@@ -1,0 +1,130 @@
+# Finance-Marketing Interface
+
+## Tobin's q
+
+Retrieve data from WRDS
+
+```{r, echo=FALSE, message=FALSE}
+# to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)
+library(RPostgres)
+library(dplyr)
+wrds <- dbConnect(Postgres(),
+                  host='wrds-pgdata.wharton.upenn.edu',
+                  port=9737,
+                  dbname='wrds',
+                  sslmode='require',
+                  user='nghia130')
+```
+
+
+
+```{r}
+# to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)
+library(RPostgres)
+library(dplyr)
+
+# I've set up wrds connection before hand. Please use your username and password here.
+
+# wrds <- dbConnect(Postgres(),
+#                   host='wrds-pgdata.wharton.upenn.edu',
+#                   port=9737,
+#                   dbname='wrds',
+#                   sslmode='require',
+#                   user='')
+
+# Check variables (column headers) in COMP ANNUAL FUNDAMENTAL
+#uses the already-established wrds connection to prepare the SQL query string and save the query as the result res.
+# check avaiable databases: https://wrds-web.wharton.upenn.edu/wrds/tools/variable.cfm?vendor_id=7
+res <- dbSendQuery(wrds, "select column_name
+                   from information_schema.columns
+                   where table_schema='compa'
+                   and table_name='funda'
+                   order by column_name")
+data <- dbFetch(res, n=-1) # fetches the data that results from running the query res against wrds and stores it as data
+dbClearResult(res) # closes the connection
+head(data)
+
+# select everything
+res <- dbSendQuery(wrds, "select * from compa.funda")
+
+# from compa.funda
+
+# only select the following variables
+res <- dbSendQuery(wrds, "select gvkey, datadate, fyear, indfmt, consol, popsrc, datafmt, tic, cusip, conm, curcd, fyr, act, at, bkvlps, ceq, ch, che, dltt, dlc, emp, np, exchg, cik, costat, naicsh,mkvalt from compa.funda") #check variables from (https://wrds-web.wharton.upenn.edu/wrds/ds/comp/funda/index.cfm?navId=80)
+data1 <- dbFetch(res, n=-1)
+dbClearResult(res)
+
+data = data1 %>%
+    distinct(gvkey,datadate,fyear,tic,conm,.keep_all = T)
+```
+
+
+Calculate Tobin's Q
+
+```{r}
+tobin_q_dt = data %>%
+    mutate(mkvalt = coalesce(mkvalt,0),
+           dltt = coalesce(dltt,0),
+           at = coalesce(at,0),
+           dlc = coalesce(dlc,0),
+           act = coalesce(act,0)) %>%
+    mutate(tobin_q = (mkvalt + ifelse((dlc - act) >=0,as.numeric(dlc-act),0) + dltt)/at ) %>%  #follow Chung (1994) (sum of stocks (preferred + common) + debt(short-term liabilities - short-term assets + long-term debt))/(total assets) # note: take only excess of short-term liabilities over short-term assets to be included in debt. 
+    select(tobin_q,gvkey,datadate,fyear,conm)
+head(tobin_q_dt)
+```
+
+
+## Event study
+
+### Abnormal Return
+
+https://rpubs.com/gregoryarobinson/315096
+
+https://www.eventstudytools.com/introduction-event-study-methodology
+
+```{r}
+library(EventStudy)
+
+
+```
+Another package 
+
+https://cran.r-project.org/web/packages/eventstudies/vignettes/replications.pdf
+
+```{r}
+library(eventstudies)
+
+```
+
+
+Replication of [@Chen_2004]
+
+```{r}
+data(TerrorIndiceReturns)
+data(TerrorAttack)
+TerrorIndiceCAR <- lapply(1: ncol(TerrorIndiceReturns), function(x){
+# 10-day window around the event
+event <- phys2eventtime(na.omit(TerrorIndiceReturns[ , x,
+drop = FALSE]),
+TerrorAttack,
+10)
+# Estimate ARs
+esMean <- constantMeanReturn(event$z.e[which(attributes(event$z.e)$index
+%in% -30:-11), ],
+residual = FALSE)
+ar <- event$z.e - esMean
+ar <- window(ar, start = 0, end = 10)
+# CAR
+car <- remap.cumsum(ar, base = as.numeric(ar[1, 1]))
+names(car) <- colnames(TerrorIndiceReturns[ , x,
+drop = FALSE])
+return(car)
+})
+names(TerrorIndiceCAR) <- colnames(TerrorIndiceReturns)
+# Compile for all indices
+TerrorIndiceCAR <- do.call(cbind, TerrorIndiceCAR)
+# 11-day CAR
+TerrorIndiceCAR[11, ]
+TerrorIndiceCAR[6, ] # 6-day CAR
+```
+
