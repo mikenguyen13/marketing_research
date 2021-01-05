@@ -1,3 +1,68 @@
+--- 
+title: "Marketing Research"
+author: "Mike Nguyen"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib,references.bib]
+biblio-style: apalike
+link-citations: yes
+description: "Placeholder for interesting knowledge in marketing"
+---
+
+# Prerequisites
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+knitr::opts_chunk$set(message = FALSE)
+```
+
+<!--chapter:end:index.Rmd-->
+
+# Introduction {#intro}
+
+You can label chapter and section titles using `{#label}` after them, e.g., we can reference Chapter \@ref(intro). If you do not manually label them, there will be automatic labels anyway, e.g., Chapter \@ref(methods).
+
+Figures and tables with captions will be placed in `figure` and `table` environments, respectively.
+
+```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center'}
+par(mar = c(4, 4, .1, .1))
+plot(pressure, type = 'b', pch = 19)
+```
+
+Reference a figure by its code chunk label with the `fig:` prefix, e.g., see Figure \@ref(fig:nice-fig). Similarly, you can reference tables generated from `knitr::kable()`, e.g., see Table \@ref(tab:nice-tab).
+
+```{r nice-tab, tidy=FALSE}
+knitr::kable(
+  head(iris, 20), caption = 'Here is a nice table!',
+  booktabs = TRUE
+)
+```
+
+You can write citations, too. For example, we are using the **bookdown** package [@R-bookdown] in this sample book, which was built on top of R Markdown and **knitr** [@xie2015].
+
+<!--chapter:end:01-intro.Rmd-->
+
+# Advertising
+
+Prior distribution for TV advertising elasticity for consumer packaged goods can be found in [@Shapiro_2018].
+A substantial portion of products has statistically insignificant or negative estimates for advertising elasticity. TV ads might not be the best vehicle to reach the customer now.
+
+<!--chapter:end:02-advertising.Rmd-->
+
+# Brand Equity
+
+<!--chapter:end:03-brand_equity.Rmd-->
+
+# Celebrity Endorsement
+
+Based on [Power Distance Theory](https://bookdown.org/mike/social-theory/power-distance-theory.html), power distance beliefs moderates the positive effect of celebrity endorsers on evaluations of advertising [@Winterich_2018]
+
+<!--chapter:end:04-celebrity_endorsement.Rmd-->
+
 # Virality
 
 The age group from 18-24 can be more challenging to target since they reported fewer positive responses compared to other age groups [@Libert_2014]. Since their threshold is higher due to the overwhelming digital content they encounter, their emotions are harder to activate.   
@@ -159,4 +224,151 @@ Social motivation: why we share :[@why_some_videos_go_viral_2015]
     + Social in real life (e.g., it will help me socialize with my friends offline).  
 
 More frequent exposure to perceptually or conceptually related cues increases product accessibility and makes the product easier to process. In turn, this increased accessibility influences product evaluation and choice, which are found to vary directly with the frequency of exposure to conceptually related cues. These results support the hypothesis that conceptual priming effects can have a strong impact on real-world consumer judgment” [@Berger_2008]
+
+
+<!--chapter:end:05-virality.Rmd-->
+
+# Finance-Marketing Interface
+
+## Tobin's q
+
+Retrieve data from WRDS
+
+```{r, echo=FALSE, message=FALSE}
+# to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)
+library(RPostgres)
+library(dplyr)
+wrds <- dbConnect(Postgres(),
+                  host='wrds-pgdata.wharton.upenn.edu',
+                  port=9737,
+                  dbname='wrds',
+                  sslmode='require',
+                  user='nghia130')
+```
+
+
+
+```{r}
+# to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)
+library(RPostgres)
+library(dplyr)
+
+# I've set up wrds connection before hand. Please use your username and password here.
+
+# wrds <- dbConnect(Postgres(),
+#                   host='wrds-pgdata.wharton.upenn.edu',
+#                   port=9737,
+#                   dbname='wrds',
+#                   sslmode='require',
+#                   user='')
+
+# Check variables (column headers) in COMP ANNUAL FUNDAMENTAL
+#uses the already-established wrds connection to prepare the SQL query string and save the query as the result res.
+# check avaiable databases: https://wrds-web.wharton.upenn.edu/wrds/tools/variable.cfm?vendor_id=7
+res <- dbSendQuery(wrds, "select column_name
+                   from information_schema.columns
+                   where table_schema='compa'
+                   and table_name='funda'
+                   order by column_name")
+data <- dbFetch(res, n=-1) # fetches the data that results from running the query res against wrds and stores it as data
+dbClearResult(res) # closes the connection
+head(data)
+
+# select everything
+res <- dbSendQuery(wrds, "select * from compa.funda")
+
+# from compa.funda
+
+# only select the following variables
+res <- dbSendQuery(wrds, "select gvkey, datadate, fyear, indfmt, consol, popsrc, datafmt, tic, cusip, conm, curcd, fyr, act, at, bkvlps, ceq, ch, che, dltt, dlc, emp, np, exchg, cik, costat, naicsh,mkvalt from compa.funda") #check variables from (https://wrds-web.wharton.upenn.edu/wrds/ds/comp/funda/index.cfm?navId=80)
+data1 <- dbFetch(res, n=-1)
+dbClearResult(res)
+
+data = data1 %>%
+    distinct(gvkey,datadate,fyear,tic,conm,.keep_all = T)
+```
+
+
+Calculate Tobin's Q
+
+```{r}
+tobin_q_dt = data %>%
+    mutate(mkvalt = coalesce(mkvalt,0),
+           dltt = coalesce(dltt,0),
+           at = coalesce(at,0),
+           dlc = coalesce(dlc,0),
+           act = coalesce(act,0)) %>%
+    mutate(tobin_q = (mkvalt + ifelse((dlc - act) >=0,as.numeric(dlc-act),0) + dltt)/at ) %>%  #follow Chung (1994) (sum of stocks (preferred + common) + debt(short-term liabilities - short-term assets + long-term debt))/(total assets) # note: take only excess of short-term liabilities over short-term assets to be included in debt. 
+    select(tobin_q,gvkey,datadate,fyear,conm)
+head(tobin_q_dt)
+```
+
+
+## Event study
+
+### Abnormal Return
+
+https://rpubs.com/gregoryarobinson/315096
+
+https://www.eventstudytools.com/introduction-event-study-methodology
+
+```{r}
+library(EventStudy)
+
+
+```
+Another package 
+
+https://cran.r-project.org/web/packages/eventstudies/vignettes/replications.pdf
+
+```{r}
+library(eventstudies)
+
+```
+
+
+Replication of [@Chen_2004]
+
+```{r}
+data(TerrorIndiceReturns)
+data(TerrorAttack)
+TerrorIndiceCAR <- lapply(1: ncol(TerrorIndiceReturns), function(x){
+# 10-day window around the event
+event <- phys2eventtime(na.omit(TerrorIndiceReturns[ , x,
+drop = FALSE]),
+TerrorAttack,
+10)
+# Estimate ARs
+esMean <- constantMeanReturn(event$z.e[which(attributes(event$z.e)$index
+%in% -30:-11), ],
+residual = FALSE)
+ar <- event$z.e - esMean
+ar <- window(ar, start = 0, end = 10)
+# CAR
+car <- remap.cumsum(ar, base = as.numeric(ar[1, 1]))
+names(car) <- colnames(TerrorIndiceReturns[ , x,
+drop = FALSE])
+return(car)
+})
+names(TerrorIndiceCAR) <- colnames(TerrorIndiceReturns)
+# Compile for all indices
+TerrorIndiceCAR <- do.call(cbind, TerrorIndiceCAR)
+# 11-day CAR
+TerrorIndiceCAR[11, ]
+TerrorIndiceCAR[6, ] # 6-day CAR
+```
+
+
+<!--chapter:end:06-finance.Rmd-->
+
+`r if (knitr::is_html_output()) '
+# References {-}
+'`
+
+<!--chapter:end:06-references.Rmd-->
+
+# Advertising 
+People don't like intrusive ads, especially when they are vulnerable [@kellogg_2005, p.143]
+
+<!--chapter:end:07-advertising.Rmd-->
 
