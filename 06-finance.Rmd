@@ -1,5 +1,117 @@
 # Finance-Marketing Interface
 
+
+Market-based assets are: relational and intellectual.  
+
+Relational market-based assets are "outcomes of the relationship between a firm and key external stakeholders, including distributors, retailers, end customers, other strategic partners". [@Srivastava_1998]
+
+For example, brand equity = relational assets between firms and their customers, while channel equity - relational assets between firms and their channel partners.  
+
+Intellectual market-based assets are "the types of knowledge a firm possesses about the environment, such as the emerging and the potential state of market conditions and the entities in it, including competitors, customers, channels, suppliers, and social and political interest group." [@Srivastava_1998]  
+
+
+Marketing actions (e.g, adverting, product innovation) can build long-term assets (e.g., brand equity, customer equity), in turn increase short-term profitability (e.g., increase marketing effectiveness for dollars spent on advertising) [@Rust_2004]  
+
+```{r fig.align='center', echo=FALSE}
+library("jpeg")
+knitr::include_graphics('images/The-chain-of-marketing-productivity-Source-Rust-et-al-2004.png')
+```
+
+The Chain of Marketing Productivity (source [@Rust_2004])
+
+
+Relationship between marketing and finance [@Srivastava_1998]  
+
+Stage 1: Market-based Assets  
+
+ * Customer relationships: Brands, installed base.  
+ * Partner Relationship: channels, co-branding network.  
+
+Stage 2:  
+
+ * Faster Market penetration  
+ * Price premium 
+ * share premium  
+ * extensions  
+ * reduce sales/service costs  
+ * Loyalty/ Retention  
+ 
+Stage 3: Shareholder value:  
+
+ * Accelerate Cash Flows  
+ * Enhance Cash Flows  
+ * Reduce Volatility and Vulnerability of Cash flows  
+ * Enhance Residual Value of Cash Flows.  
+
+[@Grewal_2010;@McAlister_2016;@Morgan_2009] used Tobin's Q in marketing research. since it is  "forward-looking, risk-adjusted, and less easily manipulated by managers" [@Wies_2019]. When probing factors affecting Tobin's Q, it was suggested to control for [Financial Leverage],[Cash flows]
+
+```{r, echo=FALSE, eval=FALSE}
+# Extended example: reading multiple data files ---------------------------
+
+setwd("stocks")
+# get file names
+stocks <- list.files()  
+# apply read_csv to each file name; return a list
+stocks_ls <- lapply(stocks, read_csv)  
+
+names(stocks_ls) <- str_remove(stocks, ".csv")
+names(stocks_ls)
+stocks_df <- bind_rows(stocks_ls, .id = "stock")
+
+# Let's calculate change from opening to closing price each day
+stocks_df$Change <- stocks_df$Open - stocks_df$Close
+
+# first six records
+head(stocks_df)
+
+head(stocks_df$Date)
+stocks_df$Date <- dmy(stocks_df$Date)
+
+# Dates print like character values but are actually numbers.
+head(stocks_df$Date)
+head(as.numeric(stocks_df$Date))
+
+# Having the Date properly formatted allows us to extract Day and Month with
+# ease.
+
+# Extract day of week and save into new column called "Day"
+stocks_df$Day <- wday(stocks_df$Date, label = TRUE)
+
+# Extract month of year and save into new column called "Month"
+stocks_df$Month <- month(stocks_df$Date, label = TRUE)
+
+
+# first six records
+head(stocks_df)
+
+# plot closing price over time for all stocks
+ggplot(stocks_df, aes(x = Date, y = Close, color = stock)) +
+  geom_line() 
+
+# boxplots of change by day of week for each stock
+ggplot(stocks_df, aes(x = Day, y = Change)) +
+  geom_boxplot() +
+  facet_wrap(~stock)
+
+# Extended example: reshape stocks_df to be "long" ------------------------
+
+# If we examine the column headers of stocks_df we can see that we really have
+# five variables instead of seven: (1) Stock, (2) Date, (3) price type, (4)
+# price, and (5) volume. Below we use gather() to make the data "tidy".
+
+stocks_df
+stocks_df_long <- pivot_longer(stocks_df, Open:Close, names_to = "price_type", values_to =  "price")
+head(stocks_df_long)
+
+# With our data in "long" format we can create plots like this:
+ggplot(filter(stocks_df_long, price_type %in% c("High","Low")), 
+       aes(x = Date, y = price, color = price_type)) +
+  geom_line() +
+  facet_wrap(~stock, scales = "free") 
+
+```
+
+
 ## Tobin's q
 
 Retrieve data from WRDS
@@ -74,6 +186,245 @@ head(tobin_q_dt)
 ```
 
 
+
+
+## Fama and French Three-factor model
+
+[@Fama_1993]
+
+An expansion from the capital asset pricing model (CAPM) to measure portfolio performance and future returns  
+
+Accounting for **company size**, and **value**  
+
+
+$$
+R_{it} - R_{ft} = \alpha_{it} + \beta_1 (R_{Mt} - R_{ft}) + \beta_2 SMB_t + \beta_3 HML_t
+$$
+where  
+
+ * $R_{it}$ = total return of a stock or portfolio i at time t  
+ * $R_{ft}$ = risk free rate of return at time t  
+ * $R_{Mt}$ = total market portfolio return at time t  
+ * $R_{it} - R_{ft}$ = expected excess return  
+ * $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)  
+ * $SMB_t$ = size premium (small - big)  
+ * $HML_t$ = value premium (high - low), also known as value premum (i.e., companies with high book-to-market stocks are called value stocks)
+ * $\beta_{1,2,3}$ = factor coefficients   
+
+
+### Example 1
+
+Example from [Calculating Investor](http://www.calculatinginvestor.com/2011/04/19/fama-french-tutorial/)
+
+```{r}
+# Fama-French Regression example in R
+
+#download factors from https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+
+# Load CSV file into R 
+ff_data <- read.table("images/ffdata.csv",header=TRUE,sep=",")
+ 
+# Extract Fama-French Factors and Fund Returns
+rmrf <- ff_data[,2]/100
+smb <- ff_data[,3]/100
+hml <- ff_data[,4]/100
+rf <- ff_data[,5]/100
+fund <- ff_data[,6]/100
+ 
+# Calculate Excess Returns for Target fund
+fund.xcess <- fund - rf
+ 
+# Run Fama-French Regression
+ffregression <- lm(fund.xcess ~ rmrf + smb + hml)
+ 
+# Print summary of regression results
+print(summary(ffregression))
+```
+
+This is monthly data, and we can see $\alpha$ term is negative means that the portfolio underperformed compared to the market. 
+
+
+
+
+### Example 2
+
+Example from [R View](https://rviews.rstudio.com/2018/04/11/introduction-to-fama-french/)
+
+```{r}
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+library(broom)
+library(glue)
+
+symbols <- c("SPY","EFA", "IJS", "EEM","AGG")
+
+
+
+prices <- 
+  getSymbols(symbols, src = 'yahoo', 
+             from = "2012-12-31",
+             to = "2017-12-31",
+             auto.assign = TRUE, warnings = FALSE) %>% 
+  map(~Ad(get(.))) %>%
+  reduce(merge) %>% 
+  `colnames<-`(symbols)
+
+w <- c(0.25, 0.25, 0.20, 0.20, 0.10)
+
+# + SPY (S&P500 fund) weighted 25%
+# + EFA (a non-US equities fund) weighted 25%
+# + IJS (a small-cap value fund) weighted 20%
+# + EEM (an emerging-mkts fund) weighted 20%
+# + AGG (a bond fund) weighted 10%
+
+asset_returns_long <-  
+  prices %>% 
+  to.monthly(indexAt = "lastof", OHLC = FALSE) %>% 
+  tk_tbl(preserve_index = TRUE, rename_index = "date") %>%
+  gather(asset, returns, -date) %>% 
+  group_by(asset) %>%  
+  mutate(returns = (log(returns) - log(lag(returns)))) %>% 
+  na.omit()
+
+portfolio_returns_tq_rebalanced_monthly <- 
+  asset_returns_long %>%
+  tq_portfolio(assets_col  = asset, 
+               returns_col = returns,
+               weights     = w,
+               col_rename  = "returns",
+               rebalance_on = "months")
+```
+
+```{r}
+temp <- tempfile()
+
+base <- "http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
+
+factor <-  "Global_3_Factors"
+
+format<- "_CSV.zip"
+
+full_url <- glue(base,
+                 factor,
+                 format,
+                 sep = "")
+
+download.file(full_url,
+              temp,
+              quiet = TRUE)
+
+
+# Global_3_Factors <-
+#   read_csv(unz(temp,
+#                "Global_3_Factors.csv"))
+# 
+# head(Global_3_Factors)  
+
+# skip 6 rows so we can have the right format
+Global_3_Factors <- 
+  read_csv(unz(temp, 
+               "Global_3_Factors.csv"), 
+    skip = 6)
+
+head(Global_3_Factors)
+
+# X1 = formatted dates
+# Mkt-Rf for the market returns above the risk-free rate
+# SMB for the size factor
+# HML for the value factor
+# RF for the risk-free rate
+
+#check data type
+map(Global_3_Factors, class)
+
+
+Global_3_Factors <-
+  read_csv(unz(temp,
+               "Global_3_Factors.csv"),
+           skip = 6) %>%
+  rename(date = X1) %>%
+  mutate_at(vars(-date), as.numeric) %>%
+  mutate(date =
+           rollback(ymd(parse_date_time(date, "%Y%m") + months(1)))) %>%
+  filter(
+    date >=
+      first(portfolio_returns_tq_rebalanced_monthly$date) & date <=
+      last(portfolio_returns_tq_rebalanced_monthly$date)
+  )
+
+head(Global_3_Factors)
+
+```
+
+
+
+## Carhart Four-factor model
+
+[@Carhart_1997]
+
+$$
+R_{it} - R_{ft} = \alpha_{it} + \beta_1 (R_{Mt} - R_{ft}) + \beta_2 SMB_t + \beta_3 HML_t + \beta_4 UMD_t
+$$
+where  
+
+ * $R_{it}$ = total return of a stock or portfolio i at time t  
+ * $R_{ft}$ = risk free rate of return at time t  
+ * $R_{Mt}$ = total market portfolio return at time t  
+ * $R_{it} - R_{ft}$ = expected excess return  
+ * $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)  
+ * $SMB_t$ = size premium (small - big)  
+ * $HML_t$ = value premium (high - low)  
+ * $UMD_t$ = premium on winners minus losers.  
+ * $\beta_{1,2,3}$ = factor coefficients   
+
+## Fama and French Five-factor model
+
+[@Fama_2015]
+Accounting additionally for profitability and investment factors 
+
+$$
+R_{it} - R_{ft} = \alpha_{it} + \beta_1 (R_{Mt} - R_{ft}) + \beta_2 SMB_t + \beta_3 HML_t + \beta_4 RMW_t + \beta_5 CMA_t + e_{it}
+$$
+where  
+
+ * $R_{it}$ = total return of a stock or portfolio i at time t  
+ * $R_{ft}$ = risk free rate of return at time t  
+ * $R_{Mt}$ = total market portfolio return at time t  
+ * $R_{it} - R_{ft}$ = expected excess return  
+ * $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)  
+ * $SMB_t$ = size premium (small - big)  
+ * $HML_t$ = value premium (high - low)  
+ * $\beta_{1,2,3}$ = factor coefficients   
+ * $RMW_t$ is the return spread of the most profitable firms - the least profitable  
+ * $CMA_t$ is the return spread of firms that invest conservatively minus aggressively . 
+
+
+
+## Multi-Factor Model
+
+$$
+R_i = \alpha_i + \beta_{i(m)} Rm + \beta_{i(1)} F_1 + ...+ \beta_{i(n)} F_n + \epsilon_i
+$$
+
+where  
+
+ * $R_i$ = return of security  
+ * $Rm$ = market return  
+ * $F(1,...N)$ = factors used  
+
+
+Factors can be  
+
+ * Macroeconomic: employment, inflation, interest.  
+ * Fundamental: (underlying financials): earnings, market cap, debt levels.  
+ * Statistical: historical data modeling.  
+
+Type of Multi-Factor Models  
+
+ * Bomicnaiton mdoel: 
+
+
 ## Event study
 
 ### Abnormal Return
@@ -83,9 +434,8 @@ https://rpubs.com/gregoryarobinson/315096
 https://www.eventstudytools.com/introduction-event-study-methodology
 
 ```{r}
+# install.packages("EventStudy")
 library(EventStudy)
-
-
 ```
 Another package 
 

@@ -1,8 +1,5 @@
 # Data 
 
-```{r}
-knitr::opts_chunk$set(eval = FALSE)
-```
 
 
 ## WRDS
@@ -56,6 +53,8 @@ res <- dbSendQuery(wrds, "select * from compa.funda")
 
 # only select the following variables
 res <- dbSendQuery(wrds, "select gvkey, datadate, fyear, indfmt, consol, popsrc, datafmt, tic, cusip, conm, curcd, fyr, act, at, bkvlps, ceq, ch, che, dltt, dlc, emp, np, exchg, cik, costat, naicsh,mkvalt from compa.funda") #check variables from (https://wrds-web.wharton.upenn.edu/wrds/ds/comp/funda/index.cfm?navId=80)
+
+# res <- dbSendQuery(wrds, "select gvkey, gp from compa.funda") #check variables from
 data1 <- dbFetch(res, n=-1)
 dbClearResult(res)
 
@@ -66,6 +65,11 @@ data = data1 %>%
 
 
 ## YouTube
+
+ * [YouTube Ads](https://www.youtube.com/intl/en_us/ads/how-it-works/measure-your-results/)  
+ * [YouTube Analytics and Reporting APIs](https://developers.google.com/youtube/reporting): All YouTube Analytics and YouTube Reporting API requests must be authorized by the channel or content owner that owns the requested data
+
+
 ### OAuth
 Go to [link](https://console.cloud.google.com/apis/api/youtube.googleapis.com) to access your API
 
@@ -76,7 +80,7 @@ app_secret <- "6BT57MexkjsQTRkIYij34w1h"
 ```
 
 
-```{r}
+```{r eval = FALSE}
 library(tuber)
 app_id = "YOUR APP ID"
 app_secret = "YOUR APP SECRET"
@@ -87,25 +91,25 @@ get_stats(video_id = "N708P-A45D0")
 
 ```
 Note for Ubuntu user
-```{r}
+```{r eval = FALSE}
 httr::set_config(httr::config( ssl_verifypeer = 0L ) )
 ```
 
 
 Get info about a video 
-```{r}
+```{r eval = FALSE}
 get_video_details(video_id="N708P-A45D0")
 ```
 
 Get caption of a video
 
-```{r}
+```{r eval = FALSE}
 get_captions(video_id="yJXTXN4xrI8")
 ```
 
 Search Videos
 
-```{r}
+```{r eval = FALSE}
 res <- yt_search(term = "test")
 head(res[, 1:3])
 ```
@@ -114,13 +118,13 @@ head(res[, 1:3])
 
 Get Comments of a video
 
-```{r}
+```{r eval = FALSE}
 res <- get_comment_threads(c(video_id="N708P-A45D0"))
 head(res)
 ```
 
 Get All the Comments Including Replies
-```{r}
+```{r eval = FALSE}
 get_all_comments(video_id = "a-UQz7fqR3w")
 ```
 
@@ -128,7 +132,7 @@ get_all_comments(video_id = "a-UQz7fqR3w")
 
 Get statistics of all the videos in a channel
 
-```{r}
+```{r eval = FALSE}
 a <- list_channel_resources(filter = c(channel_id = "UCT5Cx1l4IS3wHkJXNyuj4TA"), part="contentDetails")
 
 # Uploaded playlists:
@@ -160,7 +164,7 @@ API_key="AIzaSyDFRfvhgyjEMXA8L43DJrJ2IAxsSE4bOBs"
 ```
 
 
-```{r}
+```{r eval = FALSE}
 require(curl)
 require(jsonlite)
 library(kableExtra)
@@ -209,14 +213,14 @@ getall_channels<-function(ids,API_key,topn=5){
 
 Statistics per Channel
 
-```{r}
+```{r eval = FALSE}
 can_st=lapply(comp_data$cha_id,FUN = getstats_canal,API_key=API_key)
 can_st=bind_rows(can_st)
 can_st$viewCount=as.numeric(can_st$viewCount)
 can_st[,1:6] %>% kable() %>%kable_styling()
 ```
 
-```{r}
+```{r eval = FALSE}
 can_st$viewCount=round(as.numeric(can_st$viewCount)/1000000,2)
 p1=can_st %>% ggplot(aes(x=reorder(name,viewCount),y=viewCount,fill=name))+
 geom_bar(stat="sum")+guides(size=F)+coord_flip()+scale_fill_manual(values = c("red", "darkblue", "yellow2"))+
@@ -229,7 +233,7 @@ theme(legend.position = "top")+mytheme3
 ```
 Information on Individual Videos per Channel
 
-```{r}
+```{r eval = FALSE}
 var_to_see="dislikeCount" #favoriteCount or commentCount
 
 info=getall_channels(ids = can_st$pl_list_id.uploads,API_key = API_key,topn =20)
@@ -243,5 +247,35 @@ info=getall_channels(ids = can_st$pl_list_id.uploads,API_key = API_key,topn =20)
 ggplot(filter(datacond,variable==var_to_see),aes(x=as.Date(date),y=value,fill=name))+
 geom_bar(stat="sum")+labs(x=var_to_see,y="",fill="")+guides(size=FALSE)+scale_fill_manual(values = c("red", "darkblue", "yellow2"))+theme(legend.position = "top")+
   scale_x_date(limits =as.Date(c(as.Date(min(datacond$date)),as.Date(Sys.time()))),date_breaks  ="month",date_labels="%b %y")+theme(legend.position = "top")+mytheme2 
+```
+
+
+### Python
+
+[Pytube](https://github.com/pytube/pytube) 
+
+
+```{python}
+# from pytube import YouTube
+# YouTube('https://youtube.com/watch?v=2lAe1cqCOXo').streams.first().download()
+```
+
+
+
+
+```{python eval = FALSE}
+import requests
+import json
+r = requests.get("http://gdata.youtube.com/feeds/api/standardfeeds/top_rated?v=2&alt=jsonc")
+#r.text
+data = json.loads(r.text)
+data
+# for item in data['data']['items']:
+#   print "Video Title: %s" % (item['title'])
+#   print "Video Category: %s" % (item['category'])
+#   print "Video ID: %s" % (item['id'])
+#   print "Video Rating: %f" % (item['rating'])
+#   print "Embed URL: %s" % (item['player']['default'])
+
 ```
 
