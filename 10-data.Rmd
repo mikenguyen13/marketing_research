@@ -1,6 +1,4 @@
-# Data 
-
-
+# Data
 
 ## WRDS
 
@@ -17,8 +15,6 @@ wrds <- dbConnect(Postgres(),
                   sslmode='require',
                   user='nghia130')
 ```
-
-
 
 ```{r}
 # to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)
@@ -62,23 +58,24 @@ data = data1 %>%
     distinct(gvkey,datadate,fyear,tic,conm,.keep_all = T)
 ```
 
-
-
 ## YouTube
 
- * [YouTube Ads](https://www.youtube.com/intl/en_us/ads/how-it-works/measure-your-results/)  
- * [YouTube Analytics and Reporting APIs](https://developers.google.com/youtube/reporting): All YouTube Analytics and YouTube Reporting API requests must be authorized by the channel or content owner that owns the requested data
-
+-   [YouTube
+    Ads](https://www.youtube.com/intl/en_us/ads/how-it-works/measure-your-results/)\
+-   [YouTube Analytics and Reporting
+    APIs](https://developers.google.com/youtube/reporting): All YouTube
+    Analytics and YouTube Reporting API requests must be authorized by the
+    channel or content owner that owns the requested data
 
 ### OAuth
-Go to [link](https://console.cloud.google.com/apis/api/youtube.googleapis.com) to access your API
 
+Go to [link](https://console.cloud.google.com/apis/api/youtube.googleapis.com)
+to access your API
 
 ```{r ,echo=FALSE}
 app_id <- "711678479048-cp418avjh6shdud6b3qu9leg4d3kkuc4.apps.googleusercontent.com"
 app_secret <- "6BT57MexkjsQTRkIYij34w1h"
 ```
-
 
 ```{r eval = FALSE}
 library(tuber)
@@ -90,13 +87,15 @@ yt_oauth(app_id, app_secret)
 get_stats(video_id = "N708P-A45D0")
 
 ```
+
 Note for Ubuntu user
+
 ```{r eval = FALSE}
 httr::set_config(httr::config( ssl_verifypeer = 0L ) )
 ```
 
+Get info about a video
 
-Get info about a video 
 ```{r eval = FALSE}
 get_video_details(video_id="N708P-A45D0")
 ```
@@ -114,8 +113,6 @@ res <- yt_search(term = "test")
 head(res[, 1:3])
 ```
 
-
-
 Get Comments of a video
 
 ```{r eval = FALSE}
@@ -124,11 +121,10 @@ head(res)
 ```
 
 Get All the Comments Including Replies
+
 ```{r eval = FALSE}
 get_all_comments(video_id = "a-UQz7fqR3w")
 ```
-
-
 
 Get statistics of all the videos in a channel
 
@@ -156,13 +152,11 @@ res_df <- do.call(rbind, lapply(res, data.frame))
 head(res_df)
 ```
 
-
-### API 
+### API
 
 ```{r, echo=FALSE}
 API_key="AIzaSyDFRfvhgyjEMXA8L43DJrJ2IAxsSE4bOBs"
 ```
-
 
 ```{r eval = FALSE}
 require(curl)
@@ -231,6 +225,7 @@ theme(legend.position = "top")+mytheme3
   ggplotly(p1,tooltip=c("name","viewCount"))  %>% 
     layout(legend = list(orientation = "h",x = 0.01, y = -0.1,autosize=F))  
 ```
+
 Information on Individual Videos per Channel
 
 ```{r eval = FALSE}
@@ -249,19 +244,14 @@ geom_bar(stat="sum")+labs(x=var_to_see,y="",fill="")+guides(size=FALSE)+scale_fi
   scale_x_date(limits =as.Date(c(as.Date(min(datacond$date)),as.Date(Sys.time()))),date_breaks  ="month",date_labels="%b %y")+theme(legend.position = "top")+mytheme2 
 ```
 
-
 ### Python
 
-[Pytube](https://github.com/pytube/pytube) 
-
+[Pytube](https://github.com/pytube/pytube)
 
 ```{python}
 # from pytube import YouTube
 # YouTube('https://youtube.com/watch?v=2lAe1cqCOXo').streams.first().download()
 ```
-
-
-
 
 ```{python eval = FALSE}
 import requests
@@ -279,3 +269,156 @@ data
 
 ```
 
+Using `BeautifulSoup`
+
+```{python eval = FALSE}
+from requests_html import HTMLSession 
+from bs4 import BeautifulSoup as bs # importing BeautifulSoup
+
+# sample youtube video url
+video_url = "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+# init an HTML Session
+session = HTMLSession()
+# get the html content
+response = session.get(video_url)
+# execute Java-script
+response.html.render(sleep=1)
+# create bs object to parse HTML
+soup = bs(response.html.html, "html.parser")
+# write all HTML code into a file
+open("video.html", "w", encoding='utf8').write(response.html.html)
+```
+
+Generate random video
+
+```{python eval = FALSE}
+import json
+import urllib.request
+import string
+import random
+
+count = 50
+API_KEY = 'your_key'
+random = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(3))
+
+urlData = "https://www.googleapis.com/youtube/v3/search?key={}&maxResults={}&part=snippet&type=video&q={}".format(API_KEY,count,random)
+webURL = urllib.request.urlopen(urlData)
+data = webURL.read()
+encoding = webURL.info().get_content_charset('utf-8')
+results = json.loads(data.decode(encoding))
+
+for data in results['items']:
+    videoId = (data['id']['videoId'])
+    print(videoId)
+    #store your ids
+
+
+```
+
+Random used by YouTube API,
+[test](https://developers.google.com/youtube/v3/docs/search/list?apix=true&apix_params=%7B%22part%22%3A%5B%22snippet%22%5D%2C%22maxResults%22%3A25%2C%22q%22%3A%22surfing%22%7D)
+
+```{python eval = FALSE}
+# -*- coding: utf-8 -*-
+
+# Sample Python code for youtube.search.list
+# See instructions for running these code samples locally:
+# https://developers.google.com/explorer-help/guides/code_samples#python
+
+import os
+
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
+import googleapiclient.errors
+
+scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+
+def main():
+    # Disable OAuthlib's HTTPS verification when running locally.
+    # *DO NOT* leave this option enabled in production.
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+    api_service_name = "youtube"
+    api_version = "v3"
+    client_secrets_file = "YOUR_CLIENT_SECRET_FILE.json"
+
+    # Get credentials and create an API client
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+        client_secrets_file, scopes)
+    credentials = flow.run_console()
+    youtube = googleapiclient.discovery.build(
+        api_service_name, api_version, credentials=credentials)
+
+    request = youtube.search().list(
+        part="snippet",
+        maxResults=25,
+        q="surfing"
+    )
+    response = request.execute()
+
+    print(response)
+
+if __name__ == "__main__":
+    main()
+```
+
+Another way, but this is a dirty crawler, not for production
+
+```{python eval = FALSE}
+import re, urllib
+from random import randint
+
+def random_str(str_size):
+    res = ""
+    for i in xrange(str_size):
+        x = randint(0,25)
+        c = chr(ord('a')+x)
+        res += c
+    return res
+
+def find_watch(text,pos):
+    start = text.find("watch?v=",pos)
+    if (start<0):
+        return None,None
+    end = text.find(" ",start)
+    if (end<0):
+        return None,None
+
+    if (end-start > 200): #silly heuristics, probably not a must
+        return None,None
+
+    return text[start:end-1], start
+
+
+def find_instance_links():
+    base_url = 'https://www.youtube.com/results?search_query='
+    url = base_url+random_str(3)
+    #print url
+
+    r = urllib.urlopen(url).read()
+
+    links = {}
+
+    pos = 0
+    while True:
+        link,pos =  find_watch(r,pos)
+        if link == None or pos == None:
+            break
+        pos += 1
+        #print link
+        if (";" in link):
+            continue
+        links[link] = 1
+
+    items_list = links.items()
+
+    list_size = len(items_list)
+    selected = randint(list_size/2,list_size-1)
+    return items_list[selected][0]
+
+
+for i in xrange(1000):
+    sleep(randint(7,20)) # pause randomly between 7 and 20 seconds
+    link = find_instance_links()
+    print link
+```
