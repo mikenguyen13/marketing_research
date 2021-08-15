@@ -1,0 +1,7 @@
+# Sarcasm
+
+-   [AI-based Learning Techniques for Sarcasm Detection of Social Media Tweets](https://link.springer.com/article/10.1007/s42979-020-00336-3)
+
+-   [Interpretable Multi-Head Self-Attention Architecture for Sarcasm Detection in Social Media](https://www.mdpi.com/1099-4300/23/4/394)
+
+-   

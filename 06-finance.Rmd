@@ -1,16 +1,20 @@
 # Finance-Marketing Interface
 
+Market-based assets are: relational and intellectual.
 
-Market-based assets are: relational and intellectual.  
+Relational market-based assets are "outcomes of the relationship between a firm and key external stakeholders, including
+distributors, retailers, end customers, other strategic partners". [@Srivastava_1998]
 
-Relational market-based assets are "outcomes of the relationship between a firm and key external stakeholders, including distributors, retailers, end customers, other strategic partners". [@Srivastava_1998]
+For example, brand equity = relational assets between firms and their customers, while channel equity - relational
+assets between firms and their channel partners.
 
-For example, brand equity = relational assets between firms and their customers, while channel equity - relational assets between firms and their channel partners.  
+Intellectual market-based assets are "the types of knowledge a firm possesses about the environment, such as the
+emerging and the potential state of market conditions and the entities in it, including competitors, customers,
+channels, suppliers, and social and political interest group." [@Srivastava_1998]
 
-Intellectual market-based assets are "the types of knowledge a firm possesses about the environment, such as the emerging and the potential state of market conditions and the entities in it, including competitors, customers, channels, suppliers, and social and political interest group." [@Srivastava_1998]  
-
-
-Marketing actions (e.g, adverting, product innovation) can build long-term assets (e.g., brand equity, customer equity), in turn increase short-term profitability (e.g., increase marketing effectiveness for dollars spent on advertising) [@Rust_2004]  
+Marketing actions (e.g, adverting, product innovation) can build long-term assets (e.g., brand equity, customer equity),
+in turn increase short-term profitability (e.g., increase marketing effectiveness for dollars spent on advertising)
+[@Rust_2004]
 
 ```{r fig.align='center', echo=FALSE}
 library("jpeg")
@@ -19,31 +23,32 @@ knitr::include_graphics('images/The-chain-of-marketing-productivity-Source-Rust-
 
 The Chain of Marketing Productivity (source [@Rust_2004])
 
+Relationship between marketing and finance [@Srivastava_1998]
 
-Relationship between marketing and finance [@Srivastava_1998]  
+Stage 1: Market-based Assets
 
-Stage 1: Market-based Assets  
+-   Customer relationships: Brands, installed base.
+-   Partner Relationship: channels, co-branding network.
 
- * Customer relationships: Brands, installed base.  
- * Partner Relationship: channels, co-branding network.  
+Stage 2:
 
-Stage 2:  
+-   Faster Market penetration
+-   Price premium
+-   share premium
+-   extensions
+-   reduce sales/service costs
+-   Loyalty/ Retention
 
- * Faster Market penetration  
- * Price premium 
- * share premium  
- * extensions  
- * reduce sales/service costs  
- * Loyalty/ Retention  
- 
-Stage 3: Shareholder value:  
+Stage 3: Shareholder value:
 
- * Accelerate Cash Flows  
- * Enhance Cash Flows  
- * Reduce Volatility and Vulnerability of Cash flows  
- * Enhance Residual Value of Cash Flows.  
+-   Accelerate Cash Flows
+-   Enhance Cash Flows
+-   Reduce Volatility and Vulnerability of Cash flows
+-   Enhance Residual Value of Cash Flows.
 
-[@Grewal_2010;@McAlister_2016;@Morgan_2009] used Tobin's Q in marketing research. since it is  "forward-looking, risk-adjusted, and less easily manipulated by managers" [@Wies_2019]. When probing factors affecting Tobin's Q, it was suggested to control for [Financial Leverage],[Cash flows]
+[@Grewal_2010; @McAlister_2016; @Morgan_2009] used Tobin's Q in marketing research. since it is "forward-looking,
+risk-adjusted, and less easily manipulated by managers" [@Wies_2019]. When probing factors affecting Tobin's Q, it was
+suggested to control for [Financial Leverage],[Cash flows]
 
 ```{r, echo=FALSE, eval=FALSE}
 # Extended example: reading multiple data files ---------------------------
@@ -111,7 +116,6 @@ ggplot(filter(stocks_df_long, price_type %in% c("High","Low")),
 
 ```
 
-
 ## Tobin's q
 
 Retrieve data from WRDS
@@ -127,8 +131,6 @@ wrds <- dbConnect(Postgres(),
                   sslmode='require',
                   user='nghia130')
 ```
-
-
 
 ```{r}
 # to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)
@@ -170,7 +172,6 @@ data = data1 %>%
     distinct(gvkey,datadate,fyear,tic,conm,.keep_all = T)
 ```
 
-
 Calculate Tobin's Q
 
 ```{r}
@@ -185,32 +186,27 @@ tobin_q_dt = data %>%
 head(tobin_q_dt)
 ```
 
-
-
-
 ## Fama and French Three-factor model
 
 [@Fama_1993]
 
-An expansion from the capital asset pricing model (CAPM) to measure portfolio performance and future returns  
+An expansion from the capital asset pricing model (CAPM) to measure portfolio performance and future returns
 
-Accounting for **company size**, and **value**  
-
+Accounting for **company size**, and **value**
 
 $$
 R_{it} - R_{ft} = \alpha_{it} + \beta_1 (R_{Mt} - R_{ft}) + \beta_2 SMB_t + \beta_3 HML_t
-$$
-where  
+$$ where
 
- * $R_{it}$ = total return of a stock or portfolio i at time t  
- * $R_{ft}$ = risk free rate of return at time t  
- * $R_{Mt}$ = total market portfolio return at time t  
- * $R_{it} - R_{ft}$ = expected excess return  
- * $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)  
- * $SMB_t$ = size premium (small - big)  
- * $HML_t$ = value premium (high - low), also known as value premum (i.e., companies with high book-to-market stocks are called value stocks)
- * $\beta_{1,2,3}$ = factor coefficients   
-
+-   $R_{it}$ = total return of a stock or portfolio i at time t
+-   $R_{ft}$ = risk free rate of return at time t
+-   $R_{Mt}$ = total market portfolio return at time t
+-   $R_{it} - R_{ft}$ = expected excess return
+-   $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)
+-   $SMB_t$ = size premium (small - big)
+-   $HML_t$ = value premium (high - low), also known as value premum (i.e., companies with high book-to-market stocks
+    are called value stocks)
+-   $\beta_{1,2,3}$ = factor coefficients
 
 ### Example 1
 
@@ -241,10 +237,8 @@ ffregression <- lm(fund.xcess ~ rmrf + smb + hml)
 print(summary(ffregression))
 ```
 
-This is monthly data, and we can see $\alpha$ term is negative means that the portfolio underperformed compared to the market. 
-
-
-
+This is monthly data, and we can see $\alpha$ term is negative means that the portfolio underperformed compared to the
+market.
 
 ### Example 2
 
@@ -357,49 +351,42 @@ head(Global_3_Factors)
 
 ```
 
-
-
 ## Carhart Four-factor model
 
 [@Carhart_1997]
 
 $$
 R_{it} - R_{ft} = \alpha_{it} + \beta_1 (R_{Mt} - R_{ft}) + \beta_2 SMB_t + \beta_3 HML_t + \beta_4 UMD_t
-$$
-where  
+$$ where
 
- * $R_{it}$ = total return of a stock or portfolio i at time t  
- * $R_{ft}$ = risk free rate of return at time t  
- * $R_{Mt}$ = total market portfolio return at time t  
- * $R_{it} - R_{ft}$ = expected excess return  
- * $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)  
- * $SMB_t$ = size premium (small - big)  
- * $HML_t$ = value premium (high - low)  
- * $UMD_t$ = premium on winners minus losers.  
- * $\beta_{1,2,3}$ = factor coefficients   
+-   $R_{it}$ = total return of a stock or portfolio i at time t
+-   $R_{ft}$ = risk free rate of return at time t
+-   $R_{Mt}$ = total market portfolio return at time t
+-   $R_{it} - R_{ft}$ = expected excess return
+-   $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)
+-   $SMB_t$ = size premium (small - big)
+-   $HML_t$ = value premium (high - low)
+-   $UMD_t$ = premium on winners minus losers.
+-   $\beta_{1,2,3}$ = factor coefficients
 
 ## Fama and French Five-factor model
 
-[@Fama_2015]
-Accounting additionally for profitability and investment factors 
+[@Fama_2015] Accounting additionally for profitability and investment factors
 
 $$
 R_{it} - R_{ft} = \alpha_{it} + \beta_1 (R_{Mt} - R_{ft}) + \beta_2 SMB_t + \beta_3 HML_t + \beta_4 RMW_t + \beta_5 CMA_t + e_{it}
-$$
-where  
+$$ where
 
- * $R_{it}$ = total return of a stock or portfolio i at time t  
- * $R_{ft}$ = risk free rate of return at time t  
- * $R_{Mt}$ = total market portfolio return at time t  
- * $R_{it} - R_{ft}$ = expected excess return  
- * $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)  
- * $SMB_t$ = size premium (small - big)  
- * $HML_t$ = value premium (high - low)  
- * $\beta_{1,2,3}$ = factor coefficients   
- * $RMW_t$ is the return spread of the most profitable firms - the least profitable  
- * $CMA_t$ is the return spread of firms that invest conservatively minus aggressively . 
-
-
+-   $R_{it}$ = total return of a stock or portfolio i at time t
+-   $R_{ft}$ = risk free rate of return at time t
+-   $R_{Mt}$ = total market portfolio return at time t
+-   $R_{it} - R_{ft}$ = expected excess return
+-   $R_{Mt} - R_{ft}$ = excess return on the market portfolio (index)
+-   $SMB_t$ = size premium (small - big)
+-   $HML_t$ = value premium (high - low)
+-   $\beta_{1,2,3}$ = factor coefficients
+-   $RMW_t$ is the return spread of the most profitable firms - the least profitable
+-   $CMA_t$ is the return spread of firms that invest conservatively minus aggressively .
 
 ## Multi-Factor Model
 
@@ -407,45 +394,43 @@ $$
 R_i = \alpha_i + \beta_{i(m)} Rm + \beta_{i(1)} F_1 + ...+ \beta_{i(n)} F_n + \epsilon_i
 $$
 
-where  
+where
 
- * $R_i$ = return of security  
- * $Rm$ = market return  
- * $F(1,...N)$ = factors used  
+-   $R_i$ = return of security
+-   $Rm$ = market return
+-   $F(1,...N)$ = factors used
 
+Factors can be
 
-Factors can be  
+-   Macroeconomic: employment, inflation, interest.
+-   Fundamental: (underlying financials): earnings, market cap, debt levels.
+-   Statistical: historical data modeling.
 
- * Macroeconomic: employment, inflation, interest.  
- * Fundamental: (underlying financials): earnings, market cap, debt levels.  
- * Statistical: historical data modeling.  
+Type of Multi-Factor Models
 
-Type of Multi-Factor Models  
-
- * Bomicnaiton mdoel: 
-
+-   Bomicnaiton model:
 
 ## Event study
 
 ### Abnormal Return
 
-https://rpubs.com/gregoryarobinson/315096
+<https://rpubs.com/gregoryarobinson/315096>
 
-https://www.eventstudytools.com/introduction-event-study-methodology
+<https://www.eventstudytools.com/introduction-event-study-methodology>
 
 ```{r}
 # install.packages("EventStudy")
 library(EventStudy)
 ```
-Another package 
 
-https://cran.r-project.org/web/packages/eventstudies/vignettes/replications.pdf
+Another package
+
+<https://cran.r-project.org/web/packages/eventstudies/vignettes/replications.pdf>
 
 ```{r}
 library(eventstudies)
 
 ```
-
 
 Replication of [@Chen_2004]
 
@@ -477,4 +462,3 @@ TerrorIndiceCAR <- do.call(cbind, TerrorIndiceCAR)
 TerrorIndiceCAR[11, ]
 TerrorIndiceCAR[6, ] # 6-day CAR
 ```
-
