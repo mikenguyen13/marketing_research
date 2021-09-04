@@ -4,12 +4,12 @@
 
 ### Log-transformation
 
-[@Manchanda_2004;@Wies_2019] used 1 in place of 0 for log-transformation. And also use 0.5 and 0.0001 for sensitivity analysis.  
+[@Manchanda_2004; @Wies_2019] used 1 in place of 0 for log-transformation. And also use 0.5 and 0.0001 for sensitivity analysis.
 
-To control for firm size effects, [@Wies_2019] scale advertising investments by the firm’s total assets in the given year
+To control for firm size effects, [@Wies_2019] scale advertising investments by the firm's total assets in the given year
 
-## Endogeneity 
+## Endogeneity
 
-### Control Function 
+### Control Function
 
 In the context of consumer choice model [@Petrin_2010]

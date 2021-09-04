@@ -1,5 +1,7 @@
 # CB Seminar
 
+## Overview
+
 [@simonson2001]:
 
 -   Behavioral Decision Theory (i.e., study judgment and decisions) (Kahnenman & Tversky) vs Social Cognition
@@ -30,7 +32,7 @@ Theory-Testing vs. Substantive Phenomena-Driven Consumer Research
 
 -   Deductive-Conceptual Knowledge
 
-    -   A theory is "a statement of concepts and their interrelationships that shows how and/or why a phenomenon occurs." @corley2011
+    -   A theory is "a statement of concepts and their interrelationships that shows how and/or why a phenomenon occurs." [@corley2011]
 
     -   Knowledge Creation Strategies:
 
@@ -39,3 +41,169 @@ Theory-Testing vs. Substantive Phenomena-Driven Consumer Research
         -   Challenging assumptions
 
         -   Introducing mediators and moderators
+
+        -   Contrastive explanation
+
+        -   Borrowing and blending
+
+    -   Knowledge Appreciation
+
+        -   Quality of the contribution
+
+            -   depends on rigor, and execution of research method
+
+        -   Benefit of the contribution
+
+            -   Originality / Novelty
+
+            -   Interestingness
+
+            -   Changes in core understanding/beliefs
+
+-   Integration (i.e., tree of knowledge)
+
+## Social Influence
+
+[@mcferran2010]
+
+-   body type of others influences one's food consumption
+
+    -   moderated by body type (undesirable reference group) of the other consumers
+
+    -   low appearance self-esteem or cognitive load also moderate this relationship
+
+-   Anchoring and adjustment processes
+
+-   Social Influence and Food Choice
+
+    -   people conform to group average (anchor)
+
+-   Study 1: Social influence effects is present regardless of food perception (healthy vs. unhealthy). People eat more when there is another person, but the magnitude is moderated by the other's body type (consume less when seeing obese others - undesirable group). The effect persists after social influence.
+
+-   Study 2: Presence of other increases food quantity.
+
+    -   High anchor (obese person takes high quantity), participants take less.
+
+    -   Low anchor (obese person takes small quantity), participants take more
+
+-   Study 3: People with low appearance self-esteem and high processing resources will attenuate more
+
+<br>
+
+[@moreau2010]
+
+-   Social comparison: people want to gain self-knowledge.
+
+    -   Self-designed products are based on:
+
+        -   comparison with the characteristics of other comparable products
+
+        -   comparison with skills, talents, and expertise of the other designers.
+
+-   Since professional designers are expert, consumer designers face upward comparison
+
+-   Study 1:
+
+    -   a\. Self-deigned product evaluation is lower when compared to professional default product, than consumer designed default design
+
+    -   b\. Firm guidance moderates this effect
+
+    -   There is a premium for self-designed product.
+
+-   Study 2: Defensive vs. Nondefensive processing
+
+    -   need to protect self-esteem/ self-image.
+
+    -   a\. At low defensive processing, evaluations of self-designed products are lower when the default product is professionally designed than consumer designed
+
+    -   defensive processing reduces negative comparison
+
+-   Study 3: The behavioral consequences of social comparison in self-design.
+
+    -   Public prize (visibility) enhance self-evaluations.
+
+    -   a\. Repair opportunity affects the evaluation of self-designed products
+
+<br>
+
+[@hamilton2003]
+
+-   Influence based on context effects (suggesting other unlikely alternative)
+
+    -   moderated by the belief whether others are trying to manipulate the choice context.
+
+-   People understand context effects (e.g., choice set construction).
+
+-   To influence others, people construct a set of unattractive alternatives (attraction effect), or a compromise between two other alternatives (compromise effect).
+
+-   Author hypothesized: People correct the contextual effects when they know constructors' intentions (to influence them).
+
+-   Results: "Subjects' beliefs that menus had been created **(by their friends)** to influence their choices seemed to enhance rather than limit the effectiveness of the menus." (p. 498) likely due to homophily bias.
+
+    -   Evaluated the target more favorably.
+
+-   Source credibility, expertise, trustworthiness, attractiveness, and similarity can influence the effectiveness of persuasion attempt [@wilson1993]
+
+-   Hypothesis: ulterior motive of persuader moderates increase the resistant effect of chooser than group-oriented motive.
+
+    -   Subjects are likely to agree (choose) when they know the menu is created by their friends
+
+    -   knowing that the menu has been created by a stranger, under compromise strategy, subjects still choose the middle alternative.
+
+-   Attraction strategy is more likely to be used than compromise strategy
+
+-   Even if subjects understand contextual effects (manipulation), they do not resist because
+
+    -   it's hard to recognize characteristics of a local set from the characteristics of a global set. [@simonson1993]
+
+    -   If subjects assume that the most attractive option has been eliminated, they have to choose the best among alternatives.
+
+<br>
+
+[@argo2005]
+
+-   Non interactive social presence in the consumption context.
+
+-   social forces has greatest influence [@latan?1981]:
+
+    -   number (social size) (large \> small):
+
+        -   emotions and behaviors: (e.g., stage fright, crowding)
+
+    -   immediacy (proximity) (closer \> far)
+
+    -   social source strength (importance) (high \> low)
+
+-   Social Impact Theory
+
+-   Study 1:
+
+    -   0 -\> 1 person increased positive emotions
+
+    -   1 -\> 3 person decreased positive emotions
+
+-   Study 2:
+
+    -   proximity moderates the impact of social size on emotions and brand selection.
+
+## Interpersonal perception and consumer lay beliefs
+
+## Emotions, mood and affect
+
+## Persuasion and attitude change
+
+## Judgment and decision making and behavioral pricing
+
+## Goals and Motivation
+
+## Brand personality and consumer -brand relationships
+
+## Culture and consumer behavior
+
+## Prosocial behavior and morality
+
+## Consumer well-being
+
+## Digital marketing and WOM
+
+## Experiential consumption and time
