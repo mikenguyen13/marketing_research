@@ -4,6 +4,12 @@ People don't like intrusive ads, especially when they are vulnerable [@kellogg_2
 
 <br>
 
+Visual Persuasion
+
+-   [@visualp1997] and [@visualp2003] are two books on this subject
+
+<br>
+
 Prior distribution for TV advertising elasticity for consumer packaged goods can be found in [@Shapiro_2018]. A substantial portion of products has statistically insignificant or negative estimates for advertising elasticity. TV ads might not be the best vehicle to reach the customer now.
 
 [@Gordon_2019] reframe our idea of advertising effect, which should be thought in the sense of incremental effect above the baseline of an ad on consumer behavior.
@@ -159,7 +165,7 @@ Proposed model:
 
 Advantages of the proposed model: Incorporate
 
--   Elaboration Likelihood model
+-   Elaboration Likelihood model: [@petty1986]
 
 -   Mitchell's brand processing model
 
@@ -211,7 +217,7 @@ Note:
 
     -   Cognition -\> Affect -\> behavior. (CA)
 
-    -   Elaboration Likelihood Model (ELM)
+    -   Elaboration Likelihood Model (ELM): [@petty1986]
 
     -   Another model is [@maclnnis1989]
 
@@ -346,3 +352,131 @@ Note:
     -   Conformability
 
 -   IMC Conceptual Framework
+
+<br>
+
+## Cognitive and Affective mediators of Advertising Effects
+
+Evaluative responses = attitude
+
+Cognitive approach -\> Affective approach (not only comes from cognitive) -\> Behavioral approach (Fishbein & Ajzen, 1975 - theory of planned behavior)
+
+System 2: is kinda of independent of Cognitive, but Affective is system 1.
+
+-   Expanded model added subjective norm
+
+-   @zajonc1980
+
+-   Evaluation from cognitive approach is multi-attribute model
+
+-   Anthony Greenwald: Cognitive Response Theory: what important is what is in the consumer mind when they see the ad.
+
+<br>
+
+Conditioning:
+
+-   Classical (Pavlovian) conditioning: physiological automatic reaction occurred after being exposed to an unconditioned stimulus.
+
+-   Evaluative conditioning: direct transfer of affect from one stimulus to another via a conditioning paradigm.
+
+<br>
+
+Affective route:
+
+Moods = diffuse, hard to pin down the source, more long-lasting
+
+Emotion = specific, discrete
+
+[@wright1973]
+
+-   Three modes of spontaneous cognitive responses to advertising stimulus:
+
+    -   Counterargument
+
+    -   Source Derogation
+
+    -   Support Argument
+
+$$
+Accecptance = w_{SA} \sum_{i} SA_i - w_{CA} \sum_j CA_j - w_{SD} \sum_k SD_k
+$$
+
+Situational Factors
+
+-   Content-processing involvement: "stemming from receiver's perception of the relevancy"
+
+-   Message Modality: audio, print
+
+<br>
+
+[@batra1986]
+
+-   Advertising repetition increases brand attitude and purchase intention when support and counter argument production are low; while under high level of such production, brand attitude and purchase intention level off.
+
+-   What happen to make the downturn of advertising repetition earlier or later?
+
+-   Appropriate interval: purchase cycle (number of exposure per purchase cycle). 3 exposures per purchase cycle is the optimal number
+
+-   Wear-in: how many times it takes for the ad to take effect?
+
+-   Wear-out: how many times it takes for the ad to bore you?
+
+    -   If you change the ad execution, the wear-out is pushed back.
+
+-   Traditional thoughts advertising repetition would always wear out (inverted-U curve between repetition and impact on customer's attitude) because of wearout and mere exposure
+
+-   Ability, motivation and opportunity are antecedents of cognitive processing
+
+<br>
+
+[@kupor2015]
+
+-   Momentary interruptions can promote persuasion
+
+    -   higher for low need for cognitive individuals (motivation to engage in thoughtful processing) than high ones
+
+-   In other words, interruptions can increase consumers' processing of a message.
+
+-   Interruption amplified arousal (need for completion/ goal pursuit and curiosity)
+
+<br>
+
+[@gibson2008]: Affective Responses Mediating Acceptance of Advertising
+
+-   Using Implicit Association Test **(???)**
+
+-   Evaluative conditioning only influences explicit attitudes when there is no previous strong preference or priori
+
+<br>
+
+@batra1986a
+
+-   Antecedents of attitude towards the ad:
+
+-   Attitude toward the ad leads changes in brand attitudes [@mackenzie1986; @mitchell1981]
+
+-   In low involvement context, execution cues and source likeability (message-oriented and communicator-oriented) have greater impact on persuasion
+
+-   Affect typologies (p. 237)
+
+<br>
+
+@pham2013
+
+-   ad-evoked feelings positively influence brand attitudes both directly and indirectly (via changes in attitude toward the ad), regardless of involvement with the product category, products types (e.g., durables, nondurables, services, search or experience goods).
+
+-   This effect is greater among hedonic products than utilitarian ones.
+
+<br>
+
+@holbrook1987
+
+-   emotional reactions mediate the effect of advertising on attitudes toward ad or brand.
+
+-   Why divided two articles? the second study claimed that the last paper's list of positive affective mediators was limited, the second one expands to range of emotions.
+
+-   Is there a difference between affect and emotions?
+
+<br>
+
+[@batra1991; @voss2003] offer scale to measure the hedonic and utilitarian dimensions of consumer attitude

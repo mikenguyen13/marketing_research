@@ -10,11 +10,15 @@
 
 -   Positivist (focuses on causation) Versus Postmordern (focuses on interpretation)
 
++------------------+--------------------------------------------------------------+-------------------------------------------------------------------------+
 |                  | Behavioral Decision Theory                                   | Social Cognition                                                        |
-|------------------|--------------------------------------------------------------|-------------------------------------------------------------------------|
++==================+==============================================================+=========================================================================+
 | Underlying model | decision-making model, (e.g., determinants of choice)        | response hierarchy model (i.e., how judgments and attitudes are formed) |
++------------------+--------------------------------------------------------------+-------------------------------------------------------------------------+
 | Phenomena/ Task  | Stimulus-based                                               | Memory-based                                                            |
++------------------+--------------------------------------------------------------+-------------------------------------------------------------------------+
 | Measures         | Information acquisition, verbal protocols, and response time | Cognitive response                                                      |
++------------------+--------------------------------------------------------------+-------------------------------------------------------------------------+
 
 Types fo Consumer Research:
 
@@ -187,6 +191,86 @@ Theory-Testing vs. Substantive Phenomena-Driven Consumer Research
     -   proximity moderates the impact of social size on emotions and brand selection.
 
 ## Interpersonal perception and consumer lay beliefs
+
+[@folkes2003]
+
+-   Info valence: **Negativity bias for products** (negative info about a product has greater influence on brand perceptions than positive info). [@herr1991]
+
+-   **Positivity bias for services** (positive experience from a service provider can lead customers to infer positivity about the brand as a whole than negative experience).
+
+    -   Could be because service is more heterogeneous.
+
+    -   this effect is greater for novice consumer.
+
+-   Study 1: First time car insurance buyers
+
+    -   Alternative explanation: Subtyping [@weber1983], or occupational stereotype consistency, question order are all ruled out.
+
+-   Study 2: replicate study 1: compare the effect of info about individual service provider to that of others who is not from the firm.
+
+    -   Subjects perceive focal firm employee more positively and consider negative experience from the other firms' agents as outliers.
+
+-   Because consumers are predisposed to think that a service encounter in general should be more positive than negative [@fornell2005], this assumption could explain why consumers consider positive experience as typical and generalize it to the brand, and negative experience as outliers.
+
+-   3 sources that affect consumers' beliefs:
+
+    -   general perceptions of services
+
+    -   beliefs specific to a firm
+
+    -   beliefs specific to an occupation
+
+-   Study 3 used a critical incident method to examine the following hypothesis: the positive effect is moderated by consumer experience (e.g., stronger for less experience consumers).
+
+    -   Valence affects perceived typicality , but experience with a firm did not influence typicality (cant find support for H3)
+
+-   Study 4: Replicate study 1 and 2 in a natural setting
+
+<br>
+
+[@brough2016]
+
+-   Men are less likely to buy environmentally friendly products than women because the close association between green behavior and femininity (perceived by both men and women, and both users and observers).
+
+    -   Prior research attribute this gap to personality traits (women are more prosocial altruistic [@lee1999], and stronger ethic of care [@zelezny2000])
+
+    -   The link between greenness and femininity could be explained by
+
+        -   target of green marketing usually involved women (e.g., cleaning, laundry).
+
+        -   caring and nurturing from greenness are feminine traits
+
+-   Since men are more concerned with gender -identity maintenance (which is kinda surprising from my view), they avoid purchasing green products which might jeopardize their macho image.
+
+    -   From social-identity theory: self-concept is also derived from perceived group membership [@turner1986]
+
+<br>
+
+[@wang2016]
+
+-   Smile affects 2 social judgments: warmth and competence
+
+    -   Broader smile leads to more warmth, but less competent
+
+        -   Consumers focus moderates this effect
+
+            -   Promotion-focused consumers (and low-risk consumption) like bigger smile on warmth
+
+            -   Prevention-focused consumers (and high-risk consumption) like slight smile (signal competent)
+
+-   Based on stereotype content model (SCM) of social judgments [@fiske2002a]
+
+-   Facial configuration has evolutionary proposes.
+
+<br>
+
+[@haws2017]
+
+-   Consumers believe healthier foods are more expensive than less healthy foods.
+
+-   Due to the dual process model, intuitions based on biased information (processed heuristically) will lead consumers evaluating healthy claims with higher standard (e.g., higher standard for intuition-inconsistent than consistent claim).
+
+-   Lay theories or lay beliefs about food = expensive intuition affects consumer decision making process, because this process is low involvement one.
 
 ## Emotions, mood and affect
 

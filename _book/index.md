@@ -1,7 +1,7 @@
 --- 
 title: "Marketing Research"
 author: "Mike Nguyen"
-date: "2021-09-04"
+date: "2021-09-08"
 header-includes:
   - \usepackage{titling}
   - \pretitle{\begin{center}
@@ -24,6 +24,8 @@ apple-touch-icon-size: 120
 ---
 
 # Preface {#preface .unnumbered}
+
+
 
 
 

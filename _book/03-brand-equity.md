@@ -1,5 +1,7 @@
 # Brand Equity
 
+-   Quantitative measure of brand equity: @kamakura1993
+
 brand and psychological distance: Congruence effect: "information is easier to process, which leads consumers to respond more favorably." [@Connors_2020] "consumer spending higher when distance between consumer and brand matched with construal level of marketing communications."
 
 Value-added is the difference between a product's price to consumers and the cost of producing it.
@@ -23,3 +25,7 @@ We acknowledge that some might view usefulness/ utility as a dimension of brand 
 ## Brand Association
 
 "different groups of people can have different or even contradictory associations with the same stimulus" (Wheeler & Berger, 2007)
+
+## Brand Loyalty
+
+-   [@berkowitz1978; @berkowitz1978a] reviews on Brand Loyalty: Measurement and Management by Jacoby and Chestnut 1978, which pioneered the idea of **attitudinal** and **behavioral loyalty**.
