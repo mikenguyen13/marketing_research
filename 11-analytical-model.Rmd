@@ -1,15 +1,13 @@
 # Analytical Models
 
-This theoretical/analytical model part of this section comes mostly from
-professor Murali Mantrala's Marketing Model Seminar.
+This theoretical/analytical model part of this section comes mostly from professor Murali Mantrala's Marketing Model Seminar.
 
 Marketing models consists of
 
 1.  Analytical Model: pure mathematical-based research
 2.  Empirical Model: data analysis.
 
-"A model is a representation of the most important elements of a
-perceived real-world system".
+"A model is a representation of the most important elements of a perceived real-world system".
 
 Marketing model improves decision-making
 
@@ -21,16 +19,13 @@ Marketing model improves decision-making
 
 -   Optimization models
 
-    -   maximize profit using market response model, cost functions, or
-        any constraints.
+    -   maximize profit using market response model, cost functions, or any constraints.
 
 -   Quasi- and Field experimental analyses
 
 -   Conjoint Choice Experiments.
 
-"A decision calculus will be defined as a model-based set of procedures
-for processing data and judgments to assist a manager in his decision
-making"[@Little_1976]:
+"A decision calculus will be defined as a model-based set of procedures for processing data and judgments to assist a manager in his decision making"[@Little_1976]:
 
 -   simple
 -   robust
@@ -67,17 +62,13 @@ making"[@Little_1976]:
 
     -   Substantive assumptions for empirical testing
 
--   Decision support modeling describe how things work, and theoretical
-    modeling present how things should work.
+-   Decision support modeling describe how things work, and theoretical modeling present how things should work.
 
--   Compensation package including salaries and commission is a tradeoff
-    between reduced income risk and motivation to work hard.
+-   Compensation package including salaries and commission is a tradeoff between reduced income risk and motivation to work hard.
 
--   Internal and External Validity are questions related to the
-    boundaries conditions of your experiments.
+-   Internal and External Validity are questions related to the boundaries conditions of your experiments.
 
--   "Theories are tested by their predictions, not by the realism of
-    their super model assumptions." (Friedman, 1953)
+-   "Theories are tested by their predictions, not by the realism of their super model assumptions." (Friedman, 1953)
 
 <br>
 
@@ -87,12 +78,9 @@ making"[@Little_1976]:
 
 -   Competition reveals hidden information
 
-    -   Independent-private-values case: selling price = second highest
-        valuation
+    -   Independent-private-values case: selling price = second highest valuation
 
-    -   It's always better for sellers to reveal information since it
-        reduces chances of cautious bidding that is resulted from the
-        winner's curse
+    -   It's always better for sellers to reveal information since it reduces chances of cautious bidding that is resulted from the winner's curse
 
 -   Competition is better than bargaining
 
@@ -124,11 +112,9 @@ making"[@Little_1976]:
 
     -   Normative model
 
-        -   Profit maximization based on price, adverting and quality
-            [@dorfman1976], extended by [@roberts1964; @lambin1970a]
+        -   Profit maximization based on price, adverting and quality [@dorfman1976], extended by [@roberts1964; @lambin1970a]
 
-Later, @Little_1970 introduced decision calculus and then multinomial
-logit model [@guadagni1983]
+Later, @Little_1970 introduced decision calculus and then multinomial logit model [@guadagni1983]
 
 Potential marketing decision automation:
 
@@ -176,11 +162,9 @@ Potential marketing decision automation:
 
     -   A mixed strategy = probability dist of pure strategies.
 
-    -   Strategic form representation = sets of possible strategies for
-        every firm and its payoffs.
+    -   Strategic form representation = sets of possible strategies for every firm and its payoffs.
 
-    -   Equilibrium = a list of strategies in which "no firm would like
-        unilaterally to change its strategy."
+    -   Equilibrium = a list of strategies in which "no firm would like unilaterally to change its strategy."
 
 -   Equilibrium is not outcome of a dynamic process.
 
@@ -188,15 +172,13 @@ Potential marketing decision automation:
 
     -   Oligopolistic Competition
 
-        -   Cournot (1838): quantities supplied: Cournot equilibrium.
-            Changing quantities is more costly than changing prices
+        -   Cournot (1838): quantities supplied: Cournot equilibrium. Changing quantities is more costly than changing prices
 
         -   Bertrand (1883): Bertrand equilibrium: pricing.
 
     -   Perfect competition
 
-    -   Product Competition: Hotelling (1929): Principle of Minimum
-        Differentiation is invalid.
+    -   Product Competition: Hotelling (1929): Principle of Minimum Differentiation is invalid.
 
     -   Entry:
 
@@ -252,8 +234,7 @@ Potential marketing decision automation:
 
 -   Bertrand disagrees with Cournot, and Edgeworth elaborates on it.
 
-    -   because Cournot's assumption of absolutely identical products
-        between firms.
+    -   because Cournot's assumption of absolutely identical products between firms.
 
 seller try to $p_2 < p_1 c(l-a-b)$
 
@@ -346,8 +327,7 @@ $$
 
 @tabuchi1995
 
--   Relax Hotelling's model's assumption of uniform distribution of
-    consumers to non-uniform distribution.
+-   Relax Hotelling's model's assumption of uniform distribution of consumers to non-uniform distribution.
 
 -   Assumptions:
 
@@ -355,15 +335,13 @@ $$
 
     -   Consumers distributed over [0,1]
 
-    -   $F(x)$ = cumulative distribution of consumers where $F(1) = 1$ =
-        total population
+    -   $F(x)$ = cumulative distribution of consumers where $F(1) = 1$ = total population
 
     -   2 distributions:
 
         -   Traditional uniform density: $f(x) =1$
 
-        -   New: triangular density: $f(x) = 2 - 2|2x-1|$ which
-            represents consumer concentration
+        -   New: triangular density: $f(x) = 2 - 2|2x-1|$ which represents consumer concentration
 
     -   Transportation cost = quadratic function of distance.
 
@@ -387,39 +365,25 @@ $$
 
 and vice versa for $x_1 >x_2$, and Bertrand game when $x_1 = x_2$
 
--   If firms pick **simultaneously** their locations, and then
-    **simultaneously** their prices, and consumer density function is
-    log-concave, then there is a unique Nash price equilibrium
+-   If firms pick **simultaneously** their locations, and then **simultaneously** their prices, and consumer density function is log-concave, then there is a unique Nash price equilibrium
 
-    -   Under **uniform** distribution, firms choose to locate as far
-        apart as possible (could be true when observing shopping centers
-        are far away from cities), but then consumers have to buy
-        products that are far away from their ideal.
+    -   Under **uniform** distribution, firms choose to locate as far apart as possible (could be true when observing shopping centers are far away from cities), but then consumers have to buy products that are far away from their ideal.
 
-    -   Under **triangular** density, no symmetric location can be
-        found, but two asymmetric Nash location equilibrium can still be
-        possible (decrease in equilibrium profits of both firms)
+    -   Under **triangular** density, no symmetric location can be found, but two asymmetric Nash location equilibrium can still be possible (decrease in equilibrium profits of both firms)
 
--   If firms pick **sequentially** their locations, and pick their
-    prices **simultaneously,**
+-   If firms pick **sequentially** their locations, and pick their prices **simultaneously,**
 
-    -   Under both uniform and triangular, first entrant will locate at
-        the market center
+    -   Under both uniform and triangular, first entrant will locate at the market center
 
 <br>
 
 @sajeesh2010
 
--   Model satiation (variety-seeking) as a relative reduction in the
-    willingness to pay of the previously purchased brand. also known as
-    negative state dependence
+-   Model satiation (variety-seeking) as a relative reduction in the willingness to pay of the previously purchased brand. also known as negative state dependence
 
--   Previous studies argue that in the presence of variety seeking
-    consumers, firms should enjoy higher prices and profits, but this
-    paper argues that average prices and profits are lower.
+-   Previous studies argue that in the presence of variety seeking consumers, firms should enjoy higher prices and profits, but this paper argues that average prices and profits are lower.
 
-    -   Firms should charge lower prices in the second period to prevent
-        consumers from switching.
+    -   Firms should charge lower prices in the second period to prevent consumers from switching.
 
 Assumptions:
 
@@ -454,31 +418,22 @@ Marketing Outputs:
 
 Give phenomena for a good model:
 
--   P1: Dynamic sales response involves a sales **growth rate** and a
-    sales **decay rate** that are different
--   P2: Steady-state response can be **concave or S-shaped**. Positive
-    sales at 0 adverting.
+-   P1: Dynamic sales response involves a sales **growth rate** and a sales **decay rate** that are different
+-   P2: Steady-state response can be **concave or S-shaped**. Positive sales at 0 adverting.
 -   P3: **Competitive effects**
--   P4: Advertising effectiveness dynamics due to changes in media,
-    copy, and other factors.
--   P5: Sales still increase or fall off even as advertising is held
-    constant.
+-   P4: Advertising effectiveness dynamics due to changes in media, copy, and other factors.
+-   P5: Sales still increase or fall off even as advertising is held constant.
 
 Saunder (1987) phenomena
 
 -   P1: Output = 0 when Input = 0
 -   P2: The relationship between input and output is linear
--   P3: Returns decrease as the scale of input increases (i.e.,
-    additional unit of input gives less output)
+-   P3: Returns decrease as the scale of input increases (i.e., additional unit of input gives less output)
 -   P4: Output cannot exceed some level (i.e., saturation)
--   P5: Returns increase as scale of input increases (i.e., additional
-    unit of input gives more output)
--   P6: Returns first increase and then decrease as input increases
-    (i.e., S-shaped return)
--   P7: Input must exceed some level before it produces any output
-    (i.e., threshold)
--   P8: Beyond some level of input, output declines (i.e.,
-    supersaturation point)
+-   P5: Returns increase as scale of input increases (i.e., additional unit of input gives more output)
+-   P6: Returns first increase and then decrease as input increases (i.e., S-shaped return)
+-   P7: Input must exceed some level before it produces any output (i.e., threshold)
+-   P8: Beyond some level of input, output declines (i.e., supersaturation point)
 
 [![](images/Response+Function+Sales+Response+Effort+Level+Max+Response+Function.jpg "Response Function (Marketing Engineering)")](https://slideplayer.com/slide/4552247/)
 
@@ -488,15 +443,13 @@ Aggregate Response Models
 
     -   Through origin
 
-    -   can only handle constant returns to scale (i.e., can't handle
-        concave, convex, and S-shape)
+    -   can only handle constant returns to scale (i.e., can't handle concave, convex, and S-shape)
 
 -   The Power Series/Polynomial model: $Y = a + bX + c X^2 + dX^3 + ...$
 
     -   can't handle saturation and threshold
 
--   Fraction root model/ Power model: $Y = a+bX^c$ where c is
-    prespecified
+-   Fraction root model/ Power model: $Y = a+bX^c$ where c is prespecified
 
     -   c = 1/2, called **square root model**
 
@@ -512,8 +465,7 @@ Aggregate Response Models
 
 -   Semilog model: $Y = a + b \ln X$
 
-    -   Good when constant percentage increase in marketing effort (X)
-        result in constant absolute increase in sales (Y)
+    -   Good when constant percentage increase in marketing effort (X) result in constant absolute increase in sales (Y)
 
 -   Exponential model: $Y = ae^{bX}$ where X \>0
 
@@ -533,8 +485,7 @@ Aggregate Response Models
 
 -   Logistic model: $Y = \frac{a}{a+ e^{-(b+cX)}}+d$
 
-    -   increasing return followed by decreasing return to scale,
-        S-shape
+    -   increasing return followed by decreasing return to scale, S-shape
 
     -   saturation = a + d
 
@@ -560,29 +511,21 @@ Aggregate Response Models
 
     -   can handle, through origin, concave, saturation, S-shape
 
--   Additive model for handling multiple Instruments:
-    $Y = af(X_1) + bg(X_2)$
+-   Additive model for handling multiple Instruments: $Y = af(X_1) + bg(X_2)$
 
--   Multiplicative model for handling multiple instruments:
-    $Y = aX_1^b X_2^c$ where c and c are elasticities. More generally,
-    $Y = af(X_1)\times bg(X_2)$
+-   Multiplicative model for handling multiple instruments: $Y = aX_1^b X_2^c$ where c and c are elasticities. More generally, $Y = af(X_1)\times bg(X_2)$
 
--   Multiplicative and additive model:
-    $Y = af(X_1) + bg(X_2) + cf(X_1) g(X_2)$
+-   Multiplicative and additive model: $Y = af(X_1) + bg(X_2) + cf(X_1) g(X_2)$
 
--   Dynamic response model: $Y_t = a_0 + a_1 X_t + \lambda Y_{t-1}$
-    where $a_1$ = current effect, $\lambda$ = carry-over effect
+-   Dynamic response model: $Y_t = a_0 + a_1 X_t + \lambda Y_{t-1}$ where $a_1$ = current effect, $\lambda$ = carry-over effect
 
 Dynamic Effects
 
--   Carry-over effect: current marketing expenditure influences future
-    sales
+-   Carry-over effect: current marketing expenditure influences future sales
 
-    -   Advertising adstock/ advertising carry-over is the same thing:
-        lagged effect of advertising on sales
+    -   Advertising adstock/ advertising carry-over is the same thing: lagged effect of advertising on sales
 
--   Delayed-response effect: delays between when marketing investments
-    and their impact
+-   Delayed-response effect: delays between when marketing investments and their impact
 
 -   Customer holdout effects
 
@@ -640,8 +583,7 @@ where $A_i$ attractiveness of brand i
 
 Individual Response Model:
 
-Multinomial logit model representing the probability of individual `i`
-choosing brand `l` is
+Multinomial logit model representing the probability of individual `i` choosing brand `l` is
 
 $$
 P_{il} = \frac{e^{A_{il}}}{\sum_j e^{A_{ij}}}
@@ -649,13 +591,9 @@ $$
 
 where
 
--   $A_{ij}$ = attractiveness of product j for individual i
-    $A_{ij} = \sum_k w_k b_{ijk}$
--   $b_{ijk}$ = individual i's evaluation of product j on product
-    attribute k, where the summation is over all the products that
-    individual `i` is considering to purchase
--   $w_k$ = importance weight associated with attribute k in forming
-    product preferences.
+-   $A_{ij}$ = attractiveness of product j for individual i $A_{ij} = \sum_k w_k b_{ijk}$
+-   $b_{ijk}$ = individual i's evaluation of product j on product attribute k, where the summation is over all the products that individual `i` is considering to purchase
+-   $w_k$ = importance weight associated with attribute k in forming product preferences.
 
 ## Marketing Resource Allocation Models
 
@@ -722,16 +660,10 @@ Quadratic-form stochastic response function
 
 ## Marketing Mix Optimization Models
 
-Check this
-[post](https://towardsdatascience.com/carryover-and-shape-effects-in-media-mix-modeling-paper-review-fd699b509e2d)
-for implementation in Python
+Check this [post](https://towardsdatascience.com/carryover-and-shape-effects-in-media-mix-modeling-paper-review-fd699b509e2d) for implementation in Python
 
 ## New Product Diffusion Models
 
 ## Two-sided Platform Marketing Models
 
-Example of Marketing Mix Model in practice:
-[link](http://datafeedtoolbox.com/marketing-mix-model-for-all-using-r-for-mmm/)
-
-
-
+Example of Marketing Mix Model in practice: [link](http://datafeedtoolbox.com/marketing-mix-model-for-all-using-r-for-mmm/)
