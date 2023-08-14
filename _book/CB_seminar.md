@@ -274,6 +274,82 @@ Theory-Testing vs. Substantive Phenomena-Driven Consumer Research
 
 ## Emotions, mood and affect
 
+@bagozzi1999
+
+-   Emotions are "mental states of readiness that arise from appraisals of events or one's own thoughts" (p. 184)
+
+-   Affect is defined as "a set of more specific mental processes including emotions, moods, and (possibly) attitudes." (p. 184)
+
+-   Moods (also known as affect transfer) are longer lasting and lower in intensity and non-intentional than emotions (intentional)
+
+-   Attitudes are instances of affect defined as an evaluative judgments (also known as appraisals and under appraisal theories in psychology), and have two components:
+
+    -   affective
+
+    -   cognitive (evaluative)
+
+-   Under appraisals theory, there are two appraisal at the emotion formation stage (Lazarus 1991
+
+    - emotions and adaption):
+
+    -   goal relevance
+
+    -   goal congruence
+
+![p. 186](images/roseman's%201991.gif "Roseman's (1991) Apprisal Theory of Emotions")
+
+<br>
+
+@pham2001
+
+-   Under moderately complex and consciously accessible stimuli, conscious monitoring of feelings facilitates (1) faster, (2) more stable and homogeneous (among individuals), and (3) more predictive of the quantity and valance of people's thoughts than reason-based assessment.
+
+-   Affect-as-information framework posits that feelings contain valuable judgmental information (Schwarz, 1990). People knowingly create overall evaluation based on momentary feelings toward the target. These feelings are consequences of either
+
+    -   mental representation fo the target (produced integrally)
+
+    -   preexisting o contextually-induced mood produced by experience (produced incidentally)
+
+-   Two components of attitudes:
+
+    -   cognitive component (also known as utilitarian or instrumental)
+
+    -   affective component (also known as hedonic or consummatory).
+
+-   Two types of affect:
+
+    -   Type I affect: innate programs
+
+    -   Type II affect: conditioned stimulus that triggers emotional response
+
+    -   Type III affect: controlled appraisal of the stimulus
+
+-   Integral Feelings vs. Reason-based assessment (also known as descriptively-based evaluation
+
+    -   Relative speed: feeling faster than reason-based assessment (Type I affect, and Type II), but not under type III
+
+    -   Interpersonal Agreement: people more likely to agree on their feeling-based responses as compared to reason-based responses (under type I and type II, not type III)
+
+    -   Relation to thought generation: number and valence are better predicted by feeling responses.
+
+<br>\
+@isen2001
+
+-   Positive affect increases problem solving and facilitates decision making in the sense of flexibility, innovation, and creativity, efficiency.
+
+-   Positive affect also increases helping, generosity, and interpersonal understanding.
+
+<br>\
+@raghunathan2001
+
+-   Pleasantness of the product context is "the degree to which a product context makes the respondent happy." (p. 355)
+
+-   Domain match is "the extent to which the target product is from the same domain (or category) as that of the product context. (p. 355-356)
+
+-   Under domain match, exposure to pleasant and improving -sequence (compared to less pleasant and worsening) will lower happiness with the target product.
+
+-   Under domain mismatch, exposure to pleasant and improving will increase happiness with the target product
+
 ## Persuasion and attitude change
 
 ## Judgment and decision making and behavioral pricing

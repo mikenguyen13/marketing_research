@@ -1,0 +1,239 @@
+# Firm Network
+
+Ways to create firm network data (for Compustat public firms)
+
+## CRSP/Compustat Segments Data
+
+[Dataset](https://wrds-www.wharton.upenn.edu/pages/support/data-overview/wrds-overview-compustat-segments-data/):
+
+-   **Business** Segment: An industry segment or product line reported by a company
+
+-   **Geographic** Segment: Indicates how many geographic segments collected by Standard & Poor's are available for the company in the given data year.
+
+-   **Operating** Segment: Company groups the geographic segment with the business segment
+
+-   **State** Segment: Data broken down by the region within United States and Canada.
+
+3 updates:
+
+-   Current Segments Annual Update
+
+-   Current Segments Monthly Update
+
+-   Historical Segments Monthly Update
+
+[Notes](https://wrds-www.wharton.upenn.edu/pages/support/support-articles/compustat/segments/compustat-geographical-and-operation-segments-construction-data-limitations-and-item-sales/):
+
+-   Compustat does not provide documentation on the rules behind the collection of segment data.
+
+-   Companies themselves decide the level of detail within their segment breakouts.
+
+-   Geographical segment data may vary, with some companies providing country-by-country breakouts and others lumping data together based on larger geographic areas.
+
+-   The data limitations outlined in the Denis et al. paper are specific to the Research Insight Compustat product, not the Xpressfeed Compustat database.
+
+-   Xpressfeed Compustat database does not limit the amount of geographic or operational segments displayed.
+
+-   Compustat collects all available segment data, and any limitation to the data is based on the product.
+
+-   The item "SALES" in the data represents both sales generated through a subsidiary in a foreign country and exports from the United States.
+
+-   [The dataset is limited to 2013](https://wrds-www.wharton.upenn.edu/pages/support/support-articles/compustat/general/comparison-compustat-segments-and-compustat-fundamental-annuals-data/):
+
+    -   There is no direct requirement for firms to file SEC reports on company segments.
+
+    -   Company segments data is a "voluntary" subset of company data that is commonly accessed by Compustat via annual shareholders reports.
+
+    -   Consequently, there are fewer companies in the segments database than in the Fundamental Annuals database.
+
+    -   The historical segments database began in 1976.
+
+    -   The count of unique GVKEYS in the Compustat Fundamental Annuals data table is higher than in the segments database.
+
+    -   The Segments Fundamentals count is only for segments with segment type "BUSSEG."
+
+    -   The count was taken in October of 2013 and only reports years through 2012.
+
+Papers:
+
+[@kim2017effects]
+
+1.  Select US public companies that reported a major customer accounting for more than 10% of their sales in 2011 and had financial records available in the Compustat database for 2011 and 2012.
+2.  Match customer names to a company's unique identification (gvkey) in the Compustat Annual Files and correct any inaccurate or missing matches by hand-collecting information from the database.
+3.  Remove 15 firms from the sample frame that provided more than one-third of a customer's cost of goods sold or operated a nonclassified establishment.
+4.  Link remaining suppliers and customers to 2012 accounting data from the Compustat Annual Files, and align the supplier's year-end with the nearest year-end for the major customer.
+5.  Remove supplier-customer ties with missing financial data, resulting in a final sample of 717 suppliers with 1,317 direct ties with 257 major customers.
+
+<br>
+
+[@su2020supply]
+
+1.  Use COMPUSTAT customer segment data from 1998 to 2005 to construct a longitudinal supply chain network consisting of U.S. public firms that are reported as a major customer by their suppliers.
+2.  Cross-validate the customer segment data with other data sources such as annual reports, firm websites, and other databases to verify the name of the customers and correct any errors.
+3.  Treat multiple relationships between the same pair of firms in the same year as one link to construct a directed network.
+4.  Import the network data into UCINET 6.0 to estimate the network measures.
+5.  Use the COMPUSTAT database to obtain financial measures for the firms.
+6.  Obtain ISO 9001 certification data from QSU Publishing Company's ISO 9000 Worldwide Certified Company Directory.
+7.  Cross-check the ISO 9001 certification data to ensure that initial dates for each certification are included and only include industries where at least one firm has entities implemented ISO 9001.
+8.  Eliminate missing data and merge the ISO 9001 certification data, financial data from COMPUSTAT, and the major customer network data.
+9.  The final dataset consists of 1600 firm-year observations for the period from 1998 to 2005.
+
+<br>
+
+Other papers include
+
+-   [@atalay2011network]
+
+-   [@grieser2022industry]
+
+<br>
+
+**Recommended approach**: Firm Volatility in Granular Networks [@herskovic2020firm]
+
+1.  Use data on customer-supplier networks from the Compustat segment dataset, covering the period of 1980-2012.
+2.  If a customer represents more than 10% of its sellers' revenue, then the customer's name and sales amount are reported.
+3.  Combine this information with the total sales, available in Compustat, to obtain the sales shares
+4.  Two data issues are addressed: (a) network data, firm size, and volatility data cover only a subset of firms, and (b) firms in Compustat are only required to report customers that represent at least 10% of their sales.
+    1.  For consistency, firms are simulated for N firms, and the largest Npub firms are selected to compute model-implied moments.
+
+    2.  Truncated moments are used to account for the firms not required to report customers that represent less than 10% of their sales.
+5.  The procedure allows for indirect inferences about the full network structure.
+
+## Board Interconnectedness
+
+Firm network structure and innovation [@chuluun2017firm]
+
+1.  Obtain information on directors of 3838 unique firms in the S&P 1500 Index from 1996 to 2013 from the RiskMetrics database.
+2.  Map the entire network of these firms based on the interlocks between their boards using UCINET 6 software.
+3.  Document the connections among all of the firms over rolling four-year periods.
+4.  Compute network measures for each firm for each period using the board interlocks among firms.
+5.  Match these network measures from rolling four-year periods to the financial data of the following year.
+6.  Obtain various accounting data from the Compustat database for all the firms included in the S&P1500 universe, excluding firms in the financial services and utilities industries.
+7.  Control for firm size, market-book ratio, sales growth, return on assets, book leverage, cash holdings, unionization rate, capital expenditure, and industry competition using data from the Compustat database.
+8.  Control for union strength with the percentage of unionized workers covered by bargaining agreements using industry-level unionization rates from the Union Membership and Coverage Database maintained by Barry Hirsch and David Macpherson.
+9.  Measure R&D intensity as the ratio of R&D expenditure to total assets.
+10. Measure firm innovation output using NBER patent data constructed by Hall et al. (2001), including the number of patents a firm applied for in a given year, the type of patents (exploitative vs. exploratory), patent diversity, and subsequent citations a firm's patents receive.
+11. Obtain pricing information of at-issue corporate bonds from the SDC Platinum database, excluding convertibles, bonds with no conventional yield to maturity, and bonds with synthetic features and exotic structures.
+12. Examine changes in yield spread following patent filing dates obtained from the NBER patent database using secondary market transactions data from corporate bond price data obtained from the TRACE and Mergent FISD databases.
+
+<br>
+
+Board Networks and Corporate Innovation [@chang2021board] Check "replication" folder for SAS code
+
+1.  Obtain access to the **BoardEx** database, which provides social network data on directors and executives of public and private companies in the US and Europe.
+2.  Match firms in BoardEx with Compustat data using the Committee on Uniform Securities Identification Procedures (CUSIP) and Central Index Key (CIK). Apply a string matching by firm name when these two identifiers are not available.
+3.  Identify social ties between each director and a pool consisting of directors and top executives in the sample firms.
+4.  Match sample firms with the patent database to obtain information on companies' patenting activities.
+5.  Exclude financial and utility firms.
+6.  Start the sample in 2000, as the coverage became more reliable since then.
+7.  The final sample consists of 25,150 firm-year observations with 4,537 unique firms from 2001 to 2008.
+
+To measure Board Network
+
+1.  Gather information on current and past employment, educational background, and social activities of individuals.
+2.  For two individuals to share an employment connection, they must have been employed at the same firm (other than the focal firm) at the same time.
+3.  For two individuals to share an education connection, they must have attended the same educational institution and overlapped in time.
+4.  For two individuals to share an activity connection, they must both belong or have belonged to a non-business organization, such as a golf club or charity.
+5.  Exclude connections for which one or both individuals are simply "members."
+6.  Two individuals are defined as sharing a social connection if there are one or more connections of these three types between them.
+7.  Count the number of corporate directors and executives a firm's directors are connected to using the aggregate number of connections (Board network) for the main analysis.
+8.  Conduct extended analysis by providing results of tests on each specific type of connection.
+
+<br>
+
+Boardroom Centrality and Firm Performance [@larcker2013boardroom]
+
+1.  Obtain access to the **Corporate Board Member Magazine Director Database (BoardMag)** that contains information on directors of all publicly traded companies on the NYSE, NASDAQ, and AMEX, as well as private companies with annual sales exceeding \$1 billion.
+2.  Use the BoardMag data from 2000 to 2007 to construct an undirected and unweighted boardroom network formed by shared directorates. Shared directorates are defined as two companies that are linked if they share at least one board member, and two companies that are not linked if they do not share a board member.
+3.  Collect data on the total number of publicly traded companies on the NYSE, NASDAQ, and AMEX stock exchanges over the period from 2000 to 2007 to adjust for the decline in the number of companies in the network.
+4.  Calculate annual summary statistics on the boardroom network, including the number of companies and directors in the network, the size of the largest and second-largest components of the network, and the percentage of companies that are completely isolated.
+5.  Analyze the network structure and identify the companies that are connected in the primary component, as well as those that are completely isolated.
+
+<br>
+
+[@kuang2017corporate]
+
+1.  Data compiled from several sources: **BoardEx**, **Compustat**, **CRSP**, **I/B/E/S**, and **Audit Analytics**.
+2.  BoardEx provides data on individual directors' social connections and corporate governance.
+3.  Initial sample size is 46,413 firm-years of U.S.-listed firms with complete information on social connections and corporate governance.
+4.  After merging with Compustat, the sample size reduces to 39,694 observations.
+5.  Merging with CRSP reduces the sample size to 35,354.
+6.  Merging with I/B/E/S data leaves 21,833 firm-years.
+7.  After obtaining audit-related information from Audit Analytics, the final sample size is 17,688 firm-years.
+8.  Fraud sample is from the SEC's Accounting and Auditing Enforcement Releases (AAERs) and Stanford Law School's Securities Class Action Clearinghouse (SSCAC).
+9.  Identified 397 cases of fraud from the SEC's AAER database and supplemented with information from the SSCAC.
+10. Excluded cases involving exchange-traded funds, foreign-listed or privately traded firms, ongoing cases, or dismissed cases.
+11. Final sample consists of 206 AAER cases and 201 civil lawsuits.
+12. 354 cases were detected during the investigation window (1999-2013), and 53 were committed during the investigation window but detected after 2013.
+13. Number of fraud cases in the sample is comparable to prior studies using similar databases.
+
+## CEO Connectedness
+
+[@khanna2015ceo]
+
+1.  For appointment-based CEO connectedness, calculate the fraction of top-four non-CEO executives appointed (FTAit) and the fraction of directors appointed (FDAit) during the CEO's tenure of firm i as of year t.
+2.  Use the data from **ExecuComp** to rank executives by the sum of their salaries and bonuses.
+3.  When calculating FDA, exclude the CEO from both the numerator and denominator if they are on the board.
+4.  Determine if an executive or director was appointed during the current CEO's tenure by comparing their appointment year with the year the current CEO took office. If an executive first appears on the list of top-four non-CEO executives, assume that is the year they secured the position.
+5.  Obtain the appointment date of each board member from **RiskMetrics**. Note that information on directors' appointment dates is available only from 1998, so the sample period for FDA analyses starts in 1998 instead of 1996.
+6.  Regress FTA and FDA on CEO tenure and other factors that are mechanically correlated to them, and use the residuals as abnormal fractions of top executives or directors appointed during the CEO's tenure (AFTA and AFDA).
+7.  Check the estimation results using the abnormal measures reported in the Internet Appendix to ensure their robustness.
+
+[@el2015ceo]
+
+1.  Obtain data on educational background, prior employment, and social memberships of directors and executives of U.S. public companies from **BoardEx**.
+2.  Construct yearly networks based on employment history in listed firms only, which is considered the most reliable and free of self-reporting bias.
+3.  Assume that once formed, social connections continue to exist until one party of the pair dies.
+4.  Generate percentile values of centrality measures annually to make them comparable across time, with 1 being the least central and 100 being the most central.
+5.  Identify 4,006 unique CEOs for all S&P 1500 firms and tabulate their network centrality annually from 1999 to 2008, for a total of 16,415 firm-year observations.
+6.  Use closeness, degree, betweenness, and eigenvector as measures of centrality.
+7.  Present summary statistics based on actual centrality values as well as on percentile rankings.
+8.  Use a top-down approach to graphically present the network of 2006, grouping individuals into social communities (clusters).
+9.  Examine the distribution of CEOs and their centralities by 12 industries as defined by Fama and French (1997), but find no industry clustering or significant clustering of high- or low-centrality CEOs in particular industries.
+
+## Text Data
+
+#### News
+
+Partnership Network [@schwenkler2019network] check "replication" folder for code
+
+1.  Reuters financial news articles (October 20, 2006 to November 20, 2013)
+
+2.  Analyze each news article to identify whether an article reports about a relationship between two firms. Identify a link whenever two firms are mentioned in the same sentence of an article. (should be good alternative to an approach where they are co-mentioned in an article)
+
+3.  Use a natural language processing (NLP) toolkit to identify all nouns mentioned in a news article that could potentially be firm names (standard `coreNlP` in R)
+
+4.  Take all organizations identified by the NLP toolkit and remove all organizations whose names contain words that signal government agencies or nonprofit institutions, such as "agency", "cooperation", "federal", "foundation", or "university." For the remaining organizations, remove from their names all special symbols, unreasonable postfixes, and words that indicate business types (like "Co.," "Inc.," and "Ltd").
+
+5.  To make sure each firm has a unique name: Create clusters of firms with common words in their names and consider the most frequently mentioned name in a cluster as the name stem.
+
+6.  For each firm in the cluster, check whether the name of the firm is fully contained in the stem or vice versa. If so, update the stem to be either the name of the firm or the prevalent stem, whichever is shorter. If not, remove the firm from the original cluster.
+
+7.  Iterate through the firms in each cluster until no more improvements of the name stem can be made. All firms that remain in the cluster are considered to be the same firm and assign the name stem as the name of this firm.
+
+8.  Match the firms identified in the previous steps with firms in the merged CRSP / Compustat database.
+
+<br>
+
+#### 10-K Filings
+
+Product Market Network [@grieser2022industry]
+
+#### News (Keyword Approach)
+
+For alliances, network in tech industry [@swaminathan2009a; @thomaz2015goes]
+
+1.  Identify a relevant sample of organizations or individuals to study.
+2.  Determine the keywords or search terms (e.g., "alliance," "partnership," and "network") that are relevant to the study.
+3.  Search through publicly available sources, such as annual reports or news articles (Proquest Newspapers), using the relevant keywords.
+4.  Eliminate any irrelevant results or false positives .
+    1.  Exclude reference to the term "network" because this would have produced hundreds of articles referring to computer networks, not business networks.
+5.  Collect data on the frequency and type of mentions of the relevant keywords for each organization or individual in the sample.
+6.  Analyze the collected data to identify patterns and insights about the networks, alliances, or partnerships of the sample.
+
+For electronics industry [@bellamy2014influence]
+
+1.  Identified all firms listed in the EB 300 dataset from 2005 to 2009. (Database: EB 300)
+2.  Identified the supply network relationships for the 151 lead firms using the Connexiti database. (Databases: Connexiti, SDC)
+3.  Combined the relationship data from step 2 with the initial set of 151 leading firms to create a final dataset of 911 firms. (Databases: Connexiti, SDC)
+4.  Reduced the final sample of firms for the regression analysis step to 409 firms due to lack of financial data, outliers, and unavailability of financial information for private firms. (Databases: not applicable, as this step involves data reduction and cleaning)

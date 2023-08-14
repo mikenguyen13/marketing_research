@@ -1,0 +1,822 @@
+---
+title: "Replication Script"
+subtitle: "Consumer Consent and Firm Targeting after GDPR:The Case of a Large Telecom Provider"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+```{css, echo=FALSE}
+body .main-container {
+  max-width: 1280px !important;
+  width: 1280px !important;
+  margin: auto;
+}
+
+body {
+  max-width: 1280px !important;
+  margin: auto;
+}
+```
+
+```{r, setup, echo = FALSE, message=FALSE, warning=FALSE}
+library(lfe)
+library(multiwayvcov)
+library(ggplot2)
+library(ggthemes)
+library(gridBase)
+library(gridExtra)
+library(stargazer)
+library(data.table); setDTthreads(1)
+library(diagram)
+library(DescTools)
+
+setwd(file.path(getwd(), "replication", "data_appendix_MS-INS-19-02061"))
+
+dt.dataset_public <- fread('public_dataset.csv')
+dt.dataset_public[, month_label := factor(month_label, levels = unique(dt.dataset_public[order(month_id), list(month_id,month_label)])[,month_label])]
+```
+
+```{r functions, include=FALSE, eval =T, message=FALSE, warning=FALSE}
+cbp2              <- c("#000000", "#E69F00", "#56B4E9", "#009E73",  "#0072B2", "#D55E00", "#CC79A7")
+
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+  library(plyr)
+  # New version of length which can handle NA's: if na.rm==T, don't count them
+  length2 <- function (x, na.rm=FALSE) {
+    if (na.rm) sum(!is.na(x))
+    else       length(x)
+  }
+  
+  # This does the summary. For each group's data frame, return a vector with
+  # N, mean, and sd
+  datac <- ddply(data, groupvars, .drop=.drop,
+                 .fun = function(xx, col) {
+                   c(N    = length2(xx[[col]], na.rm=na.rm),
+                     mean = mean   (xx[[col]], na.rm=na.rm),
+                     sd   = sd     (xx[[col]], na.rm=na.rm)
+                   )
+                 },
+                 measurevar
+  )
+  
+  # Rename the "mean" column    
+  datac <- rename(datac, c("mean" = measurevar))
+  
+  datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+  
+  # Confidence interval multiplier for standard error
+  # Calculate t-statistic for confidence interval: 
+  # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+  datac$ci <- datac$se * ciMult
+  return(datac)
+}
+
+
+gdpr.dscstat.lineplots.linetype <- function(varlist, dt.data, xvar = 'month_id', groupvar = 'group', legend = FALSE, dt.var.names = NULL){
+  lapply(
+    varlist
+    , function(ovar){
+      mvar <- 'value'
+      dt.stats <-data.table( 
+        summarySE( 
+          data = dt.data[,list(month_id=get(xvar), group = get(groupvar), value =  get(ovar))]
+          , measurevar = mvar
+          , groupvars=c('month_id', 'group')
+          , na.rm=T
+          , conf.interval=.95
+          , .drop=TRUE))
+      if(legend){
+        ggplot( data = dt.stats ,  aes( x = month_id, y = value, color = group, linetype = group)) + 
+          geom_line(aes(group = group)) +  theme_bw() + labs( x = 'Month', y = ovar, color ='', linetype='') + 
+          theme(legend.position = 'top') + ylim(0, dt.stats[, max(value)]*1.3) +
+          geom_errorbar(aes(ymin=value-ci, ymax=value+ci), width=.1) + geom_point() + 
+          scale_color_tableau() + theme(legend.position = 'top', axis.text.x = element_text(angle=45, hjust = 1)) +
+          ylab( label = ifelse(is.null(dt.var.names),ovar,dt.var.names[original==ovar, newnames]))
+      }else{
+        ggplot( data = dt.stats ,  aes( x = month_id, y = value, color = group, linetype = group)) + 
+          geom_line(aes(group = group)) +  theme_bw() + labs( x = 'Month', y = ovar, color ='', linetype='') + 
+          theme(legend.position = 'top') + ylim(0, dt.stats[, max(value)]*1.3) +
+          geom_errorbar(aes(ymin=value-ci, ymax=value+ci), width=.1) + geom_point() + 
+          scale_color_tableau() + theme(legend.position = 'none', axis.text.x = element_text(angle=45, hjust = 1)) + 
+          ylab( label = ifelse(is.null(dt.var.names),ovar,dt.var.names[original==ovar, newnames]))
+      }
+    }
+  )
+}
+
+type.comparison.plot <- function(
+   varx,vary,varid='sa',data,title='',x.lab='',y.lab='',legend.lab=''
+  ,legend.position='None',pallete='',text.color='white', y.total = TRUE){
+  tmp.label.dt <- data[, list( n = length(get(varid))), by = list( type = get(varx), variable = get(vary))][order(type, - variable)]
+  tmp.label.dt[,`:=`(total=sum(n),cum_n=cumsum(n),prop=n/sum(n)),by=type][  order(type, - variable)]
+  gp <- ggplot(data[,list(type = get(varx), variable = get(vary))],aes_string(x='type',fill='variable')) + 
+    scale_fill_manual(values=pallete) + geom_bar() +
+    geom_text(data=tmp.label.dt,aes(x=type,y= (cum_n - n) + n/2, label= paste(sep='',round(prop*100,2),'%')),color=text.color) +
+    theme_bw() + labs(x=x.lab,y=y.lab,fill=legend.lab) + theme(legend.position=legend.position)
+  if(y.total)
+    gp <- gp + geom_text(data=tmp.label.dt,aes(x=type,y= total + max(total)*.05, label= paste(sep='',total)))
+  return(gp)
+}
+
+
+ggplot.get.legend<-function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+```
+
+# Tables
+
+## Table 1
+
+```{r consent_model_plm, echo=FALSE, message=FALSE, warning=FALSE}
+ols.profile     <- lm(  flg_gdpr_clientdata_endmonth   ~ treated + factor(month_id), data = dt.dataset_public)
+ols.service     <- lm(  flg_gdpr_serviceuse_endmonth   ~ treated + factor(month_id), data = dt.dataset_public)
+ols.geolocation <- lm(  flg_gdpr_geolocation_endmonth  ~ treated + factor(month_id), data = dt.dataset_public)
+ols.thirparty   <- lm(  flg_gdpr_thirdp_group_endmonth ~ treated + factor(month_id), data = dt.dataset_public)
+fe.profile      <- felm(flg_gdpr_clientdata_endmonth   ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.service      <- felm(flg_gdpr_serviceuse_endmonth   ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.geolocation  <- felm(flg_gdpr_geolocation_endmonth  ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.thirdparty   <- felm(flg_gdpr_thirdp_group_endmonth ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+reglist         <- list(ols.profile, fe.profile, ols.service, fe.service, ols.geolocation, fe.geolocation, ols.thirparty, fe.thirdparty)
+reglist.se      <- lapply(reglist[c(1,3,5,7)], function(x) sqrt(diag(cluster.vcov(x, cluster = ~ id))))
+
+stargazer( 
+    reglist 
+  , se = list(     reglist.se[[1]], NULL
+                 , reglist.se[[2]], NULL
+                 , reglist.se[[3]], NULL
+                 , reglist.se[[4]], NULL)
+  , dep.var.labels   = c('Profile Data','Service Use', 'Geo Location', 'Third Party')
+  , model.names      = FALSE
+  , column.labels    = rep(c('OLS','FE'),times=5)
+  , covariate.labels = c('Treated')
+  , omit = c('month_id')
+  , omit.labels = c('Month FE')
+  , label = c('tab:res:panel:conset_categories')
+  , title = "Impact of the experiment on the different categories of consent"
+  , type = 'text'
+  , no.space = T
+  , df = FALSE
+  , star.char = c("+", "*", "**", "***")
+  , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+    , notes = c(
+        "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    ,   'FE is the fixed effects estimator'
+    ,  'Cluster robust standard errors in (); Errors clustered by household'
+    ,  'Linear probability mode')
+  , notes.append = F
+  , add.lines =list( c('R2 (within)', sapply(reglist, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA))))
+)
+```
+
+## Table 2
+
+```{r consent_missing_plm, echo=FALSE,message=FALSE, warning=FALSE}
+depvars  <- c(
+    'flg_gdpr_clientdata_endmonth'
+  , 'flg_gdpr_serviceuse_endmonth'
+  , 'flg_gdpr_geolocation_endmonth'
+  , 'flg_gdpr_thirdp_group_endmonth')
+
+consentcategories <- c(
+    'flg_gdpr_clientdata_endmonth_missing'
+  , 'flg_gdpr_serviceuse_endmonth_missing'
+  , 'flg_gdpr_geolocation_endmonth_missing'
+  , 'flg_gdpr_thirdp_group_endmonth_missing')
+
+tmp.out <- lapply( 1:4, function(x){
+  dt.sub0 <- dt.dataset_public[ id %in% dt.dataset_public[ month_id == 201805 & get(consentcategories[x]) == 0, id] ]
+  dt.sub1 <- dt.dataset_public[ id %in% dt.dataset_public[ month_id == 201805 & get(consentcategories[x]) == 1, id] ]
+  m        <- as.formula(paste(sep='',depvars[x], '~ treated + factor(month_id) | id | 0 | id'))
+  list( felm(m, data = dt.sub0), felm(m, data = dt.sub1))
+})
+
+l1 <- lapply(tmp.out, function(x) x[[1]] )
+l2 <- lapply(tmp.out, function(x) x[[2]] )
+tmp.out <- list(l1[[1]],l2[[1]], l1[[2]],l2[[2]], l1[[3]],l2[[3]], l1[[4]],l2[[4]])
+stargazer(
+    tmp.out
+  , dep.var.labels   = c('Profile Data', 'Service Use', 'Geo Location', 'Third Party')
+  , column.labels    = rep(c('Existed', 'Missing'), times = 4) 
+  , covariate.labels = c('Treated')
+  , omit        = c('month_id')
+  , omit.labels = c('Month FE')
+  , type = 'text'
+  , no.space = T
+  , title = 'Impact of the experiment on the different consent allowances depending on whether individuals had aprior authorization on file'
+  , label = 'tab:res:panel:het_prevconsent'
+  , df = FALSE
+  , star.char    = c("+",  "*", "**", "***")
+  , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+  , notes = c(
+       "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    , 'Linear probability model estimated with household fixed effects across columns'
+    ,  'Cluster robust standard errors in (); Errors clustered by household')
+  , notes.append = F
+  , add.lines =list( c('R$^{2}$ (within)', sapply(tmp.out, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA))))
+)
+```
+
+## Table 3
+
+```{r reactions_itt_panel, echo=FALSE, message=FALSE, warning=FALSE}
+fe.n_campaings     <- felm(n_sales_campaigns    ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.n_sales_chan    <- felm(n_sales_channels     ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.n_contacts      <- felm(n_contacts           ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.n_contacts_sale <- felm(n_contacts_with_sale ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.n_salespcontact <- felm(sales_per_contact    ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.delta_arpu      <- felm(log(arpu)            ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+fe.contract        <- felm(contract_remaining   ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+reglist            <- list(fe.n_campaings, fe.n_sales_chan, fe.n_contacts, fe.n_contacts_sale, fe.n_salespcontact, fe.delta_arpu, fe.contract)
+stargazer( 
+    reglist
+  , dep.var.labels   = c('Campaigns', 'Channels', 'Contacts','Sales', '$\\frac{Sales}{Contacts}$', 'Log(Arpu)', 'Lock-In')
+  , model.names =  FALSE
+  , column.labels = rep('FE',7)
+  , covariate.labels = c('Treated')
+  , omit = c('month_id')
+  , omit.labels = c( 'Month FE')
+  , add.lines = list(
+      c('Household FE Average', sapply(reglist,function(x) format(round(mean(getfe(x)$effect),3), digits=3, nsmall=3)))
+    , c('R$^{2}$ (within)'    , sapply(reglist, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA)))
+  )
+  , notes = c(
+    "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    ,  'Models with FE label estimated with household fixed effects'
+    ,  'Cluster robust standard errors in (); Errors clustered by household'
+    ,  'Models correspond to equation \\ref{eq:itt_panel_FO} in section \\ref{sec:main_results_fo:identification}')
+  , label = c('tab:res:panel:reactions')
+  , title = "Firm targeting decisions and consumer responses after consent elicitation"
+  , omit.stat = 'adj.rsq'
+  , type = 'text'
+  , no.space = T
+  , df = F
+  , notes.append = F
+  , star.char    = c("+",  "*", "**", "***")
+  , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+)
+```
+
+## Table 4
+
+```{r reactions_late_panel, echo=FALSE, message=FALSE, warning=FALSE}
+fe.n_campaings     <- felm(n_sales_campaigns    ~ factor(month_id) | id | ( n_consent ~ treated ) | id, data = dt.dataset_public)
+fe.n_sales_chan    <- felm(n_sales_channels     ~ factor(month_id) | id | ( n_consent ~ treated ) | id, data = dt.dataset_public)
+fe.n_contacts      <- felm(n_contacts           ~ factor(month_id) | id | ( n_consent ~ treated ) | id, data = dt.dataset_public)
+fe.n_contacts_sale <- felm(n_contacts_with_sale ~ factor(month_id) | id | ( n_consent ~ treated ) | id, data = dt.dataset_public)
+fe.n_salespcontact <- felm(sales_per_contact    ~ factor(month_id) | id | ( n_consent ~ treated ) | id, data = dt.dataset_public)
+fe.delta_arpu      <- felm(log(arpu)            ~ factor(month_id) | id | ( n_consent ~ treated ) | id, data = dt.dataset_public)
+fe.contract        <- felm(contract_remaining   ~ factor(month_id) | id | ( n_consent ~ treated ) | id, data = dt.dataset_public)
+reglist    <- list(fe.n_campaings, fe.n_sales_chan, fe.n_contacts, fe.n_contacts_sale, fe.n_salespcontact, fe.delta_arpu, fe.contract)
+
+stargazer( 
+    reglist
+  , dep.var.labels = c('Campaigns', 'Channels', 'Contacts','Sales', '$\\frac{Sales}{Contacts}$', 'Log(Arpu)', 'Lock-In')
+  , column.labels = rep('2SLS-FE',7)
+  , model.names =  FALSE
+  , covariate.labels = c('$\\widehat{N Consents}$')
+  , omit = c('month_id')
+  , omit.labels = c('Month FE')
+  , add.lines = list(
+      c('Household FE Average', sapply(reglist,function(x) format(round(mean(getfe(x)$effect),3), digits=3, nsmall=3)))
+    , c('R$^{2}$ (within)'    , sapply(reglist, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA)))
+  )
+  , label = c('tab:res_panel:late_reactions')
+  , notes = c(
+       "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    ,  'All models estimated with 2SLS'
+    ,  'Models with FE label estimated with household fixed effects'
+    ,  'Cluster robust standard errors in (); Errors clustered by household'
+    ,  'Models correspond to equation \\ref{eq:late_panel_2stg} in section \\ref{sec:main_results_fo:identification}')
+  , title = "Local average treatment effect of consent elicitation on firm targeting decisions and consumer responses"
+  , omit.stat = 'adj.rsq'
+  , type = 'text'
+  , no.space = T
+  , df = F
+  , notes.append = F
+  , star.char    = c("+",  "*", "**", "***")
+  , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+)
+```
+
+## Table 5
+
+```{r consent_model_het_lm, echo=FALSE, message=FALSE, warning=FALSE}
+plm.profile.stock <- felm( flg_gdpr_clientdata_endmonth ~ treated + treated:tenure_bef_abv +  treated:arpu_bef_abv + treated:svod_bef_abv | id | 0 | id, data = dt.dataset_public)
+plm.service.stock <- felm(flg_gdpr_serviceuse_endmonth  ~ treated + treated:tenure_bef_abv +  treated:arpu_bef_abv + treated:svod_bef_abv | id | 0 | id, data = dt.dataset_public)
+plm.geoloc.stock  <- felm(flg_gdpr_geolocation_endmonth ~ treated + treated:tenure_bef_abv +  treated:arpu_bef_abv + treated:svod_bef_abv | id | 0 | id, data = dt.dataset_public)
+plm.thirdp.stock  <- felm(flg_gdpr_thirdp_group_endmonth~ treated + treated:tenure_bef_abv +  treated:arpu_bef_abv + treated:svod_bef_abv | id | 0 | id, data = dt.dataset_public)
+reglist    <- list(plm.profile.stock, plm.service.stock, plm.geoloc.stock, plm.thirdp.stock)
+stargazer(
+    reglist
+  , type = 'text'
+  , no.space = T
+  , order = 'treated'
+  , dep.var.labels   = c('Profile Data', 'Service Use', 'Geo Location', 'Third Party')
+  , covariate.labels = c(
+      'Treated'
+    , 'Treated x Above Median Tenure'
+    , 'Treated x Above Median ARPU'
+    , 'Treated x SVOD'
+    , 'Above Median Tenure'
+    , 'Above Median ARPU'
+    , 'SVOD')
+  , title = 'Heterogenous effect of consent elicitation by service tenure, expenditure and use of video-on-demand service'
+  , label = 'tab:res:panel:consent_het'
+  , notes = c(
+       "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    ,  'Linear probability model estimated with household fixed effects across columns'
+    ,  'Cluster robust standard errors in (); Errors clustered by household')
+  , notes.append = F
+  , omit.stat = 'adj.rsq'
+  , df = F
+  , star.char    = c("+",  "*", "**", "***")
+  , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+  , add.lines=list(c('R$^{2}$ (within)', sapply(reglist, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA))))
+)
+```
+
+# Table 6
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+profiles   <- c("None", "P", "P+S","Other")
+out <- sapply( profiles, function(x){
+  print(x)
+  dt.tmp <- dt.dataset_public[consent_label_one_month_after_exp == x, ] 
+  ols.n_campaings     <- felm(n_sales_campaigns    ~   treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  ols.n_sales_chan    <- felm(n_sales_channels     ~   treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  ols.n_contacts      <- felm(n_contacts           ~   treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  ols.n_contacts_sale <- felm(n_contacts_with_sale ~   treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  ols.n_salespcontact <- felm(sales_per_contact    ~   treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  ols.delta_arpu      <- felm(log(arpu)            ~   treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  ols.contract        <- felm(contract_remaining   ~   treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  reglist <- list(
+    ols.n_campaings, 
+    ols.n_sales_chan, 
+    ols.n_contacts, 
+    ols.n_contacts_sale, 
+    ols.n_salespcontact, 
+    ols.delta_arpu, 
+    ols.contract)
+  stargazer(
+      reglist
+    , dep.var.labels   = c('Campaings', 'Channels', 'Contacts','Sales', '\\frac{Sales}{Contacts}', 'Log(Arpu)', 'Lock-In')
+    , order            = c('^treated$')
+    , covariate.labels = c('Treated')
+    , omit = c('month_id')
+    , omit.labels = c('Month FE')
+    , title = paste(
+      sep = ''
+      ,'Firm targeting decisions and consumer responses after consent elicitation for households who consent to processing '
+      , x, ' data one month after elicitation of consent')
+    , label = paste(sep='','tab:panel:subsample:lookaheadonemonth:itt:',x)
+    , star.char    = c("+",  "*", "**", "***")
+    , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+    , notes = c(
+       "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    ,  'Models estimated with household fixed effects'
+    ,  'Cluster robust standard errors in (); Errors clustered by household'
+    ,  'Models correspond to equation \\ref{eq:itt_panel} in section \\ref{sec:indentification-strategy}')
+    , type = 'text'
+    , notes.append = F
+    , no.space =T
+    , df = FALSE
+    , add.lines=list(c('R$^{2}$ (within)', sapply(reglist, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA))))
+  )
+})
+```
+
+## Table 7
+
+```{r consent_model_lm, echo=FALSE, message=FALSE, warning=FALSE}
+lm.marketing.all.ols <- felm( n_all ~ treated + factor(month_id) | 0 | 0 | id, data = dt.dataset_public)
+lm.marketing.np.ols  <- felm( n_p   ~ treated + factor(month_id) | 0 | 0 | id, data = dt.dataset_public)
+lm.marketing.ns.ols  <- felm( n_s   ~ treated + factor(month_id) | 0 | 0 | id, data = dt.dataset_public)
+
+lm.marketing.all.fe  <- felm( n_all~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+lm.marketing.np.fe   <- felm( n_p  ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+lm.marketing.ns.fe   <- felm( n_s  ~ treated + factor(month_id) | id | 0 | id, data = dt.dataset_public)
+
+reglist    <- list(
+    lm.marketing.all.ols
+  , lm.marketing.all.fe
+  , lm.marketing.np.ols
+  , lm.marketing.np.fe
+  , lm.marketing.ns.ols
+  , lm.marketing.ns.fe)
+
+stargazer(
+      reglist
+    , dep.var.labels   = c('All', 'P Data', 'P+S Data')
+    , column.labels    = rep(c('OLS','FE'), 3) 
+    , covariate.labels = c('Treated')
+    , omit = c('month_id')
+    , omit.labels = c('Month FE')
+    , no.space =T
+    , notes = c(
+       "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    ,  'Models 1,3 and 5 estimated with pooled OLS'
+    ,  'Models 2,4 and 6 estimated with household fixed effects'
+    ,  'Cluster robust standard errors in (); Errors clustered by household'
+    ,  'Models correspond to equation \\ref{eq:itt_panel} in section \\ref{sec:indentification-strategy}'
+  )
+  , title = "Impact of consent on the firm uses of data in marketing communications"
+  , omit.stat = 'adj.rsq'
+  , df = F
+  , notes.append = F
+  , star.char    = c("+",  "*", "**", "***")
+  , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+  , label = c('tab:res:panel:reg-marketing-data')
+  , type='text'
+  , add.lines=list(c('R$^{2}$ (within)', sapply(reglist, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA))))
+)
+```
+
+# Table 8
+
+```{r, echo = FALSE}
+profiles   <- c("None", "P", "P+S","Other")
+out <- sapply( profiles, function(x){
+  print(x)
+  dt.tmp <- dt.dataset_public[consent_label_one_month_after_exp == x, ] 
+  lm.marketing.n_all <- felm( n_all ~ treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  lm.marketing.np   <- felm( n_p ~ treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  lm.marketing.ns   <- felm( n_s ~ treated + factor(month_id) | id | 0 | id, data = dt.tmp)
+  reglist    <- list(lm.marketing.n_all, lm.marketing.np, lm.marketing.ns)
+  stargazer(
+        reglist
+      , dep.var.labels = c('All', 'P Data', 'S Data')
+      , covariate.labels = c('Treated')
+      , omit = c('month_id')
+      , omit.labels = c('Month FE')
+      , omit.stat = 'adj.rsq'
+      , no.space =T
+      
+      , star.char    = c("+",  "*", "**", "***")
+      , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+      , notes = c(
+          "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+        ,  'Models estimated with household fixed effects'
+        ,  'Cluster robust standard errors in (); Errors clustered by household'
+        ,  'Models correspond to equation \\ref{eq:itt_panel} in section \\ref{sec:indentification-strategy}')
+      , notes.append = F
+      , title = 'Impact of consent on the firm uses of data in marketing communications'
+      , label = c('res:panel:reg-marketing-data')
+      , df       = FALSE
+    , type='text'
+    , add.lines=list(c('R$^{2}$ (within)', sapply(reglist, function(x) ifelse(class(x)=='felm',round(summary(x)$P.r.squared[1],3),NA))))
+    )
+})
+```
+
+# Table 9
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE}
+dt.dataset_public[, consent_label_agg := ifelse(consent_label=='None', 'None',ifelse(consent_label=='P','P','P+S|Other'))]
+
+constant_cas <- dt.dataset_public[,length(unique(consent_label_agg)) , by = id][V1==1]$id
+future_other <- dt.dataset_public[consent_label_one_month_after_exp=='P+S' | consent_label_one_month_after_exp=='Other', unique(id)]
+future_nonep <- dt.dataset_public[201810==month_id & (consent_label=='P' | consent_label=='None'), unique(id)]
+
+cas_constant_before      <- dt.dataset_public[month_id < 201806][, length(unique(consent_label_agg)), by = id][, id]
+cas_none_before          <- dt.dataset_public[month_id < 201806 & consent_label=='None', unique(id)]
+cas_constant_before_none <- cas_constant_before[cas_constant_before %in% cas_none_before]
+cas_psother_after        <- dt.dataset_public[consent_label_one_month_after_exp=='P+S' | consent_label_one_month_after_exp=='Other', unique(id)]
+cas_constant_before_none_psother_after <- cas_constant_before_none[cas_constant_before_none%in%cas_psother_after]
+
+dt.tmp <- rbind(
+    dt.dataset_public[ consent_label_agg=='P+S|Other'&  id %in%constant_cas, list(id, month_id, treated, n_sales_coms, sales_per_contact, arpu, contract_remaining, group ='P+S|Other (Always)')]
+  , dt.dataset_public[ id %in% cas_constant_before_none_psother_after   , list(id, month_id, treated, n_sales_coms, sales_per_contact, arpu, contract_remaining, group ='None -> P+S|Other' )]
+)
+dt.tmp[, after              := as.double(month_id >= 201807)]
+dt.tmp[, flg_future_psother := as.double(id %in% cas_constant_before_none_psother_after)]
+
+out0 <- felm( log(arpu)          ~ flg_future_psother:after + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+out1 <- felm( contract_remaining ~ flg_future_psother:after + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+out2 <- felm( n_sales_coms    ~ flg_future_psother:after + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+out3 <- felm( sales_per_contact  ~ flg_future_psother:after + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+reglist.without_none <- list(out0,out1,out2,out3)
+
+dt.tmp <- rbind(
+     dt.dataset_public[ consent_label_agg=='P+S|Other'&  id %in%constant_cas, list(id, month_id, treated, n_sales_coms, sales_per_contact, arpu, contract_remaining, group ='P+S|Other (Always)')]
+  ,  dt.dataset_public[ id %in% cas_constant_before_none_psother_after      , list(id, month_id, treated, n_sales_coms, sales_per_contact, arpu, contract_remaining, group ='None -> P+S|Other' )]
+  ,  dt.dataset_public[ consent_label_agg=='None'     &  id %in%constant_cas, list(id, month_id, treated, n_sales_coms, sales_per_contact, arpu, contract_remaining, group ='None (Always)')]
+)
+
+dt.tmp[, after              := as.double(month_id >= 201807)]
+dt.tmp[, flg_always_psother := as.double(grepl('P[+]S[|]Other [(]Always[)]',group))]
+dt.tmp[, flg_future_psother := as.double(id %in% cas_constant_before_none_psother_after)]
+
+out0 <- felm( log(arpu)          ~ flg_future_psother:after + flg_always_psother:after + flg_always_psother + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+out1 <- felm( contract_remaining ~ flg_future_psother:after + flg_always_psother:after + flg_always_psother + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+out2 <- felm( n_sales_coms    ~ flg_future_psother:after + flg_always_psother:after + flg_always_psother + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+out3 <- felm( sales_per_contact  ~ flg_future_psother:after + flg_always_psother:after + flg_always_psother + flg_future_psother + factor(month_id) | 0     | 0 | id, data=dt.tmp)
+reglist.with_none <- list(out0,out1,out2,out3)
+
+stargazer(
+    c(reglist.with_none[1], reglist.without_none[1],reglist.with_none[2],reglist.without_none[2],reglist.with_none[3],reglist.without_none[3],reglist.with_none[4],reglist.without_none[4])
+  , order = c('flg_future_psother[:]after','flg_future_psother','after[:]flg_always_psother','flg_always_psother')
+  , dep.var.labels   = c('Log(Arpu)', 'Lock-In', 'Sales Com', '$\\frac{Sales}{Contacts}$')
+  , covariate.labels =  c('None to P+S$|$Other x After', 'None to P+S$|$Other', 'P+S$|$Other (Always) x After', 'P+S$|$Other (Always)')
+  , omit = 'month_id'
+  , omit.labels = c('Month FE')
+   , star.char    = c("+",  "*", "**", "***")
+    , star.cutoffs = c(0.1, 0.05, 0.01, 0.001)
+    , notes = c(
+       "+ p$<$0.1; * p$<$0.05; ** p$<$0.01; *** p$<$0.001"
+    ,  'Cluster robust standard errors in ()'
+    ,  'Errors clustered by household')
+  , type ='text'
+  , no.space = T
+  , df = F
+  , notes.append = F
+  , title = "Contrasting household outcomes across households who don't change their data allowances and those that move from the None data allowance to the P+S or Other consent profiles before and after the re-elicitation of consent"
+  , label = "tab:res:mechanism_nonetopsother")
+```
+
+# Figures
+
+## Figure 3
+
+```{r dsc_stats_overtime, echo=FALSE, message=FALSE, warning=FALSE}
+varlist       <- c('age', 'tenure', 'arpu', 'contract_remaining')
+varlist.labels<- c('Age', 'Tenure', 'ARPU', 'Lock-In'           )
+
+dt.varnames   <- data.table( original = varlist, newnames = varlist.labels)
+gplist        <- gdpr.dscstat.lineplots.linetype(varlist, xvar = 'month_label', groupvar = 'group', dt.data = dt.dataset_public[month_id <= 201804], dt.var.names = dt.varnames )
+gp.00         <- do.call("grid.arrange", c(gplist, ncol=2))
+
+varlist       <- c(  
+    'n_contacts' 
+  , 'n_contacts_with_sale' 
+  , 'n_sales_channels' 
+  , 'n_sales_campaigns')
+
+arlist.labels<- c(  
+    'Contacts'   
+  , 'Contacts With Sale'
+  , 'Sales Channels'
+  , 'Sales Campaigns')
+
+dt.varnames   <- data.table( original = varlist, newnames = varlist.labels)
+gplist <- gdpr.dscstat.lineplots.linetype(varlist, xvar = 'month_label', groupvar = 'group', dt.data = dt.dataset_public[month_id <= 201804], dt.var.names = dt.varnames)
+gp.01 <- do.call("grid.arrange", c(gplist, ncol=2))
+```
+
+## Figure 4
+
+```{r dsc_stats_consentpermissions, echo=FALSE, message=FALSE, warning=FALSE}
+dt.plot <- rbind( 
+    dt.dataset_public[month_id == 201804, list(
+      id
+    , group.label = group
+    , gdpr    = flg_gdpr_clientdata_endmonth
+    , missing = flg_gdpr_clientdata_endmonth_missing
+    , label   = 'Profile (P)')]
+  , dt.dataset_public[month_id == 201804, list(
+      id
+    , group.label = group
+    , gdpr    = flg_gdpr_serviceuse_endmonth
+    , missing = flg_gdpr_serviceuse_endmonth_missing
+    , label   = 'Service Use (S)')]
+  , dt.dataset_public[month_id == 201804, list(
+      id
+    , group.label = group
+    , gdpr    = flg_gdpr_geolocation_endmonth
+    , missing = flg_gdpr_geolocation_endmonth_missing
+    , label   = 'Geo Location (G)')]
+  , dt.dataset_public[month_id == 201804, list(
+      id
+    , group.label = group
+    , gdpr    = flg_gdpr_thirdp_group_endmonth
+    , missing = flg_gdpr_thirdp_group_endmonth_missing
+    , label   = 'Third Party (T)')]
+)
+
+dt.plot[, label := factor(label, levels = unique(label)[1:4])]
+dt.plot[, gdpr.label := ifelse(gdpr ==1, 'Yes', ifelse(missing ==1, 'Missing', 'No'))]
+
+gp.control <- type.comparison.plot(
+    varx = 'label'
+  , vary = 'gdpr.label'
+  , varid = 'id'
+  , data = dt.plot[group.label=='Control']
+  , pallete = cbp2
+  , legend.position = 'top'
+  , y.total = FALSE
+  , y.lab   = 'Number of households' 
+  ) + theme(legend.position = 'top', axis.text.x = element_text(angle=45, hjust = 1)) + scale_fill_grey() + 
+  ggtitle('Allowances of control households')
+
+gp.treated <- type.comparison.plot(
+    varx = 'label'
+  , vary = 'gdpr.label'
+  , varid = 'id'
+  , data = dt.plot[group.label=='Treated']
+  , pallete = cbp2
+  , y.total = FALSE
+  , y.lab   = 'Number of households'
+  , legend.position = 'top') + theme(legend.position = 'top', axis.text.x = element_text(angle=45, hjust = 1)) + scale_fill_grey() + 
+  ggtitle('Allowances of treated households')
+gp <- arrangeGrob(gp.control, gp.treated, nrow=1); plot(gp)
+```
+
+## Figure 5
+
+```{r dsc_stats_consentdist, echo=FALSE, message=FALSE, warning=FALSE}
+#-- Multivarite comparison of consent
+dt.tmp <- dt.dataset_public[month_id == 201804]
+# The palette with black:
+cbp2  <- c("#000000", "#E69F00", "#56B4E9", "#009E73",  "#0072B2", "#D55E00", "#CC79A7")
+gp.04 <- type.comparison.plot(
+    varx = 'group'
+  , vary = 'consent_label'
+  , varid = 'id'
+  , data = dt.tmp
+  , pallete = cbp2
+  , legend.position = 'right'
+  , legend.lab = 'Consent Profile')
+gp.04 <- gp.04 + scale_fill_grey() + theme(legend.position = 'top');plot(gp.04)
+
+HotellingsT2Test(
+    x = dt.tmp[ group == 'Control', list(flg_gdpr_clientdata_endmonth, flg_gdpr_serviceuse_endmonth, flg_gdpr_geolocation_endmonth,flg_gdpr_thirdp_group_endmonth )]
+  , y = dt.tmp[ group == 'Treated', list(flg_gdpr_clientdata_endmonth, flg_gdpr_serviceuse_endmonth, flg_gdpr_geolocation_endmonth,flg_gdpr_thirdp_group_endmonth )] 
+  , test = 'chi')
+```
+
+## Figure 6
+
+```{r model_free, echo=FALSE, message=FALSE, warning=FALSE}
+gplotlevels <- c('Profile Data (P)','Service Use (S)', 'Geo Location (G)', 'Third Party (T)')
+dt.tmp   <- rbind( 
+    dt.dataset_public[, list(month_id, month_label, value = 100*flg_gdpr_clientdata_endmonth  , group = paste(sep='',group,'-', 'Profile Data') , gplot = 'Profile Data (P)') ]
+  , dt.dataset_public[, list(month_id, month_label, value = 100*flg_gdpr_serviceuse_endmonth  , group = paste(sep='',group,'-', 'Service Use'), gplot = 'Service Use (S)')]
+  , dt.dataset_public[, list(month_id, month_label, value = 100*flg_gdpr_geolocation_endmonth , group = paste(sep='',group,'-', 'Geo Location') , gplot = 'Geo Location (G)') ]
+  , dt.dataset_public[, list(month_id, month_label, value = 100*flg_gdpr_thirdp_group_endmonth, group = paste(sep='',group,'-', 'Third Party')  , gplot = 'Third Party (T)')])
+dt.tmp[, gplot := factor(gplot, levels = gplotlevels)]
+
+dt.stats <-data.table( 
+  summarySE( 
+    data = dt.tmp[month_id<=201810,list(month_id, month_label, group, gplot, value)]
+    , measurevar = 'value'
+    , groupvars=c('month_label', 'group', 'gplot')
+    , na.rm=T , conf.interval=.95 , .drop=TRUE))
+dt.stats[, gwave := factor(ifelse(grepl('Treated',group),'Treated', 'Control'), levels = c('Treated','Control')) ]
+dt.stats[, gtype := gsub('Treated[-]|Control-','',group)]
+
+gp.03 <- ggplot( data = dt.stats ,  aes( x = month_label, y = value, linetype = gwave, color = gwave, shape = gwave)) + 
+  geom_line(aes(group = group)) +  theme_bw() + labs( x = 'Calendar Month', y = 'Percentage of households \n authorizing data processing', color ='', linetype ='') + 
+  theme(legend.position = 'top') + ylim(0, dt.stats[, max(value)]*1.3) +
+  geom_errorbar(aes(ymin=value-ci, ymax=value+ci), width=.1) + geom_point() + 
+  scale_color_tableau() +  theme(legend.position = 'top', axis.text.x = element_text(angle=45, hjust = 1)) +
+  geom_vline( xintercept = 5.8, linetype = 'dashed') + geom_vline( xintercept = 7.8, linetype = 'dashed') +
+  labs(color='Consent Elicitation Group',shape='Consent Elicitation Group',linetype='Consent Elicitation Group') + 
+  facet_wrap(~gplot)
+gp.03
+```
+
+## Figure 7
+
+```{r firm_response, echo=FALSE, message=FALSE, warning=FALSE}
+dt.dataset_public[, logarpu :=log(arpu)]
+dt.dataset_public[, group   := factor(group, levels = c('Treated','Control'))]
+varlist <- c(  
+    'n_contacts'
+  , 'n_contacts_with_sale'
+  , 'n_sales_channels'
+  , 'sales_per_contact'
+  , 'logarpu'
+  , 'contract_remaining')
+varlist.labels <- c(
+   'Contacts'
+  ,'Contacts with Sale'
+  ,'Sales Channels'
+  ,'Sales per Contact'
+  ,'Log(ARPU)'
+  ,'Lock-In')
+dt.varnames   <- data.table( original = varlist, newnames = varlist.labels)
+gplist <- gdpr.dscstat.lineplots.linetype(varlist, xvar = 'month_label', dt.data = dt.dataset_public, dt.var.names = dt.varnames)
+gplist <- lapply(gplist, function(x) x + geom_vline(xintercept = 5.8, linetype = 'dashed') + geom_vline(xintercept = 7.8, linetype = 'dashed'))
+gp     <- do.call("grid.arrange", c(gplist, ncol=3))
+```
+
+## Figure 9
+
+```{r dsc_stats_consentdist_overtime_trt, echo=FALSE, message=FALSE, warning=FALSE}
+# The palette with black:
+cbp2  <- c("#000000", "#E69F00", "#56B4E9", "#009E73",  "#0072B2", "#D55E00", "#CC79A7")
+gp.01 <- type.comparison.plot(
+    varx = 'month_label'
+  , vary = 'consent_label'
+  , varid = 'id'
+  , data = dt.dataset_public[group=='Treated']
+  , pallete = cbp2
+  , legend.position = 'right'
+  , legend.lab = 'Consent Profile'
+  , y.total = FALSE
+  , y.lab = 'Number of households')
+gp.01 <- gp.01 + scale_fill_grey() + 
+  theme(legend.position = 'top', axis.text.x = element_text(angle=45, hjust = 1)) + ggtitle('Treated households')
+
+gp.02 <- type.comparison.plot(
+    varx = 'month_label'
+  , vary = 'consent_label'
+  , varid = 'id'
+  , data = dt.dataset_public[group=='Control']
+  , pallete = cbp2
+  , legend.position = 'right'
+  , legend.lab = 'Consent Profile'
+  , y.total = FALSE
+  , y.lab = 'Number of households')
+gp.02 <- gp.02 + scale_fill_grey() + 
+  theme(legend.position = 'top', axis.text.x = element_text(angle=45, hjust = 1)) + ggtitle('Control households')
+
+gp <- arrangeGrob(
+    ggplot.get.legend(gp.02)
+  , gp.01 + theme(legend.position = 'none')
+  , gp.02 + theme(legend.position = 'none')
+  , nrow = 3, ncol =1
+  , heights=c(1, 5,5))
+
+plot(gp)
+```
+
+## Figure 10
+
+```{r dsc_stats_allowance_transitions, echo=FALSE, message=FALSE, warning=FALSE}
+dt.dataset_public[, consent_label_agg := ifelse(consent_label=='None', 'None',ifelse(consent_label=='P','P','P+S|Other'))]
+dt.graph <- merge( 
+    dt.dataset_public[ month_id == 201801, list(id, jan=consent_label_agg)]
+  , dt.dataset_public[ month_id == 201810, list(id, oct=consent_label_agg)]
+  , by = 'id')
+MAT <- t(matrix(round(table(from=dt.graph$jan, to=dt.graph$oct)/nrow(dt.graph),2), nrow=3,ncol=3))
+pp  <- plotmat(
+   MAT
+  , main = "plotmat", self.cex = 0.5   , self.shifty = c(0.1,-.05,0.1), self.shiftx = c(0.1,.13,0.1)
+  , lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.1, shadow.size = 0
+  , pos = cbind(c(.1, .5, .8),c(.6,.23,.6))
+  , name=c("None","P","P+S|Other")
+  , title='')
+```
+
+## Figure 11
+
+```{r , echo = FALSE}
+dt.dataset_public[, consent_label_agg := ifelse(consent_label=='None', 'None',ifelse(consent_label=='P','P','P+S|Other'))]
+
+constant_cas <- dt.dataset_public[,length(unique(consent_label_agg)) , by = id][V1==1]$id
+future_other <- dt.dataset_public[consent_label_one_month_after_exp=='P+S' | consent_label_one_month_after_exp=='Other', unique(id)]
+future_nonep <- dt.dataset_public[201810==month_id & (consent_label=='P' | consent_label=='None'), unique(id)]
+
+cas_constant_before      <- dt.dataset_public[month_id < 201806][, length(unique(consent_label_agg)), by = id][, id]
+cas_none_before          <- dt.dataset_public[month_id < 201806 & consent_label=='None', unique(id)]
+cas_constant_before_none <- cas_constant_before[cas_constant_before %in% cas_none_before]
+cas_psother_after        <- dt.dataset_public[consent_label_one_month_after_exp=='P+S' | consent_label_one_month_after_exp=='Other', unique(id)]
+cas_constant_before_none_psother_after <- cas_constant_before_none[cas_constant_before_none%in%cas_psother_after]
+
+i          <- 0
+groups     <- c('None', 'P', 'P+S|Other')
+depvarlist <- c('arpu', 'contract_remaining',  'n_sales_coms','sales_per_contact')
+depvarlabl <- c('ARPU', 'Lock-In'           ,   'Sales Coms' ,'Sales/Contacts')
+glist      <- lapply( 1:length(depvarlist), function(x){
+  dt.tmp   <- rbind(
+     dt.dataset_public[id %in% cas_constant_before_none_psother_after, list(month_id, month_label, treated, value =  get(depvarlist[x]), group = 'None -> P+S|Other')]
+    ,dt.dataset_public[consent_label_agg=='P+S|Other'& id %in%constant_cas, list(month_id, month_label, treated, value =  get(depvarlist[x]), group = paste(sep='','Always ',consent_label_agg))]
+    ,dt.dataset_public[consent_label_agg=='None'     & id %in%constant_cas, list(month_id, month_label, treated, value =get(depvarlist[x]) , group = paste(sep='','Always ',consent_label_agg))]
+  )
+  
+  dt.stats <-data.table( 
+    summarySE( 
+      data = dt.tmp[,list(month_id, month_label, group, value)]
+      , measurevar = 'value'
+      , groupvars=c('month_label', 'group')
+      , na.rm=T , conf.interval=.95 , .drop=TRUE))
+  
+  gp.00 <- ggplot( data = dt.stats ,  aes( x = month_label, y = value, linetype = group, color = group)) + 
+    geom_line(aes(group = group)) +  theme_bw() + labs( x = 'Calendar Month', y = depvarlabl[x], color ='', linetype ='') + 
+    theme(legend.position = 'top',plot.title = element_text(hjust = 0.5)) + 
+    geom_errorbar(aes(ymin=value-ci, ymax=value+ci), width=.1) + geom_point() + 
+    scale_color_tableau() +  theme(legend.position = 'top', axis.text.x = element_text(angle=45, hjust = 1)) +
+    geom_vline( xintercept = 5.8, linetype = 'dashed') + geom_vline( xintercept = 7.8, linetype = 'dashed') +
+    labs(color='',shape='',linetype='') 
+  
+  gp.00 
+})
+
+gp <- do.call("grid.arrange", c(glist, ncol=2))
+```

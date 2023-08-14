@@ -393,6 +393,124 @@ Assumptions:
 
 -   Period 2, firms choose prices simultaneously
 
+<br>\
+@moorthy1988
+
+-   2 (identical) firms pick product (quality) first, then price.
+
+<br>
+
+@tyagi2000
+
+-   Extending @hotelling1929 @tyagi1999 @tabuchi1995
+
+-   Two firms enter **sequentially**, and have **different cost structures**.
+
+-   Paper shows second mover advantage
+
+<br>
+
+@kim2006
+
+-   Consumers can make multiple purchases.
+
+-   Some consumers are loyal to one brand, and others consume more than one product.
+
+<br>
+
+@shreay2015
+
+-   Quantity surcharges from different sizes of the same product (i.e., imperfect substitute or differentiated products) can be led by consumer preferences.
+
+<br>
+
+## Market Structure and Framework 
+
+Basic model utilizing aggregate demand
+
+-   Bertrand Equilibrium: Firms compete on price
+
+-   Cournot Market structure: Firm compete on quantity
+
+-   Stackelberg Market structure: Leader-Follower model
+
+Cournot - Simultaneous Games
+
+$$
+TC_i = c_i q_i \text{ where } i= 1,2 \\
+P(Q) = a - bQ \\
+Q = q_1 +q_2 \\
+\pi_1 = \text{price} \times \text{quantity} - \text{cost} = [a - b(q_1 +q_2)]q_1 - c_1 q_1 \\
+\pi_2 = \text{price} \times \text{quantity} - \text{cost} = [a - b(q_1 +q_2)]q_1 - c_2 q_2 \\
+$$
+
+$$
+\begin{equation} 
+\frac{d \pi_1}{d q_1} = a - 2bq_1 - bq_2-c_1 = 0 (1)
+(\#eq:cournot1)
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\frac{d \pi_2}{d q_2} = a - 2bq_2 - bq_1-c_2 = 0 
+(\#eq:cournot2)
+\end{equation}
+$$
+
+From \@ref(eq:cournot1)
+
+$$
+\begin{equation}
+q_1 = \frac{a-c_1}{2b} - \frac{q_2}{2} = R_1 (q_2)
+(\#eq:cournot3)
+\end{equation}
+$$
+
+is called reaction function, for best response function
+
+From \@ref(eq:cournot2)
+
+$$
+\begin{equation}
+q_2 = \frac{a-c_2}{2b} - \frac{q_1}{2} =
+(\#eq:cournot4)
+\end{equation}
+$$
+
+$$
+q_1 = \frac{a-c_1}{2b} - \frac{a-c_2}{4b} + \frac{q_1}{4}
+$$
+
+Hence,
+
+$$
+q_1^* = \frac{a-2c_1+ c_2}{3b} \\
+q_2^* = \frac{a-2c_2 + c_1}{3b}
+$$
+
+Total quantity is
+
+$$
+Q = q_1 + q_2 = \frac{2a-c_1 -c_2}{3b}
+$$
+
+Price
+
+$$
+a-bQ = \frac{a+c_1+c_2}{3b}
+$$
+
+<br>
+
+Sequential games
+
+also known as leader-follower games
+
+-   Stage 1: Firm 1 chooses quantity
+
+-   Stage 2: Firm 2 chooses quantity
+
 <br>
 
 ## Market Response Model

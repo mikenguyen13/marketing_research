@@ -480,3 +480,176 @@ Situational Factors
 <br>
 
 [@batra1991; @voss2003] offer scale to measure the hedonic and utilitarian dimensions of consumer attitude
+
+## Involvement as a key moderator in advertising effectiveness
+
+From the ELM by @petty1986 by use the word "motivation" in place of involvement. And if you use the term "motivation", reviewers are less likely to fight with you since involvement is so fragmented
+
+For review and operationalization, check @muehling1993 (preferable) or @andrews1990 and famous scale is @zaichkowsky1985
+
+Possible manipulation of involvement:
+
+-   ego-involvement: how a product is relevant to you (e.g., pick a free product for you, or for others)
+
+Involvement roughly means "How deeply you are as a consumer wants to think about a product,"
+
+(1) Motivation (2) **Opportunity** (kinda under ability in the original ELM, we as marketers separate this factor)(3) Ability are necessary for elaboration likelihood model @petty1983
+
+Defensive processing is not fully captured under the ELM model: Motivation: not the desire to think, but also the desire to find out the truth, assuming that consumers want to find out the truth.
+
+Involvement vs. Engagement:
+
+-   According to @greenwald1984 (p. 583), define audience involvement and actor involvement (should be called engagement).
+
+<br>
+
+@greenwald1984
+
+-   derived from Sherif & Hovland (1961) Social Judgment (ego-involvement)
+
+-   Enduring involvement vs. situational involvement (Houston & Rothschild, 1977) (A Paradigm for Research on Consumer Involvement)
+
+```{=html}
+<!-- -->
+```
+-   Four levels of involvement:
+
+    1.  Preattention: little capacity
+
+    2.  Focal attention: modest capacity to decipher the message
+
+    3.  Comprehension: more capacity to analyze the message
+
+    4.  Elaboration: most capacity to integrate the message into the audience's knowledge.
+
+-   Antecedents: Situational involvement
+
+-   Consequences:
+
+    -   Under high involvement: communication can modify beliefs
+
+    -   Under low involvement: communication affect perceptions, and can gradually be persuasive after repeated exposure.
+
+    -   Under ego-involvement: high involvement is more resistance to persuasion.
+
+-   Processes of involvement:
+
+    -   High involvement creates link between new info to previous experience or attitude
+
+    -   @petty1986 differentiate high vs. involvement by central vs. peripheral routs to persuasion.
+
+    -   Mitchell (1979) equates high involvement to arousal/drive
+
+-   Involvement stems from
+
+    -   Actor (participant) or audience (observer)
+
+    -   Distinction: Attentional capacity and attentional arousal
+
+        -   Arousal = "a state of wakefulness, general preparation, or excitement that facilitates the performance of well-leaned response." (p. 583)
+
+        -   Capacity (also known as effort by Kahneman (1973)) = " a limited resource that must be used to focus on a specific task and that is needed in increasing amounts as the cognitive complexity of a task increases." (p. 583)
+
+    -   Levels of processing: influences long-term memories
+
+    -   Principles for the control of involvement:
+
+        -   Bottom-up (data-driven) processing
+
+        -   Top-down (concept-driven) processing
+
+        -   Competence (data) limitation
+
+        -   Capacity (resource) limitation
+
+    -   Effects of involvement
+
+        -   Immediate Effects: "analyze codes produced by prior processing"
+
+        -   Enduring Effects
+
+            -   Preattention: no definitive conclusion
+
+            -   Focal attention:
+
+                -   Familiar stimuli could be identified as separated objects
+
+                -   Unfamiliar stimuli primes sensory memory traces
+
+            -   Comprehension: create traces at the propositional level of representation
+
+            -   Elaboration: "substantial freedom of memory and attitude from the specific details of th original message or its setting."
+
+        -   Principle of higher-level dominance: the effect of the highest level of involvement is dominant in cases where the effects of different levels oppose one another.
+
+            -   Both routes can happen at the same time
+
+            -   deeper thinking, play judgment will dominate the net results (weights on whatever route is higher )
+
+<br>
+
+@petty1983
+
+-   provides evidence for the two routes to persuasion
+
+    -   Central route: long-lasting and predictive of behavior
+
+    -   Peripheral route: associated with positive or negative cues , can be temporary and unpredictive of behavior.
+
+-   Argument quality influences attitudes more under high than low involvement
+
+-   Product endorsers (celebrities vs. joe) influences attitudes more under low than high involvement
+
+-   Can use this as an example of (1) message content, and (2) executional cues (e.g., endorsers) can influence persuasiveness.
+
+<br>
+
+@batra1990
+
+-   Mood affects cognitive elaboration, bias the argument quality, peripherally affect brand attitudes.
+
+    -   Positive moods reduces elaboration
+
+<br>
+
+@macinnis2002
+
+-   Under ELM, for the endorsers to have an effect, customers have to have some motivation (require some levels of cognition), while affective processing does not require any motivation. Hence, for consumers have higher ability (know about products because it's mature).
+
+-   For mature brands, affectively based executional cues can induce sales
+
+-   Advertisement with positive feelings induces sales
+
+<br>
+
+@schivinski2016
+
+-   Propose consumers' engagement scales (in the context of social media)
+
+-   Three dimensions of consumer's engagement based on previous research @muntinga2011
+
+    -   Consumption (e.g., using)
+
+    -   Contribution: (e.g., liking or sharing, participating)
+
+    -   Creation: (e.g., posting, producing contents)
+
+<br>
+
+McQuarrie (1998): Meta analysis
+
+-   Lab experiments (in advertising context) are different from real-world phenomenon because:
+
+    -   Forcing exposure
+
+    -   Failing to measure choice
+
+    -   does not consider competitive ads, decay, repeated exposures or mature/familiar brands.
+
+<br>
+
+@muehling1993
+
+-   A review on involvement in advertising research
+
+-   See figure 1 (p. 43) for involvement conceptualization

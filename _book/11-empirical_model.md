@@ -540,7 +540,7 @@ ggplot(R1, aes(channel_name, value, fill = variable)) +
   ylab("")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-8-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-8-1.pdf)<!-- --> 
 
 and then check the final results.
 
@@ -697,7 +697,7 @@ ggplot(df_plot_trans, aes(y = channel_from, x = channel_to, fill = transition_pr
         ggtitle("Transition matrix heatmap")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-11-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-11-1.pdf)<!-- --> 
 
 ```r
 # models comparison
@@ -744,12 +744,7 @@ ggplot(all_mod_plot, aes(x = conv_type, y = value, group = channel_name)) +
         guides(colour = guide_legend(override.aes = list(size = 4)))
 ```
 
-```
-## Warning: ggrepel: 4 unlabeled data points (too many overlaps). Consider
-## increasing max.overlaps
-```
-
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-11-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-11-2.pdf)<!-- --> 
 
 Additional concerns:
 
@@ -1416,7 +1411,7 @@ visNetwork(nodes,
         visOptions(highlightNearest = TRUE)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-18-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-18-1.pdf)<!-- --> 
 
 
 ```r
@@ -1465,7 +1460,7 @@ ggplot(df_multi_paths_tl %>% filter(conversion == 1), aes(x = tot_time_lapse)) +
         geom_histogram(fill = '#4e79a7', binwidth = 1)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-20-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-20-1.pdf)<!-- --> 
 
 ```r
 # cumulative distribution plot
@@ -1476,7 +1471,7 @@ ggplot(df_multi_paths_tl %>% filter(conversion == 1), aes(x = tot_time_lapse)) +
         geom_vline(xintercept = 23, color = '#e15759', size = 1.5, linetype = 2)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-20-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-20-2.pdf)<!-- --> 
 
 
 ```r
@@ -1503,7 +1498,7 @@ ggplot(df_multi_paths_tl_1, aes(x = as.factor(customer_id), y = touch_date, colo
         guides(colour = guide_legend(override.aes = list(size = 5)))
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-21-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-21-1.pdf)<!-- --> 
 
 
 ```r
@@ -1520,7 +1515,7 @@ ggplot(df_multi_paths_tl_2, aes(x = prev_time_lapse)) +
         geom_histogram(fill = '#4e79a7', binwidth = 1)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-22-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-22-1.pdf)<!-- --> 
 
 ```r
 # cumulative distribution
@@ -1531,7 +1526,7 @@ ggplot(df_multi_paths_tl_2, aes(x = prev_time_lapse)) +
         geom_vline(xintercept = 12, color = '#e15759', size = 1.5, linetype = 2)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-22-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-22-2.pdf)<!-- --> 
 
 In conclusion, we say that if a customer made contact with a marketing channel the first time for more than 23 days and/or hasn't made contact with a marketing channel for the last 12 days, then it is a fruitless path.
 
@@ -1629,7 +1624,7 @@ ggplot(R1, aes(channel_name, value, fill = variable)) +
   ylab("")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-28-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-28-1.pdf)<!-- --> 
 
 The "Total Conversions" bar chart shows you how many conversions were attributed to each channel (i.e. alpha, beta, etc.) for each method (i.e. first_touch, last_touch, etc.).
 
@@ -1651,7 +1646,7 @@ ggplot(R2, aes(channel_name, value, fill = variable)) +
   ylab("")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-29-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-29-1.pdf)<!-- --> 
 
 The "Total Conversion Value" bar chart shows you monetary value that can be attributed to each channel from a conversion.
 
@@ -1871,7 +1866,7 @@ ggplot(df_customers_plot, aes(x = event, y = pl)) +
     ggtitle("Sales Funnel visualization - all customers journeys")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-33-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-33-1.pdf)<!-- --> 
 
 Calculate attribution
 
@@ -2094,7 +2089,7 @@ ggplot() +
     )
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-35-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-35-1.pdf)<!-- --> 
 
 ## RFM
 
@@ -2221,7 +2216,7 @@ heat map shows the average monetary value for different categories of recency an
 rfm_heatmap(rfm_result)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-38-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-38-1.pdf)<!-- --> 
 
 bar chart
 
@@ -2230,7 +2225,7 @@ bar chart
 rfm_bar_chart(rfm_result)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-39-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-39-1.pdf)<!-- --> 
 
 histogram
 
@@ -2239,7 +2234,7 @@ histogram
 rfm_histograms(rfm_result)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-40-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-40-1.pdf)<!-- --> 
 
 Customers by Orders
 
@@ -2248,7 +2243,7 @@ Customers by Orders
 rfm_order_dist(rfm_result)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-41-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-41-1.pdf)<!-- --> 
 
 Scatter Plots
 
@@ -2257,19 +2252,19 @@ Scatter Plots
 rfm_rm_plot(rfm_result)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-42-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-42-1.pdf)<!-- --> 
 
 ```r
 rfm_fm_plot(rfm_result)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-42-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-42-2.pdf)<!-- --> 
 
 ```r
 rfm_rf_plot(rfm_result)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-42-3.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-42-3.pdf)<!-- --> 
 
 ### RFMC
 
@@ -2417,7 +2412,7 @@ ggplot(orders, aes(x = frequency)) +
     ggtitle("Dustribution by frequency")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-45-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-45-1.pdf)<!-- --> 
 
 ```r
 ggplot(orders, aes(x = recency)) +
@@ -2426,7 +2421,7 @@ ggplot(orders, aes(x = recency)) +
     ggtitle("Dustribution by recency")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-45-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-45-2.pdf)<!-- --> 
 
 
 ```r
@@ -2512,7 +2507,7 @@ ggplot(lcg, aes(x = client, y = quantity, fill = quantity)) +
     ggtitle("LifeCycle Grids")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-47-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-47-1.pdf)<!-- --> 
 
 
 ```r
@@ -2537,7 +2532,7 @@ ggplot(lcg.adv, aes(x = client, y = quantity, fill = customer.type)) +
     ggtitle("LifeCycle Grids")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-48-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-48-1.pdf)<!-- --> 
 
 ```r
 # with background
@@ -2558,7 +2553,7 @@ ggplot(lcg.adv, aes(x = client, y = quantity, fill = customer.type)) +
     ggtitle("LifeCycle Grids")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-48-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-48-2.pdf)<!-- --> 
 
 ```r
 lcg.sub <- orders.segm %>%
@@ -2584,7 +2579,7 @@ ggplot(lcg.sub, aes(x = client, y = quantity, fill = gender)) +
     ggtitle("LifeCycle Grids by gender (propotion)")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-48-3.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-48-3.pdf)<!-- --> 
 
 ```r
 ggplot(lcg.sub, aes(x = gender, y = quantity, fill = cart)) +
@@ -2598,7 +2593,7 @@ ggplot(lcg.sub, aes(x = gender, y = quantity, fill = cart)) +
     ggtitle("LifeCycle Grids by gender and last cart (propotion)")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-48-4.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-48-4.pdf)<!-- --> 
 
 #### CLV & CAC
 
@@ -2766,7 +2761,7 @@ ggplot(lcg.clv[lcg.clv$variable %in% c('clv', 'cac'), ], aes(x = variable, y =
 ## Warning: Ignoring unknown aesthetics: width
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-49-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-49-1.pdf)<!-- --> 
 
 ```r
 ggplot(lcg.clv[lcg.clv$variable %in% c('clv1', 'cac1'), ], aes(x = variable, y =
@@ -2783,7 +2778,7 @@ ggplot(lcg.clv[lcg.clv$variable %in% c('clv1', 'cac1'), ], aes(x = variable, y =
 ## Warning: Ignoring unknown aesthetics: width
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-49-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-49-2.pdf)<!-- --> 
 
 #### Cohort Analysis
 
@@ -3203,7 +3198,7 @@ ggplot(lcg.camp, aes(x = campaign, fill = campaign)) +
     ggtitle("Campaigns in LifeCycle Grids - difference between av.CLV to date and av.CAC")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-53-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-53-1.pdf)<!-- --> 
 
 ```r
 ggplot(lcg.camp, aes(x = campaign, fill = campaign)) +
@@ -3235,7 +3230,7 @@ ggplot(lcg.camp, aes(x = campaign, fill = campaign)) +
     ggtitle("Campaigns in LifeCycle Grids - total av.CLV and av.CAC")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-53-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-53-2.pdf)<!-- --> 
 
 ```r
 ggplot(lcg.camp, aes(x = campaign, fill = campaign)) +
@@ -3253,7 +3248,7 @@ ggplot(lcg.camp, aes(x = campaign, fill = campaign)) +
     ggtitle("Campaigns in LifeCycle Grids - average time lapses between purchases")
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-53-3.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-53-3.pdf)<!-- --> 
 
 ##### Retention Rate
 
@@ -3431,7 +3426,7 @@ ggplot(
 ## `geom_smooth()` using formula 'y ~ x'
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-54-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-54-1.pdf)<!-- --> 
 
 ```r
 ##### The second way for plotting cycle plot via multi-plotting
@@ -3532,7 +3527,7 @@ grid.arrange(p1, p2, ncol = 1)
 ## `geom_smooth()` using formula 'y ~ x'
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-54-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-54-2.pdf)<!-- --> 
 
 ```r
 # retention rate bubble chart
@@ -3592,7 +3587,7 @@ ggplot(na.omit(df_plot),
 ## `geom_smooth()` using formula 'y ~ x'
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-54-3.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-54-3.pdf)<!-- --> 
 
 ```r
 # retention rate falling drops chart
@@ -3653,7 +3648,7 @@ ggplot(df_plot,
 ## Warning: Removed 36 rows containing missing values (geom_text).
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-54-4.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-54-4.pdf)<!-- --> 
 
 ##### Retention Charts
 
@@ -3760,7 +3755,7 @@ p + geom_line(size = 2, alpha = 1 / 2) +
 ## `geom_smooth()` using formula 'y ~ x'
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-55-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-55-1.pdf)<!-- --> 
 
 ```r
 #second month analysis chart
@@ -3784,7 +3779,7 @@ p + geom_point(size = 3) +
 ## `geom_smooth()` using formula 'y ~ x'
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-55-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-55-2.pdf)<!-- --> 
 
 ```r
 #cycle plot
@@ -3822,7 +3817,7 @@ p + geom_point(size = 3) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-55-3.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-55-3.pdf)<!-- --> 
 
 #### Lifecycle phase sequential analysis
 
@@ -4109,7 +4104,7 @@ par(mar = c(1, 1, 1, 1))
 seqfplot(df.seq, border = NA, group = feat$campaign)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-56-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-56-1.pdf)<!-- --> 
 
 ```r
 # plotting the 10 most frequent sequences based on campaign
@@ -4121,7 +4116,7 @@ seqfplot(
 )
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-56-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-56-2.pdf)<!-- --> 
 
 ```r
 # plotting the 10 most frequent sequences based on first purch.date cohort
@@ -4252,7 +4247,7 @@ seqfplot(
 )
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-56-3.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-56-3.pdf)<!-- --> 
 
 <br>
 
@@ -8854,7 +8849,7 @@ legend(
 )
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-61-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-61-1.pdf)<!-- --> 
 
 
 ```r
@@ -9028,6 +9023,14 @@ plot(gvisSankey(
 
 ### Sequence in-depth analysis
 
+Example by [Sergey Bryl](https://www.analyzecore.com/2014/12/04/sequence-carts-in-depth-analysis-with-r/)
+
+-   To understand customer's behavior and churn based on purchase sequence. For example,
+
+    -   If the customer has left or did not make the next purchase
+
+    -   Understand duration between purchases
+
 
 ```r
 library(dplyr)
@@ -9040,14 +9043,18 @@ set.seed(10)
 data <- data.frame(
     orderId = sample(c(1:1000), 5000, replace = TRUE),
     product = sample(
-        c('NULL', 'a', 'b', 'c'),
+        c('NULL', 'a', 'b', 'c'), # assume we have only 3 products 
         5000,
         replace = TRUE,
         prob = c(0.15, 0.65, 0.3, 0.15)
     )
 )
+
+# we also know customers' purchase order 
 order <- data.frame(orderId = c(1:1000),
                     clientId = sample(c(1:300), 1000, replace = TRUE))
+
+# suppose we know customers' gender
 sex <- data.frame(clientId = c(1:300),
                   sex = sample(
                       c('male', 'female'),
@@ -9055,6 +9062,8 @@ sex <- data.frame(clientId = c(1:300),
                       replace = TRUE,
                       prob = c(0.40, 0.60)
                   ))
+
+
 date <- data.frame(orderId = c(1:1000),
                    orderdate = sample((1:90), 1000, replace = TRUE))
 orders <- merge(data, order, by = 'orderId')
@@ -9064,7 +9073,21 @@ orders <- orders[orders$product != 'NULL',]
 orders$orderdate <- as.Date(orders$orderdate, origin = "2012-01-01")
 rm(data, date, order, sex)
 
-# combining products to the cart
+head(orders)
+```
+
+```
+##   orderId clientId product    sex  orderdate
+## 1       1      204       a female 2012-02-11
+## 2       1      204       a female 2012-02-11
+## 3       1      204       a female 2012-02-11
+## 4       1      204       a female 2012-02-11
+## 5       2       71       a   male 2012-02-27
+## 6       2       71       a   male 2012-02-27
+```
+
+```r
+# combining products to the cart (include cases where customers make 2 visits in a day)
 df <- orders %>%
     arrange(product) %>%
     select(-orderId) %>%
@@ -9076,6 +9099,22 @@ df <- orders %>%
 
 ```
 ## `summarise()` has grouped output by 'clientId', 'sex'. You can override using the `.groups` argument.
+```
+
+```r
+head(df)
+```
+
+```
+## # A tibble: 6 x 4
+##   clientId sex    orderdate  cart 
+##      <int> <chr>  <date>     <chr>
+## 1        1 female 2012-02-18 a;c  
+## 2        1 female 2012-03-19 a;b;c
+## 3        1 female 2012-03-21 a;b;c
+## 4        2 female 2012-02-14 a;b  
+## 5        2 female 2012-02-27 a;b  
+## 6        2 female 2012-03-06 a
 ```
 
 ```r
@@ -9364,13 +9403,13 @@ seqdplot(df.seq, border = NA, withlegend = 'right')
 ##  [!!] In local() : withlegend is deprecated, use with.legend instead.
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-1.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-1.pdf)<!-- --> 
 
 ```r
 seqdplot(df.seq, border = NA, group = df.feat$sex) # distribution based on gender
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-2.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-2.pdf)<!-- --> 
 
 ```r
 seqstatd(df.seq)
@@ -9612,14 +9651,14 @@ seqfplot(df.seq, border = NA, withlegend = 'right')
 ##  [!!] In local() : withlegend is deprecated, use with.legend instead.
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-3.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-3.pdf)<!-- --> 
 
 ```r
 # the 10 most frequent sequences based on gender
 seqfplot(df.seq, group = df.feat$sex, border = NA)
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-4.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-4.pdf)<!-- --> 
 
 ```r
 # returning the frequency stats
@@ -9671,7 +9710,7 @@ seqmtplot(df.seq, title = 'Mean time', withlegend = 'right')
 ##  [!!] In local() : withlegend is deprecated, use with.legend instead.
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-5.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-5.pdf)<!-- --> 
 
 ```r
 seqmtplot(df.seq, group = df.feat$sex, title = 'Mean time')
@@ -9681,7 +9720,7 @@ seqmtplot(df.seq, group = df.feat$sex, title = 'Mean time')
 ##  [!!] In local() : title is deprecated, use main instead.
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-6.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-6.pdf)<!-- --> 
 
 ```r
 statd <-
@@ -9712,7 +9751,7 @@ hist(df.ient,
      xlab = 'Entropy') # plot an histogram of the within entropy of the sequences
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-7.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-7.pdf)<!-- --> 
 
 ```r
 # entrophy distribution based on gender
@@ -9726,4 +9765,306 @@ boxplot(
 )
 ```
 
-![](11-empirical_model_files/figure-epub3/unnamed-chunk-64-8.png)<!-- -->
+![](11-empirical_model_files/figure-latex/unnamed-chunk-64-8.pdf)<!-- --> 
+
+<br>
+
+## Geodemographic Classification
+
+Example by [Nick Bearman](https://rpubs.com/nickbearman/r-geodemographics)
+
+
+```r
+#Load libraries
+library(scales)
+library(ggplot2)
+
+
+#set up data and data frame
+oac_names <-
+    c(
+        "Blue Collar Communities",
+        "City Living",
+        "Countryside",
+        "Prospering Suburbs",
+        "Constrained by Circumstances",
+        "Typical Traits",
+        "Multicultural"
+    )
+
+broadsheets <- c(73.2, 144, 103.9, 109.1, 78.2, 97.1, 120.2)
+oac_broadsheets <- data.frame(oac_names, broadsheets)
+#convert the percentage values (e.g. 144%) to decimal increase or decrease (e.g. 0.44)
+oac_broadsheets$broadsheets <-  broadsheets / 100 - 1
+
+oac_broadsheets
+```
+
+```
+##                      oac_names broadsheets
+## 1      Blue Collar Communities      -0.268
+## 2                  City Living       0.440
+## 3                  Countryside       0.039
+## 4           Prospering Suburbs       0.091
+## 5 Constrained by Circumstances      -0.218
+## 6               Typical Traits      -0.029
+## 7                Multicultural       0.202
+```
+
+plot each group's percentage difference from the mean
+
+
+```r
+#select the colours we are going to use
+my_colour <-
+    c("#33A1C9",
+      "#FFEC8B",
+      "#A2CD5A",
+      "#CD7054",
+      "#B7B7B7",
+      "#9F79EE",
+      "#FCC08F")
+
+#plot the graph - this has several bits to it
+#the first three lines setup the data and type of graph
+ggplot(oac_broadsheets, aes(oac_names, broadsheets)) +
+    geom_bar(stat = "identity",
+             fill = my_colour,
+             position = "identity") +
+    theme(axis.text.x = element_text(
+        angle = 90,
+        hjust = 1,
+        vjust = 1,
+        size = 12
+    )) +
+    #this line add the lables to each bar
+    geom_text(aes(
+        label = paste(round(broadsheets * 100, digits = 0), "%"),
+        vjust = ifelse(broadsheets >= 0,-0.5, 1.5)
+    ), size = 3) +
+    #these lines as the axis labels and these fonts
+    theme(axis.title.x = element_text(size = 12)) +
+    theme(axis.title.y = element_text(size = 12)) +
+    scale_y_continuous("Difference from national average for broadsheet", labels = percent_format()) +
+    scale_x_discrete("OAC SuperGroups")
+```
+
+![](11-empirical_model_files/figure-latex/unnamed-chunk-66-1.pdf)<!-- --> 
+
+Create plot for another variable
+
+
+```r
+tabloids <- c(110.8, 82.2, 104.9, 94.5, 108.4, 96.4, 96.0)
+oac_tabloids <- data.frame(oac_names, tabloids)
+
+#convert the percentage values (e.g. 144%) to decimal increase or decrease (e.g. 0.44)
+oac_tabloids$tabloids <-  tabloids / 100 - 1
+
+oac_tabloids
+```
+
+```
+##                      oac_names tabloids
+## 1      Blue Collar Communities    0.108
+## 2                  City Living   -0.178
+## 3                  Countryside    0.049
+## 4           Prospering Suburbs   -0.055
+## 5 Constrained by Circumstances    0.084
+## 6               Typical Traits   -0.036
+## 7                Multicultural   -0.040
+```
+
+```r
+# plot
+ggplot(oac_tabloids, aes(oac_names, tabloids)) +
+    geom_bar(stat = "identity",
+             fill = my_colour,
+             position = "identity") +
+    theme(axis.text.x = element_text(
+        angle = 90,
+        hjust = 1,
+        vjust = 1,
+        size = 12
+    )) +
+    #this line add the lables to each bar
+    geom_text(aes(
+        label = paste(round(tabloids * 100, digits = 0), "%"),
+        vjust = ifelse(tabloids >= 0, -0.5, 1.5)
+    ), size = 3) +
+    #these lines as the axis labels and these fonts
+    theme(axis.title.x = element_text(size = 12)) +
+    theme(axis.title.y = element_text(size = 12)) +
+    scale_y_continuous("Difference from national average for tabloids", labels = percent_format()) +
+    scale_x_discrete("OAC SuperGroups")
+```
+
+![](11-empirical_model_files/figure-latex/unnamed-chunk-67-1.pdf)<!-- --> 
+
+To visualize how these two variables are distributed in a location such as Liverpool in this case.
+
+We load the shapefile
+
+
+```r
+#load library
+library(maptools)
+```
+
+```
+## Loading required package: sp
+```
+
+```
+## Checking rgeos availability: TRUE
+## Please note that 'maptools' will be retired by the end of 2023,
+## plan transition at your earliest convenience;
+## some functionality will be moved to 'sp'.
+```
+
+```r
+#download file
+# download.file("https://raw.githubusercontent.com/nickbearman/r-geodemographic-analysis-20140710/master/liverpool_OA.zip", "liverpool_OA.zip", method = "internal") #if you are running this on OSX, you will need to replace method = "internal" with method = "curl"
+
+#unzip file
+unzip("images/liverpool_OA.zip")
+
+
+#read in shapefile
+liverpool <- readShapeSpatial('liverpool_OA/liverpool', proj4string = CRS("+init=epsg:27700"))
+```
+
+```
+## Warning: readShapeSpatial is deprecated; use rgdal::readOGR or sf::st_read
+```
+
+```
+## Warning: readShapePoly is deprecated; use rgdal::readOGR or sf::st_read
+```
+
+```
+## Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj =
+## prefer_proj): Discarded datum OSGB_1936 in Proj4 definition
+```
+
+```r
+plot(liverpool)
+```
+
+![](11-empirical_model_files/figure-latex/unnamed-chunk-68-1.pdf)<!-- --> 
+
+The dataset can be attained [here](https://www.ons.gov.uk/methodology/geography/geographicalproducts/areaclassifications/2011areaclassifications/datasets) select [2011 OAC Clusters and Names csv (1.1 Mb ZIP)](https://www.ons.gov.uk/file?uri=/methodology/geography/geographicalproducts/areaclassifications/2011areaclassifications/datasets/2011oacclustersandnamescsvv2.zip)
+
+
+```r
+library(tidyverse)
+
+#read in OAC by OA csv file
+OAC <- rio::import("images/2011oacclustersandnamescsvv2.zip") %>%
+    select(
+        "Output Area Code",
+        "Supergroup Name",
+        "Supergroup Code",
+        "Group Name",
+        "Group Code",
+        "Subgroup Name",
+        "Subgroup Code"
+    ) %>%
+    rename("OA_CODE" = "Output Area Code")
+```
+
+Merge data (OAC) to its location (liverpool)
+
+
+```r
+# check dataset 
+# head(liverpool@data)
+# head(OAC)
+
+#Join OAC classification on to LSOA shapefile
+liverpool@data = data.frame(liverpool@data, OAC[match(liverpool@data[, "OA01CD"], OAC[, "OA_CODE"]),]) %>% drop_na()
+#Show head of liverpool
+head(liverpool@data)
+```
+
+```
+##      OA01CD  OA01CDOLD   OA_CODE   Supergroup.Name Supergroup.Code
+## 2 E00032987 00BYFA0003 E00032987 Ethnicity Central               3
+## 3 E00032988 00BYFA0004 E00032988     Cosmopolitans               2
+## 4 E00032989 00BYFA0005 E00032989 Ethnicity Central               3
+## 5 E00032990 00BYFA0006 E00032990 Ethnicity Central               3
+## 6 E00032991 00BYFA0007 E00032991 Ethnicity Central               3
+## 7 E00032992 00BYFA0008 E00032992 Ethnicity Central               3
+##                Group.Name Group.Code                             Subgroup.Name
+## 2      Ethnic Family Life         3a              Established Renting Families
+## 3  Students Around Campus         2a                Students and Professionals
+## 4 Endeavouring Ethnic Mix         3b Multi-Ethnic Professional Service Workers
+## 5    Aspirational Techies         3d                       Old EU Tech Workers
+## 6 Endeavouring Ethnic Mix         3b Multi-Ethnic Professional Service Workers
+## 7 Endeavouring Ethnic Mix         3b                  Striving Service Workers
+##   Subgroup.Code
+## 2           3a1
+## 3           2a3
+## 4           3b3
+## 5           3d3
+## 6           3b3
+## 7           3b1
+```
+
+
+```r
+#Define a set of colours, one for each of the OAC supergroups
+my_colour <-
+    c("#33A1C9",
+      "#FFEC8B",
+      "#A2CD5A",
+      "#CD7054",
+      "#B7B7B7",
+      "#9F79EE",
+      "#FCC08F")
+#Create a basic OAC choropleth map
+plot(liverpool,
+     col = my_colour[liverpool@data$Supergroup.Code],
+     axes = FALSE,
+     border = NA)
+
+
+#Name the groups we've used
+oac_names <-
+    liverpool@data %>% select(Supergroup.Name, Supergroup.Code) %>% unique() %>% arrange(Supergroup.Code) %>% select(Supergroup.Name) %>% deframe()
+
+
+#Add the legend (the oac_names object was created earlier)
+legend(
+    x = 332210,
+    y = 385752,
+    legend = oac_names,
+    fill = my_colour,
+    bty = "n",
+    cex = .8,
+    ncol = 1
+)
+#Add North Arrow
+SpatialPolygonsRescale(
+    layout.north.arrow(2),
+    offset = c(332610, 385852),
+    scale = 1600,
+    plot.grid = F
+)
+#Add Scale Bar
+SpatialPolygonsRescale(
+    layout.scale.bar(),
+    offset = c(333210, 381252),
+    scale = 5000,
+    fill = c("white", "black"),
+    plot.grid = F
+)
+#Add text to scale bar
+text(333410, 380952, "0km", cex = .8)
+text(333410 + 2500, 380952, "2.5km", cex = .8)
+text(333410 + 5000, 380952, "5km", cex = .8)
+#Add a title
+title("OAC Group Map of Liverpool")
+```
+
+![](11-empirical_model_files/figure-latex/unnamed-chunk-71-1.pdf)<!-- --> 

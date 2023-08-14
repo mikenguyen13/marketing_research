@@ -1,863 +1,866 @@
 <!DOCTYPE html>
-<html lang="" xml:lang="">
+<html lang="en">
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 19 Data | Marketing Research</title>
+<meta name="author" content="Mike Nguyen">
+<meta name="description" content='19.1 MongoDB in Mongo shell to check the location of your MongoDB files db.adminCommand("getCmdLineOpts")  19.2 WRDS Retrieve data from WRDS # to set up connection from R to WRDS...'>
+<meta name="generator" content="bookdown 0.34 with bs4_book()">
+<meta property="og:title" content="Chapter 19 Data | Marketing Research">
+<meta property="og:type" content="book">
+<meta property="og:image" content="/cover.jpg">
+<meta property="og:description" content='19.1 MongoDB in Mongo shell to check the location of your MongoDB files db.adminCommand("getCmdLineOpts")  19.2 WRDS Retrieve data from WRDS # to set up connection from R to WRDS...'>
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chapter 19 Data | Marketing Research">
+<meta name="twitter:description" content='19.1 MongoDB in Mongo shell to check the location of your MongoDB files db.adminCommand("getCmdLineOpts")  19.2 WRDS Retrieve data from WRDS # to set up connection from R to WRDS...'>
+<meta name="twitter:image" content="/cover.jpg">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><script src="libs/bs3compat-0.5.0/transition.js"></script><script src="libs/bs3compat-0.5.0/tabs.js"></script><script src="libs/bs3compat-0.5.0/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/htmlwidgets-1.6.2/htmlwidgets.js"></script><link href="libs/vis-9.1.0/vis-network.min.css" rel="stylesheet">
+<script src="libs/vis-9.1.0/vis-network.min.js"></script><script src="libs/visNetwork-binding-2.1.2/visNetwork.js"></script><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=G-46EBZ61358"></script><script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Chapter 12 Data | Marketing Research</title>
-  <meta name="description" content="Placeholder for interesting knowledge in marketing" />
-  <meta name="generator" content="bookdown 0.23 and GitBook 2.6.7" />
-
-  <meta property="og:title" content="Chapter 12 Data | Marketing Research" />
-  <meta property="og:type" content="book" />
-  
-  <meta property="og:image" content="/cover.jpg" />
-  <meta property="og:description" content="Placeholder for interesting knowledge in marketing" />
-  
-
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Chapter 12 Data | Marketing Research" />
-  
-  <meta name="twitter:description" content="Placeholder for interesting knowledge in marketing" />
-  <meta name="twitter:image" content="/cover.jpg" />
-
-<meta name="author" content="Mike Nguyen" />
-
-
-<meta name="date" content="2021-09-09" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="logo.png" />
-  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-<link rel="prev" href="metrics.html"/>
-<link rel="next" href="modeling-application.html"/>
-<script src="libs/header-attrs-2.10/header-attrs.js"></script>
-<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
-<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
-<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
-<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
-<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
-<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
-<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
-<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
-
-
-
-
-
-
-
-
-
-<link href="libs/anchor-sections-1.0.1/anchor-sections.css" rel="stylesheet" />
-<script src="libs/anchor-sections-1.0.1/anchor-sections.js"></script>
-<script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
-<link href="libs/vis-4.20.1/vis.css" rel="stylesheet" />
-<script src="libs/vis-4.20.1/vis.min.js"></script>
-<script src="libs/visNetwork-binding-2.0.9/visNetwork.js"></script>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-46EBZ61358"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-46EBZ61358');
-</script>
-
-
+      gtag('config', 'G-46EBZ61358');
+    </script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><style type="text/css">
+    
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  </style>
 <style type="text/css">
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-</style>
-
-<style type="text/css">
-/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-}
-.hanging div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
-}
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
-}
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}
-</style>
-
-<link rel="stylesheet" href="style.css" type="text/css" />
+    /* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+        }
+    .hanging div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }
+  </style>
 </head>
+<body data-spy="scroll" data-target="#toc">
 
-<body>
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
 
-
-
-  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
-
-    <div class="book-summary">
-      <nav role="navigation">
-
-<ul class="summary">
-<li><a href="./">Marketing Research</a></li>
-
-<li class="divider"></li>
-<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
-<li class="chapter" data-level="1" data-path="prerequisites.html"><a href="prerequisites.html"><i class="fa fa-check"></i><b>1</b> Prerequisites</a></li>
-<li class="chapter" data-level="2" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>2</b> Introduction</a></li>
-<li class="chapter" data-level="3" data-path="advertising.html"><a href="advertising.html"><i class="fa fa-check"></i><b>3</b> Advertising</a>
-<ul>
-<li class="chapter" data-level="3.1" data-path="advertising.html"><a href="advertising.html#cognitive-and-affective-mediators-of-advertising-effects"><i class="fa fa-check"></i><b>3.1</b> Cognitive and Affective mediators of Advertising Effects</a></li>
-</ul></li>
-<li class="chapter" data-level="4" data-path="brand-equity.html"><a href="brand-equity.html"><i class="fa fa-check"></i><b>4</b> Brand Equity</a>
-<ul>
-<li class="chapter" data-level="4.1" data-path="brand-equity.html"><a href="brand-equity.html#brand-association"><i class="fa fa-check"></i><b>4.1</b> Brand Association</a></li>
-<li class="chapter" data-level="4.2" data-path="brand-equity.html"><a href="brand-equity.html#brand-loyalty"><i class="fa fa-check"></i><b>4.2</b> Brand Loyalty</a></li>
-</ul></li>
-<li class="chapter" data-level="5" data-path="celebrity-endorsement.html"><a href="celebrity-endorsement.html"><i class="fa fa-check"></i><b>5</b> Celebrity Endorsement</a></li>
-<li class="chapter" data-level="6" data-path="innovation.html"><a href="innovation.html"><i class="fa fa-check"></i><b>6</b> Innovation</a></li>
-<li class="chapter" data-level="7" data-path="wom-virality.html"><a href="wom-virality.html"><i class="fa fa-check"></i><b>7</b> WOM / Virality</a>
-<ul>
-<li class="chapter" data-level="7.1" data-path="wom-virality.html"><a href="wom-virality.html#structural-virality"><i class="fa fa-check"></i><b>7.1</b> Structural Virality</a></li>
-<li class="chapter" data-level="7.2" data-path="wom-virality.html"><a href="wom-virality.html#mechanisms-processes"><i class="fa fa-check"></i><b>7.2</b> Mechanisms/ Processes</a>
-<ul>
-<li class="chapter" data-level="7.2.1" data-path="wom-virality.html"><a href="wom-virality.html#impression-management"><i class="fa fa-check"></i><b>7.2.1</b> Impression Management</a></li>
-<li class="chapter" data-level="7.2.2" data-path="wom-virality.html"><a href="wom-virality.html#emotion-regulation"><i class="fa fa-check"></i><b>7.2.2</b> Emotion regulation</a></li>
-<li class="chapter" data-level="7.2.3" data-path="wom-virality.html"><a href="wom-virality.html#information-acquisition"><i class="fa fa-check"></i><b>7.2.3</b> Information acquisition</a></li>
-<li class="chapter" data-level="7.2.4" data-path="wom-virality.html"><a href="wom-virality.html#social-bonding"><i class="fa fa-check"></i><b>7.2.4</b> Social bonding</a></li>
-<li class="chapter" data-level="7.2.5" data-path="wom-virality.html"><a href="wom-virality.html#persuading-others"><i class="fa fa-check"></i><b>7.2.5</b> Persuading others</a></li>
-</ul></li>
-<li class="chapter" data-level="7.3" data-path="wom-virality.html"><a href="wom-virality.html#moderators"><i class="fa fa-check"></i><b>7.3</b> Moderators</a></li>
-<li class="chapter" data-level="7.4" data-path="wom-virality.html"><a href="wom-virality.html#drivers-of-virality"><i class="fa fa-check"></i><b>7.4</b> Drivers of Virality</a>
-<ul>
-<li class="chapter" data-level="7.4.1" data-path="wom-virality.html"><a href="wom-virality.html#social-currency"><i class="fa fa-check"></i><b>7.4.1</b> Social Currency</a></li>
-<li class="chapter" data-level="7.4.2" data-path="wom-virality.html"><a href="wom-virality.html#accessibility"><i class="fa fa-check"></i><b>7.4.2</b> Accessibility</a></li>
-<li class="chapter" data-level="7.4.3" data-path="wom-virality.html"><a href="wom-virality.html#emotions"><i class="fa fa-check"></i><b>7.4.3</b> Emotions</a></li>
-</ul></li>
-<li class="chapter" data-level="7.5" data-path="wom-virality.html"><a href="wom-virality.html#other-variables"><i class="fa fa-check"></i><b>7.5</b> Other variables</a>
-<ul>
-<li class="chapter" data-level="7.5.1" data-path="wom-virality.html"><a href="wom-virality.html#contractuality"><i class="fa fa-check"></i><b>7.5.1</b> Contractuality</a></li>
-<li class="chapter" data-level="7.5.2" data-path="wom-virality.html"><a href="wom-virality.html#locus-of-control"><i class="fa fa-check"></i><b>7.5.2</b> Locus of Control</a></li>
-<li class="chapter" data-level="7.5.3" data-path="wom-virality.html"><a href="wom-virality.html#horizontalvertical-individualism"><i class="fa fa-check"></i><b>7.5.3</b> Horizontal/Vertical Individualism</a></li>
-</ul></li>
-<li class="chapter" data-level="7.6" data-path="wom-virality.html"><a href="wom-virality.html#articles"><i class="fa fa-check"></i><b>7.6</b> Articles</a></li>
-</ul></li>
-<li class="chapter" data-level="8" data-path="customer-lifetime-value-clv.html"><a href="customer-lifetime-value-clv.html"><i class="fa fa-check"></i><b>8</b> Customer Lifetime Value (CLV)</a>
-<ul>
-<li class="chapter" data-level="8.1" data-path="customer-lifetime-value-clv.html"><a href="customer-lifetime-value-clv.html#example"><i class="fa fa-check"></i><b>8.1</b> Example</a></li>
-<li class="chapter" data-level="8.2" data-path="customer-lifetime-value-clv.html"><a href="customer-lifetime-value-clv.html#referral-value-crv"><i class="fa fa-check"></i><b>8.2</b> Referral value (CRV)</a></li>
-</ul></li>
-<li class="chapter" data-level="9" data-path="finance-marketing-interface.html"><a href="finance-marketing-interface.html"><i class="fa fa-check"></i><b>9</b> Finance-Marketing Interface</a></li>
-<li class="chapter" data-level="10" data-path="communication.html"><a href="communication.html"><i class="fa fa-check"></i><b>10</b> Communication</a>
-<ul>
-<li class="chapter" data-level="10.1" data-path="communication.html"><a href="communication.html#information-theory"><i class="fa fa-check"></i><b>10.1</b> Information Theory</a>
-<ul>
-<li class="chapter" data-level="10.1.1" data-path="communication.html"><a href="communication.html#entropy"><i class="fa fa-check"></i><b>10.1.1</b> Entropy</a></li>
-<li class="chapter" data-level="10.1.2" data-path="communication.html"><a href="communication.html#divergence"><i class="fa fa-check"></i><b>10.1.2</b> Divergence</a></li>
-<li class="chapter" data-level="10.1.3" data-path="communication.html"><a href="communication.html#channel-capacity"><i class="fa fa-check"></i><b>10.1.3</b> Channel Capacity</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="11" data-path="metrics.html"><a href="metrics.html"><i class="fa fa-check"></i><b>11</b> Metrics</a>
-<ul>
-<li class="chapter" data-level="11.1" data-path="metrics.html"><a href="metrics.html#return-on-investment-roi"><i class="fa fa-check"></i><b>11.1</b> Return on Investment (ROI)</a></li>
-<li class="chapter" data-level="11.2" data-path="metrics.html"><a href="metrics.html#economic-value-added"><i class="fa fa-check"></i><b>11.2</b> Economic Value Added</a></li>
-<li class="chapter" data-level="11.3" data-path="metrics.html"><a href="metrics.html#market-value-added"><i class="fa fa-check"></i><b>11.3</b> Market Value Added</a></li>
-<li class="chapter" data-level="11.4" data-path="metrics.html"><a href="metrics.html#unexpected-size-adjusted-advertising-investments"><i class="fa fa-check"></i><b>11.4</b> Unexpected size-adjusted advertising investments</a></li>
-<li class="chapter" data-level="11.5" data-path="metrics.html"><a href="metrics.html#shareholder-complaints"><i class="fa fa-check"></i><b>11.5</b> Shareholder Complaints</a></li>
-<li class="chapter" data-level="11.6" data-path="metrics.html"><a href="metrics.html#profitability"><i class="fa fa-check"></i><b>11.6</b> Profitability</a></li>
-<li class="chapter" data-level="11.7" data-path="metrics.html"><a href="metrics.html#firm-size"><i class="fa fa-check"></i><b>11.7</b> Firm Size</a></li>
-<li class="chapter" data-level="11.8" data-path="metrics.html"><a href="metrics.html#financial-flexibility"><i class="fa fa-check"></i><b>11.8</b> Financial Flexibility</a>
-<ul>
-<li class="chapter" data-level="11.8.1" data-path="metrics.html"><a href="metrics.html#cash-flows"><i class="fa fa-check"></i><b>11.8.1</b> Cash flows</a></li>
-<li class="chapter" data-level="11.8.2" data-path="metrics.html"><a href="metrics.html#financial-leverage"><i class="fa fa-check"></i><b>11.8.2</b> Financial Leverage</a></li>
-</ul></li>
-<li class="chapter" data-level="11.9" data-path="metrics.html"><a href="metrics.html#stock-return"><i class="fa fa-check"></i><b>11.9</b> Stock return</a></li>
-<li class="chapter" data-level="11.10" data-path="metrics.html"><a href="metrics.html#financial-flexibility-1"><i class="fa fa-check"></i><b>11.10</b> Financial Flexibility</a></li>
-<li class="chapter" data-level="11.11" data-path="metrics.html"><a href="metrics.html#net-contribution"><i class="fa fa-check"></i><b>11.11</b> Net Contribution</a></li>
-</ul></li>
-<li class="chapter" data-level="12" data-path="data.html"><a href="data.html"><i class="fa fa-check"></i><b>12</b> Data</a>
-<ul>
-<li class="chapter" data-level="12.1" data-path="data.html"><a href="data.html#mongodb"><i class="fa fa-check"></i><b>12.1</b> MongoDB</a></li>
-<li class="chapter" data-level="12.2" data-path="data.html"><a href="data.html#wrds"><i class="fa fa-check"></i><b>12.2</b> WRDS</a></li>
-<li class="chapter" data-level="12.3" data-path="data.html"><a href="data.html#youtube"><i class="fa fa-check"></i><b>12.3</b> YouTube</a>
-<ul>
-<li class="chapter" data-level="12.3.1" data-path="data.html"><a href="data.html#oauth"><i class="fa fa-check"></i><b>12.3.1</b> OAuth</a></li>
-<li class="chapter" data-level="12.3.2" data-path="data.html"><a href="data.html#api"><i class="fa fa-check"></i><b>12.3.2</b> API</a></li>
-<li class="chapter" data-level="12.3.3" data-path="data.html"><a href="data.html#python"><i class="fa fa-check"></i><b>12.3.3</b> Python</a></li>
-</ul></li>
-<li class="chapter" data-level="12.4" data-path="data.html"><a href="data.html#consumer-expenditure"><i class="fa fa-check"></i><b>12.4</b> Consumer Expenditure</a></li>
-</ul></li>
-<li class="chapter" data-level="13" data-path="modeling-application.html"><a href="modeling-application.html"><i class="fa fa-check"></i><b>13</b> Modeling Application</a>
-<ul>
-<li class="chapter" data-level="13.1" data-path="modeling-application.html"><a href="modeling-application.html#transformation"><i class="fa fa-check"></i><b>13.1</b> Transformation</a>
-<ul>
-<li class="chapter" data-level="13.1.1" data-path="modeling-application.html"><a href="modeling-application.html#log-transformation"><i class="fa fa-check"></i><b>13.1.1</b> Log-transformation</a></li>
-</ul></li>
-<li class="chapter" data-level="13.2" data-path="modeling-application.html"><a href="modeling-application.html#endogeneity"><i class="fa fa-check"></i><b>13.2</b> Endogeneity</a>
-<ul>
-<li class="chapter" data-level="13.2.1" data-path="modeling-application.html"><a href="modeling-application.html#control-function"><i class="fa fa-check"></i><b>13.2.1</b> Control Function</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="14" data-path="analytical-models.html"><a href="analytical-models.html"><i class="fa fa-check"></i><b>14</b> Analytical Models</a>
-<ul>
-<li class="chapter" data-level="14.1" data-path="analytical-models.html"><a href="analytical-models.html#positioning-models"><i class="fa fa-check"></i><b>14.1</b> Positioning Models</a></li>
-<li class="chapter" data-level="14.2" data-path="analytical-models.html"><a href="analytical-models.html#market-response-model"><i class="fa fa-check"></i><b>14.2</b> Market Response Model</a></li>
-<li class="chapter" data-level="14.3" data-path="analytical-models.html"><a href="analytical-models.html#marketing-resource-allocation-models"><i class="fa fa-check"></i><b>14.3</b> Marketing Resource Allocation Models</a>
-<ul>
-<li class="chapter" data-level="14.3.1" data-path="analytical-models.html"><a href="analytical-models.html#case-study-1"><i class="fa fa-check"></i><b>14.3.1</b> Case study 1</a></li>
-<li class="chapter" data-level="14.3.2" data-path="analytical-models.html"><a href="analytical-models.html#case-study-2"><i class="fa fa-check"></i><b>14.3.2</b> Case study 2</a></li>
-<li class="chapter" data-level="14.3.3" data-path="analytical-models.html"><a href="analytical-models.html#case-study-3"><i class="fa fa-check"></i><b>14.3.3</b> Case study 3</a></li>
-</ul></li>
-<li class="chapter" data-level="14.4" data-path="analytical-models.html"><a href="analytical-models.html#meta-analyses-of-econometric-marketing-models"><i class="fa fa-check"></i><b>14.4</b> Meta-analyses of Econometric Marketing Models</a></li>
-<li class="chapter" data-level="14.5" data-path="analytical-models.html"><a href="analytical-models.html#dynamic-advertising-effects-and-spending-models"><i class="fa fa-check"></i><b>14.5</b> Dynamic Advertising Effects and Spending Models</a></li>
-<li class="chapter" data-level="14.6" data-path="analytical-models.html"><a href="analytical-models.html#marketing-mix-optimization-models"><i class="fa fa-check"></i><b>14.6</b> Marketing Mix Optimization Models</a></li>
-<li class="chapter" data-level="14.7" data-path="analytical-models.html"><a href="analytical-models.html#new-product-diffusion-models"><i class="fa fa-check"></i><b>14.7</b> New Product Diffusion Models</a></li>
-<li class="chapter" data-level="14.8" data-path="analytical-models.html"><a href="analytical-models.html#two-sided-platform-marketing-models"><i class="fa fa-check"></i><b>14.8</b> Two-sided Platform Marketing Models</a></li>
-</ul></li>
-<li class="chapter" data-level="15" data-path="empirical-models.html"><a href="empirical-models.html"><i class="fa fa-check"></i><b>15</b> Empirical Models</a>
-<ul>
-<li class="chapter" data-level="15.1" data-path="empirical-models.html"><a href="empirical-models.html#attribution-models"><i class="fa fa-check"></i><b>15.1</b> Attribution Models</a>
-<ul>
-<li class="chapter" data-level="15.1.1" data-path="empirical-models.html"><a href="empirical-models.html#ordered-shapley"><i class="fa fa-check"></i><b>15.1.1</b> Ordered Shapley</a></li>
-<li class="chapter" data-level="15.1.2" data-path="empirical-models.html"><a href="empirical-models.html#markov-model"><i class="fa fa-check"></i><b>15.1.2</b> Markov Model</a></li>
-</ul></li>
-<li class="chapter" data-level="15.2" data-path="empirical-models.html"><a href="empirical-models.html#sales-funnel"><i class="fa fa-check"></i><b>15.2</b> Sales Funnel</a>
-<ul>
-<li class="chapter" data-level="15.2.1" data-path="empirical-models.html"><a href="empirical-models.html#example-1-1"><i class="fa fa-check"></i><b>15.2.1</b> Example 1</a></li>
-<li class="chapter" data-level="15.2.2" data-path="empirical-models.html"><a href="empirical-models.html#example-2-1"><i class="fa fa-check"></i><b>15.2.2</b> Example 2</a></li>
-</ul></li>
-<li class="chapter" data-level="15.3" data-path="empirical-models.html"><a href="empirical-models.html#rfm"><i class="fa fa-check"></i><b>15.3</b> RFM</a>
-<ul>
-<li class="chapter" data-level="15.3.1" data-path="empirical-models.html"><a href="empirical-models.html#visualization"><i class="fa fa-check"></i><b>15.3.1</b> Visualization</a></li>
-<li class="chapter" data-level="15.3.2" data-path="empirical-models.html"><a href="empirical-models.html#rfmc"><i class="fa fa-check"></i><b>15.3.2</b> RFMC</a></li>
-</ul></li>
-<li class="chapter" data-level="15.4" data-path="empirical-models.html"><a href="empirical-models.html#customer-segmentation"><i class="fa fa-check"></i><b>15.4</b> Customer Segmentation</a>
-<ul>
-<li class="chapter" data-level="15.4.1" data-path="empirical-models.html"><a href="empirical-models.html#example-1-2"><i class="fa fa-check"></i><b>15.4.1</b> Example 1</a></li>
-<li class="chapter" data-level="15.4.2" data-path="empirical-models.html"><a href="empirical-models.html#example-2-2"><i class="fa fa-check"></i><b>15.4.2</b> Example 2</a></li>
-</ul></li>
-<li class="chapter" data-level="15.5" data-path="empirical-models.html"><a href="empirical-models.html#shopping-carts-analysis"><i class="fa fa-check"></i><b>15.5</b> Shopping carts analysis</a>
-<ul>
-<li class="chapter" data-level="15.5.1" data-path="empirical-models.html"><a href="empirical-models.html#multi-layer-pie-chart"><i class="fa fa-check"></i><b>15.5.1</b> Multi-layer pie chart</a></li>
-<li class="chapter" data-level="15.5.2" data-path="empirical-models.html"><a href="empirical-models.html#sankey-diagram"><i class="fa fa-check"></i><b>15.5.2</b> Sankey Diagram</a></li>
-<li class="chapter" data-level="15.5.3" data-path="empirical-models.html"><a href="empirical-models.html#sequence-in-depth-analysis"><i class="fa fa-check"></i><b>15.5.3</b> Sequence in-depth analysis</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="16" data-path="qualitative-research.html"><a href="qualitative-research.html"><i class="fa fa-check"></i><b>16</b> Qualitative Research</a>
-<ul>
-<li class="chapter" data-level="16.1" data-path="qualitative-research.html"><a href="qualitative-research.html#inter-rate-reliability-methods"><i class="fa fa-check"></i><b>16.1</b> Inter-rate reliability methods</a>
-<ul>
-<li class="chapter" data-level="16.1.1" data-path="qualitative-research.html"><a href="qualitative-research.html#percent-agreement"><i class="fa fa-check"></i><b>16.1.1</b> Percent Agreement</a></li>
-<li class="chapter" data-level="16.1.2" data-path="qualitative-research.html"><a href="qualitative-research.html#cohens-kappa"><i class="fa fa-check"></i><b>16.1.2</b> Cohen’s Kappa</a></li>
-<li class="chapter" data-level="16.1.3" data-path="qualitative-research.html"><a href="qualitative-research.html#fleisskappa"><i class="fa fa-check"></i><b>16.1.3</b> Fleiss’kappa</a></li>
-</ul></li>
-<li class="chapter" data-level="16.2" data-path="qualitative-research.html"><a href="qualitative-research.html#krippendorffs-alpha"><i class="fa fa-check"></i><b>16.2</b> Krippendorff’s Alpha</a>
-<ul>
-<li class="chapter" data-level="16.2.1" data-path="qualitative-research.html"><a href="qualitative-research.html#kendalls-w"><i class="fa fa-check"></i><b>16.2.1</b> Kendall’s W</a></li>
-<li class="chapter" data-level="16.2.2" data-path="qualitative-research.html"><a href="qualitative-research.html#intraclass-correlation-coefficients"><i class="fa fa-check"></i><b>16.2.2</b> Intraclass correlation coefficients</a></li>
-<li class="chapter" data-level="16.2.3" data-path="qualitative-research.html"><a href="qualitative-research.html#lights-kappa"><i class="fa fa-check"></i><b>16.2.3</b> Light’s kappa</a></li>
-</ul></li>
-</ul></li>
-<li class="chapter" data-level="17" data-path="nudges.html"><a href="nudges.html"><i class="fa fa-check"></i><b>17</b> Nudges</a></li>
-<li class="chapter" data-level="18" data-path="visualization-1.html"><a href="visualization-1.html"><i class="fa fa-check"></i><b>18</b> Visualization</a></li>
-<li class="chapter" data-level="19" data-path="surveys.html"><a href="surveys.html"><i class="fa fa-check"></i><b>19</b> Surveys</a></li>
-<li class="chapter" data-level="20" data-path="construct-vs.-variable.html"><a href="construct-vs.-variable.html"><i class="fa fa-check"></i><b>20</b> Construct vs. Variable</a></li>
-<li class="chapter" data-level="21" data-path="experiment.html"><a href="experiment.html"><i class="fa fa-check"></i><b>21</b> Experiment</a></li>
-<li class="chapter" data-level="22" data-path="report.html"><a href="report.html"><i class="fa fa-check"></i><b>22</b> Report</a></li>
-<li class="chapter" data-level="23" data-path="surveys-1.html"><a href="surveys-1.html"><i class="fa fa-check"></i><b>23</b> Surveys</a></li>
-<li class="chapter" data-level="24" data-path="construct-vs.-variable-1.html"><a href="construct-vs.-variable-1.html"><i class="fa fa-check"></i><b>24</b> Construct vs. Variable</a></li>
-<li class="chapter" data-level="25" data-path="experiment-1.html"><a href="experiment-1.html"><i class="fa fa-check"></i><b>25</b> Experiment</a></li>
-<li class="chapter" data-level="26" data-path="image.html"><a href="image.html"><i class="fa fa-check"></i><b>26</b> Image</a></li>
-<li class="chapter" data-level="27" data-path="sarcasm.html"><a href="sarcasm.html"><i class="fa fa-check"></i><b>27</b> Sarcasm</a></li>
-<li class="chapter" data-level="28" data-path="formative-vs.-reflective-measurements.html"><a href="formative-vs.-reflective-measurements.html"><i class="fa fa-check"></i><b>28</b> Formative vs. Reflective Measurements</a>
-<ul>
-<li class="chapter" data-level="28.1" data-path="formative-vs.-reflective-measurements.html"><a href="formative-vs.-reflective-measurements.html#alternative-to-formative-model"><i class="fa fa-check"></i><b>28.1</b> Alternative to formative model</a></li>
-</ul></li>
-<li class="chapter" data-level="29" data-path="scientific-writing.html"><a href="scientific-writing.html"><i class="fa fa-check"></i><b>29</b> Scientific Writing</a></li>
-<li class="chapter" data-level="30" data-path="review-process.html"><a href="review-process.html"><i class="fa fa-check"></i><b>30</b> Review Process</a></li>
-<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
-<li class="chapter" data-level="31" data-path="behavioral-seminar.html"><a href="behavioral-seminar.html"><i class="fa fa-check"></i><b>31</b> Behavioral Seminar</a></li>
-<li class="chapter" data-level="32" data-path="cb-seminar.html"><a href="cb-seminar.html"><i class="fa fa-check"></i><b>32</b> CB Seminar</a>
-<ul>
-<li class="chapter" data-level="32.1" data-path="cb-seminar.html"><a href="cb-seminar.html#overview"><i class="fa fa-check"></i><b>32.1</b> Overview</a></li>
-<li class="chapter" data-level="32.2" data-path="cb-seminar.html"><a href="cb-seminar.html#social-influence"><i class="fa fa-check"></i><b>32.2</b> Social Influence</a></li>
-<li class="chapter" data-level="32.3" data-path="cb-seminar.html"><a href="cb-seminar.html#interpersonal-perception-and-consumer-lay-beliefs"><i class="fa fa-check"></i><b>32.3</b> Interpersonal perception and consumer lay beliefs</a></li>
-<li class="chapter" data-level="32.4" data-path="cb-seminar.html"><a href="cb-seminar.html#emotions-mood-and-affect"><i class="fa fa-check"></i><b>32.4</b> Emotions, mood and affect</a></li>
-<li class="chapter" data-level="32.5" data-path="cb-seminar.html"><a href="cb-seminar.html#persuasion-and-attitude-change"><i class="fa fa-check"></i><b>32.5</b> Persuasion and attitude change</a></li>
-<li class="chapter" data-level="32.6" data-path="cb-seminar.html"><a href="cb-seminar.html#judgment-and-decision-making-and-behavioral-pricing"><i class="fa fa-check"></i><b>32.6</b> Judgment and decision making and behavioral pricing</a></li>
-<li class="chapter" data-level="32.7" data-path="cb-seminar.html"><a href="cb-seminar.html#goals-and-motivation"><i class="fa fa-check"></i><b>32.7</b> Goals and Motivation</a></li>
-<li class="chapter" data-level="32.8" data-path="cb-seminar.html"><a href="cb-seminar.html#brand-personality-and-consumer--brand-relationships"><i class="fa fa-check"></i><b>32.8</b> Brand personality and consumer -brand relationships</a></li>
-<li class="chapter" data-level="32.9" data-path="cb-seminar.html"><a href="cb-seminar.html#culture-and-consumer-behavior"><i class="fa fa-check"></i><b>32.9</b> Culture and consumer behavior</a></li>
-<li class="chapter" data-level="32.10" data-path="cb-seminar.html"><a href="cb-seminar.html#prosocial-behavior-and-morality"><i class="fa fa-check"></i><b>32.10</b> Prosocial behavior and morality</a></li>
-<li class="chapter" data-level="32.11" data-path="cb-seminar.html"><a href="cb-seminar.html#consumer-well-being"><i class="fa fa-check"></i><b>32.11</b> Consumer well-being</a></li>
-<li class="chapter" data-level="32.12" data-path="cb-seminar.html"><a href="cb-seminar.html#digital-marketing-and-wom"><i class="fa fa-check"></i><b>32.12</b> Digital marketing and WOM</a></li>
-<li class="chapter" data-level="32.13" data-path="cb-seminar.html"><a href="cb-seminar.html#experiential-consumption-and-time"><i class="fa fa-check"></i><b>32.13</b> Experiential consumption and time</a></li>
-</ul></li>
-<li class="chapter" data-level="33" data-path="model-building.html"><a href="model-building.html"><i class="fa fa-check"></i><b>33</b> Model Building</a></li>
-<li class="chapter" data-level="34" data-path="sales.html"><a href="sales.html"><i class="fa fa-check"></i><b>34</b> Sales</a></li>
-<li class="chapter" data-level="35" data-path="satisfaction.html"><a href="satisfaction.html"><i class="fa fa-check"></i><b>35</b> Satisfaction</a></li>
-<li class="divider"></li>
-<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
-
-</ul>
-
-      </nav>
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="">Marketing Research</a>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
     </div>
 
-    <div class="book-body">
-      <div class="body-inner">
-        <div class="book-header" role="navigation">
-          <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Marketing Research</a>
-          </h1>
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Preface</a></li>
+<li><a class="" href="intro.html"><span class="header-section-number">1</span> Introduction</a></li>
+<li class="book-part">CONSTRUCTS</li>
+<li><a class="" href="construct-vs.-variable.html"><span class="header-section-number">2</span> Construct vs. Variable</a></li>
+<li><a class="" href="satisfaction.html"><span class="header-section-number">3</span> Satisfaction</a></li>
+<li><a class="" href="innovation.html"><span class="header-section-number">4</span> Innovation</a></li>
+<li><a class="" href="market-entry.html"><span class="header-section-number">5</span> Market Entry</a></li>
+<li><a class="" href="wom-virality.html"><span class="header-section-number">6</span> WOM / Virality</a></li>
+<li><a class="" href="sarcasm.html"><span class="header-section-number">7</span> Sarcasm</a></li>
+<li class="book-part">SUBSTANCE</li>
+<li><a class="" href="branding.html"><span class="header-section-number">8</span> Branding</a></li>
+<li><a class="" href="virtual-environment.html"><span class="header-section-number">9</span> Virtual Environment</a></li>
+<li><a class="" href="advertising.html"><span class="header-section-number">10</span> Advertising</a></li>
+<li><a class="" href="communication.html"><span class="header-section-number">11</span> Communication</a></li>
+<li><a class="" href="sales.html"><span class="header-section-number">12</span> Sales</a></li>
+<li><a class="" href="customer-lifetime-value-clv.html"><span class="header-section-number">13</span> Customer Lifetime Value (CLV)</a></li>
+<li><a class="" href="celebrity-endorsement.html"><span class="header-section-number">14</span> Celebrity Endorsement</a></li>
+<li><a class="" href="nudges.html"><span class="header-section-number">15</span> Nudges</a></li>
+<li><a class="" href="marketing-finance-interface.html"><span class="header-section-number">16</span> Marketing-Finance Interface</a></li>
+<li><a class="" href="privacy.html"><span class="header-section-number">17</span> Privacy</a></li>
+<li class="book-part">METHODOLOGY</li>
+<li><a class="" href="metrics.html"><span class="header-section-number">18</span> Metrics</a></li>
+<li><a class="active" href="data.html"><span class="header-section-number">19</span> Data</a></li>
+<li><a class="" href="modeling-in-marketing.html"><span class="header-section-number">20</span> Modeling in Marketing</a></li>
+<li><a class="" href="analytical-models.html"><span class="header-section-number">21</span> Analytical Models</a></li>
+<li><a class="" href="empirical-models.html"><span class="header-section-number">22</span> Empirical Models</a></li>
+<li><a class="" href="model-building.html"><span class="header-section-number">23</span> Model Building</a></li>
+<li><a class="" href="structural-models.html"><span class="header-section-number">24</span> Structural Models</a></li>
+<li><a class="" href="qualitative-research.html"><span class="header-section-number">25</span> Qualitative Research</a></li>
+<li><a class="" href="measurement-scales.html"><span class="header-section-number">26</span> Measurement Scales</a></li>
+<li><a class="" href="preference-measurement.html"><span class="header-section-number">27</span> Preference Measurement</a></li>
+<li><a class="" href="image-processing.html"><span class="header-section-number">28</span> Image Processing</a></li>
+<li><a class="" href="surveys.html"><span class="header-section-number">29</span> Surveys</a></li>
+<li><a class="" href="experiment.html"><span class="header-section-number">30</span> Experiment</a></li>
+<li class="book-part">OTHERS</li>
+<li><a class="" href="report.html"><span class="header-section-number">31</span> Report</a></li>
+<li><a class="" href="review-process.html"><span class="header-section-number">32</span> Review Process</a></li>
+<li><a class="" href="scientific-writing.html"><span class="header-section-number">33</span> Scientific Writing</a></li>
+<li><a class="" href="cb-seminar.html"><span class="header-section-number">34</span> CB Seminar</a></li>
+<li><a class="" href="marketing-mix-models.html"><span class="header-section-number">35</span> Marketing Mix Models</a></li>
+<li><a class="" href="strategic-dynamic-models.html"><span class="header-section-number">36</span> Strategic Dynamic Models</a></li>
+<li><a class="" href="washu-analytical-model.html"><span class="header-section-number">37</span> WashU Analytical Model</a></li>
+<li><a class="" href="marketing-strategy.html"><span class="header-section-number">38</span> Marketing Strategy</a></li>
+<li><a class="" href="others.html"><span class="header-section-number">39</span> Others</a></li>
+<li class="book-part">CASE STUDIES</li>
+<li><a class="" href="case-studies-in-branding.html"><span class="header-section-number">40</span> Case Studies in Branding</a></li>
+<li><a class="" href="case-studies-in-advertising.html"><span class="header-section-number">41</span> Case Studies in Advertising</a></li>
+<li><a class="" href="references.html">References</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/mikenguyen13/marketing_research">View book source <i class="fab fa-github"></i></a></p>
         </div>
-
-        <div class="page-wrapper" tabindex="-1" role="main">
-          <div class="page-inner">
-
-            <section class="normal" id="section-">
-<div id="data" class="section level1" number="12">
-<h1><span class="header-section-number">Chapter 12</span> Data</h1>
-<div id="mongodb" class="section level2" number="12.1">
-<h2><span class="header-section-number">12.1</span> MongoDB</h2>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="data" class="section level1" number="19">
+<h1>
+<span class="header-section-number">19</span> Data<a class="anchor" aria-label="anchor" href="#data"><i class="fas fa-link"></i></a>
+</h1>
+<div id="mongodb" class="section level2" number="19.1">
+<h2>
+<span class="header-section-number">19.1</span> MongoDB<a class="anchor" aria-label="anchor" href="#mongodb"><i class="fas fa-link"></i></a>
+</h2>
 <p>in <code>Mongo</code> shell to check the location of your MongoDB files</p>
 <p><code>db.adminCommand("getCmdLineOpts")</code></p>
 </div>
-<div id="wrds" class="section level2" number="12.2">
-<h2><span class="header-section-number">12.2</span> WRDS</h2>
+<div id="wrds" class="section level2" number="19.2">
+<h2>
+<span class="header-section-number">19.2</span> WRDS<a class="anchor" aria-label="anchor" href="#wrds"><i class="fas fa-link"></i></a>
+</h2>
 <p>Retrieve data from WRDS</p>
-<pre><code>## Warning: package &#39;RPostgres&#39; was built under R version 4.0.5</code></pre>
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.0.5</code></pre>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="data.html#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)</span></span>
-<span id="cb45-2"><a href="data.html#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RPostgres)</span>
-<span id="cb45-3"><a href="data.html#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb45-4"><a href="data.html#cb45-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-5"><a href="data.html#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="co"># I&#39;ve set up wrds connection before hand. Please use your username and password here.</span></span>
-<span id="cb45-6"><a href="data.html#cb45-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-7"><a href="data.html#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="co"># wrds &lt;- dbConnect(Postgres(),</span></span>
-<span id="cb45-8"><a href="data.html#cb45-8" aria-hidden="true" tabindex="-1"></a><span class="co">#                   host=&#39;wrds-pgdata.wharton.upenn.edu&#39;,</span></span>
-<span id="cb45-9"><a href="data.html#cb45-9" aria-hidden="true" tabindex="-1"></a><span class="co">#                   port=9737,</span></span>
-<span id="cb45-10"><a href="data.html#cb45-10" aria-hidden="true" tabindex="-1"></a><span class="co">#                   dbname=&#39;wrds&#39;,</span></span>
-<span id="cb45-11"><a href="data.html#cb45-11" aria-hidden="true" tabindex="-1"></a><span class="co">#                   sslmode=&#39;require&#39;,</span></span>
-<span id="cb45-12"><a href="data.html#cb45-12" aria-hidden="true" tabindex="-1"></a><span class="co">#                   user=&#39;&#39;)</span></span>
-<span id="cb45-13"><a href="data.html#cb45-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-14"><a href="data.html#cb45-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Check variables (column headers) in COMP ANNUAL FUNDAMENTAL</span></span>
-<span id="cb45-15"><a href="data.html#cb45-15" aria-hidden="true" tabindex="-1"></a><span class="co">#uses the already-established wrds connection to prepare the SQL query string and save the query as the result res.</span></span>
-<span id="cb45-16"><a href="data.html#cb45-16" aria-hidden="true" tabindex="-1"></a><span class="co"># check avaiable databases: https://wrds-web.wharton.upenn.edu/wrds/tools/variable.cfm?vendor_id=7</span></span>
-<span id="cb45-17"><a href="data.html#cb45-17" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">dbSendQuery</span>(wrds, <span class="st">&quot;select column_name</span></span>
-<span id="cb45-18"><a href="data.html#cb45-18" aria-hidden="true" tabindex="-1"></a><span class="st">                   from information_schema.columns</span></span>
-<span id="cb45-19"><a href="data.html#cb45-19" aria-hidden="true" tabindex="-1"></a><span class="st">                   where table_schema=&#39;compa&#39;</span></span>
-<span id="cb45-20"><a href="data.html#cb45-20" aria-hidden="true" tabindex="-1"></a><span class="st">                   and table_name=&#39;funda&#39;</span></span>
-<span id="cb45-21"><a href="data.html#cb45-21" aria-hidden="true" tabindex="-1"></a><span class="st">                   order by column_name&quot;</span>)</span>
-<span id="cb45-22"><a href="data.html#cb45-22" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">dbFetch</span>(res, <span class="at">n=</span><span class="sc">-</span><span class="dv">1</span>) <span class="co"># fetches the data that results from running the query res against wrds and stores it as data</span></span>
-<span id="cb45-23"><a href="data.html#cb45-23" aria-hidden="true" tabindex="-1"></a><span class="fu">dbClearResult</span>(res) <span class="co"># closes the connection</span></span>
-<span id="cb45-24"><a href="data.html#cb45-24" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data)</span></code></pre></div>
-<pre><code>##   column_name
-## 1       acchg
-## 2        acco
-## 3       accrt
-## 4     acctchg
-## 5     acctstd
-## 6        acdo</code></pre>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="data.html#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># select everything</span></span>
-<span id="cb47-2"><a href="data.html#cb47-2" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">dbSendQuery</span>(wrds, <span class="st">&quot;select * from compa.funda&quot;</span>)</span>
-<span id="cb47-3"><a href="data.html#cb47-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-4"><a href="data.html#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="co"># from compa.funda</span></span>
-<span id="cb47-5"><a href="data.html#cb47-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-6"><a href="data.html#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="co"># only select the following variables</span></span>
-<span id="cb47-7"><a href="data.html#cb47-7" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">dbSendQuery</span>(wrds, <span class="st">&quot;select gvkey, datadate, fyear, indfmt, consol, popsrc, datafmt, tic, cusip, conm, curcd, fyr, act, at, bkvlps, ceq, ch, che, dltt, dlc, emp, np, exchg, cik, costat, naicsh,mkvalt from compa.funda&quot;</span>) <span class="co">#check variables from (https://wrds-web.wharton.upenn.edu/wrds/ds/comp/funda/index.cfm?navId=80)</span></span></code></pre></div>
-<pre><code>## Warning in result_create(conn@ptr, statement): Closing open result set,
-## cancelling previous query</code></pre>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="data.html#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># res &lt;- dbSendQuery(wrds, &quot;select gvkey, gp from compa.funda&quot;) #check variables from</span></span>
-<span id="cb49-2"><a href="data.html#cb49-2" aria-hidden="true" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> <span class="fu">dbFetch</span>(res, <span class="at">n=</span><span class="sc">-</span><span class="dv">1</span>)</span>
-<span id="cb49-3"><a href="data.html#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dbClearResult</span>(res)</span>
-<span id="cb49-4"><a href="data.html#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-5"><a href="data.html#cb49-5" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> data1 <span class="sc">%&gt;%</span></span>
-<span id="cb49-6"><a href="data.html#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(gvkey,datadate,fyear,tic,conm,<span class="at">.keep_all =</span> T)</span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># to set up connection from R to WRDS (https://wrds-www.wharton.upenn.edu/pages/support/programming-wrds/programming-r/r-from-your-computer/)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://rpostgres.r-dbi.org">RPostgres</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># I've set up wrds connection before hand. Please use your username and password here.</span></span>
+<span></span>
+<span><span class="co"># wrds &lt;- dbConnect(Postgres(),</span></span>
+<span><span class="co">#                   host='wrds-pgdata.wharton.upenn.edu',</span></span>
+<span><span class="co">#                   port=9737,</span></span>
+<span><span class="co">#                   dbname='wrds',</span></span>
+<span><span class="co">#                   sslmode='require',</span></span>
+<span><span class="co">#                   user='')</span></span>
+<span></span>
+<span><span class="co"># Check variables (column headers) in COMP ANNUAL FUNDAMENTAL</span></span>
+<span><span class="co">#uses the already-established wrds connection to prepare the SQL query string and save the query as the result res.</span></span>
+<span><span class="co"># check avaiable databases: https://wrds-web.wharton.upenn.edu/wrds/tools/variable.cfm?vendor_id=7</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">dbSendQuery</span><span class="op">(</span><span class="va">wrds</span>, <span class="st">"select column_name</span></span>
+<span><span class="st">                   from information_schema.columns</span></span>
+<span><span class="st">                   where table_schema='compa'</span></span>
+<span><span class="st">                   and table_name='funda'</span></span>
+<span><span class="st">                   order by column_name"</span><span class="op">)</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">dbFetch</span><span class="op">(</span><span class="va">res</span>, n<span class="op">=</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="co"># fetches the data that results from running the query res against wrds and stores it as data</span></span>
+<span><span class="fu">dbClearResult</span><span class="op">(</span><span class="va">res</span><span class="op">)</span> <span class="co"># closes the connection</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># select everything</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">dbSendQuery</span><span class="op">(</span><span class="va">wrds</span>, <span class="st">"select * from compa.funda"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># from compa.funda</span></span>
+<span></span>
+<span><span class="co"># only select the following variables</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">dbSendQuery</span><span class="op">(</span><span class="va">wrds</span>, <span class="st">"select gvkey, datadate, fyear, indfmt, consol, popsrc, datafmt, tic, cusip, conm, curcd, fyr, act, at, bkvlps, ceq, ch, che, dltt, dlc, emp, np, exchg, cik, costat, naicsh,mkvalt from compa.funda"</span><span class="op">)</span> <span class="co">#check variables from (https://wrds-web.wharton.upenn.edu/wrds/ds/comp/funda/index.cfm?navId=80)</span></span>
+<span></span>
+<span><span class="co"># res &lt;- dbSendQuery(wrds, "select gvkey, gp from compa.funda") #check variables from</span></span>
+<span><span class="va">data1</span> <span class="op">&lt;-</span> <span class="fu">dbFetch</span><span class="op">(</span><span class="va">res</span>, n<span class="op">=</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu">dbClearResult</span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">data</span> <span class="op">=</span> <span class="va">data1</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html">distinct</a></span><span class="op">(</span><span class="va">gvkey</span>,<span class="va">datadate</span>,<span class="va">fyear</span>,<span class="va">tic</span>,<span class="va">conm</span>,.keep_all <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="youtube" class="section level2" number="12.3">
-<h2><span class="header-section-number">12.3</span> YouTube</h2>
+<div id="youtube" class="section level2" number="19.3">
+<h2>
+<span class="header-section-number">19.3</span> YouTube<a class="anchor" aria-label="anchor" href="#youtube"><i class="fas fa-link"></i></a>
+</h2>
 <ul>
-<li><a href="https://www.youtube.com/intl/en_us/ads/how-it-works/measure-your-results/">YouTube Ads</a><br />
+<li>
+<a href="https://www.youtube.com/intl/en_us/ads/how-it-works/measure-your-results/">YouTube Ads</a><br>
 </li>
-<li><a href="https://developers.google.com/youtube/reporting">YouTube Analytics and Reporting APIs</a>: All YouTube Analytics and
-YouTube Reporting API requests must be authorized by the channel or content owner that owns the requested data</li>
+<li>
+<a href="https://developers.google.com/youtube/reporting">YouTube Analytics and Reporting APIs</a>: All YouTube Analytics and YouTube Reporting API requests must be authorized by the channel or content owner that owns the requested data</li>
 </ul>
-<div id="oauth" class="section level3" number="12.3.1">
-<h3><span class="header-section-number">12.3.1</span> OAuth</h3>
+<div id="oauth" class="section level3" number="19.3.1">
+<h3>
+<span class="header-section-number">19.3.1</span> OAuth<a class="anchor" aria-label="anchor" href="#oauth"><i class="fas fa-link"></i></a>
+</h3>
 <p>Go to <a href="https://console.cloud.google.com/apis/api/youtube.googleapis.com">link</a> to access your API</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="data.html#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tuber)</span>
-<span id="cb50-2"><a href="data.html#cb50-2" aria-hidden="true" tabindex="-1"></a>app_id <span class="ot">=</span> <span class="st">&quot;YOUR APP ID&quot;</span></span>
-<span id="cb50-3"><a href="data.html#cb50-3" aria-hidden="true" tabindex="-1"></a>app_secret <span class="ot">=</span> <span class="st">&quot;YOUR APP SECRET&quot;</span></span>
-<span id="cb50-4"><a href="data.html#cb50-4" aria-hidden="true" tabindex="-1"></a><span class="fu">yt_oauth</span>(app_id, app_secret)</span>
-<span id="cb50-5"><a href="data.html#cb50-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-6"><a href="data.html#cb50-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-7"><a href="data.html#cb50-7" aria-hidden="true" tabindex="-1"></a><span class="fu">get_stats</span>(<span class="at">video_id =</span> <span class="st">&quot;N708P-A45D0&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://github.com/soodoku/tuber">tuber</a></span><span class="op">)</span></span>
+<span><span class="va">app_id</span> <span class="op">=</span> <span class="st">"YOUR APP ID"</span></span>
+<span><span class="va">app_secret</span> <span class="op">=</span> <span class="st">"YOUR APP SECRET"</span></span>
+<span><span class="fu">yt_oauth</span><span class="op">(</span><span class="va">app_id</span>, <span class="va">app_secret</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="fu">get_stats</span><span class="op">(</span>video_id <span class="op">=</span> <span class="st">"N708P-A45D0"</span><span class="op">)</span></span></code></pre></div>
 <p>Note for Ubuntu user</p>
-<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="data.html#cb51-1" aria-hidden="true" tabindex="-1"></a>httr<span class="sc">::</span><span class="fu">set_config</span>(httr<span class="sc">::</span><span class="fu">config</span>( <span class="at">ssl_verifypeer =</span> 0L ) )</span></code></pre></div>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">httr</span><span class="fu">::</span><span class="fu"><a href="https://httr.r-lib.org/reference/set_config.html">set_config</a></span><span class="op">(</span><span class="fu">httr</span><span class="fu">::</span><span class="fu"><a href="https://httr.r-lib.org/reference/config.html">config</a></span><span class="op">(</span> ssl_verifypeer <span class="op">=</span> <span class="fl">0L</span> <span class="op">)</span> <span class="op">)</span></span></code></pre></div>
 <p>Get info about a video</p>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="data.html#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_video_details</span>(<span class="at">video_id=</span><span class="st">&quot;N708P-A45D0&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">get_video_details</span><span class="op">(</span>video_id<span class="op">=</span><span class="st">"N708P-A45D0"</span><span class="op">)</span></span></code></pre></div>
 <p>Get caption of a video</p>
-<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="data.html#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_captions</span>(<span class="at">video_id=</span><span class="st">&quot;yJXTXN4xrI8&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">get_captions</span><span class="op">(</span>video_id<span class="op">=</span><span class="st">"yJXTXN4xrI8"</span><span class="op">)</span></span></code></pre></div>
 <p>Search Videos</p>
-<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="data.html#cb54-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">yt_search</span>(<span class="at">term =</span> <span class="st">&quot;test&quot;</span>)</span>
-<span id="cb54-2"><a href="data.html#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(res[, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>])</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">yt_search</span><span class="op">(</span>term <span class="op">=</span> <span class="st">"test"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p>Get Comments of a video</p>
-<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="data.html#cb55-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">get_comment_threads</span>(<span class="fu">c</span>(<span class="at">video_id=</span><span class="st">&quot;N708P-A45D0&quot;</span>))</span>
-<span id="cb55-2"><a href="data.html#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(res)</span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">get_comment_threads</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>video_id<span class="op">=</span><span class="st">"N708P-A45D0"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
 <p>Get All the Comments Including Replies</p>
-<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="data.html#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_all_comments</span>(<span class="at">video_id =</span> <span class="st">&quot;a-UQz7fqR3w&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">get_all_comments</span><span class="op">(</span>video_id <span class="op">=</span> <span class="st">"a-UQz7fqR3w"</span><span class="op">)</span></span></code></pre></div>
 <p>Get statistics of all the videos in a channel</p>
-<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="data.html#cb57-1" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">list_channel_resources</span>(<span class="at">filter =</span> <span class="fu">c</span>(<span class="at">channel_id =</span> <span class="st">&quot;UCT5Cx1l4IS3wHkJXNyuj4TA&quot;</span>), <span class="at">part=</span><span class="st">&quot;contentDetails&quot;</span>)</span>
-<span id="cb57-2"><a href="data.html#cb57-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-3"><a href="data.html#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Uploaded playlists:</span></span>
-<span id="cb57-4"><a href="data.html#cb57-4" aria-hidden="true" tabindex="-1"></a>playlist_id <span class="ot">&lt;-</span> a<span class="sc">$</span>items[[<span class="dv">1</span>]]<span class="sc">$</span>contentDetails<span class="sc">$</span>relatedPlaylists<span class="sc">$</span>uploads</span>
-<span id="cb57-5"><a href="data.html#cb57-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-6"><a href="data.html#cb57-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Get videos on the playlist</span></span>
-<span id="cb57-7"><a href="data.html#cb57-7" aria-hidden="true" tabindex="-1"></a>vids <span class="ot">&lt;-</span> <span class="fu">get_playlist_items</span>(<span class="at">filter=</span> <span class="fu">c</span>(<span class="at">playlist_id=</span>playlist_id)) </span>
-<span id="cb57-8"><a href="data.html#cb57-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-9"><a href="data.html#cb57-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Video ids</span></span>
-<span id="cb57-10"><a href="data.html#cb57-10" aria-hidden="true" tabindex="-1"></a>vid_ids <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(vids<span class="sc">$</span>contentDetails.videoId)</span>
-<span id="cb57-11"><a href="data.html#cb57-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-12"><a href="data.html#cb57-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to scrape stats for all vids</span></span>
-<span id="cb57-13"><a href="data.html#cb57-13" aria-hidden="true" tabindex="-1"></a>get_all_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(id) {</span>
-<span id="cb57-14"><a href="data.html#cb57-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_stats</span>(id)</span>
-<span id="cb57-15"><a href="data.html#cb57-15" aria-hidden="true" tabindex="-1"></a>} </span>
-<span id="cb57-16"><a href="data.html#cb57-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-17"><a href="data.html#cb57-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Get stats and convert results to data frame </span></span>
-<span id="cb57-18"><a href="data.html#cb57-18" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">lapply</span>(vid_ids, get_all_stats)</span>
-<span id="cb57-19"><a href="data.html#cb57-19" aria-hidden="true" tabindex="-1"></a>res_df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(res, data.frame))</span>
-<span id="cb57-20"><a href="data.html#cb57-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-21"><a href="data.html#cb57-21" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(res_df)</span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">list_channel_resources</span><span class="op">(</span>filter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>channel_id <span class="op">=</span> <span class="st">"UCT5Cx1l4IS3wHkJXNyuj4TA"</span><span class="op">)</span>, part<span class="op">=</span><span class="st">"contentDetails"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Uploaded playlists:</span></span>
+<span><span class="va">playlist_id</span> <span class="op">&lt;-</span> <span class="va">a</span><span class="op">$</span><span class="va">items</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">contentDetails</span><span class="op">$</span><span class="va">relatedPlaylists</span><span class="op">$</span><span class="va">uploads</span></span>
+<span></span>
+<span><span class="co"># Get videos on the playlist</span></span>
+<span><span class="va">vids</span> <span class="op">&lt;-</span> <span class="fu">get_playlist_items</span><span class="op">(</span>filter<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>playlist_id<span class="op">=</span><span class="va">playlist_id</span><span class="op">)</span><span class="op">)</span> </span>
+<span></span>
+<span><span class="co"># Video ids</span></span>
+<span><span class="va">vid_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html">as.vector</a></span><span class="op">(</span><span class="va">vids</span><span class="op">$</span><span class="va">contentDetails.videoId</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Function to scrape stats for all vids</span></span>
+<span><span class="va">get_all_stats</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">id</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu">get_stats</span><span class="op">(</span><span class="va">id</span><span class="op">)</span></span>
+<span><span class="op">}</span> </span>
+<span></span>
+<span><span class="co"># Get stats and convert results to data frame </span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">vid_ids</span>, <span class="va">get_all_stats</span><span class="op">)</span></span>
+<span><span class="va">res_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">data.frame</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">res_df</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="api" class="section level3" number="12.3.2">
-<h3><span class="header-section-number">12.3.2</span> API</h3>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="data.html#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(curl)</span>
-<span id="cb58-2"><a href="data.html#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(jsonlite)</span>
-<span id="cb58-3"><a href="data.html#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
-<span id="cb58-4"><a href="data.html#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb58-5"><a href="data.html#cb58-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb58-6"><a href="data.html#cb58-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plotly)</span>
-<span id="cb58-7"><a href="data.html#cb58-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
-<span id="cb58-8"><a href="data.html#cb58-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-9"><a href="data.html#cb58-9" aria-hidden="true" tabindex="-1"></a>API_key <span class="ot">=</span> <span class="st">&quot;YOUR API KEY&quot;</span></span>
-<span id="cb58-10"><a href="data.html#cb58-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-11"><a href="data.html#cb58-11" aria-hidden="true" tabindex="-1"></a>getstats_video<span class="ot">&lt;-</span><span class="cf">function</span>(video_id,API_key){</span>
-<span id="cb58-12"><a href="data.html#cb58-12" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb58-13"><a href="data.html#cb58-13" aria-hidden="true" tabindex="-1"></a>  url<span class="ot">=</span><span class="fu">paste0</span>(<span class="st">&quot;https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&amp;id=&quot;</span>,video_id,<span class="st">&quot;&amp;key=&quot;</span>,API_key)</span>
-<span id="cb58-14"><a href="data.html#cb58-14" aria-hidden="true" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="at">txt=</span>url)  </span>
-<span id="cb58-15"><a href="data.html#cb58-15" aria-hidden="true" tabindex="-1"></a>  salida<span class="ot">=</span><span class="fu">list</span>()</span>
-<span id="cb58-16"><a href="data.html#cb58-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">data.frame</span>(<span class="at">name=</span>result<span class="sc">$</span>items<span class="sc">$</span>snippet<span class="sc">$</span>channelTitle, result<span class="sc">$</span>items<span class="sc">$</span>statistics,<span class="at">title=</span>result<span class="sc">$</span>items<span class="sc">$</span>snippet<span class="sc">$</span>title,<span class="at">date=</span>result<span class="sc">$</span>items<span class="sc">$</span>snippet<span class="sc">$</span>publishedAt,<span class="at">descrip=</span>result<span class="sc">$</span>items<span class="sc">$</span>snippet<span class="sc">$</span>description))</span>
-<span id="cb58-17"><a href="data.html#cb58-17" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb58-18"><a href="data.html#cb58-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-19"><a href="data.html#cb58-19" aria-hidden="true" tabindex="-1"></a>get_playlist_canal<span class="ot">&lt;-</span><span class="cf">function</span>(id,API_key,<span class="at">topn=</span><span class="dv">15</span>){</span>
-<span id="cb58-20"><a href="data.html#cb58-20" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb58-21"><a href="data.html#cb58-21" aria-hidden="true" tabindex="-1"></a>  url<span class="ot">=</span><span class="fu">paste0</span>(<span class="st">&#39;https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&amp;playlistId=&#39;</span>,id,<span class="st">&#39;&amp;key=&#39;</span>,API_key,<span class="st">&#39;&amp;maxResults=&#39;</span>,topn)</span>
-<span id="cb58-22"><a href="data.html#cb58-22" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb58-23"><a href="data.html#cb58-23" aria-hidden="true" tabindex="-1"></a>  result<span class="ot">=</span><span class="fu">fromJSON</span>(<span class="at">txt=</span>url)</span>
-<span id="cb58-24"><a href="data.html#cb58-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">data.frame</span>(result<span class="sc">$</span>items<span class="sc">$</span>contentDetails))</span>
-<span id="cb58-25"><a href="data.html#cb58-25" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb58-26"><a href="data.html#cb58-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-27"><a href="data.html#cb58-27" aria-hidden="true" tabindex="-1"></a>getstats_canal<span class="ot">&lt;-</span><span class="cf">function</span>(id,API_key){</span>
-<span id="cb58-28"><a href="data.html#cb58-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-29"><a href="data.html#cb58-29" aria-hidden="true" tabindex="-1"></a>url<span class="ot">=</span><span class="fu">paste0</span>(<span class="st">&#39;https://www.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&amp;id=&#39;</span>,id,<span class="st">&#39;&amp;key=&#39;</span>,API_key)</span>
-<span id="cb58-30"><a href="data.html#cb58-30" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb58-31"><a href="data.html#cb58-31" aria-hidden="true" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="at">txt=</span>url)   </span>
-<span id="cb58-32"><a href="data.html#cb58-32" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>(<span class="fu">data.frame</span>(<span class="at">name=</span>result<span class="sc">$</span>items<span class="sc">$</span>snippet<span class="sc">$</span>title,result<span class="sc">$</span>items<span class="sc">$</span>statistics,<span class="at">pl_list_id=</span>result<span class="sc">$</span>items<span class="sc">$</span>contentDetails<span class="sc">$</span>relatedPlaylists))</span>
-<span id="cb58-33"><a href="data.html#cb58-33" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb58-34"><a href="data.html#cb58-34" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb58-35"><a href="data.html#cb58-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb58-36"><a href="data.html#cb58-36" aria-hidden="true" tabindex="-1"></a>getall_channels<span class="ot">&lt;-</span><span class="cf">function</span>(ids,API_key,<span class="at">topn=</span><span class="dv">5</span>){</span>
-<span id="cb58-37"><a href="data.html#cb58-37" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb58-38"><a href="data.html#cb58-38" aria-hidden="true" tabindex="-1"></a>  videos<span class="ot">=</span><span class="fu">lapply</span>(ids,<span class="at">FUN=</span>get_playlist_canal,<span class="at">API_key=</span>API_key,<span class="at">topn=</span>topn) <span class="sc">%&gt;%</span> <span class="fu">bind_rows</span>()</span>
-<span id="cb58-39"><a href="data.html#cb58-39" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb58-40"><a href="data.html#cb58-40" aria-hidden="true" tabindex="-1"></a>  stats<span class="ot">=</span><span class="fu">lapply</span>(videos[,<span class="dv">1</span>],<span class="at">FUN=</span>getstats_video,<span class="at">API_key=</span>API_key)</span>
-<span id="cb58-41"><a href="data.html#cb58-41" aria-hidden="true" tabindex="-1"></a>  stats<span class="ot">=</span><span class="fu">bind_rows</span>(stats)</span>
-<span id="cb58-42"><a href="data.html#cb58-42" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">$</span>vid_id<span class="ot">=</span>videos[,<span class="dv">1</span>]</span>
-<span id="cb58-43"><a href="data.html#cb58-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(stats)</span>
-<span id="cb58-44"><a href="data.html#cb58-44" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div id="api" class="section level3" number="19.3.2">
+<h3>
+<span class="header-section-number">19.3.2</span> API<a class="anchor" aria-label="anchor" href="#api"><i class="fas fa-link"></i></a>
+</h3>
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jeroen/curl">curl</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://arxiv.org/abs/1403.2805">jsonlite</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://haozhu233.github.io/kableExtra/">kableExtra</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://plotly-r.com">plotly</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/reshape">reshape2</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">API_key</span> <span class="op">=</span> <span class="st">"YOUR API KEY"</span></span>
+<span></span>
+<span><span class="va">getstats_video</span><span class="op">&lt;-</span><span class="kw">function</span><span class="op">(</span><span class="va">video_id</span>,<span class="va">API_key</span><span class="op">)</span><span class="op">{</span></span>
+<span> </span>
+<span>  <span class="va">url</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&amp;id="</span>,<span class="va">video_id</span>,<span class="st">"&amp;key="</span>,<span class="va">API_key</span><span class="op">)</span></span>
+<span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/fromJSON.html">fromJSON</a></span><span class="op">(</span>txt<span class="op">=</span><span class="va">url</span><span class="op">)</span>  </span>
+<span>  <span class="va">salida</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span>name<span class="op">=</span><span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">snippet</span><span class="op">$</span><span class="va">channelTitle</span>, <span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">statistics</span>,title<span class="op">=</span><span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">snippet</span><span class="op">$</span><span class="va">title</span>,date<span class="op">=</span><span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">snippet</span><span class="op">$</span><span class="va">publishedAt</span>,descrip<span class="op">=</span><span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">snippet</span><span class="op">$</span><span class="va">description</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">get_playlist_canal</span><span class="op">&lt;-</span><span class="kw">function</span><span class="op">(</span><span class="va">id</span>,<span class="va">API_key</span>,<span class="va">topn</span><span class="op">=</span><span class="fl">15</span><span class="op">)</span><span class="op">{</span></span>
+<span>  </span>
+<span>  <span class="va">url</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">'https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&amp;playlistId='</span>,<span class="va">id</span>,<span class="st">'&amp;key='</span>,<span class="va">API_key</span>,<span class="st">'&amp;maxResults='</span>,<span class="va">topn</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">result</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/fromJSON.html">fromJSON</a></span><span class="op">(</span>txt<span class="op">=</span><span class="va">url</span><span class="op">)</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">contentDetails</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">getstats_canal</span><span class="op">&lt;-</span><span class="kw">function</span><span class="op">(</span><span class="va">id</span>,<span class="va">API_key</span><span class="op">)</span><span class="op">{</span></span>
+<span></span>
+<span><span class="va">url</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">'https://www.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&amp;id='</span>,<span class="va">id</span>,<span class="st">'&amp;key='</span>,<span class="va">API_key</span><span class="op">)</span></span>
+<span>  </span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/fromJSON.html">fromJSON</a></span><span class="op">(</span>txt<span class="op">=</span><span class="va">url</span><span class="op">)</span>   </span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span>name<span class="op">=</span><span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">snippet</span><span class="op">$</span><span class="va">title</span>,<span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">statistics</span>,pl_list_id<span class="op">=</span><span class="va">result</span><span class="op">$</span><span class="va">items</span><span class="op">$</span><span class="va">contentDetails</span><span class="op">$</span><span class="va">relatedPlaylists</span><span class="op">)</span><span class="op">)</span></span>
+<span>  </span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">getall_channels</span><span class="op">&lt;-</span><span class="kw">function</span><span class="op">(</span><span class="va">ids</span>,<span class="va">API_key</span>,<span class="va">topn</span><span class="op">=</span><span class="fl">5</span><span class="op">)</span><span class="op">{</span></span>
+<span>  </span>
+<span>  <span class="va">videos</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">ids</span>,FUN<span class="op">=</span><span class="va">get_playlist_canal</span>,API_key<span class="op">=</span><span class="va">API_key</span>,topn<span class="op">=</span><span class="va">topn</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html">bind_rows</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">stats</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">videos</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>,FUN<span class="op">=</span><span class="va">getstats_video</span>,API_key<span class="op">=</span><span class="va">API_key</span><span class="op">)</span></span>
+<span>  <span class="va">stats</span><span class="op">=</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html">bind_rows</a></span><span class="op">(</span><span class="va">stats</span><span class="op">)</span></span>
+<span>  <span class="va">stats</span><span class="op">$</span><span class="va">vid_id</span><span class="op">=</span><span class="va">videos</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">stats</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Statistics per Channel</p>
-<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="data.html#cb59-1" aria-hidden="true" tabindex="-1"></a>can_st<span class="ot">=</span><span class="fu">lapply</span>(comp_data<span class="sc">$</span>cha_id,<span class="at">FUN =</span> getstats_canal,<span class="at">API_key=</span>API_key)</span>
-<span id="cb59-2"><a href="data.html#cb59-2" aria-hidden="true" tabindex="-1"></a>can_st<span class="ot">=</span><span class="fu">bind_rows</span>(can_st)</span>
-<span id="cb59-3"><a href="data.html#cb59-3" aria-hidden="true" tabindex="-1"></a>can_st<span class="sc">$</span>viewCount<span class="ot">=</span><span class="fu">as.numeric</span>(can_st<span class="sc">$</span>viewCount)</span>
-<span id="cb59-4"><a href="data.html#cb59-4" aria-hidden="true" tabindex="-1"></a>can_st[,<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>] <span class="sc">%&gt;%</span> <span class="fu">kable</span>() <span class="sc">%&gt;%</span><span class="fu">kable_styling</span>()</span></code></pre></div>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="data.html#cb60-1" aria-hidden="true" tabindex="-1"></a>can_st<span class="sc">$</span>viewCount<span class="ot">=</span><span class="fu">round</span>(<span class="fu">as.numeric</span>(can_st<span class="sc">$</span>viewCount)<span class="sc">/</span><span class="dv">1000000</span>,<span class="dv">2</span>)</span>
-<span id="cb60-2"><a href="data.html#cb60-2" aria-hidden="true" tabindex="-1"></a>p1<span class="ot">=</span>can_st <span class="sc">%&gt;%</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span><span class="fu">reorder</span>(name,viewCount),<span class="at">y=</span>viewCount,<span class="at">fill=</span>name))<span class="sc">+</span></span>
-<span id="cb60-3"><a href="data.html#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">&quot;sum&quot;</span>)<span class="sc">+</span><span class="fu">guides</span>(<span class="at">size=</span>F)<span class="sc">+</span><span class="fu">coord_flip</span>()<span class="sc">+</span><span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;darkblue&quot;</span>, <span class="st">&quot;yellow2&quot;</span>))<span class="sc">+</span></span>
-<span id="cb60-4"><a href="data.html#cb60-4" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_text</span>(<span class="at">inherit.aes =</span> T,<span class="fu">aes</span>(<span class="at">label=</span><span class="fu">paste</span>(viewCount,<span class="st">&quot;M&quot;</span>)),<span class="at">nudge_y =</span><span class="dv">0</span>,<span class="at">angle =</span> <span class="dv">90</span>)<span class="sc">+</span></span>
-<span id="cb60-5"><a href="data.html#cb60-5" aria-hidden="true" tabindex="-1"></a><span class="fu">labs</span>(<span class="at">x=</span><span class="st">&quot;Total Visualizations(Millions)&quot;</span>,<span class="at">y=</span><span class="st">&quot;Visualizations&quot;</span>,<span class="at">fill=</span><span class="st">&quot;&quot;</span>)<span class="sc">+</span></span>
-<span id="cb60-6"><a href="data.html#cb60-6" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)<span class="sc">+</span>mytheme3</span>
-<span id="cb60-7"><a href="data.html#cb60-7" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb60-8"><a href="data.html#cb60-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplotly</span>(p1,<span class="at">tooltip=</span><span class="fu">c</span>(<span class="st">&quot;name&quot;</span>,<span class="st">&quot;viewCount&quot;</span>))  <span class="sc">%&gt;%</span> </span>
-<span id="cb60-9"><a href="data.html#cb60-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">legend =</span> <span class="fu">list</span>(<span class="at">orientation =</span> <span class="st">&quot;h&quot;</span>,<span class="at">x =</span> <span class="fl">0.01</span>, <span class="at">y =</span> <span class="sc">-</span><span class="fl">0.1</span>,<span class="at">autosize=</span>F))  </span></code></pre></div>
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">can_st</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">comp_data</span><span class="op">$</span><span class="va">cha_id</span>,FUN <span class="op">=</span> <span class="va">getstats_canal</span>,API_key<span class="op">=</span><span class="va">API_key</span><span class="op">)</span></span>
+<span><span class="va">can_st</span><span class="op">=</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html">bind_rows</a></span><span class="op">(</span><span class="va">can_st</span><span class="op">)</span></span>
+<span><span class="va">can_st</span><span class="op">$</span><span class="va">viewCount</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">can_st</span><span class="op">$</span><span class="va">viewCount</span><span class="op">)</span></span>
+<span><span class="va">can_st</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span><span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">can_st</span><span class="op">$</span><span class="va">viewCount</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">can_st</span><span class="op">$</span><span class="va">viewCount</span><span class="op">)</span><span class="op">/</span><span class="fl">1000000</span>,<span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">p1</span><span class="op">=</span><span class="va">can_st</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/reorder.factor.html">reorder</a></span><span class="op">(</span><span class="va">name</span>,<span class="va">viewCount</span><span class="op">)</span>,y<span class="op">=</span><span class="va">viewCount</span>,fill<span class="op">=</span><span class="va">name</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html">geom_bar</a></span><span class="op">(</span>stat<span class="op">=</span><span class="st">"sum"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html">guides</a></span><span class="op">(</span>size<span class="op">=</span><span class="cn">F</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html">coord_flip</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"darkblue"</span>, <span class="st">"yellow2"</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html">geom_text</a></span><span class="op">(</span>inherit.aes <span class="op">=</span> <span class="cn">T</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>label<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">viewCount</span>,<span class="st">"M"</span><span class="op">)</span><span class="op">)</span>,nudge_y <span class="op">=</span><span class="fl">0</span>,angle <span class="op">=</span> <span class="fl">90</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>x<span class="op">=</span><span class="st">"Total Visualizations(Millions)"</span>,y<span class="op">=</span><span class="st">"Visualizations"</span>,fill<span class="op">=</span><span class="st">""</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span><span class="op">+</span><span class="va">mytheme3</span></span>
+<span>  </span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/plotly/man/ggplotly.html">ggplotly</a></span><span class="op">(</span><span class="va">p1</span>,tooltip<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"name"</span>,<span class="st">"viewCount"</span><span class="op">)</span><span class="op">)</span>  <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> </span>
+<span>    <span class="fu">layout</span><span class="op">(</span>legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>orientation <span class="op">=</span> <span class="st">"h"</span>,x <span class="op">=</span> <span class="fl">0.01</span>, y <span class="op">=</span> <span class="op">-</span><span class="fl">0.1</span>,autosize<span class="op">=</span><span class="cn">F</span><span class="op">)</span><span class="op">)</span>  </span></code></pre></div>
 <p>Information on Individual Videos per Channel</p>
-<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="data.html#cb61-1" aria-hidden="true" tabindex="-1"></a>var_to_see<span class="ot">=</span><span class="st">&quot;dislikeCount&quot;</span> <span class="co">#favoriteCount or commentCount</span></span>
-<span id="cb61-2"><a href="data.html#cb61-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb61-3"><a href="data.html#cb61-3" aria-hidden="true" tabindex="-1"></a>info<span class="ot">=</span><span class="fu">getall_channels</span>(<span class="at">ids =</span> can_st<span class="sc">$</span>pl_list_id.uploads,<span class="at">API_key =</span> API_key,<span class="at">topn =</span><span class="dv">20</span>)</span>
-<span id="cb61-4"><a href="data.html#cb61-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb61-5"><a href="data.html#cb61-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb61-6"><a href="data.html#cb61-6" aria-hidden="true" tabindex="-1"></a> datacond<span class="ot">=</span><span class="fu">melt</span>(info[,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>,<span class="dv">8</span>)],<span class="at">id.vars =</span> <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>,<span class="st">&quot;date&quot;</span>))</span>
-<span id="cb61-7"><a href="data.html#cb61-7" aria-hidden="true" tabindex="-1"></a> datacond<span class="sc">$</span>date<span class="ot">=</span><span class="fu">as.Date</span>(datacond<span class="sc">$</span>date)</span>
-<span id="cb61-8"><a href="data.html#cb61-8" aria-hidden="true" tabindex="-1"></a> datacond<span class="sc">$</span>value<span class="ot">=</span><span class="fu">as.numeric</span>(datacond<span class="sc">$</span>value)</span>
-<span id="cb61-9"><a href="data.html#cb61-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb61-10"><a href="data.html#cb61-10" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb61-11"><a href="data.html#cb61-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">filter</span>(datacond,variable<span class="sc">==</span>var_to_see),<span class="fu">aes</span>(<span class="at">x=</span><span class="fu">as.Date</span>(date),<span class="at">y=</span>value,<span class="at">fill=</span>name))<span class="sc">+</span></span>
-<span id="cb61-12"><a href="data.html#cb61-12" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">&quot;sum&quot;</span>)<span class="sc">+</span><span class="fu">labs</span>(<span class="at">x=</span>var_to_see,<span class="at">y=</span><span class="st">&quot;&quot;</span>,<span class="at">fill=</span><span class="st">&quot;&quot;</span>)<span class="sc">+</span><span class="fu">guides</span>(<span class="at">size=</span><span class="cn">FALSE</span>)<span class="sc">+</span><span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;darkblue&quot;</span>, <span class="st">&quot;yellow2&quot;</span>))<span class="sc">+</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)<span class="sc">+</span></span>
-<span id="cb61-13"><a href="data.html#cb61-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_date</span>(<span class="at">limits =</span><span class="fu">as.Date</span>(<span class="fu">c</span>(<span class="fu">as.Date</span>(<span class="fu">min</span>(datacond<span class="sc">$</span>date)),<span class="fu">as.Date</span>(<span class="fu">Sys.time</span>()))),<span class="at">date_breaks  =</span><span class="st">&quot;month&quot;</span>,<span class="at">date_labels=</span><span class="st">&quot;%b %y&quot;</span>)<span class="sc">+</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)<span class="sc">+</span>mytheme2 </span></code></pre></div>
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">var_to_see</span><span class="op">=</span><span class="st">"dislikeCount"</span> <span class="co">#favoriteCount or commentCount</span></span>
+<span></span>
+<span><span class="va">info</span><span class="op">=</span><span class="fu">getall_channels</span><span class="op">(</span>ids <span class="op">=</span> <span class="va">can_st</span><span class="op">$</span><span class="va">pl_list_id.uploads</span>,API_key <span class="op">=</span> <span class="va">API_key</span>,topn <span class="op">=</span><span class="fl">20</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span> <span class="va">datacond</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/pkg/reshape2/man/melt.html">melt</a></span><span class="op">(</span><span class="va">info</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>,<span class="fl">8</span><span class="op">)</span><span class="op">]</span>,id.vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"name"</span>,<span class="st">"date"</span><span class="op">)</span><span class="op">)</span></span>
+<span> <span class="va">datacond</span><span class="op">$</span><span class="va">date</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html">as.Date</a></span><span class="op">(</span><span class="va">datacond</span><span class="op">$</span><span class="va">date</span><span class="op">)</span></span>
+<span> <span class="va">datacond</span><span class="op">$</span><span class="va">value</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">datacond</span><span class="op">$</span><span class="va">value</span><span class="op">)</span></span>
+<span>    </span>
+<span>    </span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">datacond</span>,<span class="va">variable</span><span class="op">==</span><span class="va">var_to_see</span><span class="op">)</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html">as.Date</a></span><span class="op">(</span><span class="va">date</span><span class="op">)</span>,y<span class="op">=</span><span class="va">value</span>,fill<span class="op">=</span><span class="va">name</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html">geom_bar</a></span><span class="op">(</span>stat<span class="op">=</span><span class="st">"sum"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">var_to_see</span>,y<span class="op">=</span><span class="st">""</span>,fill<span class="op">=</span><span class="st">""</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html">guides</a></span><span class="op">(</span>size<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"darkblue"</span>, <span class="st">"yellow2"</span><span class="op">)</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span><span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_date.html">scale_x_date</a></span><span class="op">(</span>limits <span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">min</a></span><span class="op">(</span><span class="va">datacond</span><span class="op">$</span><span class="va">date</span><span class="op">)</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/as.Date.html">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.time</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,date_breaks  <span class="op">=</span><span class="st">"month"</span>,date_labels<span class="op">=</span><span class="st">"%b %y"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span><span class="op">+</span><span class="va">mytheme2</span> </span></code></pre></div>
 </div>
-<div id="python" class="section level3" number="12.3.3">
-<h3><span class="header-section-number">12.3.3</span> Python</h3>
+<div id="python" class="section level3" number="19.3.3">
+<h3>
+<span class="header-section-number">19.3.3</span> Python<a class="anchor" aria-label="anchor" href="#python"><i class="fas fa-link"></i></a>
+</h3>
 <p><a href="https://github.com/pytube/pytube">Pytube</a></p>
-<div class="sourceCode" id="cb62"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb62-1"><a href="data.html#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="co"># from pytube import YouTube</span></span>
-<span id="cb62-2"><a href="data.html#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="co"># YouTube(&#39;https://youtube.com/watch?v=2lAe1cqCOXo&#39;).streams.first().download()</span></span></code></pre></div>
-<div class="sourceCode" id="cb63"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb63-1"><a href="data.html#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
-<span id="cb63-2"><a href="data.html#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
-<span id="cb63-3"><a href="data.html#cb63-3" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> requests.get(<span class="st">&quot;http://gdata.youtube.com/feeds/api/standardfeeds/top_rated?v=2&amp;alt=jsonc&quot;</span>)</span>
-<span id="cb63-4"><a href="data.html#cb63-4" aria-hidden="true" tabindex="-1"></a><span class="co">#r.text</span></span>
-<span id="cb63-5"><a href="data.html#cb63-5" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> json.loads(r.text)</span>
-<span id="cb63-6"><a href="data.html#cb63-6" aria-hidden="true" tabindex="-1"></a>data</span>
-<span id="cb63-7"><a href="data.html#cb63-7" aria-hidden="true" tabindex="-1"></a><span class="co"># for item in data[&#39;data&#39;][&#39;items&#39;]:</span></span>
-<span id="cb63-8"><a href="data.html#cb63-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   print &quot;Video Title: %s&quot; % (item[&#39;title&#39;])</span></span>
-<span id="cb63-9"><a href="data.html#cb63-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   print &quot;Video Category: %s&quot; % (item[&#39;category&#39;])</span></span>
-<span id="cb63-10"><a href="data.html#cb63-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   print &quot;Video ID: %s&quot; % (item[&#39;id&#39;])</span></span>
-<span id="cb63-11"><a href="data.html#cb63-11" aria-hidden="true" tabindex="-1"></a><span class="co">#   print &quot;Video Rating: %f&quot; % (item[&#39;rating&#39;])</span></span>
-<span id="cb63-12"><a href="data.html#cb63-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   print &quot;Embed URL: %s&quot; % (item[&#39;player&#39;][&#39;default&#39;])</span></span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb51-1"><a href="data.html#cb51-1" tabindex="-1"></a><span class="co"># from pytube import YouTube</span></span>
+<span id="cb51-2"><a href="data.html#cb51-2" tabindex="-1"></a><span class="co"># YouTube('https://youtube.com/watch?v=2lAe1cqCOXo').streams.first().download()</span></span></code></pre></div>
+<div class="sourceCode" id="cb52"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb52-1"><a href="data.html#cb52-1" tabindex="-1"></a><span class="im">import</span> requests</span>
+<span id="cb52-2"><a href="data.html#cb52-2" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb52-3"><a href="data.html#cb52-3" tabindex="-1"></a>r <span class="op">=</span> requests.get(<span class="st">"http://gdata.youtube.com/feeds/api/standardfeeds/top_rated?v=2&amp;alt=jsonc"</span>)</span>
+<span id="cb52-4"><a href="data.html#cb52-4" tabindex="-1"></a><span class="co">#r.text</span></span>
+<span id="cb52-5"><a href="data.html#cb52-5" tabindex="-1"></a>data <span class="op">=</span> json.loads(r.text)</span>
+<span id="cb52-6"><a href="data.html#cb52-6" tabindex="-1"></a>data</span>
+<span id="cb52-7"><a href="data.html#cb52-7" tabindex="-1"></a><span class="co"># for item in data['data']['items']:</span></span>
+<span id="cb52-8"><a href="data.html#cb52-8" tabindex="-1"></a><span class="co">#   print "Video Title: %s" % (item['title'])</span></span>
+<span id="cb52-9"><a href="data.html#cb52-9" tabindex="-1"></a><span class="co">#   print "Video Category: %s" % (item['category'])</span></span>
+<span id="cb52-10"><a href="data.html#cb52-10" tabindex="-1"></a><span class="co">#   print "Video ID: %s" % (item['id'])</span></span>
+<span id="cb52-11"><a href="data.html#cb52-11" tabindex="-1"></a><span class="co">#   print "Video Rating: %f" % (item['rating'])</span></span>
+<span id="cb52-12"><a href="data.html#cb52-12" tabindex="-1"></a><span class="co">#   print "Embed URL: %s" % (item['player']['default'])</span></span></code></pre></div>
 <p>Using <code>BeautifulSoup</code></p>
-<div class="sourceCode" id="cb64"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb64-1"><a href="data.html#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> requests_html <span class="im">import</span> HTMLSession </span>
-<span id="cb64-2"><a href="data.html#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bs4 <span class="im">import</span> BeautifulSoup <span class="im">as</span> bs <span class="co"># importing BeautifulSoup</span></span>
-<span id="cb64-3"><a href="data.html#cb64-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb64-4"><a href="data.html#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="co"># sample youtube video url</span></span>
-<span id="cb64-5"><a href="data.html#cb64-5" aria-hidden="true" tabindex="-1"></a>video_url <span class="op">=</span> <span class="st">&quot;https://www.youtube.com/watch?v=jNQXAC9IVRw&quot;</span></span>
-<span id="cb64-6"><a href="data.html#cb64-6" aria-hidden="true" tabindex="-1"></a><span class="co"># init an HTML Session</span></span>
-<span id="cb64-7"><a href="data.html#cb64-7" aria-hidden="true" tabindex="-1"></a>session <span class="op">=</span> HTMLSession()</span>
-<span id="cb64-8"><a href="data.html#cb64-8" aria-hidden="true" tabindex="-1"></a><span class="co"># get the html content</span></span>
-<span id="cb64-9"><a href="data.html#cb64-9" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> session.get(video_url)</span>
-<span id="cb64-10"><a href="data.html#cb64-10" aria-hidden="true" tabindex="-1"></a><span class="co"># execute Java-script</span></span>
-<span id="cb64-11"><a href="data.html#cb64-11" aria-hidden="true" tabindex="-1"></a>response.html.render(sleep<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb64-12"><a href="data.html#cb64-12" aria-hidden="true" tabindex="-1"></a><span class="co"># create bs object to parse HTML</span></span>
-<span id="cb64-13"><a href="data.html#cb64-13" aria-hidden="true" tabindex="-1"></a>soup <span class="op">=</span> bs(response.html.html, <span class="st">&quot;html.parser&quot;</span>)</span>
-<span id="cb64-14"><a href="data.html#cb64-14" aria-hidden="true" tabindex="-1"></a><span class="co"># write all HTML code into a file</span></span>
-<span id="cb64-15"><a href="data.html#cb64-15" aria-hidden="true" tabindex="-1"></a><span class="bu">open</span>(<span class="st">&quot;video.html&quot;</span>, <span class="st">&quot;w&quot;</span>, encoding<span class="op">=</span><span class="st">&#39;utf8&#39;</span>).write(response.html.html)</span></code></pre></div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb53-1"><a href="data.html#cb53-1" tabindex="-1"></a><span class="im">from</span> requests_html <span class="im">import</span> HTMLSession </span>
+<span id="cb53-2"><a href="data.html#cb53-2" tabindex="-1"></a><span class="im">from</span> bs4 <span class="im">import</span> BeautifulSoup <span class="im">as</span> bs <span class="co"># importing BeautifulSoup</span></span>
+<span id="cb53-3"><a href="data.html#cb53-3" tabindex="-1"></a></span>
+<span id="cb53-4"><a href="data.html#cb53-4" tabindex="-1"></a><span class="co"># sample youtube video url</span></span>
+<span id="cb53-5"><a href="data.html#cb53-5" tabindex="-1"></a>video_url <span class="op">=</span> <span class="st">"https://www.youtube.com/watch?v=jNQXAC9IVRw"</span></span>
+<span id="cb53-6"><a href="data.html#cb53-6" tabindex="-1"></a><span class="co"># init an HTML Session</span></span>
+<span id="cb53-7"><a href="data.html#cb53-7" tabindex="-1"></a>session <span class="op">=</span> HTMLSession()</span>
+<span id="cb53-8"><a href="data.html#cb53-8" tabindex="-1"></a><span class="co"># get the html content</span></span>
+<span id="cb53-9"><a href="data.html#cb53-9" tabindex="-1"></a>response <span class="op">=</span> session.get(video_url)</span>
+<span id="cb53-10"><a href="data.html#cb53-10" tabindex="-1"></a><span class="co"># execute Java-script</span></span>
+<span id="cb53-11"><a href="data.html#cb53-11" tabindex="-1"></a>response.html.render(sleep<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb53-12"><a href="data.html#cb53-12" tabindex="-1"></a><span class="co"># create bs object to parse HTML</span></span>
+<span id="cb53-13"><a href="data.html#cb53-13" tabindex="-1"></a>soup <span class="op">=</span> bs(response.html.html, <span class="st">"html.parser"</span>)</span>
+<span id="cb53-14"><a href="data.html#cb53-14" tabindex="-1"></a><span class="co"># write all HTML code into a file</span></span>
+<span id="cb53-15"><a href="data.html#cb53-15" tabindex="-1"></a><span class="bu">open</span>(<span class="st">"video.html"</span>, <span class="st">"w"</span>, encoding<span class="op">=</span><span class="st">'utf8'</span>).write(response.html.html)</span></code></pre></div>
 <p>Generate random video</p>
-<div class="sourceCode" id="cb65"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb65-1"><a href="data.html#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
-<span id="cb65-2"><a href="data.html#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> urllib.request</span>
-<span id="cb65-3"><a href="data.html#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> string</span>
-<span id="cb65-4"><a href="data.html#cb65-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
-<span id="cb65-5"><a href="data.html#cb65-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-6"><a href="data.html#cb65-6" aria-hidden="true" tabindex="-1"></a>count <span class="op">=</span> <span class="dv">50</span></span>
-<span id="cb65-7"><a href="data.html#cb65-7" aria-hidden="true" tabindex="-1"></a>API_KEY <span class="op">=</span> <span class="st">&#39;your_key&#39;</span></span>
-<span id="cb65-8"><a href="data.html#cb65-8" aria-hidden="true" tabindex="-1"></a>random <span class="op">=</span> <span class="st">&#39;&#39;</span>.join(random.choice(string.ascii_uppercase <span class="op">+</span> string.digits) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>))</span>
-<span id="cb65-9"><a href="data.html#cb65-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-10"><a href="data.html#cb65-10" aria-hidden="true" tabindex="-1"></a>urlData <span class="op">=</span> <span class="st">&quot;https://www.googleapis.com/youtube/v3/search?key=</span><span class="sc">{}</span><span class="st">&amp;maxResults=</span><span class="sc">{}</span><span class="st">&amp;part=snippet&amp;type=video&amp;q=</span><span class="sc">{}</span><span class="st">&quot;</span>.<span class="bu">format</span>(API_KEY,count,random)</span>
-<span id="cb65-11"><a href="data.html#cb65-11" aria-hidden="true" tabindex="-1"></a>webURL <span class="op">=</span> urllib.request.urlopen(urlData)</span>
-<span id="cb65-12"><a href="data.html#cb65-12" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> webURL.read()</span>
-<span id="cb65-13"><a href="data.html#cb65-13" aria-hidden="true" tabindex="-1"></a>encoding <span class="op">=</span> webURL.info().get_content_charset(<span class="st">&#39;utf-8&#39;</span>)</span>
-<span id="cb65-14"><a href="data.html#cb65-14" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> json.loads(data.decode(encoding))</span>
-<span id="cb65-15"><a href="data.html#cb65-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb65-16"><a href="data.html#cb65-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> data <span class="kw">in</span> results[<span class="st">&#39;items&#39;</span>]:</span>
-<span id="cb65-17"><a href="data.html#cb65-17" aria-hidden="true" tabindex="-1"></a>    videoId <span class="op">=</span> (data[<span class="st">&#39;id&#39;</span>][<span class="st">&#39;videoId&#39;</span>])</span>
-<span id="cb65-18"><a href="data.html#cb65-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(videoId)</span>
-<span id="cb65-19"><a href="data.html#cb65-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">#store your ids</span></span></code></pre></div>
-<p>Random used by YouTube API,
-<a href="https://developers.google.com/youtube/v3/docs/search/list?apix=true&amp;apix_params=%7B%22part%22%3A%5B%22snippet%22%5D%2C%22maxResults%22%3A25%2C%22q%22%3A%22surfing%22%7D">test</a></p>
-<div class="sourceCode" id="cb66"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb66-1"><a href="data.html#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -*- coding: utf-8 -*-</span></span>
-<span id="cb66-2"><a href="data.html#cb66-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-3"><a href="data.html#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample Python code for youtube.search.list</span></span>
-<span id="cb66-4"><a href="data.html#cb66-4" aria-hidden="true" tabindex="-1"></a><span class="co"># See instructions for running these code samples locally:</span></span>
-<span id="cb66-5"><a href="data.html#cb66-5" aria-hidden="true" tabindex="-1"></a><span class="co"># https://developers.google.com/explorer-help/guides/code_samples#python</span></span>
-<span id="cb66-6"><a href="data.html#cb66-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-7"><a href="data.html#cb66-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb66-8"><a href="data.html#cb66-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-9"><a href="data.html#cb66-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> google_auth_oauthlib.flow</span>
-<span id="cb66-10"><a href="data.html#cb66-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> googleapiclient.discovery</span>
-<span id="cb66-11"><a href="data.html#cb66-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> googleapiclient.errors</span>
-<span id="cb66-12"><a href="data.html#cb66-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-13"><a href="data.html#cb66-13" aria-hidden="true" tabindex="-1"></a>scopes <span class="op">=</span> [<span class="st">&quot;https://www.googleapis.com/auth/youtube.force-ssl&quot;</span>]</span>
-<span id="cb66-14"><a href="data.html#cb66-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-15"><a href="data.html#cb66-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
-<span id="cb66-16"><a href="data.html#cb66-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Disable OAuthlib&#39;s HTTPS verification when running locally.</span></span>
-<span id="cb66-17"><a href="data.html#cb66-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># *DO NOT* leave this option enabled in production.</span></span>
-<span id="cb66-18"><a href="data.html#cb66-18" aria-hidden="true" tabindex="-1"></a>    os.environ[<span class="st">&quot;OAUTHLIB_INSECURE_TRANSPORT&quot;</span>] <span class="op">=</span> <span class="st">&quot;1&quot;</span></span>
-<span id="cb66-19"><a href="data.html#cb66-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-20"><a href="data.html#cb66-20" aria-hidden="true" tabindex="-1"></a>    api_service_name <span class="op">=</span> <span class="st">&quot;youtube&quot;</span></span>
-<span id="cb66-21"><a href="data.html#cb66-21" aria-hidden="true" tabindex="-1"></a>    api_version <span class="op">=</span> <span class="st">&quot;v3&quot;</span></span>
-<span id="cb66-22"><a href="data.html#cb66-22" aria-hidden="true" tabindex="-1"></a>    client_secrets_file <span class="op">=</span> <span class="st">&quot;YOUR_CLIENT_SECRET_FILE.json&quot;</span></span>
-<span id="cb66-23"><a href="data.html#cb66-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-24"><a href="data.html#cb66-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Get credentials and create an API client</span></span>
-<span id="cb66-25"><a href="data.html#cb66-25" aria-hidden="true" tabindex="-1"></a>    flow <span class="op">=</span> google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(</span>
-<span id="cb66-26"><a href="data.html#cb66-26" aria-hidden="true" tabindex="-1"></a>        client_secrets_file, scopes)</span>
-<span id="cb66-27"><a href="data.html#cb66-27" aria-hidden="true" tabindex="-1"></a>    credentials <span class="op">=</span> flow.run_console()</span>
-<span id="cb66-28"><a href="data.html#cb66-28" aria-hidden="true" tabindex="-1"></a>    youtube <span class="op">=</span> googleapiclient.discovery.build(</span>
-<span id="cb66-29"><a href="data.html#cb66-29" aria-hidden="true" tabindex="-1"></a>        api_service_name, api_version, credentials<span class="op">=</span>credentials)</span>
-<span id="cb66-30"><a href="data.html#cb66-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-31"><a href="data.html#cb66-31" aria-hidden="true" tabindex="-1"></a>    request <span class="op">=</span> youtube.search().<span class="bu">list</span>(</span>
-<span id="cb66-32"><a href="data.html#cb66-32" aria-hidden="true" tabindex="-1"></a>        part<span class="op">=</span><span class="st">&quot;snippet&quot;</span>,</span>
-<span id="cb66-33"><a href="data.html#cb66-33" aria-hidden="true" tabindex="-1"></a>        maxResults<span class="op">=</span><span class="dv">25</span>,</span>
-<span id="cb66-34"><a href="data.html#cb66-34" aria-hidden="true" tabindex="-1"></a>        q<span class="op">=</span><span class="st">&quot;surfing&quot;</span></span>
-<span id="cb66-35"><a href="data.html#cb66-35" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb66-36"><a href="data.html#cb66-36" aria-hidden="true" tabindex="-1"></a>    response <span class="op">=</span> request.execute()</span>
-<span id="cb66-37"><a href="data.html#cb66-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-38"><a href="data.html#cb66-38" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(response)</span>
-<span id="cb66-39"><a href="data.html#cb66-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-40"><a href="data.html#cb66-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
-<span id="cb66-41"><a href="data.html#cb66-41" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb54-1"><a href="data.html#cb54-1" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb54-2"><a href="data.html#cb54-2" tabindex="-1"></a><span class="im">import</span> urllib.request</span>
+<span id="cb54-3"><a href="data.html#cb54-3" tabindex="-1"></a><span class="im">import</span> string</span>
+<span id="cb54-4"><a href="data.html#cb54-4" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb54-5"><a href="data.html#cb54-5" tabindex="-1"></a></span>
+<span id="cb54-6"><a href="data.html#cb54-6" tabindex="-1"></a>count <span class="op">=</span> <span class="dv">50</span></span>
+<span id="cb54-7"><a href="data.html#cb54-7" tabindex="-1"></a>API_KEY <span class="op">=</span> <span class="st">'your_key'</span></span>
+<span id="cb54-8"><a href="data.html#cb54-8" tabindex="-1"></a>random <span class="op">=</span> <span class="st">''</span>.join(random.choice(string.ascii_uppercase <span class="op">+</span> string.digits) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>))</span>
+<span id="cb54-9"><a href="data.html#cb54-9" tabindex="-1"></a></span>
+<span id="cb54-10"><a href="data.html#cb54-10" tabindex="-1"></a>urlData <span class="op">=</span> <span class="st">"https://www.googleapis.com/youtube/v3/search?key=</span><span class="sc">{}</span><span class="st">&amp;maxResults=</span><span class="sc">{}</span><span class="st">&amp;part=snippet&amp;type=video&amp;q=</span><span class="sc">{}</span><span class="st">"</span>.<span class="bu">format</span>(API_KEY,count,random)</span>
+<span id="cb54-11"><a href="data.html#cb54-11" tabindex="-1"></a>webURL <span class="op">=</span> urllib.request.urlopen(urlData)</span>
+<span id="cb54-12"><a href="data.html#cb54-12" tabindex="-1"></a>data <span class="op">=</span> webURL.read()</span>
+<span id="cb54-13"><a href="data.html#cb54-13" tabindex="-1"></a>encoding <span class="op">=</span> webURL.info().get_content_charset(<span class="st">'utf-8'</span>)</span>
+<span id="cb54-14"><a href="data.html#cb54-14" tabindex="-1"></a>results <span class="op">=</span> json.loads(data.decode(encoding))</span>
+<span id="cb54-15"><a href="data.html#cb54-15" tabindex="-1"></a></span>
+<span id="cb54-16"><a href="data.html#cb54-16" tabindex="-1"></a><span class="cf">for</span> data <span class="kw">in</span> results[<span class="st">'items'</span>]:</span>
+<span id="cb54-17"><a href="data.html#cb54-17" tabindex="-1"></a>    videoId <span class="op">=</span> (data[<span class="st">'id'</span>][<span class="st">'videoId'</span>])</span>
+<span id="cb54-18"><a href="data.html#cb54-18" tabindex="-1"></a>    <span class="bu">print</span>(videoId)</span>
+<span id="cb54-19"><a href="data.html#cb54-19" tabindex="-1"></a>    <span class="co">#store your ids</span></span></code></pre></div>
+<p>Random used by YouTube API, <a href="https://developers.google.com/youtube/v3/docs/search/list?apix=true&amp;apix_params=%7B%22part%22%3A%5B%22snippet%22%5D%2C%22maxResults%22%3A25%2C%22q%22%3A%22surfing%22%7D">test</a></p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb55-1"><a href="data.html#cb55-1" tabindex="-1"></a><span class="co"># -*- coding: utf-8 -*-</span></span>
+<span id="cb55-2"><a href="data.html#cb55-2" tabindex="-1"></a></span>
+<span id="cb55-3"><a href="data.html#cb55-3" tabindex="-1"></a><span class="co"># Sample Python code for youtube.search.list</span></span>
+<span id="cb55-4"><a href="data.html#cb55-4" tabindex="-1"></a><span class="co"># See instructions for running these code samples locally:</span></span>
+<span id="cb55-5"><a href="data.html#cb55-5" tabindex="-1"></a><span class="co"># https://developers.google.com/explorer-help/guides/code_samples#python</span></span>
+<span id="cb55-6"><a href="data.html#cb55-6" tabindex="-1"></a></span>
+<span id="cb55-7"><a href="data.html#cb55-7" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb55-8"><a href="data.html#cb55-8" tabindex="-1"></a></span>
+<span id="cb55-9"><a href="data.html#cb55-9" tabindex="-1"></a><span class="im">import</span> google_auth_oauthlib.flow</span>
+<span id="cb55-10"><a href="data.html#cb55-10" tabindex="-1"></a><span class="im">import</span> googleapiclient.discovery</span>
+<span id="cb55-11"><a href="data.html#cb55-11" tabindex="-1"></a><span class="im">import</span> googleapiclient.errors</span>
+<span id="cb55-12"><a href="data.html#cb55-12" tabindex="-1"></a></span>
+<span id="cb55-13"><a href="data.html#cb55-13" tabindex="-1"></a>scopes <span class="op">=</span> [<span class="st">"https://www.googleapis.com/auth/youtube.force-ssl"</span>]</span>
+<span id="cb55-14"><a href="data.html#cb55-14" tabindex="-1"></a></span>
+<span id="cb55-15"><a href="data.html#cb55-15" tabindex="-1"></a><span class="kw">def</span> main():</span>
+<span id="cb55-16"><a href="data.html#cb55-16" tabindex="-1"></a>    <span class="co"># Disable OAuthlib's HTTPS verification when running locally.</span></span>
+<span id="cb55-17"><a href="data.html#cb55-17" tabindex="-1"></a>    <span class="co"># *DO NOT* leave this option enabled in production.</span></span>
+<span id="cb55-18"><a href="data.html#cb55-18" tabindex="-1"></a>    os.environ[<span class="st">"OAUTHLIB_INSECURE_TRANSPORT"</span>] <span class="op">=</span> <span class="st">"1"</span></span>
+<span id="cb55-19"><a href="data.html#cb55-19" tabindex="-1"></a></span>
+<span id="cb55-20"><a href="data.html#cb55-20" tabindex="-1"></a>    api_service_name <span class="op">=</span> <span class="st">"youtube"</span></span>
+<span id="cb55-21"><a href="data.html#cb55-21" tabindex="-1"></a>    api_version <span class="op">=</span> <span class="st">"v3"</span></span>
+<span id="cb55-22"><a href="data.html#cb55-22" tabindex="-1"></a>    client_secrets_file <span class="op">=</span> <span class="st">"YOUR_CLIENT_SECRET_FILE.json"</span></span>
+<span id="cb55-23"><a href="data.html#cb55-23" tabindex="-1"></a></span>
+<span id="cb55-24"><a href="data.html#cb55-24" tabindex="-1"></a>    <span class="co"># Get credentials and create an API client</span></span>
+<span id="cb55-25"><a href="data.html#cb55-25" tabindex="-1"></a>    flow <span class="op">=</span> google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(</span>
+<span id="cb55-26"><a href="data.html#cb55-26" tabindex="-1"></a>        client_secrets_file, scopes)</span>
+<span id="cb55-27"><a href="data.html#cb55-27" tabindex="-1"></a>    credentials <span class="op">=</span> flow.run_console()</span>
+<span id="cb55-28"><a href="data.html#cb55-28" tabindex="-1"></a>    youtube <span class="op">=</span> googleapiclient.discovery.build(</span>
+<span id="cb55-29"><a href="data.html#cb55-29" tabindex="-1"></a>        api_service_name, api_version, credentials<span class="op">=</span>credentials)</span>
+<span id="cb55-30"><a href="data.html#cb55-30" tabindex="-1"></a></span>
+<span id="cb55-31"><a href="data.html#cb55-31" tabindex="-1"></a>    request <span class="op">=</span> youtube.search().<span class="bu">list</span>(</span>
+<span id="cb55-32"><a href="data.html#cb55-32" tabindex="-1"></a>        part<span class="op">=</span><span class="st">"snippet"</span>,</span>
+<span id="cb55-33"><a href="data.html#cb55-33" tabindex="-1"></a>        maxResults<span class="op">=</span><span class="dv">25</span>,</span>
+<span id="cb55-34"><a href="data.html#cb55-34" tabindex="-1"></a>        q<span class="op">=</span><span class="st">"surfing"</span></span>
+<span id="cb55-35"><a href="data.html#cb55-35" tabindex="-1"></a>    )</span>
+<span id="cb55-36"><a href="data.html#cb55-36" tabindex="-1"></a>    response <span class="op">=</span> request.execute()</span>
+<span id="cb55-37"><a href="data.html#cb55-37" tabindex="-1"></a></span>
+<span id="cb55-38"><a href="data.html#cb55-38" tabindex="-1"></a>    <span class="bu">print</span>(response)</span>
+<span id="cb55-39"><a href="data.html#cb55-39" tabindex="-1"></a></span>
+<span id="cb55-40"><a href="data.html#cb55-40" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+<span id="cb55-41"><a href="data.html#cb55-41" tabindex="-1"></a>    main()</span></code></pre></div>
 <p>Another way, but this is a dirty crawler, not for production</p>
-<div class="sourceCode" id="cb67"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb67-1"><a href="data.html#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re, urllib</span>
-<span id="cb67-2"><a href="data.html#cb67-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> random <span class="im">import</span> randint</span>
-<span id="cb67-3"><a href="data.html#cb67-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-4"><a href="data.html#cb67-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> random_str(str_size):</span>
-<span id="cb67-5"><a href="data.html#cb67-5" aria-hidden="true" tabindex="-1"></a>    res <span class="op">=</span> <span class="st">&quot;&quot;</span></span>
-<span id="cb67-6"><a href="data.html#cb67-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">xrange</span>(str_size):</span>
-<span id="cb67-7"><a href="data.html#cb67-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> randint(<span class="dv">0</span>,<span class="dv">25</span>)</span>
-<span id="cb67-8"><a href="data.html#cb67-8" aria-hidden="true" tabindex="-1"></a>        c <span class="op">=</span> <span class="bu">chr</span>(<span class="bu">ord</span>(<span class="st">&#39;a&#39;</span>)<span class="op">+</span>x)</span>
-<span id="cb67-9"><a href="data.html#cb67-9" aria-hidden="true" tabindex="-1"></a>        res <span class="op">+=</span> c</span>
-<span id="cb67-10"><a href="data.html#cb67-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> res</span>
-<span id="cb67-11"><a href="data.html#cb67-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-12"><a href="data.html#cb67-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> find_watch(text,pos):</span>
-<span id="cb67-13"><a href="data.html#cb67-13" aria-hidden="true" tabindex="-1"></a>    start <span class="op">=</span> text.find(<span class="st">&quot;watch?v=&quot;</span>,pos)</span>
-<span id="cb67-14"><a href="data.html#cb67-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (start<span class="op">&lt;</span><span class="dv">0</span>):</span>
-<span id="cb67-15"><a href="data.html#cb67-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span>,<span class="va">None</span></span>
-<span id="cb67-16"><a href="data.html#cb67-16" aria-hidden="true" tabindex="-1"></a>    end <span class="op">=</span> text.find(<span class="st">&quot; &quot;</span>,start)</span>
-<span id="cb67-17"><a href="data.html#cb67-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (end<span class="op">&lt;</span><span class="dv">0</span>):</span>
-<span id="cb67-18"><a href="data.html#cb67-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span>,<span class="va">None</span></span>
-<span id="cb67-19"><a href="data.html#cb67-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-20"><a href="data.html#cb67-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (end<span class="op">-</span>start <span class="op">&gt;</span> <span class="dv">200</span>): <span class="co">#silly heuristics, probably not a must</span></span>
-<span id="cb67-21"><a href="data.html#cb67-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span>,<span class="va">None</span></span>
-<span id="cb67-22"><a href="data.html#cb67-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-23"><a href="data.html#cb67-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> text[start:end<span class="op">-</span><span class="dv">1</span>], start</span>
-<span id="cb67-24"><a href="data.html#cb67-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-25"><a href="data.html#cb67-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-26"><a href="data.html#cb67-26" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> find_instance_links():</span>
-<span id="cb67-27"><a href="data.html#cb67-27" aria-hidden="true" tabindex="-1"></a>    base_url <span class="op">=</span> <span class="st">&#39;https://www.youtube.com/results?search_query=&#39;</span></span>
-<span id="cb67-28"><a href="data.html#cb67-28" aria-hidden="true" tabindex="-1"></a>    url <span class="op">=</span> base_url<span class="op">+</span>random_str(<span class="dv">3</span>)</span>
-<span id="cb67-29"><a href="data.html#cb67-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">#print url</span></span>
-<span id="cb67-30"><a href="data.html#cb67-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-31"><a href="data.html#cb67-31" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> urllib.urlopen(url).read()</span>
-<span id="cb67-32"><a href="data.html#cb67-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-33"><a href="data.html#cb67-33" aria-hidden="true" tabindex="-1"></a>    links <span class="op">=</span> {}</span>
-<span id="cb67-34"><a href="data.html#cb67-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-35"><a href="data.html#cb67-35" aria-hidden="true" tabindex="-1"></a>    pos <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb67-36"><a href="data.html#cb67-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">True</span>:</span>
-<span id="cb67-37"><a href="data.html#cb67-37" aria-hidden="true" tabindex="-1"></a>        link,pos <span class="op">=</span>  find_watch(r,pos)</span>
-<span id="cb67-38"><a href="data.html#cb67-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> link <span class="op">==</span> <span class="va">None</span> <span class="kw">or</span> pos <span class="op">==</span> <span class="va">None</span>:</span>
-<span id="cb67-39"><a href="data.html#cb67-39" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb67-40"><a href="data.html#cb67-40" aria-hidden="true" tabindex="-1"></a>        pos <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb67-41"><a href="data.html#cb67-41" aria-hidden="true" tabindex="-1"></a>        <span class="co">#print link</span></span>
-<span id="cb67-42"><a href="data.html#cb67-42" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="st">&quot;;&quot;</span> <span class="kw">in</span> link):</span>
-<span id="cb67-43"><a href="data.html#cb67-43" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
-<span id="cb67-44"><a href="data.html#cb67-44" aria-hidden="true" tabindex="-1"></a>        links[link] <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb67-45"><a href="data.html#cb67-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-46"><a href="data.html#cb67-46" aria-hidden="true" tabindex="-1"></a>    items_list <span class="op">=</span> links.items()</span>
-<span id="cb67-47"><a href="data.html#cb67-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-48"><a href="data.html#cb67-48" aria-hidden="true" tabindex="-1"></a>    list_size <span class="op">=</span> <span class="bu">len</span>(items_list)</span>
-<span id="cb67-49"><a href="data.html#cb67-49" aria-hidden="true" tabindex="-1"></a>    selected <span class="op">=</span> randint(list_size<span class="op">/</span><span class="dv">2</span>,list_size<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb67-50"><a href="data.html#cb67-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> items_list[selected][<span class="dv">0</span>]</span>
-<span id="cb67-51"><a href="data.html#cb67-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-52"><a href="data.html#cb67-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-53"><a href="data.html#cb67-53" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">xrange</span>(<span class="dv">1000</span>):</span>
-<span id="cb67-54"><a href="data.html#cb67-54" aria-hidden="true" tabindex="-1"></a>    sleep(randint(<span class="dv">7</span>,<span class="dv">20</span>)) <span class="co"># pause randomly between 7 and 20 seconds</span></span>
-<span id="cb67-55"><a href="data.html#cb67-55" aria-hidden="true" tabindex="-1"></a>    link <span class="op">=</span> find_instance_links()</span>
-<span id="cb67-56"><a href="data.html#cb67-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span> link</span></code></pre></div>
+<div class="sourceCode" id="cb56"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb56-1"><a href="data.html#cb56-1" tabindex="-1"></a><span class="im">import</span> re, urllib</span>
+<span id="cb56-2"><a href="data.html#cb56-2" tabindex="-1"></a><span class="im">from</span> random <span class="im">import</span> randint</span>
+<span id="cb56-3"><a href="data.html#cb56-3" tabindex="-1"></a></span>
+<span id="cb56-4"><a href="data.html#cb56-4" tabindex="-1"></a><span class="kw">def</span> random_str(str_size):</span>
+<span id="cb56-5"><a href="data.html#cb56-5" tabindex="-1"></a>    res <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb56-6"><a href="data.html#cb56-6" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">xrange</span>(str_size):</span>
+<span id="cb56-7"><a href="data.html#cb56-7" tabindex="-1"></a>        x <span class="op">=</span> randint(<span class="dv">0</span>,<span class="dv">25</span>)</span>
+<span id="cb56-8"><a href="data.html#cb56-8" tabindex="-1"></a>        c <span class="op">=</span> <span class="bu">chr</span>(<span class="bu">ord</span>(<span class="st">'a'</span>)<span class="op">+</span>x)</span>
+<span id="cb56-9"><a href="data.html#cb56-9" tabindex="-1"></a>        res <span class="op">+=</span> c</span>
+<span id="cb56-10"><a href="data.html#cb56-10" tabindex="-1"></a>    <span class="cf">return</span> res</span>
+<span id="cb56-11"><a href="data.html#cb56-11" tabindex="-1"></a></span>
+<span id="cb56-12"><a href="data.html#cb56-12" tabindex="-1"></a><span class="kw">def</span> find_watch(text,pos):</span>
+<span id="cb56-13"><a href="data.html#cb56-13" tabindex="-1"></a>    start <span class="op">=</span> text.find(<span class="st">"watch?v="</span>,pos)</span>
+<span id="cb56-14"><a href="data.html#cb56-14" tabindex="-1"></a>    <span class="cf">if</span> (start<span class="op">&lt;</span><span class="dv">0</span>):</span>
+<span id="cb56-15"><a href="data.html#cb56-15" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span>,<span class="va">None</span></span>
+<span id="cb56-16"><a href="data.html#cb56-16" tabindex="-1"></a>    end <span class="op">=</span> text.find(<span class="st">" "</span>,start)</span>
+<span id="cb56-17"><a href="data.html#cb56-17" tabindex="-1"></a>    <span class="cf">if</span> (end<span class="op">&lt;</span><span class="dv">0</span>):</span>
+<span id="cb56-18"><a href="data.html#cb56-18" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span>,<span class="va">None</span></span>
+<span id="cb56-19"><a href="data.html#cb56-19" tabindex="-1"></a></span>
+<span id="cb56-20"><a href="data.html#cb56-20" tabindex="-1"></a>    <span class="cf">if</span> (end<span class="op">-</span>start <span class="op">&gt;</span> <span class="dv">200</span>): <span class="co">#silly heuristics, probably not a must</span></span>
+<span id="cb56-21"><a href="data.html#cb56-21" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span>,<span class="va">None</span></span>
+<span id="cb56-22"><a href="data.html#cb56-22" tabindex="-1"></a></span>
+<span id="cb56-23"><a href="data.html#cb56-23" tabindex="-1"></a>    <span class="cf">return</span> text[start:end<span class="op">-</span><span class="dv">1</span>], start</span>
+<span id="cb56-24"><a href="data.html#cb56-24" tabindex="-1"></a></span>
+<span id="cb56-25"><a href="data.html#cb56-25" tabindex="-1"></a></span>
+<span id="cb56-26"><a href="data.html#cb56-26" tabindex="-1"></a><span class="kw">def</span> find_instance_links():</span>
+<span id="cb56-27"><a href="data.html#cb56-27" tabindex="-1"></a>    base_url <span class="op">=</span> <span class="st">'https://www.youtube.com/results?search_query='</span></span>
+<span id="cb56-28"><a href="data.html#cb56-28" tabindex="-1"></a>    url <span class="op">=</span> base_url<span class="op">+</span>random_str(<span class="dv">3</span>)</span>
+<span id="cb56-29"><a href="data.html#cb56-29" tabindex="-1"></a>    <span class="co">#print url</span></span>
+<span id="cb56-30"><a href="data.html#cb56-30" tabindex="-1"></a></span>
+<span id="cb56-31"><a href="data.html#cb56-31" tabindex="-1"></a>    r <span class="op">=</span> urllib.urlopen(url).read()</span>
+<span id="cb56-32"><a href="data.html#cb56-32" tabindex="-1"></a></span>
+<span id="cb56-33"><a href="data.html#cb56-33" tabindex="-1"></a>    links <span class="op">=</span> {}</span>
+<span id="cb56-34"><a href="data.html#cb56-34" tabindex="-1"></a></span>
+<span id="cb56-35"><a href="data.html#cb56-35" tabindex="-1"></a>    pos <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb56-36"><a href="data.html#cb56-36" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb56-37"><a href="data.html#cb56-37" tabindex="-1"></a>        link,pos <span class="op">=</span>  find_watch(r,pos)</span>
+<span id="cb56-38"><a href="data.html#cb56-38" tabindex="-1"></a>        <span class="cf">if</span> link <span class="op">==</span> <span class="va">None</span> <span class="kw">or</span> pos <span class="op">==</span> <span class="va">None</span>:</span>
+<span id="cb56-39"><a href="data.html#cb56-39" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb56-40"><a href="data.html#cb56-40" tabindex="-1"></a>        pos <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb56-41"><a href="data.html#cb56-41" tabindex="-1"></a>        <span class="co">#print link</span></span>
+<span id="cb56-42"><a href="data.html#cb56-42" tabindex="-1"></a>        <span class="cf">if</span> (<span class="st">";"</span> <span class="kw">in</span> link):</span>
+<span id="cb56-43"><a href="data.html#cb56-43" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb56-44"><a href="data.html#cb56-44" tabindex="-1"></a>        links[link] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb56-45"><a href="data.html#cb56-45" tabindex="-1"></a></span>
+<span id="cb56-46"><a href="data.html#cb56-46" tabindex="-1"></a>    items_list <span class="op">=</span> links.items()</span>
+<span id="cb56-47"><a href="data.html#cb56-47" tabindex="-1"></a></span>
+<span id="cb56-48"><a href="data.html#cb56-48" tabindex="-1"></a>    list_size <span class="op">=</span> <span class="bu">len</span>(items_list)</span>
+<span id="cb56-49"><a href="data.html#cb56-49" tabindex="-1"></a>    selected <span class="op">=</span> randint(list_size<span class="op">/</span><span class="dv">2</span>,list_size<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb56-50"><a href="data.html#cb56-50" tabindex="-1"></a>    <span class="cf">return</span> items_list[selected][<span class="dv">0</span>]</span>
+<span id="cb56-51"><a href="data.html#cb56-51" tabindex="-1"></a></span>
+<span id="cb56-52"><a href="data.html#cb56-52" tabindex="-1"></a></span>
+<span id="cb56-53"><a href="data.html#cb56-53" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">xrange</span>(<span class="dv">1000</span>):</span>
+<span id="cb56-54"><a href="data.html#cb56-54" tabindex="-1"></a>    sleep(randint(<span class="dv">7</span>,<span class="dv">20</span>)) <span class="co"># pause randomly between 7 and 20 seconds</span></span>
+<span id="cb56-55"><a href="data.html#cb56-55" tabindex="-1"></a>    link <span class="op">=</span> find_instance_links()</span>
+<span id="cb56-56"><a href="data.html#cb56-56" tabindex="-1"></a>    <span class="bu">print</span> link</span></code></pre></div>
 </div>
 </div>
-<div id="consumer-expenditure" class="section level2" number="12.4">
-<h2><span class="header-section-number">12.4</span> Consumer Expenditure</h2>
+<div id="consumer-expenditure" class="section level2" number="19.4">
+<h2>
+<span class="header-section-number">19.4</span> Consumer Expenditure<a class="anchor" aria-label="anchor" href="#consumer-expenditure"><i class="fas fa-link"></i></a>
+</h2>
 <ul>
-<li><p>A consumer unit: “a single person, or group of person who live together and who share responsibilities for most
-major expenditures.”</p></li>
-<li><p>The “Reference Person” is <strong>the first person named</strong> when the respondent is asked, “Who is responsible for owning or
-renting this home?”</p></li>
-<li><p>2 components to the Consumer Expenditure:</p>
+<li><p>A consumer unit: “a single person, or group of person who live together and who share responsibilities for most major expenditures.”</p></li>
+<li><p>The “Reference Person” is <strong>the first person named</strong> when the respondent is asked, “Who is responsible for owning or renting this home?”</p></li>
+<li>
+<p>2 components to the Consumer Expenditure:</p>
 <ul>
-<li><p>Interview survey</p>
+<li>
+<p>Interview survey</p>
 <ul>
 <li>for “big ticket” and recurring expenditures, and global estimates on others</li>
 <li>every three months for four quarter</li>
 <li>rotating-panel survey</li>
 <li>6,000 consumer units each quarter</li>
-</ul></li>
-<li><p>Diary survey</p>
+</ul>
+</li>
+<li>
+<p>Diary survey</p>
 <ul>
 <li><p>small-ticket, frequently purchased items</p></li>
 <li><p>independent from the interview survey</p></li>
 <li><p>about 14,000 diaries within families each year</p></li>
-</ul></li>
-</ul></li>
-<li><p>Table format</p>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Table format</p>
 <ul>
-<li><p>annual</p>
+<li>
+<p>annual</p>
 <ul>
 <li><p>Jan to Dec: since 1984</p></li>
 <li><p>July to June: since 2013</p></li>
-</ul></li>
-<li><p>two-year (Jan year 1 - Dec year 2)</p>
+</ul>
+</li>
+<li>
+<p>two-year (Jan year 1 - Dec year 2)</p>
 <ul>
 <li>since 1986</li>
-</ul></li>
-</ul></li>
-<li><p>Experimental research</p>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Experimental research</p>
 <ul>
 <li><p>all consumer units (available on request)</p></li>
 <li><p>E.g., income tables, generational groups (e.g., millennial, gen X)</p></li>
-</ul></li>
-<li></li>
+</ul>
+</li>
+</ul>
+</div>
+<div id="gender-age-nationality" class="section level2" number="19.5">
+<h2>
+<span class="header-section-number">19.5</span> Gender, Age, Nationality<a class="anchor" aria-label="anchor" href="#gender-age-nationality"><i class="fas fa-link"></i></a>
+</h2>
+<p>Now, we can make credible prediction about a person’s gender, age, and nationality based on his or her name.</p>
+<p>The APIs are</p>
+<ul>
+<li><code>https://genderize.io/</code></li>
+<li><code>https://agify.io/</code></li>
+<li><code>https://nationalize.io/</code></li>
+</ul>
+</div>
+<div id="google-trends" class="section level2" number="19.6">
+<h2>
+<span class="header-section-number">19.6</span> Google Trends<a class="anchor" aria-label="anchor" href="#google-trends"><i class="fas fa-link"></i></a>
+</h2>
+<p>Online search volume and news reporting show a strong correlation, while academic publishing lag behind online public interest due to its delayed review and publication process <span class="citation">(<a href="references.html#ref-nghiem2016">Nghiem et al. 2016</a>)</span>. This result was interpreted as news serves as a conductor between the research and the public community.</p>
+<p>Google Trends only return</p>
+<div class="inline-table"><table class="table table-sm">
+<thead><tr class="header">
+<th>Data Granularity</th>
+<th>Data Window</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Hourly Data</td>
+<td>Last 7 days</td>
+</tr>
+<tr class="even">
+<td>Daily Data</td>
+<td>Less than 9 months</td>
+</tr>
+<tr class="odd">
+<td>Weekly Data</td>
+<td>between 9 months and 5 years</td>
+</tr>
+<tr class="even">
+<td>Monthly Data</td>
+<td>Longer than 5 years</td>
+</tr>
+</tbody>
+</table></div>
+<p>Since the data is indexed for the chosen time window, for the same keywords with different time windows might result in different index values.</p>
+<div id="relative-search" class="section level3" number="19.6.1">
+<h3>
+<span class="header-section-number">19.6.1</span> Relative Search<a class="anchor" aria-label="anchor" href="#relative-search"><i class="fas fa-link"></i></a>
+</h3>
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/PMassicotte/gtrendsR">gtrendsR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># for proxy </span></span>
+<span><span class="co"># setHandleParameters(</span></span>
+<span><span class="co">#     user = "xxxx",</span></span>
+<span><span class="co">#     password = "*******",</span></span>
+<span><span class="co">#     domain = "mydomain",</span></span>
+<span><span class="co">#     proxyhost = "10.111.124.113",</span></span>
+<span><span class="co">#     proxyport = 8080</span></span>
+<span><span class="co"># )</span></span>
+<span></span>
+<span><span class="va">keywords</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"7eleven"</span>, <span class="st">"3m"</span><span class="op">)</span></span>
+<span><span class="va">country</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"US"</span><span class="op">)</span></span>
+<span><span class="va">time</span> <span class="op">=</span> <span class="op">(</span><span class="st">"2010-01-01 2012-01-30"</span><span class="op">)</span> <span class="co"># earliest is 2004</span></span>
+<span><span class="va">channel</span> <span class="op">=</span> <span class="st">"web"</span></span>
+<span></span>
+<span><span class="va">trends</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/gtrendsR/man/gtrends.html">gtrends</a></span><span class="op">(</span>keyword <span class="op">=</span> <span class="va">keywords</span>, geo <span class="op">=</span> <span class="va">country</span>, time <span class="op">=</span> <span class="va">time</span>, gprop <span class="op">=</span> <span class="va">channel</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># objects</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">trends</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># this is weekly data only</span></span>
+<span><span class="va">time_trend</span> <span class="op">&lt;-</span> <span class="va">trends</span><span class="op">$</span><span class="va">interest_over_time</span></span></code></pre></div>
+<p>The value is relative to the maximum volume (not absolute search volume)</p>
+<p>channel type (“web” (default), “news”, “images”, “froogle” , “youtube”)</p>
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span></span>
+<span> </span>
+<span><span class="va">plot</span> <span class="op">&lt;-</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">time_trend</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span></span>
+<span>        x <span class="op">=</span> <span class="va">date</span>,</span>
+<span>        y <span class="op">=</span> <span class="va">hits</span>,</span>
+<span>        group <span class="op">=</span> <span class="va">keyword</span>,</span>
+<span>        col <span class="op">=</span> <span class="va">keyword</span></span>
+<span>    <span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">xlab</a></span><span class="op">(</span><span class="st">'Time'</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ylab</a></span><span class="op">(</span><span class="st">'Relative Interest (weekly)'</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span></span>
+<span>        legend.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>        legend.position <span class="op">=</span> <span class="st">"bottom"</span>,</span>
+<span>        legend.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"Google Search Volume"</span><span class="op">)</span></span>
+<span><span class="va">plot</span></span></code></pre></div>
+<p>Smoothing to remove seasonality</p>
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plot</span> <span class="op">&lt;-</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">time_trend</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span></span>
+<span>        x <span class="op">=</span> <span class="va">date</span>,</span>
+<span>        y <span class="op">=</span> <span class="va">hits</span>,</span>
+<span>        group <span class="op">=</span> <span class="va">keyword</span>,</span>
+<span>        col <span class="op">=</span> <span class="va">keyword</span></span>
+<span>    <span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html">geom_smooth</a></span><span class="op">(</span>span <span class="op">=</span> <span class="fl">0.5</span>, se <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">xlab</a></span><span class="op">(</span><span class="st">'Time'</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ylab</a></span><span class="op">(</span><span class="st">'Relative Interest'</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span></span>
+<span>        legend.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>        legend.position <span class="op">=</span> <span class="st">"bottom"</span>,</span>
+<span>        legend.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ggtitle</a></span><span class="op">(</span><span class="st">"Google Search Volume"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">plot</span></span></code></pre></div>
+<p>Alternatively, we can use the plot function in the <code>gtrendsR</code> package readily</p>
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu">gtrendsR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gtrendsR/man/gtrends.html">gtrends</a></span><span class="op">(</span></span>
+<span>    keyword <span class="op">=</span> <span class="va">keywords</span>,</span>
+<span>    geo <span class="op">=</span> <span class="va">country</span>,</span>
+<span>    time <span class="op">=</span> <span class="va">time</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<ol style="list-style-type: decimal">
+<li>Scaling method (overlapping method) (recommended)</li>
+</ol>
+<p>A way to get daily data from <code>gtrendsR</code> readily is proposed by <a href="http://alexdyachenko.com/all/how-to-get-daily-google-trends-data-for-any-period-with-r/">Alex Dyachenko</a></p>
+<ol style="list-style-type: decimal">
+<li><p>Get daily estimates for the window less than 9 months</p></li>
+<li><p>Get monthly estimates for your desired time frame</p></li>
+<li><p>Multiply daily estimates for each month from step 1 by their weights from step 2</p></li>
+<li><p>Concatenation method (normalization/<a href="https://github.com/GeneralMills/pytrends/blob/master/pytrends/dailydata.py">dailydata</a> method)</p></li>
+</ol>
+<p>Daily data are concatenated from 1-month queries and normalized by weekly trends data, which has been done in this <a href="https://medium.com/@bewerunge.franz/google-trends-how-to-acquire-daily-data-for-broad-time-frames-b6c6dfe200e6">post</a></p>
+<p>From this <a href="https://towardsdatascience.com/reconstruct-google-trends-daily-data-for-extended-period-75b6ca1d3420">post</a>, we can be sure that the scaling method is better than the normalization method</p>
+<p>Rate limit:</p>
+<ul>
+<li>1,400 requests in 4 hours</li>
+</ul>
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/PMassicotte/gtrendsR">gtrendsR</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org">tidyverse</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://lubridate.tidyverse.org">lubridate</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">get_daily_gtrend</span> <span class="op">&lt;-</span></span>
+<span>    <span class="kw">function</span><span class="op">(</span><span class="va">keyword</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'7eleven'</span>, <span class="st">'3M'</span><span class="op">)</span>,</span>
+<span>             <span class="va">geo</span> <span class="op">=</span> <span class="st">'US'</span>,</span>
+<span>             <span class="va">from</span> <span class="op">=</span> <span class="st">'2013-01-01'</span>,</span>
+<span>             <span class="va">to</span> <span class="op">=</span> <span class="st">'2013-02-15'</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">'month'</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="va">to</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span>, <span class="st">'month'</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/period.html">days</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span>            </span>
+<span>            <span class="kw">if</span> <span class="op">(</span><span class="va">to</span> <span class="op">&lt;</span> <span class="va">from</span><span class="op">)</span> <span class="op">{</span></span>
+<span>                <span class="kw"><a href="https://rdrr.io/r/base/stop.html">stop</a></span><span class="op">(</span><span class="st">"Specifying \'to\' date in the current month is not allowed"</span><span class="op">)</span></span>
+<span>            <span class="op">}</span></span>
+<span>        <span class="op">}</span></span>
+<span>        </span>
+<span>        <span class="va">aggregated_data</span> <span class="op">&lt;-</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/pkg/gtrendsR/man/gtrends.html">gtrends</a></span><span class="op">(</span>keyword <span class="op">=</span> <span class="va">keyword</span>,</span>
+<span>                    geo <span class="op">=</span> <span class="va">geo</span>,</span>
+<span>                    time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">from</span>, <span class="va">to</span><span class="op">)</span><span class="op">)</span></span>
+<span>        <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">aggregated_data</span><span class="op">$</span><span class="va">interest_over_time</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="st">'There is no data in Google Trends!'</span><span class="op">)</span></span>
+<span>            <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>        <span class="op">}</span></span>
+<span>        </span>
+<span>        <span class="va">mult_m</span> <span class="op">&lt;-</span> <span class="va">aggregated_data</span><span class="op">$</span><span class="va">interest_over_time</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>hits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">hits</span> <span class="op">==</span> <span class="st">'&lt;1'</span>, <span class="st">'0'</span>, <span class="va">hits</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span>month <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html">floor_date</a></span><span class="op">(</span><span class="va">date</span>, <span class="st">'month'</span><span class="op">)</span>, <span class="va">keyword</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarise</a></span><span class="op">(</span>hits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">hits</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>ym <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html">format</a></span><span class="op">(</span><span class="va">month</span>, <span class="st">'%Y-%m'</span><span class="op">)</span>,</span>
+<span>                   mult <span class="op">=</span> <span class="va">hits</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="va">hits</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">month</span>, <span class="va">ym</span>, <span class="va">keyword</span>, <span class="va">mult</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html">as_tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>        </span>
+<span>        <span class="va">pm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span></span>
+<span>            s <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span><span class="op">(</span><span class="va">from</span><span class="op">)</span>, <span class="fu"><a href="https://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span>, by <span class="op">=</span> <span class="st">'month'</span><span class="op">)</span>,</span>
+<span>            e <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span><span class="op">(</span><span class="va">from</span><span class="op">)</span>, <span class="fu"><a href="https://lubridate.tidyverse.org/reference/ymd.html">ymd</a></span><span class="op">(</span><span class="va">to</span><span class="op">)</span>, by <span class="op">=</span> <span class="st">'month'</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/weekday.POSIXt.html">months</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/period.html">days</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span>        </span>
+<span>        <span class="va">raw_trends_m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>        </span>
+<span>        <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">pm</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>            <span class="va">curr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/gtrendsR/man/gtrends.html">gtrends</a></span><span class="op">(</span><span class="va">keyword</span>,</span>
+<span>                            geo <span class="op">=</span> <span class="va">geo</span>,</span>
+<span>                            time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">pm</span><span class="op">$</span><span class="va">s</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>, <span class="va">pm</span><span class="op">$</span><span class="va">e</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>            <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html">is.null</a></span><span class="op">(</span><span class="va">curr</span><span class="op">$</span><span class="va">interest_over_time</span><span class="op">)</span><span class="op">)</span></span>
+<span>                <span class="kw">next</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span></span>
+<span>                <span class="st">'for'</span>,</span>
+<span>                <span class="va">pm</span><span class="op">$</span><span class="va">s</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>,</span>
+<span>                <span class="va">pm</span><span class="op">$</span><span class="va">e</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>,</span>
+<span>                <span class="st">'retrieved'</span>,</span>
+<span>                <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html">count</a></span><span class="op">(</span><span class="va">curr</span><span class="op">$</span><span class="va">interest_over_time</span><span class="op">)</span>,</span>
+<span>                <span class="st">'days of data (all keywords)'</span></span>
+<span>            <span class="op">)</span><span class="op">)</span></span>
+<span>            <span class="va">raw_trends_m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span><span class="op">(</span><span class="va">raw_trends_m</span>,</span>
+<span>                                  <span class="va">curr</span><span class="op">$</span><span class="va">interest_over_time</span><span class="op">)</span></span>
+<span>        <span class="op">}</span></span>
+<span>        </span>
+<span>        <span class="va">trend_m</span> <span class="op">&lt;-</span> <span class="va">raw_trends_m</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">keyword</span>, <span class="va">hits</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>ym <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html">format</a></span><span class="op">(</span><span class="va">date</span>, <span class="st">'%Y-%m'</span><span class="op">)</span>,</span>
+<span>                   hits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">hits</span> <span class="op">==</span> <span class="st">'&lt;1'</span>, <span class="st">'0'</span>, <span class="va">hits</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html">as_tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>        </span>
+<span>        <span class="va">trend_res</span> <span class="op">&lt;-</span> <span class="va">trend_m</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">left_join</a></span><span class="op">(</span><span class="va">mult_m</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>est_hits <span class="op">=</span> <span class="va">hits</span> <span class="op">*</span> <span class="va">mult</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">date</span>, <span class="va">keyword</span>, <span class="va">est_hits</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html">as_tibble</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span></span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html">as.Date</a></span><span class="op">(</span><span class="va">date</span><span class="op">)</span><span class="op">)</span></span>
+<span>        </span>
+<span>        <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">trend_res</span><span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span></span>
+<span><span class="va">daily_trend</span> <span class="op">&lt;-</span> <span class="fu">get_daily_gtrend</span><span class="op">(</span></span>
+<span>    keyword <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'7eleven'</span>, <span class="st">'3M'</span><span class="op">)</span>,</span>
+<span>    geo <span class="op">=</span> <span class="st">'US'</span>,</span>
+<span>    from <span class="op">=</span> <span class="st">'2013-01-01'</span>,</span>
+<span>    to <span class="op">=</span> <span class="st">'2013-02-01'</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">daily_trend</span><span class="op">)</span></span></code></pre></div>
+<p>This method was used in a research paper <span class="citation">(<a href="references.html#ref-risteski2014">Risteski and Davcev 2014</a>)</span></p>
+<p>Similarly, without the <code>gtrendsR</code> package, you can follow <a href="http://erikjohansson.blogspot.com/2014/12/creating-daily-search-volume-data-from_8.html">Erik Johansson’s method</a>, but the Google no longer has his URL: <a href="http://www.google.com/trends/trendsReport?hl=en-US&amp;q=" class="uri">http://www.google.com/trends/trendsReport?hl=en-US&amp;q=</a> so you might have to figure out the new URL</p>
+<p>Other methods include:</p>
+<ul>
+<li><span class="citation">(<a href="references.html#ref-liugoogle2019">Ying Liu et al. 2019</a>)</span></li>
+</ul>
+</div>
+<div id="absolute-search" class="section level3" number="19.6.2">
+<h3>
+<span class="header-section-number">19.6.2</span> Absolute Search<a class="anchor" aria-label="anchor" href="#absolute-search"><i class="fas fa-link"></i></a>
+</h3>
+<p>See <a href="https://cloud.google.com/blog/products/data-analytics/top-25-google-search-terms-now-in-bigquery?utm_source=youtube&amp;utm_medium=unpaidsoc&amp;utm_campaign=CDR_swo_analytics_trendsvideo_trendsdatasetblog_071421&amp;utm_content=description">Google Trend Dataset</a> available via <a href="https://cloud.google.com/bigquery">BigQuery</a></p>
+</div>
+</div>
+<div id="baidu-index" class="section level2" number="19.7">
+<h2>
+<span class="header-section-number">19.7</span> Baidu Index<a class="anchor" aria-label="anchor" href="#baidu-index"><i class="fas fa-link"></i></a>
+</h2>
+<p>see <span class="citation">(<a href="references.html#ref-liu2019">P. J. Liu et al. 2019</a>)</span> on how to use Java-based spider to get search volume data</p>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="metrics.html"><span class="header-section-number">18</span> Metrics</a></div>
+<div class="next"><a href="modeling-in-marketing.html"><span class="header-section-number">20</span> Modeling in Marketing</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#data"><span class="header-section-number">19</span> Data</a></li>
+<li><a class="nav-link" href="#mongodb"><span class="header-section-number">19.1</span> MongoDB</a></li>
+<li><a class="nav-link" href="#wrds"><span class="header-section-number">19.2</span> WRDS</a></li>
+<li>
+<a class="nav-link" href="#youtube"><span class="header-section-number">19.3</span> YouTube</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#oauth"><span class="header-section-number">19.3.1</span> OAuth</a></li>
+<li><a class="nav-link" href="#api"><span class="header-section-number">19.3.2</span> API</a></li>
+<li><a class="nav-link" href="#python"><span class="header-section-number">19.3.3</span> Python</a></li>
+</ul>
+</li>
+<li><a class="nav-link" href="#consumer-expenditure"><span class="header-section-number">19.4</span> Consumer Expenditure</a></li>
+<li><a class="nav-link" href="#gender-age-nationality"><span class="header-section-number">19.5</span> Gender, Age, Nationality</a></li>
+<li>
+<a class="nav-link" href="#google-trends"><span class="header-section-number">19.6</span> Google Trends</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#relative-search"><span class="header-section-number">19.6.1</span> Relative Search</a></li>
+<li><a class="nav-link" href="#absolute-search"><span class="header-section-number">19.6.2</span> Absolute Search</a></li>
+</ul>
+</li>
+<li><a class="nav-link" href="#baidu-index"><span class="header-section-number">19.7</span> Baidu Index</a></li>
 </ul>
 
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/mikenguyen13/marketing_research/blob/master/32-data.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/mikenguyen13/marketing_research/edit/master/32-data.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
 </div>
+    </nav>
 </div>
-            </section>
 
-          </div>
-        </div>
-      </div>
-<a href="metrics.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="modeling-application.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
-    </div>
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Marketing Research</strong>" was written by Mike Nguyen. It was last built on 2023-08-13.</p>
   </div>
-<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
-<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
-<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
-<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
-<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
-<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
-<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
-<script>
-gitbook.require(["gitbook"], function(gitbook) {
-gitbook.start({
-"sharing": {
-"github": false,
-"facebook": true,
-"twitter": true,
-"linkedin": false,
-"weibo": false,
-"instapaper": false,
-"vk": false,
-"whatsapp": false,
-"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
-},
-"fontsettings": {
-"theme": "white",
-"family": "sans",
-"size": 2
-},
-"edit": {
-"link": "https://github.com/mikenguyen13/marketing_research/edit/main/10-data.Rmd",
-"text": "Edit"
-},
-"history": {
-"link": null,
-"text": null
-},
-"view": {
-"link": null,
-"text": null
-},
-"download": ["Marketing Research.pdf", "Marketing Research.epub"],
-"search": {
-"engine": "lunr",
-"options": null
-},
-"toc": {
-"collapse": "section",
-"scroll_highlight": true,
-"sharing": {
-"facebook": true,
-"github": true,
-"twitter": true,
-"linkedin": true
-},
-"info": true,
-"edit": true
-}
-});
-});
-</script>
 
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer><!-- dynamically load mathjax for compatibility with self-contained --><script>
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "true";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:")
       if (/^https?:/.test(src))
         src = src.replace(/^https?:/, '');
     script.src = src;
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
+</script><script type="text/x-mathjax-config">const popovers = document.querySelectorAll('a.footnote-ref[data-toggle="popover"]');
+for (let popover of popovers) {
+  const div = document.createElement('div');
+  div.setAttribute('style', 'position: absolute; top: 0, left:0; width:0, height:0, overflow: hidden; visibility: hidden;');
+  div.innerHTML = popover.getAttribute('data-content');
+
+  var has_math = div.querySelector("span.math");
+  if (has_math) {
+    document.body.appendChild(div);
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, div]);
+    MathJax.Hub.Queue(function() {
+      popover.setAttribute('data-content', div.innerHTML);
+      document.body.removeChild(div);
+    })
+  }
+}
 </script>
 </body>
-
 </html>

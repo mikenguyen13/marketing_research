@@ -1,0 +1,283 @@
+# Preference Measurement
+
+Reservation price = price a consumer willing to pay for a product
+
+Estimation for reservation price:
+
+1.  Survey question direct asks for consumer reservation price (but this estimation method tends to bias downward because participants don't want people to know that they are price sensitive).
+2.  From the coefficients of conjoint analysis.
+
+Assumptions to get consumer utility from regression:
+
+1.  Consumption utility equals sum of utilities for the product product attributes
+
+Let $N$ be the number of non-price attributes and each attributes has more than 1 level.
+
+We use fractional factorial design to derive different profiles for consumers to choose with the goal of least number of profiles.
+
+Then the utility function can be represented as
+
+$$
+U = \beta_0 + \beta_p \times P + \sum_{k=1}^N \beta_k \times A_k + \epsilon
+$$
+
+where
+
+-   $U$ = consumer rating or utility
+
+-   $\beta$'s = utility weights
+
+-   $\beta_0$ = heterogeneity in the range of the ratings scale per consumer.
+
+-   $P$ = price
+
+-   $A$ = non-price attributes (categorical variables)
+
+Then the reservation price (at the individual level) for product $P$ is
+
+$$
+r(P) = \frac{\Delta p}{\beta_p} (\sum_{k=1}^N \frac{\beta_k}{\Delta A_k} A_k)
+$$
+
+where
+
+-   $\Delta p$ = difference in price between two levels (of the same attribute)
+
+-   $\Delta A_k$ = difference in attribute levels
+
+and the dollar value for each unit of utility is
+
+$$
+\frac{\Delta p}{\beta_p}
+$$
+
+and for each attribute $k$, the utility a consumer can derive is
+
+$$
+(\frac{\beta_k}{\Delta A_k}) A_k
+$$
+
+Hence, we can see that the reservation price for a product (i.e., total dollar value a consumer assigns on product $P$) is just the sum of utility across all attributes times dollar value for each unit of utility
+
+
+
+@netzer2008
+
+-   Problem
+
+    -   Companies: Product development, pricing segmentation, positioning, advertising, project selection, and investment decisions
+
+    -   Consumers: recommendation agents
+
+    -   Policy makers and health care professionals:
+
+    -   Academic researchers;
+
+-   Design and Data collection
+
+    -   Original goals: maximizing A-efficiency and D-efficiency (based on covariance matrix of the estimates of the partworths)
+
+    -   New: M-efficiency measure (accounts for managers' considerations).
+
+    -   New Adaptive method for data collection:
+
+        -   Commercially available: Adaption conjoint analysis (ACA), Fast Polyhedral approach, Adaptive Self-explicated approach
+
+-   Model Specification, Estimation, and Action
+
+## Conjoint Analysis
+
+also known as conjoint measurements, which stems from mathematical psychology and psychometrics
+
+Aims:
+
+-   Willingness to pay: measure what individual are willing to give up to obtain certain product benefits
+
+-   Distribution of willing to pay : measure how consumer differ
+
+Advantages:
+
+-   Improves ability to assess customers' true wants and needs (especially price)
+
+-   Dissect "everything is important"
+
+Perception vs. preference
+
+-   Perception (beliefs about the market) is largely homogeneous across customers
+
+-   Preference (what product they buy) is heterogeneous across customers.
+
+Conjoint analysis is a tool for preference assessment.
+
+Attributes in conjoint:
+
+-   Not too many attributes
+
+-   Attributes should be actionable
+
+-   Need to choose reasonable range of attributes
+
+    -   within range under consideration
+
+    -   All levels should be feasible
+
+-   Number of attribute levels
+
+    -   Too many can be confusing
+
+    -   Halo effect of number of attributes (or the order of levels)
+
+Number of profiles equal number of dummy variables with the assumption of independence
+
+If you suspect that there might be interaction effect (violation of independence), you can either
+
+-   use higher-level attribute
+
+-   increase the number of profiles
+
+
+
+Ranking and Rating conjoint analysis are not different @kalish1991
+
+[@greenwind1975]
+
+Basics:
+
+-   Use orthogonal array (in experimental design) to test combinations where independent contributions of all factors (attributes) are balanced.
+
+-   Then rank all the reduced combinations in order
+
+Uses:
+
+-   New product development
+
+-   Package design
+
+-   Pricing and brand alternatives
+
+-   Descriptions of new products or services
+
+-   Alternative service design
+
+-   Also organizations as consumers
+
+Outcome variable can be:
+
+-   Preference
+
+-   Likelihood to purchase
+
+-   best value for the money
+
+-   Convenience of use
+
+-   Suitability for a specific job
+
+-   Psychological images (e.g., ruggedness, distinctiveness, conservativeness)
+
+Can be used in conjunction with
+
+-   factor analysis: firm-level decision variables (attribute/factor), dimension reduction technique
+
+-   perceptual mapping: multidimensional scaling
+
+-   cluster analysis: customer-level variables, segmentation technique
+
+Suggested packages (in order of preference):
+
+-   `AlgDesign`
+
+-   `conjoint`
+
+-   `faisalconjoint`
+
+-   `mlogit`
+
+-   `conf.design`
+
+-   `prefmod`
+
+### Full-Profile
+
+```{r}
+library(conjoint)
+data(tea)
+caModel(y = tprefm[1,],x = tprof)
+```
+
+### Choice-based
+
+Also known as Discrete-choice conjoint analysis
+
+### Adaptive
+
+-   Varies the choice sets based on respondent's preference
+
+-   Reduces the survey length
+
+
+
+### Hybrid
+
+-   Combination of [Full-Profile] and [Adaptive]
+
+### Max-Diff
+
+-   Assortment under most preferred and least preferred scenario.
+
+### Self-explicated
+
+### Hierarchical Bayes analysis
+
+### Application
+
+```{r}
+library(conjoint)
+Experiment = expand.grid(weight = c("a","b"),
+                         Price = c("Low","High"),
+                         Warranty = c("2","3"),
+                         Battery = c("10","20"))
+
+partial_design = caFactorialDesign(Experiment,type = "orthogonal",seed = 123)
+partial_profile = caEncodedDesign(partial_design)
+
+levels <- c("a","b","Low","High","2","3","10","20")
+lev.df <- data.frame(levels)
+
+data = c("")
+```
+
+Example by [Martin Muller](https://medium.com/sicara/market-research-survey-conjoint-analysis-r-code-3d4f6190c2aa)
+
+```{r}
+# Declaration of features and feature values
+feature_names <- c("LENGTH", "ILLUSTRATION", "CLAPS")
+feature_values <- list()
+feature_values[[1]] <- c("2min", "7min", "20min")
+feature_values[[2]] <- c("several images", "one image", "no image")
+feature_values[[3]] <- c("+500 claps", "less than 500 claps")
+
+# All concept generation
+articles <- expand.grid(LENGTH = feature_values[[1]],
+                        ILLUSTRATION = feature_values[[2]],
+                        CLAPS = feature_values[[3]])
+
+library (conjoint)
+maxNumberOfArticles = 8
+
+# Selection of relevant concepts
+selectedArticles <- caFactorialDesign(data = articles,
+                                      type = 'fractional',
+                                      cards = maxNumberOfArticles)
+
+# Checking if selected concepts are relevant for study
+corrSelectedArticles <- caEncodedDesign(selectedArticles)
+#print(cor(corr_design_mails))
+print(cor(corrSelectedArticles))
+
+# List of rates of each article allowing to compare them
+ranking = c(7 / 7, 3 / 7, 3 / 7, 5 / 7, 2 / 7, 6 / 7, 3 / 7, 0 / 7)
+
+# Performing conjoint analysis
+Conjoint(ranking, selectedArticles, unlist(feature_values))
+```

@@ -72,7 +72,7 @@ plot(xs,
      ylab = "H(p)")
 ```
 
-![](07-communication_files/figure-epub3/unnamed-chunk-1-1.png)<!-- -->
+![](07-communication_files/figure-latex/unnamed-chunk-1-1.pdf)<!-- --> 
 
 
 ```r

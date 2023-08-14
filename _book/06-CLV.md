@@ -117,7 +117,7 @@ ggplot(df_ret, aes(x = month_lt, y = retention_rate, group = example, color = ex
         ggtitle('Retention Rate')
 ```
 
-![](06-CLV_files/figure-epub3/unnamed-chunk-1-1.png)<!-- -->
+![](06-CLV_files/figure-latex/unnamed-chunk-1-1.pdf)<!-- --> 
 
 
 Prediciton when we only have values on certain months
@@ -332,7 +332,7 @@ ggplot(df_ret_all, aes(x = month_lt, y = retention_rate, group = example, color 
         ggtitle('Retention Rate Projections')
 ```
 
-![](06-CLV_files/figure-epub3/unnamed-chunk-2-1.png)<!-- -->
+![](06-CLV_files/figure-latex/unnamed-chunk-2-1.pdf)<!-- --> 
 
 calculate the average LTV for case03 based on two historical months with a forecast horizon of 24 months and a subscription price of $1
 
@@ -405,7 +405,9 @@ Customers with high CLV does not guarantee high CRV [@kumar_2007]. Hence, [@kuma
 ## Warning: package 'jpeg' was built under R version 4.0.5
 ```
 
-<img src="images/customer_value_matrix.jpg" width="390" style="display: block; margin: auto;" />
+
+
+\begin{center}\includegraphics[width=5.42in]{images/customer_value_matrix} \end{center}
 
 
 

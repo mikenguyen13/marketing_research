@@ -96,3 +96,13 @@ $$
 -   Model with first-order constructs instead of measure, but each with three reflective measures, and second-order construct also has two reflective measures.
 
     -   sometimes, first-order construct can't be measured multiple times (e.g., income, age)
+
+<br>
+
+Construct Validity
+
+-   Convergent Validity
+
+-   Discriminant/Divergent Validity
+
+-   Nomological Validity
