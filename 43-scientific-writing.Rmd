@@ -56,8 +56,6 @@ Rules of thumb:
 
 -   Present: events that are general fact, and current
 
-
-
 Journal paper types:
 
 1.  Research Paper: hypotheses and findings

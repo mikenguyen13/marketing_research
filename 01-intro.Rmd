@@ -24,15 +24,11 @@ Dimensions of [Qualitative Research](https://www.sagepub.com/sites/default/files
 
 4.  Methods: "technique for gathering evidence".
 
-
-
 Procedures recommended for literature review papers:
 
 -   [@katsikeas2016]
 
 -   [@lipsey2001practical]
-
-
 
 This part is based on professor Ajay Kohli's workshop on theory
 
@@ -63,8 +59,6 @@ Developing theoretical arguments
     3.  Propositions are yet to be true
 
     4.  Difference between a proposition and assumption is the Goldilocks distance between X and Y
-
-
 
 One proposition can become a theory
 

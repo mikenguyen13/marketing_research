@@ -1,5 +1,7 @@
 # Empirical Models
 
+
+
 ## Attribution Models
 
 ### Ordered Shapley
@@ -22,60 +24,6 @@ Marketing application:
 
 ```r
 library("GameTheory")
-```
-
-```
-## Loading required package: lpSolveAPI
-```
-
-```
-## Loading required package: combinat
-```
-
-```
-## 
-## Attaching package: 'combinat'
-```
-
-```
-## The following object is masked from 'package:utils':
-## 
-##     combn
-```
-
-```
-## Loading required package: gtools
-```
-
-```
-## Loading required package: ineq
-```
-
-```
-## Loading required package: kappalab
-```
-
-```
-## Loading required package: lpSolve
-```
-
-```
-## Loading required package: quadprog
-```
-
-```
-## Loading required package: kernlab
-```
-
-```
-## 
-## Attaching package: 'kappalab'
-```
-
-```
-## The following object is masked from 'package:ineq':
-## 
-##     entropy
 ```
 
 [packages reference](https://cran.r-project.org/web/packages/GameTheory/vignettes/GameTheory.pdf)
@@ -133,153 +81,17 @@ This section is by [Analytics Vidhya](https://www.analyticsvidhya.com/blog/2018/
 
 #Load the libraries
 library("ChannelAttribution")
-```
-
-```
-## ChannelAttribution 2.0.7
-```
-
-```
-## *** Looking to run more advanced attribution? Try ChannelAttribution Pro for free! Visit https://channelattribution.io/product
-```
-
-```r
 library("ggplot2")
-```
-
-```
-## 
-## Attaching package: 'ggplot2'
-```
-
-```
-## The following object is masked from 'package:kernlab':
-## 
-##     alpha
-```
-
-```r
 library("reshape")
 library("dplyr")
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-```
-
-```
-## The following object is masked from 'package:reshape':
-## 
-##     rename
-```
-
-```
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```r
 library("plyr")
-```
-
-```
-## ------------------------------------------------------------------------------
-```
-
-```
-## You have loaded plyr after dplyr - this is likely to cause problems.
-## If you need functions from both plyr and dplyr, please load plyr first, then dplyr:
-## library(plyr); library(dplyr)
-```
-
-```
-## ------------------------------------------------------------------------------
-```
-
-```
-## 
-## Attaching package: 'plyr'
-```
-
-```
-## The following objects are masked from 'package:dplyr':
-## 
-##     arrange, count, desc, failwith, id, mutate, rename, summarise,
-##     summarize
-```
-
-```
-## The following objects are masked from 'package:reshape':
-## 
-##     rename, round_any
-```
-
-```r
 library("reshape2")
-```
-
-```
-## 
-## Attaching package: 'reshape2'
-```
-
-```
-## The following objects are masked from 'package:reshape':
-## 
-##     colsplit, melt, recast
-```
-
-```r
 # library("markovchain")
 library("plotly")
-```
 
-```
-## 
-## Attaching package: 'plotly'
-```
-
-```
-## The following objects are masked from 'package:plyr':
-## 
-##     arrange, mutate, rename, summarise
-```
-
-```
-## The following object is masked from 'package:reshape':
-## 
-##     rename
-```
-
-```
-## The following object is masked from 'package:ggplot2':
-## 
-##     last_plot
-```
-
-```
-## The following object is masked from 'package:stats':
-## 
-##     filter
-```
-
-```
-## The following object is masked from 'package:graphics':
-## 
-##     layout
-```
-
-```r
 #Read the data into R
-channel = read.csv("images/Channel_attribution.csv", header = T) %>% select(-c(Output))
+channel = read.csv("images/Channel_attribution.csv", header = T) %>% 
+    select(-c(Output))
 head(channel, n = 2)
 ```
 
@@ -686,14 +498,6 @@ all_mod_plot <- reshape2::melt(all_models, id.vars = 'channel_name', variable.na
 all_mod_plot$value <- round(all_mod_plot$value)
 # slope chart
 pal <- colorRampPalette(brewer.pal(10, "Set1"))
-```
-
-```
-## Warning in brewer.pal(10, "Set1"): n too large, allowed maximum for palette Set1 is 9
-## Returning the palette you asked for with that many colors
-```
-
-```r
 ggplot(all_mod_plot, aes(x = conv_type, y = value, group = channel_name)) +
         theme_solarized(base_size = 18, base_family = "", light = TRUE) +
         scale_color_manual(values = pal(10)) +
@@ -725,14 +529,6 @@ ggplot(all_mod_plot, aes(x = conv_type, y = value, group = channel_name)) +
         guides(colour = guide_legend(override.aes = list(size = 4)))
 ```
 
-```
-## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-## ℹ Please use `linewidth` instead.
-## This warning is displayed once every 8 hours.
-## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-## generated.
-```
-
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-11-2.png" width="672" />
 
 Additional concerns:
@@ -740,35 +536,6 @@ Additional concerns:
 
 ```r
 library(tidyverse)
-```
-
-```
-## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ forcats   1.0.0     ✔ stringr   1.5.0
-## ✔ lubridate 1.9.2     ✔ tibble    3.2.1
-## ✔ purrr     1.0.1     ✔ tidyr     1.3.0
-## ✔ readr     2.1.4     
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ ggplot2::alpha()    masks kernlab::alpha()
-## ✖ plotly::arrange()   masks plyr::arrange(), dplyr::arrange()
-## ✖ purrr::compact()    masks plyr::compact()
-## ✖ plyr::count()       masks dplyr::count()
-## ✖ purrr::cross()      masks kernlab::cross()
-## ✖ plyr::desc()        masks dplyr::desc()
-## ✖ tidyr::expand()     masks reshape::expand()
-## ✖ plyr::failwith()    masks dplyr::failwith()
-## ✖ plotly::filter()    masks dplyr::filter(), stats::filter()
-## ✖ plyr::id()          masks dplyr::id()
-## ✖ dplyr::lag()        masks stats::lag()
-## ✖ plotly::mutate()    masks plyr::mutate(), dplyr::mutate()
-## ✖ plotly::rename()    masks plyr::rename(), dplyr::rename(), reshape::rename()
-## ✖ lubridate::stamp()  masks reshape::stamp()
-## ✖ plotly::summarise() masks plyr::summarise(), dplyr::summarise()
-## ✖ plyr::summarize()   masks dplyr::summarize()
-## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-```
-
-```r
 library(reshape2)
 library(ggthemes)
 library(ggrepel)
@@ -777,30 +544,6 @@ library(ChannelAttribution)
 # library(markovchain)
 library(visNetwork)
 library(expm)
-```
-
-```
-## Loading required package: Matrix
-## 
-## Attaching package: 'Matrix'
-## 
-## The following objects are masked from 'package:tidyr':
-## 
-##     expand, pack, unpack
-## 
-## The following object is masked from 'package:reshape':
-## 
-##     expand
-## 
-## 
-## Attaching package: 'expm'
-## 
-## The following object is masked from 'package:Matrix':
-## 
-##     expm
-```
-
-```r
 library(stringr)
 library(purrr)
 library(purrrlyr)
@@ -1247,17 +990,8 @@ nodes <- data_frame(id = c( c(trans_matrix_prob$channel_from), c(trans_matrix_pr
                 shadow = TRUE,
                 shape = "box"
         )
-```
 
-```
-## Warning: `data_frame()` was deprecated in tibble 1.1.0.
-## ℹ Please use `tibble()` instead.
-## This warning is displayed once every 8 hours.
-## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-## generated.
-```
 
-```r
 visNetwork(nodes,
            edges,
            height = "2000px",
@@ -2352,14 +2086,6 @@ lcg <- orders.segm %>%
     summarise(quantity = n()) %>%
     mutate(client = 'client') %>%
     ungroup()
-```
-
-```
-## `summarise()` has grouped output by 'segm.rec'. You can override using the
-## `.groups` argument.
-```
-
-```r
 lcg.matrix <-
     dcast(lcg,
           segm.freq ~ segm.rec,
@@ -2429,14 +2155,7 @@ lcg.sub <- orders.segm %>%
     summarise(quantity = n()) %>%
     mutate(client = 'client') %>%
     ungroup()
-```
 
-```
-## `summarise()` has grouped output by 'gender', 'cart', 'segm.rec'. You can
-## override using the `.groups` argument.
-```
-
-```r
 ggplot(lcg.sub, aes(x = client, y = quantity, fill = gender)) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set1') +
@@ -2606,14 +2325,7 @@ lcg.clv <- orders.segm %>%
     # calculating CAC and CLV per client
     mutate(cac1 = round(cac / quantity, 2),
            clv1 = round(clv / quantity, 2))
-```
 
-```
-## `summarise()` has grouped output by 'segm.rec'. You can override using the
-## `.groups` argument.
-```
-
-```r
 lcg.clv <-
     reshape2::melt(lcg.clv, id.vars = c('segm.rec', 'segm.freq', 'quantity'))
 
@@ -2627,11 +2339,6 @@ ggplot(lcg.clv[lcg.clv$variable %in% c('clv', 'cac'), ], aes(x = variable, y =
     ggtitle("LifeCycle Grids - CLV vs CAC (total)")
 ```
 
-```
-## Warning in geom_bar(stat = "identity", alpha = 0.6, aes(width =
-## quantity/max(quantity))): Ignoring unknown aesthetics: width
-```
-
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-49-1.png" width="672" />
 
 ```r
@@ -2643,11 +2350,6 @@ ggplot(lcg.clv[lcg.clv$variable %in% c('clv1', 'cac1'), ], aes(x = variable, y =
     geom_text(aes(y = value, label = value), size = 4) +
     facet_grid(segm.freq ~ segm.rec) +
     ggtitle("LifeCycle Grids - CLV vs CAC (average)")
-```
-
-```
-## Warning in geom_bar(stat = "identity", alpha = 0.6, aes(width =
-## quantity/max(quantity))): Ignoring unknown aesthetics: width
 ```
 
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-49-2.png" width="672" />
@@ -2665,27 +2367,7 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 library(googleVis)
-```
 
-```
-## 
-## Welcome to googleVis version 0.7.1
-## 
-## Please read Google's Terms of Use
-## before you start using the package:
-## https://developers.google.com/terms/
-## 
-## Note, the plot method of googleVis will by default use
-## the standard browser to display its output.
-## 
-## See the googleVis package vignettes for more details,
-## or visit https://mages.github.io/googleVis/.
-## 
-## To suppress this message use:
-## suppressPackageStartupMessages(library(googleVis))
-```
-
-```r
 set.seed(10)
 # creating orders data sample
 data <- data.frame(
@@ -2757,16 +2439,6 @@ customers <- orders %>%
     summarise(clv = sum(grossmarg)) %>%
     arrange(clientId) %>%
     ungroup()
-```
-
-```
-## `summarise()` has grouped output by 'orderId', 'clientId'. You can override
-## using the `.groups` argument.
-## `summarise()` has grouped output by 'clientId', 'cohort', 'frequency',
-## 'recency'. You can override using the `.groups` argument.
-```
-
-```r
 # calculating potential CLV and CAC
 customers <- merge(customers, campaign, by = 'clientId')
 customers <- merge(customers, potential, by = 'clientId')
@@ -3043,14 +2715,7 @@ lcg.camp <- customers %>%
         av.gap = round(av.gap / quantity, 2),
         diff = av.clv - av.cac
     )
-```
 
-```
-## `summarise()` has grouped output by 'campaign', 'segm.rec'. You can override
-## using the `.groups` argument.
-```
-
-```r
 ggplot(lcg.camp, aes(x = campaign, fill = campaign)) +
     theme_bw() +
     theme(panel.grid = element_blank()) +
@@ -3129,47 +2794,7 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 library(scales)
-```
-
-```
-## 
-## Attaching package: 'scales'
-```
-
-```
-## The following object is masked from 'package:purrr':
-## 
-##     discard
-```
-
-```
-## The following object is masked from 'package:readr':
-## 
-##     col_factor
-```
-
-```
-## The following object is masked from 'package:kernlab':
-## 
-##     alpha
-```
-
-```r
 library(gridExtra)
-```
-
-```
-## 
-## Attaching package: 'gridExtra'
-```
-
-```
-## The following object is masked from 'package:dplyr':
-## 
-##     combine
-```
-
-```r
 # creating data sample
 set.seed(10)
 cohorts <-
@@ -3290,10 +2915,6 @@ ggplot(
     ggtitle("Customer Retention Rate - Cycle plot")
 ```
 
-```
-## `geom_smooth()` using formula = 'y ~ x'
-```
-
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-54-1.png" width="672" />
 
 ```r
@@ -3391,10 +3012,6 @@ p2 <-
 grid.arrange(p1, p2, ncol = 1)
 ```
 
-```
-## `geom_smooth()` using formula = 'y ~ x'
-```
-
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-54-2.png" width="672" />
 
 ```r
@@ -3451,10 +3068,6 @@ ggplot(na.omit(df_plot),
     ggtitle("Customer Retention Rate - Bubble chart")
 ```
 
-```
-## `geom_smooth()` using formula = 'y ~ x'
-```
-
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-54-3.png" width="672" />
 
 ```r
@@ -3502,18 +3115,6 @@ ggplot(df_plot,
     ) +
     labs(x = 'Cohorts', y = 'Retention Rate by Year of Lifetime') +
     ggtitle("Customer Retention Rate - Falling Drops chart")
-```
-
-```
-## Warning: Removed 36 rows containing missing values (`geom_line()`).
-```
-
-```
-## Warning: Removed 36 rows containing missing values (`geom_point()`).
-```
-
-```
-## Warning: Removed 36 rows containing missing values (`geom_text()`).
 ```
 
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-54-4.png" width="672" />
@@ -3619,10 +3220,6 @@ p + geom_line(size = 2, alpha = 1 / 2) +
     labs(title = "Cohorts Retention ratio dynamics")
 ```
 
-```
-## `geom_smooth()` using formula = 'y ~ x'
-```
-
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-55-1.png" width="672" />
 
 ```r
@@ -3641,10 +3238,6 @@ p + geom_point(size = 3) +
         se = FALSE
     ) +
     labs(title = "Cohorts Retention ratio for 2nd month")
-```
-
-```
-## `geom_smooth()` using formula = 'y ~ x'
 ```
 
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-55-2.png" width="672" />
@@ -3819,8 +3412,6 @@ seqfplot(
 )
 ```
 
-
-
 ## Shopping carts analysis
 
 ### Multi-layer pie chart
@@ -3834,20 +3425,7 @@ library(dplyr)
 library(tidyverse)
 library(reshape2)
 library(plotrix)
-```
 
-```
-## 
-## Attaching package: 'plotrix'
-```
-
-```
-## The following object is masked from 'package:scales':
-## 
-##     rescale
-```
-
-```r
 # Simulate of orders
 set.seed(15)
 df <- data.frame(
@@ -3892,14 +3470,7 @@ prod.matrix <- df %>%
     group_by(cart, prod.num) %>%
     summarise(num = n()) %>%
     ungroup()
-```
 
-```
-## `summarise()` has grouped output by 'cart'. You can override using the
-## `.groups` argument.
-```
-
-```r
 head(prod.matrix)
 ```
 
@@ -4034,8 +3605,6 @@ stat.tab$share <-
 # )
 ```
 
-
-
 ### Sankey Diagram
 
 
@@ -4142,20 +3711,7 @@ for (i in 2:ncol(orders)) {
     orders.plot <- rbind(orders.plot, ord.cache)
     
 }
-```
 
-```
-## `summarise()` has grouped output by 'orders[, i - 1]'. You can override using
-## the `.groups` argument.
-## `summarise()` has grouped output by 'orders[, i - 1]'. You can override using
-## the `.groups` argument.
-## `summarise()` has grouped output by 'orders[, i - 1]'. You can override using
-## the `.groups` argument.
-## `summarise()` has grouped output by 'orders[, i - 1]'. You can override using
-## the `.groups` argument.
-```
-
-```r
 plot(gvisSankey(
     orders.plot,
     from = 'from',
@@ -4167,17 +3723,9 @@ plot(gvisSankey(
         sankey = "{link:{color:{fill:'lightblue'}}}"
     )
 ))
-```
 
-```
-## starting httpd help server ... done
-```
-
-```r
 # The bandwidths correspond to the weight of sequence
 ```
-
-
 
 ### Sequence in-depth analysis
 
@@ -4193,22 +3741,6 @@ Example by [Sergey Bryl](https://www.analyzecore.com/2014/12/04/sequence-carts-i
 ```r
 library(dplyr)
 library(TraMineR)
-```
-
-```
-## 
-## TraMineR stable version 2.2-7 (Built: 2023-06-16)
-```
-
-```
-## Website: http://traminer.unige.ch
-```
-
-```
-## Please type 'citation("TraMineR")' for citation information.
-```
-
-```r
 library(reshape2)
 library(googleVis)
 
@@ -4269,14 +3801,7 @@ df <- orders %>%
     group_by(clientId, sex, orderdate) %>%
     summarise(cart = paste(product, collapse = ";")) %>%
     ungroup()
-```
 
-```
-## `summarise()` has grouped output by 'clientId', 'sex'. You can override using
-## the `.groups` argument.
-```
-
-```r
 head(df)
 ```
 
@@ -4374,21 +3899,7 @@ for (i in 2:ncol(df.sankey)) {
     
     df.sankey.plot <- rbind(df.sankey.plot, df.sankey.cache)
 }
-```
 
-```
-## `summarise()` has grouped output by 'df.sankey[, i - 1]'. You can override
-## using the `.groups` argument.
-```
-
-```
-## `summarise()` has grouped output by 'df.sankey[, i - 1]'. You can override
-## using the `.groups` argument.
-## `summarise()` has grouped output by 'df.sankey[, i - 1]'. You can override
-## using the `.groups` argument.
-```
-
-```r
 plot(gvisSankey(
     df.sankey.plot,
     from = 'from',
@@ -4425,51 +3936,12 @@ df.form <-
         to = 'STS',
         process = FALSE
     )
-```
 
-```
-##  [>] time axis: 1 -> 91
-##  [>] converting SPELL data into 288 STS sequences (internal format)
-```
-
-```r
 df.seq <-
     seqdef(df.form,
            left = 'DEL',
            right = 'unknown',
            xtstep = 10) # xtstep - step between ticks (days)
-```
-
-```
-##  [>] found missing values ('NA') in sequence data
-##  [>] preparing 288 sequences
-##  [>] coding void elements with '%' and missing values with '*'
-##  [>] 8 distinct states appear in the data: 
-##      1 = a
-##      2 = a;b
-##      3 = a;b;c
-##      4 = a;c
-##      5 = b
-##      6 = b;c
-##      7 = c
-##      8 = nopurch
-##  [>] adding special state(s) to the alphabet: unknown
-##  [>] state coding:
-##        [alphabet]  [label]  [long label] 
-##      1  a           a        a
-##      2  a;b         a;b      a;b
-##      3  a;b;c       a;b;c    a;b;c
-##      4  a;c         a;c      a;c
-##      5  b           b        b
-##      6  b;c         b;c      b;c
-##      7  c           c        c
-##      8  nopurch     nopurch  nopurch
-##      9  unknown     unknown  unknown
-##  [>] 288 sequences in the data set
-##  [>] min/max sequence length: 4/91
-```
-
-```r
 summary(df.seq)
 ```
 
@@ -4497,10 +3969,6 @@ df.feat <- unique(df.new[, c('clientId', 'sex')])
 
 # distribution analysis
 seqdplot(df.seq, border = NA, withlegend = 'right')
-```
-
-```
-##  [!!] In local() : withlegend is deprecated, use with.legend instead.
 ```
 
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-64-1.png" width="672" />
@@ -4644,42 +4112,10 @@ df.seq <- seqdef(df.form,
                  left = 'DEL',
                  right = 'DEL',
                  xtstep = 10)
-```
 
-```
-##  [>] found missing values ('NA') in sequence data
-##  [>] preparing 288 sequences
-##  [>] coding void elements with '%' and missing values with '*'
-##  [>] 8 distinct states appear in the data: 
-##      1 = a
-##      2 = a;b
-##      3 = a;b;c
-##      4 = a;c
-##      5 = b
-##      6 = b;c
-##      7 = c
-##      8 = nopurch
-##  [>] state coding:
-##        [alphabet]  [label]  [long label] 
-##      1  a           a        a
-##      2  a;b         a;b      a;b
-##      3  a;b;c       a;b;c    a;b;c
-##      4  a;c         a;c      a;c
-##      5  b           b        b
-##      6  b;c         b;c      b;c
-##      7  c           c        c
-##      8  nopurch     nopurch  nopurch
-##  [>] 288 sequences in the data set
-##  [>] min/max sequence length: 3/91
-```
 
-```r
 # the 10 most frequent sequences
 seqfplot(df.seq, border = NA, withlegend = 'right')
-```
-
-```
-##  [!!] In local() : withlegend is deprecated, use with.legend instead.
 ```
 
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-64-3.png" width="672" />
@@ -4733,19 +4169,10 @@ seqtab(df.seq[, 1:30]) # frequency table for 1st month
 seqmtplot(df.seq, title = 'Mean time', withlegend = 'right')
 ```
 
-```
-##  [!!] In local() : title is deprecated, use main instead.
-##  [!!] In local() : withlegend is deprecated, use with.legend instead.
-```
-
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-64-5.png" width="672" />
 
 ```r
 seqmtplot(df.seq, group = df.feat$sex, title = 'Mean time')
-```
-
-```
-##  [!!] In local() : title is deprecated, use main instead.
 ```
 
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-64-6.png" width="672" />
@@ -4753,13 +4180,6 @@ seqmtplot(df.seq, group = df.feat$sex, title = 'Mean time')
 ```r
 statd <-
     seqistatd(df.seq) #function returns for each sequence the time spent in the different states
-```
-
-```
-##  [>] computing state distribution for 288 sequences ...
-```
-
-```r
 apply(statd, 2, mean) #We may be interested in the mean time spent in each state
 ```
 
@@ -4794,8 +4214,6 @@ boxplot(
 ```
 
 <img src="35-empirical_model_files/figure-html/unnamed-chunk-64-8.png" width="672" />
-
-
 
 ## Geodemographic Classification
 
@@ -4937,20 +4355,8 @@ We load the shapefile
 ```r
 #load library
 library(maptools)
-```
 
-```
-## Loading required package: sp
-```
 
-```
-## Checking rgeos availability: TRUE
-## Please note that 'maptools' will be retired during 2023,
-## plan transition at your earliest convenience;
-## some functionality will be moved to 'sp'.
-```
-
-```r
 #download file
 # download.file("https://raw.githubusercontent.com/nickbearman/r-geodemographic-analysis-20140710/master/liverpool_OA.zip", "liverpool_OA.zip", method = "internal") #if you are running this on OSX, you will need to replace method = "internal" with method = "curl"
 
@@ -4960,24 +4366,7 @@ unzip("images/liverpool_OA.zip")
 
 #read in shapefile
 liverpool <- readShapeSpatial('liverpool_OA/liverpool', proj4string = CRS("+init=epsg:27700"))
-```
 
-```
-## Warning: shapelib support is provided by GDAL through the sf and terra packages
-## among others
-```
-
-```
-## Warning: shapelib support is provided by GDAL through the sf and terra
-## paackages among others
-```
-
-```
-## Warning: shapelib support is provided by GDAL through the sf and terra packages
-## among others
-```
-
-```r
 plot(liverpool)
 ```
 

@@ -142,7 +142,7 @@ Brands (e.g., Nike, Adidas) are getting their own apps instead of using Google S
 
 ### Brand Name
 
-@pogacar2021 found that linguistically feminine brand names increase perceived warmth, in turn, increases attitudes and choice share---both hypothetically and consequentially--- improves brand outcomes/ performance. The positive effect of feminine brand name on brand performance is lower when subjects are male and when products are utilitarian.
+@pogacar2021 found that linguistically feminine brand names increase perceived warmth, in turn, increases attitudes and choice share-both hypothetically and consequentially- improves brand outcomes/ performance. The positive effect of feminine brand name on brand performance is lower when subjects are male and when products are utilitarian.
 
 [@pavia1993] For technological items, alphanumeric brand names are more acceptable than for nontechnical products.
 
@@ -214,11 +214,11 @@ Brand identity offers a value proposition to customers, where "a brand's value p
 
 Functional benefits are product attributes that deliver functional utility to customers, while emotional benefits are positive feelings customers feel when using the brand. Ads that provide emotional benefits are higher in effectiveness score compared to functional benefits ads [@Aaker_1996, pp.98].
 
-For example, Evian -- "Another day, another chance to feel healthy" ad - which provides emotional benefits of feeling satisfied after a workout. Moreover, self-expressive benefits are when brands provide a means for consumers to express their self-image. A person/ consumer can have multiple roles which associate with multiple self-concepts. Such as a woman, a mother, an author. The difference between emotional benefits and self-expressive benefits can be subtle. Emotional benefits focus on feelings, private setting (e.g., feeling of watching a TV show), past-oriented (memories), transitory, after-use emotional; In contrast, self-expressive benefits focus on self, public settings (e.g., using cars or clothes to signal), aspiration or future-oriented, permanent (i.e., the self links to person's personality), and during-use (wearing fancy clothes to signify a successful person). (cf. [@Aaker_1996, pp.99])
+For example, Evian - "Another day, another chance to feel healthy" ad - which provides emotional benefits of feeling satisfied after a workout. Moreover, self-expressive benefits are when brands provide a means for consumers to express their self-image. A person/ consumer can have multiple roles which associate with multiple self-concepts. Such as a woman, a mother, an author. The difference between emotional benefits and self-expressive benefits can be subtle. Emotional benefits focus on feelings, private setting (e.g., feeling of watching a TV show), past-oriented (memories), transitory, after-use emotional; In contrast, self-expressive benefits focus on self, public settings (e.g., using cars or clothes to signal), aspiration or future-oriented, permanent (i.e., the self links to person's personality), and during-use (wearing fancy clothes to signify a successful person). (cf. [@Aaker_1996, pp.99])
 
 With the advancement in mass production of high -quality products, quality is no longer a dimension of status signal [@Holt_1998]
 
-In the virality framework, the first and foremost driver is social currency. Social currency refers to things worth sharing. People share so that they can let others know that they are in the know. Sharing a new product to assimilate his or her identity with the product and its brand identity, customers are acquiring social currency. Moreover, brand identity is a driver of brand equity, which refers to the value portion that customers are willing to pay above the product's utility value (practical value). Brand identity offers a value proposition to customers, where "a brand's value proposition is a statement of the functional, emotional, and self-expressive benefits delivered by the brand that provide value to the customers" (Aaker, 1996, p. 95). Functional benefits are product attributes that deliver functional utility to customers, while emotional benefits are positive feelings customers feel when using the brand. Ads that provide emotional benefits are higher in effectiveness score compared to functional benefits ads (Aaker, 1996, p. 99). For example, Evian -- "Another day, another chance to feel healthy" ad - which provides emotional benefits of feeling satisfied after a workout. Moreover, self-expressive benefits are when brands provide a means for consumers to express their self-image. A person/ consumer can have multiple roles which associate with multiple self-concepts. Such as a woman, a mother, an author. The difference between emotional benefits and self-expressive benefits can be subtle. Emotional benefits focus on feelings, private setting (e.g., feeling of watching a TV show), past-oriented (memories), transitory, after-use emotional; In contrast, self-expressive benefits focus on self, public settings (e.g., using cars or clothes to signal), aspiration or future-oriented, permanent (i.e., the self links to person's personality), and during-use (wearing fancy clothes to signify a successful person). (cf. (Aaker, 1996, p. 99)) Hence, one can see that the brand identity portion that provides self-expressive benefits is social currency while exhaustively different from the brand identity portion that provides functional benefits (i.e., the practical value/ usefulness/ utility) .
+In the virality framework, the first and foremost driver is social currency. Social currency refers to things worth sharing. People share so that they can let others know that they are in the know. Sharing a new product to assimilate his or her identity with the product and its brand identity, customers are acquiring social currency. Moreover, brand identity is a driver of brand equity, which refers to the value portion that customers are willing to pay above the product's utility value (practical value). Brand identity offers a value proposition to customers, where "a brand's value proposition is a statement of the functional, emotional, and self-expressive benefits delivered by the brand that provide value to the customers" (Aaker, 1996, p. 95). Functional benefits are product attributes that deliver functional utility to customers, while emotional benefits are positive feelings customers feel when using the brand. Ads that provide emotional benefits are higher in effectiveness score compared to functional benefits ads (Aaker, 1996, p. 99). For example, Evian - "Another day, another chance to feel healthy" ad - which provides emotional benefits of feeling satisfied after a workout. Moreover, self-expressive benefits are when brands provide a means for consumers to express their self-image. A person/ consumer can have multiple roles which associate with multiple self-concepts. Such as a woman, a mother, an author. The difference between emotional benefits and self-expressive benefits can be subtle. Emotional benefits focus on feelings, private setting (e.g., feeling of watching a TV show), past-oriented (memories), transitory, after-use emotional; In contrast, self-expressive benefits focus on self, public settings (e.g., using cars or clothes to signal), aspiration or future-oriented, permanent (i.e., the self links to person's personality), and during-use (wearing fancy clothes to signify a successful person). (cf. (Aaker, 1996, p. 99)) Hence, one can see that the brand identity portion that provides self-expressive benefits is social currency while exhaustively different from the brand identity portion that provides functional benefits (i.e., the practical value/ usefulness/ utility) .
 
 We acknowledge that some might view usefulness/ utility as a dimension of brand equity (perceived quality): the perceived quality dimension can signal the true practical value. However, the practical value that drives virality is usually understood, experimented, experienced; while perceived quality is subjective comprehension that is hard to demonstrate. Moreover, quality used to be the status signal. However, with the advancement in mass production of high-quality products, quality is no longer a status signal dimension (Holt, 1998). Thus, we believe that the distinction between the two understandings should be appreciated.
 
@@ -754,44 +754,6 @@ What is the difference between brand equity and brand reputation?
 
 -   The measure is correlated with traditional survey-based measures
 
-
-
-<!-- Barriers to b2b firms to have good brands -->
-
-<!-- -   branding is only about choosing a name, logo and slogan, which we already have. -->
-
-<!-- -   branding costs too much (e.g., consultants' fee, advertising fees) -->
-
-<!-- -   benefits of branding is not short-term and hard to measure -->
-
-<!-- -   can't spare people to spend time to build brands -->
-
-<!-- -   Branding doesn't really matter (especially in b2b marketing0 -->
-
-<!-- Brands that did good: -->
-
-<!-- -   Dupont, IBM and Cisco, other like Morgan Standley. -->
-
-<!-- Steps to build strong brand -->
-
-<!-- -   Understand brand culture, corporate brand strategy -->
-
-<!-- -   frame value perceptions -->
-
-<!-- -   Get more imagery, emotional associations -->
-
-<!-- -   Segmentation of customers to have appropriate branding programs. -->
-
-<!-- Future research direction -->
-
-<!-- -   What kinds of things that help build and manage b2b brands. -->
-
-<!-- -   "How does brand equity flow across b2b and b2c divisions? Does the brand equity built in consumers affect business customers?" -->
-
-<!-- -   How to frame value calculations? -->
-
-<!-- -   How to create imagery and emotional associations? -->
-
 ## Branding Portfolio Management
 
 ### Brand Architecture/Portfolio
@@ -833,8 +795,6 @@ What is the difference between brand equity and brand reputation?
 -   House of brands
 
 -   Branded house
-
-<!-- -->
 
 -   Sub-branding (e.g., Intel Pentium): has both the brand and corporate brand name (high risk high return option)
 

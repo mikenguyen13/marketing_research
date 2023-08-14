@@ -31,14 +31,7 @@ apple-touch-icon-size: 120
 
 
 
-<div style = "text-align: center">
-
-![](cover.jpg)
-
-</div>
-
-
-<img src="imgfile.png" width="25%" style="display: block; margin: auto;" />
+<img src="cover.jpg" width="25%" style="display: block; margin: auto;" /><img src="imgfile.png" width="25%" style="display: block; margin: auto;" />
 
 
 

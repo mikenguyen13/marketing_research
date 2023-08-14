@@ -796,395 +796,395 @@ Awareness \to Interest \to Desire \to Action
 <li>4th step (action) – completes purchase</li>
 </ul>
 <p>Simulate data</p>
-<div class="sourceCode" id="cb177"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb177-1"><a href="sales-funnel.html#cb177-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb177-2"><a href="sales-funnel.html#cb177-2" tabindex="-1"></a><span class="fu">library</span>(purrrlyr)</span>
-<span id="cb177-3"><a href="sales-funnel.html#cb177-3" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
-<span id="cb177-4"><a href="sales-funnel.html#cb177-4" tabindex="-1"></a> </span>
-<span id="cb177-5"><a href="sales-funnel.html#cb177-5" tabindex="-1"></a><span class="do">##### simulating the &quot;real&quot; data #####</span></span>
-<span id="cb177-6"><a href="sales-funnel.html#cb177-6" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">454</span>)</span>
-<span id="cb177-7"><a href="sales-funnel.html#cb177-7" tabindex="-1"></a>df_raw <span class="ot">&lt;-</span></span>
-<span id="cb177-8"><a href="sales-funnel.html#cb177-8" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb177-9"><a href="sales-funnel.html#cb177-9" tabindex="-1"></a>    <span class="at">customer_id =</span> <span class="fu">paste0</span>(<span class="st">&#39;id&#39;</span>, <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5000</span>), <span class="at">replace =</span> <span class="cn">TRUE</span>)),</span>
-<span id="cb177-10"><a href="sales-funnel.html#cb177-10" tabindex="-1"></a>    <span class="at">date =</span> <span class="fu">as.POSIXct</span>(</span>
-<span id="cb177-11"><a href="sales-funnel.html#cb177-11" tabindex="-1"></a>      <span class="fu">rbeta</span>(<span class="dv">10000</span>, <span class="fl">0.7</span>, <span class="dv">10</span>) <span class="sc">*</span> <span class="dv">10000000</span>,</span>
-<span id="cb177-12"><a href="sales-funnel.html#cb177-12" tabindex="-1"></a>      <span class="at">origin =</span> <span class="st">&#39;2017-01-01&#39;</span>,</span>
-<span id="cb177-13"><a href="sales-funnel.html#cb177-13" tabindex="-1"></a>      <span class="at">tz =</span> <span class="st">&quot;UTC&quot;</span></span>
-<span id="cb177-14"><a href="sales-funnel.html#cb177-14" tabindex="-1"></a>    ),</span>
-<span id="cb177-15"><a href="sales-funnel.html#cb177-15" tabindex="-1"></a>    <span class="at">channel =</span> <span class="fu">paste0</span>(<span class="st">&#39;channel_&#39;</span>, <span class="fu">sample</span>(</span>
-<span id="cb177-16"><a href="sales-funnel.html#cb177-16" tabindex="-1"></a>      <span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">7</span>),</span>
-<span id="cb177-17"><a href="sales-funnel.html#cb177-17" tabindex="-1"></a>      <span class="dv">10000</span>,</span>
-<span id="cb177-18"><a href="sales-funnel.html#cb177-18" tabindex="-1"></a>      <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb177-19"><a href="sales-funnel.html#cb177-19" tabindex="-1"></a>      <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.12</span>, <span class="fl">0.03</span>, <span class="fl">0.07</span>, <span class="fl">0.15</span>, <span class="fl">0.25</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>)</span>
-<span id="cb177-20"><a href="sales-funnel.html#cb177-20" tabindex="-1"></a>    )),</span>
-<span id="cb177-21"><a href="sales-funnel.html#cb177-21" tabindex="-1"></a>    <span class="at">site_visit =</span> <span class="dv">1</span></span>
-<span id="cb177-22"><a href="sales-funnel.html#cb177-22" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb177-23"><a href="sales-funnel.html#cb177-23" tabindex="-1"></a>  </span>
-<span id="cb177-24"><a href="sales-funnel.html#cb177-24" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb177-25"><a href="sales-funnel.html#cb177-25" tabindex="-1"></a>    <span class="at">two_pages_visit =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="dv">10000</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.8</span>, <span class="fl">0.2</span>)),</span>
-<span id="cb177-26"><a href="sales-funnel.html#cb177-26" tabindex="-1"></a>    <span class="at">product_page_visit =</span> <span class="fu">ifelse</span>(</span>
-<span id="cb177-27"><a href="sales-funnel.html#cb177-27" tabindex="-1"></a>      two_pages_visit <span class="sc">==</span> <span class="dv">1</span>,</span>
-<span id="cb177-28"><a href="sales-funnel.html#cb177-28" tabindex="-1"></a>      <span class="fu">sample</span>(</span>
-<span id="cb177-29"><a href="sales-funnel.html#cb177-29" tabindex="-1"></a>        <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
-<span id="cb177-30"><a href="sales-funnel.html#cb177-30" tabindex="-1"></a>        <span class="fu">length</span>(two_pages_visit[<span class="fu">which</span>(two_pages_visit <span class="sc">==</span> <span class="dv">1</span>)]),</span>
-<span id="cb177-31"><a href="sales-funnel.html#cb177-31" tabindex="-1"></a>        <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb177-32"><a href="sales-funnel.html#cb177-32" tabindex="-1"></a>        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.75</span>, <span class="fl">0.25</span>)</span>
-<span id="cb177-33"><a href="sales-funnel.html#cb177-33" tabindex="-1"></a>      ),</span>
-<span id="cb177-34"><a href="sales-funnel.html#cb177-34" tabindex="-1"></a>      <span class="dv">0</span></span>
-<span id="cb177-35"><a href="sales-funnel.html#cb177-35" tabindex="-1"></a>    ),</span>
-<span id="cb177-36"><a href="sales-funnel.html#cb177-36" tabindex="-1"></a>    <span class="at">add_to_cart =</span> <span class="fu">ifelse</span>(</span>
-<span id="cb177-37"><a href="sales-funnel.html#cb177-37" tabindex="-1"></a>      product_page_visit <span class="sc">==</span> <span class="dv">1</span>,</span>
-<span id="cb177-38"><a href="sales-funnel.html#cb177-38" tabindex="-1"></a>      <span class="fu">sample</span>(</span>
-<span id="cb177-39"><a href="sales-funnel.html#cb177-39" tabindex="-1"></a>        <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
-<span id="cb177-40"><a href="sales-funnel.html#cb177-40" tabindex="-1"></a>        <span class="fu">length</span>(product_page_visit[<span class="fu">which</span>(product_page_visit <span class="sc">==</span> <span class="dv">1</span>)]),</span>
-<span id="cb177-41"><a href="sales-funnel.html#cb177-41" tabindex="-1"></a>        <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb177-42"><a href="sales-funnel.html#cb177-42" tabindex="-1"></a>        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>)</span>
-<span id="cb177-43"><a href="sales-funnel.html#cb177-43" tabindex="-1"></a>      ),</span>
-<span id="cb177-44"><a href="sales-funnel.html#cb177-44" tabindex="-1"></a>      <span class="dv">0</span></span>
-<span id="cb177-45"><a href="sales-funnel.html#cb177-45" tabindex="-1"></a>    ),</span>
-<span id="cb177-46"><a href="sales-funnel.html#cb177-46" tabindex="-1"></a>    <span class="at">purchase =</span> <span class="fu">ifelse</span>(add_to_cart <span class="sc">==</span> <span class="dv">1</span>,</span>
-<span id="cb177-47"><a href="sales-funnel.html#cb177-47" tabindex="-1"></a>                      <span class="fu">sample</span>(</span>
-<span id="cb177-48"><a href="sales-funnel.html#cb177-48" tabindex="-1"></a>                        <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
-<span id="cb177-49"><a href="sales-funnel.html#cb177-49" tabindex="-1"></a>                        <span class="fu">length</span>(add_to_cart[<span class="fu">which</span>(add_to_cart <span class="sc">==</span> <span class="dv">1</span>)]),</span>
-<span id="cb177-50"><a href="sales-funnel.html#cb177-50" tabindex="-1"></a>                        <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb177-51"><a href="sales-funnel.html#cb177-51" tabindex="-1"></a>                        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.02</span>, <span class="fl">0.98</span>)</span>
-<span id="cb177-52"><a href="sales-funnel.html#cb177-52" tabindex="-1"></a>                      ),</span>
-<span id="cb177-53"><a href="sales-funnel.html#cb177-53" tabindex="-1"></a>                      <span class="dv">0</span>)</span>
-<span id="cb177-54"><a href="sales-funnel.html#cb177-54" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb177-55"><a href="sales-funnel.html#cb177-55" tabindex="-1"></a>  <span class="fu">dmap_at</span>(<span class="fu">c</span>(<span class="st">&#39;customer_id&#39;</span>, <span class="st">&#39;channel&#39;</span>), as.character) <span class="sc">%&gt;%</span></span>
-<span id="cb177-56"><a href="sales-funnel.html#cb177-56" tabindex="-1"></a>  <span class="fu">arrange</span>(date) <span class="sc">%&gt;%</span></span>
-<span id="cb177-57"><a href="sales-funnel.html#cb177-57" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">session_id =</span> <span class="fu">row_number</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb177-58"><a href="sales-funnel.html#cb177-58" tabindex="-1"></a>  <span class="fu">arrange</span>(customer_id, session_id)</span>
-<span id="cb177-59"><a href="sales-funnel.html#cb177-59" tabindex="-1"></a>df_raw <span class="ot">&lt;-</span></span>
-<span id="cb177-60"><a href="sales-funnel.html#cb177-60" tabindex="-1"></a>  reshape2<span class="sc">::</span><span class="fu">melt</span>(</span>
-<span id="cb177-61"><a href="sales-funnel.html#cb177-61" tabindex="-1"></a>    df_raw,</span>
-<span id="cb177-62"><a href="sales-funnel.html#cb177-62" tabindex="-1"></a>    <span class="at">id.vars =</span> <span class="fu">c</span>(<span class="st">&#39;customer_id&#39;</span>, <span class="st">&#39;date&#39;</span>, <span class="st">&#39;channel&#39;</span>, <span class="st">&#39;session_id&#39;</span>),</span>
-<span id="cb177-63"><a href="sales-funnel.html#cb177-63" tabindex="-1"></a>    <span class="at">value.name =</span> <span class="st">&quot;trigger&quot;</span>,</span>
-<span id="cb177-64"><a href="sales-funnel.html#cb177-64" tabindex="-1"></a>    <span class="at">variable.name =</span> <span class="st">&#39;event&#39;</span></span>
-<span id="cb177-65"><a href="sales-funnel.html#cb177-65" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb177-66"><a href="sales-funnel.html#cb177-66" tabindex="-1"></a>  <span class="fu">filter</span>(trigger <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb177-67"><a href="sales-funnel.html#cb177-67" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>trigger) <span class="sc">%&gt;%</span></span>
-<span id="cb177-68"><a href="sales-funnel.html#cb177-68" tabindex="-1"></a>  <span class="fu">arrange</span>(customer_id, date)</span></code></pre></div>
+<div class="sourceCode" id="cb128"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb128-1"><a href="sales-funnel.html#cb128-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb128-2"><a href="sales-funnel.html#cb128-2" tabindex="-1"></a><span class="fu">library</span>(purrrlyr)</span>
+<span id="cb128-3"><a href="sales-funnel.html#cb128-3" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
+<span id="cb128-4"><a href="sales-funnel.html#cb128-4" tabindex="-1"></a> </span>
+<span id="cb128-5"><a href="sales-funnel.html#cb128-5" tabindex="-1"></a><span class="do">##### simulating the &quot;real&quot; data #####</span></span>
+<span id="cb128-6"><a href="sales-funnel.html#cb128-6" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">454</span>)</span>
+<span id="cb128-7"><a href="sales-funnel.html#cb128-7" tabindex="-1"></a>df_raw <span class="ot">&lt;-</span></span>
+<span id="cb128-8"><a href="sales-funnel.html#cb128-8" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb128-9"><a href="sales-funnel.html#cb128-9" tabindex="-1"></a>    <span class="at">customer_id =</span> <span class="fu">paste0</span>(<span class="st">&#39;id&#39;</span>, <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5000</span>), <span class="at">replace =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb128-10"><a href="sales-funnel.html#cb128-10" tabindex="-1"></a>    <span class="at">date =</span> <span class="fu">as.POSIXct</span>(</span>
+<span id="cb128-11"><a href="sales-funnel.html#cb128-11" tabindex="-1"></a>      <span class="fu">rbeta</span>(<span class="dv">10000</span>, <span class="fl">0.7</span>, <span class="dv">10</span>) <span class="sc">*</span> <span class="dv">10000000</span>,</span>
+<span id="cb128-12"><a href="sales-funnel.html#cb128-12" tabindex="-1"></a>      <span class="at">origin =</span> <span class="st">&#39;2017-01-01&#39;</span>,</span>
+<span id="cb128-13"><a href="sales-funnel.html#cb128-13" tabindex="-1"></a>      <span class="at">tz =</span> <span class="st">&quot;UTC&quot;</span></span>
+<span id="cb128-14"><a href="sales-funnel.html#cb128-14" tabindex="-1"></a>    ),</span>
+<span id="cb128-15"><a href="sales-funnel.html#cb128-15" tabindex="-1"></a>    <span class="at">channel =</span> <span class="fu">paste0</span>(<span class="st">&#39;channel_&#39;</span>, <span class="fu">sample</span>(</span>
+<span id="cb128-16"><a href="sales-funnel.html#cb128-16" tabindex="-1"></a>      <span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">7</span>),</span>
+<span id="cb128-17"><a href="sales-funnel.html#cb128-17" tabindex="-1"></a>      <span class="dv">10000</span>,</span>
+<span id="cb128-18"><a href="sales-funnel.html#cb128-18" tabindex="-1"></a>      <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb128-19"><a href="sales-funnel.html#cb128-19" tabindex="-1"></a>      <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.12</span>, <span class="fl">0.03</span>, <span class="fl">0.07</span>, <span class="fl">0.15</span>, <span class="fl">0.25</span>, <span class="fl">0.1</span>, <span class="fl">0.08</span>)</span>
+<span id="cb128-20"><a href="sales-funnel.html#cb128-20" tabindex="-1"></a>    )),</span>
+<span id="cb128-21"><a href="sales-funnel.html#cb128-21" tabindex="-1"></a>    <span class="at">site_visit =</span> <span class="dv">1</span></span>
+<span id="cb128-22"><a href="sales-funnel.html#cb128-22" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb128-23"><a href="sales-funnel.html#cb128-23" tabindex="-1"></a>  </span>
+<span id="cb128-24"><a href="sales-funnel.html#cb128-24" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb128-25"><a href="sales-funnel.html#cb128-25" tabindex="-1"></a>    <span class="at">two_pages_visit =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="dv">10000</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.8</span>, <span class="fl">0.2</span>)),</span>
+<span id="cb128-26"><a href="sales-funnel.html#cb128-26" tabindex="-1"></a>    <span class="at">product_page_visit =</span> <span class="fu">ifelse</span>(</span>
+<span id="cb128-27"><a href="sales-funnel.html#cb128-27" tabindex="-1"></a>      two_pages_visit <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb128-28"><a href="sales-funnel.html#cb128-28" tabindex="-1"></a>      <span class="fu">sample</span>(</span>
+<span id="cb128-29"><a href="sales-funnel.html#cb128-29" tabindex="-1"></a>        <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb128-30"><a href="sales-funnel.html#cb128-30" tabindex="-1"></a>        <span class="fu">length</span>(two_pages_visit[<span class="fu">which</span>(two_pages_visit <span class="sc">==</span> <span class="dv">1</span>)]),</span>
+<span id="cb128-31"><a href="sales-funnel.html#cb128-31" tabindex="-1"></a>        <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb128-32"><a href="sales-funnel.html#cb128-32" tabindex="-1"></a>        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.75</span>, <span class="fl">0.25</span>)</span>
+<span id="cb128-33"><a href="sales-funnel.html#cb128-33" tabindex="-1"></a>      ),</span>
+<span id="cb128-34"><a href="sales-funnel.html#cb128-34" tabindex="-1"></a>      <span class="dv">0</span></span>
+<span id="cb128-35"><a href="sales-funnel.html#cb128-35" tabindex="-1"></a>    ),</span>
+<span id="cb128-36"><a href="sales-funnel.html#cb128-36" tabindex="-1"></a>    <span class="at">add_to_cart =</span> <span class="fu">ifelse</span>(</span>
+<span id="cb128-37"><a href="sales-funnel.html#cb128-37" tabindex="-1"></a>      product_page_visit <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb128-38"><a href="sales-funnel.html#cb128-38" tabindex="-1"></a>      <span class="fu">sample</span>(</span>
+<span id="cb128-39"><a href="sales-funnel.html#cb128-39" tabindex="-1"></a>        <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb128-40"><a href="sales-funnel.html#cb128-40" tabindex="-1"></a>        <span class="fu">length</span>(product_page_visit[<span class="fu">which</span>(product_page_visit <span class="sc">==</span> <span class="dv">1</span>)]),</span>
+<span id="cb128-41"><a href="sales-funnel.html#cb128-41" tabindex="-1"></a>        <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb128-42"><a href="sales-funnel.html#cb128-42" tabindex="-1"></a>        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.9</span>)</span>
+<span id="cb128-43"><a href="sales-funnel.html#cb128-43" tabindex="-1"></a>      ),</span>
+<span id="cb128-44"><a href="sales-funnel.html#cb128-44" tabindex="-1"></a>      <span class="dv">0</span></span>
+<span id="cb128-45"><a href="sales-funnel.html#cb128-45" tabindex="-1"></a>    ),</span>
+<span id="cb128-46"><a href="sales-funnel.html#cb128-46" tabindex="-1"></a>    <span class="at">purchase =</span> <span class="fu">ifelse</span>(add_to_cart <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb128-47"><a href="sales-funnel.html#cb128-47" tabindex="-1"></a>                      <span class="fu">sample</span>(</span>
+<span id="cb128-48"><a href="sales-funnel.html#cb128-48" tabindex="-1"></a>                        <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb128-49"><a href="sales-funnel.html#cb128-49" tabindex="-1"></a>                        <span class="fu">length</span>(add_to_cart[<span class="fu">which</span>(add_to_cart <span class="sc">==</span> <span class="dv">1</span>)]),</span>
+<span id="cb128-50"><a href="sales-funnel.html#cb128-50" tabindex="-1"></a>                        <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb128-51"><a href="sales-funnel.html#cb128-51" tabindex="-1"></a>                        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.02</span>, <span class="fl">0.98</span>)</span>
+<span id="cb128-52"><a href="sales-funnel.html#cb128-52" tabindex="-1"></a>                      ),</span>
+<span id="cb128-53"><a href="sales-funnel.html#cb128-53" tabindex="-1"></a>                      <span class="dv">0</span>)</span>
+<span id="cb128-54"><a href="sales-funnel.html#cb128-54" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb128-55"><a href="sales-funnel.html#cb128-55" tabindex="-1"></a>  <span class="fu">dmap_at</span>(<span class="fu">c</span>(<span class="st">&#39;customer_id&#39;</span>, <span class="st">&#39;channel&#39;</span>), as.character) <span class="sc">%&gt;%</span></span>
+<span id="cb128-56"><a href="sales-funnel.html#cb128-56" tabindex="-1"></a>  <span class="fu">arrange</span>(date) <span class="sc">%&gt;%</span></span>
+<span id="cb128-57"><a href="sales-funnel.html#cb128-57" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">session_id =</span> <span class="fu">row_number</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb128-58"><a href="sales-funnel.html#cb128-58" tabindex="-1"></a>  <span class="fu">arrange</span>(customer_id, session_id)</span>
+<span id="cb128-59"><a href="sales-funnel.html#cb128-59" tabindex="-1"></a>df_raw <span class="ot">&lt;-</span></span>
+<span id="cb128-60"><a href="sales-funnel.html#cb128-60" tabindex="-1"></a>  reshape2<span class="sc">::</span><span class="fu">melt</span>(</span>
+<span id="cb128-61"><a href="sales-funnel.html#cb128-61" tabindex="-1"></a>    df_raw,</span>
+<span id="cb128-62"><a href="sales-funnel.html#cb128-62" tabindex="-1"></a>    <span class="at">id.vars =</span> <span class="fu">c</span>(<span class="st">&#39;customer_id&#39;</span>, <span class="st">&#39;date&#39;</span>, <span class="st">&#39;channel&#39;</span>, <span class="st">&#39;session_id&#39;</span>),</span>
+<span id="cb128-63"><a href="sales-funnel.html#cb128-63" tabindex="-1"></a>    <span class="at">value.name =</span> <span class="st">&quot;trigger&quot;</span>,</span>
+<span id="cb128-64"><a href="sales-funnel.html#cb128-64" tabindex="-1"></a>    <span class="at">variable.name =</span> <span class="st">&#39;event&#39;</span></span>
+<span id="cb128-65"><a href="sales-funnel.html#cb128-65" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb128-66"><a href="sales-funnel.html#cb128-66" tabindex="-1"></a>  <span class="fu">filter</span>(trigger <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb128-67"><a href="sales-funnel.html#cb128-67" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>trigger) <span class="sc">%&gt;%</span></span>
+<span id="cb128-68"><a href="sales-funnel.html#cb128-68" tabindex="-1"></a>  <span class="fu">arrange</span>(customer_id, date)</span></code></pre></div>
 <p>Preprocessing</p>
-<div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb178-1"><a href="sales-funnel.html#cb178-1" tabindex="-1"></a><span class="do">### removing not first events </span><span class="al">###</span></span>
-<span id="cb178-2"><a href="sales-funnel.html#cb178-2" tabindex="-1"></a>df_customers <span class="ot">&lt;-</span> df_raw <span class="sc">%&gt;%</span></span>
-<span id="cb178-3"><a href="sales-funnel.html#cb178-3" tabindex="-1"></a>  <span class="fu">group_by</span>(customer_id, event) <span class="sc">%&gt;%</span></span>
-<span id="cb178-4"><a href="sales-funnel.html#cb178-4" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">==</span> <span class="fu">min</span>(date)) <span class="sc">%&gt;%</span></span>
-<span id="cb178-5"><a href="sales-funnel.html#cb178-5" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb129"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb129-1"><a href="sales-funnel.html#cb129-1" tabindex="-1"></a><span class="do">### removing not first events </span><span class="al">###</span></span>
+<span id="cb129-2"><a href="sales-funnel.html#cb129-2" tabindex="-1"></a>df_customers <span class="ot">&lt;-</span> df_raw <span class="sc">%&gt;%</span></span>
+<span id="cb129-3"><a href="sales-funnel.html#cb129-3" tabindex="-1"></a>  <span class="fu">group_by</span>(customer_id, event) <span class="sc">%&gt;%</span></span>
+<span id="cb129-4"><a href="sales-funnel.html#cb129-4" tabindex="-1"></a>  <span class="fu">filter</span>(date <span class="sc">==</span> <span class="fu">min</span>(date)) <span class="sc">%&gt;%</span></span>
+<span id="cb129-5"><a href="sales-funnel.html#cb129-5" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code></pre></div>
 <p>Assumption: all customers are first-time buyers. Hence, every next purchase as an event will be removed with the above code.</p>
 <p>Calculate channel probability</p>
-<div class="sourceCode" id="cb179"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb179-1"><a href="sales-funnel.html#cb179-1" tabindex="-1"></a><span class="do">### Sales Funnel probabilities </span><span class="al">###</span></span>
-<span id="cb179-2"><a href="sales-funnel.html#cb179-2" tabindex="-1"></a>sf_probs <span class="ot">&lt;-</span> df_customers <span class="sc">%&gt;%</span></span>
-<span id="cb179-3"><a href="sales-funnel.html#cb179-3" tabindex="-1"></a>    </span>
-<span id="cb179-4"><a href="sales-funnel.html#cb179-4" tabindex="-1"></a>    <span class="fu">group_by</span>(event) <span class="sc">%&gt;%</span></span>
-<span id="cb179-5"><a href="sales-funnel.html#cb179-5" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">customers_on_step =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb179-6"><a href="sales-funnel.html#cb179-6" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb179-7"><a href="sales-funnel.html#cb179-7" tabindex="-1"></a>    </span>
-<span id="cb179-8"><a href="sales-funnel.html#cb179-8" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb179-9"><a href="sales-funnel.html#cb179-9" tabindex="-1"></a>        <span class="at">sf_probs =</span> <span class="fu">round</span>(customers_on_step <span class="sc">/</span> customers_on_step[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>], <span class="dv">3</span>),</span>
-<span id="cb179-10"><a href="sales-funnel.html#cb179-10" tabindex="-1"></a>        <span class="at">sf_probs_step =</span> <span class="fu">round</span>(customers_on_step <span class="sc">/</span> <span class="fu">lag</span>(customers_on_step), <span class="dv">3</span>),</span>
-<span id="cb179-11"><a href="sales-funnel.html#cb179-11" tabindex="-1"></a>        <span class="at">sf_probs_step =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(sf_probs_step) <span class="sc">==</span> <span class="cn">TRUE</span>, <span class="dv">1</span>, sf_probs_step),</span>
-<span id="cb179-12"><a href="sales-funnel.html#cb179-12" tabindex="-1"></a>        <span class="at">sf_importance =</span> <span class="dv">1</span> <span class="sc">-</span> sf_probs_step,</span>
-<span id="cb179-13"><a href="sales-funnel.html#cb179-13" tabindex="-1"></a>        <span class="at">sf_importance_weighted =</span> sf_importance <span class="sc">/</span> <span class="fu">sum</span>(sf_importance)</span>
-<span id="cb179-14"><a href="sales-funnel.html#cb179-14" tabindex="-1"></a>    )</span></code></pre></div>
+<div class="sourceCode" id="cb130"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb130-1"><a href="sales-funnel.html#cb130-1" tabindex="-1"></a><span class="do">### Sales Funnel probabilities </span><span class="al">###</span></span>
+<span id="cb130-2"><a href="sales-funnel.html#cb130-2" tabindex="-1"></a>sf_probs <span class="ot">&lt;-</span> df_customers <span class="sc">%&gt;%</span></span>
+<span id="cb130-3"><a href="sales-funnel.html#cb130-3" tabindex="-1"></a>    </span>
+<span id="cb130-4"><a href="sales-funnel.html#cb130-4" tabindex="-1"></a>    <span class="fu">group_by</span>(event) <span class="sc">%&gt;%</span></span>
+<span id="cb130-5"><a href="sales-funnel.html#cb130-5" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">customers_on_step =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb130-6"><a href="sales-funnel.html#cb130-6" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb130-7"><a href="sales-funnel.html#cb130-7" tabindex="-1"></a>    </span>
+<span id="cb130-8"><a href="sales-funnel.html#cb130-8" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb130-9"><a href="sales-funnel.html#cb130-9" tabindex="-1"></a>        <span class="at">sf_probs =</span> <span class="fu">round</span>(customers_on_step <span class="sc">/</span> customers_on_step[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>], <span class="dv">3</span>),</span>
+<span id="cb130-10"><a href="sales-funnel.html#cb130-10" tabindex="-1"></a>        <span class="at">sf_probs_step =</span> <span class="fu">round</span>(customers_on_step <span class="sc">/</span> <span class="fu">lag</span>(customers_on_step), <span class="dv">3</span>),</span>
+<span id="cb130-11"><a href="sales-funnel.html#cb130-11" tabindex="-1"></a>        <span class="at">sf_probs_step =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(sf_probs_step) <span class="sc">==</span> <span class="cn">TRUE</span>, <span class="dv">1</span>, sf_probs_step),</span>
+<span id="cb130-12"><a href="sales-funnel.html#cb130-12" tabindex="-1"></a>        <span class="at">sf_importance =</span> <span class="dv">1</span> <span class="sc">-</span> sf_probs_step,</span>
+<span id="cb130-13"><a href="sales-funnel.html#cb130-13" tabindex="-1"></a>        <span class="at">sf_importance_weighted =</span> sf_importance <span class="sc">/</span> <span class="fu">sum</span>(sf_importance)</span>
+<span id="cb130-14"><a href="sales-funnel.html#cb130-14" tabindex="-1"></a>    )</span></code></pre></div>
 <p>Visualization</p>
-<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb180-1"><a href="sales-funnel.html#cb180-1" tabindex="-1"></a><span class="do">### Sales Funnel visualization </span><span class="al">###</span></span>
-<span id="cb180-2"><a href="sales-funnel.html#cb180-2" tabindex="-1"></a>df_customers_plot <span class="ot">&lt;-</span> df_customers <span class="sc">%&gt;%</span></span>
-<span id="cb180-3"><a href="sales-funnel.html#cb180-3" tabindex="-1"></a>    </span>
-<span id="cb180-4"><a href="sales-funnel.html#cb180-4" tabindex="-1"></a>    <span class="fu">group_by</span>(event) <span class="sc">%&gt;%</span></span>
-<span id="cb180-5"><a href="sales-funnel.html#cb180-5" tabindex="-1"></a>    <span class="fu">arrange</span>(channel) <span class="sc">%&gt;%</span></span>
-<span id="cb180-6"><a href="sales-funnel.html#cb180-6" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">pl =</span> <span class="fu">row_number</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb180-7"><a href="sales-funnel.html#cb180-7" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb180-8"><a href="sales-funnel.html#cb180-8" tabindex="-1"></a>    </span>
-<span id="cb180-9"><a href="sales-funnel.html#cb180-9" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb180-10"><a href="sales-funnel.html#cb180-10" tabindex="-1"></a>        <span class="at">pl_new =</span> <span class="fu">case_when</span>(</span>
-<span id="cb180-11"><a href="sales-funnel.html#cb180-11" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;two_pages_visit&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;two_pages_visit&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
-<span id="cb180-12"><a href="sales-funnel.html#cb180-12" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;product_page_visit&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;product_page_visit&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
-<span id="cb180-13"><a href="sales-funnel.html#cb180-13" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;add_to_cart&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;add_to_cart&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
-<span id="cb180-14"><a href="sales-funnel.html#cb180-14" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;purchase&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;purchase&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
-<span id="cb180-15"><a href="sales-funnel.html#cb180-15" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span></span>
-<span id="cb180-16"><a href="sales-funnel.html#cb180-16" tabindex="-1"></a>        ),</span>
-<span id="cb180-17"><a href="sales-funnel.html#cb180-17" tabindex="-1"></a>        <span class="at">pl =</span> pl <span class="sc">+</span> pl_new</span>
-<span id="cb180-18"><a href="sales-funnel.html#cb180-18" tabindex="-1"></a>    )</span>
-<span id="cb180-19"><a href="sales-funnel.html#cb180-19" tabindex="-1"></a></span>
-<span id="cb180-20"><a href="sales-funnel.html#cb180-20" tabindex="-1"></a>df_customers_plot<span class="sc">$</span>event <span class="ot">&lt;-</span></span>
-<span id="cb180-21"><a href="sales-funnel.html#cb180-21" tabindex="-1"></a>    <span class="fu">factor</span>(</span>
-<span id="cb180-22"><a href="sales-funnel.html#cb180-22" tabindex="-1"></a>        df_customers_plot<span class="sc">$</span>event,</span>
-<span id="cb180-23"><a href="sales-funnel.html#cb180-23" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(</span>
-<span id="cb180-24"><a href="sales-funnel.html#cb180-24" tabindex="-1"></a>            <span class="st">&#39;purchase&#39;</span>,</span>
-<span id="cb180-25"><a href="sales-funnel.html#cb180-25" tabindex="-1"></a>            <span class="st">&#39;add_to_cart&#39;</span>,</span>
-<span id="cb180-26"><a href="sales-funnel.html#cb180-26" tabindex="-1"></a>            <span class="st">&#39;product_page_visit&#39;</span>,</span>
-<span id="cb180-27"><a href="sales-funnel.html#cb180-27" tabindex="-1"></a>            <span class="st">&#39;two_pages_visit&#39;</span>,</span>
-<span id="cb180-28"><a href="sales-funnel.html#cb180-28" tabindex="-1"></a>            <span class="st">&#39;site_visit&#39;</span></span>
-<span id="cb180-29"><a href="sales-funnel.html#cb180-29" tabindex="-1"></a>        )</span>
-<span id="cb180-30"><a href="sales-funnel.html#cb180-30" tabindex="-1"></a>    )</span>
-<span id="cb180-31"><a href="sales-funnel.html#cb180-31" tabindex="-1"></a></span>
-<span id="cb180-32"><a href="sales-funnel.html#cb180-32" tabindex="-1"></a><span class="co"># color palette</span></span>
-<span id="cb180-33"><a href="sales-funnel.html#cb180-33" tabindex="-1"></a>cols <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb180-34"><a href="sales-funnel.html#cb180-34" tabindex="-1"></a>    <span class="st">&#39;#4e79a7&#39;</span>,</span>
-<span id="cb180-35"><a href="sales-funnel.html#cb180-35" tabindex="-1"></a>    <span class="st">&#39;#f28e2b&#39;</span>,</span>
-<span id="cb180-36"><a href="sales-funnel.html#cb180-36" tabindex="-1"></a>    <span class="st">&#39;#e15759&#39;</span>,</span>
-<span id="cb180-37"><a href="sales-funnel.html#cb180-37" tabindex="-1"></a>    <span class="st">&#39;#76b7b2&#39;</span>,</span>
-<span id="cb180-38"><a href="sales-funnel.html#cb180-38" tabindex="-1"></a>    <span class="st">&#39;#59a14f&#39;</span>,</span>
-<span id="cb180-39"><a href="sales-funnel.html#cb180-39" tabindex="-1"></a>    <span class="st">&#39;#edc948&#39;</span>,</span>
-<span id="cb180-40"><a href="sales-funnel.html#cb180-40" tabindex="-1"></a>    <span class="st">&#39;#b07aa1&#39;</span>,</span>
-<span id="cb180-41"><a href="sales-funnel.html#cb180-41" tabindex="-1"></a>    <span class="st">&#39;#ff9da7&#39;</span>,</span>
-<span id="cb180-42"><a href="sales-funnel.html#cb180-42" tabindex="-1"></a>    <span class="st">&#39;#9c755f&#39;</span>,</span>
-<span id="cb180-43"><a href="sales-funnel.html#cb180-43" tabindex="-1"></a>    <span class="st">&#39;#bab0ac&#39;</span></span>
-<span id="cb180-44"><a href="sales-funnel.html#cb180-44" tabindex="-1"></a>)</span>
-<span id="cb180-45"><a href="sales-funnel.html#cb180-45" tabindex="-1"></a></span>
-<span id="cb180-46"><a href="sales-funnel.html#cb180-46" tabindex="-1"></a><span class="fu">ggplot</span>(df_customers_plot, <span class="fu">aes</span>(<span class="at">x =</span> event, <span class="at">y =</span> pl)) <span class="sc">+</span></span>
-<span id="cb180-47"><a href="sales-funnel.html#cb180-47" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb180-48"><a href="sales-funnel.html#cb180-48" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
-<span id="cb180-49"><a href="sales-funnel.html#cb180-49" tabindex="-1"></a>    <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb180-50"><a href="sales-funnel.html#cb180-50" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">group =</span> customer_id, <span class="at">color =</span> <span class="fu">as.factor</span>(channel)), <span class="at">size =</span> <span class="fl">0.05</span>) <span class="sc">+</span></span>
-<span id="cb180-51"><a href="sales-funnel.html#cb180-51" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
-<span id="cb180-52"><a href="sales-funnel.html#cb180-52" tabindex="-1"></a>        <span class="at">data =</span> sf_probs,</span>
-<span id="cb180-53"><a href="sales-funnel.html#cb180-53" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
-<span id="cb180-54"><a href="sales-funnel.html#cb180-54" tabindex="-1"></a>            <span class="at">x =</span> event,</span>
-<span id="cb180-55"><a href="sales-funnel.html#cb180-55" tabindex="-1"></a>            <span class="at">y =</span> <span class="dv">1</span>,</span>
-<span id="cb180-56"><a href="sales-funnel.html#cb180-56" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(sf_probs <span class="sc">*</span> <span class="dv">100</span>, <span class="st">&#39;%&#39;</span>)</span>
-<span id="cb180-57"><a href="sales-funnel.html#cb180-57" tabindex="-1"></a>        ),</span>
-<span id="cb180-58"><a href="sales-funnel.html#cb180-58" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span>,</span>
-<span id="cb180-59"><a href="sales-funnel.html#cb180-59" tabindex="-1"></a>        <span class="at">fontface =</span> <span class="st">&#39;bold&#39;</span></span>
-<span id="cb180-60"><a href="sales-funnel.html#cb180-60" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb180-61"><a href="sales-funnel.html#cb180-61" tabindex="-1"></a>    <span class="fu">guides</span>(<span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">2</span>))) <span class="sc">+</span></span>
-<span id="cb180-62"><a href="sales-funnel.html#cb180-62" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
-<span id="cb180-63"><a href="sales-funnel.html#cb180-63" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">&#39;bottom&#39;</span>,</span>
-<span id="cb180-64"><a href="sales-funnel.html#cb180-64" tabindex="-1"></a>        <span class="at">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>,</span>
-<span id="cb180-65"><a href="sales-funnel.html#cb180-65" tabindex="-1"></a>        <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb180-66"><a href="sales-funnel.html#cb180-66" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb180-67"><a href="sales-funnel.html#cb180-67" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(</span>
-<span id="cb180-68"><a href="sales-funnel.html#cb180-68" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">20</span>,</span>
-<span id="cb180-69"><a href="sales-funnel.html#cb180-69" tabindex="-1"></a>            <span class="at">face =</span> <span class="st">&quot;bold&quot;</span>,</span>
-<span id="cb180-70"><a href="sales-funnel.html#cb180-70" tabindex="-1"></a>            <span class="at">vjust =</span> <span class="dv">2</span>,</span>
-<span id="cb180-71"><a href="sales-funnel.html#cb180-71" tabindex="-1"></a>            <span class="at">color =</span> <span class="st">&#39;black&#39;</span>,</span>
-<span id="cb180-72"><a href="sales-funnel.html#cb180-72" tabindex="-1"></a>            <span class="at">lineheight =</span> <span class="fl">0.8</span></span>
-<span id="cb180-73"><a href="sales-funnel.html#cb180-73" tabindex="-1"></a>        ),</span>
-<span id="cb180-74"><a href="sales-funnel.html#cb180-74" tabindex="-1"></a>        <span class="at">axis.title.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">16</span>, <span class="at">face =</span> <span class="st">&quot;bold&quot;</span>),</span>
-<span id="cb180-75"><a href="sales-funnel.html#cb180-75" tabindex="-1"></a>        <span class="at">axis.title.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb180-76"><a href="sales-funnel.html#cb180-76" tabindex="-1"></a>        <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb180-77"><a href="sales-funnel.html#cb180-77" tabindex="-1"></a>        <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(</span>
-<span id="cb180-78"><a href="sales-funnel.html#cb180-78" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">8</span>,</span>
-<span id="cb180-79"><a href="sales-funnel.html#cb180-79" tabindex="-1"></a>            <span class="at">angle =</span> <span class="dv">90</span>,</span>
-<span id="cb180-80"><a href="sales-funnel.html#cb180-80" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="fl">0.5</span>,</span>
-<span id="cb180-81"><a href="sales-funnel.html#cb180-81" tabindex="-1"></a>            <span class="at">vjust =</span> <span class="fl">0.5</span>,</span>
-<span id="cb180-82"><a href="sales-funnel.html#cb180-82" tabindex="-1"></a>            <span class="at">face =</span> <span class="st">&quot;plain&quot;</span></span>
-<span id="cb180-83"><a href="sales-funnel.html#cb180-83" tabindex="-1"></a>        )</span>
-<span id="cb180-84"><a href="sales-funnel.html#cb180-84" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb180-85"><a href="sales-funnel.html#cb180-85" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">&quot;Sales Funnel visualization - all customers journeys&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb131"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb131-1"><a href="sales-funnel.html#cb131-1" tabindex="-1"></a><span class="do">### Sales Funnel visualization </span><span class="al">###</span></span>
+<span id="cb131-2"><a href="sales-funnel.html#cb131-2" tabindex="-1"></a>df_customers_plot <span class="ot">&lt;-</span> df_customers <span class="sc">%&gt;%</span></span>
+<span id="cb131-3"><a href="sales-funnel.html#cb131-3" tabindex="-1"></a>    </span>
+<span id="cb131-4"><a href="sales-funnel.html#cb131-4" tabindex="-1"></a>    <span class="fu">group_by</span>(event) <span class="sc">%&gt;%</span></span>
+<span id="cb131-5"><a href="sales-funnel.html#cb131-5" tabindex="-1"></a>    <span class="fu">arrange</span>(channel) <span class="sc">%&gt;%</span></span>
+<span id="cb131-6"><a href="sales-funnel.html#cb131-6" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">pl =</span> <span class="fu">row_number</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb131-7"><a href="sales-funnel.html#cb131-7" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb131-8"><a href="sales-funnel.html#cb131-8" tabindex="-1"></a>    </span>
+<span id="cb131-9"><a href="sales-funnel.html#cb131-9" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb131-10"><a href="sales-funnel.html#cb131-10" tabindex="-1"></a>        <span class="at">pl_new =</span> <span class="fu">case_when</span>(</span>
+<span id="cb131-11"><a href="sales-funnel.html#cb131-11" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;two_pages_visit&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;two_pages_visit&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
+<span id="cb131-12"><a href="sales-funnel.html#cb131-12" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;product_page_visit&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;product_page_visit&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
+<span id="cb131-13"><a href="sales-funnel.html#cb131-13" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;add_to_cart&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;add_to_cart&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
+<span id="cb131-14"><a href="sales-funnel.html#cb131-14" tabindex="-1"></a>            event <span class="sc">==</span> <span class="st">&#39;purchase&#39;</span> <span class="sc">~</span> <span class="fu">round</span>((<span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;site_visit&#39;</span>]) <span class="sc">-</span> <span class="fu">max</span>(pl[event <span class="sc">==</span> <span class="st">&#39;purchase&#39;</span>])) <span class="sc">/</span> <span class="dv">2</span>),</span>
+<span id="cb131-15"><a href="sales-funnel.html#cb131-15" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span></span>
+<span id="cb131-16"><a href="sales-funnel.html#cb131-16" tabindex="-1"></a>        ),</span>
+<span id="cb131-17"><a href="sales-funnel.html#cb131-17" tabindex="-1"></a>        <span class="at">pl =</span> pl <span class="sc">+</span> pl_new</span>
+<span id="cb131-18"><a href="sales-funnel.html#cb131-18" tabindex="-1"></a>    )</span>
+<span id="cb131-19"><a href="sales-funnel.html#cb131-19" tabindex="-1"></a></span>
+<span id="cb131-20"><a href="sales-funnel.html#cb131-20" tabindex="-1"></a>df_customers_plot<span class="sc">$</span>event <span class="ot">&lt;-</span></span>
+<span id="cb131-21"><a href="sales-funnel.html#cb131-21" tabindex="-1"></a>    <span class="fu">factor</span>(</span>
+<span id="cb131-22"><a href="sales-funnel.html#cb131-22" tabindex="-1"></a>        df_customers_plot<span class="sc">$</span>event,</span>
+<span id="cb131-23"><a href="sales-funnel.html#cb131-23" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(</span>
+<span id="cb131-24"><a href="sales-funnel.html#cb131-24" tabindex="-1"></a>            <span class="st">&#39;purchase&#39;</span>,</span>
+<span id="cb131-25"><a href="sales-funnel.html#cb131-25" tabindex="-1"></a>            <span class="st">&#39;add_to_cart&#39;</span>,</span>
+<span id="cb131-26"><a href="sales-funnel.html#cb131-26" tabindex="-1"></a>            <span class="st">&#39;product_page_visit&#39;</span>,</span>
+<span id="cb131-27"><a href="sales-funnel.html#cb131-27" tabindex="-1"></a>            <span class="st">&#39;two_pages_visit&#39;</span>,</span>
+<span id="cb131-28"><a href="sales-funnel.html#cb131-28" tabindex="-1"></a>            <span class="st">&#39;site_visit&#39;</span></span>
+<span id="cb131-29"><a href="sales-funnel.html#cb131-29" tabindex="-1"></a>        )</span>
+<span id="cb131-30"><a href="sales-funnel.html#cb131-30" tabindex="-1"></a>    )</span>
+<span id="cb131-31"><a href="sales-funnel.html#cb131-31" tabindex="-1"></a></span>
+<span id="cb131-32"><a href="sales-funnel.html#cb131-32" tabindex="-1"></a><span class="co"># color palette</span></span>
+<span id="cb131-33"><a href="sales-funnel.html#cb131-33" tabindex="-1"></a>cols <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb131-34"><a href="sales-funnel.html#cb131-34" tabindex="-1"></a>    <span class="st">&#39;#4e79a7&#39;</span>,</span>
+<span id="cb131-35"><a href="sales-funnel.html#cb131-35" tabindex="-1"></a>    <span class="st">&#39;#f28e2b&#39;</span>,</span>
+<span id="cb131-36"><a href="sales-funnel.html#cb131-36" tabindex="-1"></a>    <span class="st">&#39;#e15759&#39;</span>,</span>
+<span id="cb131-37"><a href="sales-funnel.html#cb131-37" tabindex="-1"></a>    <span class="st">&#39;#76b7b2&#39;</span>,</span>
+<span id="cb131-38"><a href="sales-funnel.html#cb131-38" tabindex="-1"></a>    <span class="st">&#39;#59a14f&#39;</span>,</span>
+<span id="cb131-39"><a href="sales-funnel.html#cb131-39" tabindex="-1"></a>    <span class="st">&#39;#edc948&#39;</span>,</span>
+<span id="cb131-40"><a href="sales-funnel.html#cb131-40" tabindex="-1"></a>    <span class="st">&#39;#b07aa1&#39;</span>,</span>
+<span id="cb131-41"><a href="sales-funnel.html#cb131-41" tabindex="-1"></a>    <span class="st">&#39;#ff9da7&#39;</span>,</span>
+<span id="cb131-42"><a href="sales-funnel.html#cb131-42" tabindex="-1"></a>    <span class="st">&#39;#9c755f&#39;</span>,</span>
+<span id="cb131-43"><a href="sales-funnel.html#cb131-43" tabindex="-1"></a>    <span class="st">&#39;#bab0ac&#39;</span></span>
+<span id="cb131-44"><a href="sales-funnel.html#cb131-44" tabindex="-1"></a>)</span>
+<span id="cb131-45"><a href="sales-funnel.html#cb131-45" tabindex="-1"></a></span>
+<span id="cb131-46"><a href="sales-funnel.html#cb131-46" tabindex="-1"></a><span class="fu">ggplot</span>(df_customers_plot, <span class="fu">aes</span>(<span class="at">x =</span> event, <span class="at">y =</span> pl)) <span class="sc">+</span></span>
+<span id="cb131-47"><a href="sales-funnel.html#cb131-47" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb131-48"><a href="sales-funnel.html#cb131-48" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
+<span id="cb131-49"><a href="sales-funnel.html#cb131-49" tabindex="-1"></a>    <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb131-50"><a href="sales-funnel.html#cb131-50" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">group =</span> customer_id, <span class="at">color =</span> <span class="fu">as.factor</span>(channel)), <span class="at">size =</span> <span class="fl">0.05</span>) <span class="sc">+</span></span>
+<span id="cb131-51"><a href="sales-funnel.html#cb131-51" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
+<span id="cb131-52"><a href="sales-funnel.html#cb131-52" tabindex="-1"></a>        <span class="at">data =</span> sf_probs,</span>
+<span id="cb131-53"><a href="sales-funnel.html#cb131-53" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
+<span id="cb131-54"><a href="sales-funnel.html#cb131-54" tabindex="-1"></a>            <span class="at">x =</span> event,</span>
+<span id="cb131-55"><a href="sales-funnel.html#cb131-55" tabindex="-1"></a>            <span class="at">y =</span> <span class="dv">1</span>,</span>
+<span id="cb131-56"><a href="sales-funnel.html#cb131-56" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(sf_probs <span class="sc">*</span> <span class="dv">100</span>, <span class="st">&#39;%&#39;</span>)</span>
+<span id="cb131-57"><a href="sales-funnel.html#cb131-57" tabindex="-1"></a>        ),</span>
+<span id="cb131-58"><a href="sales-funnel.html#cb131-58" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span>,</span>
+<span id="cb131-59"><a href="sales-funnel.html#cb131-59" tabindex="-1"></a>        <span class="at">fontface =</span> <span class="st">&#39;bold&#39;</span></span>
+<span id="cb131-60"><a href="sales-funnel.html#cb131-60" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb131-61"><a href="sales-funnel.html#cb131-61" tabindex="-1"></a>    <span class="fu">guides</span>(<span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">2</span>))) <span class="sc">+</span></span>
+<span id="cb131-62"><a href="sales-funnel.html#cb131-62" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
+<span id="cb131-63"><a href="sales-funnel.html#cb131-63" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">&#39;bottom&#39;</span>,</span>
+<span id="cb131-64"><a href="sales-funnel.html#cb131-64" tabindex="-1"></a>        <span class="at">legend.direction =</span> <span class="st">&quot;horizontal&quot;</span>,</span>
+<span id="cb131-65"><a href="sales-funnel.html#cb131-65" tabindex="-1"></a>        <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb131-66"><a href="sales-funnel.html#cb131-66" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb131-67"><a href="sales-funnel.html#cb131-67" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(</span>
+<span id="cb131-68"><a href="sales-funnel.html#cb131-68" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">20</span>,</span>
+<span id="cb131-69"><a href="sales-funnel.html#cb131-69" tabindex="-1"></a>            <span class="at">face =</span> <span class="st">&quot;bold&quot;</span>,</span>
+<span id="cb131-70"><a href="sales-funnel.html#cb131-70" tabindex="-1"></a>            <span class="at">vjust =</span> <span class="dv">2</span>,</span>
+<span id="cb131-71"><a href="sales-funnel.html#cb131-71" tabindex="-1"></a>            <span class="at">color =</span> <span class="st">&#39;black&#39;</span>,</span>
+<span id="cb131-72"><a href="sales-funnel.html#cb131-72" tabindex="-1"></a>            <span class="at">lineheight =</span> <span class="fl">0.8</span></span>
+<span id="cb131-73"><a href="sales-funnel.html#cb131-73" tabindex="-1"></a>        ),</span>
+<span id="cb131-74"><a href="sales-funnel.html#cb131-74" tabindex="-1"></a>        <span class="at">axis.title.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">16</span>, <span class="at">face =</span> <span class="st">&quot;bold&quot;</span>),</span>
+<span id="cb131-75"><a href="sales-funnel.html#cb131-75" tabindex="-1"></a>        <span class="at">axis.title.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb131-76"><a href="sales-funnel.html#cb131-76" tabindex="-1"></a>        <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb131-77"><a href="sales-funnel.html#cb131-77" tabindex="-1"></a>        <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(</span>
+<span id="cb131-78"><a href="sales-funnel.html#cb131-78" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">8</span>,</span>
+<span id="cb131-79"><a href="sales-funnel.html#cb131-79" tabindex="-1"></a>            <span class="at">angle =</span> <span class="dv">90</span>,</span>
+<span id="cb131-80"><a href="sales-funnel.html#cb131-80" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="fl">0.5</span>,</span>
+<span id="cb131-81"><a href="sales-funnel.html#cb131-81" tabindex="-1"></a>            <span class="at">vjust =</span> <span class="fl">0.5</span>,</span>
+<span id="cb131-82"><a href="sales-funnel.html#cb131-82" tabindex="-1"></a>            <span class="at">face =</span> <span class="st">&quot;plain&quot;</span></span>
+<span id="cb131-83"><a href="sales-funnel.html#cb131-83" tabindex="-1"></a>        )</span>
+<span id="cb131-84"><a href="sales-funnel.html#cb131-84" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb131-85"><a href="sales-funnel.html#cb131-85" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">&quot;Sales Funnel visualization - all customers journeys&quot;</span>)</span></code></pre></div>
 <p><img src="35-empirical_model_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
 <p>Calculate attribution</p>
-<div class="sourceCode" id="cb181"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb181-1"><a href="sales-funnel.html#cb181-1" tabindex="-1"></a><span class="do">### computing attribution </span><span class="al">###</span></span>
-<span id="cb181-2"><a href="sales-funnel.html#cb181-2" tabindex="-1"></a>df_attrib <span class="ot">&lt;-</span> df_customers <span class="sc">%&gt;%</span></span>
-<span id="cb181-3"><a href="sales-funnel.html#cb181-3" tabindex="-1"></a>    <span class="co"># removing customers without purchase</span></span>
-<span id="cb181-4"><a href="sales-funnel.html#cb181-4" tabindex="-1"></a>    <span class="fu">group_by</span>(customer_id) <span class="sc">%&gt;%</span></span>
-<span id="cb181-5"><a href="sales-funnel.html#cb181-5" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">any</span>(<span class="fu">as.character</span>(event) <span class="sc">==</span> <span class="st">&#39;purchase&#39;</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb181-6"><a href="sales-funnel.html#cb181-6" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb181-7"><a href="sales-funnel.html#cb181-7" tabindex="-1"></a>    </span>
-<span id="cb181-8"><a href="sales-funnel.html#cb181-8" tabindex="-1"></a>    <span class="co"># joining step&#39;s importances</span></span>
-<span id="cb181-9"><a href="sales-funnel.html#cb181-9" tabindex="-1"></a>    <span class="fu">left_join</span>(., sf_probs <span class="sc">%&gt;%</span> <span class="fu">select</span>(event, sf_importance_weighted), <span class="at">by =</span> <span class="st">&#39;event&#39;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb181-10"><a href="sales-funnel.html#cb181-10" tabindex="-1"></a>    </span>
-<span id="cb181-11"><a href="sales-funnel.html#cb181-11" tabindex="-1"></a>    <span class="fu">group_by</span>(channel) <span class="sc">%&gt;%</span></span>
-<span id="cb181-12"><a href="sales-funnel.html#cb181-12" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">tot_attribution =</span> <span class="fu">sum</span>(sf_importance_weighted)) <span class="sc">%&gt;%</span></span>
-<span id="cb181-13"><a href="sales-funnel.html#cb181-13" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb132"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb132-1"><a href="sales-funnel.html#cb132-1" tabindex="-1"></a><span class="do">### computing attribution </span><span class="al">###</span></span>
+<span id="cb132-2"><a href="sales-funnel.html#cb132-2" tabindex="-1"></a>df_attrib <span class="ot">&lt;-</span> df_customers <span class="sc">%&gt;%</span></span>
+<span id="cb132-3"><a href="sales-funnel.html#cb132-3" tabindex="-1"></a>    <span class="co"># removing customers without purchase</span></span>
+<span id="cb132-4"><a href="sales-funnel.html#cb132-4" tabindex="-1"></a>    <span class="fu">group_by</span>(customer_id) <span class="sc">%&gt;%</span></span>
+<span id="cb132-5"><a href="sales-funnel.html#cb132-5" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">any</span>(<span class="fu">as.character</span>(event) <span class="sc">==</span> <span class="st">&#39;purchase&#39;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb132-6"><a href="sales-funnel.html#cb132-6" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb132-7"><a href="sales-funnel.html#cb132-7" tabindex="-1"></a>    </span>
+<span id="cb132-8"><a href="sales-funnel.html#cb132-8" tabindex="-1"></a>    <span class="co"># joining step&#39;s importances</span></span>
+<span id="cb132-9"><a href="sales-funnel.html#cb132-9" tabindex="-1"></a>    <span class="fu">left_join</span>(., sf_probs <span class="sc">%&gt;%</span> <span class="fu">select</span>(event, sf_importance_weighted), <span class="at">by =</span> <span class="st">&#39;event&#39;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb132-10"><a href="sales-funnel.html#cb132-10" tabindex="-1"></a>    </span>
+<span id="cb132-11"><a href="sales-funnel.html#cb132-11" tabindex="-1"></a>    <span class="fu">group_by</span>(channel) <span class="sc">%&gt;%</span></span>
+<span id="cb132-12"><a href="sales-funnel.html#cb132-12" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">tot_attribution =</span> <span class="fu">sum</span>(sf_importance_weighted)) <span class="sc">%&gt;%</span></span>
+<span id="cb132-13"><a href="sales-funnel.html#cb132-13" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span></code></pre></div>
 </div>
 <div id="example-2-1" class="section level3 hasAnchor" number="22.2.2">
 <h3><span class="header-section-number">22.2.2</span> Example 2<a href="sales-funnel.html#example-2-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Code from <a href="https://www.analyzecore.com/2015/06/23/sales-funnel-visualization-with-r/">Sergey Bryl</a></p>
-<div class="sourceCode" id="cb182"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb182-1"><a href="sales-funnel.html#cb182-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb182-2"><a href="sales-funnel.html#cb182-2" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb182-3"><a href="sales-funnel.html#cb182-3" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
-<span id="cb182-4"><a href="sales-funnel.html#cb182-4" tabindex="-1"></a></span>
-<span id="cb182-5"><a href="sales-funnel.html#cb182-5" tabindex="-1"></a><span class="co"># creating a data samples</span></span>
-<span id="cb182-6"><a href="sales-funnel.html#cb182-6" tabindex="-1"></a><span class="co"># content</span></span>
-<span id="cb182-7"><a href="sales-funnel.html#cb182-7" tabindex="-1"></a>df.content <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb182-8"><a href="sales-funnel.html#cb182-8" tabindex="-1"></a>    <span class="at">content =</span> <span class="fu">c</span>(</span>
-<span id="cb182-9"><a href="sales-funnel.html#cb182-9" tabindex="-1"></a>        <span class="st">&#39;main&#39;</span>,</span>
-<span id="cb182-10"><a href="sales-funnel.html#cb182-10" tabindex="-1"></a>        <span class="st">&#39;ad landing&#39;</span>,</span>
-<span id="cb182-11"><a href="sales-funnel.html#cb182-11" tabindex="-1"></a>        <span class="st">&#39;product 1&#39;</span>,</span>
-<span id="cb182-12"><a href="sales-funnel.html#cb182-12" tabindex="-1"></a>        <span class="st">&#39;product 2&#39;</span>,</span>
-<span id="cb182-13"><a href="sales-funnel.html#cb182-13" tabindex="-1"></a>        <span class="st">&#39;product 3&#39;</span>,</span>
-<span id="cb182-14"><a href="sales-funnel.html#cb182-14" tabindex="-1"></a>        <span class="st">&#39;product 4&#39;</span>,</span>
-<span id="cb182-15"><a href="sales-funnel.html#cb182-15" tabindex="-1"></a>        <span class="st">&#39;shopping cart&#39;</span>,</span>
-<span id="cb182-16"><a href="sales-funnel.html#cb182-16" tabindex="-1"></a>        <span class="st">&#39;thank you page&#39;</span></span>
-<span id="cb182-17"><a href="sales-funnel.html#cb182-17" tabindex="-1"></a>    ),</span>
-<span id="cb182-18"><a href="sales-funnel.html#cb182-18" tabindex="-1"></a>    <span class="at">step =</span> <span class="fu">c</span>(</span>
-<span id="cb182-19"><a href="sales-funnel.html#cb182-19" tabindex="-1"></a>        <span class="st">&#39;awareness&#39;</span>,</span>
-<span id="cb182-20"><a href="sales-funnel.html#cb182-20" tabindex="-1"></a>        <span class="st">&#39;awareness&#39;</span>,</span>
-<span id="cb182-21"><a href="sales-funnel.html#cb182-21" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
-<span id="cb182-22"><a href="sales-funnel.html#cb182-22" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
-<span id="cb182-23"><a href="sales-funnel.html#cb182-23" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
-<span id="cb182-24"><a href="sales-funnel.html#cb182-24" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
-<span id="cb182-25"><a href="sales-funnel.html#cb182-25" tabindex="-1"></a>        <span class="st">&#39;desire&#39;</span>,</span>
-<span id="cb182-26"><a href="sales-funnel.html#cb182-26" tabindex="-1"></a>        <span class="st">&#39;action&#39;</span></span>
-<span id="cb182-27"><a href="sales-funnel.html#cb182-27" tabindex="-1"></a>    ),</span>
-<span id="cb182-28"><a href="sales-funnel.html#cb182-28" tabindex="-1"></a>    <span class="at">number =</span> <span class="fu">c</span>(<span class="dv">150000</span>, <span class="dv">80000</span>,</span>
-<span id="cb182-29"><a href="sales-funnel.html#cb182-29" tabindex="-1"></a>               <span class="dv">80000</span>, <span class="dv">40000</span>, <span class="dv">35000</span>, <span class="dv">25000</span>,</span>
-<span id="cb182-30"><a href="sales-funnel.html#cb182-30" tabindex="-1"></a>               <span class="dv">130000</span>,</span>
-<span id="cb182-31"><a href="sales-funnel.html#cb182-31" tabindex="-1"></a>               <span class="dv">120000</span>)</span>
-<span id="cb182-32"><a href="sales-funnel.html#cb182-32" tabindex="-1"></a>)</span>
-<span id="cb182-33"><a href="sales-funnel.html#cb182-33" tabindex="-1"></a><span class="co"># customers</span></span>
-<span id="cb182-34"><a href="sales-funnel.html#cb182-34" tabindex="-1"></a>df.customers <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb182-35"><a href="sales-funnel.html#cb182-35" tabindex="-1"></a>    <span class="at">content =</span> <span class="fu">c</span>(<span class="st">&#39;new&#39;</span>, <span class="st">&#39;engaged&#39;</span>, <span class="st">&#39;loyal&#39;</span>),</span>
-<span id="cb182-36"><a href="sales-funnel.html#cb182-36" tabindex="-1"></a>    <span class="at">step =</span> <span class="fu">c</span>(<span class="st">&#39;new&#39;</span>, <span class="st">&#39;engaged&#39;</span>, <span class="st">&#39;loyal&#39;</span>),</span>
-<span id="cb182-37"><a href="sales-funnel.html#cb182-37" tabindex="-1"></a>    <span class="at">number =</span> <span class="fu">c</span>(<span class="dv">25000</span>, <span class="dv">40000</span>, <span class="dv">55000</span>)</span>
-<span id="cb182-38"><a href="sales-funnel.html#cb182-38" tabindex="-1"></a>)</span>
-<span id="cb182-39"><a href="sales-funnel.html#cb182-39" tabindex="-1"></a><span class="co"># combining two data sets</span></span>
-<span id="cb182-40"><a href="sales-funnel.html#cb182-40" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> <span class="fu">rbind</span>(df.content, df.customers)</span>
-<span id="cb182-41"><a href="sales-funnel.html#cb182-41" tabindex="-1"></a></span>
-<span id="cb182-42"><a href="sales-funnel.html#cb182-42" tabindex="-1"></a><span class="co"># calculating dummies, max and min values of X for plotting</span></span>
-<span id="cb182-43"><a href="sales-funnel.html#cb182-43" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
-<span id="cb182-44"><a href="sales-funnel.html#cb182-44" tabindex="-1"></a>    <span class="fu">group_by</span>(step) <span class="sc">%&gt;%</span></span>
-<span id="cb182-45"><a href="sales-funnel.html#cb182-45" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">totnum =</span> <span class="fu">sum</span>(number)) <span class="sc">%&gt;%</span></span>
-<span id="cb182-46"><a href="sales-funnel.html#cb182-46" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb182-47"><a href="sales-funnel.html#cb182-47" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">dum =</span> (<span class="fu">max</span>(totnum) <span class="sc">-</span> totnum) <span class="sc">/</span> <span class="dv">2</span>,</span>
-<span id="cb182-48"><a href="sales-funnel.html#cb182-48" tabindex="-1"></a>           <span class="at">maxx =</span> totnum <span class="sc">+</span> dum,</span>
-<span id="cb182-49"><a href="sales-funnel.html#cb182-49" tabindex="-1"></a>           <span class="at">minx =</span> dum)</span>
-<span id="cb182-50"><a href="sales-funnel.html#cb182-50" tabindex="-1"></a></span>
-<span id="cb182-51"><a href="sales-funnel.html#cb182-51" tabindex="-1"></a><span class="co"># data frame for plotting funnel lines</span></span>
-<span id="cb182-52"><a href="sales-funnel.html#cb182-52" tabindex="-1"></a>df.lines <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
-<span id="cb182-53"><a href="sales-funnel.html#cb182-53" tabindex="-1"></a>    <span class="fu">distinct</span>(step, maxx, minx)</span>
-<span id="cb182-54"><a href="sales-funnel.html#cb182-54" tabindex="-1"></a></span>
-<span id="cb182-55"><a href="sales-funnel.html#cb182-55" tabindex="-1"></a><span class="co"># data frame with dummies</span></span>
-<span id="cb182-56"><a href="sales-funnel.html#cb182-56" tabindex="-1"></a>df.dum <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
-<span id="cb182-57"><a href="sales-funnel.html#cb182-57" tabindex="-1"></a>    <span class="fu">distinct</span>(step, dum) <span class="sc">%&gt;%</span></span>
-<span id="cb182-58"><a href="sales-funnel.html#cb182-58" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">content =</span> <span class="st">&#39;dummy&#39;</span>,</span>
-<span id="cb182-59"><a href="sales-funnel.html#cb182-59" tabindex="-1"></a>           <span class="at">number =</span> dum) <span class="sc">%&gt;%</span></span>
-<span id="cb182-60"><a href="sales-funnel.html#cb182-60" tabindex="-1"></a>    <span class="fu">select</span>(content, step, number)</span>
-<span id="cb182-61"><a href="sales-funnel.html#cb182-61" tabindex="-1"></a></span>
-<span id="cb182-62"><a href="sales-funnel.html#cb182-62" tabindex="-1"></a><span class="co"># data frame with rates</span></span>
-<span id="cb182-63"><a href="sales-funnel.html#cb182-63" tabindex="-1"></a>conv <span class="ot">&lt;-</span> df.all<span class="sc">$</span>totnum[df.all<span class="sc">$</span>step <span class="sc">==</span> <span class="st">&#39;action&#39;</span>]</span>
-<span id="cb182-64"><a href="sales-funnel.html#cb182-64" tabindex="-1"></a></span>
-<span id="cb182-65"><a href="sales-funnel.html#cb182-65" tabindex="-1"></a>df.rates <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
-<span id="cb182-66"><a href="sales-funnel.html#cb182-66" tabindex="-1"></a>    <span class="fu">distinct</span>(step, totnum) <span class="sc">%&gt;%</span></span>
-<span id="cb182-67"><a href="sales-funnel.html#cb182-67" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb182-68"><a href="sales-funnel.html#cb182-68" tabindex="-1"></a>        <span class="at">prevnum =</span> <span class="fu">lag</span>(totnum),</span>
-<span id="cb182-69"><a href="sales-funnel.html#cb182-69" tabindex="-1"></a>        <span class="at">rate =</span> <span class="fu">ifelse</span>(</span>
-<span id="cb182-70"><a href="sales-funnel.html#cb182-70" tabindex="-1"></a>            step <span class="sc">==</span> <span class="st">&#39;new&#39;</span> <span class="sc">|</span> step <span class="sc">==</span> <span class="st">&#39;engaged&#39;</span> <span class="sc">|</span> step <span class="sc">==</span> <span class="st">&#39;loyal&#39;</span>,</span>
-<span id="cb182-71"><a href="sales-funnel.html#cb182-71" tabindex="-1"></a>            <span class="fu">round</span>(totnum <span class="sc">/</span> conv, <span class="dv">3</span>),</span>
-<span id="cb182-72"><a href="sales-funnel.html#cb182-72" tabindex="-1"></a>            <span class="fu">round</span>(totnum <span class="sc">/</span> prevnum, <span class="dv">3</span>)</span>
-<span id="cb182-73"><a href="sales-funnel.html#cb182-73" tabindex="-1"></a>        )</span>
-<span id="cb182-74"><a href="sales-funnel.html#cb182-74" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb182-75"><a href="sales-funnel.html#cb182-75" tabindex="-1"></a>    <span class="fu">select</span>(step, rate)</span>
-<span id="cb182-76"><a href="sales-funnel.html#cb182-76" tabindex="-1"></a>df.rates <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(df.rates)</span>
-<span id="cb182-77"><a href="sales-funnel.html#cb182-77" tabindex="-1"></a></span>
-<span id="cb182-78"><a href="sales-funnel.html#cb182-78" tabindex="-1"></a><span class="co"># creting final data frame</span></span>
-<span id="cb182-79"><a href="sales-funnel.html#cb182-79" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
-<span id="cb182-80"><a href="sales-funnel.html#cb182-80" tabindex="-1"></a>    <span class="fu">select</span>(content, step, number)</span>
-<span id="cb182-81"><a href="sales-funnel.html#cb182-81" tabindex="-1"></a></span>
-<span id="cb182-82"><a href="sales-funnel.html#cb182-82" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> <span class="fu">rbind</span>(df.all, df.dum)</span>
-<span id="cb182-83"><a href="sales-funnel.html#cb182-83" tabindex="-1"></a></span>
-<span id="cb182-84"><a href="sales-funnel.html#cb182-84" tabindex="-1"></a><span class="co"># defining order of steps</span></span>
-<span id="cb182-85"><a href="sales-funnel.html#cb182-85" tabindex="-1"></a>df.all<span class="sc">$</span>step <span class="ot">&lt;-</span></span>
-<span id="cb182-86"><a href="sales-funnel.html#cb182-86" tabindex="-1"></a>    <span class="fu">factor</span>(</span>
-<span id="cb182-87"><a href="sales-funnel.html#cb182-87" tabindex="-1"></a>        df.all<span class="sc">$</span>step,</span>
-<span id="cb182-88"><a href="sales-funnel.html#cb182-88" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(</span>
-<span id="cb182-89"><a href="sales-funnel.html#cb182-89" tabindex="-1"></a>            <span class="st">&#39;loyal&#39;</span>,</span>
-<span id="cb182-90"><a href="sales-funnel.html#cb182-90" tabindex="-1"></a>            <span class="st">&#39;engaged&#39;</span>,</span>
-<span id="cb182-91"><a href="sales-funnel.html#cb182-91" tabindex="-1"></a>            <span class="st">&#39;new&#39;</span>,</span>
-<span id="cb182-92"><a href="sales-funnel.html#cb182-92" tabindex="-1"></a>            <span class="st">&#39;action&#39;</span>,</span>
-<span id="cb182-93"><a href="sales-funnel.html#cb182-93" tabindex="-1"></a>            <span class="st">&#39;desire&#39;</span>,</span>
-<span id="cb182-94"><a href="sales-funnel.html#cb182-94" tabindex="-1"></a>            <span class="st">&#39;interest&#39;</span>,</span>
-<span id="cb182-95"><a href="sales-funnel.html#cb182-95" tabindex="-1"></a>            <span class="st">&#39;awareness&#39;</span></span>
-<span id="cb182-96"><a href="sales-funnel.html#cb182-96" tabindex="-1"></a>        )</span>
-<span id="cb182-97"><a href="sales-funnel.html#cb182-97" tabindex="-1"></a>    )</span>
-<span id="cb182-98"><a href="sales-funnel.html#cb182-98" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
-<span id="cb182-99"><a href="sales-funnel.html#cb182-99" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(step))</span>
-<span id="cb182-100"><a href="sales-funnel.html#cb182-100" tabindex="-1"></a>list1 <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span> <span class="fu">distinct</span>(content) <span class="sc">%&gt;%</span></span>
-<span id="cb182-101"><a href="sales-funnel.html#cb182-101" tabindex="-1"></a>    <span class="fu">filter</span>(content <span class="sc">!=</span> <span class="st">&#39;dummy&#39;</span>)</span>
-<span id="cb182-102"><a href="sales-funnel.html#cb182-102" tabindex="-1"></a>df.all<span class="sc">$</span>content <span class="ot">&lt;-</span></span>
-<span id="cb182-103"><a href="sales-funnel.html#cb182-103" tabindex="-1"></a>    <span class="fu">factor</span>(df.all<span class="sc">$</span>content, <span class="at">levels =</span> <span class="fu">c</span>(<span class="fu">as.character</span>(list1<span class="sc">$</span>content), <span class="st">&#39;dummy&#39;</span>))</span>
-<span id="cb182-104"><a href="sales-funnel.html#cb182-104" tabindex="-1"></a></span>
-<span id="cb182-105"><a href="sales-funnel.html#cb182-105" tabindex="-1"></a><span class="co"># calculating position of labels</span></span>
-<span id="cb182-106"><a href="sales-funnel.html#cb182-106" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
-<span id="cb182-107"><a href="sales-funnel.html#cb182-107" tabindex="-1"></a>    <span class="fu">arrange</span>(step, <span class="fu">desc</span>(content)) <span class="sc">%&gt;%</span></span>
-<span id="cb182-108"><a href="sales-funnel.html#cb182-108" tabindex="-1"></a>    <span class="fu">group_by</span>(step) <span class="sc">%&gt;%</span></span>
-<span id="cb182-109"><a href="sales-funnel.html#cb182-109" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">pos =</span> <span class="fu">cumsum</span>(number) <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> number) <span class="sc">%&gt;%</span></span>
-<span id="cb182-110"><a href="sales-funnel.html#cb182-110" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
-<span id="cb182-111"><a href="sales-funnel.html#cb182-111" tabindex="-1"></a></span>
-<span id="cb182-112"><a href="sales-funnel.html#cb182-112" tabindex="-1"></a><span class="co"># creating custom palette with &#39;white&#39; color for dummies</span></span>
-<span id="cb182-113"><a href="sales-funnel.html#cb182-113" tabindex="-1"></a>cols <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb182-114"><a href="sales-funnel.html#cb182-114" tabindex="-1"></a>    <span class="st">&quot;#fec44f&quot;</span>,</span>
-<span id="cb182-115"><a href="sales-funnel.html#cb182-115" tabindex="-1"></a>    <span class="st">&quot;#fc9272&quot;</span>,</span>
-<span id="cb182-116"><a href="sales-funnel.html#cb182-116" tabindex="-1"></a>    <span class="st">&quot;#a1d99b&quot;</span>,</span>
-<span id="cb182-117"><a href="sales-funnel.html#cb182-117" tabindex="-1"></a>    <span class="st">&quot;#fee0d2&quot;</span>,</span>
-<span id="cb182-118"><a href="sales-funnel.html#cb182-118" tabindex="-1"></a>    <span class="st">&quot;#2ca25f&quot;</span>,</span>
-<span id="cb182-119"><a href="sales-funnel.html#cb182-119" tabindex="-1"></a>    <span class="st">&quot;#8856a7&quot;</span>,</span>
-<span id="cb182-120"><a href="sales-funnel.html#cb182-120" tabindex="-1"></a>    <span class="st">&quot;#43a2ca&quot;</span>,</span>
-<span id="cb182-121"><a href="sales-funnel.html#cb182-121" tabindex="-1"></a>    <span class="st">&quot;#fdbb84&quot;</span>,</span>
-<span id="cb182-122"><a href="sales-funnel.html#cb182-122" tabindex="-1"></a>    <span class="st">&quot;#e34a33&quot;</span>,</span>
-<span id="cb182-123"><a href="sales-funnel.html#cb182-123" tabindex="-1"></a>    <span class="st">&quot;#a6bddb&quot;</span>,</span>
-<span id="cb182-124"><a href="sales-funnel.html#cb182-124" tabindex="-1"></a>    <span class="st">&quot;#dd1c77&quot;</span>,</span>
-<span id="cb182-125"><a href="sales-funnel.html#cb182-125" tabindex="-1"></a>    <span class="st">&quot;#ffffff&quot;</span></span>
-<span id="cb182-126"><a href="sales-funnel.html#cb182-126" tabindex="-1"></a>)</span>
-<span id="cb182-127"><a href="sales-funnel.html#cb182-127" tabindex="-1"></a></span>
-<span id="cb182-128"><a href="sales-funnel.html#cb182-128" tabindex="-1"></a><span class="co"># plotting chart</span></span>
-<span id="cb182-129"><a href="sales-funnel.html#cb182-129" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb182-130"><a href="sales-funnel.html#cb182-130" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb182-131"><a href="sales-funnel.html#cb182-131" tabindex="-1"></a>    <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb182-132"><a href="sales-funnel.html#cb182-132" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
-<span id="cb182-133"><a href="sales-funnel.html#cb182-133" tabindex="-1"></a>    <span class="fu">geom_bar</span>(</span>
-<span id="cb182-134"><a href="sales-funnel.html#cb182-134" tabindex="-1"></a>        <span class="at">data =</span> df.all,</span>
-<span id="cb182-135"><a href="sales-funnel.html#cb182-135" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> step, <span class="at">y =</span> number, <span class="at">fill =</span> content),</span>
-<span id="cb182-136"><a href="sales-funnel.html#cb182-136" tabindex="-1"></a>        <span class="at">stat =</span> <span class="st">&quot;identity&quot;</span>,</span>
-<span id="cb182-137"><a href="sales-funnel.html#cb182-137" tabindex="-1"></a>        <span class="at">width =</span> <span class="dv">1</span></span>
-<span id="cb182-138"><a href="sales-funnel.html#cb182-138" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb182-139"><a href="sales-funnel.html#cb182-139" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
-<span id="cb182-140"><a href="sales-funnel.html#cb182-140" tabindex="-1"></a>        <span class="at">data =</span> df.all[df.all<span class="sc">$</span>content <span class="sc">!=</span> <span class="st">&#39;dummy&#39;</span>,],</span>
-<span id="cb182-141"><a href="sales-funnel.html#cb182-141" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
-<span id="cb182-142"><a href="sales-funnel.html#cb182-142" tabindex="-1"></a>            <span class="at">x =</span> step,</span>
-<span id="cb182-143"><a href="sales-funnel.html#cb182-143" tabindex="-1"></a>            <span class="at">y =</span> pos,</span>
-<span id="cb182-144"><a href="sales-funnel.html#cb182-144" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(content, <span class="st">&#39;-&#39;</span>, number <span class="sc">/</span> <span class="dv">1000</span>, <span class="st">&#39;K&#39;</span>)</span>
-<span id="cb182-145"><a href="sales-funnel.html#cb182-145" tabindex="-1"></a>        ),</span>
-<span id="cb182-146"><a href="sales-funnel.html#cb182-146" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span>,</span>
-<span id="cb182-147"><a href="sales-funnel.html#cb182-147" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;white&#39;</span>,</span>
-<span id="cb182-148"><a href="sales-funnel.html#cb182-148" tabindex="-1"></a>        <span class="at">fontface =</span> <span class="st">&quot;bold&quot;</span></span>
-<span id="cb182-149"><a href="sales-funnel.html#cb182-149" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb182-150"><a href="sales-funnel.html#cb182-150" tabindex="-1"></a>    <span class="fu">geom_ribbon</span>(<span class="at">data =</span> df.lines,</span>
-<span id="cb182-151"><a href="sales-funnel.html#cb182-151" tabindex="-1"></a>                <span class="fu">aes</span>(</span>
-<span id="cb182-152"><a href="sales-funnel.html#cb182-152" tabindex="-1"></a>                    <span class="at">x =</span> step,</span>
-<span id="cb182-153"><a href="sales-funnel.html#cb182-153" tabindex="-1"></a>                    <span class="at">ymax =</span> <span class="fu">max</span>(maxx),</span>
-<span id="cb182-154"><a href="sales-funnel.html#cb182-154" tabindex="-1"></a>                    <span class="at">ymin =</span> maxx,</span>
-<span id="cb182-155"><a href="sales-funnel.html#cb182-155" tabindex="-1"></a>                    <span class="at">group =</span> <span class="dv">1</span></span>
-<span id="cb182-156"><a href="sales-funnel.html#cb182-156" tabindex="-1"></a>                ),</span>
-<span id="cb182-157"><a href="sales-funnel.html#cb182-157" tabindex="-1"></a>                <span class="at">fill =</span> <span class="st">&#39;white&#39;</span>) <span class="sc">+</span></span>
-<span id="cb182-158"><a href="sales-funnel.html#cb182-158" tabindex="-1"></a>    <span class="fu">geom_line</span>(</span>
-<span id="cb182-159"><a href="sales-funnel.html#cb182-159" tabindex="-1"></a>        <span class="at">data =</span> df.lines,</span>
-<span id="cb182-160"><a href="sales-funnel.html#cb182-160" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> step, <span class="at">y =</span> maxx, <span class="at">group =</span> <span class="dv">1</span>),</span>
-<span id="cb182-161"><a href="sales-funnel.html#cb182-161" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;darkred&#39;</span>,</span>
-<span id="cb182-162"><a href="sales-funnel.html#cb182-162" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span></span>
-<span id="cb182-163"><a href="sales-funnel.html#cb182-163" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb182-164"><a href="sales-funnel.html#cb182-164" tabindex="-1"></a>    <span class="fu">geom_ribbon</span>(<span class="at">data =</span> df.lines,</span>
-<span id="cb182-165"><a href="sales-funnel.html#cb182-165" tabindex="-1"></a>                <span class="fu">aes</span>(</span>
-<span id="cb182-166"><a href="sales-funnel.html#cb182-166" tabindex="-1"></a>                    <span class="at">x =</span> step,</span>
-<span id="cb182-167"><a href="sales-funnel.html#cb182-167" tabindex="-1"></a>                    <span class="at">ymax =</span> minx,</span>
-<span id="cb182-168"><a href="sales-funnel.html#cb182-168" tabindex="-1"></a>                    <span class="at">ymin =</span> <span class="fu">min</span>(minx),</span>
-<span id="cb182-169"><a href="sales-funnel.html#cb182-169" tabindex="-1"></a>                    <span class="at">group =</span> <span class="dv">1</span></span>
-<span id="cb182-170"><a href="sales-funnel.html#cb182-170" tabindex="-1"></a>                ),</span>
-<span id="cb182-171"><a href="sales-funnel.html#cb182-171" tabindex="-1"></a>                <span class="at">fill =</span> <span class="st">&#39;white&#39;</span>) <span class="sc">+</span></span>
-<span id="cb182-172"><a href="sales-funnel.html#cb182-172" tabindex="-1"></a>    <span class="fu">geom_line</span>(</span>
-<span id="cb182-173"><a href="sales-funnel.html#cb182-173" tabindex="-1"></a>        <span class="at">data =</span> df.lines,</span>
-<span id="cb182-174"><a href="sales-funnel.html#cb182-174" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> step, <span class="at">y =</span> minx, <span class="at">group =</span> <span class="dv">1</span>),</span>
-<span id="cb182-175"><a href="sales-funnel.html#cb182-175" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;darkred&#39;</span>,</span>
-<span id="cb182-176"><a href="sales-funnel.html#cb182-176" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span></span>
-<span id="cb182-177"><a href="sales-funnel.html#cb182-177" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb182-178"><a href="sales-funnel.html#cb182-178" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
-<span id="cb182-179"><a href="sales-funnel.html#cb182-179" tabindex="-1"></a>        <span class="at">data =</span> df.rates,</span>
-<span id="cb182-180"><a href="sales-funnel.html#cb182-180" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
-<span id="cb182-181"><a href="sales-funnel.html#cb182-181" tabindex="-1"></a>            <span class="at">x =</span> step,</span>
-<span id="cb182-182"><a href="sales-funnel.html#cb182-182" tabindex="-1"></a>            <span class="at">y =</span> (df.lines<span class="sc">$</span>minx[<span class="sc">-</span><span class="dv">1</span>]),</span>
-<span id="cb182-183"><a href="sales-funnel.html#cb182-183" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(rate <span class="sc">*</span> <span class="dv">100</span>, <span class="st">&#39;%&#39;</span>)</span>
-<span id="cb182-184"><a href="sales-funnel.html#cb182-184" tabindex="-1"></a>        ),</span>
-<span id="cb182-185"><a href="sales-funnel.html#cb182-185" tabindex="-1"></a>        <span class="at">hjust =</span> <span class="fl">1.2</span>,</span>
-<span id="cb182-186"><a href="sales-funnel.html#cb182-186" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;darkblue&#39;</span>,</span>
-<span id="cb182-187"><a href="sales-funnel.html#cb182-187" tabindex="-1"></a>        <span class="at">fontface =</span> <span class="st">&quot;bold&quot;</span></span>
-<span id="cb182-188"><a href="sales-funnel.html#cb182-188" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb182-189"><a href="sales-funnel.html#cb182-189" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
-<span id="cb182-190"><a href="sales-funnel.html#cb182-190" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">&#39;none&#39;</span>,</span>
-<span id="cb182-191"><a href="sales-funnel.html#cb182-191" tabindex="-1"></a>        <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb182-192"><a href="sales-funnel.html#cb182-192" tabindex="-1"></a>        <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb182-193"><a href="sales-funnel.html#cb182-193" tabindex="-1"></a>        <span class="at">axis.title.x =</span> <span class="fu">element_blank</span>()</span>
-<span id="cb182-194"><a href="sales-funnel.html#cb182-194" tabindex="-1"></a>    )</span></code></pre></div>
+<div class="sourceCode" id="cb133"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb133-1"><a href="sales-funnel.html#cb133-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb133-2"><a href="sales-funnel.html#cb133-2" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb133-3"><a href="sales-funnel.html#cb133-3" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
+<span id="cb133-4"><a href="sales-funnel.html#cb133-4" tabindex="-1"></a></span>
+<span id="cb133-5"><a href="sales-funnel.html#cb133-5" tabindex="-1"></a><span class="co"># creating a data samples</span></span>
+<span id="cb133-6"><a href="sales-funnel.html#cb133-6" tabindex="-1"></a><span class="co"># content</span></span>
+<span id="cb133-7"><a href="sales-funnel.html#cb133-7" tabindex="-1"></a>df.content <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb133-8"><a href="sales-funnel.html#cb133-8" tabindex="-1"></a>    <span class="at">content =</span> <span class="fu">c</span>(</span>
+<span id="cb133-9"><a href="sales-funnel.html#cb133-9" tabindex="-1"></a>        <span class="st">&#39;main&#39;</span>,</span>
+<span id="cb133-10"><a href="sales-funnel.html#cb133-10" tabindex="-1"></a>        <span class="st">&#39;ad landing&#39;</span>,</span>
+<span id="cb133-11"><a href="sales-funnel.html#cb133-11" tabindex="-1"></a>        <span class="st">&#39;product 1&#39;</span>,</span>
+<span id="cb133-12"><a href="sales-funnel.html#cb133-12" tabindex="-1"></a>        <span class="st">&#39;product 2&#39;</span>,</span>
+<span id="cb133-13"><a href="sales-funnel.html#cb133-13" tabindex="-1"></a>        <span class="st">&#39;product 3&#39;</span>,</span>
+<span id="cb133-14"><a href="sales-funnel.html#cb133-14" tabindex="-1"></a>        <span class="st">&#39;product 4&#39;</span>,</span>
+<span id="cb133-15"><a href="sales-funnel.html#cb133-15" tabindex="-1"></a>        <span class="st">&#39;shopping cart&#39;</span>,</span>
+<span id="cb133-16"><a href="sales-funnel.html#cb133-16" tabindex="-1"></a>        <span class="st">&#39;thank you page&#39;</span></span>
+<span id="cb133-17"><a href="sales-funnel.html#cb133-17" tabindex="-1"></a>    ),</span>
+<span id="cb133-18"><a href="sales-funnel.html#cb133-18" tabindex="-1"></a>    <span class="at">step =</span> <span class="fu">c</span>(</span>
+<span id="cb133-19"><a href="sales-funnel.html#cb133-19" tabindex="-1"></a>        <span class="st">&#39;awareness&#39;</span>,</span>
+<span id="cb133-20"><a href="sales-funnel.html#cb133-20" tabindex="-1"></a>        <span class="st">&#39;awareness&#39;</span>,</span>
+<span id="cb133-21"><a href="sales-funnel.html#cb133-21" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
+<span id="cb133-22"><a href="sales-funnel.html#cb133-22" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
+<span id="cb133-23"><a href="sales-funnel.html#cb133-23" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
+<span id="cb133-24"><a href="sales-funnel.html#cb133-24" tabindex="-1"></a>        <span class="st">&#39;interest&#39;</span>,</span>
+<span id="cb133-25"><a href="sales-funnel.html#cb133-25" tabindex="-1"></a>        <span class="st">&#39;desire&#39;</span>,</span>
+<span id="cb133-26"><a href="sales-funnel.html#cb133-26" tabindex="-1"></a>        <span class="st">&#39;action&#39;</span></span>
+<span id="cb133-27"><a href="sales-funnel.html#cb133-27" tabindex="-1"></a>    ),</span>
+<span id="cb133-28"><a href="sales-funnel.html#cb133-28" tabindex="-1"></a>    <span class="at">number =</span> <span class="fu">c</span>(<span class="dv">150000</span>, <span class="dv">80000</span>,</span>
+<span id="cb133-29"><a href="sales-funnel.html#cb133-29" tabindex="-1"></a>               <span class="dv">80000</span>, <span class="dv">40000</span>, <span class="dv">35000</span>, <span class="dv">25000</span>,</span>
+<span id="cb133-30"><a href="sales-funnel.html#cb133-30" tabindex="-1"></a>               <span class="dv">130000</span>,</span>
+<span id="cb133-31"><a href="sales-funnel.html#cb133-31" tabindex="-1"></a>               <span class="dv">120000</span>)</span>
+<span id="cb133-32"><a href="sales-funnel.html#cb133-32" tabindex="-1"></a>)</span>
+<span id="cb133-33"><a href="sales-funnel.html#cb133-33" tabindex="-1"></a><span class="co"># customers</span></span>
+<span id="cb133-34"><a href="sales-funnel.html#cb133-34" tabindex="-1"></a>df.customers <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb133-35"><a href="sales-funnel.html#cb133-35" tabindex="-1"></a>    <span class="at">content =</span> <span class="fu">c</span>(<span class="st">&#39;new&#39;</span>, <span class="st">&#39;engaged&#39;</span>, <span class="st">&#39;loyal&#39;</span>),</span>
+<span id="cb133-36"><a href="sales-funnel.html#cb133-36" tabindex="-1"></a>    <span class="at">step =</span> <span class="fu">c</span>(<span class="st">&#39;new&#39;</span>, <span class="st">&#39;engaged&#39;</span>, <span class="st">&#39;loyal&#39;</span>),</span>
+<span id="cb133-37"><a href="sales-funnel.html#cb133-37" tabindex="-1"></a>    <span class="at">number =</span> <span class="fu">c</span>(<span class="dv">25000</span>, <span class="dv">40000</span>, <span class="dv">55000</span>)</span>
+<span id="cb133-38"><a href="sales-funnel.html#cb133-38" tabindex="-1"></a>)</span>
+<span id="cb133-39"><a href="sales-funnel.html#cb133-39" tabindex="-1"></a><span class="co"># combining two data sets</span></span>
+<span id="cb133-40"><a href="sales-funnel.html#cb133-40" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> <span class="fu">rbind</span>(df.content, df.customers)</span>
+<span id="cb133-41"><a href="sales-funnel.html#cb133-41" tabindex="-1"></a></span>
+<span id="cb133-42"><a href="sales-funnel.html#cb133-42" tabindex="-1"></a><span class="co"># calculating dummies, max and min values of X for plotting</span></span>
+<span id="cb133-43"><a href="sales-funnel.html#cb133-43" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
+<span id="cb133-44"><a href="sales-funnel.html#cb133-44" tabindex="-1"></a>    <span class="fu">group_by</span>(step) <span class="sc">%&gt;%</span></span>
+<span id="cb133-45"><a href="sales-funnel.html#cb133-45" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">totnum =</span> <span class="fu">sum</span>(number)) <span class="sc">%&gt;%</span></span>
+<span id="cb133-46"><a href="sales-funnel.html#cb133-46" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb133-47"><a href="sales-funnel.html#cb133-47" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">dum =</span> (<span class="fu">max</span>(totnum) <span class="sc">-</span> totnum) <span class="sc">/</span> <span class="dv">2</span>,</span>
+<span id="cb133-48"><a href="sales-funnel.html#cb133-48" tabindex="-1"></a>           <span class="at">maxx =</span> totnum <span class="sc">+</span> dum,</span>
+<span id="cb133-49"><a href="sales-funnel.html#cb133-49" tabindex="-1"></a>           <span class="at">minx =</span> dum)</span>
+<span id="cb133-50"><a href="sales-funnel.html#cb133-50" tabindex="-1"></a></span>
+<span id="cb133-51"><a href="sales-funnel.html#cb133-51" tabindex="-1"></a><span class="co"># data frame for plotting funnel lines</span></span>
+<span id="cb133-52"><a href="sales-funnel.html#cb133-52" tabindex="-1"></a>df.lines <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
+<span id="cb133-53"><a href="sales-funnel.html#cb133-53" tabindex="-1"></a>    <span class="fu">distinct</span>(step, maxx, minx)</span>
+<span id="cb133-54"><a href="sales-funnel.html#cb133-54" tabindex="-1"></a></span>
+<span id="cb133-55"><a href="sales-funnel.html#cb133-55" tabindex="-1"></a><span class="co"># data frame with dummies</span></span>
+<span id="cb133-56"><a href="sales-funnel.html#cb133-56" tabindex="-1"></a>df.dum <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
+<span id="cb133-57"><a href="sales-funnel.html#cb133-57" tabindex="-1"></a>    <span class="fu">distinct</span>(step, dum) <span class="sc">%&gt;%</span></span>
+<span id="cb133-58"><a href="sales-funnel.html#cb133-58" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">content =</span> <span class="st">&#39;dummy&#39;</span>,</span>
+<span id="cb133-59"><a href="sales-funnel.html#cb133-59" tabindex="-1"></a>           <span class="at">number =</span> dum) <span class="sc">%&gt;%</span></span>
+<span id="cb133-60"><a href="sales-funnel.html#cb133-60" tabindex="-1"></a>    <span class="fu">select</span>(content, step, number)</span>
+<span id="cb133-61"><a href="sales-funnel.html#cb133-61" tabindex="-1"></a></span>
+<span id="cb133-62"><a href="sales-funnel.html#cb133-62" tabindex="-1"></a><span class="co"># data frame with rates</span></span>
+<span id="cb133-63"><a href="sales-funnel.html#cb133-63" tabindex="-1"></a>conv <span class="ot">&lt;-</span> df.all<span class="sc">$</span>totnum[df.all<span class="sc">$</span>step <span class="sc">==</span> <span class="st">&#39;action&#39;</span>]</span>
+<span id="cb133-64"><a href="sales-funnel.html#cb133-64" tabindex="-1"></a></span>
+<span id="cb133-65"><a href="sales-funnel.html#cb133-65" tabindex="-1"></a>df.rates <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
+<span id="cb133-66"><a href="sales-funnel.html#cb133-66" tabindex="-1"></a>    <span class="fu">distinct</span>(step, totnum) <span class="sc">%&gt;%</span></span>
+<span id="cb133-67"><a href="sales-funnel.html#cb133-67" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb133-68"><a href="sales-funnel.html#cb133-68" tabindex="-1"></a>        <span class="at">prevnum =</span> <span class="fu">lag</span>(totnum),</span>
+<span id="cb133-69"><a href="sales-funnel.html#cb133-69" tabindex="-1"></a>        <span class="at">rate =</span> <span class="fu">ifelse</span>(</span>
+<span id="cb133-70"><a href="sales-funnel.html#cb133-70" tabindex="-1"></a>            step <span class="sc">==</span> <span class="st">&#39;new&#39;</span> <span class="sc">|</span> step <span class="sc">==</span> <span class="st">&#39;engaged&#39;</span> <span class="sc">|</span> step <span class="sc">==</span> <span class="st">&#39;loyal&#39;</span>,</span>
+<span id="cb133-71"><a href="sales-funnel.html#cb133-71" tabindex="-1"></a>            <span class="fu">round</span>(totnum <span class="sc">/</span> conv, <span class="dv">3</span>),</span>
+<span id="cb133-72"><a href="sales-funnel.html#cb133-72" tabindex="-1"></a>            <span class="fu">round</span>(totnum <span class="sc">/</span> prevnum, <span class="dv">3</span>)</span>
+<span id="cb133-73"><a href="sales-funnel.html#cb133-73" tabindex="-1"></a>        )</span>
+<span id="cb133-74"><a href="sales-funnel.html#cb133-74" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb133-75"><a href="sales-funnel.html#cb133-75" tabindex="-1"></a>    <span class="fu">select</span>(step, rate)</span>
+<span id="cb133-76"><a href="sales-funnel.html#cb133-76" tabindex="-1"></a>df.rates <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(df.rates)</span>
+<span id="cb133-77"><a href="sales-funnel.html#cb133-77" tabindex="-1"></a></span>
+<span id="cb133-78"><a href="sales-funnel.html#cb133-78" tabindex="-1"></a><span class="co"># creting final data frame</span></span>
+<span id="cb133-79"><a href="sales-funnel.html#cb133-79" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
+<span id="cb133-80"><a href="sales-funnel.html#cb133-80" tabindex="-1"></a>    <span class="fu">select</span>(content, step, number)</span>
+<span id="cb133-81"><a href="sales-funnel.html#cb133-81" tabindex="-1"></a></span>
+<span id="cb133-82"><a href="sales-funnel.html#cb133-82" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> <span class="fu">rbind</span>(df.all, df.dum)</span>
+<span id="cb133-83"><a href="sales-funnel.html#cb133-83" tabindex="-1"></a></span>
+<span id="cb133-84"><a href="sales-funnel.html#cb133-84" tabindex="-1"></a><span class="co"># defining order of steps</span></span>
+<span id="cb133-85"><a href="sales-funnel.html#cb133-85" tabindex="-1"></a>df.all<span class="sc">$</span>step <span class="ot">&lt;-</span></span>
+<span id="cb133-86"><a href="sales-funnel.html#cb133-86" tabindex="-1"></a>    <span class="fu">factor</span>(</span>
+<span id="cb133-87"><a href="sales-funnel.html#cb133-87" tabindex="-1"></a>        df.all<span class="sc">$</span>step,</span>
+<span id="cb133-88"><a href="sales-funnel.html#cb133-88" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(</span>
+<span id="cb133-89"><a href="sales-funnel.html#cb133-89" tabindex="-1"></a>            <span class="st">&#39;loyal&#39;</span>,</span>
+<span id="cb133-90"><a href="sales-funnel.html#cb133-90" tabindex="-1"></a>            <span class="st">&#39;engaged&#39;</span>,</span>
+<span id="cb133-91"><a href="sales-funnel.html#cb133-91" tabindex="-1"></a>            <span class="st">&#39;new&#39;</span>,</span>
+<span id="cb133-92"><a href="sales-funnel.html#cb133-92" tabindex="-1"></a>            <span class="st">&#39;action&#39;</span>,</span>
+<span id="cb133-93"><a href="sales-funnel.html#cb133-93" tabindex="-1"></a>            <span class="st">&#39;desire&#39;</span>,</span>
+<span id="cb133-94"><a href="sales-funnel.html#cb133-94" tabindex="-1"></a>            <span class="st">&#39;interest&#39;</span>,</span>
+<span id="cb133-95"><a href="sales-funnel.html#cb133-95" tabindex="-1"></a>            <span class="st">&#39;awareness&#39;</span></span>
+<span id="cb133-96"><a href="sales-funnel.html#cb133-96" tabindex="-1"></a>        )</span>
+<span id="cb133-97"><a href="sales-funnel.html#cb133-97" tabindex="-1"></a>    )</span>
+<span id="cb133-98"><a href="sales-funnel.html#cb133-98" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
+<span id="cb133-99"><a href="sales-funnel.html#cb133-99" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(step))</span>
+<span id="cb133-100"><a href="sales-funnel.html#cb133-100" tabindex="-1"></a>list1 <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span> <span class="fu">distinct</span>(content) <span class="sc">%&gt;%</span></span>
+<span id="cb133-101"><a href="sales-funnel.html#cb133-101" tabindex="-1"></a>    <span class="fu">filter</span>(content <span class="sc">!=</span> <span class="st">&#39;dummy&#39;</span>)</span>
+<span id="cb133-102"><a href="sales-funnel.html#cb133-102" tabindex="-1"></a>df.all<span class="sc">$</span>content <span class="ot">&lt;-</span></span>
+<span id="cb133-103"><a href="sales-funnel.html#cb133-103" tabindex="-1"></a>    <span class="fu">factor</span>(df.all<span class="sc">$</span>content, <span class="at">levels =</span> <span class="fu">c</span>(<span class="fu">as.character</span>(list1<span class="sc">$</span>content), <span class="st">&#39;dummy&#39;</span>))</span>
+<span id="cb133-104"><a href="sales-funnel.html#cb133-104" tabindex="-1"></a></span>
+<span id="cb133-105"><a href="sales-funnel.html#cb133-105" tabindex="-1"></a><span class="co"># calculating position of labels</span></span>
+<span id="cb133-106"><a href="sales-funnel.html#cb133-106" tabindex="-1"></a>df.all <span class="ot">&lt;-</span> df.all <span class="sc">%&gt;%</span></span>
+<span id="cb133-107"><a href="sales-funnel.html#cb133-107" tabindex="-1"></a>    <span class="fu">arrange</span>(step, <span class="fu">desc</span>(content)) <span class="sc">%&gt;%</span></span>
+<span id="cb133-108"><a href="sales-funnel.html#cb133-108" tabindex="-1"></a>    <span class="fu">group_by</span>(step) <span class="sc">%&gt;%</span></span>
+<span id="cb133-109"><a href="sales-funnel.html#cb133-109" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">pos =</span> <span class="fu">cumsum</span>(number) <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> number) <span class="sc">%&gt;%</span></span>
+<span id="cb133-110"><a href="sales-funnel.html#cb133-110" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
+<span id="cb133-111"><a href="sales-funnel.html#cb133-111" tabindex="-1"></a></span>
+<span id="cb133-112"><a href="sales-funnel.html#cb133-112" tabindex="-1"></a><span class="co"># creating custom palette with &#39;white&#39; color for dummies</span></span>
+<span id="cb133-113"><a href="sales-funnel.html#cb133-113" tabindex="-1"></a>cols <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb133-114"><a href="sales-funnel.html#cb133-114" tabindex="-1"></a>    <span class="st">&quot;#fec44f&quot;</span>,</span>
+<span id="cb133-115"><a href="sales-funnel.html#cb133-115" tabindex="-1"></a>    <span class="st">&quot;#fc9272&quot;</span>,</span>
+<span id="cb133-116"><a href="sales-funnel.html#cb133-116" tabindex="-1"></a>    <span class="st">&quot;#a1d99b&quot;</span>,</span>
+<span id="cb133-117"><a href="sales-funnel.html#cb133-117" tabindex="-1"></a>    <span class="st">&quot;#fee0d2&quot;</span>,</span>
+<span id="cb133-118"><a href="sales-funnel.html#cb133-118" tabindex="-1"></a>    <span class="st">&quot;#2ca25f&quot;</span>,</span>
+<span id="cb133-119"><a href="sales-funnel.html#cb133-119" tabindex="-1"></a>    <span class="st">&quot;#8856a7&quot;</span>,</span>
+<span id="cb133-120"><a href="sales-funnel.html#cb133-120" tabindex="-1"></a>    <span class="st">&quot;#43a2ca&quot;</span>,</span>
+<span id="cb133-121"><a href="sales-funnel.html#cb133-121" tabindex="-1"></a>    <span class="st">&quot;#fdbb84&quot;</span>,</span>
+<span id="cb133-122"><a href="sales-funnel.html#cb133-122" tabindex="-1"></a>    <span class="st">&quot;#e34a33&quot;</span>,</span>
+<span id="cb133-123"><a href="sales-funnel.html#cb133-123" tabindex="-1"></a>    <span class="st">&quot;#a6bddb&quot;</span>,</span>
+<span id="cb133-124"><a href="sales-funnel.html#cb133-124" tabindex="-1"></a>    <span class="st">&quot;#dd1c77&quot;</span>,</span>
+<span id="cb133-125"><a href="sales-funnel.html#cb133-125" tabindex="-1"></a>    <span class="st">&quot;#ffffff&quot;</span></span>
+<span id="cb133-126"><a href="sales-funnel.html#cb133-126" tabindex="-1"></a>)</span>
+<span id="cb133-127"><a href="sales-funnel.html#cb133-127" tabindex="-1"></a></span>
+<span id="cb133-128"><a href="sales-funnel.html#cb133-128" tabindex="-1"></a><span class="co"># plotting chart</span></span>
+<span id="cb133-129"><a href="sales-funnel.html#cb133-129" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb133-130"><a href="sales-funnel.html#cb133-130" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb133-131"><a href="sales-funnel.html#cb133-131" tabindex="-1"></a>    <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb133-132"><a href="sales-funnel.html#cb133-132" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
+<span id="cb133-133"><a href="sales-funnel.html#cb133-133" tabindex="-1"></a>    <span class="fu">geom_bar</span>(</span>
+<span id="cb133-134"><a href="sales-funnel.html#cb133-134" tabindex="-1"></a>        <span class="at">data =</span> df.all,</span>
+<span id="cb133-135"><a href="sales-funnel.html#cb133-135" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> step, <span class="at">y =</span> number, <span class="at">fill =</span> content),</span>
+<span id="cb133-136"><a href="sales-funnel.html#cb133-136" tabindex="-1"></a>        <span class="at">stat =</span> <span class="st">&quot;identity&quot;</span>,</span>
+<span id="cb133-137"><a href="sales-funnel.html#cb133-137" tabindex="-1"></a>        <span class="at">width =</span> <span class="dv">1</span></span>
+<span id="cb133-138"><a href="sales-funnel.html#cb133-138" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb133-139"><a href="sales-funnel.html#cb133-139" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
+<span id="cb133-140"><a href="sales-funnel.html#cb133-140" tabindex="-1"></a>        <span class="at">data =</span> df.all[df.all<span class="sc">$</span>content <span class="sc">!=</span> <span class="st">&#39;dummy&#39;</span>,],</span>
+<span id="cb133-141"><a href="sales-funnel.html#cb133-141" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
+<span id="cb133-142"><a href="sales-funnel.html#cb133-142" tabindex="-1"></a>            <span class="at">x =</span> step,</span>
+<span id="cb133-143"><a href="sales-funnel.html#cb133-143" tabindex="-1"></a>            <span class="at">y =</span> pos,</span>
+<span id="cb133-144"><a href="sales-funnel.html#cb133-144" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(content, <span class="st">&#39;-&#39;</span>, number <span class="sc">/</span> <span class="dv">1000</span>, <span class="st">&#39;K&#39;</span>)</span>
+<span id="cb133-145"><a href="sales-funnel.html#cb133-145" tabindex="-1"></a>        ),</span>
+<span id="cb133-146"><a href="sales-funnel.html#cb133-146" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span>,</span>
+<span id="cb133-147"><a href="sales-funnel.html#cb133-147" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;white&#39;</span>,</span>
+<span id="cb133-148"><a href="sales-funnel.html#cb133-148" tabindex="-1"></a>        <span class="at">fontface =</span> <span class="st">&quot;bold&quot;</span></span>
+<span id="cb133-149"><a href="sales-funnel.html#cb133-149" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb133-150"><a href="sales-funnel.html#cb133-150" tabindex="-1"></a>    <span class="fu">geom_ribbon</span>(<span class="at">data =</span> df.lines,</span>
+<span id="cb133-151"><a href="sales-funnel.html#cb133-151" tabindex="-1"></a>                <span class="fu">aes</span>(</span>
+<span id="cb133-152"><a href="sales-funnel.html#cb133-152" tabindex="-1"></a>                    <span class="at">x =</span> step,</span>
+<span id="cb133-153"><a href="sales-funnel.html#cb133-153" tabindex="-1"></a>                    <span class="at">ymax =</span> <span class="fu">max</span>(maxx),</span>
+<span id="cb133-154"><a href="sales-funnel.html#cb133-154" tabindex="-1"></a>                    <span class="at">ymin =</span> maxx,</span>
+<span id="cb133-155"><a href="sales-funnel.html#cb133-155" tabindex="-1"></a>                    <span class="at">group =</span> <span class="dv">1</span></span>
+<span id="cb133-156"><a href="sales-funnel.html#cb133-156" tabindex="-1"></a>                ),</span>
+<span id="cb133-157"><a href="sales-funnel.html#cb133-157" tabindex="-1"></a>                <span class="at">fill =</span> <span class="st">&#39;white&#39;</span>) <span class="sc">+</span></span>
+<span id="cb133-158"><a href="sales-funnel.html#cb133-158" tabindex="-1"></a>    <span class="fu">geom_line</span>(</span>
+<span id="cb133-159"><a href="sales-funnel.html#cb133-159" tabindex="-1"></a>        <span class="at">data =</span> df.lines,</span>
+<span id="cb133-160"><a href="sales-funnel.html#cb133-160" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> step, <span class="at">y =</span> maxx, <span class="at">group =</span> <span class="dv">1</span>),</span>
+<span id="cb133-161"><a href="sales-funnel.html#cb133-161" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;darkred&#39;</span>,</span>
+<span id="cb133-162"><a href="sales-funnel.html#cb133-162" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span></span>
+<span id="cb133-163"><a href="sales-funnel.html#cb133-163" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb133-164"><a href="sales-funnel.html#cb133-164" tabindex="-1"></a>    <span class="fu">geom_ribbon</span>(<span class="at">data =</span> df.lines,</span>
+<span id="cb133-165"><a href="sales-funnel.html#cb133-165" tabindex="-1"></a>                <span class="fu">aes</span>(</span>
+<span id="cb133-166"><a href="sales-funnel.html#cb133-166" tabindex="-1"></a>                    <span class="at">x =</span> step,</span>
+<span id="cb133-167"><a href="sales-funnel.html#cb133-167" tabindex="-1"></a>                    <span class="at">ymax =</span> minx,</span>
+<span id="cb133-168"><a href="sales-funnel.html#cb133-168" tabindex="-1"></a>                    <span class="at">ymin =</span> <span class="fu">min</span>(minx),</span>
+<span id="cb133-169"><a href="sales-funnel.html#cb133-169" tabindex="-1"></a>                    <span class="at">group =</span> <span class="dv">1</span></span>
+<span id="cb133-170"><a href="sales-funnel.html#cb133-170" tabindex="-1"></a>                ),</span>
+<span id="cb133-171"><a href="sales-funnel.html#cb133-171" tabindex="-1"></a>                <span class="at">fill =</span> <span class="st">&#39;white&#39;</span>) <span class="sc">+</span></span>
+<span id="cb133-172"><a href="sales-funnel.html#cb133-172" tabindex="-1"></a>    <span class="fu">geom_line</span>(</span>
+<span id="cb133-173"><a href="sales-funnel.html#cb133-173" tabindex="-1"></a>        <span class="at">data =</span> df.lines,</span>
+<span id="cb133-174"><a href="sales-funnel.html#cb133-174" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> step, <span class="at">y =</span> minx, <span class="at">group =</span> <span class="dv">1</span>),</span>
+<span id="cb133-175"><a href="sales-funnel.html#cb133-175" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;darkred&#39;</span>,</span>
+<span id="cb133-176"><a href="sales-funnel.html#cb133-176" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">4</span></span>
+<span id="cb133-177"><a href="sales-funnel.html#cb133-177" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb133-178"><a href="sales-funnel.html#cb133-178" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
+<span id="cb133-179"><a href="sales-funnel.html#cb133-179" tabindex="-1"></a>        <span class="at">data =</span> df.rates,</span>
+<span id="cb133-180"><a href="sales-funnel.html#cb133-180" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
+<span id="cb133-181"><a href="sales-funnel.html#cb133-181" tabindex="-1"></a>            <span class="at">x =</span> step,</span>
+<span id="cb133-182"><a href="sales-funnel.html#cb133-182" tabindex="-1"></a>            <span class="at">y =</span> (df.lines<span class="sc">$</span>minx[<span class="sc">-</span><span class="dv">1</span>]),</span>
+<span id="cb133-183"><a href="sales-funnel.html#cb133-183" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">paste0</span>(rate <span class="sc">*</span> <span class="dv">100</span>, <span class="st">&#39;%&#39;</span>)</span>
+<span id="cb133-184"><a href="sales-funnel.html#cb133-184" tabindex="-1"></a>        ),</span>
+<span id="cb133-185"><a href="sales-funnel.html#cb133-185" tabindex="-1"></a>        <span class="at">hjust =</span> <span class="fl">1.2</span>,</span>
+<span id="cb133-186"><a href="sales-funnel.html#cb133-186" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">&#39;darkblue&#39;</span>,</span>
+<span id="cb133-187"><a href="sales-funnel.html#cb133-187" tabindex="-1"></a>        <span class="at">fontface =</span> <span class="st">&quot;bold&quot;</span></span>
+<span id="cb133-188"><a href="sales-funnel.html#cb133-188" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb133-189"><a href="sales-funnel.html#cb133-189" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
+<span id="cb133-190"><a href="sales-funnel.html#cb133-190" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">&#39;none&#39;</span>,</span>
+<span id="cb133-191"><a href="sales-funnel.html#cb133-191" tabindex="-1"></a>        <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb133-192"><a href="sales-funnel.html#cb133-192" tabindex="-1"></a>        <span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb133-193"><a href="sales-funnel.html#cb133-193" tabindex="-1"></a>        <span class="at">axis.title.x =</span> <span class="fu">element_blank</span>()</span>
+<span id="cb133-194"><a href="sales-funnel.html#cb133-194" tabindex="-1"></a>    )</span></code></pre></div>
 <p><img src="35-empirical_model_files/figure-html/unnamed-chunk-35-1.png" width="672" /></p>
 </div>
 </div>
