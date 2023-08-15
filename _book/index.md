@@ -1,7 +1,7 @@
 --- 
 title: "Marketing Research"
 author: "Mike Nguyen"
-date: "2023-08-14"
+date: "2023-08-15"
 header-includes:
   - \usepackage{titling}
   - \pretitle{\begin{center}
@@ -31,7 +31,18 @@ apple-touch-icon-size: 120
 
 
 
-<img src="cover.jpg" width="25%" style="display: block; margin: auto;" /><img src="imgfile.png" width="25%" style="display: block; margin: auto;" />
+<div style = "text-align: center">
+
+![](cover.jpg)
+
+</div>
+
+
+
+
+
+
+
 
 
 

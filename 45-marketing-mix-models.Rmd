@@ -1078,7 +1078,7 @@ $$
 
 To make the model solvable, if a person did not watch any ad, but still purchase a brand, then his or her $r_h \approx 0$
 
-Advertising stock is modeled based on [@bass1972], [@clarke1976], [@guadagni2008]:
+Advertising stock is modeled based on [@bass1972], [@clarke1976]:
 
 $$
 AS_{jht} = \sum_{g=0} ^ \infty \alpha_{jht- g} \rho_h^g 
@@ -1094,7 +1094,7 @@ Advertising effect occurs instantly and diminished exponentially (to the $g$ ord
 
 Two other stock variables:
 
-**Brand Loyalty** [@guadagni2008] [@erdem1996]:
+**Brand Loyalty** [@guadagni2008logit] [@erdem1996]:
 
 $$
 BL_{jht} = \sum_{g=1}^\infty y_{jht-g} \tau_h^g

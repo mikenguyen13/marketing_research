@@ -2404,14 +2404,14 @@ Vector Auto-regression (VAR)
 
 -   capture the carryover effects over time with the generalized impulse response function
 
--   Controls for trends, seasonality, non-stationary, serial correlation, and reserve causality [@luo2009]
+-   Controls for trends, seasonality, non-stationary, serial correlation, and reserve causality [@luo2009quantifying]
 
 Procedure
 
 1.  Estimate the stationary (unit roots + co-integration) properties of stock performance and UGC
     1.  Stationarity test: Augmented Dickey-Fuller test + Kwiatkowski-Philips-Schmidt-Shin test
 
-    2.  Co-integration: Johansen's procedure [@johansen1995]
+    2.  Co-integration: Johansen's procedure [@johansen1992determination]
 2.  Granger causality test
 3.  Estimate dynamics of carryover effect using impulse response function
     -   Not sensitive to the causal ordering to the causal ordering of the variable in the system of equations

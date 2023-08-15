@@ -900,7 +900,7 @@ Summary
 
 ## Decentralized Channels
 
-### [@jiang2018] Reactive capacity on product quality and profitability in uncertain markets
+### [@jiang2022effects] Reactive capacity on product quality and profitability in uncertain markets
 
 -   Under "pull" contracts, the retailer designs the product quality and makes the wholesales and retail pricing decisions, but the risk of excess production is assumed by the upstream suppliers or contract manufacturers, rather than brand-owning retailers or OEMs.
 
@@ -990,7 +990,7 @@ Analysis
 
         -   High reactive capacity: the supplier has enough time to produce during the selling season within the acceptable delivery time. Anticipating the supplier's high ability to fulfill its order, the retailers will target only high valuation costumers at a high retail price
 
-### [@hu2022] Wholesale vs. Agency
+### [@hu2022agency] Wholesale vs. Agency
 
 Literature
 

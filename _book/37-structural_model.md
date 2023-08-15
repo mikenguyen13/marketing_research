@@ -62,7 +62,7 @@ Examples of structural modeling papers in marketing:
 
 -   [@diamantopoulos2013quantitative]: It provides insights into modern applications of quantitative models in marketing
 
--   [@heckman2007econometric1, @abbring2007econometric2, @abbring2007econometric3]
+-   [@heckman2007econometric1, @heckman2007econometric, @abbring2007econometric3]
 
 ## Structural modeling and Causal Inference
 
