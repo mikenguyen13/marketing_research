@@ -40,11 +40,7 @@
 
 20. [Warby Parker: Disrupting the traditional eyewear market with an online-first approach]
 
-<!-- -->
-
-1.  
-
-2.  **Sustainable Brands** - A trend toward environmentally responsible branding, seen in companies like Allbirds, Lush, and others.
+21. [Allbirds: A Case Study in Sustainable Footwear Innovation]
 
 ## Apple**: Innovation and Design as Brand Identity**
 
