@@ -126,8 +126,6 @@ Reviews:
 
 ![Figure 1 (p. 28)](images/paste-B94FDBF1.png){width="100%"}
 
-
-
 [@kotler2007] encourage B2B firms to adopt a long-term branding strategy since it is positively correlated with stock performance
 
 @belk1988 posits the construct of extended-self, where possessions contribute and reflect a person's identity (more related to consumer behavior than buyer behavior). We consume products to show our identity such as clothes or music.
@@ -135,8 +133,6 @@ Reviews:
 Brands (e.g., Nike, Adidas) are getting their own apps instead of using Google Shopping or Amazon [@wichmann2021]
 
 [@muntinga2011] classify three types of consumers' online brand-related activities (COBRAs): (1) Consuming (passive consumption), (2) Contributing (engagement via comment, rating), and (3) Creating (upload, publish, write)
-
-
 
 ## Brand Elements
 
@@ -183,8 +179,6 @@ Brand equity was operationalized as .... of [Perceived Quality], [Brand Associat
 -   a formative construct of [@henseler2017]
 
 -   a consequence/outcome (preferable, and easier to argue with reviewers, but still not the consensus of the field)
-
-
 
 -   Quantitative measure of brand equity:
 
@@ -308,15 +302,11 @@ Brand meaning is a subset of brand associations (brand associations can also hav
 
 Successful brand transferability typically depends on attribute similarity and personality similarity (image similarity). Since customers expect a firm's technological competencies to transfer between products with similar makeups, an antecedent of a successful brand's transferability is that products share similar attributes. On the other hand, image similarity is the "relationship of categories in terms of the images of the brands in them" (Batra et al., 1993). For instance, a brand in the entertainment industry with the image of being fun and exciting can potentially extend to soda production. Aaker and Keller (1990) have shown that transferability is higher for complimentary products and hard-to-make products, and no impact for substitutes products, while Batra et al. (1993) showed that brand transferability is higher for a product with a high match on the image (personality dimension) and on product attributes.
 
-
-
 @batra2004
 
 -   Nonverbalized personality association of celebrity endorsers on fun and sophistication (classiness) can increase consumer beliefs about a brand's fun and classiness. (only under social consumption context, and match between brand image beliefs and product category).
 
 -   And ad-created brand image beliefs only influence brand purchase intention, not brand attitudes.
-
-
 
 @chu2021
 
@@ -333,8 +323,6 @@ Successful brand transferability typically depends on attribute similarity and p
 -   This effect is lowered when consumers believe that company's behavior is driven by self-interest as compared to benevolence.
 
 -   Hence, acting good (and people don't know your true intent) can lead to better company's performance.
-
-
 
 @liu2020 built BrandImageNet (based on multi-label deep convolutional neural network model) to predict the presence of perceptual brand attributes in the consumer-created images (which is also consistent with consumer brand perception collected from survey). Hence,this model can monitor brand portrayal in real time to understand consumer brand perceptions and attitudes toward their and competitor brands.
 
@@ -358,8 +346,6 @@ Successful brand transferability typically depends on attribute similarity and p
 
 -   Brand personality is defined as "the set of human characteristics associated with a brand." (p. 347)
 
-
-
 @batra2010
 
 -   Previous research posits that brand with greater brand associations and imagery "fit" will more likely to have successful brand extensions
@@ -380,8 +366,6 @@ Successful brand transferability typically depends on attribute similarity and p
 
     -   Atypicality
 
-
-
 @grohmann2009
 
 -   advancement on @aaker1997
@@ -394,11 +378,7 @@ Successful brand transferability typically depends on attribute similarity and p
 
 -   masculine and feminine brand personality contributes to the brand extension perception
 
-
-
 More reference on Actual and the Ideal Self: @malär2011
-
-
 
 #### Brand Coolness
 
@@ -444,8 +424,6 @@ More reference on Actual and the Ideal Self: @malär2011
 
 -   Norm legitimacy moderates the appropriateness of divergence from an injunctive norm
 
-
-
 @warren2019
 
 -   Conceptualizes "brand coolness" and a set of characteristics associated with cool brands
@@ -464,7 +442,75 @@ More reference on Actual and the Ideal Self: @malär2011
 
 [@aaker1994] Brand quality influences shareholder wealth positively.
 
+[@slotegraaf2004longitudinal] Customer Equity, Satisfaction, and Quality: Role of Attribute Types Over Time
 
+-   **Research Context:**
+
+    -   The importance of understanding factors affecting satisfaction and quality, as highlighted by customer equity research.
+
+-   **Existing Literature Gap:**
+
+    -   Prior studies recognized factors affecting satisfaction and quality.
+
+    -   Missed the potential for asymmetric effects over time based on attribute types.
+
+-   **Study Focus:**
+
+    -   Investigate how consumers' perceptions of satisfaction with product attributes change as they near the end of the warranty period.
+
+-   **Attribute Classification:**
+
+    1.  **Resolvable Attributes:** Characteristics of a product that can be fixed or adjusted.
+
+    2.  **Irresolvable Attributes:** Inherent characteristics of a product that can't be changed or remedied.
+
+-   **Key Findings:**
+
+    1.  As the warranty end approaches:
+
+    -   Satisfaction with resolvable attributes declines faster.
+
+    -   However, the influence of these attributes on overall product quality perception intensifies.
+
+    2.  On the contrary:
+
+    -   Satisfaction with irresolvable attributes decreases at a slower pace.
+
+    -   Their impact on overall product quality perception weakens over time.
+
+[@kalra2008signaling] Signaling Quality Through Specialization
+
+-   **Objective:**
+
+    -   To explore how firms, particularly in effort-intensive categories, can utilize specialization as a strategy to signal quality to consumers.
+
+-   **Premise:**
+
+    -   Companies often brand themselves as specialists, implying they've intentionally forgone alternative opportunities to focus on a specific area.
+
+-   **Methodology:**
+
+    -   The study models a firm's decision to either provide a single service or offer two services.
+
+    -   By opting for a single category, the firm sacrifices potential profit from the secondary category but might realize reduced costs.
+
+    -   This cost difference is termed the 'signaling cost' - the extra amount a high-quality firm might spend to differentiate itself from a lower-quality firm.
+
+-   **Key Findings:**
+
+    1.  **Homogenous Markets:** In markets with similar consumers, a firm of high quality signals its superiority by specializing in just one category.
+
+    2.  **Heterogeneous Markets:** In varied markets, a firm can signal its high quality merely using its pricing strategy in both primary and secondary categories. But specialization still remains an effective, secondary quality signal due to its reduced signaling costs.
+
+    3.  **Role of Competition:** The likelihood of using specialization as a signaling tool increases in competitive markets.
+
+-   **Implications:**
+
+    -   Firms operating in effort-intensive markets can harness the strategy of specialization to convey their high-quality status to consumers.
+
+    -   While pricing can be a direct quality signal, specialization provides a subtle yet effective cue, especially in diverse markets or those with significant competition.
+
+    -   Businesses need to weigh the potential profits from diversification against the benefits of being perceived as a specialized, high-quality provider.
 
 ## Brand Authenticity
 
@@ -498,8 +544,6 @@ This construct is to be determined, we still have not consensus whether this is 
 
     -   Symbolism
 
-
-
 @nunes2021
 
 -   Authenticity has 6 formative constructs: accuracy, connectedness, integrity, legitimacy, originality, and proficiency
@@ -513,8 +557,6 @@ This construct is to be determined, we still have not consensus whether this is 
 -   Using grounded theory to come up with potential dimension, and verify the measurement model of authenticity based on PLS
 
 -   Dependent variables: attitudes, behavioral intentions.
-
-
 
 ## Brand Relationship
 
@@ -562,8 +604,6 @@ This construct is to be determined, we still have not consensus whether this is 
 
 -   Related to [Brand Loyalty](both%20try%20to%20capture%20the%20strength%20of%20connection,%20but%20BRQ%20has%20more%20facets%20to%20capture%20richness%20than%20loyalty) and [Brand Personality](can%20examine%20the%20mechanism%20behind,%20or%20how%20brand%20personality%20is%20formed%20in%20relationship%20with%20consumers.)
 
-
-
 @aggarwal2004
 
 -   When people form a relationship with brands, they use international relationship norms to guide this relationship.
@@ -586,8 +626,6 @@ This construct is to be determined, we still have not consensus whether this is 
 
 -   The relationship between brands and consumers are more in line with celebrity and fan (p. 89)
 
-
-
 @aaker2010
 
 -   People use warmth and competence (social judgments of people @fiske2007) to form perceptions of firms.
@@ -604,8 +642,6 @@ This construct is to be determined, we still have not consensus whether this is 
 
 -   Stereotype is defined as "a shorthand, blanket judgment containing evaluative components." (p. 225)
 
-
-
 @puzakova2013
 
 -   The negative side of brand humanization (i.e., anthropomorphization of a brand): it can decrease consumers' brand evaluations when brand faces negative publicity as compared to non-humanized brands.
@@ -621,8 +657,6 @@ This construct is to be determined, we still have not consensus whether this is 
 -   Leveraging perceptual fluency when products are under human schemas, the product can enjoy greater liking [@delbaere2011]
 
 -   Compensation (vs. denial or apology) is the only effective response among entity theorists.
-
-
 
 @macinnis2017
 
@@ -646,15 +680,11 @@ This construct is to be determined, we still have not consensus whether this is 
 
 -   Relationship-Focused Perspective: brand relationships are analogous to human relationships
 
-
-
 [@ordabayeva2022]
 
 -   Negative internet reviews from socially distant (but not socially close) individuals may not be as harmful to identity-relevant brands. Because a negative review of an identity-relevant brand can threaten a client's identity, the consumer will seek to strengthen their relationship with the brand.
 
 -   They show that this effect does not appear when the review is positive or when the brand is irrelevant.
-
-
 
 [@swaminathan2007]
 
@@ -688,8 +718,6 @@ It exists on the same level as [Brand Equity] and it subsumes Brand Affect
 
 -   Brand love is a component of brand relationships.
 
-
-
 @bagozzi2016
 
 -   Developed a parsimonious brand love scale
@@ -704,10 +732,6 @@ It exists on the same level as [Brand Equity] and it subsumes Brand Affect
 
 -   Used Multitrait-Multimethod Matrix (MTMM) of method bias
 
-
-
-
-
 ## Reputation
 
 Reputation is "a global evaluation of an organization accumulated over a period of time." (quote by [@aaker2010, p. 225]), original by [@fombrun1990].
@@ -719,8 +743,6 @@ What is the difference between brand equity and brand reputation?
 -   Brand equity: belongs to the marketing world, where it means the positive (good) part of the firm.
 
 -   Brand reputation: belongs to the management world, where it means both the positive and negative parts of the firm.
-
-
 
 [@proserpio2017] Effect of management responses on consumer reviews
 
@@ -742,8 +764,6 @@ What is the difference between brand equity and brand reputation?
 
 -   @naylor2012 defined "mere virtual presence" as whether presence of virtual supporters for a brand (e.g., demographic) is revealed. The mere virtual presence can affect a target consumer's brand evaluation and purchase intention. This effect is moderated by the composition of existing supporters and targeted new supporters and (2) and salience of competitor brands when evaluating the focal brand.
 
-
-
 ## Brand Favorability
 
 [@zhang2021]
@@ -761,8 +781,6 @@ What is the difference between brand equity and brand reputation?
 [@aribarg2008]
 
 -   Firms may increase portfolio profitability by eliminating versions of lower-tier brands, but the proportion of upper-tier brands to lower-tier brands moderates benefits.
-
-
 
 [@Rao_2004] Corporate branding strategy association with intangible value (Tobin's q)
 
@@ -802,6 +820,8 @@ What is the difference between brand equity and brand reputation?
 
 -   Hybrid branding: Combine all four above options.
 
+-   The most valuable increase in firm value comes from subbranding, but it also has the most risk.
+
 -   Examine idiosyncratic risk
 
     -   Brand reputation risk
@@ -811,12 +831,6 @@ What is the difference between brand equity and brand reputation?
     -   Brand cannibalization risk
 
     -   Brand stretch risk
-
-#### Brand and Line extension
-
--   [@lane1995]: Stock Market Reactions to Brand Extension Announcements
-
-    -   Negative impact: when familiarity is disproportionately higher than esteem or vice versa.
 
 #### Brand alliances and co-branding
 
@@ -842,15 +856,17 @@ What is the difference between brand equity and brand reputation?
 
 -   [@singh2020a] Preventable, highly controllable, and purposeful crises are bad to the reputation of the culpable ally. Deny reaction is effective in repairing company image despite being inferior to decrease and acknowledge/rebuild responses. In addition, we show that the non-culpable partner suffers from crises only indirectly, as a result of negative post-crisis sentiments against the partnership
 
-
-
 [@rindfleisch2001b]
 
 -   Although embeddedness increases both the acquisition and utilization of information in alliances, redundancy decreases the acquisition of information but increases its utilization.
 
-
-
 [@swaminathan2009a]: Marketing Alliances
+
+[@malhotra2022] Leveraging Co-Followership Patterns on Social Media to Identify Brand Alliance Opportunities
+
+-   Use Twitter followership data, authors identify brand extension or co-branding opportunities based on common followership patterns.
+
+-   Introduce brand **transcendence** construct: "measures the extension which a brand's followers overlap with those of other brands in a new category."
 
 #### Brand acquisitions and disposals
 
@@ -861,8 +877,6 @@ Positive abnormal stock market returns when acquirers have stronger marketing ca
 -   [@jitsinghmann2012]: Brand Acquisitions Create Wealth for Acquiring Company Shareholders
 
 -   [@newmeyer2016]: brand acquisitions
-
-
 
 [@wiles2012]: The Effect of Brand Acquisition and Disposal on Stock Returns
 
@@ -960,41 +974,114 @@ Positive abnormal stock market returns when acquirers have stronger marketing ca
 
 ### Brand Extensions
 
-[@aaker1990]
+[@aaker1990] Consumer Evaluations of Brand Extensions
 
 -   The perceived compatibility between the parent brand and an extension product is the single most critical factor in determining the level of success achieved by a brand extension.
 
-[@morrin1999a]
+[@smith1992effects] Brand Extensions on Market Share and Advertising Efficiency
 
--   Transferring brand equity is made easier when there is a high degree of resemblance between the parent brand and the expansion category.
+-   Surveys: Product Managers and Consumers
 
-[@broniarczyk1994]
+-   **Objective:** The study investigates how brand strategy (brand extensions vs. individual brands) impacts new product market share and advertising efficiency.
+
+-   **Main Findings:**
+
+    1.  **Brand Extensions vs. Individual Brands:** Brand extensions have a higher market share and better advertising efficiency than individual brands.
+
+    2.  **Parent Brand Strength:** A strong parent brand positively impacts the market share of its extensions. However, it doesn't influence advertising efficiency.
+
+    3.  **Number of Products:** The number of products linked to the parent brand doesn't affect the market share or advertising efficiency of its extensions.
+
+    4.  **Similarity of Products:**
+
+        -   Market share isn't influenced by the similarity between the extension and other brand-related products.
+
+        -   Advertising efficiency is higher when product similarity is based on intrinsic attributes.
+
+    5.  **Product Attributes and Market Knowledge:**
+
+        -   Both market share and advertising efficiency increase when the brand extension mainly has experience attributes and is in a market where consumers lack knowledge.
+
+    6.  **Competitive Intensity:**
+
+        -   Advertising efficiency is unaffected by competition.
+
+        -   Market share increases when there are fewer competitors in the market.
+
+    7.  **Extension Establishment:** As a brand extension becomes more established, both its market share and advertising efficiency decrease.
+
+[@rangaswamy1993brand] Brand equity and the extendibility of brand names
+
+-   **Opportunity for Firms**: Brand extensions leverage the equity of existing brand names to boost marketing productivity.
+
+-   **Key Management Consideration**: Before an extension, determine the extendibility potential of the brand name.
+
+-   **Consumer Utility Components**: We propose that consumer utility for a brand encompasses:
+
+    1.  Brand name.
+
+    2.  Physical product attributes.
+
+    3.  Interaction between the brand name and product attributes.
+
+-   **Extendibility Constraint**: The brand's extendibility is affected by its interaction with product attributes in the primary category.
+
+-   **Comparison of Two Brands**:
+
+    -   If both brands are equally preferred, but one has utility due to brand-attribute interaction, it may be less extendable than a brand without this interaction.
+
+-   **Consumer Utility Model**: A model has been crafted for experimental validation using real brands and hypothetical extensions.
+
+-   **Findings**: Our experimental outcomes align with our model.
+
+-   **Strategy for Max Extendibility**: Brands should focus on enhancing non-product-specific values like quality, style, durability, and reputation linked with their name.
+
+[@dacin1994] Brand Portfolio Characteristics on Consumer Evaluations of Brand Extensions
+
+-   **Objective:** The study investigates the influence of brand portfolio characteristics on brand strength, particularly focusing on consumers' confidence in and favorability towards brand extensions.
+
+-   **Background:** While more brands are diversifying their product categories, concerns exist about potential weakening of brand strength. Current research in this area is limited.
+
+-   **Main Findings:**
+
+    1.  **Number of Products and Brand Evaluation:** Laboratory experiments show a positive link between the number of products linked with a brand and the consumers' confidence in, as well as favorability of, evaluations of extension quality. This result was not mirrored in the survey.
+
+    2.  **Portfolio Quality Variance:** A consistent observation from both the experiments and the survey was that when there's a decrease in the variance of portfolio quality, a positive association emerges between the number of affiliated products and consumers' confidence in evaluating brand extensions.
+
+-   **Implications:** The findings provide insights for both theoretical understanding and practical application in brand management, suggesting that brand portfolio characteristics play a role in shaping consumers' perceptions and evaluations of brand extensions.
+
+[@broniarczyk1994] The Importance of the Brand in Brand Extension
 
 -   The impact of perceived fit can be overridden by the influence of key brand associations, which can form the basis of fit between a parent brand and an extension brand.
 
-[@heath2011]
+[@lane1995] Stock Market Reactions to Brand Extension Announcements
 
--   The reach of high-quality brands can be significantly greater than that of low-quality brands.
-
-[@dacin1994]
-
-[@erdem1998]
-
-
-
-[@lane1995]
-
+-   Negative impact: when familiarity is disproportionately higher than esteem or vice versa.
 -   How the stock market reacts to using brands in new ways depends on how well known and respected the brands are.
 
-[@völckner2006] Drivers of Brand Extension Success
+[@erdem1998] Umbrella Branding
 
-[@hsu2015]
+[@morrin1999a] Brand Extensions on Parent Brand Memory Structures and Retrieval Processes
 
--   The most valuable increase in firm value comes from subbranding, but it also has the most risk.
+-   Transferring brand equity is made easier when there is a high degree of resemblance between the parent brand and the expansion category.
 
+[@klink2001threats] Threats to the External Validity of Brand Extension Research (Brand Extendibility: Beyond Fit)
 
+-   **Objective:** Explore the mismatch between research suggesting brand extendibility relies on perceived fit with the extension category and real-world examples of successful extensions into varied domains.
 
-[@swaminathan2001]
+-   **Key Insights:**
+
+    1.  Past research had limitations: scant extension information, didn't consider consumer adoption tendencies, and only one exposure to proposed extensions.
+
+    2.  Perceived fit's influence vanishes when more attribute information is provided about the extension.
+
+    3.  Fit effects mainly concern later product adopters.
+
+    4.  Exposure to an extension multiple times enhances perceived fit.
+
+-   **Implications:** Research design factors previously deemed unimportant can actually reshape our understanding of brand extension dynamics.
+
+[@swaminathan2001] Brand Extension Introduction on Choice
 
 -   brand extension is a strategy that a brand attaches its brand name to a new product in a different product category.
 
@@ -1010,15 +1097,37 @@ Positive abnormal stock market returns when acquirers have stronger marketing ca
 
 -   Limitation: did not consider sequential introduction in the second study, which is later addressed by [@swaminathan2003] (likely similar dataset and the takeaway is that prior experience with the parent brand and intervening extension influences purchase behavior of later brand extension for those with low loyalty towards the parent brand).
 
-[@malhotra2022]
+[@delvecchio2005brand] Brand-Extension Price Premiums
 
--   Use Twitter followership data, authors identify brand extension or co-branding opportunities based on common followership patterns.
+-   **Objective:** Explore the influence of brand strength on potential price premiums when extending into new product categories.
 
--   Introduce brand **transcendence** construct: "measures the extension which a brand's followers overlap with those of other brands in a new category."
+-   **Key Insights:**
 
+    1.  **Brand Benefits:** Strong brands in new categories can command higher prices than lower equity brands.
 
+    2.  **Perceived Risk Reduction:** Recognizable brands diminish the perceived purchase risk for customers.
 
-[@mathur2022]
+    3.  **Price Premiums & Risk:** Price premiums can fluctuate based on the associated purchase risk.
+
+    4.  **Perceived Fit & Price:** Price premiums are tied to the fit between the brand and the extension category.
+
+    5.  **Risk Variables:** The relationship between perceived fit and price premiums changes based on financial and social risks linked with the extension product.
+
+[@völckner2006] Drivers of Brand Extension Success
+
+[@heath2011] Asymmetric Effects of Extending Brands to Lower and HigherQuality
+
+-   The reach of high-quality brands can be significantly greater than that of low-quality brands.
+
+[@mukherji2011behemoths] How Incumbents Take on Acquisitive Entrants
+
+-   Corporate acquisitions are a common means by which large firms enter new markets.
+
+-   Large acquirers' entry into new markets can affect the strategies and performance of incumbent firms in those markets.
+
+-   Incumbent firms are more likely to align their product mix strategy with that of the acquisitive entrant if the incumbent is large, the acquirer's past performance has been strong, and the market served by the incumbent is small. However, large incumbents that deviate from acquirers' product mix strategy perform better than other incumbents do.
+
+[@mathur2022] The Context (In)Dependence of Low Fit Brand Extensions
 
 -   Identify conditions in which low fit brand extension that can be beneficial
 
@@ -1027,18 +1136,6 @@ Positive abnormal stock market returns when acquirers have stronger marketing ca
 -   For context independent individuals, they base their judgment on extension fit regardless of info provided
 
 -   Not surprisingly, the high fit extension is unaffected by context dependence and type of information.
-
-
-
-[@mukherji2011behemoths]
-
--   Corporate acquisitions are a common means by which large firms enter new markets.
-
--   Large acquirers' entry into new markets can affect the strategies and performance of incumbent firms in those markets.
-
--   Incumbent firms are more likely to align their product mix strategy with that of the acquisitive entrant if the incumbent is large, the acquirer's past performance has been strong, and the market served by the incumbent is small. However, large incumbents that deviate from acquirers' product mix strategy perform better than other incumbents do.
-
-
 
 ## Strategic Branding Decisions
 
@@ -1074,8 +1171,6 @@ Other studies:
 
 -   [@dinner2018]: If a brand crisis occurs in a foreign market, the repercussions relate inverted U-shaped patterns to the mental distance between the home country and the host nation. If a company has built strong marketing capabilities, the impact of psychological distance is greatly lessened.
 
-
-
 [@herhausen2022]
 
 -   Active listening and empathy in the firm's response evoke gratitude in high-arousal customers, even if the actual failure is not (yet) recovered.
@@ -1106,8 +1201,6 @@ Other studies:
     -   Virality: \# of likes and comments
 
     -   Dummy var: apology, compensation, suggested communication channel change
-
-
 
 ### Global Brand Strategy
 
@@ -1155,8 +1248,6 @@ Other studies:
 
     -   self-enhancement
 
-
-
 @steenkamp2010
 
 -   Introduce two concepts:
@@ -1164,8 +1255,6 @@ Other studies:
     -   Attitude toward global products (AGP)
 
     -   Attitude toward local products (ALP)
-
-
 
 @batra2000
 
@@ -1176,8 +1265,6 @@ Other studies:
     -   This effect is greater for consumers who are high in susceptibility to normative influence and product categories that carry social signaling values
 
     -   This effect is greater when products are less familiar
-
-
 
 [@bronnenberg2009; @bronnenberg2010]
 

@@ -16,8 +16,6 @@
 
 -   However, this is practical only to very low-selling books.
 
-
-
 [@brynjolfsson2003consumer]
 
 -   With additional demand data from a book publisher, they can derive the relationship between the sales and rank.
@@ -94,6 +92,38 @@ Data:
 
 -   Data: 200 paid apps, 200 grossing apps and their price data.
 
-
-
 [@he2020sales] On Amazon, which is a generalized results from [@chevalier2003measuring]
+
+## Salespeople
+
+[@sunder2017salespeople] own and peer effects on salesperson turnover behavior
+
+-   **Objective:** Delve into the factors influencing salesperson turnover, emphasizing personal performance and peer effects.
+
+-   **Background:** Prior studies mostly focused on the repercussions of voluntary turnover. The direct causes, especially the role of personal achievements and peer influences, have been less explored.
+
+-   **Key Insights:**
+
+    1.  **Framework Proposal:** Introduces a model assessing the impact of individual factors (via identity theory) and peer factors (via social identity theory) on turnover.
+
+    2.  **Data Analysis:** Used data from 6,727 salespeople over two years.
+
+    3.  **Findings:** Alongside personal performance metrics, peer behaviors, especially peer turnover, significantly affect a salesperson's likelihood to leave.
+
+    4.  **Peer vs. Own Effects:** Peer influences have a more pronounced impact than individual factors on turnover.
+
+[@kumar2014measuring] Measure saleperson's future value
+
+-   **Objective:** Introduce a forward-looking metric for sales force evaluation, emphasizing the impact of training and incentive types on future salesperson value.
+
+-   **Background:** Traditional sales evaluations focus on retrospective metrics like sales volume. With businesses shifting towards customer-centric views, there's a need for sales strategy adaptation.
+
+-   **Key Insights:**
+
+    1.  **New Metric Proposal:** A profit-oriented, forward-looking metric is presented to assess salesperson value.
+
+    2.  **Method:** Uses a latent class modeling approach to identify different sales force segments.
+
+    3.  **Findings:** Sales force segments respond differently to training and incentives, suggesting a universal approach might not be effective.
+
+    4.  **Time Horizon Analysis:** The impact of training and incentives can vary based on whether short-term or long-term effects are considered.

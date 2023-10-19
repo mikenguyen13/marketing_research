@@ -1,7 +1,7 @@
 --- 
 title: "Marketing Research"
 author: "Mike Nguyen"
-date: "2023-08-16"
+date: "2023-10-15"
 header-includes:
   - \usepackage{titling}
   - \pretitle{\begin{center}

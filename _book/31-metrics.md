@@ -369,6 +369,98 @@ Simpson Diversity index measures the market share of each sector
 
 Measuring trust algorithmically using social media data [@roy2017]
 
+### Sentiment
+
+[@hartmann2023more] Accuracy and Application of Sentiment Analysis
+
+-   Sentiment is core to human communication.
+
+-   Marketing uses sentiment analysis for:
+
+    -   Social media.
+
+    -   News articles.
+
+    -   Customer feedback.
+
+    -   Corporate communication.
+
+-   Available sentiment analysis methods:
+
+    -   Lexicons: link words/expressions to sentiment scores.
+
+    -   Machine learning: complex but potentially more accurate.
+
+-   Study introduces an empirical framework to:
+
+    -   Evaluate method suitability based on research questions, data, and resources.
+
+-   Meta-analysis conducted on:
+
+    -   272 datasets.
+
+    -   12 million sentiment-labeled documents.
+
+-   Findings:
+
+    -   Transfer learning models top performance.
+
+    -   These models may not always meet leaderboard benchmarks.
+
+    -   Transfer learning models are, on average, \>20% more accurate than lexicons.
+
+-   Performance influenced by:
+
+    -   Number of sentiment classes.
+
+    -   Text length.
+
+-   Study offers:
+
+    -   SiEBERT - a pre-trained sentiment analysis model.
+
+    -   Open-source scripts for easy application.
+
+### Purchase Intention
+
+[@hartmann2021power] The Power of Brand Selfies
+
+-   RoBERTa-based model: <https://huggingface.co/j-hartmann/purchase-intention-english-roberta-large>
+
+-   Smartphones simplify sharing branded imagery.
+
+-   Study categorizes social media brand imagery.
+
+-   Identified image types:
+
+    -   Packshots (just the product).
+
+    -   Consumer selfies (consumer's face with brand).
+
+    -   Brand selfies (product held, no visible consumer).
+
+-   Convolutional neural networks used to recognize image types.
+
+-   Language models analyze social media responses to 250,000+ brand-image posts from 185 brands on Twitter & Instagram.
+
+-   Findings:
+
+    -   Consumer selfies lead to more likes and comments.
+
+    -   Brand selfies induce higher purchase intentions.
+
+-   Traditional social media metrics may not fully capture brand engagement.
+
+-   Display ad results:
+
+    -   Higher click-through rates for brand selfies than consumer selfies.
+
+-   Lab experiment indicates self-reference affects image responses.
+
+-   Machine learning can decipher marketing insights from multimedia content.
+
+-   Image perspective impacts actual brand engagement.
+
 ### Brand Reputation
 
 -   Measuring brand reputation from Twitter data [@rust2021]
@@ -423,17 +515,17 @@ Cost of production = f(output, cost of capital, labor cost, technological base, 
 
 Variables
 
-+-------+--------------------------------------------------------------------------------------------+
-| Label | Variable                                                                                   |
-+=======+============================================================================================+
-|       | Sales                                                                                      |
-+-------+--------------------------------------------------------------------------------------------+
-|       | Did not use raw patent count because quality matters.                                      |
-+-------+--------------------------------------------------------------------------------------------+
-|       | Innovative-adjusted technological output                                                   |
-|       |                                                                                            |
-|       | The number of times the patents of a firm have been cited (citation-weighted patent count) |
-+-------+--------------------------------------------------------------------------------------------+
++-----------+--------------------------------------------------------------------------------------------+
+| Label     | Variable                                                                                   |
++===========+============================================================================================+
+|           | Sales                                                                                      |
++-----------+--------------------------------------------------------------------------------------------+
+|           | Did not use raw patent count because quality matters.                                      |
++-----------+--------------------------------------------------------------------------------------------+
+|           | Innovative-adjusted technological output                                                   |
+|           |                                                                                            |
+|           | The number of times the patents of a firm have been cited (citation-weighted patent count) |
++-----------+--------------------------------------------------------------------------------------------+
 
 Replication
 
@@ -786,6 +878,28 @@ mar_cap <-
 efficiencies(mar_cap)
 ```
 
+[@morgan2009linking] Linking marketing capabilities with profit growth
+
+-   **Objective:** Examine the connection between a firm's marketing capabilities and its profit growth, with a particular emphasis on how specific marketing functions impact the composite components of profit growth.
+
+-   **Context:** Although profit growth stands as a pivotal determinant of a firm's stock price, there's a limited understanding of how integral marketing capabilities interlink with this growth trajectory.
+
+-   **Methodology:**
+
+    -   Engaged a cross-industry dataset from 114 firms.
+
+    -   Delineated the exploration into three cornerstone marketing capabilities: market sensing, brand management, and customer relationship management (CRM).
+
+    -   These capabilities were then juxtaposed with the dual facets of profit growth: revenue growth and margin growth.
+
+-   **Key Findings:**
+
+    -   The scrutinized marketing capabilities exhibited both direct and synergistic influences on the growth rates of revenue and margin.
+
+    -   A pivotal revelation was the counteractive effects of brand management and CRM capabilities on the growth rates of revenue and margin. Specifically, while one capability might promote revenue growth, it might simultaneously inhibit margin growth (and vice versa).
+
+    -   Such intricate dynamics imply that a surface-level analysis, overlooking the nuanced contributions to revenue and margin growth, could obscure the genuine relationships tying marketing capabilities to the overarching profit growth trajectory.
+
 #### Digital Marketing Capabilities
 
 Survey:
@@ -801,3 +915,39 @@ Review:
 #### Social Media Strategics Capabilities
 
 [@nguyen2015a]
+
+#### Organization Capabilities
+
+[@grewal2007embeddedness] Embeddedness of Organizational Capabilities
+
+-   **Core Issue:**
+
+    -   Managers need to efficiently use limited resources to build lasting organizational capabilities for a sustainable competitive edge.
+
+-   **Challenge:**
+
+    -   Neglecting the intricate underlying processes of organizational capabilities can hinder understanding their impact on competitive advantage.
+
+-   **Key Insight:**
+
+    -   Managerial decisions regarding resource usage directly impact the depth at which capabilities are ingrained in the organization, termed "capability embeddedness."
+
+-   **Research Method:**
+
+    -   Introduced a hierarchical composed error structure framework.
+
+    -   Uses cross-sectional data and can be applied to panel data.
+
+-   **Case Study: Retailing**
+
+    -   Organizational capability embeddedness directly influences retailer performance.
+
+    -   This influence remains significant even when considering both tangible and intangible resources/capabilities.
+
+-   **Takeaways:**
+
+    1.  Acknowledging how resources and capabilities affect performance at various organizational layers helps managers make informed decisions.
+
+    2.  Essential to recognize whether the objectives of capabilities align (convergent) or differ (divergent).
+
+    3.  The alignment or misalignment of these objectives can dictate how much embedded capabilities boost firm performance.

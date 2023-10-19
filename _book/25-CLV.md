@@ -34,11 +34,11 @@ library(tidyverse)
 
 ```
 ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.1     ✔ readr     2.1.4
+## ✔ dplyr     1.1.2     ✔ readr     2.1.4
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.0
-## ✔ ggplot2   3.4.2     ✔ tibble    3.2.1
+## ✔ ggplot2   3.4.3     ✔ tibble    3.2.1
 ## ✔ lubridate 1.9.2     ✔ tidyr     1.3.0
-## ✔ purrr     1.0.1     
+## ✔ purrr     1.0.2     
 ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
@@ -380,3 +380,33 @@ where
 Customers with high CLV does not guarantee high CRV [@kumar_2007]. Hence, [@kumar_2007] proposed the customer value matrix
 
 ![](images/customer_value_matrix.jpg){style="display: block; margin: 1em auto" width="90%"}
+
+[@sunder2016measuring] CLV in the consumer packaged goods industry
+
+-   **Objective:** Propose a framework to assess Customer Lifetime Value (CLV) in the Consumer Packaged Goods (CPG) industry.
+
+-   **Challenges Addressed:**
+
+    -   **Multiple-Discreteness:** Varied buying patterns.
+
+    -   **Brand-Switching:** Customers shifting between brands.
+
+    -   **Budget Constrained Consumption:** Customers' purchasing limited by budget.
+
+-   **Key Features:**
+
+    -   **Bayesian Estimation:** Enables inference of a consumer's latent budget constraint using transaction data alone.
+
+    -   **Brand-Level & Category-Level CLV:** Shift from traditional firm-centric CLV models.
+
+-   **Implementation:**
+
+    -   Applied to carbonated beverages category.
+
+    -   Demonstrated superiority over simpler heuristics and traditional CLV models.
+
+-   **Policy Simulations:**
+
+    -   Explored budget constraint's impact on CLV.
+
+    -   Analyzed asymmetric pricing effects and derived managerial insights.
