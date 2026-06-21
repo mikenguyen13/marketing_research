@@ -1,0 +1,57 @@
+name: Publish to Posit Connect
+
+# Renders the Quarto book and deploys it to Posit Connect.
+# Requires two repository secrets (Settings > Secrets and variables > Actions):
+#   CONNECT_SERVER   e.g. https://connect.yourorg.com
+#   CONNECT_API_KEY  a Posit Connect API key with publish rights
+# If either is missing, the deploy step is skipped (no failure), so this is safe
+# to merge before the secrets exist. Deploy only happens after a successful render.
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          tinytex: true
+
+      - name: Install Chromium for Mermaid (PDF/EPUB diagrams)
+        run: quarto install chromium --no-prompt || true
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::knitr
+            any::rmarkdown
+            any::downlit
+            any::xml2
+
+      - name: Render book (all formats)
+        run: quarto render
+
+      - name: Publish to Posit Connect
+        env:
+          CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+        run: |
+          if [ -z "$CONNECT_SERVER" ] || [ -z "$CONNECT_API_KEY" ]; then
+            echo "::warning::CONNECT_SERVER / CONNECT_API_KEY not set — skipping Posit Connect deploy."
+            exit 0
+          fi
+          quarto publish connect "$CONNECT_SERVER" --no-prompt --no-browser
