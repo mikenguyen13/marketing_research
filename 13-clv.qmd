@@ -1,302 +1,476 @@
-# Customer Lifetime Value (CLV)
+# Customer Lifetime Value {#sec-clv}
 
-also known as Lifetime Value (LTV)
+*Customer lifetime value* (CLV)—often called *lifetime value* (LTV) in practice—is
+the present value of the future cash flows a firm expects to earn from a customer
+relationship over its remaining duration. It reframes the customer from a
+transaction into an asset: the question is no longer "what did this person buy
+today?" but "what is this relationship worth, net of the cost of sustaining it, for
+as long as it lasts?" That shift in unit of analysis is the conceptual core of
+customer-centric marketing. Once customers are assets, acquisition becomes a capital
+budgeting decision, retention becomes asset maintenance, and the firm's total
+customer base aggregates into *customer equity*—a balance-sheet-style summary of the
+demand side of the business [@rust2002customer; @gupta2006modeling].
 
-[Bain & Comapny customer value model](https://media.bain.com/customer-value/home/)
+CLV matters for two reasons that map onto the book's two audiences. Scientifically,
+it forces an explicit stochastic model of three primitives—how long a customer stays
+(retention or survival), how often and how much they buy (transaction flow and
+spend), and how those translate into margin net of marketing cost—each of which is a
+latent process observed only through noisy transaction data. Commercially, CLV is
+the metric that allocates acquisition budget, prioritizes service, sizes loyalty
+programs, and, when aggregated, has been shown to track shareholder value
+[@gupta2006modeling; @kumar2010]. A century-old practitioner heuristic captures the
+stakes: a single year's projected business typically recovers only about half of a
+customer's full lifetime value, a ratio that varies widely by industry
+[@kumar_2007]. Truncating the horizon at one year therefore discards roughly half
+the asset.
 
-"A year's projected business gives a number that is normally about half of a customer's full lifetime value, although that can vary by industry." [@kumar_2007]
+This chapter builds CLV from its primitives. It first defines the construct
+formally and states the assumptions under which the familiar closed-form formulas
+hold. It then develops the two dominant modeling traditions—the *managerial
+discounted-margin* formulation and the *probabilistic* (buy-till-you-die and
+shifted-beta-geometric) tradition—and shows, with reproducible code, how to estimate
+a retention curve from sparse data and roll it forward into a value forecast. It
+closes by extending the asset view beyond the focal customer's own purchases to the
+value a customer creates by *referring* others (customer referral value) and by
+surveying the identification problems that make CLV easy to compute and hard to
+compute *correctly*.
 
-[@Kumar_2008] CLV model
+## The Construct and Its Assumptions
+
+Fix a customer $i$ and let periods be indexed by $j$ (annual or semiannual). Three
+latent quantities drive value: the probability $p(\text{Buy}_{ij}=1)$ that the
+customer is active and transacts in period $j$; the contribution margin
+$\text{CM}_{ij}$ the customer generates conditional on transacting; and the
+marketing cost $\text{MC}_{ij}$ the firm directs at the customer to keep the
+relationship alive. Future cash flows are discounted at a per-period rate $r$.
+Writing $T$ for the end of the observation (calibration) window and $N$ for the
+number of periods projected forward, the discounted-margin definition of CLV is
 
 $$
-CLV_i = \sum_{j = T+1}^{T+N} \frac{p(Buy_{ij}=1)\times \hat{CM}_{ij}}{(1+r)^{j-T}} - \frac{\hat{MC}_{ij}}{(1-r)^{j-T}}
+\text{CLV}_i \;=\; \sum_{j=T+1}^{T+N}
+   \frac{p(\text{Buy}_{ij}=1)\,\widehat{\text{CM}}_{ij}}{(1+r)^{\,j-T}}
+   \;-\; \sum_{j=T+1}^{T+N} \frac{\widehat{\text{MC}}_{ij}}{(1+r)^{\,j-T}} .
+$$ {#eq-clv-general}
+
+@eq-clv-general is the formulation popularized in the customer-equity program of
+Kumar and colleagues [@Kumar_2008; @kumar2010]. Several features deserve emphasis
+because they are routinely elided in practice. The summation starts at $j=T+1$: CLV
+is a *forward-looking* quantity, the value of the relationship from today onward, not
+the historical revenue already booked.[^historic] The purchase probability,
+contribution margin, and marketing cost are all *predicted* ($\widehat{\,\cdot\,}$),
+so CLV inherits the sampling error of three separate forecasting models. And the
+discount factor must be expressed at the period frequency of the data: a 15% annual
+rate corresponds to a semiannual factor of $r \approx 0.07238$, since
+$(1.07238)^2 \approx 1.15$ [@Kumar_2008].
+
+[^historic]: A common conflation is between CLV and *historic customer value* (the
+realized margin already earned). The two answer different questions: historic value
+scores past contribution; CLV is the basis for forward-looking decisions such as how
+much to spend acquiring a *similar* prospect. Only the latter belongs in a capital
+budgeting calculation.
+
+> **Customer lifetime value.** The present value of all future cash flows
+> attributable to the relationship with a customer—margin from the customer's own
+> purchases, net of the marketing cost of serving and retaining them—over the
+> expected remaining lifetime of that relationship.
+
+A useful special case exposes the economics. Suppose margin per active period is a
+constant $m = \text{CM} - \text{MC}$ and the customer is retained from one period to
+the next with constant probability $\rho$ (the *retention rate*). Then the expected
+discounted value of an infinite-horizon relationship collapses to a geometric series,
+
 $$
+\text{CLV} \;=\; m \sum_{t=0}^{\infty} \left(\frac{\rho}{1+r}\right)^{t}
+            \;=\; m \,\frac{1+r}{\,1+r-\rho\,},
+$$ {#eq-clv-geometric}
 
-where
+valid whenever $\rho < 1+r$. The factor $(1+r)/(1+r-\rho)$ is the *margin
+multiple*: at $\rho = 0.8$ and $r = 0.1$ it equals $1.1/0.3 \approx 3.67$, so a
+loyal customer is worth roughly three and two-thirds years of current margin. Two
+modeling decisions are buried in @eq-clv-geometric and matter enormously: the
+constancy of $\rho$ (real retention curves are not memoryless, as the next section
+shows) and the choice of horizon (the infinite sum versus a finite $N$). Both are
+where naive CLV estimates go wrong.
 
--   $CLV_i$ = lifetime value for customer i,
--   $p(Buy_{ij})$ = predicted probability that customer i will purchase in period j,
--   $CM_{ij}$ = predicted contribution margin provided by customer i in period j,
--   $MC_{ij}$ = predicted marketing costs directed toward customer i in period j,
--   $j$ = index for time periods (semiannual or annual)
--   $T$ = the end of the calibration or observation time frame (usually 1 year projection),
--   $N$ = total number of prediction periods,
--   $r$ = semiannual discount factor (e.g., 0.07238 [@Kumar_2008] = 15% annual rate)
+### Two Traditions
 
-## Example
+The literature splits into two complementary approaches to operationalizing
+@eq-clv-general, summarized in @tbl-clv-approaches. The *managerial* tradition
+predicts the components—purchase incidence, margin, marketing cost—with separate
+regression or machine-learning models, typically on a contractual or
+panel-with-covariates dataset, and is the workhorse of the customer-equity
+literature [@Kumar_2008; @kumar2010; @gupta2006modeling]. The *probabilistic*
+tradition instead posits a small generative model for the latent purchase and
+dropout processes and derives expected value in closed form; its canonical members
+are the Pareto/NBD and BG/NBD "buy-till-you-die" models for noncontractual settings
+[@schmittlein1982] and the shifted-beta-geometric (sBG) model for discrete-time
+contractual settings, developed below. A third, structural strand models the
+customer's underlying utility and budget constraint and derives CLV as an
+implication of choices [@sunder2016measuring], trading tractability for behavioral
+fidelity.
 
-This example is subscription customers by [Sergey Bryl'](https://www.analyzecore.com/2018/09/19/ltv-prediction-for-a-recurring-subscription-with-r/) in which he adapted model [Fader and Hardie (2007)](https://faculty.wharton.upenn.edu/wp-content/uploads/2012/04/Fader_hardie_jim_07.pdf)
+| Dimension | Managerial / component models | Probabilistic models |
+|---|---|---|
+| What is modeled | Each cash-flow component separately | Latent purchase + dropout processes |
+| Typical data | Contractual or covariate-rich panel | Recency–frequency transaction logs |
+| Covariates | Rich (demographics, marketing) | Few or none |
+| Output | Per-customer point forecast | Posterior expected value |
+| Strengths | Targeting, what-if on marketing | Parsimony, honest uncertainty |
+| Weakness | Many models to maintain and validate | Hard to attach drivers/covariates |
 
-```{r}
+: Two traditions for operationalizing customer lifetime value. {#tbl-clv-approaches}
+
+The remainder of this chapter develops the probabilistic tradition in depth, because
+it most cleanly exposes the latent-process assumptions on which *every* CLV number
+depends, and because it estimates cleanly from the sparse retention data firms
+actually hold. @fig-clv-pipeline shows how the pieces compose.
+
+```{mermaid}
+%%| label: fig-clv-pipeline
+%%| fig-cap: "From transaction data to customer lifetime value. A latent retention or survival process is estimated, projected forward, combined with a margin process, discounted, and aggregated across customers into customer equity."
+flowchart LR
+  A[Transaction /<br/>retention data] --> B[Estimate latent<br/>survival process]
+  B --> C[Project retention<br/>over horizon N]
+  M[Margin & cost<br/>process] --> D
+  C --> D[Discount expected<br/>per-period cash flows]
+  D --> E[CLV per customer]
+  E --> F[Aggregate:<br/>customer equity]
+```
+
+## Retention, Survival, and the Shifted-Beta-Geometric Model
+
+The single most consequential primitive in @eq-clv-general is the path of the
+purchase probability over time. In a *contractual* setting—subscriptions,
+memberships, insurance—the firm observes exactly when each customer churns, and the
+object of interest is the **survivor function** $S(t)=\Pr(\text{still active at }t)$.
+The naive approach assumes a constant retention rate $\rho$ and sets
+$S(t)=\rho^{t}$, the memoryless geometric curve underlying @eq-clv-geometric. This
+is almost always wrong in a specific and predictable direction: *observed aggregate
+retention rates rise with tenure*. Customers who have stayed many periods are
+disproportionately the intrinsically loyal ones; the churn-prone have already left.
+Aggregate retention climbs not because any individual becomes more loyal but because
+the surviving population is increasingly self-selected toward loyalty—a pure
+*sorting* (heterogeneity) effect, not a duration-dependence effect.
+
+The shifted-beta-geometric model formalizes exactly this intuition and is the
+discrete-time benchmark for contractual CLV. Each customer has a fixed but
+unobserved per-period churn probability $\theta$. Conditional on $\theta$, the
+period of churn follows a (shifted) geometric distribution: the customer survives
+each period with probability $1-\theta$ and churns with probability $\theta$, so
+
+$$
+P(T = t \mid \theta) = \theta\,(1-\theta)^{\,t-1}, \qquad t = 1, 2, \dots
+$$ {#eq-sbg-geometric}
+
+Heterogeneity across customers is captured by mixing $\theta$ over the population
+with a Beta prior, $\theta \sim \text{Beta}(\alpha,\beta)$, whose density is
+$f(\theta)=\theta^{\alpha-1}(1-\theta)^{\beta-1}/B(\alpha,\beta)$. Integrating the
+individual churn probability over this prior yields closed-form aggregate churn and
+survivor functions that depend only on the two parameters $(\alpha,\beta)$:
+
+$$
+P(T = t) = \frac{B(\alpha+1,\;\beta+t-1)}{B(\alpha,\beta)}, \qquad
+S(t) = \frac{B(\alpha,\;\beta+t)}{B(\alpha,\beta)} .
+$$ {#eq-sbg-survivor}
+
+These satisfy the convenient forward recursions
+$P(1)=\alpha/(\alpha+\beta)$, $P(t)=P(t-1)\,(\beta+t-2)/(\alpha+\beta+t-1)$, and
+$S(t)=S(t-1)-P(t)$, which is exactly how the estimation code below evaluates them.
+The model's key qualitative property—rising aggregate retention from fixed
+individual propensities—emerges purely from the Beta mixture; no individual's
+$\theta$ ever changes.
+
+**Estimation.** With cohort data giving the number of customers $n_t$ surviving at
+each tenure $t$ (equivalently, the number churning, $d_t = n_{t-1}-n_t$), the
+parameters are estimated by maximum likelihood. The log-likelihood for a cohort
+observed through period $\tau$ sums the log-probability of each observed churn over
+its churn period plus the log-survivor probability for those still active at the end
+of the window:
+
+$$
+\ell(\alpha,\beta) = \sum_{t=1}^{\tau} d_t \,\log P(T=t)
+   \;+\; n_{\tau}\,\log S(\tau).
+$$ {#eq-sbg-loglik}
+
+The last term is the right-censoring contribution: customers still active at $\tau$
+contribute the probability of surviving *at least* that long. Identification is weak
+when the window is short relative to the heterogeneity—$\alpha$ and $\beta$ are
+separately identified only once the curvature of the survival curve is visible—which
+is why the projections below stabilize as more months of history are used.
+
+The following example reconstructs the analysis of a subscription business: four
+cohorts ("cases") with markedly different retention dynamics, each observed for eight
+months. The goal is to fit the sBG model and project retention forward. We first
+visualize the raw curves.
+
+```{r clv-setup}
+#| message: false
+#| warning: false
+#| label: fig-retention-observed
+#| fig-cap: "Observed monthly retention curves for four subscription cohorts. All decline, but at different rates and with different curvature."
 library(tidyverse)
-library(reshape2)
-library(MLmetrics)
- 
-# retention rate data
-df_ret <- data.frame(month_lt = c(0:7),
-                     case01 = c(1, .531, .452, .423, .394, .375, .356, .346),
-                     case02 = c(1, .869, .743, .653, .593, .551, .517, .491),
-                     case03 = c(1, .677, .562, .486, .412, .359, .332, .310),
-                     case04 = c(1, .631, .468, .382, .326, .289, .262, .241)
-                     ) %>%
-        melt(., id.vars = c('month_lt'), variable.name = 'example', value.name = 'retention_rate')
- 
-ggplot(df_ret, aes(x = month_lt, y = retention_rate, group = example, color = example)) +
-        theme_minimal() +
-        facet_wrap(~ example) +
-        scale_color_manual(values = c('#4e79a7', '#f28e2b', '#e15759', '#76b7b2')) +
-        geom_line() +
-        geom_point() +
-        theme(plot.title = element_text(size = 20, face = 'bold', vjust = 2, hjust = 0.5),
-              axis.text.x = element_text(size = 8, hjust = 0.5, vjust = .5, face = 'plain'),
-              strip.text = element_text(face = 'bold', size = 12)) +
-        ggtitle('Retention Rate')
+
+set.seed(13)
+
+# Observed retention rate by months since signup (month 0 = 100%)
+df_ret <- tibble(
+  month_lt = 0:7,
+  case01 = c(1, .531, .452, .423, .394, .375, .356, .346),
+  case02 = c(1, .869, .743, .653, .593, .551, .517, .491),
+  case03 = c(1, .677, .562, .486, .412, .359, .332, .310),
+  case04 = c(1, .631, .468, .382, .326, .289, .262, .241)
+) |>
+  pivot_longer(-month_lt, names_to = "example", values_to = "retention_rate")
+
+ggplot(df_ret, aes(month_lt, retention_rate, colour = example)) +
+  geom_line() + geom_point() +
+  facet_wrap(~ example) +
+  scale_colour_manual(values = c("#4e79a7", "#f28e2b", "#e15759", "#76b7b2")) +
+  labs(x = "Months since signup", y = "Retention rate") +
+  theme_minimal() +
+  theme(legend.position = "none", strip.text = element_text(face = "bold"))
 ```
 
-Prediciton when we only have values on certain months
+We next implement the sBG churn, survivor, and (negative) log-likelihood functions
+following @eq-sbg-survivor and @eq-sbg-loglik, then optimize.
 
-```{r}
-# functions for sBG distribution
-churnBG <- Vectorize(function(alpha, beta, period) {
-        t1 = alpha / (alpha + beta)
-        result = t1
-        if (period > 1) {
-                result = churnBG(alpha, beta, period - 1) * (beta + period - 2) / (alpha + beta + period - 1)
-        }
-        return(result)
-}, vectorize.args = c("period"))
- 
-survivalBG <- Vectorize(function(alpha, beta, period) {
-        t1 = 1 - churnBG(alpha, beta, 1)
-        result = t1
-        if(period > 1){
-                result = survivalBG(alpha, beta, period - 1) - churnBG(alpha, beta, period)
-        }
-        return(result)
-}, vectorize.args = c("period"))
- 
-MLL <- function(alphabeta) {
-        if(length(activeCust) != length(lostCust)) {
-                stop("Variables activeCust and lostCust have different lengths: ",
-                     length(activeCust), " and ", length(lostCust), ".")
-        }
-        t = length(activeCust) # number of periods
-        alpha = alphabeta[1]
-        beta = alphabeta[2]
-        return(-as.numeric(
-                sum(lostCust * log(churnBG(alpha, beta, 1:t))) +
-                        activeCust[t]*log(survivalBG(alpha, beta, t))
-        ))
+```{r sbg-functions}
+# Aggregate churn probability P(T = t) via the forward recursion implied by
+# the Beta-geometric mixture (equation @eq-sbg-survivor).
+churn_bg <- Vectorize(function(alpha, beta, period) {
+  p <- alpha / (alpha + beta)
+  if (period > 1)
+    p <- churn_bg(alpha, beta, period - 1) *
+         (beta + period - 2) / (alpha + beta + period - 1)
+  p
+}, vectorize.args = "period")
+
+# Survivor function S(t) = S(t-1) - P(t), with S(1) = 1 - P(1).
+survival_bg <- Vectorize(function(alpha, beta, period) {
+  s <- 1 - churn_bg(alpha, beta, 1)
+  if (period > 1)
+    s <- survival_bg(alpha, beta, period - 1) - churn_bg(alpha, beta, period)
+  s
+}, vectorize.args = "period")
+
+# Negative log-likelihood (equation @eq-sbg-loglik): churners contribute
+# log P(T = t); the still-active at the end contribute log S(tau).
+neg_loglik <- function(par, active, lost) {
+  alpha <- par[1]; beta <- par[2]
+  tau <- length(active)
+  -( sum(lost * log(churn_bg(alpha, beta, 1:tau))) +
+       active[tau] * log(survival_bg(alpha, beta, tau)) )
 }
- 
- 
-df_ret <- df_ret %>%
-        group_by(example) %>%
-        mutate(activeCust = 1000 * retention_rate,
-               lostCust = lag(activeCust) - activeCust,
-               lostCust = ifelse(is.na(lostCust), 0, lostCust)) %>%
-        ungroup()
- 
-         
-ret_preds01 <- vector('list', 7)
-for (i in c(1:7)) {
-         
-        df_ret_filt <- df_ret %>%
-                filter(between(month_lt, 1, i) == TRUE & example == 'case01')
-         
-        activeCust <- c(df_ret_filt$activeCust)
-        lostCust <- c(df_ret_filt$lostCust)
-         
-        opt <- optim(c(1, 1), MLL)
-        retention_pred <- round(c(1, survivalBG(alpha = opt$par[1], beta = opt$par[2], c(1:7))), 3)
-         
-        df_pred <- data.frame(month_lt = c(0:7),
-                              example = 'case01',
-                              fact_months = i,
-                              retention_pred = retention_pred)
-        ret_preds01[[i]] <- df_pred
-}
- 
-ret_preds01 <- as.data.frame(do.call('rbind', ret_preds01))
- 
- 
-ret_preds02 <- vector('list', 7)
-for (i in c(1:7)) {
-         
-        df_ret_filt <- df_ret %>%
-                filter(between(month_lt, 1, i) == TRUE & example == 'case02')
-         
-        activeCust <- c(df_ret_filt$activeCust)
-        lostCust <- c(df_ret_filt$lostCust)
-         
-        opt <- optim(c(1, 1), MLL)
-        retention_pred <- round(c(1, survivalBG(alpha = opt$par[1], beta = opt$par[2], c(1:7))), 3)
-         
-        df_pred <- data.frame(month_lt = c(0:7),
-                              example = 'case02',
-                              fact_months = i,
-                              retention_pred = retention_pred)
-        ret_preds02[[i]] <- df_pred
-}
- 
-ret_preds02 <- as.data.frame(do.call('rbind', ret_preds02))
- 
- 
-ret_preds03 <- vector('list', 7)
-for (i in c(1:7)) {
-         
-        df_ret_filt <- df_ret %>%
-                filter(between(month_lt, 1, i) == TRUE & example == 'case03')
-         
-        activeCust <- c(df_ret_filt$activeCust)
-        lostCust <- c(df_ret_filt$lostCust)
-         
-        opt <- optim(c(1, 1), MLL)
-        retention_pred <- round(c(1, survivalBG(alpha = opt$par[1], beta = opt$par[2], c(1:7))), 3)
-         
-        df_pred <- data.frame(month_lt = c(0:7),
-                              example = 'case03',
-                              fact_months = i,
-                              retention_pred = retention_pred)
-        ret_preds03[[i]] <- df_pred
-}
- 
-ret_preds03 <- as.data.frame(do.call('rbind', ret_preds03))
- 
- 
-ret_preds04 <- vector('list', 7)
-for (i in c(1:7)) {
-         
-        df_ret_filt <- df_ret %>%
-                filter(between(month_lt, 1, i) == TRUE & example == 'case04')
-         
-        activeCust <- c(df_ret_filt$activeCust)
-        lostCust <- c(df_ret_filt$lostCust)
-         
-        opt <- optim(c(1, 1), MLL)
-        retention_pred <- round(c(1, survivalBG(alpha = opt$par[1], beta = opt$par[2], c(1:7))), 3)
-         
-        df_pred <- data.frame(month_lt = c(0:7),
-                              example = 'case04',
-                              fact_months = i,
-                              retention_pred = retention_pred)
-        ret_preds04[[i]] <- df_pred
-}
- 
-ret_preds04 <- as.data.frame(do.call('rbind', ret_preds04))
- 
- 
-ret_preds <- bind_rows(ret_preds01, ret_preds02, ret_preds03, ret_preds04)
- 
- 
- 
- 
-df_ret_all <- df_ret %>%
-        select(month_lt, example, retention_rate) %>%
-        left_join(., ret_preds, by = c('month_lt', 'example'))
- 
-ggplot(df_ret_all, aes(x = month_lt, y = retention_rate, group = example, color = example)) +
-        theme_minimal() +
-        facet_wrap(~ example) +
-        scale_color_manual(values = c('#4e79a7', '#f28e2b', '#e15759', '#76b7b2')) +
-        geom_line(size = 1.5) +
-        geom_point(size = 1.5) +
-        geom_line(aes(y = retention_pred, group = fact_months), alpha = 0.5) +
-        theme(plot.title = element_text(size = 20, face = 'bold', vjust = 2, hjust = 0.5),
-              axis.text.x = element_text(size = 8, hjust = 0.5, vjust = .5, face = 'plain'),
-              strip.text = element_text(face = 'bold', size = 12)) +
-        ggtitle('Retention Rate Projections')
+
+# Convert retention rates into active/lost counts for a notional 1,000-customer
+# cohort (the likelihood depends only on the shape, not the cohort size).
+df_ret <- df_ret |>
+  group_by(example) |>
+  mutate(active = 1000 * retention_rate,
+         lost   = replace_na(lag(active) - active, 0)) |>
+  ungroup()
 ```
 
-calculate the average LTV for case03 based on two historical months with a forecast horizon of 24 months and a subscription price of \$1
+The instructive exercise is to ask how the *projected* retention curve evolves as
+the firm accumulates more months of actual data. With only one or two months
+observed, identification is weak and the projection is unreliable; as the window
+lengthens, the fitted curve locks onto the truth. We refit the model for each cohort
+using the first $i$ months only, for $i = 1, \dots, 7$, and overlay every projection
+on the observed curve.
 
-```{r}
-### LTV prediction ###
-df_ltv_03 <- df_ret %>%
-        filter(between(month_lt, 1, 2) == TRUE & example == 'case03')
- 
-activeCust <- c(df_ltv_03$activeCust)
-lostCust <- c(df_ltv_03$lostCust)
- 
-opt <- optim(c(1, 1), MLL)
-retention_pred <- round(c(survivalBG(alpha = opt$par[1], beta = opt$par[2], c(3:24))), 3)
- 
-df_pred <- data.frame(month_lt = c(3:24),
-                      retention_pred = retention_pred)
- 
-df_ltv_03 <- df_ret %>%
-        filter(between(month_lt, 0, 2) == TRUE & example == 'case03') %>%
-        select(month_lt, retention_rate) %>%
-        bind_rows(., df_pred) %>%
-        mutate(retention_rate_calc = ifelse(is.na(retention_rate), retention_pred, retention_rate),
-               ltv_monthly = retention_rate_calc * 1,
-               ltv_cum = round(cumsum(ltv_monthly), 2))
-# average LTV of $9.33. actual data for the observed periods (from 0 to 2nd months) and the predicted retention for the future periods (from 3rd to 24th months)
+```{r sbg-projections}
+#| label: fig-retention-projected
+#| fig-cap: "Observed retention (bold) with sBG projections fit on the first i months only, for i = 1..7 (faint lines). Projections stabilize toward the observed curve as the calibration window lengthens."
+project_cohort <- function(d) {
+  map_dfr(1:7, function(i) {
+    fit <- d |> filter(month_lt >= 1, month_lt <= i)
+    opt <- optim(c(1, 1), neg_loglik,
+                 active = fit$active, lost = fit$lost)
+    tibble(month_lt   = 0:7,
+           fact_months = i,
+           retention_pred = round(
+             c(1, survival_bg(opt$par[1], opt$par[2], 1:7)), 3))
+  })
+}
+
+ret_preds <- df_ret |>
+  group_by(example) |>
+  group_modify(~ project_cohort(.x)) |>
+  ungroup()
+
+df_plot <- df_ret |>
+  select(month_lt, example, retention_rate) |>
+  left_join(ret_preds, by = c("month_lt", "example"))
+
+ggplot(df_plot, aes(month_lt, retention_rate, colour = example)) +
+  geom_line(aes(y = retention_pred, group = fact_months), alpha = 0.4) +
+  geom_line(linewidth = 1.2) + geom_point(size = 1.2) +
+  facet_wrap(~ example) +
+  scale_colour_manual(values = c("#4e79a7", "#f28e2b", "#e15759", "#76b7b2")) +
+  labs(x = "Months since signup", y = "Retention rate") +
+  theme_minimal() +
+  theme(legend.position = "none", strip.text = element_text(face = "bold"))
 ```
 
-## Referral value (CRV)
+The faint projection lines fan out wildly when fit on one month and converge onto
+the observed curve as the calibration window grows—a visual diagnostic of the
+identification problem in @eq-sbg-loglik. In practice this argues against committing
+to a CLV figure from a single early cohort snapshot.
 
-"Referrals made by customers after a referral-incentive marketing campaign can be attributed to that campaign for about a year." [@kumar_2007]. Hence, we usually count those referrals made after one year of a campaign.
+### From Retention to Value
 
-2 types of referral:
-
--   Type-one referral: Would not join without referral.\
--   Type-two referral: still join without referral.
-
-[@kumar_2007] estimated that each customer made about half type-one and half type-two referrals.
-
-Referral value = PV(Type-one referrals) + PV(Type-two referrals)
-
-where
-
--   PV(type-two referrals) = the prevent value of the savings in acquisition costs.
+With a fitted survivor function, lifetime value follows directly. For a contractual
+product with constant per-period margin $m$ (here a \$1 subscription) and discount
+factor $r$, expected discounted value over a horizon of $N$ periods is
 
 $$
-CRV_i = \sum_{t =1}^{T} \sum_{y = 1}^{n1} \frac{A_{ty} - a_{ty} - M_{ty} + ACQ1_{ty}}{(1+r)^t} + \sum_{t=1}^{T} \sum_{y = n1+1}^{n2} \frac{ACQ2_{ty}}{(1+r)^t}
+\widehat{\text{CLV}} \;=\; m \sum_{t=0}^{N} \frac{\widehat{S}(t)}{(1+r)^{\,t}},
+$$ {#eq-clv-from-survivor}
+
+with $\widehat{S}(t)$ taken from observed data where available and from the sBG
+projection beyond the calibration window. Setting $r=0$ for transparency (the firm
+wants undiscounted expected revenue per signup), we compute average LTV for cohort 3
+from only two months of history, projected over a 24-month horizon.
+
+```{r clv-forecast}
+fit3 <- df_ret |> filter(example == "case03", month_lt >= 1, month_lt <= 2)
+opt3 <- optim(c(1, 1), neg_loglik, active = fit3$active, lost = fit3$lost)
+
+projected <- tibble(
+  month_lt       = 3:24,
+  retention_pred = round(survival_bg(opt3$par[1], opt3$par[2], 3:24), 3))
+
+ltv3 <- df_ret |>
+  filter(example == "case03", month_lt <= 2) |>
+  select(month_lt, retention_rate) |>
+  bind_rows(projected) |>
+  mutate(retention = coalesce(retention_rate, retention_pred),
+         ltv_monthly = retention * 1,          # $1 subscription price
+         ltv_cum     = round(cumsum(ltv_monthly), 2))
+
+tail(ltv3, 3)
+cat("Average 24-month LTV for cohort 3: $", tail(ltv3$ltv_cum, 1), "\n", sep = "")
+```
+
+The cumulative figure—roughly \$9.33 per subscriber over 24 months—blends two months
+of *observed* retention with twenty-two months of *projected* retention from a
+two-parameter model estimated on those same two months. That this is even possible is
+the practical appeal of the probabilistic approach; that it rests on extrapolating a
+heterogeneity model far beyond its calibration window is its central caveat, and
+@fig-retention-projected is the warning label.
+
+## Customer Referral Value
+
+CLV as defined so far captures only the margin a customer generates through their
+*own* purchases. A customer also creates value by bringing in others—through
+word of mouth and formal referral programs—and this *customer referral value* (CRV)
+is empirically distinct from CLV: high-CLV customers are frequently *not* the best
+referrers, so the two must be managed separately [@kumar_2007]. The managerial
+implication is a two-by-two **customer value matrix** crossing CLV (low/high) with
+CRV (low/high): "champions" score high on both, "affluents" buy heavily but refer
+little, "advocates" refer well but buy little, and the remainder warrant minimal
+investment. The diagnostic point is that targeting on CLV alone leaves the referral
+asset unmanaged.
+
+Measuring referral value requires separating two kinds of referred customer
+[@kumar_2007]. A **type-one** referral is incremental—the referred customer would
+*not* have joined absent the referral—so their entire margin is attributable to the
+referrer. A **type-two** referral *would* have joined anyway through other channels;
+the referrer's contribution is not the customer's margin but the *acquisition cost
+the firm saved* by not having to recruit them through paid channels. Empirically the
+split is roughly even between the two types [@kumar_2007]. Letting $n_1$ index the
+incremental (type-one) referrals and $n_1{+}1,\dots,n_2$ index the would-have-joined
+(type-two) referrals,
+
 $$
+\text{CRV}_i \;=\; \sum_{t=1}^{T}\sum_{y=1}^{n_1}
+   \frac{A_{ty} - a_{ty} - M_{ty} + \text{ACQ1}_{ty}}{(1+r)^{t}}
+   \;+\; \sum_{t=1}^{T}\sum_{y=n_1+1}^{n_2}
+   \frac{\text{ACQ2}_{ty}}{(1+r)^{t}},
+$$ {#eq-crv}
 
-where
+where $A_{ty}$ is the gross margin from incremental customer $y$, $a_{ty}$ the cost
+of the referral incentive, $M_{ty}$ the marketing cost to retain the referred
+customer, $\text{ACQ1}_{ty}$ the acquisition cost saved on incremental customers,
+$\text{ACQ2}_{ty}$ the acquisition cost saved on would-have-joined customers, and $r$
+the per-period discount factor (again $\approx 0.07238$ semiannually for a 15% annual
+rate [@Kumar_2008]). The first sum books full net margin for incremental customers;
+the second books *only* avoided acquisition cost for the rest. A practical detail
+governs the attribution window: referrals attributable to an incentive campaign
+accrue for about a year after it runs, so CRV is typically accumulated over a
+one-year horizon and referrals beyond it are treated as organic
+[@kumar_2007].
 
--   T = the number of periods that will be predicted into the future (e.g., typically 1 year)
--   $A_{ty}$ = the gross margin contributed by customer y who other otherwise would not have bought the product,
--   $a_{ty}$ = the cost of the referral for the customer y (this is what you set up)
--   $n1$ = the number of customers who would not join without the referral,
--   $n2-n1$ = the number of customers who would have joined anyway,
--   $M_{ty}$ = the marketing costs needed to retain the referred customers,
--   r = semiannual discount factor ([@Kumar_2008] used .07238 = 15% annual rate)
--   $ACQ1_{ty}$ = the savings in acquisition costs from customers who would not join without the referral,
--   $ACQ2_{ty}$ = the savings in acquisition cost from customers who would have joined anyway.
+## Identification and What Breaks It
 
-Customers with high CLV does not guarantee high CRV [@kumar_2007]. Hence, [@kumar_2007] proposed the customer value matrix
+CLV is arithmetically simple and inferentially treacherous. Every term in
+@eq-clv-general is a forecast, and the headline number compounds their errors. The
+recurring failure modes are worth stating as assumptions whose violation is
+diagnostic.
 
-![](images/customer_value_matrix.jpg){style="display: block; margin: 1em auto" width="90%"}
+*Constant-retention bias.* Assuming a fixed $\rho$ (@eq-clv-geometric) when the true
+process is heterogeneous understates the value of long-tenured customers and
+overstates churn for survivors, because it misreads population sorting as individual
+duration dependence. The sBG model exists precisely to correct this; the symptom is a
+geometric model that systematically underpredicts late-tenure survival.
 
-[@sunder2016measuring] CLV in the consumer packaged goods industry
+*Horizon and discounting.* Because roughly half of lifetime value sits beyond the
+first year [@kumar_2007], the choice of $N$ and $r$ is not a rounding decision. The
+infinite-horizon shortcut in @eq-clv-geometric requires $\rho < 1+r$ and a genuinely
+stationary margin; the Gordon-style terminal value used in valuation work is valid
+only when the growth rate is strictly below the discount rate. A short horizon
+truncates the asset; an over-long one extrapolates a calibration-window model past
+its evidence (@fig-retention-projected).
 
--   **Objective:** Propose a framework to assess Customer Lifetime Value (CLV) in the Consumer Packaged Goods (CPG) industry.
+*Endogenous marketing.* The marketing cost $\text{MC}_{ij}$ is not exogenous—firms
+direct more spend at customers they already believe are valuable. Treating observed
+$\text{MC}$ and observed retention as if the latter were the causal response to the
+former conflates targeting with treatment effect, biasing the implied return on
+retention spending. Clean estimates of how marketing *moves* CLV require experimental
+or quasi-experimental variation, not the historical correlation between spend and
+value.
 
--   **Challenges Addressed:**
+*Aggregation and the noncontractual problem.* In noncontractual settings (retail,
+e-commerce) churn is never observed: a customer who has not purchased recently may
+have defected or may simply be between trips. Disentangling "dead" from "dormant"
+requires a latent-attrition model such as the Pareto/NBD [@schmittlein1982], whose
+recency–frequency sufficient statistics carry exactly the information needed to infer
+the probability a customer is still alive. Ignoring latent attrition and counting all
+lapsed customers as retained inflates customer equity.
 
-    -   **Multiple-Discreteness:** Varied buying patterns.
+*Heterogeneous response and structural drivers.* Reduced-form component models give
+per-customer forecasts but say little about *why* value differs or how it responds to
+prices and competition. Structural approaches embed CLV in a model of consumer
+utility: @sunder2016measuring derive brand- and category-level CLV in consumer
+packaged goods by accounting for multiple-discreteness (consumers buy several brands),
+brand-switching, and a latent budget constraint inferred from transaction data alone
+via Bayesian estimation, and show that ignoring the budget constraint—as simpler
+heuristics do—mismeasures value and the response to asymmetric price changes. The
+gain in behavioral fidelity is bought with strong functional-form assumptions; the
+trade-off between the two traditions in @tbl-clv-approaches has no free lunch.
 
-    -   **Brand-Switching:** Customers shifting between brands.
+The financial relevance of getting these right is direct: aggregated CLV is *customer
+equity*, and the demonstrated link from customer equity to firm value
+[@gupta2006modeling; @kumar2010] is the bridge from this chapter to the
+marketing–finance interface developed in @sec-marketing-finance.
 
-    -   **Budget Constrained Consumption:** Customers' purchasing limited by budget.
+## Key Takeaways
 
--   **Key Features:**
-
-    -   **Bayesian Estimation:** Enables inference of a consumer's latent budget constraint using transaction data alone.
-
-    -   **Brand-Level & Category-Level CLV:** Shift from traditional firm-centric CLV models.
-
--   **Implementation:**
-
-    -   Applied to carbonated beverages category.
-
-    -   Demonstrated superiority over simpler heuristics and traditional CLV models.
-
--   **Policy Simulations:**
-
-    -   Explored budget constraint's impact on CLV.
-
-    -   Analyzed asymmetric pricing effects and derived managerial insights.
+- CLV (@eq-clv-general) treats a customer as a forward-looking asset: the discounted
+  present value of future margin from their purchases net of the marketing cost of
+  retaining them. Aggregated across customers it is *customer equity*.
+- The constant-retention shortcut (@eq-clv-geometric) is biased whenever customers
+  are heterogeneous; observed aggregate retention rises with tenure because of
+  *sorting*, not increasing individual loyalty. The shifted-beta-geometric model
+  (@eq-sbg-survivor) captures this with a two-parameter Beta mixture and estimates
+  cleanly from sparse cohort data.
+- Projections extrapolated from a short calibration window are unstable
+  (@fig-retention-projected); commit to a CLV figure only once the survival curve's
+  curvature is identified.
+- Customer referral value (@eq-crv) is distinct from CLV and must separate
+  *incremental* referrals (book full margin) from *would-have-joined* referrals (book
+  only saved acquisition cost). High-CLV customers are not automatically high-CRV
+  customers.
+- The hard part is identification, not arithmetic: constant-retention bias, horizon
+  and discounting choices, endogenous marketing spend, and latent attrition in
+  noncontractual settings each bias the headline number in a predictable direction.

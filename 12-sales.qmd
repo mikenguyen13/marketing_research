@@ -1,129 +1,500 @@
-# Sales
+# Sales {#sec-sales}
 
-[@habel2021] found that consistent with traditional idea, having variable factor in salesperson's compensation plan will increase performance, but also introduce health hazard (more stress which results in emotional exhaustion and more sick days). In cases where salespeople have higher personal ability and more social resources, this harmful effect is mitigated.
+Selling is where a firm's marketing promises are tested against a buyer's
+willingness to pay. This chapter treats the sales function as two distinct but
+connected measurement problems. The first is **inference about demand from
+observed sales**: firms and researchers rarely see the full demand curve, but
+they do see rankings, units, and revenue, and a recurring task is to reconstruct
+latent demand from these partial signals. The second is **management of the sales
+force**: the salespeople who convert demand into revenue are themselves an asset
+whose compensation, productivity, retention, and future value can be modeled,
+measured, and optimized.
 
-## Sales from Rank
+The two problems share a methodological spine. In both, the object of interest
+is unobserved—true demand in the first case, a salesperson's forward-looking
+profit contribution in the second—and must be recovered from a noisy,
+selection-prone proxy. A reader who finishes this chapter should be able to
+estimate a demand curve from a sales-rank list, reason about when that estimate
+breaks down, and evaluate a sales-force compensation or retention policy using
+the same identification discipline applied throughout the book.
 
-[@chevalier2003measuring]
+We proceed from the outside in. We begin with the economics of compensation and
+its hidden health costs, because incentives are the lever managers pull most
+often. We then turn to **sales from rank**, the empirical problem of inferring
+demand from ordinal best-seller lists, and develop the Pareto rank–demand model
+in full. We close with the **salesperson as an asset**: turnover and its
+contagion through peer networks, and the forward-looking valuation of a sales
+force.
 
--   use an experiment to infer demand
+## Compensation and Its Hidden Costs
 
--   From low-selling books (where demand was either known or very small) and purchased large quantities (relative to their low demand)
+The canonical justification for putting variable pay—commissions, bonuses,
+quota-based incentives—into a salesperson's compensation contract is an
+agency-theoretic one. The firm (principal) cannot perfectly observe the agent's
+effort, only the noisy output (sales) that effort produces. Tying pay to output
+realigns the agent's incentives with the firm's, and the standard prediction is
+that a steeper pay–performance slope elicits more effort and higher sales. This
+prediction is robust and well documented.
 
--   Data from Amazon
+What the classical account omits is that effort is not free of physiological
+cost. @habel2021 confirm the performance benefit of variable compensation but
+show that the same incentive intensity that lifts sales also operates as a
+*health hazard*: it raises stress, which manifests as emotional exhaustion and a
+higher incidence of sick days. The effect is not uniform across the sales force.
+It is **buffered** for salespeople with higher personal ability and richer
+social resources—the people best equipped to absorb the additional psychological
+load—and sharpest for those without such buffers.
 
--   As the ranks for the books changed, the relationship between the sales rank and demand can be inferred.
+The managerial implication is that the pay–performance slope has a cost the
+standard model prices at zero. Let $w_i = \alpha + \beta\, s_i$ denote a linear
+contract for salesperson $i$, with fixed component $\alpha$, variable rate
+$\beta$, and realized sales $s_i$. The firm's familiar problem is to choose
+$\beta$ to maximize expected profit net of wage cost. @habel2021 effectively add
+a term: the agent's stress, and hence absenteeism and exhaustion, is increasing
+in $\beta$, so the firm faces a more accurate objective in which $\beta$ carries
+a shadow cost through reduced effective capacity and higher turnover risk. The
+optimal incentive intensity that internalizes this health externality is lower
+than the one that ignores it, and it varies with the ability and social
+resources of the individual—an argument for incentive schemes that are
+differentiated rather than uniform.
 
--   However, this is practical only to very low-selling books.
+::: {.callout-note}
+The health cost of incentives is a *moderated* effect, not a main-effect
+caveat. Reporting only the average performance gain from steeper incentives, as
+much of the older literature does, overstates the net benefit for the segment of
+the sales force least able to bear the stress.
+:::
 
-[@brynjolfsson2003consumer]
+## Sales from Rank {#sec-sales-from-rank}
 
--   With additional demand data from a book publisher, they can derive the relationship between the sales and rank.
+Many of the most visible signals of commercial success are **ordinal**, not
+cardinal. Amazon publishes a sales rank for every book; Apple's App Store
+publishes ranked lists rather than download counts; the music, film, and
+publishing industries all live by charts. A rank is informative—rank 1 outsells
+rank 100—but it discards the magnitudes a firm actually needs: how *many* more
+units does rank 1 move than rank 100? Recovering demand magnitudes from rank is
+the central inference problem of this section.
 
-[@garg2013inferring]
+The difficulty is that the map from demand to rank is many-to-one and unknown.
+Two products can swap ranks after a small change in either one's sales, and the
+same rank can correspond to wildly different unit volumes in a thick versus a
+thin market. The literature solves this in three stages of increasing
+ambition, summarized in @tbl-rank-approaches: experimentally perturb rank and
+read off the demand response; supplement rank with auxiliary demand data; or
+impose a parametric demand–rank law and estimate it from rank data alone.
 
--   Without demand data, they can infer the demand data
+| Study | Setting | Demand data required | Core idea |
+|---|---|---|---|
+| @chevalier2003measuring | Amazon books | Known/very low for chosen titles | Buy units of low-selling books; watch rank move; trace the rank–demand map |
+| @brynjolfsson2003consumer | Amazon books | Publisher demand data | Calibrate the rank–demand relationship directly |
+| @garg2013inferring | Apple App Store | None | Impose a Pareto law; identify it from paid and grossing ranks |
+| @he2020sales | Amazon (general) | None | Generalize @chevalier2003measuring beyond books |
 
-On Apple's App Store, there are three rank list:
+: Approaches to inferring demand from sales rank {#tbl-rank-approaches}
 
-1.  Top-free apps
-2.  Top-paid apps
-3.  Top-grossing apps: based on revenue generation
+### The Experimental Approach
 
-Assuming a Pareto distribution
+The cleanest identification comes from intervention. @chevalier2003measuring run
+a field experiment on Amazon: they select books whose demand is either known or
+known to be very small, purchase large quantities relative to that baseline
+demand, and observe how each title's sales rank responds to the induced demand
+shock. Because the experimenter controls the size of the shock, the otherwise
+unobservable mapping between a change in units and a change in rank is revealed.
+Repeating this across the rank distribution traces out the rank–demand curve.
+
+The method's strength—a controlled demand shock—is also its limitation. It is
+practical only for **low-selling** titles, where a feasible experimental purchase
+is large relative to organic demand. At the head of the distribution, the
+purchase required to move rank by a perceptible amount is prohibitive, so the
+high-volume region of the curve cannot be identified experimentally. The
+generalization of this revealed-demand logic to Amazon products beyond books is
+developed in @he2020sales.
+
+### The Auxiliary-Data Approach
+
+When the experimenter cannot perturb demand, the next-best instrument is
+external demand data. @brynjolfsson2003consumer obtain demand figures from a book
+publisher and pair them with observed ranks, which pins down the rank–demand
+relationship by direct calibration rather than by experiment. This dispenses with
+the need to intervene but substitutes a different scarce resource—proprietary
+unit-sales data—that most analysts cannot obtain.
+
+### The Structural Approach: A Pareto Rank–Demand Law
+
+The most general method dispenses with both intervention and demand data,
+recovering magnitudes from rank alone by imposing structure on the demand
+distribution. @garg2013inferring develop this approach on Apple's App Store,
+which is an unusually favorable laboratory because it publishes three distinct
+ranked lists that, jointly, over-identify the model:
+
+1. **Top-free apps** — ranked by download volume among zero-price apps.
+2. **Top-paid apps** — ranked by download volume among positive-price apps.
+3. **Top-grossing apps** — ranked by *revenue*, i.e., price times downloads.
+
+The key modeling assumption is that downloads follow a **Pareto** (power-law)
+distribution in rank, an empirical regularity in best-seller and long-tail
+markets [@garg2013inferring]. For the top-paid list, let $d_{r_p}$ denote
+downloads at paid rank $r_p$. The Pareto law states
 
 $$
-d_{r_p} = b_p \times r_p^{-a_p}|1 \le 200
+d_{r_p} = b_p\, r_p^{-a_p}, \qquad 1 \le r_p \le 200,
+$$ {#eq-pareto-paid}
+
+where $a_p > 0$ is the **shape** parameter (the steepness of the long tail; a
+larger $a_p$ means demand falls off faster with rank) and $b_p > 0$ is a
+**scale** factor that depends on total market size for the platform (iPhone or
+iPad). The truncation at 200 reflects that the published list is finite. Taking
+logs of @eq-pareto-paid linearizes it, $\log d_{r_p} = \log b_p - a_p \log r_p$,
+so a single list with download data would yield $(a_p, b_p)$ from an ordinary
+least squares (OLS) regression of log-downloads on log-rank. The problem is that
+download magnitudes are not published; only ranks are. The grossing list
+supplies the missing leverage.
+
+#### Identification from the grossing list
+
+Assume the same app obeys a Pareto law in the grossing (revenue) list, with its
+own shape $a_g$ and scale $b_g$. For an app at grossing rank $r_g$ selling at
+price $p$, revenue equals price times the downloads it earns at its paid rank:
+
 $$
+p\, d_{r_p} = b_g\, r_g^{-a_g}.
+$$ {#eq-pareto-grossing}
 
-where
-
--   $d_{r_p}$ = downloads at rank $r_p$ in the **top-paid**
-
--   $b_p$ = scale factor that is dependent on the total market size for iPad or iPhone apps
-
--   $a_p$ = shape of the Pareto curve
-
-For apps in the top-grossing list, we assume a Pareto distribution for each app (to estimate use a simple truncated OLS regression)
+Substituting the paid-list law @eq-pareto-paid for $d_{r_p}$ and taking logs
+gives, after rearranging to put grossing rank on the left,
 
 $$
-\begin{aligned}
-pd_{r_g} &= p \times d_{r_p} = b_g \times r_g^{-a_g} \\
-\log(r_g) &= \frac{1}{a_g} \times \log\left( \frac{b_g}{b_p} \right) + \frac{a_p}{a_g} \times \log (r_p) - \frac{1}{a_g} \times \log(p) \\
-\log(r_g) &= \beta_0 + \beta_1 \times \log(r_p) + \beta_2 \log(p)
-\end{aligned}
+\log r_g
+= \frac{1}{a_g}\log\!\left(\frac{b_g}{b_p}\right)
++ \frac{a_p}{a_g}\log r_p
+- \frac{1}{a_g}\log p .
+$$ {#eq-rank-mapping}
+
+@eq-rank-mapping is linear in observables. It maps an app's paid rank $r_p$ and
+price $p$ into its grossing rank $r_g$, and every quantity on the right except
+the structural parameters is in the data. It is therefore estimable as the
+truncated OLS regression
+
 $$
+\log r_g = \beta_0 + \beta_1 \log r_p + \beta_2 \log p + \varepsilon,
+$$ {#eq-rank-ols}
 
-where
+where the regression coefficients are nonlinear functions of the structural
+parameters. Matching coefficients between @eq-rank-mapping and @eq-rank-ols
+recovers the shapes directly:
 
--   $p$ = product price
+$$
+a_g = -\frac{1}{\beta_2}, \qquad
+a_p = -\frac{\beta_1}{\beta_2}, \qquad
+\frac{b_g}{b_p} = \exp\!\left(-\frac{\beta_1}{\beta_2}\right).
+$$ {#eq-structural-recovery}
 
--   $b_g$ = scale factor that is dependent on the total market size for iPad or iPhone apps
+The regression identifies the two shape parameters and the *ratio* of scales, but
+not the scales themselves, because rank data are invariant to a common rescaling
+of all download volumes. To pin down the levels, @garg2013inferring add one
+aggregate moment. Summing the paid-list law over all ranked apps in a day equates
+the model-implied total to observed aggregate downloads $D_t$:
 
--   $d_{r_p}$ = downloads of the same app in the top-paid list
+$$
+D_t = \sum_{r_p=1}^{N} d_{r_p} = b_p \sum_{r_p=1}^{N} r_p^{-a_p}.
+$$ {#eq-aggregate-downloads}
 
--   Assumption: top-grossing apps generate revenue from upfront pricing only
+Because $a_p$ is already known from @eq-structural-recovery, the sum on the right
+is a computable constant, so @eq-aggregate-downloads solves for the scale levels:
 
-    -   Free and paid apps may have additional purchasable features inside the app, but these purchases will not be included in the paid apps (which is reasonable since paid apps make most of their money from upfront prices) (p. 1256).
+$$
+b_p = \frac{\sum_{r_p=1}^{N} d_{r_p}}{\sum_{r_p=1}^{N} r_p^{-a_p}}, \qquad
+b_g = \exp\!\left(-\frac{\beta_0}{\beta_1}\right)
+      \cdot \frac{\sum_{r_p=1}^{N} d_{r_p}}{\sum_{r_p=1}^{N} r_p^{-a_p}}.
+$$ {#eq-scale-recovery}
 
-    -   It's reasonable to assume that in-app features are most common in free apps (p. 1256)
+With $(a_p, b_p)$ in hand, @eq-pareto-paid returns a download magnitude for every
+paid rank, completing the recovery of cardinal demand from ordinal lists.
 
-    -   Apps' rank and price are assumed to be independent across sectional data (even when an app appears multiple times).
+#### What breaks identification
 
--   $a_g = - 1/\beta_2$
+The estimator rests on assumptions that are explicit and falsifiable, and each
+is a potential failure point.
 
--   $a_p = -\beta_1/\beta_2$
+- **Revenue comes only from upfront price.** The grossing equation
+  @eq-pareto-grossing treats revenue as price times downloads, ignoring in-app
+  purchases. @garg2013inferring argue this is reasonable for *paid* apps, which
+  earn most of their money at the point of sale, while in-app monetization is
+  concentrated in *free* apps, which the grossing analysis excludes
+  [@garg2013inferring, p. 1256]. Where paid apps monetize heavily inside the app,
+  the price term in @eq-rank-ols is misspecified and the recovered shapes are
+  biased.
+- **Rank and price are cross-sectionally independent.** Estimation treats each
+  app-day observation as independent even when an app appears across multiple
+  days, ignoring the correlation that would arise from app-level unobservables.
+  Failing this, the OLS standard errors understate sampling uncertainty.
+- **A single Pareto law fits the whole list.** A mixture of populations
+  (e.g., games versus utilities) with different tail behavior would violate the
+  single-shape assumption, and the linearized regression would average over
+  heterogeneous slopes.
 
--   $\frac{b_g}{b_p} = \exp(-\beta_1/\beta_2)$
+@garg2013inferring estimate the model on roughly 200 paid apps, 200 grossing
+apps, and their prices over April–May 2011, drawing on Apple's public lists and
+third-party trackers of the period.[^datasources] The pipeline from the three
+published lists to recovered demand is summarized in @fig-rank-pipeline.
 
-    -   To recover individual values of the scale parameters, we aggregate downloads across apps in a day (since actual downloads for an app is not available) $D_t = \sum d_{r_p} = b_p \sum_{r=1}^N r_p^{-a_p}$
+[^datasources]: The original data were assembled from Apple's lists and
+contemporaneous trackers including Appshopper (shut down in 2021) and AppAnnie
+(now data.ai), with later coverage from providers such as Mobilewalla. The
+specific vendors are incidental to the method; any source of ranked lists plus a
+single aggregate-download moment suffices.
 
-    -   Using the total number of downloads of top ranked apps, the two parameters are
+```{mermaid}
+%%| label: fig-rank-pipeline
+%%| fig-cap: "Recovering cardinal demand from ordinal App Store lists. Ranked lists and prices identify the Pareto shapes and the scale ratio via regression; one aggregate-download moment pins down the scale levels; the paid-list law then returns downloads at every rank."
+flowchart TD
+    A[Top-paid ranks r_p] --> D[Regress log r_g on log r_p and log p]
+    B[Top-grossing ranks r_g] --> D
+    C[Prices p] --> D
+    D --> E["Shapes a_p, a_g and scale ratio b_g / b_p"]
+    F[Aggregate downloads D_t] --> G[Recover scale levels b_p, b_g]
+    E --> G
+    G --> H["Pareto law d = b_p r_p^(-a_p): downloads at every rank"]
+```
 
-        -   $b_p = (\sum_{r_p=1}^N d_{r_p})/(\sum_{r_p = 1}^N r_p^{-a_p})$
+#### A reproducible illustration
 
-        -   $b_g = \exp(-\beta_0 / \beta_1)\times (\sum_{r_p=1}^N d_{r_p})/(\sum_{r_p = 1}^N r_p^{-a_p})$
+The following simulation generates app-level ranks and prices from a known
+data-generating process, then recovers the structural parameters through
+@eq-rank-ols and @eq-structural-recovery. Because the truth is known, the example
+doubles as a check that the estimator is unbiased when its assumptions hold.
 
-Data:
+```{r rank-demand-sim, message=FALSE, warning=FALSE}
+set.seed(12)
 
--   Apple, Appshopper (shutdown in 2021), AppAnnie (now is [data.ai](https://www.data.ai/)), [Mobilewalla](https://www.mobilewalla.com/mobile-data)
+# True structural parameters
+a_p_true <- 0.80   # paid-list shape
+a_g_true <- 0.95   # grossing-list shape
+b_p_true <- 5e5    # paid-list scale
+b_g_true <- 2e6    # grossing-list scale
 
--   Period: April 2011 - May 2011
+N <- 200
+r_p   <- 1:N                                  # paid ranks
+price <- round(runif(N, 0.99, 9.99), 2)       # app prices
 
--   Data: 200 paid apps, 200 grossing apps and their price data.
+# Downloads from the paid-list Pareto law (eq-pareto-paid)
+downloads <- b_p_true * r_p^(-a_p_true)
 
-[@he2020sales] On Amazon, which is a generalized results from [@chevalier2003measuring]
+# Grossing rank implied by the structural mapping (eq-rank-mapping),
+# with mild noise standing in for measurement error
+log_rg <- (1 / a_g_true) * log(b_g_true / b_p_true) +
+          (a_p_true / a_g_true) * log(r_p) -
+          (1 / a_g_true) * log(price) +
+          rnorm(N, 0, 0.05)
+r_g <- exp(log_rg)
 
-## Salespeople
+# Estimate the truncated OLS regression (eq-rank-ols)
+fit <- lm(log(r_g) ~ log(r_p) + log(price))
+b   <- coef(fit)
 
-[@sunder2017salespeople] own and peer effects on salesperson turnover behavior
+# Recover structural parameters (eq-structural-recovery)
+a_g_hat     <- -1 / b[["log(price)"]]
+a_p_hat     <- -b[["log(r_p)"]] / b[["log(price)"]]
+b_ratio_hat <- exp(-b[["log(r_p)"]] / b[["log(price)"]])
 
--   **Objective:** Delve into the factors influencing salesperson turnover, emphasizing personal performance and peer effects.
+# Recover scale levels from the aggregate-download moment (eq-scale-recovery)
+D_t       <- sum(downloads)
+b_p_hat   <- D_t / sum(r_p^(-a_p_hat))
 
--   **Background:** Prior studies mostly focused on the repercussions of voluntary turnover. The direct causes, especially the role of personal achievements and peer influences, have been less explored.
+data.frame(
+  parameter = c("a_p", "a_g", "b_g/b_p", "b_p"),
+  truth     = c(a_p_true, a_g_true, b_g_true / b_p_true, b_p_true),
+  estimate  = c(a_p_hat, a_g_hat, b_ratio_hat, b_p_hat)
+)
+```
 
--   **Key Insights:**
+The recovered shapes and scale track their true values, illustrating that the
+ordinal lists, plus one cardinal anchor, suffice to reconstruct the full demand
+schedule.
 
-    1.  **Framework Proposal:** Introduces a model assessing the impact of individual factors (via identity theory) and peer factors (via social identity theory) on turnover.
+## The Salesperson as an Asset {#sec-salesperson-asset}
 
-    2.  **Data Analysis:** Used data from 6,727 salespeople over two years.
+The second measurement problem shifts from the product to the person. A sales
+force is a portfolio of human assets, and two questions dominate its management:
+who leaves, and what is each person worth going forward. Both resist naive
+measurement—turnover is contagious in ways that confound individual attribution,
+and a salesperson's value is forward-looking while the convenient metrics are
+backward-looking.
 
-    3.  **Findings:** Alongside personal performance metrics, peer behaviors, especially peer turnover, significantly affect a salesperson's likelihood to leave.
+### Turnover: Own and Peer Effects {#sec-turnover}
 
-    4.  **Peer vs. Own Effects:** Peer influences have a more pronounced impact than individual factors on turnover.
+Salesperson turnover is expensive: it destroys accumulated account relationships
+and product knowledge and imposes replacement costs. Most prior work studied the
+*consequences* of voluntary turnover; @sunder2017salespeople instead model its
+*antecedents*, and in particular separate two channels that the data tend to
+confound.
 
-[@kumar2014measuring] Measure saleperson's future value
+The first channel is the salesperson's **own** standing. Drawing on identity
+theory, a salesperson's role identity is reinforced or threatened by personal
+performance, so individual achievement shapes the propensity to stay. The second
+channel is **peer** influence. Drawing on social identity theory, a salesperson's
+attachment is shaped by the group, so the behavior of peers—above all, **peer
+turnover**—moves the individual's own exit decision. The empirical contribution
+is to estimate both channels jointly on a panel of 6,727 salespeople observed
+over two years, and the central finding is that **peer effects dominate own
+effects**: a colleague's departure is a stronger predictor of a salesperson's
+exit than that salesperson's own performance.
 
--   **Objective:** Introduce a forward-looking metric for sales force evaluation, emphasizing the impact of training and incentive types on future salesperson value.
+::: {.callout-note}
+## Identification: distinguishing contagion from common shocks
+The headline that "peers drive turnover" is a causal claim, and peer effects are
+notoriously hard to identify. The **reflection problem** (a peer's outcome
+reflects the same group-level shocks that drive ego's outcome) and **homophily**
+(similar people self-select into the same teams) both generate peer correlations
+with no underlying contagion. Reading a peer-turnover coefficient as a causal
+contagion effect requires that team membership and the timing of peer exits be
+plausibly exogenous to ego's latent propensity to leave—conditioning on common
+shocks, not merely correlating outcomes.
+:::
 
--   **Background:** Traditional sales evaluations focus on retrospective metrics like sales volume. With businesses shifting towards customer-centric views, there's a need for sales strategy adaptation.
+A reduced-form hazard specification makes the two channels concrete. Let the
+hazard that salesperson $i$ on team $j$ exits in period $t$ be
 
--   **Key Insights:**
+$$
+h_{ijt} = h_0(t)\,
+\exp\!\big(\gamma\, \text{Perf}_{ijt} + \delta\, \text{PeerTurnover}_{jt}
++ \boldsymbol{\theta}^{\top}\mathbf{x}_{ijt}\big),
+$$ {#eq-turnover-hazard}
 
-    1.  **New Metric Proposal:** A profit-oriented, forward-looking metric is presented to assess salesperson value.
+where $h_0(t)$ is a baseline hazard, $\text{Perf}_{ijt}$ captures own performance
+(the identity channel), $\text{PeerTurnover}_{jt}$ is recent turnover among $i$'s
+peers (the social-identity channel), and $\mathbf{x}_{ijt}$ collects controls.
+The @sunder2017salespeople finding is that the estimated peer coefficient
+$\hat\delta$ is large relative to the own-performance coefficient $\hat\gamma$.
 
-    2.  **Method:** Uses a latent class modeling approach to identify different sales force segments.
+### Valuing a Salesperson's Future Contribution {#sec-salesperson-value}
 
-    3.  **Findings:** Sales force segments respond differently to training and incentives, suggesting a universal approach might not be effective.
+Traditional sales-force evaluation is **retrospective**: it ranks salespeople on
+realized volume, the metric that is easiest to observe but least informative about
+what the firm will earn from each person next year. As marketing has shifted
+toward a customer-centric, lifetime-value orientation, the natural analogue for
+the sales force is a **forward-looking, profit-based** valuation of each
+salesperson—an internal parallel to customer lifetime value.
 
-    4.  **Time Horizon Analysis:** The impact of training and incentives can vary based on whether short-term or long-term effects are considered.
+@kumar2014measuring propose exactly such a metric and embed it in a **latent
+class** model that recognizes the sales force is not homogeneous. The intuition
+for latent classes is that salespeople fall into a small number of unobserved
+**segments** that respond differently to managerial levers, so a single average
+response masks divergent effects. Formally, with $C$ latent segments, the
+expected future value of salesperson $i$ is the mixture
+
+$$
+\widehat{\text{Value}}_i
+= \sum_{c=1}^{C} \pi_{ic}\, \mathbb{E}\!\left[V_i \mid \text{segment } c\right],
+$$ {#eq-salesperson-value}
+
+where $\pi_{ic}$ is the posterior probability that $i$ belongs to segment $c$
+and $\mathbb{E}[V_i \mid \text{segment } c]$ is the discounted future profit
+contribution conditional on that segment's response parameters. Both the
+segment memberships $\pi_{ic}$ and the segment-specific response parameters are
+estimated jointly, typically by maximum likelihood via the
+expectation–maximization (EM) algorithm.
+
+The substantive payoff is a precise statement of when "one size fits all" fails.
+@kumar2014measuring find that segments respond **differently** to **training**
+and to **incentives**, so a uniform program is inefficient: the same training
+budget yields different returns across segments, and the ranking of training
+versus incentives can even reverse depending on the **time horizon**—an
+intervention that looks inferior in the short run may dominate over a longer one.
+The forward-looking metric thus reframes sales-force management from rewarding
+*past* volume to allocating development resources toward the salespeople and
+interventions with the highest *future* return.
+
+@fig-salesperson-value contrasts the retrospective and forward-looking views of
+sales-force evaluation.
+
+```{mermaid}
+%%| label: fig-salesperson-value
+%%| fig-cap: "From retrospective to forward-looking sales-force evaluation. Realized volume looks backward; a latent-class future-value metric segments the sales force and allocates training and incentives to the highest forward return."
+flowchart LR
+    A[Realized sales volume] --> B[Retrospective ranking]
+    C[Salesperson behavior and responses] --> D[Latent-class segmentation]
+    D --> E[Segment-specific future value]
+    E --> F[Allocate training and incentives by horizon]
+    B -. backward-looking .-> G((Evaluation))
+    F -. forward-looking .-> G
+```
+
+#### A reproducible illustration of latent-class value
+
+The following example simulates two latent segments of salespeople with different
+responses to training, fits a two-component mixture by EM, and recovers the
+segment-specific effects. It is a deliberately minimal stand-in for the richer
+specification in @kumar2014measuring, intended to make the mixture logic of
+@eq-salesperson-value concrete.
+
+```{r latent-class-sim, message=FALSE, warning=FALSE}
+set.seed(34)
+
+n <- 600
+# Two latent segments with different training -> future-value slopes
+seg     <- rbinom(n, 1, 0.4)            # segment indicator (unobserved in practice)
+train   <- runif(n, 0, 10)             # training hours
+slope   <- ifelse(seg == 1, 1.8, 0.3)  # high vs. low responders
+value   <- 20 + slope * train + rnorm(n, 0, 4)
+dat     <- data.frame(value, train)
+
+# Fit a 2-component mixture of regressions by EM (base R)
+em_mixreg <- function(y, x, K = 2, iters = 100) {
+  n <- length(y)
+  pi_k  <- rep(1 / K, K)
+  beta0 <- quantile(y, c(0.3, 0.7)); beta1 <- c(0.3, 1.5); sig <- rep(sd(y), K)
+  for (it in seq_len(iters)) {
+    # E-step: responsibilities
+    dens <- sapply(1:K, function(k)
+      pi_k[k] * dnorm(y, beta0[k] + beta1[k] * x, sig[k]))
+    r <- dens / rowSums(dens)
+    # M-step: weighted regressions
+    for (k in 1:K) {
+      w  <- r[, k]
+      fk <- lm(y ~ x, weights = w)
+      beta0[k] <- coef(fk)[1]; beta1[k] <- coef(fk)[2]
+      sig[k]   <- sqrt(sum(w * residuals(fk)^2) / sum(w))
+      pi_k[k]  <- mean(w)
+    }
+  }
+  list(pi = pi_k, slope = beta1, intercept = beta0)
+}
+
+out <- em_mixreg(dat$value, dat$train, K = 2)
+data.frame(
+  segment        = c(1, 2),
+  mix_weight     = round(out$pi, 3),
+  training_slope = round(out$slope, 3)
+)
+```
+
+The estimator separates the high-responding segment (training slope near 1.8)
+from the low-responding one (near 0.3), reproducing the qualitative lesson of
+@kumar2014measuring: returns to a managerial lever are segment-specific, and the
+forward-looking value in @eq-salesperson-value averages over those segments
+weighted by membership.
+
+## Key Takeaways
+
+- Variable compensation lifts sales but carries a **health cost**—stress,
+  exhaustion, absenteeism—that is buffered by individual ability and social
+  resources, so the profit-maximizing incentive slope is lower and more
+  differentiated than the standard agency model implies [@habel2021].
+- **Sales rank is ordinal**; recovering cardinal demand requires either an
+  experimental demand shock [@chevalier2003measuring; @he2020sales], auxiliary
+  demand data [@brynjolfsson2003consumer], or a parametric demand law identified
+  from multiple ranked lists [@garg2013inferring].
+- The Pareto rank–demand model (@eq-pareto-paid–@eq-scale-recovery) identifies
+  tail **shapes** and a **scale ratio** from rank regressions, but needs one
+  aggregate-download moment to fix scale **levels**; its identification breaks if
+  revenue is not upfront, if cross-sectional independence fails, or if a single
+  power law does not fit the list.
+- Salesperson **turnover is contagious**: peer turnover predicts individual exit
+  more strongly than own performance, but reading this as causal contagion
+  demands care with the reflection problem and homophily
+  [@sunder2017salespeople].
+- A **forward-looking, latent-class** valuation of the sales force
+  (@eq-salesperson-value) shows that returns to training and incentives are
+  segment- and horizon-specific, so uniform development programs are inefficient
+  [@kumar2014measuring].

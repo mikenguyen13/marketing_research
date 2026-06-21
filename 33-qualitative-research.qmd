@@ -1,232 +1,523 @@
-# Qualitative Research
+# Qualitative Research {#sec-qualitative-research}
 
-## Inter-rate reliability methods
+Qualitative research generates evidence that is not born as numbers: interview
+transcripts, open-ended survey responses, field notes, social-media posts,
+product reviews, and the imagery and video that increasingly dominate consumer
+expression. To make such evidence cumulative and defensible, researchers
+*code* it—assigning categorical or ordinal labels to passages, respondents, or
+images according to a coding scheme. The credibility of every downstream claim
+then hinges on a single question: would a second, independent analyst, applying
+the same scheme, have produced the same labels? If coding is idiosyncratic to
+the coder, the "findings" are an artifact of who did the reading, not a property
+of the data. **Inter-rater reliability** (IRR), also called inter-coder
+agreement, is the family of statistics that answers this question, and it is the
+methodological hinge on which qualitative rigor turns.
 
-Calculation to judge the degree of agreement between the choices made by two or more independent judges
+This concern is not parochial to ethnography. The same machinery governs the
+quality of any human-labeled dataset: relevance judgments in information
+retrieval, sentiment labels that train a classifier, diagnostic ratings in
+medicine, and—of growing importance in marketing—the gold-standard annotations
+used to validate text- and image-mining pipelines (@sec-measurement-scales).
+Whenever a learned model is benchmarked against "ground truth," that ground
+truth is itself a set of human codes whose reliability must be quantified before
+the benchmark means anything. Reliability is necessary but not sufficient for
+validity: two coders can agree perfectly on a scheme that measures the wrong
+construct. The agreement coefficients in this chapter certify *consistency*; the
+*meaning* of the codes is established by the construct-validity arguments of
+@sec-measurement-scales.
 
-Other packages are
-
--   `vcd` for visualization
-
--   `DescTools`
-
-### Percent Agreement
-
-$$
-\frac{\text{number of agreement}}{\text{number of total}} \times 100
-$$
+The chapter develops the IRR coefficients as a single coherent system rather
+than a catalog. We begin with the deceptively simple idea of percent agreement
+and show precisely why it fails. Correcting that failure—subtracting the
+agreement expected by chance—yields the chance-corrected family that includes
+Cohen's and Fleiss's kappa, Krippendorff's $\alpha$, and Kendall's $W$. We then
+turn to the intraclass correlation coefficient (ICC) for continuous ratings,
+which embeds reliability inside a variance-components model and exposes the
+design assumptions the kappa family leaves implicit. Throughout, intuition
+leads, the estimator and its assumptions follow in full, and every coefficient
+is computed on reproducible data.
 
 ```{r}
-library("irr")
-data("diagnoses", package = "irr")
-data("anxiety", package = "irr")
-head(diagnoses,10)
-agree(diagnoses)
-
-# library(vcd)
-# # Create the plot
-# p <- agreementplot(anxiety)
+#| label: setup-qual
+#| message: false
+#| warning: false
+library(irr)        # agree, kappa2, kappam.fleiss, kappam.light, kripp.alpha, icc
+library(DescTools)  # KendallW, ICC, CohenKappa with CIs
 ```
 
-### Cohen's Kappa
+## The Chance-Correction Problem
 
-[@Cohen_1960]
+Every chance-corrected agreement coefficient in this chapter is a special case
+of one idea. Let $p_o$ be the proportion of items on which raters *observed*
+agreement and let $p_e$ be the proportion of agreement *expected* if raters
+labeled items independently at random. The corrected coefficient rescales
+observed agreement against the headroom that chance leaves:
 
 $$
-k = \frac{p_o - p_e}{1 - p_e} = 1 - \frac{1 - p_o}{1- p_e}
-$$
+S = \frac{p_o - p_e}{1 - p_e}
+   = 1 - \frac{1 - p_o}{1 - p_e}.
+$$ {#eq-chance-correction}
 
-where
-
--   $p_o$ = relative observed agreement among raters
-
--   $p_e$ = hypothetical probability of chance agreement
-
-strict agreements between raters
-
-appropriate in case of 2 ordinal or nominal varibles
-
-Based on [@Landis_1977]'s guide, we have
-
-| Degree       | Decision                            |
-|--------------|-------------------------------------|
-| 0.01 -- 0.20 | slight agreement                    |
-| 0.21 -- 0.40 | fair agreement                      |
-| 0.41 -- 0.60 | moderate agreement                  |
-| 0.61 -- 0.80 | substantial agreement               |
-| 0.81 -- 1.00 | almost perfect or perfect agreement |
+The numerator $p_o - p_e$ is agreement beyond chance; the denominator $1 - p_e$
+is the maximum agreement beyond chance attainable. Thus $S = 1$ for perfect
+agreement, $S = 0$ when observed agreement equals chance, and $S < 0$ when raters
+agree *less* than chance—a diagnostic signal of systematic disagreement, not
+mere noise. The coefficients differ only in how they define $p_o$ and, above all,
+$p_e$: how chance is modeled, how many raters and categories are allowed, whether
+categories are nominal or ordinal, and how partial credit is assigned to near
+misses. Holding @eq-chance-correction fixed and varying its two inputs organizes
+the entire family, summarized in @tbl-irr-map.
 
 ```{r}
-# Unweighted kappa for 2 nominal or 2 ordinal categorical
-kappa2(diagnoses[, c("rater1", "rater2")], weight = "unweighted") # two ordinal variables only, allows partial agreement
-
-
-# Weighted kappa ordinal scales
-kappa2(diagnoses[, c("rater1", "rater2")], weight = "equal") # linear weightes of the differences
-
-kappa2(diagnoses[, c("rater1", "rater2")], weight = "squared") # squared weightes of the differences
-
-
-
-```
-
-p-value less than 0.05, mean that raters agree more than what you would expect by chance.
-
-### Fleiss'kappa
-
-for two or more categorical variables (nominal or ordinal)
-
-for three or more raters
-
--   0 = no agreement
-
--   1 = perfect agreement
-
-```{r}
-# no assumption of same raters for all subjects
-kappam.fleiss(diagnoses[, 1:3])
-```
-
-## Krippendorff's Alpha
-
-calculates disagreement among raters.
-
-$$
-\frac{\text{observed disagreement}}{\text{expected disagreement}}
-$$
-
-Rules of thumb by [@Shelley_1984]
-
--   $\alpha \ge 0.08$ = good
-
--   $\alpha \ge 0.667$ = acceptable lower limit
-
-```{r}
-nmm <-
-    matrix(
-        c(
-            1,
-            1,
-            NA,
-            1,
-            2,
-            2,
-            3,
-            2,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            3,
-            2,
-            2,
-            2,
-            2,
-            1,
-            2,
-            3,
-            4,
-            4,
-            4,
-            4,
-            4,
-            1,
-            1,
-            2,
-            1,
-            2,
-            2,
-            2,
-            2,
-            NA,
-            5,
-            5,
-            5,
-            NA,
-            NA,
-            1,
-            1,
-            NA,
-            NA,
-            3,
-            NA
-        ),
-nrow = 4
+#| label: tbl-irr-map
+#| echo: false
+irr_map <- data.frame(
+  Coefficient = c("Percent agreement", "Cohen's κ", "Weighted κ",
+                  "Fleiss's κ", "Krippendorff's α", "Kendall's W",
+                  "ICC"),
+  Raters = c("2+", "2", "2", "3+", "2+", "3+", "2+"),
+  Scale = c("Any", "Nominal", "Ordinal", "Nominal/Ordinal",
+            "Nominal–Ratio", "Ordinal (ranks)", "Interval/Continuous"),
+  `Chance corrected` = c("No", "Yes", "Yes", "Yes", "Yes", "Yes (ties)", "Yes"),
+  `Handles missing` = c("No", "No", "No", "Limited", "Yes", "No", "Limited"),
+  check.names = FALSE
 )
- # first assume the default nominal classification
- kripp.alpha(nmm)
- # now use the same data with the other three methods
- kripp.alpha(nmm, "ordinal")
- kripp.alpha(nmm, "interval")
- kripp.alpha(nmm, "ratio") 
+knitr::kable(
+  irr_map,
+  caption = "A map of inter-rater reliability coefficients. All chance-corrected
+  measures instantiate Equation @eq-chance-correction; they differ in the rating
+  scale they assume, the number of raters they admit, and how they model chance
+  agreement and missing data."
+)
 ```
 
-### Kendall's W
+### Why Raw Agreement Misleads
 
-Continuous ordinal ratings
+The naive measure of reliability is **percent agreement**: the share of items two
+raters label identically,
+$$
+p_o = \frac{\text{number of agreements}}{\text{number of items}} \times 100.
+$$
+Its appeal is transparency; its flaw is fatal. Percent agreement credits the
+agreement two raters would reach even if both labeled items by coin flip, and
+that baseline grows with category imbalance. Consider a rare event coded present
+in 5% of items. Two raters who blindly code everything "absent" agree 90% of the
+time and never once detect the event—yet percent agreement applauds them. The
+statistic conflates skill with the base rate, so it is uninterpretable across
+studies with different category distributions. Chance correction
+(@eq-chance-correction) exists precisely to strip out this base-rate-driven
+floor.
 
 ```{r}
-rtr1 <- c(1, 6, 3, 2, 5, 4)
-rtr2 <- c(1, 5, 6, 2, 4, 3)
-rtr3 <- c(2, 3, 6, 5, 4, 1)
-ratings <- cbind(rtr1, rtr2, rtr3)
-library(DescTools)
-KendallW(ratings, test=TRUE)
+#| label: percent-agreement
+data("diagnoses", package = "irr")  # 30 patients, 6 raters, psychiatric dx
+head(diagnoses, 5)
+agree(diagnoses[, 1:2])             # raw percent agreement, raters 1 and 2
 ```
 
-### Intraclass correlation coefficients
+The `diagnoses` data record six psychiatrists independently assigning each of 30
+patients to one of five diagnostic categories—a canonical nominal-coding problem
+isomorphic to coding open-ended responses into themes. Raw agreement looks
+reassuring, but we cannot yet say whether it reflects genuine reliability or the
+prevalence of common diagnoses.
 
-[@Shrout_1979]
+## Cohen's Kappa: Two Raters, Nominal Categories
 
-#### Continuous scales
+@Cohen_1960 supplied the first widely adopted correction for two raters and
+nominal categories. Cohen's $\kappa$ takes $p_o$ as the observed proportion of
+exact agreement and models chance under the assumption that each rater applies
+their *own* marginal distribution of category usage independently of the other:
 
-Decision:
+$$
+\kappa = \frac{p_o - p_e}{1 - p_e},
+\qquad
+p_e = \sum_{k=1}^{K} \hat{p}_{1k}\,\hat{p}_{2k},
+$$ {#eq-cohen-kappa}
 
--   model:
+where $\hat{p}_{1k}$ and $\hat{p}_{2k}$ are the marginal proportions with which
+rater 1 and rater 2 use category $k$, and $K$ is the number of categories. The
+product $\hat{p}_{1k}\,\hat{p}_{2k}$ is the chance probability that both land on
+category $k$ when acting independently; summing over $k$ gives total expected
+agreement. Substituting into @eq-chance-correction yields the coefficient. Cohen's
+$\kappa$ presumes a *fixed* pair of raters (the marginals are specific to those
+two coders) and *exhaustive, mutually exclusive* categories, and it treats every
+disagreement as equally severe—appropriate when categories are nominal but
+wasteful when they are ordinal.
 
-    -   `"oneway"` when subjects are random effects
+To read a $\kappa$ value, the field relies on the verbal benchmarks of
+@Landis_1977, reproduced in @tbl-landis. These thresholds are conventions, not
+laws: they ignore $K$ (a given $\kappa$ is harder to achieve with few categories)
+and the cost of disagreement, so they should anchor judgment rather than replace
+it.
 
-    -   `"twoway"` when subjects and raters are random effects
+```{r}
+#| label: tbl-landis
+#| echo: false
+landis <- data.frame(
+  `Kappa range` = c("< 0.00", "0.00 – 0.20", "0.21 – 0.40",
+                    "0.41 – 0.60", "0.61 – 0.80", "0.81 – 1.00"),
+  Interpretation = c("Poor (worse than chance)", "Slight", "Fair", "Moderate",
+                     "Substantial", "Almost perfect"),
+  check.names = FALSE
+)
+knitr::kable(
+  landis,
+  caption = "Benchmarks for chance-corrected agreement following @Landis_1977.
+  The bands are interpretive conventions, not significance thresholds, and do not
+  adjust for the number of categories."
+)
+```
 
--   type:
+### Weighting Ordinal Disagreements
 
-    -   `"agreement"` differences in mean ratings among raters are of interest
+When categories are ordered—Likert intensities, severity grades, sentiment from
+*very negative* to *very positive*—treating a one-step miss as harshly as a
+five-step miss discards information. **Weighted kappa** generalizes
+@eq-cohen-kappa by attaching a disagreement weight $w_{jk}$ to each cell of the
+$K \times K$ rating table, with $w_{kk} = 0$ on the diagonal and weights
+increasing in the distance $|j-k|$ off it. Both observed and expected
+disagreement are then weighted:
 
-    -   `"consistency"` is default
+$$
+\kappa_w = 1 - \frac{\sum_{j,k} w_{jk}\, p_{o,jk}}{\sum_{j,k} w_{jk}\, p_{e,jk}},
+$$ {#eq-weighted-kappa}
 
--   unit
+where $p_{o,jk}$ is the observed and $p_{e,jk} = \hat{p}_{1j}\hat{p}_{2k}$ the
+chance proportion of the $(j,k)$ cell. Two weighting schemes dominate. *Linear*
+weights, $w_{jk} = |j-k|$, penalize disagreement in proportion to the number of
+steps; *quadratic* weights, $w_{jk} = (j-k)^2$, penalize large discrepancies far
+more steeply. The choice is substantive: quadratic weights are appropriate when a
+two-category error is much worse than two one-category errors, and—usefully—the
+quadratically weighted $\kappa$ coincides with a two-way intraclass correlation
+under mild conditions, linking the kappa and ICC families.[^kappa-icc]
 
-    -   `"single"` single value
+[^kappa-icc]: The numerical equivalence of quadratically weighted $\kappa$ and
+the two-way ICC holds when the marginal rating distributions are equal across
+raters; it fails as the marginals diverge, which is one reason ICC is preferred
+when raters use the scale with systematically different generosity (a *prevalence*
+or *bias* problem the unweighted $\kappa$ also suffers, the so-called kappa
+paradox).
 
-    -   `"average"` mean of several ratings
+```{r}
+#| label: cohen-kappa
+dx2 <- diagnoses[, c("rater1", "rater2")]
+kappa2(dx2, weight = "unweighted")  # nominal: all disagreements equal
+kappa2(dx2, weight = "equal")       # linear weights for ordinal scales
+kappa2(dx2, weight = "squared")     # quadratic weights penalize large gaps
+```
 
-```{r, message=FALSE}
+The accompanying $z$-test reports whether $\kappa$ exceeds zero; a $p$-value
+below 0.05 indicates raters agree more than chance. That is a low bar—rejecting
+$\kappa = 0$ is not evidence of *good* reliability—so the point estimate read
+against @tbl-landis, with a confidence interval, remains the substantive summary.
+`DescTools::CohenKappa()` returns that interval directly.
+
+```{r}
+#| label: cohen-kappa-ci
+DescTools::CohenKappa(table(dx2$rater1, dx2$rater2), conf.level = 0.95)
+```
+
+## Fleiss's Kappa: Many Raters
+
+Cohen's $\kappa$ is structurally limited to two raters. Coding teams routinely
+use three or more, and—as in the `diagnoses` study—the particular raters
+assigned to an item may vary. @eq-cohen-kappa cannot accommodate this because its
+$p_e$ is built from two specific raters' marginals. **Fleiss's kappa** generalizes
+to any number of raters by redefining agreement *per item* rather than per rater
+pair, and by assuming the raters for each item are a random draw from a larger
+pool, so a single category distribution describes chance for all items.
+
+For $n$ items, $m$ raters per item, and $K$ categories, let $n_{ik}$ be the number
+of raters who assign item $i$ to category $k$. The per-item observed agreement is
+the proportion of agreeing rater pairs,
+$$
+P_i = \frac{1}{m(m-1)} \left( \sum_{k=1}^{K} n_{ik}^2 - m \right),
+$$
+and $\bar{P} = \tfrac{1}{n}\sum_i P_i$ is mean observed agreement. Expected
+agreement uses the pooled category proportions
+$\bar{p}_k = \tfrac{1}{nm}\sum_i n_{ik}$, giving
+$$
+\bar{P}_e = \sum_{k=1}^{K} \bar{p}_k^2,
+\qquad
+\kappa_{\text{Fleiss}} = \frac{\bar{P} - \bar{P}_e}{1 - \bar{P}_e}.
+$$ {#eq-fleiss-kappa}
+
+This is again @eq-chance-correction, now with multi-rater definitions of observed
+and expected agreement. The key identifying assumption—that raters are
+exchangeable draws from a common pool—is what permits a single $\bar{p}_k$ to
+stand in for every item's chance baseline; it is appropriate when coders are
+interchangeable but not when specific, non-substitutable experts are deliberately
+paired.
+
+```{r}
+#| label: fleiss-kappa
+kappam.fleiss(diagnoses)  # all six raters; no fixed-pairing assumption
+```
+
+A related multi-rater measure, **Light's kappa**, instead averages Cohen's
+$\kappa$ over every pair of raters [@Cohen_1960]. It retains Cohen's pairwise,
+fixed-rater chance model while summarizing across the team, and is preferable when
+raters are *not* exchangeable—each pair's marginals are honored before averaging.
+
+```{r}
+#| label: lights-kappa
+kappam.light(diagnoses)  # mean of pairwise Cohen's kappa
+```
+
+## Krippendorff's Alpha: A General Reliability Coefficient
+
+The kappa family carries assumptions that real coding violates: it presumes
+complete data (every rater codes every item), a fixed measurement level, and—for
+Fleiss—exchangeable raters. **Krippendorff's $\alpha$** dispenses with these. It
+is the most general agreement coefficient: it accommodates any number of raters,
+missing values, unequal numbers of raters per item, and any measurement
+level—nominal, ordinal, interval, or ratio—through a single pluggable difference
+function. Rather than correcting observed *agreement*, $\alpha$ is built on
+observed and expected *disagreement*:
+
+$$
+\alpha = 1 - \frac{D_o}{D_e},
+$$ {#eq-krippendorff}
+
+which is @eq-chance-correction rearranged: writing $S = 1 - (1-p_o)/(1-p_e)$ and
+identifying $1 - p_o$ with observed disagreement $D_o$ and $1 - p_e$ with expected
+disagreement $D_e$ makes the equivalence explicit. The observed disagreement
+$D_o$ aggregates, over all pairs of ratings of the same item, a metric
+$\delta^2(c,c')$ measuring how far apart categories $c$ and $c'$ are; the expected
+disagreement $D_e$ aggregates the same metric over all pairs drawn from the data
+*irrespective* of item, i.e., under independence. The genius of the construction
+is that the measurement level enters only through $\delta^2$: it is an indicator
+$\mathbb{1}[c \neq c']$ for nominal data, a squared rank distance for ordinal
+data, and $(c-c')^2$ for interval data. One estimator therefore spans all scales,
+and because $D_o$ and $D_e$ are computed over *coincidences* (pairs of available
+ratings) rather than complete records, missing data are handled natively.
+
+For interpretation, @Shelley_1984 recommend treating $\alpha \geq 0.80$ as
+acceptable reliability and $\alpha \geq 0.667$ as the lowest threshold at which
+tentative conclusions may be drawn—a deliberately conservative bar reflecting the
+coefficient's use as a gatekeeper for publishable coding.
+
+> Reliability data must be reproducible: a coefficient certifies that the data
+> would arise again under independent coding by other competent coders applying
+> the same instructions. By this standard, variables with $\alpha < 0.667$ should
+> not be analyzed, and only $\alpha \geq 0.80$ licenses confident substantive
+> claims [@Shelley_1984].
+
+The following example—four observers rating twelve units, with missing entries
+coded `NA`—computes $\alpha$ under each measurement level so the role of
+$\delta^2$ is visible: the same coincidences yield different coefficients purely
+because the distance between categories is defined differently.
+
+```{r}
+#| label: krippendorff
+ratings_mat <- matrix(
+  c(1, 1, NA, 1, 2, 2, 3, 2, 3, 3, 3, 3,
+    3, 3, 3, 3, 2, 2, 2, 2, 1, 2, 3, 4,
+    4, 4, 4, 4, 1, 1, 2, 1, 2, 2, 2, 2,
+    NA, 5, 5, 5, NA, NA, 1, 1, NA, NA, 3, NA),
+  nrow = 4, byrow = TRUE      # 4 observers (rows) x 12 units (columns)
+)
+kripp.alpha(ratings_mat, method = "nominal")   # delta = 1[c != c']
+kripp.alpha(ratings_mat, method = "ordinal")   # rank-distance metric
+kripp.alpha(ratings_mat, method = "interval")  # squared difference
+kripp.alpha(ratings_mat, method = "ratio")     # ratio-scale metric
+```
+
+Moving from `nominal` to `interval` typically *raises* $\alpha$ when most
+disagreements are between adjacent categories, because the metric awards partial
+credit for near misses—exactly the ordinal logic of weighted kappa, generalized.
+Reporting the measurement level alongside the coefficient is therefore essential:
+an unqualified "$\alpha = 0.74$" is incomplete.
+
+## Kendall's W: Agreement Among Rankings
+
+Some qualitative tasks ask raters not to *categorize* items but to *rank* them:
+ordering brand concepts by appeal, prioritizing themes by salience, or sorting
+stimuli. Agreement is then concordance among orderings, and the natural
+coefficient is **Kendall's coefficient of concordance** $W$. For $m$ raters each
+ranking $n$ objects, let $R_i$ be the sum of ranks object $i$ receives. If raters
+agree, some objects accumulate consistently high rank sums and others
+consistently low, so the $R_i$ are *dispersed*; if raters are random, every object
+draws a middling sum and the $R_i$ cluster. $W$ normalizes the realized dispersion
+by its maximum:
+
+$$
+W = \frac{12 \sum_{i=1}^{n} \left(R_i - \bar{R}\right)^2}{m^2\,(n^3 - n)},
+\qquad
+\bar{R} = \frac{m(n+1)}{2},
+$$ {#eq-kendall-w}
+
+where the denominator $m^2(n^3-n)/12$ is the variance of the rank sums under
+perfect agreement, so $W \in [0,1]$ with $1$ denoting unanimous ordering and $0$
+denoting no association.[^kendall-corr] Under the null of no concordance,
+$m(n-1)W$ is approximately $\chi^2_{n-1}$, giving a significance test; the
+correction for tied ranks reduces the denominator accordingly.
+
+[^kendall-corr]: $W$ relates linearly to the mean Spearman rank correlation
+$\bar{r}_s$ across all rater pairs via $W = [(m-1)\bar{r}_s + 1]/m$. Because $W$
+is bounded in $[0,1]$ it cannot represent *systematic disagreement* (negative
+association), which $\bar{r}_s$ can—a limitation to keep in mind when raters may be
+genuinely opposed rather than merely noisy.
+
+```{r}
+#| label: kendall-w
+rankings <- cbind(
+  rater1 = c(1, 6, 3, 2, 5, 4),
+  rater2 = c(1, 5, 6, 2, 4, 3),
+  rater3 = c(2, 3, 6, 5, 4, 1)
+)
+DescTools::KendallW(rankings, test = TRUE)
+```
+
+## Intraclass Correlation: Reliability as Variance Decomposition
+
+When ratings are *continuous*—perceived quality on a 0–100 scale, sentiment
+scores, expert intensity judgments—agreement becomes a question about variance.
+The **intraclass correlation coefficient** (ICC) of @Shrout_1979 asks: of all the
+variation in the ratings, how much is true between-subject signal versus rater
+noise? Intuitively, a measurement is reliable when subjects differ from one
+another far more than raters differ on the same subject. The ICC formalizes this
+as the share of total variance attributable to subjects.
+
+The ICC is defined inside a variance-components model. Let $y_{ij}$ be the rating
+of subject $i$ by rater $j$. The two-way model decomposes it as
+$$
+y_{ij} = \mu + \alpha_i + \beta_j + \varepsilon_{ij},
+\qquad
+\alpha_i \sim \mathcal{N}(0, \sigma_\alpha^2),\;
+\beta_j \sim \mathcal{N}(0, \sigma_\beta^2),\;
+\varepsilon_{ij} \sim \mathcal{N}(0, \sigma_\varepsilon^2),
+$$ {#eq-icc-model}
+
+where $\mu$ is the grand mean, $\alpha_i$ the subject effect (the signal we want
+to measure reliably), $\beta_j$ the rater effect (systematic leniency or severity
+of rater $j$), and $\varepsilon_{ij}$ residual error. The variance components are
+estimated from the rating table's mean squares by analysis of variance. The ICC
+is then a ratio of variance components, but *which* ratio depends on three design
+decisions that must be stated before estimation, because they change the
+estimand—not merely its estimate:
+
+1. **Model.** A *one-way* model treats only subjects as random and folds rater
+   and error into a single residual; it applies when each subject is rated by a
+   *different*, randomly chosen set of raters. A *two-way* model adds a rater
+   effect $\beta_j$ and applies when the *same* raters score *every* subject.
+2. **Definition: agreement vs. consistency.** *Absolute agreement* counts rater
+   bias $\sigma_\beta^2$ as error—two raters who are perfectly correlated but
+   offset by ten points do not *agree*. *Consistency* excludes $\sigma_\beta^2$,
+   asking only whether raters rank-order subjects alike. Use agreement when the
+   rating's absolute level is interpreted; consistency when only relative
+   standing matters.
+3. **Unit: single vs. average.** Report reliability of a *single* rater's score
+   when one coder will rate future items, or of the *average* of $k$ raters when
+   the mean of the panel is the operative measurement. Averaging suppresses error,
+   so the average-measure ICC is mechanically higher (the Spearman–Brown
+   relationship).
+
+The two-way, absolute-agreement, single-measure ICC makes these choices concrete:
+$$
+\text{ICC}(\text{agreement}, 1) =
+\frac{\sigma_\alpha^2}
+     {\sigma_\alpha^2 + \sigma_\beta^2 + \sigma_\varepsilon^2}.
+$$ {#eq-icc-agreement}
+The consistency variant simply drops $\sigma_\beta^2$ from the denominator,
+mechanically raising the coefficient; the gap between the two quantifies how much
+rater bias inflates apparent agreement. @fig-icc-tree maps the decisions to the
+estimand.
+
+```{mermaid}
+%%| label: fig-icc-tree
+%%| fig-cap: "Choosing an ICC. The three design decisions of @Shrout_1979—model, definition, and unit—jointly determine which variance ratio is estimated. Each choice changes the estimand, so it must be justified by the rating design, not chosen to maximize the coefficient."
+flowchart TD
+  A["Continuous ratings"] --> B{"Same raters score<br/>every subject?"}
+  B -->|"No: raters vary<br/>by subject"| C["One-way model<br/>ICC(1,&middot;)"]
+  B -->|"Yes: fixed panel"| D{"Is the absolute<br/>level interpreted?"}
+  D -->|"Yes"| E["Two-way<br/>Absolute agreement"]
+  D -->|"No: only ranking<br/>matters"| F["Two-way<br/>Consistency"]
+  C --> G{"Score future items<br/>with one rater<br/>or a panel mean?"}
+  E --> G
+  F --> G
+  G -->|"One rater"| H["Single-measure ICC"]
+  G -->|"Panel mean of k"| I["Average-measure ICC<br/>(Spearman&ndash;Brown higher)"]
+```
+
+The `anxiety` data—three raters scoring the same twenty subjects—illustrate the
+two-way, absolute-agreement, single-measure case.
+
+```{r}
+#| label: icc-anxiety
+#| message: false
+data("anxiety", package = "irr")
 icc(anxiety,
-    model = "twoway", # can be "oneway"
-    type = "agreement", # can be "consistency"
-    unit = "single" # can be "average"
-    )
+    model = "twoway",      # same raters score all subjects
+    type  = "agreement",   # absolute level matters; counts rater bias as error
+    unit  = "single")      # reliability of one rater's score
 ```
 
-`DescTools` package
+`DescTools::ICC()` reports all six ICC forms of @Shrout_1979 at once, which is the
+disciplined way to expose how sensitive the conclusion is to the design
+assumptions: a reliability that looks "substantial" as a consistency,
+average-measure coefficient can collapse as a single-rater, absolute-agreement
+coefficient.
 
 ```{r}
-rtr1 <- c(9, 6, 8, 7, 10, 6)
-rtr2 <- c(2, 1, 4, 1,  5, 2)
-rtr3 <- c(5, 3, 6, 2,  6, 4)
-rtr4 <- c(8, 2, 8, 6,  9, 7)
-ratings <- cbind(rtr1, rtr2, rtr3, rtr4)
-DescTools::ICC(ratings)
+#| label: icc-desctools
+panel <- cbind(
+  rater1 = c(9, 6, 8, 7, 10, 6),
+  rater2 = c(2, 1, 4, 1,  5, 2),
+  rater3 = c(5, 3, 6, 2,  6, 4),
+  rater4 = c(8, 2, 8, 6,  9, 7)
+)
+DescTools::ICC(panel)
 ```
 
-### Light's kappa
+Here the raters track one another's *ordering* of subjects well but sit at very
+different absolute levels (rater 1 is systematically generous, rater 2 severe).
+Consistency ICCs are accordingly high while agreement ICCs are low—a textbook case
+of why @eq-icc-agreement, not the consistency form, is the honest choice when the
+score's level will be interpreted.
 
--   average of Cohen's Kappa if using more than two categorical variables
+## Choosing and Reporting a Coefficient
 
-```{r}
-# Light’s kappa: multiple raters
-kappam.light(diagnoses[, 1:3])
-```
+The coefficients are not interchangeable, and selecting one post hoc to maximize
+the reported number is a form of specification search. The choice is dictated by
+the data's structure—measurement level, number of raters, presence of missing
+values, and whether the rating's absolute level carries meaning—as mapped in
+@tbl-irr-map and @fig-icc-tree. Krippendorff's $\alpha$ is the safest default for
+categorical coding because it degrades gracefully to the others' use cases while
+tolerating missing data and any measurement level; the kappa coefficients remain
+standard and expected in many literatures; the ICC is mandatory for continuous
+ratings.
+
+Three reporting disciplines separate credible IRR from box-checking. First,
+report the *coefficient with a confidence interval*, not a bare point estimate: a
+$\kappa$ of 0.70 from 20 items is far weaker evidence than the same value from
+500. Second, *state every assumption that defines the estimand*—the measurement
+level and difference metric for $\alpha$, the model/definition/unit triple for the
+ICC—because, as the examples show, the same data yield materially different
+coefficients under different assumptions. Third, remember that reliability bounds
+but does not establish validity: a perfectly reliable code can still measure the
+wrong construct, and the validity argument belongs to @sec-measurement-scales.
+High agreement earns the right to interpret the codes; it does not, by itself,
+make the interpretation correct.
+
+## Key Takeaways
+
+- Inter-rater reliability is the methodological hinge of qualitative coding and of
+  every human-labeled "ground truth" used to validate text- and image-mining
+  models (@sec-measurement-scales).
+- Raw percent agreement is uninterpretable because it credits agreement expected
+  from category base rates; all defensible coefficients chance-correct via
+  @eq-chance-correction.
+- The kappa family (@eq-cohen-kappa, @eq-weighted-kappa, @eq-fleiss-kappa) handles
+  nominal and ordinal categories; weighting awards partial credit for near misses
+  on ordered scales [@Cohen_1960; @Landis_1977].
+- Krippendorff's $\alpha$ (@eq-krippendorff) is the general coefficient—any number
+  of raters, missing data, any measurement level—and its thresholds gatekeep
+  publishable coding [@Shelley_1984]; Kendall's $W$ (@eq-kendall-w) handles
+  rankings.
+- For continuous ratings, the ICC (@eq-icc-model, @eq-icc-agreement) embeds
+  reliability in a variance-components model whose model/definition/unit choices
+  change the estimand and must be justified by the design, not the result
+  [@Shrout_1979].
+- Report coefficients with confidence intervals and explicit assumptions, and
+  never mistake reliability for validity.

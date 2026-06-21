@@ -1,192 +1,403 @@
-# Surveys
+# Surveys and Experiments {#sec-surveys}
 
-@chandon2005 posits that "self-generated validity" can obscure the link between purchase intentions and purchase behavior. On average, the link between latent intentions and purchase behavior is 58% stronger among survey consumers that that of nonsurveyed consumers.
+Most of what marketing researchers want to know—what consumers intend to buy, how
+much they value an attribute, whether a campaign caused a sale—cannot be read
+directly off transactional data. It must be *elicited* or *manufactured*: elicited
+through **surveys** that ask people to report latent states, or manufactured through
+**experiments** that intervene on the world and observe the response. This chapter
+treats the two as a matched pair. Both are instruments for recovering a quantity
+that the analyst cannot observe, and both fail in characteristic, formalizable ways.
+The survey's central problem is *error*—the gap between what respondents report and
+the population truth—decomposed into how respondents are selected and how they
+answer. The experiment's central problem is *validity*—whether the measured effect
+is the causal effect, generalizes beyond the lab, and operationalizes the construct
+the researcher intended.
 
-@sheppard1988 found that the link between intentions and behavior is about 0.53
+The two instruments also interact, and not benignly. The very act of surveying a
+consumer can change that consumer's later behavior, so a survey designed to *measure*
+intentions can *create* the intentions it claims to observe. Recognizing such
+feedback is the first step toward using either instrument credibly. By the end of the
+chapter the reader should be able to state the total-survey-error decomposition,
+build an unbiased estimator from a known sampling design, correct cross-respondent
+incomparability with anchoring vignettes, and lay out an experiment whose causal
+claim survives scrutiny.
 
-A little more improvement can be achieved in predictive power if we use segmentation before forecasting sales based on historical purchases and purchase intention @morwitz1992
+## Surveys as Measurement
 
-|         | Sampling                        | Interviews            | Data environment |
-|---------|---------------------------------|-----------------------|------------------|
-| 1st era | area probability                | face-to-face          | stand-alone      |
-| 2nd ear | random digital dial probability | telephone             | stand-alone      |
-| 3rd era | non-probability                 | computer-administered | linked           |
+A survey is a measurement device whose output is a set of self-reports. Two
+properties make it powerful and dangerous in equal measure. It is *cheap*, so it
+scales to populations and to questions—intentions, attitudes, satisfaction—that
+leave no behavioral trace. And it is *reactive*: the instrument can perturb the
+state it measures.
 
-: SICSS Summer 2020 -Survey Research in the Digital Age by professor **Matthew Salganik**
+### Self-Generated Validity: When Measurement Changes Behavior
 
-Total survey error framework [@Groves_2010]
+The canonical reactivity result concerns purchase intentions. Researchers routinely
+ask "How likely are you to buy product $X$ in the next month?" and treat the answer
+as a noisy reading of a pre-existing propensity. @chandon2005 show that the reading
+is not passive. Merely asking the intentions question increases the *correspondence*
+between stated intentions and subsequent purchase—a phenomenon they call
+**self-generated validity**. The respondent, prompted to articulate an intention,
+forms or crystallizes an attitude that did not fully exist before the question and
+then acts on it. The intention–behavior link is therefore endogenous to the
+measurement: it is, on average, **58% stronger among surveyed consumers than among
+otherwise-comparable nonsurveyed consumers** [@chandon2005]. The implication is
+sharp. An intentions survey does not merely forecast demand; it is a light-touch
+*intervention* that nudges demand. A forecast calibrated on surveyed respondents will
+overstate the predictability of an unsurveyed population.
 
-Insight:
+> **Self-generated validity.** The increase in the predictive validity of a stated
+> intention that is *caused by the act of stating it*. Asking the question
+> reactively strengthens the very intention–behavior correlation the researcher
+> intends to measure passively [@chandon2005].
 
-1.  Errors can come from bias or variance
-2.  Total survey error = Measurement error + representation error
+### The Intention–Behavior Correlation
 
-![](images/frame_0_delay-0.01s.jpg){style="display: block; margin: 1em auto" width="100%"}
+How tightly do intentions track behavior once reactivity is acknowledged? The
+meta-analytic benchmark from the theory of reasoned action places the
+intention–behavior correlation near $\rho \approx 0.53$ across domains
+[@sheppard1988]. This is a substantial but far-from-deterministic association: stated
+intentions explain on the order of $\rho^2 \approx 28\%$ of the variance in
+subsequent behavior. The residual is the space in which forecasting models earn their
+keep. @morwitz1992 show that **segmenting before forecasting** materially improves
+predictive power: a model that uses historical purchase behavior together with stated
+intention, and that allows the mapping from intention to purchase to differ across
+consumer segments, forecasts sales better than a pooled model that imposes a single
+intention–purchase slope. The intuition is that the intention–behavior gap is
+heterogeneous—deliberate planners realize their stated intentions far more reliably
+than impulsive or constrained consumers—so pooling averages over groups whose mapping
+functions genuinely differ.
 
-\[@Groves_2010, Fig. 3\]
+The practical sequence is summarized in @fig-intent-pipeline.
 
+```{mermaid}
+%%| label: fig-intent-pipeline
+%%| fig-cap: "From elicited intentions to a sales forecast. The dashed feedback edge is self-generated validity: the act of measurement perturbs the behavior being forecast."
+flowchart LR
+    A["Elicit stated<br/>intention"] --> B["Segment respondents<br/>(planners vs. impulsive,<br/>constrained, etc.)"]
+    B --> C["Estimate segment-specific<br/>intention to purchase mapping"]
+    C --> D["Aggregate to<br/>sales forecast"]
+    A -. "self-generated<br/>validity" .-> E["Actual purchase<br/>behavior"]
+    D --> E
+```
 
+## The Total Survey Error Framework
 
-Probability and Non-probability Sampling
-
--   Probability sample: every unit from a frame population has a known and non-zero probability of inclusion
--   With weighting, we can recover bias in your sampling.
-
-<!-- -->
-
--   Non-response problem
-
-Horvitz-Thompson estimator (or bias estimator):
-
+A survey statistic can miss the truth for two broad reasons: the *people* who answer
+are not the people the analyst wanted, and the *answers* they give are not the values
+the analyst wanted. The **total survey error** (TSE) framework organizes every way a
+survey can go wrong under these two headings and, orthogonally, separates systematic
+error (**bias**) from sampling-driven dispersion (**variance**) [@Groves_2010].
+Formally, for an estimator $\hat\theta$ of a population target $\theta$, the relevant
+loss is mean squared error,
 $$
-\hat{\bar{y}} = \frac{\sum_{i \in s}y_i / \pi_i}{N}
+\mathrm{MSE}(\hat\theta) = \underbrace{\bigl(\mathbb{E}[\hat\theta] - \theta\bigr)^2}_{\text{bias}^2}
+                          + \underbrace{\operatorname{Var}(\hat\theta)}_{\text{variance}},
+$$ {#eq-tse-mse}
+and TSE decomposes both terms by *source*. The first decomposition is by stage of the
+survey process:
 $$
+\text{Total Survey Error} = \underbrace{\text{Measurement Error}}_{\text{the answers}}
+                          + \underbrace{\text{Representation Error}}_{\text{the people}}.
+$$ {#eq-tse-decomp}
 
-where $\pi_i$ = person i's probability of inclusion (we have to estimate)
+The **measurement** branch tracks a single response from the target *construct* the
+analyst cares about, to the *measurement* the question actually taps, to the
+*response* the person gives, to the *edited datum* stored after processing—accruing
+validity error, response error, and processing error along the way. The
+**representation** branch tracks the *units* from the target *population*, to the
+*sampling frame* (the list from which units are drawn), to the *sample*, to the
+*respondents* who actually answer—accruing coverage error, sampling error, and
+nonresponse error. @fig-tse renders both branches.
 
-[Wiki Survey](https://www.allourideas.org/)
+```{mermaid}
+%%| label: fig-tse
+%%| fig-cap: "The total survey error framework: a measurement (left) and a representation (right) branch, each accumulating distinct error sources from construct/population down to the final respondent-level datum. Adapted in original form from the decomposition in @Groves_2010."
+flowchart TB
+    subgraph M["Measurement (the answers)"]
+        C1["Construct"] -->|validity| C2["Measurement"]
+        C2 -->|response error| C3["Response"]
+        C3 -->|processing error| C4["Edited response"]
+    end
+    subgraph R["Representation (the people)"]
+        P1["Target population"] -->|coverage error| P2["Sampling frame"]
+        P2 -->|sampling error| P3["Sample"]
+        P3 -->|nonresponse error| P4["Respondents"]
+    end
+    C4 --> S["Survey statistic"]
+    P4 --> S
+```
 
--   Create a survey that leverages the power of people
+The framework is more than a taxonomy: it tells the analyst *where to spend the next
+dollar*. A statistic can be unbiased yet imprecise (a clean design with a small
+sample), or precise yet badly biased (a large but unrepresentative convenience
+panel). Because the two failure modes call for opposite remedies—more units versus a
+better frame—naming the dominant source is the prerequisite to fixing it.
 
-Mass Collaboration
+### Three Eras of Survey Practice
 
--   Human Computation: Train People -> Train Lots of People -> Train Machine
+The TSE trade-offs have not been static; the technology of contacting respondents has
+reshaped which errors bind. @tbl-eras sketches the three eras now standard in survey
+methodology. The trajectory is one of falling cost and falling response rates: each
+era widened reach and cut expense while making the representation branch harder to
+control, culminating in non-probability online panels that must lean on modeling
+rather than design to justify inference.
 
-    -   Cleaning
+| Era | Sampling | Interview mode | Data environment |
+|-----|----------|----------------|------------------|
+| First | Area probability | Face-to-face | Stand-alone |
+| Second | Random-digit-dial probability | Telephone | Stand-alone |
+| Third | Non-probability | Computer-administered | Linked |
 
-    -   De-biasing
+: Three eras of survey research, after the design taxonomy popularized in survey methodology. {#tbl-eras}
 
-    -   Combining
+## Probability and Non-Probability Sampling
 
--   Open Call:
+The representation branch lives or dies on the **sampling design**. A sample is a
+**probability sample** if every unit in the frame has a *known, non-zero* probability
+of inclusion. This single property is what licenses design-based inference: because
+the inclusion probabilities are known, the analyst can *reweight* the sample to
+recover an unbiased estimate of the population total even when the design
+oversamples some units.
 
-    -   solutions are easier to check than generate
+### The Horvitz–Thompson Estimator
 
-    -   required specialized skills
+Let $\pi_i = \Pr(i \in s)$ be unit $i$'s inclusion probability and let $y_i$ be the
+quantity of interest. The **Horvitz–Thompson** estimator of the population mean
+weights each sampled observation by the inverse of its inclusion probability,
+$$
+\hat{\bar y}_{\text{HT}} = \frac{1}{N}\sum_{i \in s} \frac{y_i}{\pi_i},
+$$ {#eq-ht}
+where $N$ is the population size and $s$ the realized sample. Inverse-probability
+weighting is the formal content of the slogan "weighting recovers
+representativeness": a unit sampled at half the average rate stands in for twice as
+many population members and so receives twice the weight. The estimator is
+*design-unbiased*—$\mathbb{E}[\hat{\bar y}_{\text{HT}}] = \bar y$ under the
+randomization that generated $s$—for *any* design with strictly positive $\pi_i$,
+which is precisely why the positivity requirement is non-negotiable.[^positivity]
 
--   Distributed Data Collection:
+[^positivity]: If $\pi_i = 0$ for some unit, that unit can never enter the sample and
+no weight can resurrect it; the corresponding stratum is structurally invisible and
+no amount of reweighting recovers it. This is the formal statement of coverage error
+in @eq-tse-decomp.
 
-    -   People go out and collect data
+A short simulation makes the bias correction concrete. We construct a population in
+which the outcome is correlated with the inclusion probability—the worst case for a
+naive sample mean—and verify that the Horvitz–Thompson estimator recovers the truth
+while the unweighted mean does not.
 
-    -   quality check
+```{r ht-estimator, message=FALSE, warning=FALSE}
+set.seed(31)
 
-[Fragile family challenges](https://www.fragilefamilieschallenge.org/)
+N <- 100000
+# A covariate that drives BOTH the outcome and the sampling probability,
+# so the naive sample mean is biased and weighting is required.
+x      <- runif(N)
+y      <- 2 + 3 * x + rnorm(N, sd = 0.5)        # population outcome
+pop_mean <- mean(y)
 
+# Unequal-probability design: high-x units are sampled more often.
+pi_i   <- 0.02 + 0.08 * x                         # inclusion probability in (0.02, 0.10)
+in_sample <- runif(N) < pi_i
 
+y_s    <- y[in_sample]
+pi_s   <- pi_i[in_sample]
+
+naive_mean <- mean(y_s)                           # ignores the design -> biased
+ht_mean    <- sum(y_s / pi_s) / N                 # Horvitz-Thompson -> unbiased
+
+cat("Population mean:        ", round(pop_mean, 4), "\n")
+cat("Naive sample mean:      ", round(naive_mean, 4), "  (biased upward)\n")
+cat("Horvitz-Thompson mean:  ", round(ht_mean, 4),  "  (design-unbiased)\n")
+```
+
+### The Non-Response Problem
+
+The third-era pivot to non-probability and online sampling breaks the clean logic
+above, because the operative inclusion probability is no longer the *design*
+probability the analyst set but the *response* probability the respondent chose. Let
+$R_i \in \{0,1\}$ indicate that unit $i$ both is selected and chooses to respond, with
+response propensity $\rho_i = \Pr(R_i = 1)$. The respondent-based estimator is
+unbiased only if the analyst knows $\rho_i$, and in practice $\rho_i$ must be
+*estimated*—typically by modeling response as a function of observed covariates. This
+is where non-response error enters: if response depends on the outcome $y_i$ even
+after conditioning on observed covariates (non-response that is *not* missing at
+random), no reweighting on observables removes the bias, and the survey is identified
+only under an untestable assumption about the missingness mechanism. The TSE framework
+thus locates the modern survey's hardest problem precisely: representation error
+migrates from a *design* quantity the analyst controls to a *behavioral* quantity the
+analyst must model [@Groves_2010].
 
 ## Anchoring Vignettes
 
--   Problem of interpersonal incomparability
+The measurement branch has a subtler pathology than noisy answers: respondents may
+use the *same* response scale to mean *different* things. Ask consumers to rate their
+satisfaction "on a 1–5 scale" and a lenient respondent's 4 may encode the same
+underlying experience as a demanding respondent's 2. This **interpersonal
+incomparability**—formally, **differential item functioning** (DIF)—means that
+differences across respondents partly reflect differences in how they map a latent
+state onto categories, not differences in the latent state itself. Agreement on the
+exact meaning of an abstract scale point is, in practice, nearly impossible to
+secure, and the problem is acute for constructs that can only be conveyed by example.
 
--   Resources:
+**Anchoring vignettes** solve this by adding, alongside the self-assessment, a small
+set of fixed hypothetical scenarios that every respondent rates on the same scale
+[@king2004; @king2007; @hopkins2010]. The key move is that the analyst *authors* the
+vignettes, so their true level is **fixed across respondents by construction**. Any
+variation in how respondents rate the *same* vignette is therefore pure DIF—a direct
+reading of each respondent's idiosyncratic scale use—which can then be netted out of
+the self-assessment. The logic is to *measure as usual, then subtract the
+incomparable portion*, using each respondent's own vignette ratings to recalibrate
+that same respondent's self-rating.
 
-    -   [@king2004]
+Two assumptions identify the correction [@king2004]:
 
-    -   [@king2007]
+- **Response consistency.** Each respondent applies the *same* mapping from latent
+  state to response category when rating the vignettes as when rating themselves.
+  Without this, the vignette ratings carry no information about the respondent's
+  self-rating scale.
+- **Vignette equivalence.** The latent level a given vignette describes is perceived
+  identically by all respondents; only its *translation* into a category varies. This
+  is what makes cross-respondent differences in vignette ratings attributable to DIF
+  rather than to genuine disagreement about the scenario.
 
-    -   [@hopkins2010]
+### Nonparametric Correction
 
-    -   [Examples](https://gking.harvard.edu/vign/eg)
+The nonparametric estimator requires no distributional assumptions. For each
+respondent, the analyst recodes the self-assessment $y_i$ relative to where it falls
+among that respondent's *ordered* vignette ratings $z_{i1} \le z_{i2} \le \dots \le
+z_{iJ}$. The rescaled outcome $C_i$ records the self-rating's rank position within the
+respondent's own vignette thresholds—how good the respondent is relative to anchors
+whose true level is known—so it is comparable across respondents by construction.
+Order **inconsistencies**, where a respondent's vignette ratings are non-monotone in
+the vignettes' known true order, are absorbed as **ties** (interval-valued
+categories). The recoded $C_i$ is then modeled, for example with an ordered probit,
+purged of the respondent-specific scale shifts.
 
--   Help with 2 questions:
+### Parametric Correction
 
-    -   Different respondents understand the same question differently: Incomparaability in Survey Responses ("DIF"). Agreement on theoretical concept is almost nearly impossible.
+The parametric estimator embeds the same idea in a likelihood. Self-assessment and
+vignettes are jointly modeled with an **ordered probit** in which the *cut points*
+(category thresholds) are allowed to vary across respondents as functions of
+covariates, with a respondent **random effect** capturing residual scale
+heterogeneity. Identification improves as the number of vignettes $J$ grows—more
+anchors pin down each respondent's thresholds more tightly—but there is a bias–variance
+trade-off: each additional vignette is itself measured with error, so adding vignettes
+trades sharper threshold identification against more measurement noise [@hopkins2010].
+The `anchors` package implements both estimators; the chunk below is illustrative and
+not evaluated in the build.
 
-    -   How can we measure concepts that can only be defined by examples
-
--   Measure like usually, then subtract the incomparable portion. (i.e., using the assessment from the same respondents for a particular example/case to correct/adjust for the self-assessment).
-
--   Varying vignette assessments give us DIF (i.e., **differential item functioning**)
-
--   Since we created the anchors (i.e., examples), we know the true vignette assessments are fixed over respondents
-
-
-
-### Nonparametric method
-
-Code the relative ranking of self-assessment in accordance to vignettes.
-
-Inconsistencies would be considered ties.
-
-Measurement Assumptions:
-
--   **Response consistency**: Each responder approaches the self-assessment and vignette categories in a same manner across questions.
-
--   **Vignette Equivalence**: For every vignette, the real level is the same for all respondents.
-
-Used Ordered Probit to estimate.
-
-### Parametric method
-
-The more vignettes that we have better identification. But it will introduce measurement errors.
-
--   Also use an ordinal probit model
-
--   with varying thresholds and a random effect.
-
-```{r, eval = FALSE}
+```{r anchors-demo, eval=FALSE}
 # install.packages("anchors")
 library(anchors)
 
-# Example from the package's authors
-data("freedom")
-head(freedom)
-a1 <-
-    anchors(self ~ vign2 + vign3 + vign4 + vign5 + vign6, freedom, method = "C")
+data("freedom")                       # example data shipped with the package
+a1 <- anchors(self ~ vign2 + vign3 + vign4 + vign5 + vign6,
+              data = freedom, method = "C")   # "C" = nonparametric (ties as intervals)
 summary(a1)
-
 ```
 
+## Experiments
 
+Where a survey *observes* a latent state, an experiment *manufactures* variation in a
+cause and reads off its effect. The experiment's payoff is causal identification: by
+randomly assigning the treatment, the analyst makes the treatment statistically
+independent of every confounder, observed or not, so the difference in mean outcomes
+estimates the average treatment effect rather than a confounded association. The cost
+is that the analyst must defend four distinct kinds of **validity**, manage the
+heterogeneity that averages conceal, and respect the ethics of intervening on people.
 
-# Experiment
+### Four Validities
 
-Things to consider:
+A credible experiment clears four hurdles, summarized in @tbl-validity. They are
+ordered roughly from "is there an effect at all" to "does it mean what we claim" to
+"does it travel."
 
--   Validity
+| Validity | Question it answers | Characteristic threat |
+|----------|--------------------|-----------------------|
+| Statistical conclusion | Is the treatment–outcome covariation real, not noise? | Low power; fishing; violated test assumptions |
+| Internal | Is the covariation *causal* within the study? | Confounding; attrition; failed randomization |
+| Construct | Does the operationalization capture the intended concept? | Mono-operation bias; demand effects |
+| External | Does the effect *generalize* beyond this sample and setting? | Non-representative subjects; artificial context |
 
-    -   statistical conclusion validity
-    -   internal validity
-    -   construct validity: whether you operationalize your construct correctly
-    -   external validity: generalization
+: The four validities an experiment must defend, in roughly increasing order of generality. {#tbl-validity}
 
--   Heterogeneity of treatment effects
+The four trade off against one another. Tight laboratory control buys internal
+validity at the expense of external validity (realism), while a field experiment buys
+realism at the expense of control. The same tension recurs in the practical design
+levers—**cost, control, realism, and ethics**—that no single design optimizes
+simultaneously.
 
-    -   average (aggregate) effect can be artificially constructed.
+### Heterogeneity and Mechanisms
 
--   Mechanisms
+A single number—the **average treatment effect** (ATE)—can be an artifact. If the
+effect is positive for one segment and negative for another, the average may be near
+zero, near either extreme, or anywhere between, depending only on segment mix. Writing
+the conditional average treatment effect as $\tau(x) = \mathbb{E}[Y(1) - Y(0)\mid X=x]$,
+the reported ATE is the mix-weighted average $\int \tau(x)\,dF(x)$, which is silent
+about the sign and size of $\tau(x)$ for any particular $x$. The same caution that
+motivated segmentation in forecasting (@sec-surveys) applies to experiments:
+heterogeneous effects demand that the analyst report the distribution of $\tau(x)$,
+not only its mean, and that any claimed **mechanism**—the causal pathway through which
+the treatment acts—be argued rather than assumed.
 
+### Ethics: The 3Rs
 
+Experiments intervene on living subjects, and the governing ethical framework is the
+**3Rs** of Russell and Burch (1959):[^threers] *Replace* an invasive procedure with a
+less invasive (or non-animal, or natural) alternative; *Refine* procedures to reduce
+harm and distress; and *Reduce* the number of participants to the minimum consistent
+with a valid answer. The Reduce principle has a statistical edge: the minimum sample
+is set by the power calculation, so an underpowered study is not only wasteful but
+also *unethical*, exposing participants to risk without a credible chance of a
+conclusive result.
 
-More things to consider
+[^threers]: Russell, W. M. S. and Burch, R. L. (1959), *The Principles of Humane
+Experimental Technique*. The 3Rs framework predates and underlies most modern
+research-ethics review.
 
--   cost
--   control
--   realism
--   ethics
+### Pre-Registration and the Replication Crisis
 
+The credibility of an experimental finding depends not only on its design but on
+whether the analysis was specified *before* the data were seen. **Pre-registration**
+time-stamps the hypotheses, design, and analysis plan in advance, so a reviewer can
+distinguish a confirmatory test from a hypothesis read off the data after the
+fact—the practice that inflates false-positive rates and fuels the replication crisis
+in the behavioral sciences. Public registries such as AsPredicted provide the
+time-stamp; open-data and open-materials platforms such as the Open Science Framework
+and ResearchBox let others re-run the analysis.
 
+A complementary forensic tool is the **$p$-curve**: the distribution of statistically
+significant $p$-values across a body of studies. Under a true effect, that
+distribution is *right-skewed* (many very small $p$-values); under no effect but
+selective reporting ($p$-hacking), it is *left-skewed* (a pile-up just below 0.05).
+Inspecting the curve thus diagnoses whether a literature reflects real effects or
+selective analysis.[^pcurve] A final design caution: testing for **interaction**
+effects requires controlling for the *interactions* of the covariates, not merely
+their main effects—controlling only for main effects leaves the interaction estimate
+confounded.
 
-The Principles of Humane Experimental Technique by Russell and Burch (1959): 3Rs
+[^pcurve]: The $p$-curve was developed and popularized through the Data Colada
+research collective; the underlying logic is that selective reporting leaves a
+detectable signature in the shape of the significant-$p$ distribution.
 
--   Replace: with natural (less invasive)
--   Refine: less harmful
--   Reduce: min number of participants
+## Key Takeaways
 
-
-
-Before running experiments, to make sure that you did not tamper with the data, or hypotheses (i.e., change them after the fact), you should always pre-register your research. A website that allows you to do this and automatically provides you with time stamp is [aspredicted](https://aspredicted.org/)
-
-This way then you can show to reviewers that you did hypothesize before running analysis.
-
-
-
-To combat replication crisis in psychology, we can advocate for open research in which researchers public their data and analyses. Popular websites include:
-
--   [ResearchBox](https://researchbox.org/index.php)
-
--   <https://osf.io/>
-
-To see whether authors temper with their data, we can use [p-curve](http://p-curve.com/) to inspect. [1](https://datacolada.org/66) [2](https://datacolada.org/67) [3](https://datacolada.org/49) [4](https://datacolada.org/45) [5](https://datacolada.org/91)
-
-[Interaction Effects Need Interaction Controls](https://datacolada.org/80) (basically, you can't just control for main effects).
+- Surveys and experiments are both *instruments for recovering an unobserved
+  quantity*; surveys fail through **error** (@eq-tse-decomp) and experiments through
+  threats to **validity** (@tbl-validity).
+- Measurement is **reactive**: asking about purchase intentions strengthens the
+  intention–behavior link by roughly 58%, so intentions surveys are mild
+  interventions, not passive forecasts [@chandon2005].
+- Total survey error separates **measurement** error (the answers) from
+  **representation** error (the people), and bias from variance; naming the dominant
+  source dictates the fix [@Groves_2010].
+- Probability designs license design-based inference through the
+  **Horvitz–Thompson** estimator (@eq-ht); non-probability and non-response designs
+  shift the burden from *design* to *modeling* the inclusion mechanism.
+- **Anchoring vignettes** purge interpersonal incomparability by netting out
+  differential item functioning, identified by response consistency and vignette
+  equivalence [@king2004].
+- Causal claims from experiments rest on four validities, demand attention to
+  effect **heterogeneity** beyond the average, and gain credibility from
+  **pre-registration** and open science.

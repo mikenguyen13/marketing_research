@@ -1,281 +1,496 @@
-# Preference Measurement
+# Preference Measurement {#sec-preference-measurement}
 
-Reservation price = price a consumer willing to pay for a product
+*Preference measurement* is the problem of recovering, from observable choices or
+judgments, the latent valuation a consumer places on a product and on each of the
+attributes that compose it. It is the empirical bridge between what people *do*—rate,
+rank, click, buy—and what firms need to *know*: how much a feature is worth, what a
+segment will pay, which configuration to launch, and at what price. Where
+@sec-branding asks what a brand is worth, this chapter asks the more granular
+question of what each *part* of an offering is worth, and supplies the estimators
+that turn survey or transaction data into those numbers.
 
-Estimation for reservation price:
+The construct that anchors the chapter is the **reservation price** (also called
+willingness to pay, WTP): the maximum amount a consumer would pay for a product
+before preferring to forgo it. Reservation price is not a primitive that can simply
+be asked for—people are reluctant to reveal price sensitivity, and direct questions
+bias the answer downward—so it must be *inferred* from a model of utility. The
+dominant inferential machinery is **conjoint analysis**, a family of designed
+experiments and discrete-choice models that decompose overall preference into
+attribute-level *partworths* and, with a price attribute included, express those
+partworths in dollars.
 
-1.  Survey question direct asks for consumer reservation price (but this estimation method tends to bias downward because participants don't want people to know that they are price sensitive).
-2.  From the coefficients of conjoint analysis.
+The chapter proceeds from intuition to formalism to estimation. We first define
+reservation price and derive it from an additive utility model, making explicit the
+assumptions that license the derivation. We then develop conjoint analysis as the
+general framework: its experimental-design logic, its measurement variants
+(full-profile, choice-based, adaptive, hybrid, self-explicated, MaxDiff), the
+random-utility model that underlies the modern choice-based form, and the estimators
+(OLS, multinomial and mixed logit, hierarchical Bayes) that recover heterogeneous
+partworths. Throughout we flag what breaks identification—confounded designs,
+scale–heterogeneity confounds, hypothetical bias—because a partworth that is not
+identified is a number without a referent. Worked, reproducible R code accompanies
+each major method.
 
-Assumptions to get consumer utility from regression:
+## Reservation Price and the Additive Utility Model
 
-1.  Consumption utility equals sum of utilities for the product product attributes
+The commercial questions branded around pricing—segmentation, positioning,
+product-line design, the go/no-go decision on a feature—reduce to a single
+quantity per consumer: how many dollars of value the consumer attaches to a given
+configuration. Two routes lead to that quantity. The **direct** route asks the
+consumer outright, but self-reported reservation prices are systematically biased
+downward: respondents understate WTP because they do not wish to appear price
+insensitive, and because a hypothetical question carries no budget consequence.[^direct]
+The **indirect** route, which this chapter develops, recovers reservation price as a
+*derived* quantity from a fitted utility model, most commonly the coefficients of a
+conjoint study.
 
-Let $N$ be the number of non-price attributes and each attributes has more than 1 level.
+[^direct]: Direct elicitation is not worthless—open-ended WTP, the Becker–DeGroot–
+Marschak mechanism, and contingent valuation all have their uses—but for
+multi-attribute products the indirect route dominates because it yields attribute-level
+dollar values, not just a single product-level number, and it embeds the valuation in
+a choice context that disciplines hypothetical bias.
 
-We use fractional factorial design to derive different profiles for consumers to choose with the goal of least number of profiles.
-
-Then the utility function can be represented as
+The indirect route rests on one structural assumption, which should be stated before
+any result: **additive separability** of utility across attributes. Consumption
+utility is taken to equal the sum of the utilities contributed by the product's
+attributes, with no interaction among them. Let a product be described by a price $P$
+and by $N$ non-price attributes, each taking one of several discrete levels. Index the
+attributes by $k = 1,\dots,N$ and let $A_k$ denote the level of attribute $k$. The
+additive model writes a consumer's utility (or rating) as
 
 $$
-U = \beta_0 + \beta_p \times P + \sum_{k=1}^N \beta_k \times A_k + \epsilon
-$$
+U = \beta_0 + \beta_p P + \sum_{k=1}^{N} \beta_k A_k + \epsilon,
+$$ {#eq-additive-utility}
 
-where
+where the $\beta$'s are *utility weights* (partworths in conjoint language),
+$\beta_0$ absorbs consumer-specific shifts in the rating scale, $\beta_p$ is the
+marginal utility of price (expected to be negative), and $\epsilon$ is an idiosyncratic
+error. Equation @eq-additive-utility is the linear, additive special case of the
+random-utility model formalized in @sec-rum; the categorical attributes $A_k$ are in
+practice expanded into level dummies, so each attribute contributes one coefficient per
+non-baseline level.
 
--   $U$ = consumer rating or utility
-
--   $\beta$'s = utility weights
-
--   $\beta_0$ = heterogeneity in the range of the ratings scale per consumer.
-
--   $P$ = price
-
--   $A$ = non-price attributes (categorical variables)
-
-Then the reservation price (at the individual level) for product $P$ is
-
-$$
-r(P) = \frac{\Delta p}{\beta_p} (\sum_{k=1}^N \frac{\beta_k}{\Delta A_k} A_k)
-$$
-
-where
-
--   $\Delta p$ = difference in price between two levels (of the same attribute)
-
--   $\Delta A_k$ = difference in attribute levels
-
-and the dollar value for each unit of utility is
+The dollar value of one *util* follows immediately. Because price enters linearly,
+the marginal rate of substitution between money and utility is the negative reciprocal
+of the price coefficient. If $\Delta p$ is the price difference between two levels of
+the price attribute, the dollar value of a unit of utility is
 
 $$
-\frac{\Delta p}{\beta_p}
+\text{\$ per util} = -\frac{\Delta p}{\beta_p},
+$$ {#eq-dollar-per-util}
+
+and the utility a consumer derives from attribute $k$, expressed per unit of that
+attribute, is $(\beta_k / \Delta A_k)\,A_k$, where $\Delta A_k$ is the spacing between
+adjacent levels of attribute $k$. The **reservation price** for a configuration is then
+the total utility of its non-price attributes converted to dollars:
+
 $$
+r(P) = -\frac{\Delta p}{\beta_p}\sum_{k=1}^{N}\frac{\beta_k}{\Delta A_k}\,A_k.
+$$ {#eq-reservation-price}
 
-and for each attribute $k$, the utility a consumer can derive is
+The interpretation is exactly the intuition with which we began. A consumer's
+reservation price for a product is the sum of the dollar values she places on each of
+its attributes—each attribute's partworth, scaled by the dollar value of a util in
+@eq-dollar-per-util. Two assumptions make @eq-reservation-price legitimate, and both
+fail in identifiable circumstances. First, **additivity**: if attributes interact
+(a fast processor is worth more in a laptop with a good screen), the cross-terms
+omitted from @eq-additive-utility are loaded onto the main effects and the partworths
+are biased. Second, **linearity of the price disutility**: if $\beta_p$ is not
+constant across the price range—if marginal price sensitivity rises near a budget
+ceiling—then $\Delta p / \beta_p$ is not a single number and @eq-dollar-per-util is
+only a local approximation. We return to both threats once the design machinery is in
+place.
+
+::: {.callout-note}
+## Sign and scale conventions
+We write $\beta_p < 0$, so the dollar-per-util conversion in @eq-dollar-per-util carries
+an explicit negative sign that makes $r(P)$ positive for value-adding attributes. In a
+ratings model the scale of $U$ is set by the response scale and $\beta_0$ absorbs
+per-respondent scale heterogeneity; in a choice model (@sec-rum) the scale is fixed by
+normalizing the error variance, which has consequences for cross-respondent comparison
+that we take up under the scale–heterogeneity confound.
+:::
+
+## Conjoint Analysis {#sec-conjoint}
+
+Conjoint analysis—originally *conjoint measurement*, a term inherited from mathematical
+psychology and psychometrics—is the workhorse for estimating the partworths in
+@eq-additive-utility. Its premise is that consumers evaluate products holistically, as
+bundles, and that the analyst can recover the weight on each attribute by observing
+evaluations of systematically varied bundles. The name encodes the logic: the joint
+("con-joint") effect of attributes considered together is decomposed into separable
+contributions.
+
+> Conjoint analysis is a decompositional method that estimates the structure of a
+> consumer's preferences given her overall evaluations of a set of alternatives that
+> are prespecified in terms of levels of different attributes.
+
+The method's enduring appeal is twofold. It improves the analyst's ability to assess
+customers' true wants—above all their price sensitivity, which direct questioning
+distorts—and it dissolves the "everything is important" problem that plagues
+self-reported importance ratings, forcing trade-offs that reveal which attributes
+genuinely move choice. @netzer2008 survey the field and organize it around three
+managerial tasks that conjoint serves—product development, pricing and segmentation,
+and positioning—together with parallel uses for consumers (recommendation agents),
+policymakers, and academic researchers; the review traces the field's movement from
+designs that maximize statistical efficiency toward designs and adaptive elicitation
+that also respect managerial and respondent constraints.
+
+A foundational distinction motivates why preference, not perception, is the target.
+*Perception*—beliefs about what products exist and what they are like—is largely
+**homogeneous** across consumers: people broadly agree that one car is faster than
+another. *Preference*—which product a consumer actually wants—is **heterogeneous**:
+people who agree on the facts still choose differently [@netzer2008]. Conjoint is a tool
+for the second object, and its modern forms are built to estimate the *distribution* of
+partworths across consumers, not merely their average. The original combinatorial
+treatment of @greenwind1975 already contained the core recipe: use an orthogonal array
+to construct a balanced subset of attribute combinations so that each attribute's
+contribution is estimated independently of the others, then collect rankings or ratings
+over that reduced set. Their catalog of applications—new-product development, package
+design, pricing and brand alternatives, service design, and industrial (organizational)
+buying—remains an accurate map of where conjoint is used today.
+
+### Designing the Attribute Space
+
+The quality of a conjoint study is fixed before any data are collected, in the choice of
+attributes and levels. Four design principles recur, and each protects a specific
+inferential property rather than being mere good practice. Attributes must be
+**actionable**—a partworth on a feature the firm cannot build is uninterpretable as a
+decision input. Their number must be **bounded**, because respondent cognitive load
+grows with the dimensionality of each profile and noisy responses inflate $\epsilon$ in
+@eq-additive-utility. Levels must span a **feasible and relevant range**: every level
+should be one the firm could actually offer and one the consumer would plausibly
+encounter, since extrapolating partworths outside the studied range is unsupported.
+Finally, the **number of levels** per attribute is itself a design variable with a known
+artifact—the *number-of-levels effect*, whereby an attribute is estimated to be more
+important simply because it is split into more levels, independent of its true
+importance.[^nlevels]
+
+[^nlevels]: The number-of-levels effect is partly a halo of the level count and partly an
+ordering artifact; it means importance comparisons across attributes with different
+numbers of levels are not clean. The defensive design is to equalize level counts where
+possible, or to interpret importances within, not across, attributes.
+
+Under additivity and independence, the number of profiles the design must support equals
+the number of estimated dummy variables. When the analyst suspects an **interaction**—a
+violation of the additive separability that @eq-additive-utility assumes—two remedies are
+available, and they trade respondent effort against bias. One can fold the interacting
+pair into a single higher-level "super-attribute" whose levels enumerate the relevant
+combinations, absorbing the interaction into main effects; or one can enlarge the design
+to include enough profiles to estimate the interaction term explicitly. The first is
+cheaper but coarsens the attribute space; the second is faithful but costly in profiles.
+
+The mechanism that makes a reduced design estimable is the **fractional factorial**: a
+carefully chosen subset of the full factorial that preserves orthogonality among main
+effects so that partworths remain independently identified. A full factorial over $N$
+attributes with $L$ levels each contains $L^N$ profiles—infeasible for any realistic $N$—
+so the analyst selects a fraction in which the columns of the design matrix remain
+uncorrelated. @fig-conjoint-pipeline summarizes the workflow from attribute definition
+through to managerial action.
+
+```{mermaid}
+%%| label: fig-conjoint-pipeline
+%%| fig-cap: "The conjoint analysis pipeline, from attribute specification to managerial decision. The estimation step varies by conjoint type (see @tbl-conjoint-types)."
+flowchart TD
+    A[Define attributes & levels<br/>actionable, feasible, bounded] --> B[Construct design<br/>fractional factorial / orthogonal array]
+    B --> C[Choose elicitation<br/>rate · rank · choose · MaxDiff]
+    C --> D[Collect responses]
+    D --> E[Estimate partworths<br/>OLS · MNL · mixed logit · HB]
+    E --> F[Derive quantities<br/>WTP · importance · share-of-preference]
+    F --> G[Managerial action<br/>design · price · segment · position]
+```
+
+Conjoint is rarely run in isolation. It pairs naturally with **factor analysis** for
+reducing a large attribute set to underlying dimensions, with **perceptual mapping**
+(multidimensional scaling) for positioning the estimated preferences in a perceptual
+space, and with **cluster analysis** for grouping consumers by their partworth vectors
+into actionable segments—the empirical expression of preference heterogeneity.
+
+### The Random-Utility Foundation {#sec-rum}
+
+The ratings model in @eq-additive-utility treats $U$ as an observed (or directly
+reported) quantity. Modern conjoint, especially its choice-based form, instead treats
+$U$ as **latent** and observes only the consumer's *choice* among alternatives. This is
+the random-utility model (RUM), the foundation McFadden built for discrete choice
+[@mcfadden1986choice; @mcfadden2001economic]. Consumer $i$ derives utility from
+alternative $j$ in choice set $\mathcal{S}_t$,
 
 $$
-(\frac{\beta_k}{\Delta A_k}) A_k
+U_{ijt} = \mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i + \varepsilon_{ijt},
+$$ {#eq-rum}
+
+where $\mathbf{x}_{jt}$ collects the attribute levels of alternative $j$ (including
+price), $\boldsymbol{\beta}_i$ is consumer $i$'s partworth vector, and $\varepsilon_{ijt}$
+is an unobserved component. The consumer chooses the alternative of greatest utility, so
+the analyst observes $y_{it} = \arg\max_{j \in \mathcal{S}_t} U_{ijt}$. The systematic
+part $\mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i$ is exactly the additive partworth sum of
+@eq-additive-utility; what RUM adds is an explicit stochastic structure on $\varepsilon$
+that delivers a likelihood for *choices*.
+
+If the $\varepsilon_{ijt}$ are independent and identically distributed type-I extreme
+value, the choice probabilities take the **multinomial logit** (MNL) form,
+
 $$
-
-Hence, we can see that the reservation price for a product (i.e., total dollar value a consumer assigns on product $P$) is just the sum of utility across all attributes times dollar value for each unit of utility
-
-@netzer2008
-
--   Problem
-
-    -   Companies: Product development, pricing segmentation, positioning, advertising, project selection, and investment decisions
-
-    -   Consumers: recommendation agents
-
-    -   Policy makers and health care professionals:
-
-    -   Academic researchers;
-
--   Design and Data collection
-
-    -   Original goals: maximizing A-efficiency and D-efficiency (based on covariance matrix of the estimates of the partworths)
-
-    -   New: M-efficiency measure (accounts for managers' considerations).
-
-    -   New Adaptive method for data collection:
-
-        -   Commercially available: Adaption conjoint analysis (ACA), Fast Polyhedral approach, Adaptive Self-explicated approach
-
--   Model Specification, Estimation, and Action
-
-## Conjoint Analysis
-
-also known as conjoint measurements, which stems from mathematical psychology and psychometrics
-
-Aims:
-
--   Willingness to pay: measure what individual are willing to give up to obtain certain product benefits
-
--   Distribution of willing to pay : measure how consumer differ
-
-Advantages:
-
--   Improves ability to assess customers' true wants and needs (especially price)
-
--   Dissect "everything is important"
-
-Perception vs. preference
-
--   Perception (beliefs about the market) is largely homogeneous across customers
-
--   Preference (what product they buy) is heterogeneous across customers.
-
-Conjoint analysis is a tool for preference assessment.
-
-Attributes in conjoint:
-
--   Not too many attributes
-
--   Attributes should be actionable
-
--   Need to choose reasonable range of attributes
-
-    -   within range under consideration
-
-    -   All levels should be feasible
-
--   Number of attribute levels
-
-    -   Too many can be confusing
-
-    -   Halo effect of number of attributes (or the order of levels)
-
-Number of profiles equal number of dummy variables with the assumption of independence
-
-If you suspect that there might be interaction effect (violation of independence), you can either
-
--   use higher-level attribute
-
--   increase the number of profiles
-
-Ranking and Rating conjoint analysis are not different @kalish1991
-
-[@greenwind1975]
-
-Basics:
-
--   Use orthogonal array (in experimental design) to test combinations where independent contributions of all factors (attributes) are balanced.
-
--   Then rank all the reduced combinations in order
-
-Uses:
-
--   New product development
-
--   Package design
-
--   Pricing and brand alternatives
-
--   Descriptions of new products or services
-
--   Alternative service design
-
--   Also organizations as consumers
-
-Outcome variable can be:
-
--   Preference
-
--   Likelihood to purchase
-
--   best value for the money
-
--   Convenience of use
-
--   Suitability for a specific job
-
--   Psychological images (e.g., ruggedness, distinctiveness, conservativeness)
-
-Can be used in conjunction with
-
--   factor analysis: firm-level decision variables (attribute/factor), dimension reduction technique
-
--   perceptual mapping: multidimensional scaling
-
--   cluster analysis: customer-level variables, segmentation technique
-
-Suggested packages (in order of preference):
-
--   `AlgDesign`
-
--   `conjoint`
-
--   `faisalconjoint`
-
--   `mlogit`
-
--   `conf.design`
-
--   `prefmod`
-
-### Full-Profile
-
-```{r}
+\Pr(y_{it} = j) = \frac{\exp(\mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i)}
+{\sum_{l \in \mathcal{S}_t}\exp(\mathbf{x}_{lt}^{\top}\boldsymbol{\beta}_i)}.
+$$ {#eq-mnl}
+
+The aggregate logit of @eq-mnl (with $\boldsymbol{\beta}_i = \boldsymbol{\beta}$ common
+to all consumers) is the model behind the @guadagni1983 scanner-data application that
+launched choice modeling in marketing, and it is the workhorse for demand estimation more
+broadly [@berry1995]. Two identification facts must be stated. First, **only utility
+differences are identified**: adding a constant to every alternative's utility leaves
+choices unchanged, so one alternative's intercept is normalized to zero. Second, the
+**scale is not separately identified** from the partworths: the error variance is
+normalized (to $\pi^2/6$ in the logit), which means estimated $\boldsymbol{\beta}$ are
+confounded with scale. This scale normalization is the root of the scale–heterogeneity
+confound discussed below. MNL also carries the **independence of irrelevant alternatives**
+(IIA) property—the odds of choosing $j$ over $l$ are independent of other alternatives—
+which is implausible when alternatives are close substitutes and which the richer models
+below relax.
+
+### Heterogeneity: Mixed Logit and Hierarchical Bayes
+
+Because preference is heterogeneous, a single $\boldsymbol{\beta}$ misrepresents the
+market and, worse, can produce biased aggregate elasticities. The **mixed (random-
+coefficients) logit** lets partworths vary across consumers, $\boldsymbol{\beta}_i \sim
+g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$, and integrates them out of the likelihood:
+
+$$
+\Pr(y_{it} = j) = \int \frac{\exp(\mathbf{x}_{jt}^{\top}\boldsymbol{\beta})}
+{\sum_{l \in \mathcal{S}_t}\exp(\mathbf{x}_{lt}^{\top}\boldsymbol{\beta})}\,
+g(\boldsymbol{\beta}\mid\boldsymbol{\theta})\,d\boldsymbol{\beta}.
+$$ {#eq-mixed-logit}
+
+Mixed logit relaxes IIA and accommodates flexible substitution, at the cost of a
+likelihood with no closed form that must be simulated. In marketing the dominant route to
+@eq-mixed-logit is **hierarchical Bayes** (HB): a Gaussian (or richer) population prior
+$\boldsymbol{\beta}_i \sim \mathcal{N}(\bar{\boldsymbol{\beta}}, \boldsymbol{\Sigma})$ is
+placed over individual partworths, and Markov chain Monte Carlo recovers a full posterior
+for *each respondent's* partworth vector by borrowing strength across the panel
+[@rossi2014; @allenby1999dynamic]. HB is what makes individual-level WTP estimable from a
+handful of choices per respondent—too few to fit a separate model per person—and it is the
+engine behind commercial choice-based conjoint. The same Bayesian decomposition recovers
+brand value from choice data by splitting utility into attribute-driven and name-driven
+components [@kamakura1993; @jedidi2003].
+
+::: {.callout-warning}
+## The scale–heterogeneity confound
+Because the logit fixes the error scale, what looks like heterogeneity in partworths can
+instead be heterogeneity in *scale*—how deterministically a respondent chooses. Two
+respondents with identical relative preferences but different choice consistency will
+appear to have proportionally different $\boldsymbol{\beta}_i$. WTP, a ratio of two
+coefficients ($-\beta_k/\beta_p$), partially cancels scale, which is one reason WTP is
+often more stable across respondents than raw partworths—but only if scale is common to
+the numerator and denominator. Mis-attributing scale to preference is a standard threat to
+identification in choice-based conjoint.
+:::
+
+### Variants of Conjoint {#sec-conjoint-variants}
+
+Conjoint is a family, not a single method. The variants differ in how preferences are
+*elicited* and therefore in what they assume about the respondent and what they can
+estimate. @tbl-conjoint-types contrasts them.
+
+| Variant | Elicitation task | Estimator | When it fits |
+|---|---|---|---|
+| **Full-profile** | Rate or rank complete profiles | OLS / regression on partworths | Few attributes; ratings interpretable |
+| **Choice-based (CBC)** | Choose one profile from a set | MNL / mixed logit / HB | Realistic; recovers WTP and shares |
+| **Adaptive (ACA)** | Tailored questions by prior answers | Self-explicated + tradeoff, often HB | Many attributes; shorten survey |
+| **Hybrid** | Self-explicated stage + full-profile/choice | Two-stage / HB | Many attributes with efficiency |
+| **Self-explicated** | Rate level desirability and attribute importance | Weighted compositional sum | Many attributes; minimal load |
+| **MaxDiff** | Pick most- and least-preferred items | Best–worst MNL | Importance ranking of many items |
+
+: Conjoint variants by elicitation task and estimator. Ranking and rating full-profile
+conjoint yield substantively equivalent partworths [@kalish1991]. {#tbl-conjoint-types}
+
+**Full-profile** conjoint presents complete product descriptions for rating or ranking and
+estimates the partworths of @eq-additive-utility by regression. A classic result is that
+ranking and rating data, though they look different, recover the same preference structure
+and need not be treated as fundamentally distinct response modes [@kalish1991].
+
+**Choice-based conjoint** (CBC), also called discrete-choice conjoint, replaces the rating
+with a *choice* among profiles, often including a no-choice option. It is the most
+behaviorally realistic variant—people choose in markets, they do not rate—and it is
+estimated with the RUM machinery of @sec-rum, yielding WTP and market-share simulations
+directly. CBC is now the default in commercial practice.
+
+**Adaptive conjoint** (ACA) varies the choice sets dynamically, conditioning each question
+on the respondent's earlier answers to concentrate information where the respondent's
+preferences are most uncertain, thereby shortening the survey for high-dimensional
+attribute spaces. The polyhedral methods of @toubia2013 formalize adaptive question
+selection as iteratively shrinking the set of partworth vectors consistent with a
+respondent's answers, and incentive-aligned and incentive-compatible variants address the
+hypothetical-bias problem at the elicitation stage. **Hybrid** conjoint combines a
+self-explicated stage with full-profile or choice tasks, and **self-explicated** conjoint
+dispenses with profiles entirely, asking respondents to rate each level's desirability and
+each attribute's importance and composing partworths from the product—cheap and scalable
+but vulnerable to the "everything is important" inflation that holistic methods avoid.
+**MaxDiff** (best–worst scaling) asks respondents to identify the most- and least-preferred
+items in a set, a task that produces sharper discrimination among many items than rating
+scales and is estimated as a best–worst extension of MNL.
+
+A persistent practical problem is **missing data** in partial profiles—respondents do not
+see every attribute or level. @bradlow2004learning develop a learning-based model that
+imputes the missing levels by treating the partial profile as informative about the
+respondent's inferences, rather than discarding incomplete responses; modern machine-
+learning approaches extend this to learn preferences from sparse, adaptively collected data
+[@ding2015learning]. The broader frontier integrates conjoint with text and image data and
+with structural demand models so that designed-experiment partworths and revealed-preference
+market data can be reconciled [@netzer2008hidden; @rao2017; @wedel2016].
+
+## Worked Examples
+
+The examples below use the `conjoint` and `AlgDesign` packages, which implement the
+orthogonal-array design and OLS-based partworth estimation of full-profile conjoint. They
+are deliberately small and reproducible; production CBC studies would substitute the HB
+estimator of @sec-rum.
+
+### Generating an Efficient Design
+
+The first task is to reduce a full factorial to an estimable fractional design whose
+columns remain (near-)orthogonal. The example below specifies a four-attribute product and
+extracts an orthogonal fraction, then verifies that the selected profiles are mutually
+near-uncorrelated—the property that keeps partworths independently identified.
+
+```{r conjoint-design}
+#| message: false
+#| warning: false
+library(conjoint)
+
+set.seed(123)
+
+# A four-attribute product; full factorial = 2 x 2 x 2 x 2 = 16 profiles
+experiment <- expand.grid(
+  Weight   = c("light", "heavy"),
+  Price    = c("low", "high"),
+  Warranty = c("2yr", "3yr"),
+  Battery  = c("10h", "20h")
+)
+
+# Reduce to an orthogonal fraction
+design  <- caFactorialDesign(data = experiment, type = "orthogonal")
+encoded <- caEncodedDesign(design)
+
+# Orthogonality check: off-diagonal correlations should be near zero
+round(cor(encoded), 2)
+```
+
+### Estimating Partworths and Importances
+
+With a design and a respondent's preferences in hand, OLS recovers the partworths. The
+example uses the `tea` data shipped with the `conjoint` package: preferences of
+respondents over tea profiles described by price, variety, kind, and aroma. We estimate one
+respondent's partworths, then the aggregate importances—the share of total preference range
+each attribute commands.
+
+```{r conjoint-estimate}
+#| message: false
+#| warning: false
 library(conjoint)
 data(tea)
-caModel(y = tprefm[1,],x = tprof)
+
+# Single-respondent partworths via OLS on the encoded design
+caModel(y = tprefm[1, ], x = tprof)
+
+# Aggregate attribute importances across all respondents
+caImportance(y = tpref, x = tprof)
 ```
 
-### Choice-based
+The importances sum to 100% and quantify how much of the preference variation each
+attribute explains. They are the empirical answer to "what matters?"—and, unlike
+self-reported importance ratings, they are forced to respect trade-offs, which is precisely
+why conjoint dissolves the "everything is important" pathology.
 
-Also known as Discrete-choice conjoint analysis
+### From Partworths to Willingness to Pay
 
-### Adaptive
+The managerial payoff is dollar-valued WTP, obtained by dividing each attribute's partworth
+by the (negative) price partworth, as in @eq-dollar-per-util. The synthetic example below
+fits an aggregate model with a numeric price attribute so that the price coefficient is a
+single slope, then converts non-price partworths to dollars.
 
--   Varies the choice sets based on respondent's preference
+```{r conjoint-wtp}
+#| message: false
+#| warning: false
+set.seed(2024)
 
--   Reduces the survey length
+# Synthetic full-profile ratings for a 3-attribute product with numeric price
+profiles <- expand.grid(
+  price    = c(10, 20, 30),          # dollars
+  battery  = c(0, 1),                # 0 = 10h, 1 = 20h
+  warranty = c(0, 1)                 # 0 = 2yr, 1 = 3yr
+)
 
-### Hybrid
+# True partworths (utils): price hurts, battery and warranty help
+beta_true <- c(intercept = 5, price = -0.15, battery = 1.2, warranty = 0.6)
+profiles$rating <- with(profiles,
+  beta_true["intercept"] + beta_true["price"] * price +
+    beta_true["battery"] * battery + beta_true["warranty"] * warranty +
+    rnorm(nrow(profiles), sd = 0.1)
+)
 
--   Combination of [Full-Profile] and [Adaptive]
+fit <- lm(rating ~ price + battery + warranty, data = profiles)
+b   <- coef(fit)
 
-### Max-Diff
+# Dollar value of one util = -1 / price coefficient  (Delta p = 1 here)
+dollars_per_util <- -1 / b["price"]
 
--   Assortment under most preferred and least preferred scenario.
-
-### Self-explicated
-
-### Hierarchical Bayes analysis
-
-### Application
-
-```{r}
-library(conjoint)
-Experiment = expand.grid(weight = c("a","b"),
-                         Price = c("Low","High"),
-                         Warranty = c("2","3"),
-                         Battery = c("10","20"))
-
-partial_design = caFactorialDesign(Experiment,type = "orthogonal",seed = 123)
-partial_profile = caEncodedDesign(partial_design)
-
-levels <- c("a","b","Low","High","2","3","10","20")
-lev.df <- data.frame(levels)
-
-data = c("")
+wtp <- c(
+  battery_20h_vs_10h = b["battery"]  * dollars_per_util,
+  warranty_3yr_vs_2yr = b["warranty"] * dollars_per_util
+)
+round(wtp, 2)
 ```
 
-Example by [Martin Muller](https://medium.com/sicara/market-research-survey-conjoint-analysis-r-code-3d4f6190c2aa)
+The recovered WTP—the dollar premium a consumer would pay to upgrade battery life or extend
+the warranty—is the reservation-price increment of @eq-reservation-price, attribute by
+attribute. Summing these increments across a configuration's upgraded attributes yields the
+configuration's total reservation price relative to the baseline product, which is the input
+that pricing and product-line decisions actually consume.
 
-```{r}
-# Declaration of features and feature values
-feature_names <- c("LENGTH", "ILLUSTRATION", "CLAPS")
-feature_values <- list()
-feature_values[[1]] <- c("2min", "7min", "20min")
-feature_values[[2]] <- c("several images", "one image", "no image")
-feature_values[[3]] <- c("+500 claps", "less than 500 claps")
+## Pitfalls and Identification
 
-# All concept generation
-articles <- expand.grid(LENGTH = feature_values[[1]],
-                        ILLUSTRATION = feature_values[[2]],
-                        CLAPS = feature_values[[3]])
+Three threats recur, each tracing to an assumption made explicit above.
 
-library (conjoint)
-maxNumberOfArticles = 8
+**Hypothetical bias.** Stated-preference partworths can diverge from revealed behavior
+because survey choices carry no consequence. Incentive-aligned designs—where the respondent
+faces a real chance of receiving the chosen option—and the reconciliation of conjoint
+partworths against market data are the standard defenses [@toubia2017; @ding2015learning].
+WTP, being a ratio, is somewhat insulated, but level effects on the absolute scale are not.
 
-# Selection of relevant concepts
-selectedArticles <- caFactorialDesign(data = articles,
-                                      type = 'fractional',
-                                      cards = maxNumberOfArticles)
+**Confounded designs.** If the fractional factorial is poorly chosen, attribute columns are
+correlated and their partworths are not separately identified—the design, not the data,
+determines the estimates. The orthogonality check in the worked example is not decorative;
+it is the diagnostic that the partworths in @eq-additive-utility are recoverable at all.
 
-# Checking if selected concepts are relevant for study
-corrSelectedArticles <- caEncodedDesign(selectedArticles)
-#print(cor(corr_design_mails))
-print(cor(corrSelectedArticles))
+**Heterogeneity and scale.** Treating a heterogeneous market with a single aggregate logit
+biases elasticities through composition; the mixed-logit and HB estimators of @sec-rum exist
+to fix this. But heterogeneity in choice *consistency* (scale) masquerades as heterogeneity
+in *preference*, so individual-level partworths must be interpreted with the scale–
+heterogeneity confound in mind. Segmenting on partworth vectors via cluster analysis is sound
+only after this confound is addressed.
 
-# List of rates of each article allowing to compare them
-ranking = c(7 / 7, 3 / 7, 3 / 7, 5 / 7, 2 / 7, 6 / 7, 3 / 7, 0 / 7)
+A final, structural caveat returns to additivity. Equation @eq-additive-utility and the
+reservation-price formula @eq-reservation-price assume attributes contribute independently.
+Where they do not—where a feature's value depends on the presence of another—the analyst must
+either model the interaction explicitly (more profiles) or absorb it into a higher-level
+attribute, as discussed in @sec-conjoint. A partworth estimated under a falsely additive model
+is biased toward the configurations over-represented in the design, and the WTP derived from it
+inherits that bias.
 
-# Performing conjoint analysis
-Conjoint(ranking, selectedArticles, unlist(feature_values))
-```
+## Key Takeaways
 
-### Research
-
-[@bradlow2004learning] Learning-Based Model for Imputing Missing Levels in Partial Conjoint Profiles
+- **Reservation price is derived, not asked.** Direct WTP questions bias downward; the
+  defensible route recovers WTP from a fitted utility model as the partworth-to-price ratio in
+  @eq-dollar-per-util.
+- **Additive separability is the load-bearing assumption.** Equations @eq-additive-utility and
+  @eq-reservation-price hold only when attributes do not interact and price disutility is
+  locally linear; both fail in identifiable ways.
+- **Choice-based conjoint with random utility is the modern default.** The MNL/mixed-logit/HB
+  stack of @sec-rum estimates heterogeneous, individual-level partworths from realistic choice
+  tasks [@mcfadden1986choice; @rossi2014].
+- **Design determines identification.** Orthogonal fractional factorials keep partworths
+  separately estimable; a confounded design produces numbers without referents.
+- **Mind the confounds.** Hypothetical bias, the number-of-levels effect, and the
+  scale–heterogeneity confound each threaten the interpretation of partworths and the WTP
+  derived from them.

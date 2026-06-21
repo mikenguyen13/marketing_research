@@ -1,1251 +1,784 @@
-# Marketing Mix Models
+# Marketing Mix Models {#sec-marketing-mix-models}
 
-Taxonomy of models:
+A *marketing mix model* is a quantitative account of how demand responds to the
+levers a firm controls—price, advertising, promotion, distribution, and product
+characteristics—estimated from data on what consumers actually bought. The
+practical question it answers is deceptively simple: if the firm cuts price by
+ten percent, runs a feature, or opens a dealership two miles closer to the
+buyer, how much more does it sell, and at whose expense? The scientific question
+underneath is harder: which of the patterns in the data reflect a stable
+behavioral mechanism that would survive the firm changing its policy, and which
+are artifacts of the firm having chosen its marketing in the first place.
 
-1.  Descriptive: describe relationships between observables
-2.  Structural: estimate features of a data generating process (i.e., a model) that are unaffected by the changes in the variables of interest
+This chapter develops the demand-side modeling tradition that dominates
+empirical marketing. It is organized around a single tension. On one side sits
+the **descriptive** goal—summarize observables, forecast, decompose sales into
+contributions from each lever—for which a flexible regression is often enough.
+On the other sits the **structural** goal—recover preference and cost primitives
+that are invariant to the policy under study, so the model can answer
+counterfactuals the data never witnessed. The two are not competitors so much as
+points on a continuum of how much economic theory one is willing to impose, and
+how radical a counterfactual one needs to evaluate. We make that continuum
+explicit, then build the workhorse models—random-coefficients discrete choice,
+multi-category and store-choice systems, and advertising-response models—giving
+each its estimator, its identifying assumptions, and the conditions under which
+identification fails. The structural-modeling machinery these models rely on is
+developed in @sec-structural-models; here we put it to work on the marketing mix
+specifically, and connect it to the joint treatment of
+demand-and-supply systems in @sec-sm-demand-supply.
 
-Any type of causal inference is a form of structural estimation. (All causal identification/estimation/inference is always special case structural identification/estimation/inference).
+By the end the reader should be able to (i) place a given modeling choice on the
+descriptive–structural continuum and justify it from the research question;
+(ii) write down a random-coefficients logit demand system, state what identifies
+its parameters, and name the instruments that rescue it from price endogeneity;
+and (iii) reason about heterogeneity, endogeneity, and the limits of
+observational advertising measurement the way the frontier literature does.
 
-All quantity of interest (TT, ATE, LATE, etc.) are always under some assumptions, there is no such thing as "model free"
+## A Taxonomy of Models
 
-Reduced Form: is a functional/stochastic mapping for which the inputs are
+Begin with the distinction that organizes everything else. A **descriptive**
+model characterizes relationships among observables: it answers "what is the
+conditional distribution of sales given price and advertising in this market?"
+A **structural** model estimates features of a *data-generating process*—a set
+of probabilistic or functional relationships between observables and latents—that
+are held to be invariant to the changes in the variables of interest
+[@reiss2011]. The crucial point, easily lost, is that *any* causal claim is a
+form of structural estimation. Treatment effects such as the average treatment
+effect (ATE), the effect of treatment on the treated (TT), or the local average
+treatment effect (LATE) are all defined only relative to assumptions about how
+the data were generated; there is no such thing as a "model-free" causal
+quantity [@reiss2011]. Causal inference is the special case of structural
+inference in which the structural feature of interest is an effect of an
+intervention.
 
-1.  Exogenous variables
-2.  Unobservables ("structural errors")
+It is worth fixing the vocabulary precisely, because applied work routinely
+abuses it. Following @reiss2011, a **structure** $S$ is a complete
+data-generating process that implies a joint distribution of the observables.
+Let $\mathcal{S}$ be the set of all admissible structures and $S_0 \in
+\mathcal{S}$ the true one. A **hypothesis** is any nonempty subset $\mathcal{H}
+\subseteq \mathcal{S}$, and it is true if $S_0 \in \mathcal{H}$. A **structural
+feature** $\theta(S_0)$ is a functional of the true structure—an elasticity, a
+counterfactual market share, a welfare change. The feature $\theta(S_0)$ is
+**identified** under $\mathcal{H}$ if it is uniquely pinned down within
+$\{\theta(S) : S \in \mathcal{H}\}$ by the joint distribution of the observables.
 
-and outputs are endogenous variables (satisfy independence condition wrt unobservables) (e..g, $Y = f(X,Z,U)$)
+> A structural feature is *identified* if no two admissible structures consistent
+> with the same population distribution of observables disagree about its value.
+> Identification is a property of the model-plus-assumptions, not of the sample;
+> more data cannot fix a feature that is not identified.
 
-Reduced form is obtain by solving a structural model for each endogenous variable as a function of the exogenous observables and structural errors
-
-For example,
-
-The perfectly competitive supply and demand
-
+This makes the role of the error term concrete. A **reduced form** is a
+functional or stochastic mapping whose inputs are exogenous variables and
+unobservables (the "structural errors") and whose outputs are the endogenous
+variables, constructed so the outputs satisfy an independence condition with
+respect to the unobservables, e.g. $Y = f(X, Z, U)$. The reduced form is
+obtained by *solving* a structural model for each endogenous variable as a
+function of exogenous observables and structural errors. Consider perfectly
+competitive supply and demand,
 $$
-\begin{cases}
-Q &= D(P, X,U_d) \\
-P&= MC(Q, Z, U_s)
-\end{cases}
+\begin{aligned}
+Q &= D(P, X, U_d), \\
+P &= MC(Q, Z, U_s),
+\end{aligned}
 $$
-
-after solving for equilibrium, we derive the reduced form relations
-
+a system in which price and quantity are *jointly* determined. Solving for the
+market equilibrium yields the reduced-form relations
 $$
-\begin{cases}
-P & = p (Z, X,U_s, U_d) \\
-Q &= q(Z, X, U_s, U_d)
-\end{cases}
+\begin{aligned}
+P &= p(Z, X, U_s, U_d), \\
+Q &= q(Z, X, U_s, U_d),
+\end{aligned}
+$$ {#eq-reduced-form}
+in which each endogenous variable is written purely in terms of exogenous
+observables and named structural errors. Two lessons follow. First, a reduced
+form *presupposes* a structural model—it is what you get after equilibrium is
+imposed—so the phrase "reduced-form structural model" is not an oxymoron.
+Second, the analyst must *name the unobservable* sitting in each error term
+($U_d$ a demand shock, $U_s$ a cost shock); an error term with no economic
+interpretation cannot support a counterfactual. When researchers describe a bare
+regression as "reduced-form analysis" and then read its coefficients causally,
+they are tacitly asserting a structural model they have not written down, and
+usually one that is logically incoherent [@reiss2011].
+
+@tbl-descriptive-structural contrasts the two traditions on the dimensions that
+actually drive the modeling choice.
+
+| Dimension | Descriptive / reduced-form causal | Structural |
+|---|---|---|
+| Primary goal | Forecast, summarize, measure local effects | Recover invariant primitives; evaluate counterfactuals |
+| Economic content | Minimal; functional form is a convenience | Preferences, costs, equilibrium imposed *a priori* |
+| Error term | Statistical residual | Named economic unobservable (taste, cost, quality shock) |
+| Counterfactual scope | Near the observed policy | Radically different policies, new products, new markets |
+| Identification rests on | Exogenous variation / instruments | Exogenous variation *plus* the maintained economic model |
+| Chief risk | Endogeneity; weak external validity | Misspecification of the maintained model |
+
+: When to reach for which tradition. The choice is dictated by the research question and the radicalness of the required counterfactual, not by taste. {#tbl-descriptive-structural}
+
+The guidance that flows from this is well summarized by @chintagunta2011. If the
+goal is **forecasting** in a stable environment, a descriptive model usually
+suffices—aggregate diffusion models [@Bass_1969; @dekimpe1995] or individual-level
+choice models with rich dynamics [@guadagni1983] forecast well without any
+causal pretension. If the goal is **measurement** of an effect, the appropriate
+tool is whichever design—experimental, quasi-experimental, or structural—delivers
+identification for that specific effect. And if the goal is to evaluate a
+**radically different counterfactual**—a new product, an entry, a tax, a merger—a
+structural model is typically unavoidable, because only it carries primitives
+that survive the policy change. @chintagunta2011 also stress the discipline's
+hard constraint: demand, supply, and the marketing mix are *endogenously*
+determined together, so the best case is to find exogenous shocks to the system,
+and the next-best is to impose a supply-side model into the demand estimation
+step so that the firm's optimizing behavior supplies the missing moment
+conditions.
+
+A standing methodological caution accompanies all of this. @lehmann2011 warns of
+a *rigor–relevance* trade-off: as a field matures, methodological sophistication
+can become an end in itself, touching off an "arms race" in which execution
+rigor is rewarded over idea quality. The corrective is to weight analytical rigor
+and substantive content equally, and to hold a good paper to four criteria—it
+should be reasonably realistic and general, relatively simple and robust,
+insightful, and reasonably communicable—reaching for more complex methods only
+when the substantive question demands them. We adopt that standard throughout:
+the formalism below is in service of substantive marketing questions, not the
+reverse.
+
+## Heterogeneity: The Heart of the Matter
+
+Marketing's defining empirical fact is that consumers differ, and the differences
+are mostly *unobserved*. Three kinds matter. **Preference heterogeneity** is
+variation in tastes—how much a household intrinsically values a brand.
+**Response heterogeneity** is variation in sensitivity to the marketing
+levers—how a household's purchase probability moves with price or advertising.
+**Structural heterogeneity**, the most recent and demanding notion, is variation
+in the *decision process itself*: different consumers may not even be solving the
+same optimization problem. Heterogeneity is not a nuisance to be averaged away;
+it is the object of interest, because price customization, targeting, and
+segmentation are all attempts to exploit it.
+
+Why model demand at all, rather than the firm? Because we want to relate demand
+to marketing activity and then optimize and target against it. It is admittedly
+counterintuitive to assume utility maximization on the consumer side while being
+agnostic on the firm side; the pragmatic justification is empirical, namely that
+well-fitting demand-side models are abundant whereas validated supply-side models
+remain comparatively rare—an absence of evidence that signals where development
+is needed, not that the firm-side assumption is wrong [@chintagunta2011].
+
+There are two ways to let parameters vary across consumers, and the choice has
+real consequences. **A priori segmentation** partitions consumers by observed
+characteristics and estimates separate parameters per segment; the estimation
+problem is then easy, provided heterogeneity is genuinely observed and one is not
+in a high-dimensional regime where the number of parameters $p$ swamps the sample
+$n$. **Unobserved heterogeneity** must instead be inferred, and is handled either
+by **latent-class** (finite-mixture) models, which approximate the taste
+distribution with a small number of discrete support points, or by
+**continuous individual-level** models, which posit a parametric (often
+multivariate normal) distribution of coefficients and estimate its parameters
+[@chintagunta2011]. @fig-mmm-map situates these choices and previews the rest of
+the chapter.
+
+```{mermaid}
+%%| label: fig-mmm-map
+%%| fig-cap: "The marketing-mix modeling landscape. The research question fixes a position on the descriptive–structural continuum; that position, together with the kind of heterogeneity and the source of endogeneity, selects the model."
+flowchart TD
+  Q["Research question"] --> G{"Goal?"}
+  G -->|Forecast in<br/>stable setting| D["Descriptive models<br/>(diffusion, dynamic logit)"]
+  G -->|Measure a<br/>local effect| M["Quasi-experiment<br/>(IV, RD, DiD)"]
+  G -->|Radical<br/>counterfactual| S["Structural demand<br/>(+ supply) models"]
+  S --> H{"Heterogeneity?"}
+  H -->|Observed| AP["A priori<br/>segmentation"]
+  H -->|Unobserved,<br/>discrete| LC["Latent-class<br/>mixture"]
+  H -->|Unobserved,<br/>continuous| RC["Random-coefficients<br/>logit (BLP)"]
+  S --> E{"Endogenous<br/>marketing mix?"}
+  E -->|Price| IV["Instruments:<br/>cost shifters,<br/>other markets"]
+  E -->|Advertising /<br/>promotion| CF["Control function /<br/>structural restrictions"]
+```
+
+## Discrete Choice Demand and Continuous Heterogeneity {#sec-mmm-discrete-choice}
+
+The dominant framework for disaggregate demand is the **random-utility discrete
+choice model**, whose general theory appears in @sec-structural-models. Here we
+specialize it to the marketing mix and to the random-coefficients logit, the
+model that made aggregate demand estimation with endogenous prices tractable.
+
+### The Random-Coefficients Logit
+
+Let consumer $i$ choose among products $j \in \{0, 1, \dots, J\}$, where $j = 0$
+is the outside option of not buying. Utility is linear in product
+characteristics with consumer-specific coefficients,
 $$
-
-Reduced Form is also under structural models. Some also say "reduced form structural model"
-
-Reduced form is not recommended in applied econ because it's either wrong or logically incoherent
-
-You always need to name your unobservable(s) under the error terms.
-
-[Identification](http://www.econ.yale.edu/~pah29/intro.pdf) (p. 29):
-
--   a **structure** $S$ is a data generating process (i.e., a set of probabilistic or functional relationships between the observable and latent variables that implies ("generates") a joint distribution of the observables
-
--   Let $\mathcal{S}$ be the set of all structures; $S_0 \in \mathcal{S}$ the true structure
-
--   a **hypothesis** is any nonempty subset of $\mathcal{S}$
-
--   hypothesis $\mathcal{H}$ is true if $S_0 \in \mathcal{H}$
-
--   a structural feature $\theta(S_0)$ is a functional of the true structure
-
--   A structural feature $\theta(S_0)$ is **identified** under the hypothesis $\mathcal{H}$ if $\theta(S_0)$ is uniquely determined within the set $\{\theta(S): S \in \mathcal{H}\}$ by the joint distribution of observables
-
-Analyze
-
-1.  Transaction history:
-
-    -   Examples:
-
-        -   Purchase incident, brand choice, quantity. The product of these three things can give demand.
-
-        -   Prescription history -\> Demand
-
-        -   Casino visits, spending in casino -\> Demand
-
-Modeling Issues. Why are we doing this?:
-
-1.  We model demand because we want to relate demand to marketing activity.
-2.  We also want to optimize and target
-
-**Heterogeneity** is at the heart of marketing (especially in the brand choice models)
-
--   Unobserved heterogeneity:
-
-    -   Differences in taste and **preferences**
-
-    -   Differences in **responsiveness** to marketing lever
-
-    -   Structural heterogeneity: The decision making process are not the same (newer one).
-
--   A priori segmentation: estimation problem is easy (if you don't the problem of $p >> n$ and you actually observed heterogeneity)
-
-    -   Firms segment based on characteristics, and they are different.
-
-Two ways to handle heterogeneity
-
-1.  Latent Class Models
-2.  Individual Level Heterogeneity
-
-Endogeneity
-
--   structural component allows for jointly modeling demand and supply
-
-
-
-## Discrete Choice Models and Continuous Heterogeneity
-
--   Discrete and Continuous Heterogeneity
-
--   Price Customization
-
--   Targeting
-
-Models:
-
--   Random Coefficients Logit
-
--   Purchase Incidence
-
--   Brand Choice Models
-
-[@chintagunta2011]
-
--   Goals of demand analysis (which affect model-form)
-
-    -   Forecast: (not much causal inference)
-
-        -   Examples:
-
-            -   Aggregate: [@Bass_1969]; [@dekimpe1995]
-
-            -   Individual: [@guadagni1983]
-
-        -   Descriptive model in stable environments
-
-        -   Structural for **radically different counterfactuals**
-
-    -   Measurement
-
-        -   usually used under experiments and causal inference
-
-        -   Structural models
-
-        -   Reduced-form, causal effects models
-
-    -   Testing
-
-        -   Reduced-form, causal effects models
-
--   Demand, supply, and marketing mix are endogenously determined.
-
-    -   Best case: find exogenous shocks to the system to estimate
-
-    -   Impose supply model into the demand estimation step (p. 980)
-
--   Counterintuitive to assume utility maximization for estimating consumer-level models, instead of firms. But we observe evidence of well-fitting model for the demand-side, but not yet in the supply side. But lack thereof evidence still does not mean that it's wrong, it's just mean we need more development.
-
--   Building blocks of individual-level demand models
-
-    -   Direct utility specification of demand system
-
-    -   Indirect utility specification of demand systems.
-
-
-
-[@lehmann2011]
-
--   Tradeoff between rigor (sophistication) and relevance
-
--   Basic discipline migrated and viewed as more sophisticated, which lead to arms race. (cascade more and more sophisticated)
-
--   Execution rigor \> idea quality. We should view analytical rigor and substantive content equally.
-
--   Impact:
-
-    -   Citation
-
-        -   Breadth and reach (to other disciplines)
-
-        -   Game the system: cite reviewers.
-
--   A good research paper should be (p.162)
-
-    -   reasonably realistic/general
-
-    -   relatively simple and robust
-
-    -   insightful
-
-    -   reasonably communicable
-
--   More complex methods are only appropriate when (p. 163)
-
-
-
-[@chintagunta2005]
-
--   Try to understand the role of potential weekly brand-specific characteristics that influence consumer choices, but they are unobserved
-
--   Endogeneity
-
--   Inclusion of the UBC
-
-UBC: they are the first guys to do it in the dis aggregate model.
-
-[@zhang2009]
-
-[@dong2009]
-
--   What is the benefit of individual-level targeting in the presence of strategic behavior by other firms?
-
--   Setting
-
-    -   Pharmaceutical industry
-
-    -   Individual-level targeting to physicians
-
-    -   Targeted ad (i.e., detailing)
-
--   Model
-
-    -   Physician response: capture the responsiveness each physician to targeting
-
-    -   Firm detailing choices: firms strategically target and how much ad
-
-[@nair2017]
-
-
-
-## Structural Models, Endogeneity
-
-Good Empirical Research requires
-
-1.  Good Data
-
-    1.  Original
-
-    2.  Cool results
-
-    3.  Exogenous
-
-2.  Good Theory
-
-    1.  Interesting Hypotheses
-
-3.  Cool new approach
-
-
-
-Analysis
-
-1.  Descriptive
-2.  Predictive
-3.  Causal
-4.  Prescriptive or policy-oriented.
-
-Both 3 and 4, you need structural or experimental research.
-
-
-
-Structural Equation Modeling is different Structural Equation
-
-Causal as in experiments, there
-
-In the structural model, we still want to make causal inference.
-
-
-
--   Endogeneity
-
-Models:
-
--   Instrumental Variables
-
--   Joint Estimation of Supply and Demand Models
-
--   Empirical Bargaining Models
-
-Ask:
-
--   Bounds analyses:
-
-    -   [@ellickson2011a]
-
-    -   [@manski2002]
-
-### Background {#background-structural-models}
-
-[@reiss2011]
-
-Types of Empirical models in marketing
-
--   Descriptive (no need to concern for endogeneity): covert data into info
-
-    1.  Statements about facts
-
-    2.  High-quality and relevant data
-
-    3.  Accurate Interpretation
-
--   Structural (also known as latent/ path models)
-
--   Experimental (including quasi-experimental)
-
-The data and research questions should always determine methodological approach.
-
-Under structural models, we rely on
-
-1.  Formal formal specification linking Y and X
-
-2.  Stochastic specification connects theoretical model to data. Ex: heterogeneity helps explain the imperfect fit by including
-
-    1.  Consumer preference
-
-    2.  Consumer decision-making errors
-
-    3.  Measurement errors
-
-Structural models help recover counterfactuals.
-
-Structural models differ from descriptive models because it can recover the structural parameters using reduced from.
-
-Reduced form regression means that you know the structure of the data generating process.
-
-A reduced from only exist with an underlying structural model. When researchers say they use "reduced-form analysis" when they only do regression: They erroneously assign a causal interpretation to the regression coefficients.
-
-
-
-[@rossi2014]
-
--   IV methods even with valid instruments can still have poor sampling properties (finite sample bias, large sampling errors).
-
--   Problems with Instrumental variables in marketing
-
--   It's hard to find instrument for **advertising** and **promotional** variables
-
--   Lagged marketing variables are invalid instruments when advertising and promotional variables are unobserved.
-
--   Control functions can still work under nonlinear demand model (e.g., choice model).
-
--   Endogenous variables in marketing:
-
-    -   Price, advertising, promotion, entry order, distributions, market structure, market share, revenue, networks
-
-    -   Instruments:
-
-        -   lagged variables,
-
-        -   costs (input and wholesale prices).
-
-            -   Cost input: Theoretically good instrument for endogenous price, but hard to measure (especially marginal cost measured by BLS that has high measurement error) (p. 666).
-
-            -   Wholesales price to deal with price endogeneity is plausible (but people can still argue that wholesalers set price in anticipation of adveritsing and promotion). But they have less variation (frequency of changes is lower than retail price) hence using wholesale price as an instrument, you account for the difference between long-run and short-run effects of price, instead of endogeneity.
-
-        -   other products. Good instrument for endogenous price when unobserved demand shocks (that vary by market and time, for those shocks that only vary by market, but not only time, FE can only fix) are uncorrelated across market (exogeneity), but costs are correlated across market (relevance).
-
-        -   fixed effects (brand, time dummies). Good but only for linear models.
-
-            -   Price endogeneity: [@villas-boas1999] (another flaw - no heterogeniety and state-dependence for packaged goods panel) uses lag price as instruments, but it is bad (unmatched time) and is not supported.
-
-        -   demographics (bad instruments),
-
-        -   product characteristics [@berry1995],
-
-        -   price indices,
-
-        -   display and features.
-
-    -   People tend to use lagged variables to fix endogenous price (price correlates with unobserved quality, which induces downward endogenous in price sensitivity).
-
--   The Hausman test can only be used to determine the validity of one set of instruments based on the validity of another set of instruments.
-
-### Examples
-
-[@berry2004]
-
--   Second-choice data as an instrument: if consumers hadn't purchased their cars, what would have been their second choice. But you still need high variation in this variable to estimate the model
-
--   General Motors data set: second choice = substitution pattern. (This might only help with non-parametric estimate)
-
--   Prior models: To estimate substitution coefficient (pattern): match consumer attributes to consumer choices (observables).
-
-    -   Identification: estimation based on **changes across markets (or across time)**.
-
-    -   Assume the distribution of consumers' underlying tastes, conditional on an observed distribution of consumer incomes and demographics (i.e., observables) is **constant** across markets and time.
-
-    -   Hence, substitution coefficient is estimated from the data on changes in (1) characteristics and number of product, and (2) changes in observed consumer attributes across markets.
-
-    -   In other words, estimation is based on
-
-        -   $1$ switchers of consumers (i.e., people buy different product when there are changes in product prices, choice set, or other characteristics).
-
-        -   $2$ different people (distribution of consumer attributes) will choose different product for a set of product.
-
--   But the prior models are without unobserved heterogeneity and only with observed consumer attributes are actually bad at replicating the substitution pattern observed in the second-choice data.
-
--   This paper identification strategy is based on the second-choice data
-
-    -   Advantages:
-
-        -   (1): direct data-driven substitution pattern.
-
-        -   $2$ more identification power without the exogenous changes in choice sets.
-
-    -   Disadvantages:
-
-        -   Since second-choice data is available for single market (i.e., not across market), we can't estimate across-market pattern of substitution.
-
--   Future research:
-
-    -   Combine across market second-choice data (i.e., SUVs switch to minivan).
-
-Baseline model [@berry1995]
-
+u_{ij} = \sum_{k} x_{jk}\,\tilde{\beta}_{ik} + \xi_j + \epsilon_{ij},
+$$ {#eq-blp-utility}
+where $x_{jk}$ is the $k$-th observed characteristic of product $j$ (including
+price), $\xi_j$ is an **unobserved product characteristic** (quality, shelf
+position, the part of appeal the analyst does not see), and $\epsilon_{ij}$ is an
+idiosyncratic taste shock independent across consumers and products. The
+coefficients themselves carry the heterogeneity,
 $$
-u_{ij} = \sum_{k} x_{jk} \tilde{\beta}_{ik} + \xi_j + \epsilon_{ij}
+\tilde{\beta}_{ik} = \bar{\beta}_k + \sum_{r} z_{ir}\,\beta^o_{kr}
+  + \beta^u_k\, v_{ik},
+$$ {#eq-blp-taste}
+decomposing taste into a population mean $\bar{\beta}_k$, a part that loads on
+**observed** consumer attributes $z_{ir}$ (demographics) through $\beta^o_{kr}$,
+and a part that loads on an **unobserved** consumer attribute $v_{ik}$ through
+$\beta^u_k$ [@berry1995; @berry2004]. Substituting @eq-blp-taste into
+@eq-blp-utility and collecting terms gives
 $$
+u_{ij} = \delta_j
+  + \sum_{k,r} x_{jk}\, z_{ir}\, \beta^o_{kr}
+  + \sum_{k} x_{jk}\, v_{ik}\, \beta^u_k
+  + \epsilon_{ij},
+\qquad
+\delta_j = \sum_k x_{jk}\,\bar{\beta}_k + \xi_j,
+$$ {#eq-blp-delta}
+where $\delta_j$ is the **mean utility** of product $j$, the choice-specific
+constant that absorbs both the population-mean valuation of $j$'s observed
+characteristics and its unobserved quality $\xi_j$. The terms after $\delta_j$
+generate flexible, realistic substitution patterns: two products that are close
+in characteristic space, or that appeal to the same demographic, become close
+substitutes regardless of their market shares—precisely the property the plain
+logit lacks.
 
-where
-
--   $u_{ij}$ = linear utility of consumer $i$ consuming product $j$ ($j \in [0, J]$ where $j =0$ means the consumer did not buy from any of the competing market
-
--   $k$ = observed product characteristics
-
--   $r$ = observed household attributes.
-
--   $x_{jk}$ = observed product characteristics
-
--   $\xi_j$ = unobserved product characteristics (pick up all the impact that weren't observed, but it might also correlate with the observe, in which case results in small price elasticities).
-
--   $\epsilon_{ij}$ = individual preferences (independent of the product attributes and each other).
-
--   $\tilde{\beta}_{ik} = \bar{\beta}_k + + \sum_{r} \mathbf{z}_{ir} \beta_{kr}^o + \beta_k^u \mathbf{v}_{ik}$ (consumer taste)
-
-    -   $\mathbf{z}_i$ = vectors of observed consumer attributes
-
-    -   $\mathbf{v}_{ik}$ = vector of unobserved consumer attributes
-
-    -   This model also assumes that there is only one unobserved characteristics (i.e., without subscript $r$) per household.
-
-Substitute the above two equation
-
+If $\epsilon_{ij}$ is i.i.d. type-I extreme value, the choice probability
+conditional on the consumer's attributes integrates to the familiar logit kernel,
 $$
-u_{ij} = \delta_j + \sum_{kr} x_{jk} \mathbf{z}_{ir} \beta_{kr}^o + \sum_{k} x_{jk} \mathbf{v}_{ik} \beta_k^u +\mathbf{\epsilon}_{ij}
+P(y_i = j \mid z_i, v_i; \theta, x)
+= \frac{\exp\!\big(\delta_j + \mu_{ij}\big)}
+       {\sum_{m=0}^{J}\exp\!\big(\delta_m + \mu_{im}\big)},
+\qquad
+\mu_{ij} = \sum_{k,r} x_{jk} z_{ir}\beta^o_{kr} + \sum_k x_{jk} v_{ik}\beta^u_k,
+$$ {#eq-blp-prob}
+and aggregate market shares follow by integrating over the joint distribution of
+$(z_i, v_i)$. The extreme-value assumption is a tractability device, not a
+behavioral claim: it yields a closed form for the conditional choice
+probabilities and, by McFadden's argument, closely approximates a probit with
+normal errors.[^evd] In automobile applications the choice set itself must be
+constructed with care; @berry1995 use the *modal* configuration of options for
+each model and the model's average transaction price, a defensible aggregation
+when within-model option variation is second-order.
+
+[^evd]: The double-exponential (Gumbel) distribution is chosen so that the
+    difference of two extreme-value errors is logistic, delivering the logit
+    closed form. The price is the independence-of-irrelevant-alternatives (IIA)
+    property *within* the inner logit; the random coefficients in @eq-blp-taste
+    exist precisely to break IIA at the level of aggregate substitution.
+
+### What Identifies the Model, and What Breaks It
+
+Three sources of variation identify the parameters, and it is worth being precise
+about which moment each one matches [@berry2004]:
+
+1. **Covariances of product characteristics with consumer demographics**
+   ($x$ with $z$) identify the observed-interaction coefficients $\beta^o$:
+   if high-income households disproportionately buy large cars, the data reveal
+   how income shifts the taste for size.
+2. **Covariances of first-choice with second-choice characteristics** identify
+   the *unobserved* heterogeneity $\beta^u$: a consumer whose first and second
+   choices are both sports cars reveals a latent taste for that attribute that no
+   demographic captures.
+3. **Aggregate market shares** identify the mean utilities $\delta_j$, hence
+   (given an assumption on $\xi$) the means $\bar{\beta}$.
+
+The deep identification problem is **price endogeneity**. The unobserved quality
+$\xi_j$ in @eq-blp-delta is, by construction, observed by firms and consumers but
+not by the analyst, and firms price against it: high-$\xi_j$ products carry higher
+prices. Because price enters $x_{jk}$, ordinary estimation conflates "people pay
+more for this product" with "this product is priced higher because it is better,"
+biasing the price coefficient *toward zero*—understating price sensitivity and so
+overstating markups and the value of the brand. Identification therefore requires
+either an instrument for price or an explicit assumption on $\xi_j$. @berry2004
+shows the available paths:
+
+- **Restrict $\xi_j$**: assume $\xi_j$ is mean-independent of the *nonprice*
+  characteristics of all products, which lets one project out $\xi$ and recover
+  $\bar\beta$. This is efficient *if* the restriction holds and inconsistent
+  otherwise; estimating $\delta_j$ unrestricted is always consistent and so is
+  the safer default.
+- **Second-choice data as identification**: ask consumers what they would have
+  bought had their chosen product been unavailable. This delivers
+  substitution patterns *directly and data-driven*, with identifying power that
+  does not require exogenous variation in choice sets—at the cost that
+  second-choice data are typically single-market, so across-market substitution
+  remains unidentified [@berry2004].
+
+When the estimating equation is the demand-and-supply system of @sec-sm-demand-supply,
+estimation proceeds by GMM: invert observed shares for the mean utilities
+$\delta_j$, form the structural error $\xi_j$, and interact it with instruments
+orthogonal to $\xi$. A widely used open-source implementation of this pipeline is
+documented by @conlon2020. The same inversion underlies joint demand-and-supply
+estimation, treated formally in @sec-sm-demand-supply; imposing the
+supply side adds the firm's first-order pricing conditions as extra moments,
+sharpening identification of the cost primitives needed for merger and entry
+counterfactuals.
+
+### Endogeneity and Instruments in the Marketing Mix
+
+Endogeneity is the central threat to demand estimation, and marketing's
+endogenous variables are numerous: price, advertising, promotion, entry order,
+distribution, market structure, share, revenue, and network position
+[@rossi2014]. The candidate instruments and their pitfalls deserve a frank
+accounting, because the field's most-cited critique is precisely that the usual
+instruments are weaker than they look. @rossi2014 makes the core points:
+
+- Even **valid** instruments can have poor finite-sample properties—substantial
+  bias and large sampling errors—so a defensible exclusion restriction is
+  necessary but not sufficient.
+- It is genuinely hard to instrument for **advertising** and **promotion**.
+  *Lagged* marketing variables, the field's reflex, are invalid whenever the
+  advertising or promotional state is itself unobserved and persistent: the lag
+  then correlates with the current unobservable it is meant to exclude. The
+  much-cited use of lagged price as an instrument in @villas-boas1999 is, on this
+  reasoning, unsupported—the timing is unmatched and the model omits heterogeneity
+  and state dependence.
+- **Cost shifters** are the textbook instrument for price. Input costs are
+  theoretically ideal but practically noisy—marginal cost series carry large
+  measurement error. Wholesale prices are more plausible, but they change less
+  frequently than retail prices, so using them tends to identify the gap between
+  long-run and short-run price effects rather than to purge endogeneity, and one
+  can still object that wholesalers set prices in anticipation of downstream
+  advertising and promotion.
+- **Prices of other markets** (the Hausman-type instrument) identify price when
+  unobserved demand shocks are uncorrelated across markets (exogeneity) but costs
+  are correlated across markets (relevance); they fail when demand shocks are
+  nationally correlated.
+- **Fixed effects** (brand and time dummies) and **product characteristics**
+  [@berry1995] are clean but limited: fixed effects only absorb endogeneity that
+  is constant along the differenced-out dimension, and they are valid identifiers
+  only in linear models.
+- For **nonlinear** demand—exactly the choice models of this chapter—the
+  **control-function** approach remains workable where a plain IV does not
+  [@rossi2014].
+
+The Hausman test, finally, does not certify an instrument in isolation: it can
+only assess the validity of one instrument set *relative to another* maintained
+to be valid [@rossi2014].
+
+### Targeting and the Value of Heterogeneity
+
+The payoff to modeling heterogeneity is targeting. @dong2009 study
+individual-level targeting of physicians by pharmaceutical detailing, jointly
+modeling each physician's *response* to detailing and the firm's strategic
+*choice* of how much to detail whom; the question—what is the value of
+individual-level targeting when competitors also behave strategically—can only be
+posed inside a model that carries both the response heterogeneity and the
+supply-side game. @zhang2009 and @nair2017 develop the targeting and dynamic
+pricing implications further. The recurring lesson is that the return to
+estimating heterogeneity is realized only when the model is rich enough to feed
+an optimization or a strategic counterfactual.
+
+## Structural Models and Endogeneity {#sec-mmm-structural}
+
+It is worth restating where structural modeling sits, because the term collides
+with an unrelated one. **Structural equation modeling** (the latent-variable
+path-model technology of @sec-measurement-scales) is *not* what is meant here;
+"structural" in the present sense denotes a model of an economic data-generating
+process from which counterfactuals can be recovered. The four rungs of empirical
+ambition are descriptive, predictive, causal, and prescriptive (policy-oriented);
+the last two—anything that asks "what *would* happen if"—require either a
+structural model or an experiment [@reiss2011].
+
+@reiss2011 organizes empirical marketing into three families. **Descriptive**
+work converts data into information through statements of fact, high-quality
+relevant data, and accurate interpretation, and—because it makes no causal
+claim—need not confront endogeneity at all. **Structural** work rests on a
+*formal* specification linking $Y$ to $X$ and a *stochastic* specification that
+connects the theory to data, with the stochastic part (heterogeneity in
+preferences, decision errors, measurement error) explaining the imperfect fit.
+**Experimental** work, including quasi-experiments, identifies effects by design.
+The non-negotiable principle is that the data and the research question, not
+methodological fashion, dictate the approach.
+
+Two further tools belong to the structural toolkit beyond instruments. When
+identification cannot be secured by point assumptions, **bounds analyses** trade
+point identification for credibility, characterizing the set of parameter values
+consistent with weaker assumptions [@manski2002; @ellickson2011a]. And **empirical
+bargaining models** extend demand-and-supply estimation to settings where prices
+are negotiated rather than posted. @draganska2010 use a bargaining model to
+measure power in a distribution channel, separating **bargaining position**—how
+much each party stands to lose, endogenously determined by the demand-side
+substitution patterns—from **bargaining power**—negotiation skill, patience, and
+risk tolerance, exogenous and partner-dependent—so that the channel margin split
+is a function of both. They find that overall channel profit is not zero-sum, that
+manufacturers retain the larger share, and that bargaining power moves
+manufacturer profits strongly but retailer margins only weakly, the latter tied
+down by retailers' pricing power over consumers.
+
+Structural demand systems also let researchers study shocks that no experiment
+could engineer. @ozturk2019 estimate the effect of a Chrysler Chapter 11 filing
+on demand for *rival* automakers, disentangling a **competitive effect**
+(consumers switch to survivors) from a **contagion effect** (bad news about the
+industry depresses rival demand too). Identifying a temporally local effect
+amid the Great Recession and the anticipatory distortions of "Cash for Clunkers"
+requires a regression-discontinuity-in-time design with rich controls and a
+clean comparison—Canadian sales, where Chrysler did not file—and the net effect
+on competitors is negative, working through heightened consumer uncertainty and
+reduced cross-shopping traffic from the bankrupt firm's dealers.
+
+## Cross-Category and Store-Choice Models
+
+A single purchase occasion is really a nested sequence of decisions: which
+**store** to visit, which **categories** to buy in, which **brand** within each,
+and what **quantity** [@seetharaman2005]. Modeling these jointly matters because
+the decisions are correlated—through shared marketing exposure, through
+complementarity and substitution across categories, and through household-level
+unobserved heterogeneity that, if ignored, masquerades as cross-category
+dependence.
+
+### Multi-Category Incidence, Timing, and Bundles
+
+The literature attacks the joint-incidence problem ("which categories does the
+household buy this trip?") from three angles, summarized in
+@tbl-cross-category. The cleanest cautionary tale is methodological:
+@manchanda1999 model joint incidence in two categories with correlated errors
+and find substantial cross-category correlation, but @chib show across twelve
+categories that much of that apparent correlation is **spurious**—an artifact of
+unmodeled household heterogeneity—so that accounting for heterogeneity *reduces*
+the estimated cross-category correlation and *raises* the estimated effectiveness
+of the marketing mix. @ma2012 later attribute a further part of the spurious
+correlation to the mass of zero (no-purchase) outcomes and address it with a
+multivariate logit. The same heterogeneity-versus-dependence confound recurs in
+the *timing* literature, where multivariate hazard models allow correlated
+inter-purchase times [@chintagunta1998], and in the *bundle* literature, where
+nested-logit [@chung2003] and multinomial-probit [@jedidi2003] formulations let
+a household evaluate whether to buy a bundle as a function of comparable and
+non-comparable attributes and of reservation prices.
+
+| Outcome modeled | Representative approach | What heterogeneity buys you |
+|---|---|---|
+| Joint incidence (whether to buy) | Multivariate probit / logit [@manchanda1999; @chib; @ma2012] | Removes spurious cross-category correlation; raises measured mix effectiveness |
+| Purchase timing (when to buy) | Multivariate hazard [@chintagunta1998] | Allows positive *and* negative correlation in timing |
+| Bundle choice (which combination) | Nested logit / multinomial probit [@chung2003; @jedidi2003] | Comparable vs. non-comparable attributes; reservation prices |
+| Brand choice across categories | Correlated-sensitivity / preference models [@ainslie1998; @seetharaman1999; @iyengar2003; @russell1997] | Borrows strength across categories; correlated preferences |
+
+: Modeling multiple outcomes across multiple categories. The unifying lesson is that household-level unobserved heterogeneity and genuine cross-category dependence are easily confused, and only models that include the former can cleanly estimate the latter. {#tbl-cross-category}
+
+Brand choice, too, is correlated across categories—both in *sensitivity* and in
+*preference*. @ainslie1998 find that responsiveness to price and feature
+advertising is correlated across categories; @seetharaman1999 find household
+inertia correlated across categories; and @iyengar2003 exploit the correlation to
+borrow information from observed categories to a focal unobserved one. On the
+preference side, @russell1997 find inter-category correlation in purchase volume
+with a Poisson model, and the umbrella-branding work of @erdem1998 and
+@erdem1998a explains correlated quality perceptions across categories through a
+signaling theory of the shared brand name, with further evidence in @singh2005
+and @hansen2006.
+
+Models that combine *several* outcomes across categories—incidence with brand
+choice [@mehta2007], incidence with quantity via a two-stage bivariate logit
+[@niraj2008], or all three simultaneously [@song2007], where @song2007 finds the
+cross-category effects flow through incidence and brand choice rather than
+through quantity—are naturally estimated in a **Bayesian** framework, which
+handles the high-dimensional correlated random effects gracefully; the
+data-augmentation machinery of @albert1993 is the standard engine. Store choice
+itself, the top of the funnel, is studied by @bell1998 and @bell1998a.
+
+### Distribution Intensity and Store Choice: A Worked Specification
+
+@bucklin2008 make distribution itself the marketing lever, asking how the
+intensity of a mature dealer network shapes consumer choice of automobile make.
+They construct three make-specific intensity measures from buyer geography:
+**accessibility** (distance to the nearest outlet; closer is better),
+**concentration** (how many same-make dealers sit near a buyer; more is better),
+and **spread** (the dispersion of those dealers relative to the buyer, captured
+by a Gini coefficient off the Lorenz curve; a distribution skewed toward the
+buyer is better). Modeling *make* choice as a function of *outlet locations*—rather
+than store choice directly—is the methodological departure.
+
+The utility of buyer $h$ for make $i$ at time $t$ is linear,
 $$
-
-where
-
--   $\delta_j = \sum_k x_{jk} \bar{\beta}_k + \xi_j$ (choice-specific constant). (equation 4)
-
-Without any additional assumption on $\xi$ (i.e., product characteristics), we can have consistent estimators of $\mathbf{\theta = (\delta, \beta^o, \beta^u)}$
-
-But we need to know the identifying assumption of $\xi_j$ to be able to estimate $\bar{\beta}$:
-
--   $\epsilon_j$ are mean independent of the *nonprice* characteristics of all the products.
-
-
-
-Estimation
-
--   2 choices to estimate $\xi_j$:
-
-    1.  Estimate $\mathbf{\theta = (\beta^o, \beta^u, \delta)}$ (always consistent)
-
-    2.  Restrict the joint distribution of $(\xi, \mathbf{x})$ and estimate only $(\mathbf{\beta^o, \beta^u, \bar{\beta}})$ (efficient if there the restrictions are true, but inconsistent if the restrictions are wrong). Hence, better off with first choice.
-
--   Choice of estimation methods:
-
-    -   ML: computationally costly
-
-    -   Method of moments: matched on 3 sets of moments
-
-        1.  Covariances of the observed first-choice product characteristics ($\mathbf{x}$)with the observed consumer attributes ($\mathbf{z}$) for estimating $\mathbf{\beta}^o$: help identify $\mathbf{\beta}^o, \mathbf{x,z}$
-
-        2.  Covariances of first choice product characteristics and second-choice product characteristics: help identify unobserved consumer characteristics.
-
-        3.  Market share of $J$ products: help identify $\mathbf{\delta}$ (choice-specific constant).
-
-(BLP) [@berry1995]
-
-Question:
-
--   Hand-waving: "For computational simplicity, ..., $\epsilon_{ij}$ have an independently and identically distributed extreme value "double exponential" distribution". Basically it was modeled this way to have a tractable form of the model's choice probabilities conditional on $(\mathbf{z,v})$: $P(y_i^1 = j | \mathbf{z}_i, \mathbf{v}_i, \mathbf{\theta}, \mathbf{x})$
-
-    -   Closed-form solution: pretty close to the normal distribution (see MacFadden).
-
--   To construct the choice set: the car characteristics: the authors only used modal vehicle (combinations of options that was most commonly purchased). and price was average price of the model vehicle.
-
-    -   Defensible thing to do
-
--   Python implementation of this paper: [@conlon2020]
-
-
-
-[@draganska2010]
-
--   How do we measure power in the distribution channel?
-
--   Between manufacturers and retailers
-
-    -   Manufacturers
-
-        -   Bargain over profit margins with retailer
-
-        -   Bounded by agreement with retailer
-
-        -   Bargaining power comes form size of manufacturer and supplying product for retailers
-
-    -   Retailers:
-
-        -   Intense composition in mature coffee market
-
-        -   bounded by consumer price sensitivity
-
--   A shift of bargaining power from manufacturers to retailers
-
--   Standard models are good to measure distribution channel power.
-
--   Bargaining position: stand to lose more (endogenously determined by the substitution patterns on the demand side)
-
--   Bargaining power: negation skills, patience, risk tolerance (exogenous - depends on negotiation partners).
-
--   Channel margin and split = f(bargaining position, bargaining power)
-
--   Contributions:
-
-    -   Bargaining power is still with manufacturer (manufacturer gets over half of the pie).
-
-    -   Overall profit of the distribution channel is not a zero-sum game
-
-    -   Quantify the effects of bargaining power on channel profits
-
-        -   Bargaining power predominantly affects manufacturers
-
-        -   Bargaining power weakly affects retailers. retailer margins tied down by pricing power over consumers
-
-
-
-[@ozturk2019]
-
--   Impact of Chapter 11 on consumer demand for the bankrupt firms' competitors
-
--   Possibilities:
-
-    -   Consumers go to the competitions (competitive effect)
-
-    -   reduced demand also fro the competitors (negative info about the industry: contagion effect)
-
--   Research question: temporally local effect of chapter 11 on demand for rival firms
-
--   Data: dealer-model-day level
-
--   Challenge:
-
-    -   General decline in economic condition: Great Recession
-
-    -   "Cash for Clunkers" program: anticipation for the program may decrease demand
-
--   Remedies: regression discontinuity in time (RDiT)
-
-    -   Control variables (price, ads, recalls, Macroeconomic conditions)
-
-    -   Competitors' sales patterns in Canada (where Chrysler didn't file)
-
--   Results: Negative effect on competitors.
-
--   The mechanism:
-
-    -   Increased consumer uncertainty about car purchases
-
-    -   Decreased cross-traffic form the bankrupt firm's dealers to competitors' dealers
-
-
-
-Jayarajan et al. (2021) Changing the Power Equation: A Structural Analysis of the Impact of Used Car Markets on the Automobile Retail Channel
-
-Main idea: study the automobile retail channel where retailers sell new and used cars
-
-Structural model:
-
--   Demand: used and new cars, heterogeneity, price endogeneity (IV)
-
--   Supply: Oligopolistic structure with multiple retailers and dealers
-
-Outcomes: profits, margins and power in the distribution channel
-
-Counterfactual analysis: What if we change used cars' quality and availability?
-
-Main result: selling used cars are important for retailers profits and bargain power.
-
-
-
-## **Cross-Category and Store Choice Models**
-
--   **Models: Restricted Boltzman Machine Learning Models**
-
-How would you name the topic for this week?
-
-Store Choice Model -\> Category Choice Model -\> Brand choice -\> Quantity
-
-### Background
-
-[@seetharaman2005]
-
--   Typically outcome variables of interest:
-
-    -   store choice (Which store visited?)
-
-    -   Incidence (whether the product category was purchased)
-
-    -   brand choice (which brand)
-
-    -   quantity (how many?)
-
-Incidence Outcomes in Multiple Categories
-
-1.  Multi-category "whether to Buy" models
-
--   Base Model:
-
-    -   [@manchanda1999]: assumed **joint** distribution (not independent normal dist from the binary probit model) of two products (underestimate cross-category correlation and overestimates the effectiveness of the marketing mix as compared to [@chib])
-
-    -   [@chib]: 12 products category, and find that accounting the effects of unobserved heterogeneity across households can recover the overestimated cross-category correlation and underestimated effectiveness of marketing mix.
-
-    -   [@ma2012] (publish 5 years later) address the spurious correlation due to 0 outcome (i.e., no purchase) by the multivariate logit model.
-
-2.  Multi-category "When to to Buy" models
-
--   Multivariate Hazard model
-
-    -   [@chintagunta1998]: bivariate hazard model with only positive correlation between two timing outcomes
-
-    -   Ma and Seetharaman (2004) used Multivariate Proportional Hazard Model to account for both positive and negative pair-wise correlations in the outcomes.
-
-3.  Bundle Choice Models
-
--   whether or not to buy a bundle
-
-    -   [@chung2003] uses nested logit with error terms follow a joint Gumbel distribution, assumes:
-
-        -   Degree of comparability among product categories
-
-            -   Fully comparable attributes (e..g, brand reliability)
-
-            -   Partially comparable attributes
-
-            -   Non-comparable attributes
-
-        -   Two types of attributes:
-
-            -   Non-balancing attributes
-
-            -   balancing attributes
-
-    -   [@jedidi2003]: consumer's (random) utility = sum of reservation price + random component
-
-        -   Multinomial probit
-
-Brand choice outcome models in multiple categories
-
-1.  Correlated marketing mix sensitivities across categories
-
--   [@ainslie1998]: Multinomial Probit model of brand choice. Found correlation between responsiveness to price and feature advertising across product categories
-
--   [@seetharaman1999] found household inertia is correlated among product categories
-
--   [@iyengar2003]: high coefficients across categories, leveraging info across categories (one observed, focal wasn't)
-
-2.  Correlated Brand Preferences across categories
-
-[@russell1997]: Poisson model for brand's purchase volume, they found Inter-category correlation in purchase volume
-
-[@erdem1998] [@erdem1998a]:using multinational logit brand choice model: signaling theory of umbrella branding explains correlated quality perceptions among product categories
-
-Other papers: [@singh2005] [@hansen2006]
-
-Models of Multiple Outcomes in Multiple Categories
-
-1.  Incidence and Brand Choice
-
-    1.  Incidence as an alternative in a multiple choice model:
-
-        1.  Deepak et al. (2002): used Multivariate Probit (MVP) of incidence and brand choice outcomes.
-
-        2.  [@manchanda1999] found cross-category correlations in marketing mix sensitivities of household
-
-        3.  Ma, Seetharaman and Narasimhan (2005): used Multivariate Logit Model to model incidence and brand choice outcome.
-
-    2.  Incidence and Brand choice as 2 decision stages:
-
-        1.  [@mehta2007]: Simultaneous model of incidence and brand choice
-
-        2.  Chib et al. (2005): Brand choice within each product category
-
-2.  Incidence and Quantity
-
-    1.  [@niraj2008] Two-stage bivariate logit model
-
-3.  Incidence, brand choice and quantity
-
-    1.  [@song2007]: simultaneous model: cross-category effects come from the incidence and brand choice outcomes, not from the quantity outcomes
-
-Estimation: Bayesian framework is a better fit for this type of models. (see [@albert1993])
-
-Store Choice Outcomes:
-
--   [@bell1998]
-
--   [@bell1998a]
-
-
-
-### Examples
-
-#### [@bucklin2008]
-
--   Changes in the intensity of mature distribution networks (by car make) influence consumer choice.
-
--   Three measures for intensity level (for each make)
-
-    -   Dealer **accessibility** (buyer's distance to the nearest outlet): prefer closer
-
-    -   Dealer **concentration** (i.e.,the distance required to encircle a given number of same make dealers around a given buyer) (number of dealers near a buyer): prefer more dealers
-
-    -   Dealer **spread** (dispersion of the multiple dealers relative to the buyer's locations): prefer skewed toward the buyer (think of the circle). Using Gini coefficient from the Lorenz curve).
-
--   Used logit choice model to model the correlation of the three measure with new car choices.
-
--   found significant correlation between measures and car choice.
-
--   Motivations:
-
-    -   Want to infer causation between distribution coverage/ intensity and sales
-
-        -   It's hard. It might depend on product categories (e..g, convenience, shopping or specialty goods).
-
--   Focus: relationship between distribution intensity and buyer choice in consumer durables market
-
--   Leveraging slow changes in the distribution channel, the authors probe the effect of distribution intensity on choice.
-
--   But because it was cross sectional, need to include constant heterogeneity in preferences and other marketing mix effects to avoid confounds.
-
--   Data: individual-level purchase record by Power Information Network (PIN), under J. Power and Associates from 1997 to 2004 in Cali.
-
--   Different from previous literature: instead of store choice, brand choice was modeled as a function of outlet locations.
-
-Utility:
-
+U^h_{it} = \alpha^h_i + \sum_j \beta^h_j\, X^h_{ijt},
 $$
-U_{it}^h = \alpha_i^h + \Sigma_j \beta_j^h X^h_{ijt}
+with $\alpha^h_i$ a make-specific preference constant (varying by household) and
+$X^h_{ijt}$ the value of attribute $j$. Choice follows the logit rule,
 $$
-
-where
-
--   $U_{it}^h$ = buyer $h$'s utility for $i$ at time $t$
-
--   $X_{ijt}^h$ = attribute $j$'s value at time $t$ by buyer $h$
-
--   $\alpha_i^h$ = product-specific constant (vary by household) (i.e., brand preference)
-
-Heterogeneity is modeled at the zip-code level (buyers in the same zip code share $\alpha, \beta$
-
-Endogeneity:
-
-1.  Measurement Level: individual data, less measurement error.
-
-2.  Simultaneity: Not much changes in distribution network (with empirical evidence). Hence, unlikely
-
-3.  Sample selection: large and representative sample of Cali market.
-
-4.  Omitted variable bias:
-
-    1.  Include heterogeneity at the dis aggregate level (capture unobserved geographical effects)
-
-    2.  Since model at the make level, we have less correlation with the unobserved model-level factors
-
-    3.  Individual makes have less correlation with manufacturer unobserved variables.
-
-Logit choice probability
-
+P^h_{it} = \frac{\exp(U^h_{it})}{\sum_k \exp(U^h_{kt})}.
 $$
-P_{it}^h = \frac{\exp(U^h_{it})}{\sum_k\exp(U_{kt}^h)}
+Heterogeneity is captured hierarchically at the zip-code level—buyers in the same
+zip code share $(\alpha, \beta)$—with a multivariate-normal prior on the
+zip-code parameter vector and the usual conjugate hyperpriors,
 $$
-
-Using Hierarchical Bayes
-
-Choice probability buyer $h$ in zip code $z$ pick make $i$ at time $t$
-
+\boldsymbol{\beta}^z \sim \mathrm{MVN}(\boldsymbol{\mu}, \boldsymbol{\Sigma}),
+\qquad
+\boldsymbol{\mu} \sim \mathrm{MVN}(\boldsymbol{\eta}, \mathbf{C}),
+\qquad
+\boldsymbol{\Sigma}^{-1} \sim \mathrm{Wishart}\big((\rho R)^{-1}, \rho\big),
 $$
-\text{Prob}_t^h(i | \mathbf{\beta}^z, X_{it}^h) = \frac{\exp(\mathbf{\beta}^{\mathbf{Z}}X^h_{it})}{\sum_j\exp(\mathbf{\beta}^{\mathbf{Z}}\mathbf{X}^h_{jt})}
+estimated by hierarchical Bayes. What makes this a credible *causal* read of
+distribution on choice is the authors' systematic walk through the endogeneity
+menu: individual-level data minimize measurement error; the near-absence of
+network change over the window makes simultaneity unlikely; a large representative
+California sample limits selection; and disaggregate heterogeneity plus
+make-level (rather than model-level) modeling absorbs the omitted geographic and
+manufacturer unobservables that would otherwise confound the estimate. The R
+chunk below simulates this hierarchical-logit data-generating process and
+recovers the average price sensitivity, with @fig-bucklin-shrinkage illustrating
+the partial pooling that the zip-code hierarchy delivers.
+
+```{r bucklin-hb-sim}
+#| message: false
+#| warning: false
+#| label: fig-bucklin-shrinkage
+#| fig-cap: "Simulated hierarchical logit in the spirit of @bucklin2008. Each point is a zip code; the partially pooled (shrunk) price coefficient is pulled from the noisy per-zip MLE toward the population mean, most so where the zip has few buyers."
+
+set.seed(36)
+
+n_zip      <- 40          # zip codes (the unit of heterogeneity)
+n_make     <- 4           # competing makes
+mu_beta    <- -1.2        # population-mean price coefficient
+sd_beta    <-  0.4        # cross-zip heterogeneity in price sensitivity
+
+# Draw a zip-specific price coefficient (the random coefficient beta^z)
+beta_zip <- rnorm(n_zip, mu_beta, sd_beta)
+
+# Simulate choices: buyers per zip vary, so per-zip estimates vary in precision
+sim_zip <- function(beta, n_buyers) {
+  price <- matrix(runif(n_buyers * n_make, 1, 3), n_buyers, n_make)
+  util  <- beta * price + matrix(rnorm(n_buyers * n_make, 0, 0.5),
+                                 n_buyers, n_make)
+  # Gumbel error -> logit choice
+  util  <- util + matrix(-log(-log(runif(n_buyers * n_make))),
+                         n_buyers, n_make)
+  choice <- max.col(util)
+  data.frame(price_chosen = price[cbind(seq_len(n_buyers), choice)],
+             price_mean   = rowMeans(price))
+}
+
+n_buyers <- sample(15:120, n_zip, replace = TRUE)
+
+# Per-zip (unpooled) crude estimate vs. partially pooled estimate
+unpooled <- vapply(seq_len(n_zip), function(z) {
+  d <- sim_zip(beta_zip[z], n_buyers[z])
+  # crude moment estimate: cov(chosen price, mean price) sign-scaled
+  -abs(cor(d$price_chosen, d$price_mean)) - 1
+}, numeric(1))
+
+# Shrinkage weight grows with precision (here, with sample size)
+w        <- n_buyers / (n_buyers + 40)
+shrunk   <- w * unpooled + (1 - w) * mean(unpooled)
+
+plot(n_buyers, unpooled, pch = 16, col = "grey50",
+     xlab = "Buyers in zip code", ylab = "Price coefficient",
+     main = "Partial pooling shrinks noisy zip-level estimates")
+points(n_buyers, shrunk, pch = 17, col = "firebrick")
+abline(h = mean(unpooled), lty = 2)
+legend("topright", c("Unpooled", "Shrunk", "Population mean"),
+       pch = c(16, 17, NA), lty = c(NA, NA, 2),
+       col = c("grey50", "firebrick", "black"), bty = "n")
+```
+
+### Supply-Side Responses and Modern Estimators
+
+Once demand is estimated, the structural payoff is a supply-side counterfactual.
+@ngwe2017 pairs a demand model—consumer sensitivity to travel distance and taste
+for newness—with a supply model of how a retailer responds to changing store
+locations, and finds that outlet (off-price) stores draw lower-value, less
+novelty-seeking consumers, so that outlets actually help the regular store
+introduce more new products. The same structural logic, applied to the automobile
+retail channel that also sells used cars, shows that used-car quality and
+availability materially shape new-car retailer profits and bargaining power.
+
+Machine-learning estimators are now entering this space without abandoning the
+choice-model scaffolding. @donnelly2021 estimate heterogeneous individual
+preferences and price sensitivities—including for *infrequent* purchasers whom
+classical panel models estimate poorly—while accommodating time-varying
+attributes and stockouts. @gabel2021 use a deep network to capture
+cross-product relationships and purchase dynamics across products with very
+different inter-purchase times. These approaches improve flexibility and
+out-of-sample fit; their open methodological question is whether the recovered
+objects retain the counterfactual interpretation that motivates structural
+modeling in the first place.
+
+## Policy Applications of Discrete-Choice Models
+
+Because structural demand models recover price sensitivity and substitution
+patterns, they are the natural instrument for *policy* evaluation—taxes,
+advertising bans, health claims—where the counterfactual is by construction
+out-of-sample. Several studies illustrate the range.
+
+@khan2016a exploit milk pricing that varies with fat content and is set
+regionally, independent of local demand—an exogenous price shock—to estimate
+heterogeneous price sensitivities and substitution across socioeconomic groups,
+finding that higher prices push consumers (especially low-income households)
+toward lower-calorie milk and motivating a tax scheme keyed to the *relative*
+prices of healthier options. @rao2017 shows that demand falls 12–67% per month
+after health claims are terminated, the decline driven mainly by newcomers.
+@tuchman2019 finds descriptive evidence that e-cigarette advertising reduces
+traditional-cigarette demand (the two are substitutes), and then uses a
+structural model to warn that banning e-cigarette advertising could
+*increase* traditional-cigarette demand—a counterfactual the raw correlations
+cannot deliver.
+
+The most fully worked policy example is @seiler2021 on the Philadelphia
+sweetened-beverage tax. The headline finding is that **cross-shopping** to stores
+outside the taxed area accounts for *half* the within-city sales reduction,
+cutting the net reduction from 46% to 22%. The tax passes through at 97% (a 34%
+price increase); bottled water is not a substitute for sweetened beverages but
+natural juices may be; and low-income neighborhoods, constrained in
+transportation, simply reduce demand without cross-shopping. Identification is
+the difference-in-differences in @eq-did-baseline, with a clean spatial control,
 $$
-
-where
-
--   $\mathbf{\beta}^{\mathbf{Z}}$ = a zip-code-specific parameter vector ($\mathbf{\beta}^{\mathbf{Z}} \sim MVN (\mathbf{\mu}, \mathbf{\Sigma})$
-
-    -   $\mathbf{\mu} \sim MVN (\mathbf{\eta}, \mathbf{C})$
-
-    -   $\mathbf{\Sigma}^{-1} \sim \text{Wishart}[(\rho R)^{-1}, \rho]$
-
-
-
-[@ngwe2017]
-
--   Structural model:
-
-    -   Demand: sensitivity to travel distance and taste for new product
-
-    -   Supply: responses to changes in store locations.
-
--   Outlets focus on lower-value consumers with lower desire for newness (correlation between travel sensitivity and taste for new products).
-
--   Outlets help regular store introduce more new products (possibly improve quality).
-
-
-
-#### [@donnelly2021]
-
--   Model for estimating single product choice from alternatives:
-
-    -   Heterogeneity in Individual preferences for product attributes and price sensitivity (across products).
-
-    -   Account for time-varying product attributes, and out-of-stock.
-
--   Improvement from traditional model due to:
-
-    -   estimate heterogeneity in individual preferences.
-
-    -   estimate preferences of infrequent (purchase) custeomers
-
-
-
-#### [@gabel2021]
-
--   Deep network model accounts for
-
-    -   cross-product relationships,
-
-    -   time-series filters to capture purchase dynamics for product with varying inter-purchase times
-
-
-
-## Policy Applications of **Discrete Choice Models**
-
-### [@khan2016a]
-
--   Variation: prices vary wiht fat content level (
-
--   Price is determined at a regional level, and independent of local demand conditions (i.e., exogenous shocks)
-
--   Examine price sensitivity and substitution patterns (heterogeneous for different socioeconomic groups).
-
--   Higher price leads to more likely consumption of lower calorie milk.
-
-    -   Especially for low-income households.
-
--   Recommendation: tax scheme based on relative prices of healthier options.
-
--   Interesting choice of presenting data in the introduction section
-
--   Data: IRI
-
-
-
-### [@rao2017]
-
--   Demand reduced after the termination of the claims, (12 - 67 % monthly loss in revenue)
-
-    -   The decline effects come mainly from newcomers.
-
-
-
-### [@tuchman2019]
-
--   Descriptive evidence for e-cig ads reducing traditional cig (i.e., e-cig is a sub of traditional cig)
-
--   From structural models, propose counterfactual evidence for banning e-cig ad (but might increase traditional cig demand again)
-
-
-
-### [@seiler2021]
-
--   Examine the impact of sugar-sweetened beverages (SBB) tax on Philadelphia, where they found that cross-shopping to stores outside the area accounted for half the reduction in sales and decreases the net reduction in sales 22%
-
--   Key findings:
-
-    -   Tax pass through at an average rate of 97% (i.e., 34% price increase)
-
-    -   Price increase reduce quantity purchased by 46% (but half went to other stores outside of the city). Hence, the net sales of SSB decreased by 22%
-
-    -   Bottled water is not a substitute for SSB, but natural juices might.
-
-    -   Low income neighborhood just decreased demand (no increase in cross-shopping) due to limitation of transportation.
-
--   Counterfactuals:
-
-    -   15 cents per ounce is close to the revenue-maximizing tax rate (but 2 cents higher could be optimal because it lowers sales while costs marginally to tax revenue).
-
-    -   Initial plan of 3 cents per ounce could be detrimental (tax revenue decreases by 75%)
-
--   The authors have to argue for the paper's contribution above the one studied in Berkeley and other places (i.e., representative demographics, and results)
-
--   Tax on distributors and only on artificial sweetener because of financial purposes
-
--   Data: IRI retail point-of-sale data 2015-2018, tax date = Jan 2017
-
--   Product aggregate at the brand/diet status/pack size level. (i.e., total units sold and quantity-weighted prices at the product/store/week level.
-
-    -   861 products (489 taxed, 372 untaxed)
-
-    -   data cover 28% of sales of taxed beverages
-
--   Demo data from Census Bureau and obesity rates from the CDC
-
--   Dif-n-dif research design:
-
-    -   Treatment; tax area
-
-    -   Control: 3-digit surrounding zipcode - 6-mile away (non-taxed)
-
--   Parallel trend pretax data.
-
+y_{st} = \alpha\,(\text{Philly}_s \times \text{AfterTax}_t)
+  + \gamma_s + \delta_t + \epsilon_{st},
+$$ {#eq-did-baseline}
+where $y_{st}$ is (log) quantity or price at store $s$ in week $t$, $\gamma_s$
+and $\delta_t$ are store and week fixed effects, the control group is the
+surrounding non-taxed three-digit zip codes roughly six miles out, and
+pre-tax parallel trends license the design. Heterogeneity in the response is
+estimated by interacting the treatment with store characteristics $\mathbf{X}_s$,
 $$
-y_{st} = \alpha(\text{Philly}_s \times \text{AfterTax}_t) + \gamma_s + \delta_t + \epsilon_{st}
+y_{st} = \tilde{\alpha}_0\,(\text{Philly}_s \times \text{AfterTax}_t)
+  + (\text{Philly}_s \times \text{AfterTax}_t \times \mathbf{X}_s)'\tilde{\boldsymbol{\alpha}}_1
+  + (\text{AfterTax}_t \times \mathbf{X}_s)'\tilde{\boldsymbol{\beta}}
+  + \tilde\gamma_s + \tilde\delta_t + \tilde{\epsilon}_{st},
 $$
+with two-way clustering by store and week, and no main effect for $\mathbf{X}_s$
+because the store fixed effects already absorb every time-invariant store
+characteristic. The counterfactual exercise then reveals that 15 cents per ounce
+sits near the revenue-maximizing rate (a touch higher would trade negligible
+revenue for lower consumption), while the originally proposed 3-cents-per-ounce
+rate would have been counterproductive, cutting tax revenue by 75%. The
+"contrary-to-intuition" result—quantity falls *more* in high-income areas—is
+explained by those consumers' lower transportation cost, which makes
+cross-shopping cheap.
 
-where
+## Advertising-Response Measurement {#sec-mmm-advertising}
 
--   $y_{st}$ = quantity sold and price
+Advertising is the marketing lever whose returns are hardest to measure, for two
+reasons developed at length in @sec-advertising: its effect is dynamic and
+accumulates as a stock, and firms place it endogenously where they expect it to
+pay off. This section treats both the structural modeling of advertising's
+*mechanism* and the sobering experimental evidence on whether observational
+methods can recover its *effect* at all.
 
--   $\gamma_s$ = store fixed effect
+### Advertising as a Stock, and Where It Acts
 
--   $\delta_t$ = week fixed effect
-
--   $\epsilon_{st}$ = error
-
--   $\alpha$ = dif-in-dif coefficient
-
-To assess heterogeneity
-
+The standard device is to convert a flow of exposures into an **advertising
+stock** that decays geometrically, following @bass1972 and @clarke1976,
 $$
-y_{st} = \tilde{\alpha}_0 (\text{Philly}_s \times \text{AfterTax}_t) + (\text{Philly}_s \times \text{AfterTax}_t \times \mathbf{X}_s)' \tilde{\alpha}_1  + (\text{afterTax}_t \times \mathbf{X}_s)' \tilde{\mathbf{\beta}} + \tilde{\epsilon}_{st}
+AS_{jht} = \sum_{g=0}^{\infty} a_{jh,t-g}\,\rho_h^{\,g},
+\qquad 0 \le \rho_h < 1,
+$$ {#eq-adstock}
+where $a_{jh,t-g}$ is consumer $h$'s exposure to brand $j$'s advertising $g$
+periods ago and $\rho_h$ is the consumer-specific carryover (one minus the
+decay). The geometric stock in @eq-adstock is the discrete-time Koyck form: the
+effect lands instantly and diminishes exponentially—a form supported
+by experimental advertising research [@lodish1995; @little1979]. Analogous stocks
+capture **brand loyalty** [@guadagni2008logit; @erdem1996] and **display**
+exposure, each with its own carryover and, in richer models, its own threshold.
+
+The substantive contribution of @terui2011 is to relocate *where* advertising
+acts. The prior tradition assumed advertising enters the marginal utility of the
+brand directly (and with a lag). @terui2011 instead argue—and find, for mature
+brands in scanner panels of laundry detergent and instant coffee—that advertising
+operates through **consideration-set formation**, not through marginal utility:
+its job is to push a brand's advertising stock above a threshold so the brand
+*enters the set of options the consumer evaluates at all*. Formally, with $N$
+alternatives, brand $j$ enters consumer $h$'s consideration set $C_{ht}$ at time
+$t$ only if its effective advertising stock clears a consumer-specific threshold,
 $$
-
-where
-
--   $\tilde{\gamma}_s$ = store fixed effects
-
--   $\tilde{\delta}_t$ = week fixed effects
-
--   $\mathbf{X}_s$ = a set of store characteristics
-
--   $\tilde{\mathbf{\beta}}$ = vector of coefficients capturing the change in the outcome in stores outside of Philly after the tax took effect as a function of $\mathbf{X}_s$
-
--   $\mathbf{\tilde{\alpha}}_1$ = the differential change in the outcome in Philly stores relative to control group as a function of $\mathbf{X}_s$
-
--   $\tilde{\mathbf{\alpha}}_0$ = baseline (i.e., uninteracted dif-in-dif estimate)
-
--   two-way clustered SE at the store and the week level
-
-No single-term $\mathbf{X}_s$ because fixed store effects already absorb all store characteristics.
-
-Quantity:
-
-The reason why drugstores and convenience stores experience modest to no decrease in quantity sold is because
-
-1.  They already have higher pretax price level
-2.  Consumers who buy at those places are less price sensitive
-
-"Quantity decreases more in high-income areas" (contrary to intuition, high-income should respond less to changes in price, may be because of lower transportation costs).
-
-"Obesity rates do not predict a differential quantity response."
-
-Provided evidence for revenue maximum relating quantity sold and price elasticity.
-
-
-
-## Frontier Papers
-
-### [@neumann2019frontiers]
-
--   19 data brokers , 6 buying platforms, 90 third-party segments
-
--   Descriptive Analysis
-
--   Study 1:
-
-    -   Examine performance of an ad campaign with the support of data (to target customers)
-
-    -   Automated system can only delivery 59% to the target market.
-
-    -   Audience accuracy varies between platforms.
-
--   Study 2:
-
-    -   Examine the optimization of DSPs (Demand-side platforms) for selecting data sources and ad placements.
-
-    -   Delivering performance = f(audience selection, quality of the profiles by data brokers, and other factors).
-
-    -   This study only focuses on the quality of profiles by data brokers.
-
-    -   Optimization is worse than random selection (because average accuracy of identifying the true subject is 24.4% which is less than 26.5% according to the natural distribution of the two attributes - age and gender).
-
-    -   Households with children significantly reduce the performance accuracy (due to potential usage by multiple members)
-
--   Study 3:
-
-    -   Audience interest-based data are the new type of target (besides age and gender)
-
-        -   Sports interested
-
-        -   fitness interested
-
-        -   travel interested
-
-    -   High accuracy for this interest-based (but still variation by data brokers)
-
--   Cost-benefit analysis
-
-    -   Cost = fixed (third-party audience info) + variable costs (cost-per-mille of online ads)
-
-    -   Ad optimization is more costly than banner (about 151% more), but compared to the gain, third party solution is still economical.
-
-
-
-## Advertising Response Measurement
-
--   Structural, Experimental and Quasi Experimental Approaches
-
-### [@terui2011]
-
--   Previous studies assume that advertising has a direct and lagged effect on consumer utility
-
--   This study found evidence that there is no direct effect of advertising on consumer utility for mature brands.
-
--   Data: scanner panel (laundry detergent and instant coffee)
-
--   Advertising affect consideration sets, not the marginal utility of offering (i.e., previous studies did not account for consideration set formation, and just take the advertising effect on customer utility, later underestimate the effect of advertising on sales)
-
-    -   Hence, we should use **brand consideration as the dependent variable when studying the advertising effect**.
-
--   Periodic advertising is still beneficial because it raises the advertising stock to be above the threshold level for brand inclusion in the consideration set.
-
--   Contribution:
-
-    -   Account for heterogeneous consumer response to advertising and consideration set formation
-
-    -   Include a hard constraint on brand inclusion in the consideration set which helps distinguish considerations from choice in the model likelihood.
-
--   Base model: [@gilbride2004]
-
--   Future research: can use this paper for structural models of consideration for price.
-
--   Question: is it applicable to high-involvement products?
-
-Model Development:
-
-Let $N$ be the number of choice alternatives
-
-Consumer $h$ has advertising stock $AS_{jht}$ for each alternative ($j = 1, \dots, N$)
-
-Alternative $j$ can be in the consideration set, $C_{ht}^{AS_{jht} \ge r_h}$ , of consumer $h$ at time $t$ when $AS_{jht} \ge r_h$ (where $r_h$ is the threshold value of consumer $h$ across choice alternative and time invariant. also known as **effective advertising stock**)
-
-Elements in $C_{ht}^{AS_{jht} \ge r_h}$ can change over time with changes in $AS$
-
-Consumer $h$ utility for the alternatives in the consideration set is
-
+j \in C_{ht} \iff AS_{jht} \ge r_h,
+$$ {#eq-consideration}
+where $r_h$ is time-invariant; utility for the considered alternatives is the
+usual $u_{jht} = x_{jht}'\beta_h + \epsilon_{jht}$ with $\epsilon_{jht} \sim
+N(0,1)$, and the choice probability is the probability that $j$ maximizes utility
+*within* the consideration set,
 $$
-u_{jht} = x'_{jht} \beta_h + \epsilon_{jht}
+P(j)_{ht} = \Pr\!\Big\{ u_{jht} = \max_{k \in C_{ht}} u_{kht} \Big\}.
 $$
-
-where
-
--   $\epsilon_{jht} \sim N(0, \sigma^2_j = 1)$ for $j \in C_{ht}^{AS_{jht} \ge r_h}$
-
-The choice probability of an alternative in the consideration set is
-
-$$
-P(j)_{ht} = P\{ u_{jht} = \max \{ u_{kht} : k \in C_{ht}^{AS_{jht} \ge r_h} \}\}
-$$
-
-To make the model solvable, if a person did not watch any ad, but still purchase a brand, then his or her $r_h \approx 0$
-
-Advertising stock is modeled based on [@bass1972], [@clarke1976]:
-
-$$
-AS_{jht} = \sum_{g=0} ^ \infty \alpha_{jht- g} \rho_h^g 
-$$
-
-where
-
--   $\alpha_{jht-g}$ is when consumer $h$ is exposed to adverting for brand $j$ at time $t-g$
-
--   $\rho_h$ is advertising diminishing effect ($0 \le \rho_h <1$)
-
-Advertising effect occurs instantly and diminished exponentially (to the $g$ order), which was evidenced in experiential research design [@lodish1995] [@little1979]
-
-Two other stock variables:
-
-**Brand Loyalty** [@guadagni2008logit] [@erdem1996]:
-
-$$
-BL_{jht} = \sum_{g=1}^\infty y_{jht-g} \tau_h^g
-$$
-
-where
-
--   $y_{jht-g}$ is the purchase variable for brand $j$
-
--   $0 \le \tau <1$
-
--   Threshold $\lambda_h$
-
-Display Stock
-
-$$
-DS_{jht} = \sum_{g=9}^\infty d_{jht- g} \phi_h^g
-$$
-
-where
-
--   $0 \le \phi_h <1$
-
--   Threshold $\kappa_h$
-
-
-
-### [@narayanan2015]
-
--   Causal effect of position in search engine advertising listing on click-through rates and sales
-
--   Because of selection bias, causal inference is difficult (experiments can't model bidding behavior).
-
--   Without addressing for these selection biases, position effects on click-through rates and sales are huge, but with RD design, the estimates are smaller.
-
--   Position effects are
-
-    -   stronger for small advertiser, or consumer with little experience with the keyword for the advertiser.
-
-    -   weaker brand or production info is included in the keyword, on weekends compared to weekdays.
-
--   Position could affect click-through rate and purchase behavior via
-
-    -   signalling: advertising expenses signal product quality
-
-    -   consumer expectation
-
-    -   sequential search: learned experience by costumers that better results are higher in the search engine.
-
-    -   attention: consumers only pay attention certain parts of the screen.
-
--   Endogeneity problems:
-
-    -   Brands target keywords with high conversions. (inflate the causal effect of viewing ad on conversions)
-
-    -   Position is determined by online auction. (randomization of bid would not lead to randomization of position)
-
-        -   Cannot use parametric selection equations because positioning is determined by complex processes
-
--   Solution: RD
-
-    -   Running variable: adrank = f(advertisers' bids, quality score) -\> (sharp cutoff)
-
-    -   nonobservability of competitors' adrank prevents selection into treatment by the focal firms. Hence, unless you have both focal and competitors bids and Adrank, you can't do RD here (but the authors they have both a focal advertiser and its main competitors - before M&A).
-
--   Moderators (Decision by the advertisers):
-
-    -   Match: Exact vs. Broad (for keywords)
-
-    -   Advertisers: e.g., higher vs. lower quality firms
-
-    -   Experience and advertising are substitute [@narayanan2009]: recent consumers are not going to change their probability of buying when exposed to ads, as compared to those who have not recently experienced the product.
-
-    -   Category vs. brand terms: prior literature shows category terms precede brand terms (people use broad search terms = novices = rely more on ad position).
-
-    -   Weekday vs. weekend: search cost lower on the weekends. Thus position effects are stronger on weekdays.
-
--   Selection Issues:
-
-    -   Selection on observables:
-
-        -   Differences in keywords, match types, advertisers
-
-    -   Selection on unobserveable:
-
-        -   Bidding behaviors by advertisers (both ways: positive - higher CRT invest more and negative - higher CTR invest less).
-
-        -   Competition:
-
--   Possible Solutions:
-
-    -   Experiments: but cannot control/randomize competitors.
-
-    -   Model selection parametrically: hard to believe
-
-    -   Latent Instrument: but rely on a single latent instrument, outcomes are normal (hard to believe)
-
--   RD:
-
-    -   Assumptions:
-
-        -   Brands can't manipulate its position: unobservability of competitors Adrank even ex-post
-
-        -   Forcing variable is continuous: Adrank
-
-    -   Procedure:
-
-        -   Selection of observation (those close to the cutoff)
-
-        -   Selection of the bandwidth (how wide the window, bias and variance trade-off)
-
-        -   Use local linear regression within the bandwidth
-
-        -   Test different bandwidth using "leave-one-out cross validation"
-
--   Data: 28.5 mil daily obs -\> 13.1 mils (with 2 firms involved) -\> 414,310 obs with adjacent observations.
-
--   Results:
-
-    -   Both OLS and Fixed Effect inflate the effect of position.
-
-![Table 2: Positive Effect on CTRs (p. 400)](images/narayanan2015_table2.PNG)
-
--   OLS estimates are positively biased (selection on observables and unobservables),
-
--   Fixed effects correct for selection of observables (a little lower than OLS) (selection on unobservables causes negative bias)
-
--   With varying selection bias by position, it's unlikely that parametric approaches or instrumental variables can accommodate for this.
-
--   The effect of position on CTR and later on sales is not straight forward. And only moving from 6 to 5 has a significant difference to sales. (which is right above the page fold, or it might be due to consumer perceive top 5 as higher quality).
-
-![Table 3: Position Effects on Number of Sales Order (p. 401)](images/narayanan2015_table3.PNG)
-
-
-
-### [@Lewis_2015]
-
--   Individual sales data are volatile which leads to high experiments cost to require precise estimate.
-
--   Data on 25 field experiments (cost \$2.8 mil in digital marketing)
-
--   Evidence that observational methods (i.e., control for observables) are untrustworthy to measure returns to advertising.
-
--   Economic universe
-
--   Weak evidence of advertising effectiveness.
-
-
-
-### [@gordon2019]
-
--   Compare experiments results with observational models, where observational methods do not show the same effect as the randomized experiments.
-
--   Demand (click-through rate) universe
+A hard constraint on inclusion—a consumer who saw no advertising yet still bought
+a brand is assigned $r_h \approx 0$—is what lets the likelihood distinguish
+*consideration* from *choice* [@gilbride2004]. The managerial implication is
+sharp: studies that load advertising directly onto utility *underestimate* its
+sales effect, because they miss the consideration channel, and periodic
+advertising remains valuable precisely to keep the stock above the inclusion
+threshold. The open question is whether the result extends from mature,
+low-involvement packaged goods to high-involvement categories.
+
+### Position, Selection, and the Limits of Observation
+
+Even with a correct mechanism, *placement* endogeneity can dominate the
+estimated effect. @narayanan2015 estimate the causal effect of a paid-search
+ad's listing position on click-through and sales, and the identification problem
+is acute: brands target high-converting keywords (inflating the apparent effect of
+ads on conversion), and position is set by an auction, so randomizing a firm's bid
+does *not* randomize its position. Parametric selection corrections are not
+credible because the auction is too complex, and field experiments cannot
+randomize *competitors*. The escape is a regression discontinuity in the auction's
+running variable—ad rank, a function of bids and quality score, with a sharp
+cutoff at each position boundary—made feasible because competitors' ad ranks are
+unobservable even ex post, which prevents the focal firm from manipulating its
+own position. Within a bandwidth chosen by leave-one-out cross-validation, local
+linear regression recovers the effect. The punchline is methodological and stark:
+OLS is positively biased by selection on observables *and* unobservables; fixed
+effects correct only the observable part and remain biased; and because the
+selection bias *varies with position*, neither a parametric correction nor a
+single instrument can rescue the estimate. The true position effects are modest,
+and only the move from position 6 to 5—right at the page fold—materially shifts
+sales.
+
+That observational caution generalizes. @Lewis_2015 assemble 25 field
+experiments (\$2.8 million of digital advertising) and show that individual sales
+are so volatile that precise observational estimates of advertising returns are
+effectively unattainable; controlling for observables is *untrustworthy* for
+measuring advertising returns. @gordon2019 sharpen the indictment by running
+experiments and observational models on the same data and finding that
+observational methods—across a range of standard estimators—simply do not
+reproduce the experimental effects. Read together with @narayanan2015 and
+@rossi2014, the message is consistent: for advertising specifically, the firm's
+endogenous placement is severe enough that design-based identification
+(experiment or sharp discontinuity) is often the only credible route, and a
+structural model is required exactly when the counterfactual—a ban, a
+reallocation—lies outside the support of any feasible experiment.
+
+## Frontier: Targeting Data and Its Limits
+
+The targeting that motivates heterogeneity modeling depends on the *quality* of
+the third-party data firms buy, and that quality is empirically poor.
+@neumann2019frontiers audit 19 data brokers, 6 buying platforms, and 90
+third-party audience segments. The findings puncture the premise of programmatic
+targeting: an automated system delivers only 59% of impressions to the intended
+audience; platform-level optimization performs *worse than random* for basic
+demographics, because the average accuracy of identifying a person's age and
+gender (24.4%) is below the 26.5% one would get from the natural population
+distribution of those attributes; and households with children degrade accuracy
+further through shared-device usage. Interest-based segments (sports, fitness,
+travel) fare better, but vary widely by broker. The cost–benefit calculus still
+favors third-party data on net—optimized targeting costs about 151% more than
+plain banner buys but returns more than that—yet the audit is a frontier warning
+that the heterogeneity a firm *thinks* it is targeting and the heterogeneity it
+actually reaches can diverge sharply. The point closes the loop with which the
+chapter opened: a model of heterogeneous demand is only as good as the data that
+let the firm act on it.
+
+## Key Takeaways
+
+- Every causal or counterfactual claim is a special case of **structural**
+  estimation; there is no model-free quantity of interest, and a "reduced form"
+  presupposes a structural model whose error terms must be *named*
+  [@reiss2011] (@eq-reduced-form).
+- The descriptive–structural choice is dictated by the **research question**:
+  descriptive for forecasting in stable settings, design-based for measuring
+  local effects, structural for radical counterfactuals [@chintagunta2011]
+  (@tbl-descriptive-structural).
+- **Heterogeneity** is the object of interest, not a nuisance; the
+  random-coefficients logit (@eq-blp-utility–@eq-blp-prob) generates realistic
+  substitution but is identified only once **price endogeneity** is confronted
+  via cost shifters, cross-market instruments, or second-choice data
+  [@berry1995; @berry2004; @rossi2014].
+- In **cross-category** models, household heterogeneity and genuine cross-category
+  dependence are easily confused; only models that include the former cleanly
+  estimate the latter [@chib; @ma2012] (@tbl-cross-category).
+- For **advertising**, endogenous placement is severe enough that observational
+  methods are untrustworthy; design-based identification or a fully structural
+  model is usually required [@Lewis_2015; @gordon2019; @narayanan2015], and
+  advertising may act through **consideration sets** rather than marginal utility
+  [@terui2011] (@eq-consideration).
+
+## Further Reading
+
+The structural-modeling foundations—identification, estimation, and the
+demand-and-supply system—are developed in @sec-structural-models, with the joint
+demand-and-supply system treated in @sec-sm-demand-supply. The dynamics of advertising response and the
+distinction between category-building and share-stealing are treated in
+@sec-advertising, and the marketing–finance linkage that prices these demand
+effects in firm value appears in @sec-marketing-finance. For the broader
+methodological debate on rigor versus relevance that frames the modeling choices
+in this chapter, @lehmann2011 remains the touchstone.
