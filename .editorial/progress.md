@@ -5,6 +5,13 @@ Status legend: ⬜ not started · 🟧 in progress · ✅ done (compiles, cited,
 ## Phase 0 — structure
 - ✅ Renumber + manifest + integrate drafts + .gitignore (commit 0a53422)
 
+## STATUS SNAPSHOT (Quarto branch)
+- ✅ 31 chapters rewritten + verified (0 invented cites): Branding + wave 1 (22) + wave 2 mega (7)
+- ✅ School research batch 1 committed: Michigan, WashU, Chicago, USC, UCSD (~103 verified)
+- 🔄 School research batch 2 running: UCLA, Berkeley, Wharton, Stanford/MIT/Kellogg, Columbia/NYU/Duke/Harvard
+- ⬜ NEXT: merge ALL verified cites (169 + school ~250) into .bib; controlled weaving pass;
+     stubs/thin chapters; front matter (intro+history body); seminar gap chapters; build/render fixes
+
 ## Phase 1 — strongest chapters (exemplars)
 - ✅ 08-branding — full rewrite (synthesized, formal); base-R code only; copyright
      screenshots removed; flags in citation-flags.md. Pending full-book render check.
