@@ -36,7 +36,7 @@ Status legend: ⬜ not started · 🟧 in progress · ✅ done (compiles, cited,
 ## Research gathered (DOI-verified, in .editorial/research/) — to integrate
 - ✅ tellis.md (27), marinova.md (21), conjoint.md (26), branding-frontier.md (30),
      history-of-marketing.md (23 + 2 books), seminar-inventory.md
-- ⬜ advertising.md (agent still running)
+- ✅ advertising.md (24, top-4 + causal/measurement frontier)
 - Spot-check (main thread, 3/3 DOIs resolved exactly) — pipeline trusted.
 - NOTE: subagents could use WebFetch→Crossref but WebSearch was sometimes blocked;
   treat agent DOIs as verified-against-Crossref, still spot-check on integration.
