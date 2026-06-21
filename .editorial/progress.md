@@ -48,7 +48,23 @@ Status legend: ⬜ not started · 🟧 in progress · ✅ done (compiles, cited,
 - ⬜ Choice Modeling & Bayesian Methods (promote scattered content)
 - ⬜ Platforms / Two-Sided Markets (lower priority)
 
-## Toolchain decision
-- → Migrate bookdown → **Quarto** (native Mermaid in HTML/PDF/EPUB + R chunks +
-  R figures). Add GitHub Actions CI (Quarto+R+TinyTeX) building all 3 formats; user
-  also builds locally. Migration is light: only ~10 \@ref, 7 part dividers, index yaml.
+## Toolchain + hosting decision (CONFIRMED)
+- Migrate bookdown → **Quarto** (native Mermaid in HTML/PDF/EPUB + R chunks + figures).
+- **Host: Posit Connect** (NOT bookdown.org — that only hosts bookdown). The old
+  rsconnect record (rsconnect/bookdown.org/mike/marketing_research.dcf →
+  https://bookdown.org/mike/marketing_research/) will be retired/redirected.
+- **Publish ONLY after a clean build** (CI green + local). Never push a half-done
+  book to the live URL.
+- NEEDED FROM USER for Connect deploy: Connect server URL + API key (as GitHub
+  Actions secrets CONNECT_SERVER / CONNECT_API_KEY, or for local `quarto publish connect`).
+- Pushed to GitHub master (ee44a56). Commits stripped of Claude co-author trailer;
+  do NOT add it going forward.
+
+## Migration steps (next focused effort, on a branch, CI-verified)
+1. _quarto.yml (book: parts+chapters from manifest; formats html/pdf/epub; bibliography
+   list; crossref). Retire _bookdown.yml/_output.yml.
+2. git mv *.Rmd -> *.qmd; remove 7 part-*.qmd dividers (parts go in _quarto.yml).
+3. Convert syntax: \@ref(x)->@sec-x (+ {#sec-x} on headings), eq env -> $$...$$ {#eq-x},
+   index.Rmd header -> index.qmd + _quarto.yml.
+4. .github/workflows/ CI: Quarto + R + TinyTeX render all 3 formats; deploy to Connect
+   on main after green (gated on secrets).
