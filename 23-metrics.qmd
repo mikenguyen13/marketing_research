@@ -1,948 +1,1414 @@
-# Metrics
+# Metrics {#sec-metrics}
 
-## Finance
+Marketing research lives and dies by measurement. A construct that cannot be
+operationalized into a reproducible number cannot enter a regression, cannot be
+priced by equity markets, and cannot be defended to a sceptical reviewer or a
+sceptical chief financial officer. This chapter is a working catalogue of the
+metrics that quantitative marketing scholars actually compute—the financial
+indicators that connect marketing actions to firm value, the firm-level
+controls drawn from accounting data, and the increasingly text- and
+image-based marketing constructs that machine learning has made measurable at
+scale. It is also a methods chapter: for the harder constructs—marketing
+capability above all—we give the estimator, the identifying assumptions, and
+runnable code that reconstructs the measure from raw Compustat and patent data.
 
-### Return on Investment (ROI)
+The organizing distinction is between *outcomes* and *inputs to outcomes*. A
+metric such as return on marketing investment is an outcome the firm wants to
+maximize; metrics such as firm size, leverage, and profitability are covariates
+that confound or moderate the marketing–performance relationship and must be
+controlled. A third class—capability metrics—are neither directly observed nor
+simple ratios of accounting items; they are *latent efficiencies* recovered by
+econometric frontier estimation, and they demand the most care. We treat the
+three classes in turn, leading each with the intuition for what the number is
+supposed to capture and following immediately with its formal definition,
+its data source, and the assumptions under which it is identified.
 
-$$
-ROI = \frac{\text{Net Profit}}{\text{Investment}}
-$$
+Throughout, the practical substrate is the Wharton Research Data Services (WRDS)
+ecosystem: the Center for Research in Security Prices (CRSP) for market data,
+Compustat for accounting fundamentals, Thomson Financial 13F filings for
+institutional ownership, and the WRDS U.S. patents database for innovation
+output. The reader who works through the code will end with a firm-year panel
+on which any of the marketing–finance models in @sec-marketing-finance can be
+estimated.
 
-Similarly, return on marketing investment
+## Financial Metrics {#sec-metrics-finance}
 
-$$
-ROIM = \frac{IRAM - CM}{MS}
-$$
+Financial metrics translate a marketing intervention into the language that
+capital markets and corporate boards speak. They fall into three families:
+*return* measures that scale profit by the capital deployed to earn it,
+*value-creation* measures that ask whether the firm earned more than its cost of
+capital, and *covariate* measures that characterize the firm's size, risk, and
+profitability for use as controls.
 
-where
+### Return on Investment and Return on Marketing Investment {#sec-roi}
 
--   IRAM = Incremental Revenue Attributable to Marketing
--   CM = Cost of the Marketing Investment
--   MS = Marketing Spending
-
-If ROMI is positive, then firm is on doing well.
-
-### Economic Value Added
-
--   also known as economic profit.
--   is a measure based on the residual wealth calculated by deducting its cost of capital from its operating profit, adjusted for taxes on a cash basis.
--   measures the value a company generates from its invested funds.
--   EVA relies heavily on invested capital. Hence, more suitable for asset-rich companies, whereas companies with intangible assets, such as technology businesses, may not be good candidates.
-
-$$
-EVA = NOPAT - (Invested Capital * WACC)
-$$
-
-where
-
--   NOPAT = Net Operating profit after taxes = Operating Profit x (1-Tax Rate)
-
--   Invested capital = Debt + capital leases + shareholders' equity = Equity + long-term debt at the beginning of the period
-
--   WACC = Weighted average cost of capital (average rate of return a company expects to pay its investors).
-
-    -   $WACC = \frac{Ke \times E}{E+D} + \frac{Kd \times (1-t) \times D}{E +D }$
-
-        -   Ke = required return on equity
-        -   Kd(1-t) = after tax return on debt.
-
--   (WACC\* capital invested) is also known as a **finance charge**
-
-Invested capital can also be calculated as (Total Assets - Current Liabilities). Hence, the modified version of EVA is:
+The most elementary return metric scales net profit by the capital that produced
+it. *Return on investment* (ROI) is
 
 $$
-EVA = NOPAT - (\text{total assets} - \text{current liabilities}) * WACC
-$$
+\text{ROI} = \frac{\text{Net Profit}}{\text{Investment}},
+$$ {#eq-roi}
 
-### Market Value Added
+a unitless ratio interpretable as the profit earned per dollar committed. ROI is
+attractive precisely because it is dimensionless and therefore comparable across
+projects of different scale, but that virtue is also its central weakness: it
+discards the magnitude of the investment, so a tiny project with a spectacular
+percentage return can dominate a large project that creates far more absolute
+value. ROI is a ranking device, not a value-maximization objective.
 
--   is the amount of wealth that a company is able to create for its stakeholders since its foundation.
--   (the current market value of the company's stock - the initial invested capital)
-
-$$
-MVA = \text{market value of shares (or enterprise value)} - \text{book value of shareholders' equity}
-$$
-
-### Unexpected size-adjusted advertising investments
-
-[@Chakravarty_2016; @Kim_2011; @Liu_2017] used
-
-### Shareholder Complaints
-
-[@Wies_2019] used data from RiskMetrics
-
-### Profitability
-
-[@Grewal_2008; @McAlister_2016]
+For marketing specifically, the analogue isolates the *incremental* effect of the
+marketing dollar. *Return on marketing investment* (ROMI), sometimes written
+ROIM, is
 
 $$
-\text{profitability} = \frac{\text{operating income before depreciation}}{\text{total assets}}
+\text{ROMI} = \frac{\text{IRAM} - \text{CM}}{\text{MS}},
+$$ {#eq-romi}
+
+where IRAM is the incremental revenue attributable to marketing, CM is the
+contribution cost of the marketing investment, and MS is marketing spending. A
+positive ROMI signals that the marketing program returned more than it cost on
+the margin. The deceptively simple numerator hides the entire identification
+problem of the field: *incremental* revenue is a counterfactual quantity—the
+revenue that would not have occurred absent the marketing—and recovering it
+requires either an experiment or a credible model of the no-marketing baseline.
+Naively crediting marketing with all post-campaign revenue (the endogeneity of
+spend with demand) inflates ROMI without bound, which is why the construct is
+better understood as a target for causal estimation than as an accounting ratio.
+
+::: {.callout-note}
+ROI and ROMI are *summary* statistics of a causal effect, not the effect itself.
+Their managerial appeal—a single comparable percentage—is exactly what makes them
+easy to game by manipulating the denominator (under-counting the true cost base)
+or by attributing organic demand to the campaign. Report them alongside the
+identification strategy that produced the incremental numerator.
+:::
+
+### Economic Value Added {#sec-eva}
+
+ROI compares profit to capital but is silent on whether that profit cleared the
+*cost* of capital. *Economic value added* (EVA), also called economic profit, fills
+that gap. It measures the residual wealth a firm generates after deducting a charge
+for all the capital it employs, equity as well as debt, on an after-tax basis:
+
 $$
+\text{EVA} = \text{NOPAT} - (\text{Invested Capital} \times \text{WACC}).
+$$ {#eq-eva}
 
-### Firm Size
+Here *net operating profit after taxes* (NOPAT) equals operating profit times one
+minus the tax rate; *invested capital* is the sum of debt, capital leases, and
+shareholders' equity (equivalently, equity plus long-term debt measured at the
+start of the period); and WACC is the *weighted average cost of capital*, the
+blended return the firm must pay its providers of capital. The product
+$\text{WACC} \times \text{Invested Capital}$ is the **finance charge**: the
+opportunity cost of the funds tied up in the business. EVA is positive only when
+operating performance exceeds that charge, which is the precise sense in which
+positive EVA means the firm created value rather than merely earned a profit.
 
-[@Grewal_2010; @McAlister_2016; @Nezami_2018] used log of total asset in million as firm size
-
-$$
-\text{firm size} = \log (\text{total assets})
-$$
-
-### Sales Growth
-
-[@Grewal_2010; @Nezami_2018; @Rao_2004]
-
-Percentage change in gross sales = sales growth
-
-### Financial Flexibility
-
-### Cash flows
-
-[@Chakravarty_2011; @Malshe_2015] Cash flows = log(operating cash flow in mil)
-
-### Financial Leverage
-
-[@Kashmiri_2017; @Chakravarty_2011]
+The cost of capital itself is a weighted average over the firm's capital
+structure,
 
 $$
-\text{financial leverage} = \frac{\text{long-term debt}}{\text{book value of assets}}
+\text{WACC} = \frac{K_e \, E}{E + D} + \frac{K_d \,(1 - t)\, D}{E + D},
+$$ {#eq-wacc}
+
+where $E$ and $D$ are the market values of equity and debt, $K_e$ is the required
+return on equity, $K_d(1-t)$ is the after-tax return on debt, and $t$ is the
+marginal tax rate. The after-tax adjustment on debt reflects the tax
+deductibility of interest.
+
+Because invested capital can equivalently be written as total assets net of
+current liabilities, a common balance-sheet implementation of @eq-eva is
+
 $$
+\text{EVA} = \text{NOPAT} - (\text{total assets} - \text{current liabilities}) \times \text{WACC}.
+$$ {#eq-eva-bs}
 
-### Stock return
+EVA rests heavily on the book value of invested capital, which makes it most
+informative for *asset-rich* firms whose balance sheets capture the bulk of the
+resources they deploy. For firms whose value resides in intangibles—software,
+brands, data, organizational capital—book invested capital understates the true
+capital base, and EVA correspondingly overstates value creation. The intangibles
+problem is not a minor caveat; it is the reason marketing scholars increasingly
+favor market-based metrics over EVA for technology and consumer-brand firms.
 
-[@Markovitch_2005; @Chakravarty_2011; @Chakravarty_2016] used dummy if stock returns exceed industry averaged stock returns
+### Market Value Added {#sec-mva}
 
-### Financial Flexibility
+Where EVA is a flow concept measured each period, *market value added* (MVA) is the
+corresponding stock: the cumulative wealth the firm has created for its capital
+providers since inception. It is the gap between what the market says the firm's
+claims are worth and what investors originally contributed:
 
-### Book Equity
+$$
+\text{MVA} = \text{market value of shares (or enterprise value)} - \text{book value of shareholders' equity}.
+$$ {#eq-mva}
 
-Following Fama and French's [definition](http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/variable_definitions.html):
+A firm with persistently positive EVA accumulates positive MVA; under the residual-
+income identity, MVA equals the present value of all expected future EVA. MVA thus
+sidesteps the period-by-period WACC estimation that EVA requires, at the cost of
+inheriting all the noise of market expectations: it tells you what the market
+believes the firm has created, not what it has demonstrably created.
 
-"BE is the book value of stockholders' equity, plus balance sheet deferred taxes and investment tax credit (if available), minus the book value of preferred stock. Depending on availability, we use the redemption, liquidation, or par value (in that order) to estimate the book value of preferred stock. Stockholders' equity is the value reported by Moody's or Compustat, if it is available. If not, we measure stockholders' equity as the book value of common equity plus the par value of preferred stock, or the book value of assets minus total liabilities (in that order)" (cite [@davis2000])
+### Firm-Level Covariates from Accounting Data {#sec-covariates}
 
-```{r, eval = FALSE}
+Most marketing–finance studies are observational, so the credibility of any
+estimated marketing effect rests on controlling for the firm characteristics that
+jointly drive marketing decisions and financial outcomes. The literature has
+converged on a standard battery of accounting-based controls, each with a
+canonical operationalization. We collect them here with their definitions, their
+empirical pedigree, and the source items in Compustat.
+
+**Profitability** is conventionally measured as operating income before
+depreciation scaled by total assets, a return-on-assets variant that strips out
+the financing and depreciation choices that contaminate net income
+[@Grewal_2008; @McAlister_2016]:
+
+$$
+\text{profitability} = \frac{\text{operating income before depreciation}}{\text{total assets}}.
+$$ {#eq-profitability}
+
+**Firm size** enters as the natural logarithm of total assets, the log
+transformation taming the extreme right skew of the firm-size distribution and
+rendering coefficients interpretable as elasticities [@Grewal_2010; @McAlister_2016; @Nezami_2018]:
+
+$$
+\text{firm size} = \log(\text{total assets}).
+$$ {#eq-firm-size}
+
+**Sales growth**, the percentage change in gross sales, proxies for the firm's
+demand-side momentum and growth opportunities [@Grewal_2010; @Nezami_2018; @Rao_2004].
+**Cash flow**, measured as the log of operating cash flow in millions, captures
+internal financing capacity and is a standard control in studies linking marketing
+to firm risk [@Chakravarty_2011; @Malshe_2015].
+
+**Financial leverage** scales long-term debt by the book value of assets, indexing
+the firm's reliance on debt financing and its exposure to financial distress
+[@Kashmiri_2017; @Chakravarty_2011]:
+
+$$
+\text{financial leverage} = \frac{\text{long-term debt}}{\text{book value of assets}}.
+$$ {#eq-leverage}
+
+**Abnormal stock return** is frequently dichotomized: a dummy equal to one when a
+firm's stock return exceeds its industry-averaged return marks out-performers in a
+way robust to the heavy tails of raw returns [@Markovitch_2005; @Chakravarty_2011; @Chakravarty_2016].
+
+Beyond these workhorses, specialized studies build bespoke financial constructs.
+*Unexpected size-adjusted advertising investment*—the residual from a model of
+expected advertising given firm size—isolates the surprise component of marketing
+spend that markets have not already priced [@Chakravarty_2016; @Kim_2011; @Liu_2017].
+*Shareholder complaints*, drawn from the RiskMetrics governance database, proxy for
+investor dissatisfaction and governance friction [@Wies_2019].
+
+### Book Equity {#sec-book-equity}
+
+Book equity (BE) is a deceptively intricate construct because the "right" measure
+depends on data availability, and the field's conventions trace to the Fama–French
+data library. The canonical definition is worth quoting in full:
+
+> "BE is the book value of stockholders' equity, plus balance sheet deferred taxes
+> and investment tax credit (if available), minus the book value of preferred stock.
+> Depending on availability, we use the redemption, liquidation, or par value (in
+> that order) to estimate the book value of preferred stock. Stockholders' equity is
+> the value reported by Moody's or Compustat, if it is available. If not, we measure
+> stockholders' equity as the book value of common equity plus the par value of
+> preferred stock, or the book value of assets minus total liabilities (in that
+> order)." [@davis2000]
+
+The hierarchy of fallbacks is the point: preferred stock is valued by redemption,
+then liquidation, then par; stockholders' equity is taken from the cleanest
+available source and reconstructed only when necessary. The Compustat
+implementation coalesces the preferred-stock items in order of preference and adds
+deferred taxes:
+
+```{r}
+#| eval: false
 library(tidyverse)
-seq - coalesce(pstkrv, pstkl, pstk, 0) + coalesce(txdtc, 0)
+# Preferred-stock book value: redemption (pstkrv), then liquidation (pstkl),
+# then par (pstk); add deferred taxes and investment tax credit (txdtc).
+book_equity <- seq - coalesce(pstkrv, pstkl, pstk, 0) + coalesce(txdtc, 0)
 ```
 
-### Net Contribution
+### Net Contribution {#sec-net-contribution}
 
-Net contribution = gross margin x sales - cost of marketing
+The bridge from marketing spend to profit is the *net contribution* function,
+which underlies the advertising-budgeting and response-modeling literature. Net
+contribution is gross margin times sales revenue, less the cost of the marketing
+that produced those sales:
 
 $$
-NC = m \times S(a) -ka
-$$
-
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Variable                                | Data Item                           | Source                                                                                      |
-+=========================================+=====================================+=============================================================================================+
-| Book Value on Equity                    | PRCC_C x CSHO                       | PRCC_C: CRSP/Annual Update/CRSP/Compustat Merged/Fundamental Annual/Supplemental Data Items |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | CSHO: CRSP/Annual Update/CRSP/Compustat Merged/Fundamental Annual /Miscellaneous Items      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| CAPEX                                   | CAPX                                | Cash Flow Items                                                                             |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Capital Intensity                       | CAPX / AT                           | CAPX: Cash Flow Items                                                                       |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | AT: Balance Sheet Items                                                                     |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Cash                                    | CH                                  | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Cash and short-term Investments         | CHE                                 | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Cash Flow                               | $\frac{IBC + DP}{AT}$               | IBC: Cash Flow Items                                                                        |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | DP: Income Statement Items                                                                  |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | AT: Balance Sheet Items                                                                     |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Cash Holdings                           | $\frac{CHE}{AT}$                    | CHE: Balance Sheet Items                                                                    |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | AT: Balance Sheet Items                                                                     |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Closing Price (annual, calendar)        | PRCC_C                              | Supplement Data Items                                                                       |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Closing Price                           | PRCC_F                              | Supplement Data Items                                                                       |
-|                                         |                                     |                                                                                             |
-| (annual, fiscal)                        |                                     |                                                                                             |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Cost of Capital                         | $\frac{XINT}{DLC}$                  | XINT: Income Statement Items                                                                |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | DLC: Balance Sheet Items                                                                    |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Current Assets Total                    | ACT                                 | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Current Liabilities                     | LCT                                 | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Debt in Current Liabilities             | DLC                                 | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Dividends (common)                      | DVC                                 | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Dividends (preferred)                   | DVP                                 | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Dividends (total)                       | DVT                                 | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Earning per Shares                      | $\frac{NI}{CSHO}$                   | NI: Income Statement Items                                                                  |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | CSHO: Miscellaneous Items                                                                   |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| EBIT                                    | EBIT                                | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| EBITDA                                  | EBITDA                              | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Equity Book Value                       | BKVLPS                              | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Firm Size                               | log(AT)                             | AT: Balance Sheet Items                                                                     |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Income before Extraordinary Items       | IB                                  | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Interest on long-term debt              | UXINTD                              | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Interest on short-term Debt             | UXINST                              | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Leverage                                | $\frac{DLTT + DLC}{SEQ}$            | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Long-term Assets                        | AT - ATC                            | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Long-term Debts                         | DLTT                                | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Market to Book Ratio                    | $\frac{MKVALT}{BKVLPS}$             | MKVALT: Supplement Data Items                                                               |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | BKVLPS: Balance Sheet Items                                                                 |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Market Value                            | MKVALT or CSHO x PRCC_F             | MKVALT: Supplement Data Items                                                               |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | CSHO: Miscellaneous Items                                                                   |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | PRCC_F: Supplement Data Items                                                               |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Net income (Loss)                       | NI                                  | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Payout Ratio                            | $\frac{DVP + DVC + PRSTKC}{IB}$     | DVP: Income Statement Items                                                                 |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | DVC: Income Statement Items                                                                 |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | PRSTKC: Cash Flow Items                                                                     |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | IB: Income Statement Items                                                                  |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Property, Plant, and Equipment          | PPENT                               | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Purchase of common and preferred Stocks | PRSTKC                              | Cash Flow Items                                                                             |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| R&D Intensity                           | $\frac{XRD}{AT}$                    | XRD: Income Statement Items                                                                 |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | AT: Balance Sheet Items                                                                     |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| ROA                                     | $\frac{NI}{AT}$                     | NI: Income Statement Items                                                                  |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | AT: Balance Sheet Items                                                                     |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| ROE                                     | NI/(CSHO x PRCC_F)                  | NI: Income Statement Items                                                                  |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | CSHO: Miscellaneous Items                                                                   |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | PRCC_F: Supplement Data Items                                                               |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| ROI                                     | $\frac{NI}{ICAPT}$                  | NI: Income Statement Items                                                                  |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | ICAPT: Balance Sheet Items                                                                  |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Sale                                    | SALE                                | Income Statement Items                                                                      |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Short-term Liabilities                  | APC                                 | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Stockholders Equity (total)             | SEQ                                 | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Tangibility                             | $\frac{PPENT}{AT}$                  | PPENT: Balance Sheet Items                                                                  |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | AT: Balance Sheet Items                                                                     |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Tobin's Q                               | $$AT + (CSHO x PRCC_F) - CEQ$$/(AT) | AT: Balance Sheet Items                                                                     |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | CSHO: Miscellaneous Items                                                                   |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | PRCC_F Supplement Data Items                                                                |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | CEQ: Balance Sheet Items                                                                    |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Total Assets                            | AT                                  | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Total Equity                            | PSTKC + CSHO                        | PSTKC: Balance Sheet Items                                                                  |
-|                                         |                                     |                                                                                             |
-|                                         |                                     | CSHO: Miscellaneous Items                                                                   |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-| Total Liabilities                       | LT                                  | Balance Sheet Items                                                                         |
-+-----------------------------------------+-------------------------------------+---------------------------------------------------------------------------------------------+
-
-: All data without CSRP come from Compustat/Fundamentals
-
-Information is taken from [WRDS Data Items](https://www.wiwi.uni-muenster.de/uf/sites/uf/files/2017_10_12_wrds_data_items.pdf)
-
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Variable                                 | Data Item                                                                                  | Data Source                                                                                                    |
-+==========================================+============================================================================================+================================================================================================================+
-| Age                                      |                                                                                            | CRSP                                                                                                           |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| **Valuation**                            |                                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Market Cap/ GDP                          |                                                                                            | series GDPA (U.S. Bureau of Economic Analysis)                                                                 |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Tobin's q                                | (AT (CSHO \* PRCC_F) - CEQ)/(AT)                                                           |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Market cap (000s)                        | $prc \times shrout$                                                                        | CRSP                                                                                                           |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Small firm                               | Market cap \< \$ 100M                                                                      |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Revenue Herfindahl                       | $\frac{revt^2_i}{\sum_1^n revt}$ where $i$ = the firm, $n$ = firms in the same industry    |                                                                                                                |
-|                                          |                                                                                            |                                                                                                                |
-| (for each 3-digit NAICS in each year)    |                                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| **Investment**                           |                                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Capital Expenditures / Assets            | $\frac{capx}{lag(at)}$                                                                     |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| R&D/Assets                               | $\frac{xrd}{lag(at)}$                                                                      | If R&D is missing, set to 0                                                                                    |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Fixed Assets/ Assets                     | $\frac{ppent}{at}$                                                                         |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Inventory / Assets                       | $\frac{invt}{at}$                                                                          |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Cash / Assets                            | $\frac{che}{at}$                                                                           |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| **Profitability**                        |                                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Operating cashflow / assets              | $\frac{oidbp - xint - txt}{lag(at)}$                                                       | Operating income before depreciation (oibdp) minus interest (xint) minus taxes (txt), divided by lagged assets |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Loss firms                               | \% of firm with net income (ni) \< 0                                                       |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| R&D-adjusted operating cash flow/ assets | $CF/at + RD/ at$                                                                           |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| ROA                                      | $\frac{ib}{at}$                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| **Financing**                            |                                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Book Leverage                            | $\frac{dltt + dlc}{at}$                                                                    |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Market leverage                          | (dltt + dlc)/(at - ceq + (chso x prcc_f)                                                   |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Net Leverage                             | $\frac{dltt + dlc - che}{aat}$                                                             |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Negative net leverage firms              | \% of firms with Net Leverage \< 0                                                         |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Interest/ Assets                         | $\frac{xint}{lag(at)}$                                                                     |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| No debt firms                            | \% with no dltt or dlc                                                                     |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Net equity issuance                      | $\frac{sstk - prstkc}{lag(at)}$                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| **Ownership**                            |                                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Institutional ownership                  | \% of shares outstanding held by institution                                               | Thomson Financial 13f data                                                                                     |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Blockholder                              | \% of firms with an institutional owner who holds 10 percent or more of outstanding shares | Thomson Financial 13f data                                                                                     |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| **Payout Policy**                        |                                                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Dividend paying firms                    | \% of firms with dvc \> 0                                                                  |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Dividends / Assets                       | $\frac{dvc}{lag(at)}$                                                                      |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Repurchase / Assets                      | $\frac{prstkc - pstk}{lag(at)}$                                                            |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Total payout/ assets                     | $\frac{dvc + prstkc}{lag(at)}$                                                             |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-| Total payout/ Net income                 | $\frac{dvc+ prstkc}{ni}$                                                                   |                                                                                                                |
-+------------------------------------------+--------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
-
-Info from [@kahle2017] Appendix
-
-### Diversity
-
-Simpson Diversity index measures the market share of each sector
-
--   Equivalent to the Herfindahl index (in economics)
-
-## Marketing
-
-### Trust
-
-Measuring trust algorithmically using social media data [@roy2017]
-
-### Sentiment
-
-[@hartmann2023more] Accuracy and Application of Sentiment Analysis
-
--   Sentiment is core to human communication.
-
--   Marketing uses sentiment analysis for:
-
-    -   Social media.
-
-    -   News articles.
-
-    -   Customer feedback.
-
-    -   Corporate communication.
-
--   Available sentiment analysis methods:
-
-    -   Lexicons: link words/expressions to sentiment scores.
-
-    -   Machine learning: complex but potentially more accurate.
-
--   Study introduces an empirical framework to:
-
-    -   Evaluate method suitability based on research questions, data, and resources.
-
--   Meta-analysis conducted on:
-
-    -   272 datasets.
-
-    -   12 million sentiment-labeled documents.
-
--   Findings:
-
-    -   Transfer learning models top performance.
-
-    -   These models may not always meet leaderboard benchmarks.
-
-    -   Transfer learning models are, on average, \>20% more accurate than lexicons.
-
--   Performance influenced by:
-
-    -   Number of sentiment classes.
-
-    -   Text length.
-
--   Study offers:
-
-    -   SiEBERT - a pre-trained sentiment analysis model.
-
-    -   Open-source scripts for easy application.
-
-### Purchase Intention
-
-[@hartmann2021power] The Power of Brand Selfies
-
--   RoBERTa-based model: <https://huggingface.co/j-hartmann/purchase-intention-english-roberta-large>
-
--   Smartphones simplify sharing branded imagery.
-
--   Study categorizes social media brand imagery.
-
--   Identified image types:
-
-    -   Packshots (just the product).
-
-    -   Consumer selfies (consumer's face with brand).
-
-    -   Brand selfies (product held, no visible consumer).
-
--   Convolutional neural networks used to recognize image types.
-
--   Language models analyze social media responses to 250,000+ brand-image posts from 185 brands on Twitter & Instagram.
-
--   Findings:
-
-    -   Consumer selfies lead to more likes and comments.
-
-    -   Brand selfies induce higher purchase intentions.
-
--   Traditional social media metrics may not fully capture brand engagement.
-
--   Display ad results:
-
-    -   Higher click-through rates for brand selfies than consumer selfies.
-
--   Lab experiment indicates self-reference affects image responses.
-
--   Machine learning can decipher marketing insights from multimedia content.
-
--   Image perspective impacts actual brand engagement.
-
-### Brand Reputation
-
--   Measuring brand reputation from Twitter data [@rust2021]
-
-### Capabilities
-
-[@dutta1999] Marketing capability is critical for high-technology markets
-
-Insights
-
--   A company's sales are increased by a solid foundation of innovative technologies that positively affect consumers' perceptions of the benefits of its product's externalities.
-
--   For businesses with a strong technological foundation, marketing capability has the biggest impact on the production of innovation that has been quality-adjusted. The companies that stand to benefit the most from great marketing capabilities are those with a solid R&D foundation.
-
-    -   because a company may have tremendous R&D capabilities but be unable to translate them into commercially viable items due to weak marketing skills
-
--   The interaction of marketing and R&D capabilities is the most significant factor in determining a firm's performance.
-
-    -   High tech firm need to have both the ability to come up with innovation constantly and the ability to commercialize these innovations.
-
--   A firm's capability is defined as "its ability to deploy the resources (inputs) available to it to achieve the desired objective(s) (output)."
-
-    -   Logically, **the higher the functional capability a firm has, the more efficiently it is able to deploy its productive inputs to achieve its functional objectives**.
-
-    -   Equivalently, the lower the functional inefficiency, the higher the functional capability of the firm
-
-Operationalization
-
-**Marketing Capability**
-
-Sales = f(technological base, advertising stock, stock of marketing expenditure, investment in customer relationships, installed base)
-
-Weight for marketing expenditure = 0.5 [@dutta2005, p. 281]
-
-Advertising stock weight = 0.4 [@peles1971] or 0.5 [@wang2017]
-
-**R&D Capability**
-
-2 dimensions of the quality of technological output
-
--   innovativeness [@trajtenberg1990; @trajtenberg1990a]
-
--   width of applicability [@jaffe1993]
-
-Quality-adjusted technological output = f(technological base, cumulative R&D expenditure, marketing capability)
-
-R&D expenditure weight = 0.4 [@dutta2005, p. 281]
-
-**Operations Capability**
-
-Cost of production = f(output, cost of capital, labor cost, technological base, marketing capability)
-
-Variables
-
-+-----------+--------------------------------------------------------------------------------------------+
-| Label     | Variable                                                                                   |
-+===========+============================================================================================+
-|           | Sales                                                                                      |
-+-----------+--------------------------------------------------------------------------------------------+
-|           | Did not use raw patent count because quality matters.                                      |
-+-----------+--------------------------------------------------------------------------------------------+
-|           | Innovative-adjusted technological output                                                   |
-|           |                                                                                            |
-|           | The number of times the patents of a firm have been cited (citation-weighted patent count) |
-+-----------+--------------------------------------------------------------------------------------------+
-
-Replication
-
-As the time of this writing, the US Patents by WRDS dataset only covers from 2011 to 2019. Hence, I can only replicate the results in this period but not the years in the study (1985 - 1994). Alternatively, you can visit [USPTO](https://bulkdata.uspto.gov/) to download the raw dataset and create your own matching algorithm based on company names.
-
-`wrdsapps_patents_link` is from US Patents by WRDS / Compustat Link
-
-`wrdsapp_patents` is from US Patents by WRDS / Patents
-
--   forward citations counts as of Dec 31st 2019
-
-`wrdsapp_patents_citations` is from US Patents by WRDS / Citations
-
-```{r, eval = FALSE}
-library(tidyverse)
-library(lubridate)
-
-totalq <- read.csv(file.path("data/totalq.csv.gz"))
-
-capability <- read.csv(file.path("data/capability.csv.gz")) %>% 
-    # fix the length of numeric variables
-    mutate(gvkey = str_pad(as.character(gvkey),width = 6, pad = "0", side = "left"),
-           sic = str_pad(as.character(sic), width = 4, pad = "0", side = "left")) %>% 
-    
-    # need to have data on advertising, r&d, sga, cogs
-    filter(!is.na(xad) & !is.na(xrd) & !is.na(xsga) & !is.na(cogs))
-
-
-wrdsapps_patents_link <-
-    read.csv("data/patents/wrdsapps_patents_link.csv.gz") %>%
-    mutate(gvkey = str_pad(
-        as.character(gvkey),
-        width = 6,
-        pad = "0",
-        side = "left"
-    )) %>%
-    
-    # get industry data
-    inner_join(capability %>% select(gvkey, sic) %>% distinct(), by = "gvkey")
-    
-# view(head(wrdsapps_patents_link))
-
-wrdsapps_patents <- read.csv("data/patents/wrdsapps_patents.gz")
-# view(head(wrdsapps_patents))
-
-wrdsapps_patents_citations <- read.csv("data/patents/wrdsapps_patents_citations.csv.gz") %>% 
-    # correct dates
-    mutate(grantdate = as.Date(as.character(grantdate), "%Y%m%d"),
-           cited_pat_gdate = as.Date(as.character(cited_pat_gdate), "%Y%m%d")) %>% 
-    
-    # get year
-    # grant year here is the year that the new patent that cite the old one was granted.
-    mutate(grantyear = year(grantdate),
-           cited_pat_gyear = year(cited_pat_gdate)) %>% 
-    
-    # get only those patents belong to firms in the Compustat database
-    left_join(
-        wrdsapps_patents_link %>% 
-            select(patnum, sic) %>% 
-            rename(cited_patnum_sic = sic),
-        by = c("cited_patnum" = "patnum")
-    ) %>% 
-    left_join(
-        wrdsapps_patents_link %>% 
-            select(patnum, sic) %>% 
-            rename(patnum_sic = sic),
-        by = c("patnum" = "patnum")
-    )
-    
-
-# view(head(wrdsapps_patents_citations, 100)) 
-
-wrdsapps_patents_citations_by_year <- wrdsapps_patents_citations %>% 
-    
-    select(patnum, grantyear, cited_patnum) %>% 
-    
-    count(cited_patnum, grantyear) %>% 
-    
-    rename(citation_count = n)
-
-
-
-
-# check
-# wrdsapps_patents_citations_by_year %>%
-#     filter(cited_patnum == "01044494") %>%
-#     view()
-
-
-# wrdsapps_patents_citations %>% 
-#     filter(cited_patnum == "01044494") %>% 
-#     view()
-
+\text{NC} = m \times S(a) - k a,
+$$ {#eq-net-contribution}
+
+where $m$ is gross margin, $S(a)$ is the sales-response function mapping marketing
+effort $a$ to sales, and $k$ is the unit cost of effort. The first-order condition
+$m \, S'(a^\*) = k$ characterizes the optimal effort $a^\*$: spend until the
+marginal gross profit from an additional unit of effort equals its marginal cost.
+The shape of $S(\cdot)$—concave, S-shaped, or saturating—governs whether an
+interior optimum exists, which is the recurring substantive question of the
+advertising-response literature.
+
+### A Reference Map of Compustat Items {#sec-compustat-map}
+
+The metrics above all reduce to combinations of a relatively small set of WRDS
+data items. Because reproducing any one of them requires knowing the exact item
+mnemonic and its source file, @tbl-compustat-core assembles the core mapping. All
+items without a CRSP annotation come from Compustat Fundamentals Annual; the
+mnemonics follow the WRDS data-items reference.[^wrds-ref]
+
+[^wrds-ref]: The item definitions follow the WRDS data-items documentation
+(`wrds_data_items`). Items prefixed in CRSP/Compustat Merged (e.g., `PRCC_C`,
+`CSHO`) are drawn from the merged fundamentals files; market-price and
+shares-outstanding items used for market capitalization come from CRSP.
+
+```{r}
+#| label: tbl-compustat-core
+#| tbl-cap: "Core firm-level metrics and their Compustat/CRSP data items."
+#| echo: false
+#| message: false
+#| warning: false
+library(knitr)
+core_items <- tibble::tribble(
+  ~Metric,                          ~`Data item`,                 ~`Source file`,
+  "Book value of equity",           "PRCC_C x CSHO",              "CRSP/Compustat Merged",
+  "Capital intensity",              "CAPX / AT",                  "Cash flow; balance sheet",
+  "Cash flow",                      "(IBC + DP) / AT",            "Cash flow; income statement",
+  "Cash holdings",                  "CHE / AT",                   "Balance sheet",
+  "Cost of capital (proxy)",        "XINT / DLC",                 "Income statement; balance sheet",
+  "Earnings per share",             "NI / CSHO",                  "Income statement; misc.",
+  "Firm size",                      "log(AT)",                    "Balance sheet",
+  "Leverage",                       "(DLTT + DLC) / SEQ",         "Balance sheet",
+  "Market-to-book ratio",           "MKVALT / BKVLPS",            "Supplemental; balance sheet",
+  "Market value",                   "MKVALT or CSHO x PRCC_F",    "Supplemental; misc.",
+  "Payout ratio",                   "(DVP + DVC + PRSTKC) / IB",  "Income statement; cash flow",
+  "R&D intensity",                  "XRD / AT",                   "Income statement; balance sheet",
+  "Return on assets (ROA)",         "NI / AT",                    "Income statement; balance sheet",
+  "Return on equity (ROE)",         "NI / (CSHO x PRCC_F)",       "Income statement; supplemental",
+  "Return on investment (ROI)",     "NI / ICAPT",                 "Income statement; balance sheet",
+  "Tangibility",                    "PPENT / AT",                 "Balance sheet",
+  "Tobin's Q",                      "(AT + CSHO x PRCC_F - CEQ) / AT", "Balance sheet; supplemental",
+  "Total equity",                   "PSTKC + CSHO",               "Balance sheet; misc."
+)
+kable(core_items, booktabs = TRUE)
 ```
 
-Innovativeness-adjusted technological output:
+A second, finance-oriented battery—used in studies of corporate investment,
+financing, and payout policy—follows the conventions catalogued by @kahle2017.
+@tbl-kahle reproduces the construction rules, which differ from
+@tbl-compustat-core chiefly in their use of *lagged* assets in denominators (to
+avoid mechanical contemporaneous correlation) and in the explicit treatment of
+missing R&D as zero.
 
-1.  Calculate the average number of citations receive by all patents belonging the firms in the sample within one industry (defined by sic1, sic2, sic3, sic4)
-2.  The weight assigned to a firm's patents = \# of citations / industry sample average
-3.  Tech_innv = sum of citation-weighted patents within a firm in a year.
+```{r}
+#| label: tbl-kahle
+#| tbl-cap: "Valuation, investment, financing, and payout metrics following @kahle2017."
+#| echo: false
+kahle_items <- tibble::tribble(
+  ~Category,       ~Metric,                       ~Construction,
+  "Valuation",     "Tobin's Q",                   "(AT + CSHO x PRCC_F - CEQ) / AT",
+  "Valuation",     "Market cap",                  "prc x shrout (CRSP)",
+  "Valuation",     "Revenue Herfindahl",          "revt_i^2 / sum(revt) within 3-digit NAICS x year",
+  "Investment",    "CapEx / assets",              "capx / lag(at)",
+  "Investment",    "R&D / assets",                "xrd / lag(at); missing R&D set to 0",
+  "Investment",    "Fixed assets / assets",       "ppent / at",
+  "Investment",    "Cash / assets",               "che / at",
+  "Profitability", "Operating cash flow / assets","(oibdp - xint - txt) / lag(at)",
+  "Profitability", "ROA",                         "ib / at",
+  "Financing",     "Book leverage",               "(dltt + dlc) / at",
+  "Financing",     "Market leverage",             "(dltt + dlc) / (at - ceq + che x prcc_f)",
+  "Financing",     "Net leverage",                "(dltt + dlc - che) / at",
+  "Financing",     "Net equity issuance",         "(sstk - prstkc) / lag(at)",
+  "Ownership",     "Institutional ownership",     "% shares held by institutions (13F)",
+  "Ownership",     "Blockholder",                 "institution holding >= 10% of shares (13F)",
+  "Payout",        "Dividends / assets",          "dvc / lag(at)",
+  "Payout",        "Repurchase / assets",         "(prstkc - pstk) / lag(at)",
+  "Payout",        "Total payout / assets",       "(dvc + prstkc) / lag(at)"
+)
+kable(kahle_items, booktabs = TRUE)
+```
 
-```{r, eval = FALSE}
-# calculate industry average citation based on
-# sic1
-tech_innv1 <- aggregate(x = tech_innv$citation_count,
-                   by = list(tech_innv$sic1),
-                   FUN = mean) %>% 
-    rename(sic1 = 1,
-           mean_cite_ind1 = 2)
+Institutional-ownership and blockholder variables come from Thomson Financial 13F
+filings; the macro denominator for the market-cap/GDP ratio is series GDPA from the
+U.S. Bureau of Economic Analysis.
 
-# sic2
-tech_innv2 <- aggregate(x = tech_innv$citation_count,
-                   by = list(tech_innv$sic2),
-                   FUN = mean) %>% 
-    rename(sic2 = 1,
-           mean_cite_ind2 = 2)
+### Industry Concentration and Diversity {#sec-diversity}
 
-# sic3
-tech_innv3 <- aggregate(x = tech_innv$citation_count,
-                   by = list(tech_innv$sic3),
-                   FUN = mean) %>% 
-    rename(sic3 = 1,
-           mean_cite_ind3 = 2)
+Several of the metrics above require an industry-concentration index, and the
+literature has settled on the Herfindahl form. For revenue shares $s_i$ within an
+industry, the Herfindahl–Hirschman index is $\sum_i s_i^2$; the
+revenue-Herfindahl in @tbl-kahle computes this within each 3-digit NAICS industry
+and year. The same quantity, applied to sector market shares, is the **Simpson
+diversity index** familiar from ecology—the two are algebraically identical, both
+equal to the probability that two randomly drawn units belong to the same
+category. High Herfindahl (low Simpson diversity) signals a concentrated industry;
+the index thus does double duty as a competition control and as a measure of how
+diversified a firm's or market's activity is across sectors.
 
-# sic4
-tech_innv4 <- aggregate(x = tech_innv$citation_count,
-                   by = list(tech_innv$sic),
-                   FUN = mean) %>% 
-    rename(sic = 1,
-           mean_cite_ind4 = 2)
+## Marketing Metrics {#sec-metrics-marketing}
 
-# merge all four sic types together
-tech_innv_sic <- tech_innv4 %>%
+The financial metrics above are computed from structured accounting data. The
+marketing constructs in this section are different in kind: trust, sentiment,
+willingness to pay, purchase intention, and brand reputation are *psychological*
+states that classically required surveys to measure but are now increasingly
+recovered from unstructured text and images by machine learning. The
+methodological frontier here is the use of pre-trained language and vision models
+to convert social-media content into validated marketing measures at a scale
+surveys cannot reach.
+
+### Trust {#sec-trust}
+
+Trust is the willingness to rely on an exchange partner in whom one has confidence,
+and it has long been measured by multi-item attitudinal scales. The frontier
+substitutes behavioral and relational signals in social-media data for
+self-report: @roy2017 develop an algorithmic measure of brand trust from the
+structure and content of consumers' social-media interactions, demonstrating that
+trust leaves a computational trace that can be extracted without surveying anyone.
+
+### Sentiment {#sec-sentiment}
+
+Sentiment—the valence of expressed affect—is core to human communication and is the
+single most demanded text-analytic measure in marketing, applied to social media,
+news, customer feedback, and corporate communications. The central practical
+question is *which* method to use, because the menu ranges from simple lexicons
+that map words to polarity scores to transfer-learning language models that are
+far more accurate but far more demanding.
+
+@hartmann2023more resolve this question empirically with a meta-analysis spanning
+272 datasets and roughly twelve million sentiment-labeled documents. Their headline
+finding is that transfer-learning models—pre-trained transformers fine-tuned on
+sentiment—deliver the best performance, outperforming lexicons by more than twenty
+percent in accuracy on average. The advantage is not uniform: it widens with the
+number of sentiment classes and is moderated by text length, and the
+leaderboard-topping benchmark model is not always the best choice for a given
+research setting. Crucially for reproducibility, the authors supply a pre-trained
+model (SiEBERT) and open-source scripts, lowering the barrier to applying
+state-of-the-art sentiment analysis. The practical lesson is that method choice
+should be made deliberately against the research question, the data, and the
+available computational resources—not by reflexively reaching for a lexicon because
+it is convenient.
+
+### Willingness to Pay {#sec-wtp}
+
+Willingness to pay (WTP)—the maximum price a consumer will accept for a good—is the
+demand-side primitive that underlies pricing and welfare analysis. Recovering it
+from naturally occurring text rather than from elicitation experiments is an active
+frontier; @he2023express represents recent work in this direction, extracting WTP
+signals from expressed consumer language.
+
+### Purchase Intention {#sec-purchase-intention}
+
+Purchase intention—the self-reported likelihood of buying—is a leading indicator of
+behavior and a workhorse dependent variable. @hartmann2021power show that it can be
+inferred from *images*, not just text, and in doing so overturn a common assumption
+about social-media metrics. Smartphones have made it trivial for consumers to share
+branded imagery, and the authors classify that imagery into three types using
+convolutional neural networks: **packshots** (the product alone), **consumer
+selfies** (a consumer's face shown with the brand), and **brand selfies** (the
+product held from the consumer's own visual perspective, with no consumer face
+visible). Applying language models to social-media responses across more than
+250,000 brand-image posts from 185 brands on Twitter and Instagram, they find a
+revealing dissociation: consumer selfies generate more likes and comments, but
+brand selfies induce higher *purchase intentions*. Engagement metrics and purchase
+intent diverge.
+
+The dissociation has managerial bite. In a display-advertising field test, brand
+selfies earned higher click-through rates than consumer selfies, and a laboratory
+experiment traced the mechanism to self-reference: the first-person perspective of
+the brand selfie invites the viewer to imagine holding the product themselves. The
+broader methodological point is that machine learning can decode marketing-relevant
+constructs from multimedia content, and that traditional engagement counts (likes,
+comments) may *mislead* about the constructs managers actually care about. The
+purchase-intention classifier is released as a fine-tuned RoBERTa model.[^purchase-model]
+
+[^purchase-model]: The fine-tuned purchase-intention model is distributed publicly
+as a large RoBERTa checkpoint, allowing researchers to score new English-language
+text for expressed purchase intent without retraining.
+
+### Brand Reputation {#sec-brand-reputation}
+
+Brand reputation—the aggregate esteem in which a brand is held—has migrated from
+survey trackers to real-time social listening. @rust2021 measure brand reputation
+directly from Twitter data, demonstrating that a construct historically captured by
+periodic, expensive surveys can be estimated continuously from public conversation,
+with the attendant gains in timeliness and the attendant risks of platform-specific
+selection.
+
+## Marketing Capability {#sec-capability}
+
+Capability is the most demanding metric in this chapter and the one that most
+rewards careful estimation, because it is not observed at all—it is a latent
+*efficiency* that must be inferred from the gap between what a firm achieves and
+what the best firms achieve with comparable inputs. The construct originates with
+@dutta1999, who define a firm's capability as "its ability to deploy the resources
+(inputs) available to it to achieve the desired objective(s) (output)." The higher
+a firm's functional capability, the more efficiently it converts its inputs into
+the relevant functional output; equivalently, the lower its functional
+*inefficiency*, the higher its capability. This input–output framing is what makes
+stochastic frontier analysis the natural estimator.
+
+### The Substantive Argument {#sec-capability-theory}
+
+The motivating insight of @dutta1999 is that in high-technology markets, raw
+technological prowess is not enough. A firm can possess formidable research and
+development (R&D) capability—generating a stream of high-quality innovations—yet
+fail commercially because it lacks the *marketing* capability to translate those
+innovations into products consumers value and buy. Marketing capability has its
+largest effect on quality-adjusted innovation output precisely for firms with a
+strong technological base: the firms that benefit most from great marketing
+capability are those that already have a strong R&D foundation, because only they
+have innovations worth commercializing. The interaction of marketing and R&D
+capabilities is therefore the single most important determinant of firm
+performance—high-technology firms must be able both to generate innovation
+continuously and to commercialize it.
+
+This argument dictates the estimation strategy. Three capabilities are estimated
+jointly because they feed one another: **marketing capability** drives sales from a
+firm's technological base, advertising stock, marketing stock, customer
+relationships, and installed base; **R&D capability** drives quality-adjusted
+technological output; and **operations capability** drives the cost of production.
+The functional relationships @dutta1999 posit are, schematically,
+
+$$
+\text{Sales} = f(\text{technological base},\ \text{advertising stock},\ \text{marketing stock},\ \text{customer relationships},\ \text{installed base}),
+$$
+
+$$
+\text{Quality-adjusted output} = f(\text{technological base},\ \text{cumulative R\&D},\ \text{marketing capability}),
+$$
+
+$$
+\text{Cost of production} = f(\text{output},\ \text{cost of capital},\ \text{labor cost},\ \text{technological base},\ \text{marketing capability}).
+$$
+
+The appearance of marketing capability inside the R&D and operations equations is
+the formal expression of the substantive claim that the capabilities are
+interdependent, not separable.
+
+@fig-capability-flow makes the recursive structure explicit.
+
+```{mermaid}
+%%| label: fig-capability-flow
+%%| fig-cap: "The interdependent capability system of @dutta1999. Stocks of marketing, advertising, and R&D investment feed three stochastic frontiers; estimated marketing efficiency enters the R&D and operations frontiers, capturing the interdependence of capabilities."
+flowchart TD
+    A[Advertising stock] --> M[Marketing frontier:<br/>log sales]
+    MK[Marketing stock] --> M
+    TB[Technological base] --> M
+    REC[Receivables / CRM] --> M
+    IB[Installed base] --> M
+    M --> ME[Marketing efficiency]
+    ME --> R[R&D frontier:<br/>log tech output]
+    RD[R&D stock] --> R
+    TB --> R
+    R --> RE[R&D efficiency]
+    ME --> O[Operations frontier:<br/>log COGS]
+    LC[Labor cost] --> O
+    CC[Cost of capital] --> O
+    TB --> O
+    O --> OE[Operations efficiency]
+```
+
+### Stock Variables and the Koyck Transformation {#sec-koyck}
+
+Marketing and innovation investments do not affect sales only in the year they are
+incurred; their effect decays geometrically over time. The standard device for
+turning a flow of expenditure into a *stock* is the Koyck geometric-lag
+transformation [@koyck1954distributed]. For an expenditure flow $x_t$ and a
+retention rate $\lambda \in (0,1)$, the stock is
+
+$$
+\text{Stock}_t = \sum_{j=0}^{t-1} \lambda^{j} \, x_{t-j},
+$$ {#eq-koyck}
+
+so that each past dollar contributes $\lambda^j$ of its original force after $j$
+years. The advertising-stock literature anchors $\lambda$ empirically: weights of
+0.4 [@peles1971] and 0.5 [@wang2017] are standard for advertising stock, and
+@dutta2005 use a weight of 0.5 for marketing expenditure and 0.4 for R&D
+expenditure (their p. 281). The choice of $\lambda$ is consequential—too high a
+retention rate over-credits ancient spending—and should be defended against the
+estimated carryover in the relevant category rather than imposed by habit.
+
+### Measuring R&D Output: Innovativeness and Width {#sec-rd-output}
+
+A raw patent count is a poor measure of technological output because patents differ
+enormously in quality; @dutta1999 deliberately avoid it in favor of two
+citation-based, quality-adjusted measures. The first, **innovativeness**, follows
+the citation-weighting tradition of @trajtenberg1990 and @trajtenberg1990a: a patent
+that is cited often is more valuable, so patents are weighted by how far their
+citation count exceeds the industry norm. The second, **width of applicability**,
+follows @jaffe1993: a patent cited by firms in *other* industries has broader
+applicability, so patents are weighted by the share of their citations that come
+from outside the focal industry.
+
+Concretely, the **innovativeness-adjusted** output is built in three steps. First,
+compute the average number of citations received by all sample patents within an
+industry—defined at one-, two-, three-, and four-digit SIC granularity—where the
+original study used a single mean across all firms and years. Second, weight each
+firm's patent by its citation count divided by that industry-sample average. Third,
+sum the citation-weighted patents within a firm-year. The **width-adjusted** output
+parallels this: for each patent compute the proportion of its citations originating
+outside the focal SIC code; weight the patent by that proportion divided by the
+industry-average proportion; and sum the weighted patents within a firm-year.
+
+### The Stochastic Frontier Estimator {#sec-sfa}
+
+The three capabilities are recovered by *stochastic frontier analysis* (SFA), which
+is the right tool precisely because capability is defined as efficiency relative to
+a best-practice frontier. For firm $i$ in year $t$ with output $y_{it}$ and inputs
+$\mathbf{x}_{it}$, the production frontier is
+
+$$
+\log y_{it} = \mathbf{x}_{it}' \boldsymbol{\beta} + v_{it} - u_{it},
+$$ {#eq-sfa}
+
+where the composed error decomposes into a symmetric noise term
+$v_{it} \sim \mathcal{N}(0, \sigma_v^2)$ and a one-sided inefficiency term
+$u_{it} \ge 0$. The frontier $\mathbf{x}_{it}'\boldsymbol{\beta} + v_{it}$ is the
+maximum attainable output; the firm falls short of it by $u_{it}$. Capability is
+then the technical efficiency
+
+$$
+\text{TE}_{it} = \exp(-u_{it}) \in (0, 1],
+$$ {#eq-efficiency}
+
+recovered as the conditional expectation $\mathbb{E}[\exp(-u_{it}) \mid v_{it} -
+u_{it}]$ following Jondrow and others. For a *production* frontier, inefficiency
+*decreases* output, so the sign on $u_{it}$ is negative (`ineffDecrease = TRUE` in
+the code below); for a *cost* frontier—used for the operations capability, where the
+output is the cost of goods sold to be *minimized*—inefficiency *increases* cost and
+the sign reverses (`ineffDecrease = FALSE`).
+
+The identifying assumptions are exactly those that make SFA both powerful and
+fragile. First, the inefficiency term must be one-sided and distributionally
+specified (half-normal, truncated-normal, or exponential); the efficiency estimates
+are not robust to gross misspecification of this distribution. Second, the inputs
+$\mathbf{x}_{it}$ must be exogenous to $u_{it}$—if firms with high latent capability
+systematically invest more, the frontier is biased and the recovered efficiencies
+absorb the endogeneity. Third, the log specification requires strictly positive
+inputs and outputs, which is why the data pipeline below replaces zeros and missing
+stocks with small positive constants. None of these assumptions is innocuous, and
+the interpretation of the recovered efficiencies as "capability" is only as good as
+the frontier is correctly specified.
+
+### Data Construction {#sec-capability-data}
+
+We now build the firm-year panel from WRDS. The pipeline connects to the WRDS
+PostgreSQL server, pulls Total Q (a refined Tobin's Q), the Compustat fundamentals
+needed for the input stocks, and the patent data needed for the R&D-output measures,
+and assembles them into a single panel. The replication is constrained by the WRDS
+U.S. patents coverage (2011–2019 for the citation files), so the post-2010 window is
+used for estimation; the original 1985–1994 study period would require building a
+name-matching algorithm against raw USPTO bulk data.
+
+```{r}
+#| eval: false
+library(RPostgres)
+library(tidyverse)
+
+# WRDS connection. Supply your own credentials via environment variables;
+# never hard-code passwords into a reproducible script.
+wrds <- dbConnect(
+  Postgres(),
+  host = "wrds-pgdata.wharton.upenn.edu",
+  port = 9737,
+  dbname = "wrds",
+  sslmode = "require",
+  user = Sys.getenv("wrds_user"),
+  pass = Sys.getenv("wrds_pass")
+)
+```
+
+Total Q provides the valuation outcome used in some replications below.
+
+```{r}
+#| eval: false
+#| collapse: true
+res <- dbSendQuery(wrds, "SELECT DISTINCT gvkey, fyear, q_tot
+                          FROM totalq_all.total_q
+                          WHERE fyear >= 2000 AND
+                                gvkey IS NOT NULL AND
+                                q_tot IS NOT NULL")
+totalq <- dbFetch(res, n = -1)
+dbClearResult(res)
+totalq |> write_rds(file.path("data", "totalq.rds"))
+```
+
+```{r}
+#| message: false
+library(tidyverse)
+totalq <- read_rds(file.path("data", "totalq.rds")) |>
+  rename(year = fyear)
+```
+
+The fundamentals pull retrieves the income-statement and balance-sheet items needed
+to build the input stocks, joins industry classifications, and interpolates missing
+firm-years. Spline interpolation is used in preference to linear interpolation
+because the underlying series (advertising, R&D, sales) are smooth and trending;
+linear fill would introduce kinks that the frontier would misread as inefficiency.
+
+```{r}
+#| eval: false
+#| collapse: true
+res <- dbSendQuery(
+  wrds,
+  "SELECT DISTINCT gvkey, fyear, conm, curcd, cogs, rect, revt, sale,
+                   xad, xrd, xsga, ppegt, emp, act, xopr, xint, dlc,
+                   xlr, uxintd, invfg
+   FROM comp_na_daily_all.funda
+   WHERE fyear >= 2000 AND gvkey IS NOT NULL AND
+         sale IS NOT NULL AND sale > 0 AND revt IS NOT NULL"
+)
+capability <- dbFetch(res, n = -1)
+dbClearResult(res)
+
+# Industry classifications.
+res <- dbSendQuery(wrds,
+  "SELECT gvkey, gind, gsubind, naics, sic
+   FROM comp_na_daily_all.names")
+ind <- dbFetch(res, n = -1)
+dbClearResult(res)
+
+capability <- capability |>
+  left_join(ind, by = join_by(gvkey)) |>
+  rename(year = fyear) |>
+  unique() |>
+  arrange(gvkey, year) |>
+  group_by(gvkey, year) |>
+  slice(1) |>           # one record per firm-year
+  ungroup()
+
+# Spline interpolation across the non-missing span of each series.
+spline_interpolate <- function(x) {
+  nz <- which(!is.na(x))
+  if (length(nz) == 0) return(x)
+  first_non_na <- nz[1]
+  last_non_na  <- nz[length(nz)]
+  x[first_non_na:last_non_na] <-
+    zoo::na.spline(x[first_non_na:last_non_na], na.rm = TRUE)
+  x
+}
+library(zoo)
+
+capability <- capability |>
+  group_by(gvkey) |>
+  arrange(year, .by_group = TRUE) |>
+  fill(conm, curcd, gind, gsubind, naics, sic, .direction = "downup") |>
+  ungroup() |>
+  group_by(gvkey) |>
+  complete(year = min(year):max(year)) |>     # fill gaps within firm
+  arrange(year, .by_group = TRUE) |>
+  fill(conm, curcd, gind, gsubind, naics, sic, .direction = "downup") |>
+  mutate(across(
+    c(xrd, xsga, xad, emp, ppegt, xint, act, invfg, xlr,
+      cogs, rect, revt, sale, xopr, dlc),
+    spline_interpolate
+  )) |>
+  ungroup() |>
+  arrange(gvkey, year)
+
+capability |> write_rds(file.path("data", "capability", "capability.rds"))
+```
+
+```{r}
+capability <- read_rds(file.path("data", "capability", "capability.rds"))
+```
+
+The patent–firm linkage assigns patents to `gvkey`s, keeping for each patent the
+match with the highest WRDS confidence score and breaking ties deterministically.
+Annual patent counts per firm follow.
+
+```{r}
+#| eval: false
+#| collapse: true
+res <- dbSendQuery(wrds,
+  "SELECT gvkey, link_bdate, patnum, wrds_score
+   FROM wrdsapps_patents.uspatents_gvkey_linking
+   WHERE gvkey IS NOT NULL")
+wrdsapps_patents_link <- dbFetch(res, n = -1) |>
+  group_by(patnum) |> slice_max(order_by = wrds_score, n = 1) |> ungroup() |>
+  group_by(patnum) |> slice(1) |> ungroup()
+dbClearResult(res)
+
+res <- dbSendQuery(wrds,
+  "SELECT DISTINCT patnum, grantdate, cited_patnum, cited_pat_gdate, cite_type
+   FROM wrdsapps_patents.uspatents_citations")
+wrdsapps_patents_citations <- dbFetch(res, n = -1)
+dbClearResult(res)
+
+patent_output <- wrdsapps_patents_link |>
+  mutate(year = year(link_bdate)) |>
+  group_by(gvkey, year) |>
+  summarise(pat_count = n(), .groups = "drop") |>
+  complete(gvkey, year = range(year)) |>
+  mutate(across(-c(gvkey, year), ~ replace_na(., 0)))
+
+patent_output |> write_rds(file.path("data", "capability", "patent_output.rds"))
+```
+
+```{r}
+patent_output <- read_rds(file.path("data", "capability", "patent_output.rds"))
+```
+
+#### Innovativeness-adjusted output {#sec-tech-innv}
+
+Implementing the three-step innovativeness measure requires the industry citation
+averages at each SIC granularity. The following computes citations per patent per
+year, the industry averages at one- through four-digit SIC, the per-patent weights,
+and finally the firm-year sums.
+
+```{r}
+#| eval: false
+# Citations received per patent per year, with firm and industry attached.
+df_cite_patent_year <- wrdsapps_patents_citations |>
+  group_by(year = year(grantdate), patnum = cited_patnum) |>
+  summarise(cite_count = n(), .groups = "drop") |>
+  inner_join(wrdsapps_patents_link, by = join_by(patnum)) |>
+  filter(year(link_bdate) <= year) |>     # patent predates the citing year
+  inner_join(ind |> select(gvkey, sic) |> na.omit() |> unique(),
+             by = "gvkey") |>
+  select(-c(link_bdate, wrds_score)) |>
+  unique()
+
+# Industry-year average citations at each SIC granularity.
+ind_avg_patent_sic <- df_cite_patent_year |>
+  group_by(year, sic) |>
+  summarize(ind_avg_year_patent_sic = mean(cite_count, na.rm = TRUE),
+            .groups = "drop")
+ind_avg_patent_sic3 <- df_cite_patent_year |>
+  mutate(sic3 = substr(sic, 1, 3)) |>
+  group_by(year, sic3) |>
+  summarize(ind_avg_year_patent_sic3 = mean(cite_count, na.rm = TRUE),
+            .groups = "drop")
+ind_avg_patent_sic2 <- df_cite_patent_year |>
+  mutate(sic2 = substr(sic, 1, 2)) |>
+  group_by(year, sic2) |>
+  summarize(ind_avg_year_patent_sic2 = mean(cite_count, na.rm = TRUE),
+            .groups = "drop")
+ind_avg_patent_sic1 <- df_cite_patent_year |>
+  mutate(sic1 = substr(sic, 1, 1)) |>
+  group_by(year, sic1) |>
+  summarize(ind_avg_year_patent_sic1 = mean(cite_count, na.rm = TRUE),
+            .groups = "drop")
+
+# Per-patent weights = citations / industry average; sum within firm-year.
+tech_innv <- df_cite_patent_year |>
+  mutate(sic1 = substr(sic, 1, 1),
+         sic2 = substr(sic, 1, 2),
+         sic3 = substr(sic, 1, 3)) |>
+  inner_join(ind_avg_patent_sic,  by = join_by(year, sic)) |>
+  inner_join(ind_avg_patent_sic3, by = join_by(year, sic3)) |>
+  inner_join(ind_avg_patent_sic2, by = join_by(year, sic2)) |>
+  inner_join(ind_avg_patent_sic1, by = join_by(year, sic1)) |>
+  mutate(
+    weight_year_patent_sic  = cite_count / ind_avg_year_patent_sic,
+    weight_year_patent_sic3 = cite_count / ind_avg_year_patent_sic3,
+    weight_year_patent_sic2 = cite_count / ind_avg_year_patent_sic2,
+    weight_year_patent_sic1 = cite_count / ind_avg_year_patent_sic1
+  ) |>
+  group_by(gvkey, year) |>
+  summarise(
+    tech_inv_patent      = sum(weight_year_patent_sic,  na.rm = TRUE),
+    tech_inv_patent_sic3 = sum(weight_year_patent_sic3, na.rm = TRUE),
+    tech_inv_patent_sic2 = sum(weight_year_patent_sic2, na.rm = TRUE),
+    tech_inv_patent_sic1 = sum(weight_year_patent_sic1, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+tech_innv |> write_rds(file.path("data", "capability", "tech_innv.rds"))
+```
+
+```{r}
+tech_innv <- read_rds(file.path("data", "capability", "tech_innv.rds"))
+# Firms with no patents in a year get a small positive value so that
+# the log frontier is defined.
+tech_innv <- tech_innv |>
+  complete(gvkey, year = min(tech_innv$year):max(tech_innv$year)) |>
+  mutate(across(-c(gvkey, year), ~ replace_na(., 0.1)))
+```
+
+#### Width-of-applicability output {#sec-tech-width}
+
+The width measure counts, for each patent, the share of its citations that come
+from firms in a *different* SIC code, then weights by that share relative to the
+industry-average share.
+
+```{r}
+#| eval: false
+tech_width_all <- wrdsapps_patents_citations |>
+  inner_join(
+    wrdsapps_patents_link |> select(-wrds_score) |> rename(gvkey_cite = gvkey),
+    by = join_by(patnum)) |>
+  select(-link_bdate) |>
+  inner_join(
+    wrdsapps_patents_link |> select(-wrds_score) |> rename(gvkey_cited = gvkey),
+    by = join_by(cited_patnum == patnum)) |>
+  filter(year(cited_pat_gdate) >= year(link_bdate)) |>
+  select(-link_bdate) |>
+  inner_join(ind |> select(gvkey, sic) |> rename(sic_cite = sic),
+             by = join_by(gvkey_cite == gvkey)) |>
+  inner_join(ind |> select(gvkey, sic) |> rename(sic_cited = sic),
+             by = join_by(gvkey_cited == gvkey)) |>
+  mutate(outside = if_else(sic_cite == sic_cited, 0, 1)) |>
+  unique()
+
+df_cite_patent_year_outside <- tech_width_all |>
+  filter(outside == 1) |>
+  group_by(patnum = cited_patnum, year = year(grantdate),
+           gvkey = gvkey_cited, sic = sic_cited) |>
+  summarise(outside_cite_count = n(), .groups = "drop") |>
+  unique()
+
+tech_width <- df_cite_patent_year_outside |>
+  inner_join(df_cite_patent_year, by = join_by(patnum, year, gvkey, sic)) |>
+  unique() |>
+  mutate(prop = outside_cite_count / cite_count) |>
+  mutate(mean_prop = mean(prop)) |>
+  mutate(weight = prop / mean_prop, weighted_patent = weight * cite_count) |>
+  group_by(gvkey, year) |>
+  summarize(tech_width = sum(weighted_patent), .groups = "drop")
+
+tech_width |> write_rds(file.path("data", "capability", "tech_width.rds"))
+```
+
+```{r}
+tech_width <- read_rds(file.path("data", "capability", "tech_width.rds"))
+min_year <- min(tech_width$year); max_year <- max(tech_width$year)
+tech_width <- tech_width |>
+  complete(gvkey, year = min_year:max_year) |>
+  mutate(across(-c(gvkey, year), ~ replace_na(., 0.1)))
+rm(min_year, max_year)
+```
+
+#### Historical patent output {#sec-patent-hist}
+
+To extend coverage backward, a historical patent file (1981–2012) drawn from the
+NBER/Searle dynamic-assignee data supplements the WRDS counts.[^hist-data] The two
+sources are reconciled into a single patent-count series, preferring the historical
+count where both exist.
+
+[^hist-data]: The two large input files (`dynass_nber_searle.dta` and
+`patents_conveyance.dta`) are too large to redistribute here but are publicly
+archived; the code reconstructs the firm-year patent counts from them.
+
+```{r}
+#| eval: false
+patent_output_hist <-
+  rio::import(file.path("data", "capability", "patents_conveyance.dta")) |>
+  select(h_assignee_code, grant_date, patentid) |>
+  na.omit() |>
+  inner_join(
+    rio::import(file.path("data", "capability", "dynass_nber_searle.dta")) |>
+      select(gvkey1, h_assignee_code) |> na.omit(),
+    by = join_by(h_assignee_code)) |>
+  mutate(year = year(grant_date)) |>
+  rename(gvkey = gvkey1) |>
+  group_by(gvkey, year) |>
+  summarise(patent_count = n(), .groups = "drop") |>
+  complete(gvkey, year = range(year)) |>
+  mutate(across(-c(gvkey, year), ~ replace_na(., 0)))
+
+patent_output_hist |>
+  write_rds(file.path("data", "capability", "patent_output_hist.rds"))
+```
+
+```{r}
+patent_output_hist <-
+  read_rds(file.path("data", "capability", "patent_output_hist.rds"))
+
+patent_output_total <- patent_output |>
+  full_join(patent_output_hist, by = join_by(gvkey, year)) |>
+  mutate(pat_count = case_when(
+    !is.na(patent_count) ~ patent_count,
+    !is.na(pat_count)    ~ pat_count,
+    TRUE                 ~ 0
+  )) |>
+  select(-patent_count) |>
+  arrange(gvkey, year) |>
+  filter(year >= 2000)
+```
+
+#### Building the input stocks {#sec-build-stocks}
+
+The final construction step applies the Koyck transformation of @eq-koyck (with
+$\lambda = 0.4$) to each investment flow, producing the patent, technology,
+marketing, advertising, installed-base, and R&D stocks, and imputes the
+cost-of-capital and labor-cost inputs from industry–year means where firm-level
+values are missing. The cost of capital is proxied by interest expense over
+current debt ($\text{xint}/\text{dlc}$) and labor cost by per-employee staff
+expense ($\text{xlr}/\text{emp}$); both are filled hierarchically from four-digit
+down to one-digit SIC industry averages so that no firm-year is dropped for a
+single missing input.
+
+```{r}
+#| eval: false
+lambda <- 0.4
+
+df_cap <- capability |>
+  mutate(sic1 = substr(sic, 1, 1),
+         sic2 = substr(sic, 1, 2),
+         sic3 = substr(sic, 1, 3)) |>
+  filter(xad >= 0, xrd >= 0) |>
+  left_join(tech_innv,           by = join_by(gvkey, year)) |>
+  left_join(tech_width,          by = join_by(gvkey, year)) |>
+  left_join(patent_output_total, by = join_by(gvkey, year)) |>
+  mutate(
+    pat_count     = if_else(is.na(pat_count), 0, pat_count),
+    dlc           = if_else(dlc == 0, NA, dlc),
+    costofcapital = xint / dlc,            # interest expense / current debt
+    emp           = if_else(emp == 0, NA, emp),
+    xlr           = if_else(xlr <= 0, NA, xlr),
+    laborcost     = xlr / emp
+  )
+
+# Hierarchical industry-year imputation of cost of capital and labor cost.
+impute_grp <- function(df, ...) {
+  df |>
+    group_by(...) |>
     mutate(
-        sic3 = substr(sic, 1, 3),
-        sic2 = substr(sic, 1, 2),
-        sic1 = substr(sic, 1, 1)
-    ) %>%
-    full_join(tech_innv3, by = "sic3") %>%
-    full_join(tech_innv2, by = "sic2") %>%
-    full_join(tech_innv1, by = "sic1") %>% 
-    
-    select(-c(sic1, sic2, sic3))
-
-# note that a modification from Dutta's paper is that I use the average number of citations received by all the patents belonging the firms in the sample within one industry (because industry average citations might differ)
-# Dutta's paper did not do this because they consider only one industry 
-
-# calculate the Tech_innv
-tech_innv <- wrdsapps_patents_link %>% 
-    select(gvkey, patnum, sic) %>% 
-    
-    inner_join(wrdsapps_patents_citations_by_year, by = c("patnum" = "cited_patnum")) %>% 
-    
-    # match with the firm and year data 
-    filter(gvkey %in% capability$gvkey) %>% 
-    
-    inner_join(tech_innv_sic, by = "sic") %>% 
-    
-    # create the weight assigned to a firm's patent
-    mutate(weight1 = citation_count / mean_cite_ind1, 
-           weight2 = citation_count / mean_cite_ind2,
-           weight3 = citation_count / mean_cite_ind3,
-           weight4 = citation_count / mean_cite_ind4) %>% 
-    
-    group_by(gvkey, grantyear) %>% 
-    # create the citation-weighted patent count
-    summarize(tech_innv1 = sum(weight1), 
-              tech_innv2 = sum(weight2),
-              tech_innv3 = sum(weight3),
-              tech_innv4 = sum(weight4)) %>% 
+      costofcapital = ifelse(is.na(costofcapital),
+                             mean(costofcapital, na.rm = TRUE), costofcapital),
+      laborcost     = ifelse(is.na(laborcost),
+                             mean(laborcost, na.rm = TRUE), laborcost)
+    ) |>
     ungroup()
+}
+df_cap <- df_cap |>
+  impute_grp(sic, year)  |> impute_grp(sic3, year) |>
+  impute_grp(sic2, year) |> impute_grp(sic1, year)
 
-rm(tech_innv_sic,
-   tech_innv1,
-   tech_innv2,
-   tech_innv3,
-   tech_innv4)
+# Koyck geometric-lag stocks (equation @eq-koyck) for each investment flow.
+koyck_stock <- function(x, lambda) {
+  map_dbl(seq_along(x), ~ {
+    if (all(is.na(x[1:.x]))) NA_real_
+    else sum(x[1:.x] * lambda ^ (.x - seq_along(x[1:.x])), na.rm = TRUE)
+  })
+}
+df_cap <- df_cap |>
+  group_by(gvkey) |>
+  arrange(year, .by_group = TRUE) |>
+  mutate(
+    pat_stock     = koyck_stock(pat_count,      lambda),
+    techbase_innv = koyck_stock(tech_inv_patent, lambda),
+    techbase_width= koyck_stock(tech_width,     lambda),
+    marstock      = koyck_stock(xsga,           lambda),
+    adstock       = koyck_stock(xad,            lambda),
+    installedbase = koyck_stock(sale,           lambda),
+    rdstock       = koyck_stock(xrd,            lambda)
+  ) |>
+  ungroup()
+
+df_cap |> write_rds(file.path("data", "capability", "df_cap.rds"))
 ```
 
-Width-of-applicability-technological output 1. Calculate the proportion of citations received by a patent from firms belonging outside of focal SIC code (sic1, sic2, sic3, sic4) = \# of citations received by a patent from firms outside the focal SIC code / the total number of citation the patent received. 2. The weight assigned to a firm's patent = the proportion of outside citations for the patent/ the industry sample average proportion 3. Tech_width = The sum of the "proportion-of-outside citation"-weighted patent in a year for a firm
+### Estimating the Frontiers: @dutta1999 Replication {#sec-dutta-replication}
 
-```{r, eval = FALSE}
-wrdsapps_patents_citations_out_ind <- wrdsapps_patents_citations %>% 
-    # select patent number with data on industry
-    filter(!is.na(cited_patnum_sic) & !is.na(patnum_sic)) %>% 
-    
-    # create variables indicating whether the new and old patents belong in the same industry 
-    mutate(sim4 = if_else(patnum_sic == cited_patnum_sic, 1, 0),
-       sim3 = if_else(substr(patnum_sic,0,3) == substr(cited_patnum_sic,0,3), 1, 0),
-       sim2 = if_else(substr(patnum_sic,0,2) == substr(cited_patnum_sic,0,2), 1, 0),
-       sim1 = if_else(substr(patnum_sic,0,1) == substr(cited_patnum_sic,0,1), 1, 0)) %>% 
-    
-    select(
-        patnum,
-        cited_patnum,
-        grantyear,
-        cited_pat_gyear,
-        cited_patnum_sic,
-        patnum_sic,
-        contains("sim")
-    )
+With the panel built, the three frontiers of @eq-sfa are estimated with the
+`frontier` package. Each capability is estimated twice—once with the
+innovativeness-adjusted technology measure and once with the width-adjusted
+measure—so that the robustness of the recovered efficiencies to the
+output-quality definition can be assessed. The marketing frontier is a production
+frontier (maximize sales), the operations frontier is a cost frontier (minimize
+cost of goods sold), and the recovered marketing efficiency is fed forward into
+the R&D and operations frontiers, operationalizing the interdependence of
+capabilities.
 
-total_citation <- wrdsapps_patents_citations_out_ind %>% 
-    group_by(cited_patnum, cited_pat_gyear) %>% 
-    count()
+```{r}
+#| message: false
+#| warning: false
+library(plm)
+library(tidyverse)
+df_cap <- read_rds(file.path("data", "capability", "df_cap.rds"))
 
-# view(head(total_citation))
-
-# get per patent, per year, the number of outside-industry citations
-# sic1
-outside_citation_sic1 <- wrdsapps_patents_citations_out_ind %>% 
-    group_by(cited_patnum, cited_pat_gyear, sim1) %>% 
-    count() %>% 
-    ungroup() %>% 
-    # get only citations outside of the patent's industry
-    filter(sim1 == 0) %>% 
-    select(-c(sim1)) %>% 
-    rename(n_sim1 = n)
-
-# sic2
-outside_citation_sic2 <- wrdsapps_patents_citations_out_ind %>% 
-    group_by(cited_patnum, cited_pat_gyear, sim2) %>% 
-    count() %>% 
-    ungroup() %>% 
-    # get only citations outside of the patent's industry
-    filter(sim2 == 0) %>% 
-    select(-c(sim2)) %>% 
-    rename(n_sim2 = n)
-
-# sic3
-outside_citation_sic3 <- wrdsapps_patents_citations_out_ind %>% 
-    group_by(cited_patnum, cited_pat_gyear, sim3) %>% 
-    count() %>% 
-    ungroup() %>% 
-    # get only citations outside of the patent's industry
-    filter(sim3 == 0) %>% 
-    select(-c(sim3)) %>% 
-    rename(n_sim3 = n)
-
-# sic4
-outside_citation_sic4 <- wrdsapps_patents_citations_out_ind %>% 
-    group_by(cited_patnum, cited_pat_gyear, sim4) %>% 
-    count() %>% 
-    ungroup() %>% 
-    # get only citations outside of the patent's industry
-    filter(sim4 == 0) %>% 
-    select(-c(sim4)) %>% 
-    rename(n_sim4 = n)
-
-
-tech_width <- total_citation %>% 
-    
-    full_join(outside_citation_sic1, by = c("cited_patnum", "cited_pat_gyear")) %>% 
-    full_join(outside_citation_sic2, by = c("cited_patnum", "cited_pat_gyear")) %>% 
-    full_join(outside_citation_sic3, by = c("cited_patnum", "cited_pat_gyear")) %>% 
-    full_join(outside_citation_sic4, by = c("cited_patnum", "cited_pat_gyear")) %>% 
-    
-    
-    # fill in 0 (those patents without any citations outside of their industry)
-    replace(is.na(.), 0) %>% 
-    
-    mutate(weight1 = n_sim1 / n,
-           weight2 = n_sim2 / n,
-           weight3 = n_sim3 / n,
-           weight4 = n_sim4 / n) %>% 
-    
-    # get company gvkey for each patent
-    inner_join(wrdsapps_patents_link %>%
-                   select(gvkey, patnum, sic),
-               by = c("cited_patnum" = "patnum")) %>% 
-    
-    # step 3: get proportion-of-outside citation-weighted patent
-    group_by(gvkey, cited_pat_gyear) %>% 
-    summarize(tech_width1 = sum(weight1),
-              tech_width2 = sum(weight2),
-              tech_width3 = sum(weight3),
-              tech_width4 = sum(weight4)) %>% 
-    ungroup()
-
-
-rm(outside_citation_sic1,
-   outside_citation_sic2,
-   outside_citation_sic3,
-   outside_citation_sic4,
-   total_citation)
-
-rm(wrdsapps_patents,
-   wrdsapps_patents_citations,
-   wrdsapps_patents_citations_by_year,
-   wrdsapps_patents_citations_out_ind,
-   wrdsapps_patents_link)
+df_cap_panel_dutta <- df_cap |>
+  filter(year > 2010) |>
+  pdata.frame(c("gvkey", "year"))
 ```
 
-#### Marketing Capabilities
-
--   @bahadir2008
-
--   Marketing Capability: [@xiong2013]
-
--   @wiles2012
-
--   [@mishra2016]
-
--   @dinner2018
-
--   Marketing Alliance Capabilities: @swaminathan2009a
-
--   Digitized Selling Capabilities: [@johnson2005]
-
--   Big Data Capabilities: [@johnson2017]
-
--   Social CRM Capabilities: [@trainor2014]
-
--   Customer relationship capabilities: [@wang2017]
-
-```{r, eval = FALSE}
+```{r}
+#| message: false
+#| warning: false
 library(frontier)
 
-mar_cap <-
-    sfa(
-        log(sales) ~ sub_market,
-        log(adstock) + log(marketingstock) + log(techbase) + log(receivable) + log(installedbase),
-        data = capability,
-        ineffDecrease = T, # inefficiency decreases the endogenous variable for estimating a production function 
-        timeEffect = T # Error Compoennts Frontier are time-variant
-    )
+# Marketing capability: production frontier for log sales.
+cap_mar_innv <- frontier::sfa(
+  log(sale) ~ log(adstock) + log(marstock) + log(techbase_innv) +
+    log(rect) + log(installedbase) + sic1 + factor(year),
+  ineffDecrease = TRUE,   # maximize: inefficiency lowers output
+  timeEffect = TRUE,
+  data = df_cap_panel_dutta
+)
+df_cap_panel_dutta$mar_eff_innv <-
+  frontier::efficiencies(cap_mar_innv, asInData = TRUE)
 
+cap_mar_width <- frontier::sfa(
+  log(sale) ~ log(adstock) + log(marstock) + log(techbase_width) +
+    log(rect) + log(installedbase) | sic1 + factor(year),
+  ineffDecrease = TRUE, timeEffect = TRUE, data = df_cap_panel_dutta
+)
+df_cap_panel_dutta$mar_eff_width <-
+  frontier::efficiencies(cap_mar_width, asInData = TRUE)
+
+# R&D capability: marketing efficiency enters as an input (interdependence).
+cap_rd_innv <- sfa(
+  log(tech_inv_patent) ~ log(techbase_innv) + log(rdstock) +
+    log(mar_eff_innv) + log(mar_eff_innv) * log(rdstock) |
+    sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = TRUE, data = df_cap_panel_dutta
+)
+df_cap_panel_dutta$rd_eff_innv <-
+  frontier::efficiencies(cap_rd_innv, asInData = TRUE)
+
+cap_rd_width <- sfa(
+  log(tech_width) ~ log(techbase_width) + log(rdstock) +
+    log(mar_eff_width) + log(mar_eff_width) * log(rdstock) |
+    sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = TRUE, data = df_cap_panel_dutta
+)
+df_cap_panel_dutta$rd_eff_width <-
+  frontier::efficiencies(cap_rd_width, asInData = TRUE)
+
+# Operations capability: cost frontier for log COGS (minimize).
+cap_op_innv <- sfa(
+  log(cogs) ~ log(invfg) + log(laborcost) + log(costofcapital) +
+    log(techbase_innv) + log(mar_eff_innv) | sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = FALSE,  # minimize: inefficiency raises cost
+  data = df_cap_panel_dutta
+)
+df_cap_panel_dutta$op_eff_innv <-
+  frontier::efficiencies(cap_op_innv, asInData = TRUE)
+
+cap_op_width <- sfa(
+  log(cogs) ~ log(invfg) + log(laborcost) + log(costofcapital) +
+    log(techbase_width) + log(mar_eff_width) | sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = FALSE, data = df_cap_panel_dutta
+)
+df_cap_panel_dutta$op_eff_width <-
+  frontier::efficiencies(cap_op_width, asInData = TRUE)
+
+df_cap_panel_dutta |>
+  write_rds(file.path("data", "capability", "df_cap_panel_dutta.rds"))
+```
+
+The recovered efficiencies can then be correlated with each other and with sales to
+check that they behave as capability measures should—positively associated with
+performance and only moderately correlated with one another, since a firm strong in
+marketing need not be strong in R&D.
+
+```{r}
+#| eval: false
+df_cap_panel_dutta |> select(contains("eff")) |> na.omit() |> cor()
+```
+
+An alternative implementation uses the `sfa` package in place of `frontier`; the two
+agree up to numerical tolerance.
+
+```{r}
+#| eval: false
+library(sfa)
+```
+
+### Alternative Capability Specifications {#sec-capability-alt}
+
+The Dutta frontier is one of several closely related specifications, and the panel
+built above supports the others with minor changes to the input set. We give three
+published variants, each differing in how output is measured and which stocks enter
+the frontier; the substantive payoff is that the recovered capability efficiencies
+are reassuringly correlated across specifications, lending the construct convergent
+validity.
+
+#### @saboo2017assessing {#sec-saboo}
+
+This specification uses lagged sales as the installed-base proxy and patent counts
+(rather than citation-weighted output) for the R&D frontier; the operations frontier
+is a standard cost frontier in operating expense. It is computationally heavy
+because of the lag structure.
+
+```{r}
+#| eval: false
+library(frontier)
+df_cap_panel_saboo <- df_cap |>
+  group_by(gvkey) |> arrange(year) |>
+  mutate(sale_t_1 = dplyr::lag(sale, n = 1)) |>
+  ungroup() |>
+  pdata.frame(c("gvkey", "year"))
+
+cap_mar <- sfa(
+  log(sale) ~ log(xsga) + log(rect) + log(sale_t_1) | sic1 + factor(year),
+  ineffDecrease = TRUE, timeEffect = TRUE, data = df_cap_panel_saboo
+)
+df_cap_panel_saboo$mar_eff <- efficiencies(cap_mar, asInData = TRUE)
+
+cap_rd <- sfa(
+  log(pat_count) ~ log(rdstock) + log(pat_stock) | sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = TRUE, data = df_cap_panel_saboo
+)
+df_cap_panel_saboo$rd_eff <- efficiencies(cap_rd, asInData = TRUE)
+
+cap_op <- sfa(
+  log(xopr) ~ log(act) + log(ppegt) + log(emp) | sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = FALSE, data = df_cap_panel_saboo
+)
+df_cap_panel_saboo$op_eff <- efficiencies(cap_op, asInData = TRUE)
+```
+
+#### @elhelaly2023collaborating {#sec-elhelaly}
+
+This variant (with Koyck weight 0.5) enriches each frontier with three-year
+accumulated stocks. The marketing frontier adds both advertising and its stock,
+both marketing expense and its stock, and both current and three-year receivables;
+the R&D frontier uses three-year patent and R&D accumulations; and the operations
+frontier is a cost frontier:
+
+$$
+\begin{aligned}
+\log(\text{sales}) &= \log(\text{xad}) + \log(\text{adstock}) + \log(\text{xsga}) + \log(\text{marstock}) \\
+&\quad + \log(\text{rect}) + \log(\text{rec}) + \log(\text{installedbase}),
+\end{aligned}
+$$ {#eq-elhelaly-mar}
+
+where $\text{rec}$ is accounts receivable summed over the three years prior;
+
+$$
+\log(\text{patent}) = \log(\text{patstock}) + \log(\text{xrd}) + \log(\text{accumrd}),
+$$ {#eq-elhelaly-rd}
+
+where $\text{patstock}$ is the three-year patent total, $\text{xrd}$ is total R&D
+expense, and $\text{accumrd}$ is the three-year R&D total; and
+
+$$
+\log(\text{cogs}) = \log(\text{output}) + \log(\text{laborcost}) + \log(\text{costofcapital}),
+$$ {#eq-elhelaly-op}
+
+where $\text{output}$ is the dollar value of output, $\text{laborcost}$ is
+per-employee wages and benefits, and $\text{costofcapital}$ is the average
+long-term interest rate.
+
+```{r}
+#| eval: false
+df_cap_panel_elhelaly <- df_cap |>
+  select(gvkey, year, contains("sic"), sale, xad, adstock, invfg, xsga,
+         marstock, rect, installedbase, pat_count, pat_stock, xrd, cogs,
+         laborcost, costofcapital) |>
+  group_by(gvkey) |> arrange(gvkey, year) |>
+  mutate(
+    rec      = dplyr::lag(rect, 1) + dplyr::lag(rect, 2) + dplyr::lag(rect, 3),
+    patstock = dplyr::lag(pat_count, 1) + dplyr::lag(pat_count, 2) + dplyr::lag(pat_count, 3),
+    accumrd  = dplyr::lag(xrd, 1) + dplyr::lag(xrd, 2) + dplyr::lag(xrd, 3)
+  ) |>
+  pdata.frame(c("gvkey", "year"))
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| eval: false
+library(frontier)
+
+cap_mar <- frontier::sfa(
+  log(sale) ~ log(xad) + log(adstock) + log(xsga) + log(marstock) +
+    log(rect) + log(rec) + log(installedbase) | sic1 + factor(year),
+  ineffDecrease = TRUE, timeEffect = TRUE, data = df_cap_panel_elhelaly
+)
+df_cap_panel_elhelaly$mar_eff <-
+  frontier::efficiencies(cap_mar, asInData = TRUE)
+
+cap_rd <- sfa(
+  log(pat_count) ~ log(patstock) + log(xrd) + log(accumrd) | sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = TRUE, data = df_cap_panel_elhelaly
+)
+df_cap_panel_elhelaly$rd_eff <-
+  frontier::efficiencies(cap_rd, asInData = TRUE)
+
+cap_op <- sfa(
+  log(cogs) ~ log(invfg) + log(laborcost) + log(costofcapital) | sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = FALSE, data = df_cap_panel_elhelaly
+)
+df_cap_panel_elhelaly$op_eff <-
+  frontier::efficiencies(cap_op, asInData = TRUE)
+
+df_cap_panel_elhelaly |>
+  write_rds(file.path("data", "capability", "df_cap_panel_elhelaly.rds"))
+```
+
+```{r}
+df_cap_panel_elhelaly <-
+  read_rds(file.path("data", "capability", "df_cap_panel_elhelaly.rds"))
+df_cap_panel_elhelaly |> select(contains("eff")) |> na.omit() |> cor()
+```
+
+#### @cao2023marketing {#sec-cao}
+
+This specification uses a valuation outcome—Total Q in place of Tobin's Q—for the
+marketing frontier and a lagged-R&D, lagged-patent-stock structure for the R&D
+frontier:
+
+$$
+\log(\text{Total } Q_t) = \log(\text{xsga}_t) + \log(\text{xsga}_{t-1}) + \log(\text{xad}) + \log(\text{pat}),
+$$ {#eq-cao-mar}
+
+$$
+\log(\text{pat}) = \log(\text{xrd}_t) + \log(\text{xrd}_{t-1}) + \log(\text{patstock}_{t-1}),
+$$ {#eq-cao-rd}
+
+where $\text{pat}$ is the number of patents.
+
+```{r}
+#| eval: false
+df_cap_panel_cao <- df_cap |>
+  left_join(totalq, by = join_by(gvkey, year)) |>
+  select(gvkey, year, contains("sic"), q_tot, xsga, xad,
+         pat_count, xrd, pat_stock) |>
+  group_by(gvkey) |> arrange(gvkey, year) |>
+  mutate(
+    xsga_t_1      = dplyr::lag(xsga, n = 1),
+    xrd_t_1       = dplyr::lag(xrd, n = 1),
+    pat_stock_t_1 = dplyr::lag(pat_stock, n = 1)
+  ) |>
+  pdata.frame(c("gvkey", "year"))
+```
+
+```{r}
+#| eval: false
+library(frontier)
+
+cap_mar <- frontier::sfa(
+  log(q_tot) ~ log(xsga) + log(xsga_t_1) + log(xad) + log(pat_count) |
+    sic1 + factor(year),
+  ineffDecrease = TRUE, timeEffect = TRUE, data = df_cap_panel_cao
+)
+df_cap_panel_cao$mar_eff <-
+  frontier::efficiencies(cap_mar, asInData = TRUE)
+
+cap_rd <- sfa(
+  log(pat_count) ~ log(xrd) + log(xrd_t_1) + log(pat_stock_t_1) |
+    sic1 + factor(year),
+  timeEffect = TRUE, ineffDecrease = TRUE, data = df_cap_panel_cao
+)
+df_cap_panel_cao$rd_eff <-
+  frontier::efficiencies(cap_rd, asInData = TRUE)
+
+df_cap_panel_cao |>
+  write_rds(file.path("data", "capability", "df_cap_panel_cao.rds"))
+```
+
+```{r}
+df_cap_panel_cao <-
+  read_rds(file.path("data", "capability", "df_cap_panel_cao.rds"))
+df_cap_panel_cao |> select(contains("eff")) |> na.omit() |> cor()
+```
+
+### The Broader Marketing-Capability Literature {#sec-marketing-cap-lit}
+
+The frontier-estimation tradition above is one strand of a much larger literature
+that decomposes marketing capability into functional sub-capabilities and links each
+to performance. The foundational input weights used in the stocks above—0.5 for
+marketing expenditure and 0.4 for R&D—come from @dutta2005, and the
+brand/advertising-stock weighting from @peles1971 and @wang2017. Building on these
+primitives, scholars have isolated specialized capabilities: marketing capability
+broadly [@bahadir2008; @xiong2013; @wiles2012; @mishra2016; @dinner2018], marketing
+*alliance* capability [@swaminathan2009a], digitized selling capability
+[@johnson2005], big-data capability [@johnson2017], social-CRM capability
+[@trainor2014], and customer-relationship capability [@wang2017].
+
+The single most influential disaggregation is @morgan2009linking, who link three
+core marketing capabilities to *profit growth* and uncover a tension invisible to
+coarser analyses. Although profit growth is a primary driver of stock price, the
+mechanism by which marketing capabilities feed it was poorly understood. Using a
+cross-industry sample of 114 firms, @morgan2009linking decompose marketing
+capability into **market sensing**, **brand management**, and **customer
+relationship management** (CRM), and decompose profit growth into **revenue growth**
+and **margin growth**. The capabilities exert both direct and synergistic effects on
+the two growth components—but, critically, brand-management and CRM capabilities can
+*counteract* each other across the components: a capability that lifts revenue growth
+may simultaneously depress margin growth, and vice versa. A surface-level analysis
+that examines only aggregate profit growth would miss these offsetting effects and
+mis-state the true relationship between capabilities and performance. The
+methodological moral reinforces the theme of this chapter: the level of aggregation
+at which a metric is defined determines what relationships it can reveal.
+
+A generic frontier implementation, parameterized by a `sub_market` grouping, ties
+the strands together; the `sfaR` package offers a cross-sectional alternative when
+the panel structure is unavailable.
+
+```{r}
+#| eval: false
+library(frontier)
+mar_cap <- sfa(
+  log(sales) ~ sub_market +
+    log(adstock) + log(marketingstock) + log(techbase) +
+    log(receivable) + log(installedbase),
+  data = capability,
+  ineffDecrease = TRUE,  # production frontier
+  timeEffect = TRUE      # time-varying error-components frontier
+)
 efficiencies(mar_cap)
 ```
 
-```{r, eval = FALSE}
-# defunct
-# install.packages("FEAR")
-
-# install.packages("sfaR")
+```{r}
+#| eval: false
 library(sfaR)
-mar_cap <-
-    sfacross(
-        log(sales) ~ sub_market,
-        log(adstock) + log(marketingstock) + log(techbase) + log(receivable) + log(installedbase),
-        data = capability
-        # ineffDecrease = T, # inefficiency decreases the endogenous variable for estimating a production function 
-        # timeEffect = T # Error Compoennts Frontier are time-variant
-    )
-
+mar_cap <- sfacross(
+  log(sales) ~ sub_market +
+    log(adstock) + log(marketingstock) + log(techbase) +
+    log(receivable) + log(installedbase),
+  data = capability
+)
 efficiencies(mar_cap)
 ```
 
-[@morgan2009linking] Linking marketing capabilities with profit growth
+#### Digital, Social-Media, and Organizational Capabilities {#sec-digital-cap}
 
--   **Objective:** Examine the connection between a firm's marketing capabilities and its profit growth, with a particular emphasis on how specific marketing functions impact the composite components of profit growth.
+The capability lens has been extended to the digital domain. Survey-based studies of
+**digital marketing capability** [@wang2020; @homburg2022] and a synthesizing review
+[@herhausen2020] map the organizational routines through which firms convert digital
+assets into performance, while @nguyen2015a treats **social-media strategic
+capability** as a distinct competence.
 
--   **Context:** Although profit growth stands as a pivotal determinant of a firm's stock price, there's a limited understanding of how integral marketing capabilities interlink with this growth trajectory.
+A complementary line generalizes from functional capabilities to the *embeddedness*
+of capabilities in the organization. @grewal2007embeddedness argue that managers must
+deploy scarce resources to build durable capabilities, and that neglecting the
+underlying processes obscures how capabilities translate into competitive advantage.
+Their central construct is **capability embeddedness**—the depth at which a
+capability is ingrained in the organization, itself a consequence of managerial
+resource-allocation decisions. Methodologically, they introduce a hierarchical
+composed-error framework (a multilevel generalization of the stochastic frontier)
+that applies to cross-sectional and panel data alike, and they show in a retailing
+application that capability embeddedness directly improves performance even after
+controlling for tangible and intangible resources. The framework's payoff is
+diagnostic: recognizing whether the objectives of different capabilities are
+*convergent* or *divergent* tells a manager whether deepening embeddedness will
+amplify or undercut firm performance—an organizational echo of the revenue/margin
+tension in @morgan2009linking.
 
--   **Methodology:**
+## Management Metrics {#sec-management}
 
-    -   Engaged a cross-industry dataset from 114 firms.
+A final, smaller family of metrics characterizes the firm's strategy and leadership,
+which moderate how marketing investments convert into performance. Two constructs
+have proven especially measurable from archival data. **Founding strategy**, and
+specifically the degree of *market differentiation* a firm adopts at founding, can be
+recovered from the language of its early communications and product positioning;
+@guzman2023measuring develop a scalable measure of this founding differentiation.
+**CEO overconfidence**—a behavioral trait with consequences for innovation and
+investment—is measured from executives' revealed reluctance to exercise in-the-money
+stock options, following the option-based approach @galasso2011ceo apply to study
+innovation. Both illustrate the chapter's recurring method: a psychological or
+strategic construct, once thought to require surveys or inside access, recovered at
+scale from the residue firms leave in archival and market data.
 
-    -   Delineated the exploration into three cornerstone marketing capabilities: market sensing, brand management, and customer relationship management (CRM).
+## Key Takeaways {#sec-metrics-takeaways}
 
-    -   These capabilities were then juxtaposed with the dual facets of profit growth: revenue growth and margin growth.
-
--   **Key Findings:**
-
-    -   The scrutinized marketing capabilities exhibited both direct and synergistic influences on the growth rates of revenue and margin.
-
-    -   A pivotal revelation was the counteractive effects of brand management and CRM capabilities on the growth rates of revenue and margin. Specifically, while one capability might promote revenue growth, it might simultaneously inhibit margin growth (and vice versa).
-
-    -   Such intricate dynamics imply that a surface-level analysis, overlooking the nuanced contributions to revenue and margin growth, could obscure the genuine relationships tying marketing capabilities to the overarching profit growth trajectory.
-
-#### Digital Marketing Capabilities
-
-Survey:
-
--   [@wang2020]
-
--   [@homburg2022]
-
-Review:
-
-[@herhausen2020]
-
-#### Social Media Strategics Capabilities
-
-[@nguyen2015a]
-
-#### Organization Capabilities
-
-[@grewal2007embeddedness] Embeddedness of Organizational Capabilities
-
--   **Core Issue:**
-
-    -   Managers need to efficiently use limited resources to build lasting organizational capabilities for a sustainable competitive edge.
-
--   **Challenge:**
-
-    -   Neglecting the intricate underlying processes of organizational capabilities can hinder understanding their impact on competitive advantage.
-
--   **Key Insight:**
-
-    -   Managerial decisions regarding resource usage directly impact the depth at which capabilities are ingrained in the organization, termed "capability embeddedness."
-
--   **Research Method:**
-
-    -   Introduced a hierarchical composed error structure framework.
-
-    -   Uses cross-sectional data and can be applied to panel data.
-
--   **Case Study: Retailing**
-
-    -   Organizational capability embeddedness directly influences retailer performance.
-
-    -   This influence remains significant even when considering both tangible and intangible resources/capabilities.
-
--   **Takeaways:**
-
-    1.  Acknowledging how resources and capabilities affect performance at various organizational layers helps managers make informed decisions.
-
-    2.  Essential to recognize whether the objectives of capabilities align (convergent) or differ (divergent).
-
-    3.  The alignment or misalignment of these objectives can dictate how much embedded capabilities boost firm performance.
+A metric is a definition plus an identification argument. The financial measures of
+@sec-metrics-finance are easy to compute and hard to interpret causally: ROI and
+ROMI summarize an effect whose incremental numerator is itself the object of
+inference, and EVA and MVA price value creation only as well as invested capital and
+market expectations are measured. The accounting covariates are largely settled in
+their construction—@tbl-compustat-core and @tbl-kahle catalogue the conventions—but
+their role is to *neutralize* confounding, and they earn that role only when chosen
+to match the marketing decision under study. The marketing constructs of
+@sec-metrics-marketing exemplify the field's methodological frontier: sentiment,
+purchase intention, trust, and reputation, once the province of surveys, are now
+recovered from text and images by pre-trained models whose accuracy and biases must
+themselves be validated. Capability, the subject of @sec-capability, is the hardest
+case and the template for the rest: a latent efficiency, identified only under
+explicit distributional and exogeneity assumptions, whose credibility rests entirely
+on the care taken in building the input stocks and specifying the frontier. Across
+all three families, the lesson is the same—report the metric, but report the
+assumptions that make it mean what you claim.

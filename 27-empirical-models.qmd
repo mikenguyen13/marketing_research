@@ -1,84 +1,233 @@
-# Empirical Models
+# Empirical Models {#sec-empirical-models}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
 
-## Attribution Models
+The preceding chapters develop constructs—brand equity, customer value, advertising
+response—largely from the firm's strategic vantage. This chapter turns to the
+empirical machinery that a working analyst deploys once transaction logs,
+clickstreams, and customer journeys arrive as data. The unifying question is one of
+*credit and value assignment*: given that a customer touched many channels, passed
+through several funnel stages, and bought repeatedly over time, how much of the
+realized outcome should be attributed to each touchpoint, each customer, and each
+moment? Answering that question well is what separates a defensible marketing-mix
+or budget decision from a vanity dashboard.
 
-### Ordered Shapley
+The models here share a common pedigree in applied probability and game theory, and
+a common hazard: each imposes structure that, if violated, silently biases the
+credit it assigns. We therefore lead each method with its intuition, state its formal
+object, give the estimator and the assumptions that identify it, and—just as
+importantly—name the conditions under which identification fails. The chapter
+proceeds through five families of empirical models. **Attribution models**
+(@sec-attribution) allocate conversion credit across marketing channels using
+cooperative-game and Markov-chain machinery. **Sales-funnel models**
+(@sec-sales-funnel) attribute credit instead to stages of a purchase process and
+visualize where prospects leak. **Recency–frequency–monetary (RFM) scoring**
+(@sec-rfm) compresses transaction histories into a behavioral summary. **Customer
+segmentation** (@sec-segmentation) builds on RFM to partition customers into
+managerially actionable groups and to track them over their lifecycle. Finally,
+**basket and sequence analysis** (@sec-basket) and **geodemographic classification**
+(@sec-geodemographic) model what customers buy together, in what order, and where
+they live. Every method is implemented in reproducible, seeded R.
 
-Based on [@Zhao_2018] (to access [paper](https://arxiv.org/ftp/arxiv/papers/1804/1804.05327.pdf) ) Cooperative game theory: look at the marginal contribution of each player in the game, where **Shapley value** (i..e, the credit assigned to each individual) is the expected value value of the marginal contribution over all possible permutations (e.g., all possible sequences) of the players.
+## Attribution Models {#sec-attribution}
 
-Shapely value considered:
+When a customer converts after a sequence of exposures—a display ad, then a paid
+search click, then an email, then a direct visit—the firm observes a single
+outcome but many candidate causes. **Attribution** is the problem of distributing
+the credit for that outcome across the touchpoints that preceded it. The stakes are
+budgetary: channel spend is reallocated in proportion to attributed credit, so a
+biased attribution rule mechanically misallocates money.
 
--   marginal contribution of each player (i.e., channel)
--   sequence of joining the coalition (i.e., customer journey).
+The naïve solutions are *heuristic* rules that assign all credit to a single
+position in the path. **First-touch** attribution credits the channel that
+initiated the journey; **last-touch** attribution credits the channel that
+immediately preceded conversion; **linear-touch** attribution splits credit equally
+across all touchpoints. These rules are transparent and require no estimation, but
+each encodes an indefensible causal assumption—that position in the sequence is a
+sufficient statistic for contribution. Last-touch attribution, the long-standing
+industry default, systematically over-credits lower-funnel channels (branded search,
+retargeting) that harvest demand other channels created. The two model-based
+alternatives developed below—the Shapley value and the Markov removal effect—replace
+positional heuristics with a principled notion of marginal contribution.
 
-Typically, we can't apply the Shapley Value method due to computational burden (you need all possible permutations). And a drawback is that all the credit must be divided among your channels, if you have missing channels, then it will distort the estimates of other channels' estimates.
+```{mermaid}
+%%| label: fig-attribution-taxonomy
+%%| fig-cap: "Two families of attribution rule. Heuristic rules assign credit by position in the path; model-based rules assign credit by marginal contribution, estimated either from cooperative game theory (Shapley) or from a Markov model of the journey (removal effect)."
+flowchart TD
+    A[Conversion path:<br/>ordered touchpoints] --> B{Attribution rule}
+    B --> C[Heuristic]
+    B --> D[Model-based]
+    C --> C1[First touch]
+    C --> C2[Last touch]
+    C --> C3[Linear touch]
+    D --> D1[Shapley value<br/>cooperative game theory]
+    D --> D2[Markov removal effect<br/>absorbing chain]
+    D1 --> E[Channel credit allocation]
+    D2 --> E
+    C1 --> E
+    C2 --> E
+    C3 --> E
+```
 
-It's hard to use Shapley value model for model comparison since we have no "ground truth"
+### The Shapley Value {#sec-shapley}
 
-Marketing application:
+The Shapley value imports a solution concept from cooperative game theory into
+attribution [@Zhao_2018]. Treat each marketing channel as a *player* and a
+conversion as the *payoff* of a coalition of channels acting together. The question
+"how much credit does channel $i$ deserve?" becomes "what is channel $i$'s average
+marginal contribution to the payoff, taken over every order in which the channels
+could have joined the coalition?"
 
--   [Pardot Einstein features](https://salesforceben.com/the-drip/complete-overview-of-pardot-einstein-features/) and [more](https://www.salesforceben.com/the-drip/pardot-einstein-attribution-a-deeper-dive/)
+Formally, let $N = \{1, \dots, n\}$ be the set of channels and let
+$v: 2^{N} \to \mathbb{R}$ be a *characteristic function* assigning to each coalition
+$S \subseteq N$ the conversions (or conversion value) realized when exactly the
+channels in $S$ are present. The marginal contribution of channel $i$ to a coalition
+$S$ that does not contain it is $v(S \cup \{i\}) - v(S)$. The **Shapley value**
+averages this marginal contribution over all $n!$ orderings of the players:
+
+$$
+\phi_i(v) = \sum_{S \subseteq N \setminus \{i\}}
+\frac{|S|!\,\bigl(n - |S| - 1\bigr)!}{n!}
+\bigl[v(S \cup \{i\}) - v(S)\bigr].
+$$ {#eq-shapley}
+
+The combinatorial weight in @eq-shapley counts the permutations consistent with
+channel $i$ joining immediately after coalition $S$ has formed. The Shapley value is
+the *unique* allocation satisfying four axioms that any fair attribution scheme
+should arguably obey: **efficiency** (the credits sum to the total payoff,
+$\sum_i \phi_i = v(N)$), **symmetry** (two channels making identical marginal
+contributions receive equal credit), the **null-player** property (a channel that
+never changes any coalition's payoff receives zero), and **additivity** (credit is
+linear in the payoff across independent games). This axiomatic uniqueness is what
+distinguishes the Shapley value from heuristic rules: it is not one allocation among
+many but the only one consistent with these fairness requirements.
+
+Two channel-specific features of the marketing problem deserve emphasis. First, the
+characteristic function encodes the *marginal contribution* of each channel.
+Second, the averaging over orderings encodes the *sequence in which channels join
+the coalition*—the empirical analogue of the customer journey. The ordered Shapley
+extension of @Zhao_2018 preserves information about the order of touchpoints rather
+than treating the path as an unordered set, which matters when the same channels in
+different orders convert at different rates.
+
+::: {.callout-note}
+## When the Shapley value breaks down
+
+Three failure modes recur in practice. **Computational burden**: @eq-shapley sums
+over $2^{n}$ coalitions and implicitly over $n!$ orderings, so exact computation is
+infeasible beyond a couple dozen channels and must be approximated by Monte Carlo
+sampling of permutations. **Coalitional completeness**: efficiency forces all credit
+to be divided among the *observed* channels; if a relevant channel is unmeasured
+(offline word of mouth, a competitor's action), its contribution is silently
+redistributed onto the measured channels, biasing every estimate. **No ground
+truth**: because the conversion is observed only once per customer, there is no
+held-out outcome against which to validate the allocation, so model comparison
+across attribution schemes is inherently difficult and rests on face validity rather
+than predictive accuracy.
+:::
+
+The `GameTheory` package provides the coalitional-game primitives—characteristic
+functions and Shapley-value solvers—on which an attribution pipeline is built.
 
 ```{r}
 library("GameTheory")
 ```
 
-[packages reference](https://cran.r-project.org/web/packages/GameTheory/vignettes/GameTheory.pdf)
+In a production setting the characteristic function $v(S)$ is estimated from the log
+of observed paths: for each coalition $S$, one tallies conversions among customers
+whose journeys used exactly (or at least) the channels in $S$. Sparse coalitions—
+combinations of channels that few customers ever experience—are the practical limit
+on reliability, since $v(S)$ for an unobserved $S$ must be imputed or smoothed.
 
-### Markov Model
+### Markov-Chain Attribution {#sec-markov-attribution}
 
-Markov chains maps the movement and gives a probability distribution, for moving from one state to another state. A Markov Chain has three properties:
+The Markov approach reframes the customer journey as a random walk over a graph
+whose nodes are channels and whose edges carry transition probabilities. Conversion
+and non-conversion are *absorbing* states; once a journey reaches either, it stops.
+Channel importance is then measured by how much the conversion probability *falls*
+when a channel is deleted from the graph—the **removal effect**. The appeal is that
+this construction yields a single internally consistent model of the journey from
+which credit, expected duration, and counterfactual scenarios all follow.
 
--   **State space** -- set of all the states in which process could potentially exist
--   **Transition operator** --the probability of moving from one state to other state
--   **Current state probability distribution** -- probability distribution of being in any one of the states at the start of the process
-
-In mathematically sense
+A Markov chain is specified by three objects: a **state space**, the set of all
+states the process can occupy (here, the channels plus the absorbing conversion and
+null states); a **transition operator**, the probabilities of moving from each state
+to each other state; and a **current-state distribution**, the probability of
+occupying each state at the start. The defining restriction is the **Markov
+property**: the next state depends only on the current state, not on the full
+history. The transition probabilities satisfy
 
 $$
-w_{ij}= P(X_t = s_j|X_{t-1}=s_i),0 \le w_{ij} \le 1, \sum_{j=1}^N w_{ij} =1 \forall i
+w_{ij} = P\bigl(X_t = s_j \mid X_{t-1} = s_i\bigr),
+\qquad 0 \le w_{ij} \le 1,
+\qquad \sum_{j=1}^{N} w_{ij} = 1 \;\; \forall i.
+$$ {#eq-markov-transition}
+
+The three conditions in @eq-markov-transition state, respectively, that $w_{ij}$ is
+the probability of moving to state $s_j$ given current state $s_i$; that each such
+probability is a genuine probability bounded in $[0,1]$; and that the rows of the
+transition matrix sum to one, because from any state the process must move
+*somewhere* (including possibly back to itself or into an absorbing state).
+
+The credit a channel earns is its **removal effect**. Let $\pi$ denote the
+probability that a random walk starting from the `(start)` node is eventually
+absorbed in `(conversion)` under the full transition matrix. Deleting channel $i$
+means rerouting every path that would have passed through $i$ directly to the
+`(null)` absorbing state; let $\pi_{-i}$ be the conversion probability of the
+mutilated chain. The removal effect of channel $i$ is the relative drop in
+conversion probability,
+
 $$
+\text{RE}_i = \frac{\pi - \pi_{-i}}{\pi},
+$$ {#eq-removal-effect}
 
-where
+and attributed conversions are obtained by normalizing the removal effects to sum to
+one and multiplying by total conversions. The removal effect is therefore a
+counterfactual: it answers "what fraction of conversions would we lose if this
+channel disappeared?"
 
--   The Transition Probability ($w_{ij}$) = The Probability of the Previous State ( $X_{t-1}$) Given the Current State ($X_t$)
--   The Transition Probability ($w_{ij}$) is No Less Than 0 and No Greater Than 1
--   The Sum of the Transition Probabilities Equals 1 (i.e., Everyone Must Go Somewhere)
+#### The Order of the Chain {#sec-markov-order}
 
-To examine a particular node in the Markov graph, we use **removal effect** ($s_i$) to see its contribution to a conversion. In another word, the Removal Effect is the probability of converting when a step is completely removed; all sequences that had to go through that step are now sent directly to the null node
+The chain's **order** controls how much history conditions the next transition, and
+the choice trades bias against variance.
 
-Each node is called **transition states**\
-The probability of moving from one channel to another channel is called **transition probability**.
+| Order | Memory | Conditioning set for the next state |
+|------:|:-------|:------------------------------------|
+| 0 | none | unconditional probability of entering any state |
+| 1 | current state only | the state you are in now (*memory-free*) |
+| 2 | one prior state | where you came from and where you are |
+| 3 | two prior states | the last two states and where you are |
+| 4 | three prior states | the last three states and where you are |
 
-first-order or "memory-free" Markov graph is called "memory-free" because the probability of reaching one state depends only on the previous state visited.
+: Markov-chain order and the history it conditions on. A first-order ("memory-free")
+chain is the workhorse: the probability of the next state depends only on the
+current state. {#tbl-markov-order}
 
--   Order 0: Do not care about where the you came from or what step the you are on, only the probability of going to any state.
--   Order 1: Looks back zero steps. You are currently at a state. The probability of going anywhere is based on being at that step.
--   Order 2: Looks back one step. You came from state A and are currently at state B. The probability of going anywhere is based on where you were and where you are.
--   Order 3: Looks back two steps. You came from state A after state B and are currently at state C. The probability of going anywhere is based on where you were and where you are.
--   Order 4: Looks back three steps. You came from state A after B after C and are currently at state D. The probability of going anywhere is based on where you were and where you are.
+A first-order chain is *memory-free*: the probability of reaching the next state
+depends only on the state currently occupied, as @tbl-markov-order records. Higher
+orders capture sequence dependence—the same channel may convert differently
+depending on what preceded it—at the cost of a combinatorial explosion in the number
+of estimated transition probabilities and corresponding data sparsity. As we
+demonstrate below, in the *first*-order chain consecutive duplicate channels leave
+the transition matrix and hence the attribution unchanged, which justifies the common
+practice of collapsing duplicates; this invariance no longer holds at second order
+and above.
 
-#### Example 1
+The terminology recurs throughout: each node is a **transition state**, the
+probability of moving between two channels is a **transition probability**, and the
+counterfactual deletion of a node yields its removal effect.
 
-This section is by [Analytics Vidhya](https://www.analyticsvidhya.com/blog/2018/01/channel-attribution-modeling-using-markov-chains-in-r/)
+#### Worked Example: Heuristics versus Markov {#sec-markov-example-1}
 
-[data link](https://www.dropbox.com/s/wi907ms4h4cl1p0/Channel_attribution.csv?dl=0)
+The first worked example contrasts the heuristic rules with a first-order Markov
+model on a channel-attribution dataset, following the implementation popularized by
+Analytics Vidhya. The raw data encode each customer's path as a sequence of channel
+identifiers, where codes 1–19 are marketing channels, 20 marks device selection, 21
+marks the final purchase, and 22 marks an undecided customer.
 
 ```{r}
-# #Install the libraries
-# install.packages("ChannelAttribution")
-# install.packages("ggplot2")
-# install.packages("reshape")
-# install.packages("dplyr")
-# install.packages("plyr")
-# install.packages("reshape2")
-# install.packages("markovchain")
-# install.packages("plotly")
-
 #Load the libraries
 library("ChannelAttribution")
 library("ggplot2")
@@ -86,23 +235,17 @@ library("reshape")
 library("dplyr")
 library("plyr")
 library("reshape2")
-# library("markovchain")
 library("plotly")
 
 #Read the data into R
-channel = read.csv("images/Channel_attribution.csv", header = T) %>% 
+channel = read.csv("images/Channel_attribution.csv", header = T) %>%
     select(-c(Output))
 head(channel, n = 2)
 ```
 
-The number represents:
-
--   1-19 are various channels
--   20 -- customer has decided which device to buy;
--   21 -- customer has made the final purchase, and;
--   22 -- customer hasn't decided yet.
-
-Pre-processing
+The preprocessing step reconstructs a single delimited path string per customer and
+marks conversion wherever the purchase code 21 appears, then truncates each path at
+the point of purchase so that post-conversion states do not leak credit.
 
 ```{r}
 for (row in 1:nrow(channel)){
@@ -128,27 +271,25 @@ Data = channel_fin
 head(Data)
 ```
 
-heuristic model
+The heuristic models assign credit by position. First-touch credits the path's
+initiator, last-touch credits the closer, and linear-touch divides credit equally—
+the three positional baselines against which the Markov model is judged.
 
 ```{r}
 H <- heuristic_models(Data, 'path', 'conversion', var_value='conversion')
 H
 ```
 
--   First Touch Conversion: credit is given to the first touch point.
-
--   Last Touch Conversion: credit is given to the last touch point.
-
--   Linear Touch Conversion: All channels/touch points are given equal credit in the conversion.
-
-Markov model
+The first-order Markov model estimates the transition matrix from the observed paths
+and computes removal effects via @eq-removal-effect.
 
 ```{r}
 M <- markov_model(Data, 'path', 'conversion', var_value='conversion', order = 1)
 M
 ```
 
-combine the two models
+Merging the heuristic and Markov outputs on the channel name aligns the four
+allocations for comparison.
 
 ```{r}
 # Merges the two data frames on the "channel_name" column.
@@ -162,6 +303,8 @@ R1 <- melt(R1, id='channel_name')
 ```
 
 ```{r}
+#| label: fig-markov-heuristic-conversions
+#| fig-cap: "Total conversions attributed to each channel under first-touch, last-touch, linear-touch, and first-order Markov rules. Divergence between the Markov bar and the positional bars localizes channels that heuristics systematically mis-credit."
 # Plot the total conversions
 ggplot(R1, aes(channel_name, value, fill = variable)) +
   geom_bar(stat='identity', position='dodge') +
@@ -173,11 +316,20 @@ ggplot(R1, aes(channel_name, value, fill = variable)) +
   ylab("")
 ```
 
-and then check the final results.
+Where the Markov bar in @fig-markov-heuristic-conversions stands well above a
+channel's last-touch bar, that channel is an *assist* whose contribution last-touch
+attribution would discard; where it stands below, the channel is a *closer* that
+last-touch attribution over-credits.
 
-#### Example 2
+#### Worked Example: Transition Matrix and Model Comparison {#sec-markov-example-2}
 
-Example code by [Sergey Bryl'](https://www.analyzecore.com/2016/08/03/attribution-model-r-part-1/)
+The second example, following Sergey Bryl', simulates a realistic journey log and
+exposes the transition matrix directly, along with the `(start)`, `(conversion)`,
+and `(null)` bookkeeping states that make the chain absorbing. The first block builds
+a minimal three-channel example to illustrate the data structure the
+`markov_model()` function expects—a path string, a conversion flag, and a
+non-conversion flag—and to extract the raw transition matrix and the dummy absorbing
+states needed to plot the journey graph.
 
 ```{r, eval=FALSE}
 library(dplyr)
@@ -188,47 +340,47 @@ library(ggrepel)
 library(RColorBrewer)
 library(ChannelAttribution)
 library(markovchain)
- 
+
 ##### simple example #####
 # creating a data sample
 df1 <- data.frame(path = c('c1 > c2 > c3', 'c1', 'c2 > c3'), conv = c(1, 0, 0), conv_null = c(0, 1, 1))
- 
+
 # calculating the model
 mod1 <- markov_model(df1,
                     var_path = 'path',
                     var_conv = 'conv',
                     var_null = 'conv_null',
                     out_more = TRUE)
- 
+
 # extracting the results of attribution
 df_res1 <- mod1$result
- 
+
 # extracting a transition matrix
 df_trans1 <- mod1$transition_matrix
 df_trans1 <- dcast(df_trans1, channel_from ~ channel_to, value.var = 'transition_probability')
- 
+
 ### plotting the Markov graph ###
 df_trans <- mod1$transition_matrix
- 
+
 # adding dummies in order to plot the graph
 df_dummy <- data.frame(channel_from = c('(start)', '(conversion)', '(null)'),
                        channel_to = c('(start)', '(conversion)', '(null)'),
                        transition_probability = c(0, 1, 1))
 df_trans <- rbind(df_trans, df_dummy)
- 
+
 # ordering channels
 df_trans$channel_from <- factor(df_trans$channel_from,levels = c('(start)','(conversion)', '(null)', 'c1', 'c2', 'c3'))
 df_trans$channel_to <- factor(df_trans$channel_to,levels = c('(start)', '(conversion)', '(null)', 'c1', 'c2', 'c3'))
 df_trans <- dcast(df_trans, channel_from ~ channel_to, value.var ='transition_probability')
- 
+
 # creating the markovchain object
 trans_matrix <- matrix(data = as.matrix(df_trans[, -1]),nrow = nrow(df_trans[, -1]), ncol = ncol(df_trans[, -1]),dimnames = list(c(as.character(df_trans[,1])),c(colnames(df_trans[, -1]))))
 trans_matrix[is.na(trans_matrix)] <- 0
-# trans_matrix1 <- new("markovchain", transitionMatrix = trans_matrix)
-# 
-# # plotting the graph
-# plot(trans_matrix1, edge.arrow.size = 0.35)
 ```
+
+The next block simulates 5,000 touchpoints across ten channels for up to 1,000
+customers, aggregates them into per-customer paths, and fits the Markov model
+alongside manually computed first- and last-touch baselines.
 
 ```{r}
 # simulating the "real" data
@@ -239,7 +391,7 @@ df2 <- data.frame(client_id = sample(c(1:1000), 5000, replace = TRUE),
                                    prob = c(0.1, 0.15, 0.05, 0.07, 0.11, 0.07, 0.13, 0.1, 0.06, 0.16)))
 df2$date <- as.Date(df2$date, origin = "2015-01-01")
 df2$channel <- paste0('channel_', df2$channel)
- 
+
 # aggregating channels to the paths for each customer
 df2 <- df2 %>%
         arrange(client_id, date) %>%
@@ -249,18 +401,18 @@ df2 <- df2 %>%
                   conv = 1,
                   conv_null = 0) %>%
         ungroup()
- 
+
 # calculating the models (Markov and heuristics)
 mod2 <- markov_model(df2,
                      var_path = 'path',
                      var_conv = 'conv',
                      var_null = 'conv_null',
                      out_more = TRUE)
- 
+
 # heuristic_models() function doesn't work for me, therefore I used the manual calculations
 # instead of:
 #h_mod2 <- heuristic_models(df2, var_path = 'path', var_conv = 'conv')
- 
+
 df_hm <- df2 %>%
         mutate(channel_name_ft = sub('>.*', '', path),
                channel_name_ft = sub(' ', '', channel_name_ft),
@@ -276,27 +428,32 @@ df_lt <- df_hm %>%
         group_by(channel_name_lt) %>%
         summarise(last_touch_conversions = sum(conv)) %>%
         ungroup()
- 
+
 h_mod2 <- merge(df_ft, df_lt, by.x = 'channel_name_ft', by.y = 'channel_name_lt')
- 
+
 # merging all models
 all_models <- merge(h_mod2, mod2$result, by.x = 'channel_name_ft', by.y = 'channel_name')
 colnames(all_models)[c(1, 4)] <- c('channel_name', 'attrib_model_conversions')
-
 ```
 
+The transition-matrix heatmap renders the estimated $w_{ij}$ as a colored grid,
+making the dominant journey paths and the channels that most often precede
+conversion visually legible.
+
 ```{r}
+#| label: fig-transition-heatmap
+#| fig-cap: "Estimated first-order transition matrix as a heatmap. Each cell is the probability of moving from the row channel to the column channel; bright cells trace the most-traveled edges of the journey graph."
 library("RColorBrewer")
 library("ggthemes")
 library("ggrepel")
 ############## visualizations ##############
 # transition matrix heatmap for "real" data
 df_plot_trans <- mod2$transition_matrix
- 
+
 cols <- c("#e7f0fa", "#c9e2f6", "#95cbee", "#0099dc", "#4ab04a", "#ffd73e", "#eec73a",
           "#e29421", "#e29421", "#f05336", "#ce472e")
 t <- max(df_plot_trans$transition_probability)
- 
+
 ggplot(df_plot_trans, aes(y = channel_from, x = channel_to, fill = transition_probability)) +
         theme_minimal() +
         geom_tile(colour = "white", width = .9, height = .9) +
@@ -315,7 +472,7 @@ ggplot(df_plot_trans, aes(y = channel_from, x = channel_to, fill = transition_pr
               axis.text.y = element_text(size = 8, face = "bold", color = 'black'),
               axis.text.x = element_text(size = 8, angle = 90, hjust = 0.5, vjust = 0.5, face = "plain")) +
         ggtitle("Transition matrix heatmap")
- 
+
 # models comparison
 all_mod_plot <- reshape2::melt(all_models, id.vars = 'channel_name', variable.name = 'conv_type')
 all_mod_plot$value <- round(all_mod_plot$value)
@@ -352,7 +509,20 @@ ggplot(all_mod_plot, aes(x = conv_type, y = value, group = channel_name)) +
         guides(colour = guide_legend(override.aes = list(size = 4)))
 ```
 
-Additional concerns:
+The slope chart in @fig-transition-heatmap connects each channel's attributed
+conversions across the four rules; channels whose lines cross steeply are precisely
+those whose ranking depends on the attribution method, and therefore those for which
+the choice of model has real budgetary consequences.
+
+#### Practical Refinements to Markov Attribution {#sec-markov-refinements}
+
+A production attribution pipeline must confront several complications that the
+textbook chain ignores. The following refinements, again following Bryl', address
+journey staging, missing data, single-channel paths, chain order, non-converting
+paths, and journey duration. We begin by simulating a richer log of 80,000
+touchpoints across eight channels for 20,000 customers, with conversions sprinkled
+stochastically and one channel deliberately set to missing to exercise the
+missing-data logic.
 
 ```{r}
 library(tidyverse)
@@ -361,14 +531,12 @@ library(ggthemes)
 library(ggrepel)
 library(RColorBrewer)
 library(ChannelAttribution)
-# library(markovchain)
 library(visNetwork)
 library(expm)
 library(stringr)
 library(purrr)
 library(purrrlyr)
- 
- 
+
 ##### simulating the "real" data #####
 set.seed(454)
 df_raw <- data.frame(customer_id = paste0('id', sample(c(1:20000), replace = TRUE)), date = as.Date(rbeta(80000, 0.7, 10) * 100, origin = "2016-01-01"), channel = paste0('channel_', sample(c(0:7), 80000, replace = TRUE, prob = c(0.2, 0.12, 0.03, 0.07, 0.15, 0.25, 0.1, 0.08))) ) %>%
@@ -377,17 +545,18 @@ df_raw <- data.frame(customer_id = paste0('id', sample(c(1:20000), replace = TRU
         ungroup() %>%
         dmap_at(c(1, 3), as.character) %>%
         arrange(customer_id, date)
- 
+
 df_raw <- df_raw %>%
         mutate(channel = ifelse(channel == 'channel_2', NA, channel))
 head(df_raw, n = 2)
 ```
 
-##### 1. Customers will be at different stage of purchase journey after each conversion.
-
-First-time buyer's journey will look different from n-times buyer's (e.g., he will not start at website )
-
-You can create your own code to split data into customers in different stages.
+**Journey staging.** A customer occupies a different position in the funnel after
+each conversion: a first-time buyer's path looks nothing like a tenth-time buyer's,
+who will not, for instance, begin at the landing page. The analyst therefore splits
+each customer's history into separate *paths* indexed by the cumulative number of
+prior conversions, and may model each stage separately. The serial path number is the
+lagged cumulative sum of the conversion flag.
 
 ```{r}
 ##### splitting paths #####
@@ -398,56 +567,55 @@ df_paths <- df_raw %>%
 head(df_paths)
 ```
 
-attribution path for first-time buyers:
-
 ```{r}
 df_paths_1 <- df_paths %>%
         filter(path_no == 1) %>%
         select(-path_no)
 ```
 
-##### 2. Handle missing data
-
-We might have missing data on the channel or do not want to attribute a path (e.g., Direct Channel). We can either
-
--   Remove NA/Channel
--   Use the previous channel in its place.
-
-In the first-order Markov chains, the results are unchanged because duplicated channels don't affect the calculation.
+**Missing and non-attributable channels.** Channels may be unrecorded, or the firm
+may choose not to attribute certain touchpoints (a direct visit, say, that merely
+reflects existing intent). Two remedies are available: drop the offending touchpoint,
+or impute it with the previous channel in the path. A useful invariance justifies the
+casual treatment of duplicates here: *in a first-order chain, consecutive duplicate
+channels do not change the transition matrix*, so substituting a previous channel for
+a missing one leaves first-order attribution unaffected. The code removes missing
+values, then replaces a designated direct channel (`channel_6`) with the preceding
+touchpoint except when it opens the path, in which case it is dropped.
 
 ```{r}
 ##### replace some channels #####
 df_path_1_clean <- df_paths_1 %>%
         # removing NAs
         filter(!is.na(channel)) %>%
-         
+
         # adding order of channels in the path
         group_by(customer_id) %>%
         mutate(ord = c(1:n()),
                is_non_direct = ifelse(channel == 'channel_6', 0, 1),
                is_non_direct_cum = cumsum(is_non_direct)) %>%
-         
+
         # removing Direct (channel_6) when it is the first in the path
         filter(is_non_direct_cum != 0) %>%
-         
+
         # replacing Direct (channel_6) with the previous touch point
         mutate(channel = ifelse(channel == 'channel_6', channel[which(channel != 'channel_6')][is_non_direct_cum], channel)) %>%
-         
+
         ungroup() %>%
         select(-ord, -is_non_direct, -is_non_direct_cum)
 ```
 
-##### 3. one vs. multi-channel paths
-
-We need to calculate the weighted importance for each channel because the sum of the Removal Effects doesn't equal to 1. In case we have a path with a unique channel, the Removal Effect and importance of this channel for that exact path is 1. However, weighting with other multi-channel paths will decrease the importance of one-channel occurrences. That means that, in case we have a channel that occurs in one-channel paths, usually it will be underestimated if attributed with multi-channel paths.
-
-There is also a pretty straight logic behind splitting -- for one-channel paths, we definitely know the channel that brought a conversion and we don't need to distribute that value into other channels.
-
-To account for one-channel path:
-
-1.  Split data for paths with one or more unique channels
-2.  Calculate total conversions for one-channel paths and compute the Markov model for multi-channel paths
-3.  Summarize results for each channel.
+**Single-channel versus multi-channel paths.** Because the removal effects do not
+sum to one, the package reweights each channel's importance by the total. This
+creates a subtle bias: for a path consisting of a single unique channel, that
+channel's removal effect and importance are exactly one, but pooling such paths with
+multi-channel paths and reweighting *dilutes* the single-channel credit, so channels
+that frequently appear alone are underestimated. The logic of the fix is direct—when
+a path contains only one channel we know with certainty which channel earned the
+conversion, and that certainty should not be redistributed. The procedure is
+therefore to (i) split the data into one-channel and multi-channel paths, (ii) count
+conversions directly for one-channel paths while fitting the Markov model only on
+multi-channel paths, and (iii) sum the two contributions per channel.
 
 ```{r}
 ##### one- and multi-channel paths #####
@@ -455,15 +623,15 @@ df_path_1_clean <- df_path_1_clean %>%
         group_by(customer_id) %>%
         mutate(uniq_channel_tag = ifelse(length(unique(channel)) == 1, TRUE, FALSE)) %>%
         ungroup()
- 
+
 df_path_1_clean_uniq <- df_path_1_clean %>%
         filter(uniq_channel_tag == TRUE) %>%
         select(-uniq_channel_tag)
- 
+
 df_path_1_clean_multi <- df_path_1_clean %>%
         filter(uniq_channel_tag == FALSE) %>%
         select(-uniq_channel_tag)
- 
+
 ### experiment ###
 # attribution model for all paths
 df_all_paths <- df_path_1_clean %>%
@@ -472,7 +640,7 @@ df_all_paths <- df_path_1_clean %>%
                   conversion = sum(conversion)) %>%
         ungroup() %>%
         filter(conversion == 1)
- 
+
 mod_attrib <- markov_model(df_all_paths,
                            var_path = 'path',
                            var_conv = 'conversion',
@@ -480,7 +648,7 @@ mod_attrib <- markov_model(df_all_paths,
 mod_attrib$removal_effects
 mod_attrib$result
 d_all <- data.frame(mod_attrib$result)
- 
+
 # attribution model for splitted multi and unique channel paths
 df_multi_paths <- df_path_1_clean_multi %>%
         group_by(customer_id) %>%
@@ -488,63 +656,69 @@ df_multi_paths <- df_path_1_clean_multi %>%
                   conversion = sum(conversion)) %>%
         ungroup() %>%
         filter(conversion == 1)
- 
+
 mod_attrib_alt <- markov_model(df_multi_paths,
                            var_path = 'path',
                            var_conv = 'conversion',
                            out_more = TRUE)
 mod_attrib_alt$removal_effects
 mod_attrib_alt$result
- 
+
 # adding unique paths
 df_uniq_paths <- df_path_1_clean_uniq %>%
         filter(conversion == 1) %>%
         group_by(channel) %>%
         summarise(conversions = sum(conversion)) %>%
         ungroup()
- 
+
 d_multi <- data.frame(mod_attrib_alt$result)
- 
+
 d_split <- full_join(d_multi, df_uniq_paths, by = c('channel_name' = 'channel')) %>%
         mutate(result = total_conversions + conversions)
- 
+
 sum(d_all$total_conversions)
 sum(d_split$result)
 ```
 
-##### 4. Higher Order Markov Chains
-
-Since the transition matrix stays the same in the first order Markov, having duplicates will not affect the result. But starting from the second order order Markov, you will have different results when skipping duplicates. In order to check the effect of skipping duplicates in the first-order Markov chain, we will use my script for "manual" calculation because the package skips duplicates automatically.
+**Higher-order chains and duplicate channels.** The first-order invariance noted
+above fails at second order: once the next transition conditions on two prior states,
+a duplicated channel changes the conditioning history and hence the estimated
+probabilities. To verify that the practical effect on first-order attribution is nil,
+one can compute the transition matrix and removal effects "manually"—the package
+collapses duplicates automatically, so a hand-rolled calculation is needed to compare.
+The script below builds the transition matrix by tabulating adjacent channel pairs,
+then computes attribution by iterating the mutilated transition matrix to its
+stationary behavior via the matrix power `%^%`.
 
 ```{r, eval = FALSE}
 ##### Higher order of Markov chains and consequent duplicated channels in the path #####
- 
+
 # computing transition matrix - 'manual' way
 df_multi_paths_m <- df_multi_paths %>%
         mutate(path = paste0('(start) > ', path, ' > (conversion)'))
 m <- max(str_count(df_multi_paths_m$path, '>')) + 1 # maximum path length
- 
+
 df_multi_paths_cols <- reshape2::colsplit(string = df_multi_paths_m$path, pattern = ' > ', names = c(1:m))
 colnames(df_multi_paths_cols) <- paste0('ord_', c(1:m))
 df_multi_paths_cols[df_multi_paths_cols == ''] <- NA
- 
+
 df_res <- vector('list', ncol(df_multi_paths_cols) - 1)
- 
+
 for (i in c(1:(ncol(df_multi_paths_cols) - 1))) {
-         
+
         df_cache <- df_multi_paths_cols %>%
                 select(num_range("ord_", c(i, i+1))) %>%
                 na.omit() %>%
                 group_by_(.dot = c(paste0("ord_", c(i, i+1)))) %>%
                 summarise(n = n()) %>%
                 ungroup()
-         
+
         colnames(df_cache)[c(1, 2)] <- c('channel_from', 'channel_to')
         df_res[[i]] <- df_cache
 }
- 
+
 df_res <- do.call('rbind', df_res)
- 
+
 df_res_tot <- df_res %>%
         group_by(channel_from, channel_to) %>%
         summarise(n = sum(n)) %>%
@@ -553,78 +727,78 @@ df_res_tot <- df_res %>%
         mutate(tot_n = sum(n),
                perc = n / tot_n) %>%
         ungroup()
- 
+
 df_dummy <- data.frame(channel_from = c('(start)', '(conversion)', '(null)'),
                        channel_to = c('(start)', '(conversion)', '(null)'),
                        n = c(0, 0, 0),
                        tot_n = c(0, 0, 0),
                        perc = c(0, 1, 1))
- 
+
 df_res_tot <- rbind(df_res_tot, df_dummy)
- 
+
 # comparing transition matrices
 trans_matrix_prob_m <- dcast(df_res_tot, channel_from ~ channel_to, value.var = 'perc', fun.aggregate = sum)
 trans_matrix_prob <- data.frame(mod_attrib_alt$transition_matrix)
 trans_matrix_prob <- dcast(trans_matrix_prob, channel_from ~ channel_to, value.var = 'transition_probability')
- 
+
 # computing attribution - 'manual' way
 channels_list <- df_path_1_clean_multi %>%
         filter(conversion == 1) %>%
         distinct(channel)
 channels_list <- c(channels_list$channel)
- 
+
 df_res_ini <- df_res_tot %>% select(channel_from, channel_to)
 df_attrib <- vector('list', length(channels_list))
- 
+
 for (i in c(1:length(channels_list))) {
-         
+
         channel <- channels_list[i]
-         
+
         df_res1 <- df_res %>%
                 mutate(channel_from = ifelse(channel_from == channel, NA, channel_from),
                        channel_to = ifelse(channel_to == channel, '(null)', channel_to)) %>%
                 na.omit()
-         
+
         df_res_tot1 <- df_res1 %>%
                 group_by(channel_from, channel_to) %>%
                 summarise(n = sum(n)) %>%
                 ungroup() %>%
-                 
+
                 group_by(channel_from) %>%
                 mutate(tot_n = sum(n),
                        perc = n / tot_n) %>%
                 ungroup()
-         
+
         df_res_tot1 <- rbind(df_res_tot1, df_dummy) # adding (start), (conversion) and (null) states
-         
+
         df_res_tot1 <- left_join(df_res_ini, df_res_tot1, by = c('channel_from', 'channel_to'))
         df_res_tot1[is.na(df_res_tot1)] <- 0
-         
+
         df_trans1 <- dcast(df_res_tot1, channel_from ~ channel_to, value.var = 'perc', fun.aggregate = sum)
-         
+
         trans_matrix_1 <- df_trans1
         rownames(trans_matrix_1) <- trans_matrix_1$channel_from
         trans_matrix_1 <- as.matrix(trans_matrix_1[, -1])
-         
+
         inist_n1 <- dcast(df_res_tot1, channel_from ~ channel_to, value.var = 'n', fun.aggregate = sum)
         rownames(inist_n1) <- inist_n1$channel_from
         inist_n1 <- as.matrix(inist_n1[, -1])
         inist_n1[is.na(inist_n1)] <- 0
         inist_n1 <- inist_n1['(start)', ]
-         
+
         res_num1 <- inist_n1 %*% (trans_matrix_1 %^% 100000)
-         
+
         df_cache <- data.frame(channel_name = channel,
                                conversions = as.numeric(res_num1[1, 1]))
-         
+
         df_attrib[[i]] <- df_cache
 }
- 
+
 df_attrib <- do.call('rbind', df_attrib)
- 
+
 # computing removal effect and results
 tot_conv <- sum(df_multi_paths_m$conversion)
- 
+
 df_attrib <- df_attrib %>%
         mutate(tot_conversions = sum(df_multi_paths_m$conversion),
                impact = (tot_conversions - conversions) / tot_conversions,
@@ -635,11 +809,16 @@ df_attrib <- df_attrib %>%
         select(channel_name, attrib_model_conversions)
 ```
 
-Since with different transition matrices, the removal effects and attribution results stay the same, in practice we skip duplicates.
+Because the removal effects and attribution results coincide whether or not
+duplicates are collapsed in the first-order chain, the package's default of skipping
+duplicates is innocuous, and we adopt it in practice.
 
-##### 5. Non-conversion paths
-
-We incorporate null paths in this analysis.
+**Non-converting paths.** A complete model must include the paths that *failed* to
+convert, since they are exactly what the `(null)` absorbing state represents. Adding a
+null-conversion flag and refitting yields the *generic probabilistic model*, whose
+transition matrix can be visualized as an interactive network graph in which green
+nodes are the start and conversion states, the red node is the null state, and yellow
+nodes are channels.
 
 ```{r}
 ##### Generic Probabilistic Model #####
@@ -649,7 +828,7 @@ df_all_paths_compl <- df_path_1_clean %>%
                   conversion = sum(conversion)) %>%
         ungroup() %>%
         mutate(null_conversion = ifelse(conversion == 1, 0, 1))
- 
+
 mod_attrib_complete <- markov_model(
         df_all_paths_compl,
         var_path = 'path',
@@ -657,10 +836,10 @@ mod_attrib_complete <- markov_model(
         var_null = 'null_conversion',
         out_more = TRUE
 )
- 
+
 trans_matrix_prob <- mod_attrib_complete$transition_matrix %>%
         dmap_at(c(1, 2), as.character)
- 
+
 ##### viz #####
 edges <-
         data.frame(
@@ -673,7 +852,7 @@ edges <-
                 arrows = "to",
                 color = list(color = "#95cbee", highlight = "red")
         )
- 
+
 nodes <- data_frame(id = c( c(trans_matrix_prob$channel_from), c(trans_matrix_prob$channel_to) )) %>%
         distinct(id) %>%
         arrange(id) %>%
@@ -699,6 +878,11 @@ visNetwork(nodes,
         visOptions(highlightNearest = TRUE)
 ```
 
+The transition matrix can also be raised to successive powers to *simulate forward*
+the distribution of customers across states after a given number of steps—a
+counterfactual that answers, for instance, where 1,000 customers seeded at one
+channel will have dispersed after five steps versus at the stationary limit.
+
 ```{r eval = FALSE}
 ##### modeling states and conversions #####
 # transition matrix preprocessing
@@ -711,20 +895,24 @@ trans_matrix_complete <- dcast(trans_matrix_complete, channel_from ~ channel_to,
 trans_matrix_complete[is.na(trans_matrix_complete)] <- 0
 rownames(trans_matrix_complete) <- trans_matrix_complete$channel_from
 trans_matrix_complete <- as.matrix(trans_matrix_complete[, -1])
- 
- 
+
+
 # creating empty matrix for modeling
 model_mtrx <- matrix(data = 0,
                      nrow = nrow(trans_matrix_complete), ncol = 1,
                      dimnames = list(c(rownames(trans_matrix_complete)), '(start)'))
 # adding modeling number of visits
 model_mtrx['channel_5', ] <- 1000
- 
+
 c(model_mtrx) %*% (trans_matrix_complete %^% 5) # after 5 steps
 c(model_mtrx) %*% (trans_matrix_complete %^% 100000) # after 100000 steps
 ```
 
-##### 6. Customer Journey Duration
+**Customer-journey duration.** The model is silent on *time*, but the firm needs a
+rule for declaring a path dead. Computing the elapsed time from first touch to
+conversion, and the gap since the most recent touch, yields empirical distributions
+whose upper quantiles define a churn cutoff. The histograms and empirical cumulative
+distribution functions below locate the 95th percentile of each duration.
 
 ```{r}
 ##### Customer journey duration #####
@@ -737,19 +925,18 @@ df_multi_paths_tl <- df_path_1_clean_multi %>%
                   tot_time_lapse = round(as.numeric(last_touch_date - first_touch_date)),
                   conversion = sum(conversion)) %>%
         ungroup()
- 
+
 # distribution plot
 ggplot(df_multi_paths_tl %>% filter(conversion == 1), aes(x = tot_time_lapse)) +
         theme_minimal() +
         geom_histogram(fill = '#4e79a7', binwidth = 1)
- 
+
 # cumulative distribution plot
 ggplot(df_multi_paths_tl %>% filter(conversion == 1), aes(x = tot_time_lapse)) +
         theme_minimal() +
         stat_ecdf(geom = 'step', color = '#4e79a7', size = 2, alpha = 0.7) +
         geom_hline(yintercept = 0.95, color = '#e15759', size = 1.5) +
         geom_vline(xintercept = 23, color = '#e15759', size = 1.5, linetype = 2)
-
 ```
 
 ```{r}
@@ -759,7 +946,7 @@ df_multi_paths_tl_1 <- reshape2::melt(df_multi_paths_tl[c(1:50), ] %>% select(cu
                     value.name = 'touch_date') %>%
         arrange(customer_id)
 rep_date <- as.Date('2016-01-10', format = '%Y-%m-%d')
- 
+
 ggplot(df_multi_paths_tl_1, aes(x = as.factor(customer_id), y = touch_date, color = factor(conversion), group = customer_id)) +
         theme_minimal() +
         coord_flip() +
@@ -783,22 +970,24 @@ df_multi_paths_tl_2 <- df_path_1_clean_multi %>%
         ungroup() %>%
         filter(conversion == 1) %>%
         mutate(prev_time_lapse = round(as.numeric(date - prev_touch_date)))
-         
+
 # distribution
 ggplot(df_multi_paths_tl_2, aes(x = prev_time_lapse)) +
         theme_minimal() +
         geom_histogram(fill = '#4e79a7', binwidth = 1)
- 
+
 # cumulative distribution
 ggplot(df_multi_paths_tl_2, aes(x = prev_time_lapse)) +
         theme_minimal() +
         stat_ecdf(geom = 'step', color = '#4e79a7', size = 2, alpha = 0.7) +
         geom_hline(yintercept = 0.95, color = '#e15759', size = 1.5) +
         geom_vline(xintercept = 12, color = '#e15759', size = 1.5, linetype = 2)
-
 ```
 
-In conclusion, we say that if a customer made contact with a marketing channel the first time for more than 23 days and/or hasn't made contact with a marketing channel for the last 12 days, then it is a fruitless path.
+Reading the two cutoffs together yields an operational churn rule: a customer whose
+*first* contact was more than 23 days ago and whose *most recent* contact was more
+than 12 days ago is on a fruitless path and may be excluded or re-targeted. The
+final block operationalizes exactly this flag.
 
 ```{r}
 # extracting data for generic model
@@ -812,23 +1001,21 @@ df_multi_paths_tl_3 <- df_path_1_clean_multi %>%
         ungroup() %>%
         mutate(is_fruitless = ifelse(conversion == 0 & tot_time_lapse > 20 & prev_touch_tl > 10, TRUE, FALSE)) %>%
         filter(conversion == 1 | is_fruitless == TRUE)
-
 ```
 
-##### 7. Channel Comparisons
+**Channel value comparison.** Finally, supplying `markov_model()` with a `var_value`
+argument attributes *gross margin* rather than raw conversions, so channels are
+ranked by the revenue they help generate rather than by conversion counts alone—the
+managerially relevant currency.
 
-We can use `markov_model` with `var_value` to compare the gross margin among channels.
+#### Worked Example: Value Attribution {#sec-markov-example-3}
 
-#### Example 3
-
-This example is from [Bounteus](https://www.bounteous.com/insights/2016/06/30/marketing-channel-attribution-markov-models-r/)
+The third example, following Bounteous, exercises the value-attribution path on the
+package's bundled `PathData`. Here each path carries four quantities: the channel
+sequence, the conversion count, the monetary value of each conversion, and the count
+of exits (the null variable).
 
 ```{r}
-# Install these libraries (only do this once)
-# install.packages("ChannelAttribution")
-# install.packages("reshape")
-# install.packages("ggplot2")
-
 # Load these libraries (every time you start RStudio)
 library(ChannelAttribution)
 library(reshape)
@@ -838,43 +1025,37 @@ library(ggplot2)
 data(PathData)
 ```
 
--   Path Variable -- The steps a user takes across sessions to comprise the sequences.
--   Conversion Variable -- How many times a user converted.
--   Value Variable -- The monetary value of each marketing channel.
--   Null Variable -- How many times a user exited.
-
-Build the simple heuristic models (First Click / first_touch, Last Click / last_touch, and Linear Attribution / linear_touch):
+The heuristic and Markov models are fit on both conversions and conversion value, so
+that two parallel comparisons—credit and dollars—can be drawn.
 
 ```{r}
 H <- heuristic_models(Data, 'path', 'total_conversions', var_value='total_conversion_value')
 ```
 
-Markov model
-
 ```{r}
-M <- markov_model(Data, 'path', 'total_conversions', var_value='total_conversion_value', order = 1) 
+M <- markov_model(Data, 'path', 'total_conversions', var_value='total_conversion_value', order = 1)
 ```
 
 ```{r}
 # Merges the two data frames on the "channel_name" column.
-R <- merge(H, M, by='channel_name') 
+R <- merge(H, M, by='channel_name')
 
 # Selects only relevant columns
 R1 <- R[, (colnames(R)%in%c('channel_name', 'first_touch_conversions', 'last_touch_conversions', 'linear_touch_conversions', 'total_conversion'))]
 
 # Renames the columns
-colnames(R1) <- c('channel_name', 'first_touch', 'last_touch', 'linear_touch', 'markov_model') 
+colnames(R1) <- c('channel_name', 'first_touch', 'last_touch', 'linear_touch', 'markov_model')
 
 # Transforms the dataset into a data frame that ggplot2 can use to graph the outcomes
 R1 <- melt(R1, id='channel_name')
 ```
 
-Plot the total conversions
-
 ```{r}
+#| label: fig-value-conversions
+#| fig-cap: "Total conversions attributed to each channel under the four rules on the bundled PathData."
 ggplot(R1, aes(channel_name, value, fill = variable)) +
   geom_bar(stat='identity', position='dodge') +
-  ggtitle('TOTAL CONVERSIONS') + 
+  ggtitle('TOTAL CONVERSIONS') +
   theme(axis.title.x = element_text(vjust = -2)) +
   theme(axis.title.y = element_text(vjust = +2)) +
   theme(title = element_text(size = 16)) +
@@ -882,9 +1063,14 @@ ggplot(R1, aes(channel_name, value, fill = variable)) +
   ylab("")
 ```
 
-The "Total Conversions" bar chart shows you how many conversions were attributed to each channel (i.e. alpha, beta, etc.) for each method (i.e. first_touch, last_touch, etc.).
+@fig-value-conversions reports how many conversions each method assigns to each
+channel. The companion chart in @fig-value-monetary repeats the exercise on
+*monetary value*, which can reorder the channels when high-converting channels close
+low-value purchases and vice versa.
 
 ```{r}
+#| label: fig-value-monetary
+#| fig-cap: "Total conversion value attributed to each channel. Comparing against the conversion-count chart reveals channels that convert often but cheaply, or rarely but at high value."
 R2 <- R[, (colnames(R)%in%c('channel_name', 'first_touch_value', 'last_touch_value', 'linear_touch_value', 'total_conversion_value'))]
 
 colnames(R2) <- c('channel_name', 'first_touch', 'last_touch', 'linear_touch', 'markov_model')
@@ -893,7 +1079,7 @@ R2 <- melt(R2, id='channel_name')
 
 ggplot(R2, aes(channel_name, value, fill = variable)) +
   geom_bar(stat='identity', position='dodge') +
-  ggtitle('TOTAL VALUE') + 
+  ggtitle('TOTAL VALUE') +
   theme(axis.title.x = element_text(vjust = -2)) +
   theme(axis.title.y = element_text(vjust = +2)) +
   theme(title = element_text(size = 16)) +
@@ -901,33 +1087,51 @@ ggplot(R2, aes(channel_name, value, fill = variable)) +
   ylab("")
 ```
 
-The "Total Conversion Value" bar chart shows you monetary value that can be attributed to each channel from a conversion.
+The contrast between @fig-value-conversions and @fig-value-monetary is the practical
+payoff of value attribution: a channel that converts often but cheaply and one that
+converts rarely but at high value receive very different budget recommendations,
+and only the monetary view distinguishes them.
 
-## Sales Funnel
+## Sales-Funnel Models {#sec-sales-funnel}
 
-### Example 1
-
-This example is based on [Sergey Bryl](https://www.analyzecore.com/2017/09/28/marketing-multi-channel-attribution-model-based-on-sales-funnel-with-r/)
+Attribution credits *channels*; funnel analysis credits *stages*. The classical
+**AIDA** funnel posits that a prospect moves through awareness, interest, desire, and
+action in sequence,
 
 $$
-Awareness \to Interest \to Desire \to Action 
-$$
+\text{Awareness} \to \text{Interest} \to \text{Desire} \to \text{Action},
+$$ {#eq-aida}
 
-Step in the funnel:
+and that the firm's task is to maximize the conversion probability at each transition
+while minimizing leakage. Where Markov attribution treats channels as nodes, the
+funnel model treats the @eq-aida stages as nodes and asks which stage a channel most
+helps a customer clear.
 
--   0 step (necessary condition) -- customer visits a site for the first time
--   1st step (awareness) -- visits two site's pages
--   2nd step (interest) -- reviews a product page
--   3rd step (desire) -- adds a product to the shopping cart
--   4th step (action) -- completes purchase
+```{mermaid}
+%%| label: fig-funnel-stages
+%%| fig-cap: "The operationalized AIDA funnel. Each stage is defined by an observable on-site event, and the step probability is the share of customers who advance from one stage to the next."
+flowchart TD
+    A["Site visit<br/>(necessary condition)"] --> B["Awareness<br/>two pages visited"]
+    B --> C["Interest<br/>product page reviewed"]
+    C --> D["Desire<br/>add to cart"]
+    D --> E["Action<br/>purchase complete"]
+```
 
-Simulate data
+### Funnel-Based Attribution {#sec-funnel-attribution}
+
+The first funnel model, following Sergey Bryl, operationalizes the abstract AIDA
+stages of @eq-aida as observable on-site events, as @fig-funnel-stages depicts: a
+first site visit is the necessary entry condition; visiting two pages marks
+*awareness*; reviewing a product page marks *interest*; adding to cart marks
+*desire*; and completing the purchase marks *action*. The data are simulated as a
+clickstream in which each later event is conditional on the previous one, so the
+funnel structure is built into the generating process.
 
 ```{r}
 library(tidyverse)
 library(purrrlyr)
 library(reshape2)
- 
+
 ##### simulating the "real" data #####
 set.seed(454)
 df_raw <-
@@ -946,7 +1150,7 @@ df_raw <-
     )),
     site_visit = 1
   ) %>%
-  
+
   mutate(
     two_pages_visit = sample(c(0, 1), 10000, replace = TRUE, prob = c(0.8, 0.2)),
     product_page_visit = ifelse(
@@ -994,7 +1198,9 @@ df_raw <-
   arrange(customer_id, date)
 ```
 
-Preprocessing
+Because the analysis assumes every customer is a first-time buyer, only the *first*
+occurrence of each event per customer is retained; any later repurchase event is
+discarded.
 
 ```{r}
 ### removing not first events ###
@@ -1004,18 +1210,22 @@ df_customers <- df_raw %>%
   ungroup()
 ```
 
-Assumption: all customers are first-time buyers. Hence, every next purchase as an event will be removed with the above code.
-
-Calculate channel probability
+The core quantities are the **step probabilities**. Let $c_k$ be the number of
+customers reaching stage $k$. The cumulative funnel probability is
+$c_k / c_{\text{site\_visit}}$, the step probability is $c_k / c_{k-1}$, and the
+*importance* of clearing step $k$ is $1 - c_k / c_{k-1}$—the share of customers lost
+at that transition, which is exactly the leakage the firm wants to plug. Normalizing
+the importances to sum to one yields stage weights that play the role the removal
+effect played for channels.
 
 ```{r}
 ### Sales Funnel probabilities ###
 sf_probs <- df_customers %>%
-    
+
     group_by(event) %>%
     summarise(customers_on_step = n()) %>%
     ungroup() %>%
-    
+
     mutate(
         sf_probs = round(customers_on_step / customers_on_step[event == 'site_visit'], 3),
         sf_probs_step = round(customers_on_step / lag(customers_on_step), 3),
@@ -1025,17 +1235,21 @@ sf_probs <- df_customers %>%
     )
 ```
 
-Visualization
+The journey visualization overlays every customer's path on the funnel and annotates
+each stage with its cumulative conversion probability, so that the width of the
+leakage at each step is immediately visible.
 
 ```{r}
+#| label: fig-funnel-journeys
+#| fig-cap: "All customer journeys overlaid on the funnel, colored by acquisition channel, with cumulative conversion probability annotated at each stage."
 ### Sales Funnel visualization ###
 df_customers_plot <- df_customers %>%
-    
+
     group_by(event) %>%
     arrange(channel) %>%
     mutate(pl = row_number()) %>%
     ungroup() %>%
-    
+
     mutate(
         pl_new = case_when(
             event == 'two_pages_visit' ~ round((max(pl[event == 'site_visit']) - max(pl[event == 'two_pages_visit'])) / 2),
@@ -1115,7 +1329,10 @@ ggplot(df_customers_plot, aes(x = event, y = pl)) +
     ggtitle("Sales Funnel visualization - all customers journeys")
 ```
 
-Calculate attribution
+Channel attribution then follows by crediting each channel with the weighted
+importance of the stages a converting customer cleared while exposed to it: customers
+who never purchased are dropped, the stage weights are joined on, and the weighted
+importances are summed by channel.
 
 ```{r}
 ### computing attribution ###
@@ -1124,20 +1341,28 @@ df_attrib <- df_customers %>%
     group_by(customer_id) %>%
     filter(any(as.character(event) == 'purchase')) %>%
     ungroup() %>%
-    
+
     # joining step's importances
     left_join(., sf_probs %>% select(event, sf_importance_weighted), by = 'event') %>%
-    
+
     group_by(channel) %>%
     summarise(tot_attribution = sum(sf_importance_weighted)) %>%
     ungroup()
 ```
 
-### Example 2
+### Funnel Visualization {#sec-funnel-viz}
 
-Code from [Sergey Bryl](https://www.analyzecore.com/2015/06/23/sales-funnel-visualization-with-r/)
+The second funnel example, also following Bryl, is a presentation device rather than
+an estimator: it renders a funnel chart in which each stage's width is proportional
+to the number of customers present, with conversion rates annotated between stages.
+The data combine *content* nodes (pages mapped to AIDA stages) with *customer*
+lifecycle nodes (new, engaged, loyal), and the plotting code constructs the
+symmetric trapezoidal silhouette by adding white "dummy" segments that center each
+bar.
 
 ```{r}
+#| label: fig-funnel-chart
+#| fig-cap: "Funnel chart with stage widths proportional to customer counts and step conversion rates annotated between stages, combining content stages with customer-lifecycle stages."
 library(dplyr)
 library(ggplot2)
 library(reshape2)
@@ -1334,36 +1559,42 @@ ggplot() +
     )
 ```
 
-## RFM
+## Recency, Frequency, Monetary (RFM) {#sec-rfm}
 
-[RFM](https://cran.r-project.org/web/packages/rfm/vignettes/rfm-customer-level-data.html) is calculated as:
+RFM scoring is the oldest and most durable behavioral-segmentation device in direct
+marketing. The premise is that three sufficient statistics of a customer's
+transaction history predict future value: how *recently* they purchased, how
+*frequently* they purchase, and how much *monetary* value they have generated.
+Customers who bought recently, buy often, and spend heavily are the most responsive
+to the next offer.
 
--   A recency score is assigned to each customer based on date of most recent purchase.
--   A frequency ranking is assigned based on frequency of purchases
--   Monetary score is assigned based on the total revenue generated by the customer in the period under consideration for the analysis
+Formally, for customer $i$ observed up to an analysis date $t_0$, define recency
+$R_i = t_0 - \max_j t_{ij}$ as the elapsed time since the most recent of their
+transactions $\{t_{ij}\}$, frequency $F_i = n_i$ as the transaction count, and
+monetary value $M_i = \sum_j m_{ij}$ as cumulative revenue. Each raw measure is
+mapped to an ordinal score, conventionally a quintile $\{1,\dots,5\}$, by binning the
+empirical distribution: recency is reverse-coded so that more recent buyers score
+higher, while frequency and monetary value score higher with larger values. The
+composite **RFM score** concatenates or sums the three sub-scores and is the basis for
+the segmentation rules of @sec-segmentation.
+
+The `rfm` package implements this pipeline from either customer-level summaries or
+raw order logs. The customer-level table requires a customer identifier, a
+transaction count, total revenue, and days since the last visit; the order-level
+table requires an identifier, a transaction date, and an amount, from which
+`rfm_table_order()` derives the summaries.
 
 ```{r}
 library("rfm")
 rfm_data_customer
-# a unique customer id
-# number of transaction/order
-# total revenue from the customer
-# number of days since the last visit
-
 
 rfm_data_orders # to generate data_orders, use rfm_table_order()
-
-# unique customer id
-# date of transaction
-# and amount
-# customer_id: name of the customer id column
-# order_date: name of the transaction date column
-# revenue: name of the transaction amount column
-# analysis_date: date of analysis
-# recency_bins: number of rankings for recency score (default is 5)
-# frequency_bins: number of rankings for frequency score (default is 5)
-# monetary_bins: number of rankings for monetary score (default is 5)
 ```
+
+Supplying an explicit analysis date $t_0$ makes recency well defined; the
+`rfm_table_customer()` call below scores the customer-level data and returns, for
+each customer, the most-recent-visit date, recency in days, transaction count, total
+amount, the three sub-scores, and the composite.
 
 ```{r}
 analysis_date <- lubridate::as_date('2007-01-01')
@@ -1377,72 +1608,89 @@ rfm_result <-
         analysis_date
     )
 rfm_result
-# customer_id: unique customer id
-# date_most_recent: date of most recent visit
-# recency_days: days since the most recent visit
-# transaction_count: number of transactions of the customer
-# amount: total revenue generated by the customer
-# recency_score: recency score of the customer
-# frequency_score: frequency score of the customer
-# monetary_score: monetary score of the customer
-# rfm_score: RFM score of the customer
-
 ```
 
-### Visualization
+### Visualizing RFM {#sec-rfm-viz}
 
-heat map shows the average monetary value for different categories of recency and frequency scores
+A battery of standard diagnostics interrogates the scored data. The heatmap displays
+average monetary value across the recency–frequency grid, revealing whether high-value
+customers cluster in the recent-and-frequent corner as the premise predicts.
 
 ```{r}
+#| label: fig-rfm-heatmap
+#| fig-cap: "Average monetary value across the recency-by-frequency grid. Concentration in the high-recency, high-frequency corner confirms the RFM premise that recent frequent buyers are the most valuable."
 rfm_heatmap(rfm_result)
 ```
 
-bar chart
-
 ```{r}
+#| label: fig-rfm-bar
+#| fig-cap: "Distribution of customers across recency scores within frequency bins."
 rfm_bar_chart(rfm_result)
 ```
 
-histogram
-
 ```{r}
+#| label: fig-rfm-hist
+#| fig-cap: "Marginal histograms of the recency, frequency, and monetary measures."
 rfm_histograms(rfm_result)
 ```
 
-Customers by Orders
-
 ```{r}
+#| label: fig-rfm-orders
+#| fig-cap: "Distribution of customers by number of orders."
 rfm_order_dist(rfm_result)
-
 ```
 
-Scatter Plots
+The bivariate scatter plots—recency against monetary, frequency against monetary, and
+recency against frequency—expose the pairwise dependence structure that the composite
+score collapses.
 
 ```{r}
+#| label: fig-rfm-scatter
+#| fig-cap: "Bivariate scatter plots of the three RFM dimensions, exposing the pairwise dependence the composite score collapses."
 rfm_rm_plot(rfm_result)
 rfm_fm_plot(rfm_result)
 rfm_rf_plot(rfm_result)
 ```
 
-### RFMC
+### Adding Clumpiness: RFMC {#sec-rfmc}
 
-(C) clumpiness is defined as the degree of nonconformity to equal spacing [@Zhang_2015]
+The three RFM moments summarize *how much* and *how recently* a customer transacts
+but are blind to *how the events are spaced in time*. Two customers with identical
+frequency over a window can differ sharply in whether their purchases were evenly
+spread or arrived in a tight burst. **Clumpiness** (the "C" in RFMC) measures this
+spacing, defined by @Zhang_2015 as the degree of nonconformity to equal spacing of
+events.
 
-In finance, clumpiness can indicate high growth potential but large risk, Hence, it can be incorporated into firm acquisition decision. Originated from sports phenomenon - hot hand effect - where success leads to more success.
+> Clumpiness is the serial dependence or non-constant propensity—specifically,
+> temporary elevations of propensity, i.e., periods during which one event is more
+> likely to occur than the average level [@Zhang_2013].
 
-In statistics, clumpiness is the serial dependence or "non-constant propensity, specifically temporary elevations of propensity--- i.e. periods during which one event is more likely to occur than the average level." [@Zhang_2013]
+The construct migrated into marketing from two prior literatures. In finance,
+clumpiness can flag high growth potential coupled with elevated risk, so it informs
+firm-acquisition decisions; the phenomenon itself originates in the sports "hot hand"
+effect, in which success appears to breed further success. A well-behaved clumpiness
+measure satisfies three properties [@Zhang_2015]: it attains its **minimum** when
+events are equally spaced and its **maximum** when they cluster tightly together;
+it varies **continuously** in the event times; and it **converges** appropriately as
+the number of events grows. Appending a clumpiness score to the RFM triple sharpens
+churn prediction, because a customer whose previously bursty buying has gone quiet is
+a stronger churn signal than recency alone conveys.
 
-Properties of clumpiness:
+## Customer Segmentation {#sec-segmentation}
 
--   Min (max) if events are equally spaced (close to one another)
--   Continuity
--   Convergence
+Segmentation partitions the customer base into groups that are internally homogeneous
+and managerially distinct, so that each group can receive a tailored treatment. RFM
+scores furnish a natural partition; lifecycle and cohort views add the time dimension
+that a static score omits.
 
-## Customer Segmentation
+### RFM-Based Segments {#sec-rfm-segments}
 
-### Example 1
-
-Continue from the RFM
+The most direct segmentation reads named segments off the RFM score by specifying,
+for each segment, the admissible ranges of the recency, frequency, and monetary
+sub-scores. A "Premium" customer scores high on all three; an "At Risk" customer
+combines low recency with high historical frequency and value; a "Lost" customer
+scores low everywhere. The `rfm_segment()` function maps every customer to the first
+segment whose score box contains them.
 
 ```{r, eval = FALSE}
 segment_names <-
@@ -1496,18 +1744,21 @@ rfm_plot_median_frequency(rfm_segments)
 rfm_plot_median_monetary(rfm_segments)
 ```
 
-### Example 2
+### LifeCycle Grids {#sec-lifecycle-grids}
 
-Example by [Sergey](https://www.analyzecore.com/2015/02/16/customer-segmentation-lifecycle-grids-with-r/)
-
-#### LifeCycle Grids
+A score-box segmentation is static. The **lifecycle grid**, following Sergey,
+restores dynamics by cross-tabulating recency bands against frequency bands and
+populating each cell with the customers it contains, so that movement through the
+grid over time traces a customer's lifecycle. We simulate an order log with products,
+clients, gender, and order dates, then collapse it to one row per client carrying
+frequency and recency.
 
 ```{r}
 # loading libraries
 library(dplyr)
 library(reshape2)
 library(ggplot2)
- 
+
 # creating data sample
 set.seed(10)
 data <- data.frame(
@@ -1539,6 +1790,8 @@ rm(data, date, order, gender)
 ```
 
 ```{r}
+#| label: fig-lcg-explore
+#| fig-cap: "Marginal distributions of purchase frequency and recency in the simulated order log."
 # reporting date
 today <- as.Date('2012-04-11', format = '%Y-%m-%d')
 
@@ -1564,14 +1817,17 @@ ggplot(orders, aes(x = frequency)) +
     theme_bw() +
     scale_x_continuous(breaks = c(1:10)) +
     geom_bar(alpha = 0.6, width = 1) +
-    ggtitle("Dustribution by frequency")
+    ggtitle("Distribution by frequency")
 
 ggplot(orders, aes(x = recency)) +
     theme_bw() +
     geom_bar(alpha = 0.6, width = 1) +
-    ggtitle("Dustribution by recency")
-
+    ggtitle("Distribution by recency")
 ```
+
+The continuous frequency and recency are bucketed into ordered bands, and the band
+factors are ordered so the grid reads from most-recent-and-frequent to
+least, with a last-cart feature capturing which products the customer last bought.
 
 ```{r}
 orders.segm <- orders %>%
@@ -1625,10 +1881,15 @@ orders.segm$segm.rec <-
             '0-6 days'
         )
     )
-
 ```
 
+Faceting customer counts by the two band factors produces the grid itself: each panel
+is one recency–frequency cell, and its height encodes how many customers presently
+occupy it.
+
 ```{r}
+#| label: fig-lcg-basic
+#| fig-cap: "Lifecycle grid: customer counts faceted by recency band (columns) and frequency band (rows)."
 lcg <- orders.segm %>%
     group_by(segm.rec, segm.freq) %>%
     summarise(quantity = n()) %>%
@@ -1649,7 +1910,13 @@ ggplot(lcg, aes(x = client, y = quantity, fill = quantity)) +
     ggtitle("LifeCycle Grids")
 ```
 
+Coarsening the grid into recent/not-recent and frequent/infrequent quadrants, and
+splitting by gender and last cart, turns the grid into a strategic map of where value
+concentrates and which sub-populations occupy each region.
+
 ```{r}
+#| label: fig-lcg-advanced
+#| fig-cap: "Lifecycle grids enriched with quadrant coloring (recent/frequent), and split by gender and last-cart composition, turning the grid into a strategic map of the customer base."
 lcg.adv <- lcg %>%
     mutate(
         rec.type = ifelse(
@@ -1701,7 +1968,7 @@ ggplot(lcg.sub, aes(x = client, y = quantity, fill = gender)) +
              position = 'fill' ,
              alpha = 0.6) +
     facet_grid(segm.freq ~ segm.rec) +
-    ggtitle("LifeCycle Grids by gender (propotion)")
+    ggtitle("LifeCycle Grids by gender (proportion)")
 
 ggplot(lcg.sub, aes(x = gender, y = quantity, fill = cart)) +
     theme_bw() +
@@ -1711,14 +1978,22 @@ ggplot(lcg.sub, aes(x = gender, y = quantity, fill = cart)) +
              position = 'fill' ,
              alpha = 0.6) +
     facet_grid(segm.freq ~ segm.rec) +
-    ggtitle("LifeCycle Grids by gender and last cart (propotion)")
+    ggtitle("LifeCycle Grids by gender and last cart (proportion)")
 ```
 
-#### CLV & CAC
+#### CLV and CAC on the Grid {#sec-clv-cac}
 
-[calculate](https://www.analyzecore.com/2015/02/19/customer-segmentation-lifecycle-grids-clv-and-cac-with-r/) customer acquisition cost (CAC) and customer lifetime value (CLV)
+Customer counts alone do not reveal whether a segment is *profitable*. Overlaying
+**customer lifetime value (CLV)**—the gross margin a customer has generated—and
+**customer acquisition cost (CAC)**—what was spent to acquire them—on the grid shows
+which cells return their acquisition investment. A cell where average CLV exceeds
+average CAC is profitable; a cell where it does not is a candidate for reduced
+acquisition spend. We attach simulated per-client CAC and product gross margins,
+recompute the grid, and plot CLV against CAC both in aggregate and per client.
 
 ```{r}
+#| label: fig-lcg-clv-cac
+#| fig-cap: "Lifecycle grids overlaying customer lifetime value against acquisition cost, in total and per client. Cells where CLV exceeds CAC return their acquisition investment."
 # loading libraries
 library(dplyr)
 library(reshape2)
@@ -1877,11 +2152,16 @@ ggplot(lcg.clv[lcg.clv$variable %in% c('clv1', 'cac1'), ], aes(x = variable, y =
     ggtitle("LifeCycle Grids - CLV vs CAC (average)")
 ```
 
-#### Cohort Analysis
+#### Cohort Analysis {#sec-cohort}
 
-[link](https://www.analyzecore.com/2015/04/01/cohort-analysis-and-lifecycle-grids-mixed-segmentation-with-r/)
-
-combine customers through common characteristics to split customers into homogeneous groups
+A **cohort** groups customers by a shared origin—most often their acquisition
+month—so that groups acquired under different conditions can be compared on equal
+footing as they age. Cohort analysis combines customers through common
+characteristics into homogeneous groups and tracks each group's value trajectory over
+its lifetime. The setup below simulates a larger order log and assembles, per client,
+frequency, recency, the average gap between purchases, the first-purchase cohort
+label, realized CLV to date, an acquisition campaign with its CAC, and a predicted
+*potential* CLV.
 
 ```{r}
 # loading libraries
@@ -1929,12 +2209,10 @@ rm(cac)
 today <- as.Date('2013-05-16', format = '%Y-%m-%d')
 ```
 
-where
-
--   campaign, which includes campaign name and customer acquisition cost for each customer,
--   margin, which includes gross margin for each product,
--   potential, which includes potential values / predicted CLV for each client,
--   orders, which includes orders from our customers with products and order dates.
+The four auxiliary tables play distinct roles: *campaign* carries each customer's
+acquisition campaign and its acquisition cost; *margin* gives the gross margin per
+product; *potential* holds the predicted CLV per client; and *orders* records the
+transactions. The next block computes the per-client features and cohort labels.
 
 ```{r}
 # calculating CLV, frequency, recency, average time lapses between purchases and defining cohorts
@@ -2013,10 +2291,15 @@ customers$segm.rec <-
             '0-30 days'
         )
     )
-
 ```
 
-##### First-purchase date cohort
+##### First-Purchase-Date Cohorts {#sec-fpd-cohorts}
+
+Grouping by first-purchase month and laying the result on the lifecycle grid lets the
+analyst compare cohorts on profitability (average CLV minus CAC), on combined realized
+plus potential value, and on purchasing pace. The customer-flow analysis tracks how a
+single cohort redistributes across recency–frequency states at successive reporting
+dates and renders the migration as a Sankey diagram.
 
 ```{r, eval = FALSE}
 lcg.coh <- customers %>%
@@ -2098,7 +2381,7 @@ df.sankey <- data.frame()
 for (i in 1:length(report.dates)) {
     orders.cache <- orders %>%
         filter(orderdate < report.dates[i])
-    
+
     customers.cache <- orders.cache %>%
         select(-product,-grossmarg) %>%
         unique() %>%
@@ -2151,7 +2434,7 @@ for (i in 1:length(report.dates)) {
             report.date = report.dates[i]
         ) %>%
         select(clientId, cohort.segm, report.date)
-    
+
     df.sankey <- rbind(df.sankey, customers.cache)
 }
 
@@ -2170,14 +2453,14 @@ for (i in 2:ncol(df.sankey)) {
         group_by(df.sankey[, i - 1], df.sankey[, i]) %>%
         summarise(n = n()) %>%
         ungroup()
-    
+
     colnames(df.sankey.cache)[1:2] <- c('from', 'to')
-    
+
     df.sankey.cache$from <-
         paste(df.sankey.cache$from, ' (', report.dates[i - 1], ')', sep = '')
     df.sankey.cache$to <-
         paste(df.sankey.cache$to, ' (', report.dates[i], ')', sep = '')
-    
+
     df.sankey.plot <- rbind(df.sankey.plot, df.sankey.cache)
 }
 
@@ -2209,12 +2492,19 @@ ggplot(lcg.coh, aes(x = cohort, fill = cohort)) +
         face = "plain"
     )) +
     ggtitle("Cohorts in LifeCycle Grids - average time lapses between purchases")
-
 ```
 
-##### Campaign Cohorts
+##### Campaign Cohorts {#sec-campaign-cohorts}
+
+Reindexing the same machinery by *acquisition campaign* rather than first-purchase
+month answers a different question: which campaigns recruited customers whose realized
+value justifies their acquisition cost, and at what purchasing pace. The plots below
+report, by campaign, the CLV-minus-CAC gap, total realized-plus-potential value
+against CAC, and the average gap between purchases.
 
 ```{r}
+#| label: fig-campaign-cohorts
+#| fig-cap: "Campaign cohorts on the lifecycle grid: profitability gap, total value against acquisition cost, and purchasing pace by acquisition campaign."
 # campaign cohorts
 lcg.camp <- customers %>%
     group_by(campaign, segm.rec, segm.freq) %>%
@@ -2292,14 +2582,20 @@ ggplot(lcg.camp, aes(x = campaign, fill = campaign)) +
         face = "plain"
     )) +
     ggtitle("Campaigns in LifeCycle Grids - average time lapses between purchases")
-
 ```
 
-##### Retention Rate
+##### Retention Rate {#sec-retention-rate}
 
-[Customer Retention Rate](https://www.analyzecore.com/2015/12/10/cohort-analysis-retention-rate-visualization-r/)
+The **retention rate** is the share of a cohort still active after a given lifetime
+interval. For cohort $c$ with $N_{c,0}$ members at acquisition and $N_{c,\tau}$ active
+at lifetime $\tau$, the retention rate is $N_{c,\tau}/N_{c,0}$, and the
+period-over-period rate is $N_{c,\tau}/N_{c,\tau-1}$. Plotting retention as a cycle
+plot, with seasonality (a simulated Black Friday bump) baked into the data, separates
+genuine cohort-quality differences from calendar effects.
 
 ```{r}
+#| label: fig-retention-cycle
+#| fig-cap: "Customer retention rate as a cycle plot and as bars of cohort size by year of lifetime, with simulated seasonality. Smoothed trends separate cohort-quality differences from calendar effects."
 # loading libraries
 library(dplyr)
 library(reshape2)
@@ -2615,11 +2911,17 @@ ggplot(df_plot,
     ggtitle("Customer Retention Rate - Falling Drops chart")
 ```
 
-##### Retention Charts
+##### Retention Charts {#sec-retention-charts}
 
-[Retention charts](https://www.analyzecore.com/2014/07/03/cohort-analysis-in-r-retention-charts/)
+The canonical **retention triangle** arranges cohorts in rows and lifetime months in
+columns, so that each diagonal corresponds to a calendar period and each row traces a
+cohort's decay. Normalizing every row by its first-month count converts raw counts to
+retention ratios; the dynamics, second-month, and cycle-plot views then interrogate
+the triangle from complementary angles.
 
 ```{r}
+#| label: fig-retention-triangle
+#| fig-cap: "Retention triangle analyses: ratio dynamics across lifetime months, a single-month cross-cohort comparison, and a cycle plot highlighting two reference cohorts."
 # libraries
 library(dplyr)
 library(ggplot2)
@@ -2764,10 +3066,16 @@ p + geom_point(size = 3) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-#### Lifecycle phase sequential analysis
+#### Lifecycle-Phase Sequence Analysis {#sec-lifecycle-sequence}
 
--   analyze the path patterns of each cohort\
--   identify cohorts that attracted customers with the path we prefer to make offers.
+The final lifecycle device borrows **sequence analysis** from the social sciences to
+study the *order* in which customers pass through lifecycle states (new, engaged,
+best, and their at-risk and former counterparts). The goal is to identify the path
+patterns characteristic of each cohort and to surface the cohorts that acquired
+customers on the trajectory the firm prefers, so offers can be targeted accordingly.
+Each customer is assigned a lifecycle state at a sequence of reporting dates, the
+states are encoded as a sequence object with `TraMineR::seqdef()`, and the most
+frequent sequences are plotted by campaign and by first-purchase cohort.
 
 ```{r, eval=FALSE}
 library(TraMineR)
@@ -2782,10 +3090,10 @@ df <- data.frame()
 for (i in l) {
     cur.date <- min.date + i
     print(cur.date)
-    
+
     orders.cache <- orders %>%
         filter(orderdate <= cur.date)
-    
+
     customers.cache <- orders.cache %>%
         select(-product,-grossmarg) %>%
         unique() %>%
@@ -2795,7 +3103,7 @@ for (i in l) {
         ungroup() %>%
         select(clientId, frequency, recency) %>%
         unique() %>%
-        
+
         mutate(segm =
                    ifelse(
                        between(frequency, 1, 2) & between(recency, 0, 60),
@@ -2807,7 +3115,7 @@ for (i in l) {
                            ifelse(
                                between(frequency, 1, 2) & recency > 180,
                                '1x buyer',
-                               
+
                                ifelse(
                                    between(frequency, 3, 4) &
                                        between(recency, 0, 60),
@@ -2819,7 +3127,7 @@ for (i in l) {
                                        ifelse(
                                            between(frequency, 3, 4) & recency > 180,
                                            'former engaged customer',
-                                           
+
                                            ifelse(
                                                frequency > 4 & between(recency, 0, 60),
                                                'best customer',
@@ -2837,10 +3145,10 @@ for (i in l) {
                            )
                        )
                    )) %>%
-        
+
         mutate(report.date = i) %>%
         select(clientId, segm, report.date)
-    
+
     df <- rbind(df, customers.cache)
 }
 
@@ -2893,14 +3201,21 @@ seqfplot(
     group = feat.coh.list$cohort,
     cex.legend = 0.9
 )
-
 ```
 
-## Shopping carts analysis
+## Basket and Sequence Analysis {#sec-basket}
 
-### Multi-layer pie chart
+The models so far summarize *whether* and *when* customers buy. Basket analysis turns
+to *what* they buy together, and sequence analysis to *in what order* they buy across
+visits. Both inform cross-sell, merchandising, and churn detection.
 
-Example by [Sergey Bryl](https://www.analyzecore.com/2014/10/17/cart-analysis-r/)
+### Multi-Layer Pie Chart of Baskets {#sec-basket-pie}
+
+The first device, following Sergey Bryl, visualizes the co-occurrence structure of
+products within carts as a set of concentric rings—an innermost ring for
+single-product carts and outer rings for each additional product—so that the most
+common product combinations are read off as the widest arcs. We simulate orders of up
+to five products and reduce each order to a unique set of products.
 
 ```{r}
 # loading libraries
@@ -2924,6 +3239,10 @@ df <- df[df$product != 'NULL',]
 head(df)
 ```
 
+Each order is collapsed into a delimited *cart* string with a count of distinct
+products, and carts are tallied, so the analysis operates on cart *types* rather than
+individual orders.
+
 ```{r}
 # processing initial data
 # we need to be sure that product's names are unique
@@ -2945,6 +3264,10 @@ prod.matrix <- df %>%
 
 head(prod.matrix)
 ```
+
+Splitting single-product from multi-product carts sets up the layered geometry: the
+inner ring is reserved for one-product carts and successive outer rings encode the
+presence of each additional product.
 
 ```{r}
 # calculating total number of orders/carts
@@ -2986,6 +3309,8 @@ colors <- as.list(setNames(cols[c(1:(length(prod)))], prod))
 ```
 
 ```{r}
+#| label: fig-basket-pie
+#| fig-cap: "Multi-layer pie chart of shopping carts. The inner ring shows single-product carts; each outer ring encodes the presence of an additional product, so the widest arcs are the most common combinations."
 # 0 circle: blank
 pie(
     1,
@@ -3033,8 +3358,10 @@ legend(
     bty = 'n',
     ncol = 1
 )
-
 ```
+
+A companion statistics table records each cart type's count and share, ranking the
+combinations by prevalence.
 
 ```{r}
 # creating a table with the stats
@@ -3046,23 +3373,19 @@ stat.tab <- prod.matrix %>%
 library(scales)
 stat.tab$share <-
     percent(stat.tab$share) # converting values to percents
-
-# adding a table with the stats
-# addtable2plot(
-#     -2.5,
-#     -1.5,
-#     stat.tab,
-#     bty = "n",
-#     display.rownames = FALSE,
-#     hlines = FALSE,
-#     vlines = FALSE,
-#     title = "The stats"
-# )
 ```
 
-### Sankey Diagram
+### Sankey Diagram of Order Sequences {#sec-basket-sankey}
+
+A **Sankey diagram** visualizes flows: here, how customers move from one order's cart
+composition to the next across successive purchases, with band width proportional to
+the number of customers following each transition. Carts are simulated, concatenated
+into per-order strings, pivoted so each customer's successive orders sit in adjacent
+columns, and the transitions between consecutive orders are tallied as flow weights.
 
 ```{r}
+#| label: fig-basket-sankey
+#| fig-cap: "Sankey diagram of cart composition across successive orders. Band width is proportional to the number of customers making each cart-to-cart transition."
 # loading libraries
 library(googleVis)
 library(dplyr)
@@ -3129,15 +3452,15 @@ for (i in 2:ncol(orders)) {
         group_by(orders[, i - 1], orders[, i]) %>%
         summarise(n = n()) %>%
         ungroup()
-    
+
     colnames(ord.cache)[1:2] <- c('from', 'to')
-    
+
     # adding tags to carts
     ord.cache$from <- paste(ord.cache$from, '(', i - 1, ')', sep = '')
     ord.cache$to <- paste(ord.cache$to, '(', i, ')', sep = '')
-    
+
     orders.plot <- rbind(orders.plot, ord.cache)
-    
+
 }
 
 plot(gvisSankey(
@@ -3151,19 +3474,18 @@ plot(gvisSankey(
         sankey = "{link:{color:{fill:'lightblue'}}}"
     )
 ))
-
-# The bandwidths correspond to the weight of sequence
 ```
 
-### Sequence in-depth analysis
+### In-Depth Sequence Analysis {#sec-basket-sequence}
 
-Example by [Sergey Bryl](https://www.analyzecore.com/2014/12/04/sequence-carts-in-depth-analysis-with-r/)
-
--   To understand customer's behavior and churn based on purchase sequence. For example,
-
-    -   If the customer has left or did not make the next purchase
-
-    -   Understand duration between purchases
+Sequence analysis proper, again following Bryl, treats each customer's ordered series
+of carts (interleaved with a synthetic *no-purchase* spell to mark dormancy) as a
+categorical sequence amenable to the descriptive and information-theoretic tools of
+`TraMineR`. The aim is to understand purchasing behavior and churn: whether a customer
+has lapsed, and how long the gaps between purchases run. We simulate orders with
+products, clients, gender, and dates, then build per-client cart sequences and append
+a no-purchase spell whose length is keyed to the customer's own average inter-purchase
+interval.
 
 ```{r}
 library(dplyr)
@@ -3176,14 +3498,14 @@ set.seed(10)
 data <- data.frame(
     orderId = sample(c(1:1000), 5000, replace = TRUE),
     product = sample(
-        c('NULL', 'a', 'b', 'c'), # assume we have only 3 products 
+        c('NULL', 'a', 'b', 'c'), # assume we have only 3 products
         5000,
         replace = TRUE,
         prob = c(0.15, 0.65, 0.3, 0.15)
     )
 )
 
-# we also know customers' purchase order 
+# we also know customers' purchase order
 order <- data.frame(orderId = c(1:1000),
                     clientId = sample(c(1:300), 1000, replace = TRUE))
 
@@ -3228,7 +3550,7 @@ df.new <- data.frame()
 for (i in 1:length(ids)) {
     df.cache <- df %>%
         filter(clientId == ids[i])
-    
+
     ifelse(nrow(df.cache) == 1,
            av.dur <- 30,
            av.dur <-
@@ -3237,7 +3559,7 @@ for (i in 1:length(ids)) {
                ) / (
                    nrow(df.cache) - 1
                )) * 1.5, 0))
-    
+
     df.cache <-
         rbind(
             df.cache,
@@ -3251,20 +3573,28 @@ for (i in 1:length(ids)) {
     ifelse(max(df.cache$orderdate) > max.date,
            df.cache$orderdate[which.max(df.cache$orderdate)] <- max.date,
            NA)
-    
+
     df.cache$to <- c(df.cache$orderdate[2:nrow(df.cache)] - 1, max.date)
-    
+
     # order# for Sankey diagram
     df.cache <- df.cache %>%
         mutate(ord = paste('ord', c(1:nrow(df.cache)), sep = ''))
-    
+
     df.new <- rbind(df.new, df.cache)
 }
 # filtering dummies
 df.new <- df.new %>%
     filter(cart != 'nopurch' | to != orderdate)
 rm(orders, df, df.cache, i, ids, max.date, av.dur)
+```
 
+A Sankey diagram of the first few carts per customer gives a flow view of how cart
+composition evolves, with no-purchase states propagated forward once a customer
+lapses.
+
+```{r}
+#| label: fig-sequence-sankey
+#| fig-cap: "Sankey flow of cart composition across the first four orders per customer, with no-purchase states carried forward once a customer becomes dormant."
 ##### Sankey diagram #######
 
 df.sankey <- df.new %>%
@@ -3292,14 +3622,14 @@ for (i in 2:ncol(df.sankey)) {
         group_by(df.sankey[, i - 1], df.sankey[, i]) %>%
         summarise(n = n()) %>%
         ungroup()
-    
+
     colnames(df.sankey.cache)[1:2] <- c('from', 'to')
-    
+
     # adding tags to carts
     df.sankey.cache$from <-
         paste(df.sankey.cache$from, '(', i - 1, ')', sep = '')
     df.sankey.cache$to <- paste(df.sankey.cache$to, '(', i, ')', sep = '')
-    
+
     df.sankey.plot <- rbind(df.sankey.plot, df.sankey.cache)
 }
 
@@ -3316,8 +3646,20 @@ plot(gvisSankey(
 ))
 
 rm(df.sankey, df.sankey.cache, df.sankey.plot, i)
+```
 
+Recasting the spells into `TraMineR`'s state-sequence format unlocks a battery of
+descriptive tools: state-distribution plots over time (overall and by gender),
+frequency tables of the most common sequences, mean time spent in each state, and a
+per-sequence **entropy** that quantifies how varied a customer's state history is.
+Entropy is the information-theoretic dispersion of the states a customer visits; a
+low-entropy customer stays in one or two states, while a high-entropy customer churns
+through many, and comparing its distribution by gender exposes behavioral
+heterogeneity.
 
+```{r}
+#| label: fig-sequence-analysis
+#| fig-cap: "State-sequence analyses: state distribution over time overall and by gender, most-frequent sequences, mean time per state, and the distribution of within-customer sequence entropy."
 df.new <- df.new %>%
     # chosing a length of sequence
     filter(ord %in% c('ord1', 'ord2', 'ord3', 'ord4')) %>%
@@ -3397,11 +3739,23 @@ boxplot(
 )
 ```
 
-## Geodemographic Classification
+## Geodemographic Classification {#sec-geodemographic}
 
-Example by [Nick Bearman](https://rpubs.com/nickbearman/r-geodemographics)
+Geodemographic classification segments customers by *where they live*, on the premise
+that neighborhood composition predicts consumption. National statistical agencies
+publish small-area classifications—in the United Kingdom, the Output Area
+Classification (OAC) groups every census output area into named supergroups such as
+"Blue Collar Communities" or "City Living"—that marketers join to behavioral data to
+profile and target geographies. The example, following Nick Bearman, profiles
+newspaper readership by OAC supergroup and then maps the classification onto Liverpool.
+
+The first step expresses each supergroup's broadsheet readership as a percentage
+deviation from the national average, the natural scale for spotting over- and
+under-indexing audiences.
 
 ```{r}
+#| label: fig-geo-broadsheets
+#| fig-cap: "Broadsheet readership by OAC supergroup, expressed as percentage deviation from the national average. Positive bars mark over-indexing audiences."
 #Load libraries
 library(scales)
 library(ggplot2)
@@ -3425,11 +3779,7 @@ oac_broadsheets <- data.frame(oac_names, broadsheets)
 oac_broadsheets$broadsheets <-  broadsheets / 100 - 1
 
 oac_broadsheets
-```
 
-plot each group's percentage difference from the mean
-
-```{r}
 #select the colours we are going to use
 my_colour <-
     c("#33A1C9",
@@ -3464,9 +3814,12 @@ ggplot(oac_broadsheets, aes(oac_names, broadsheets)) +
     scale_x_discrete("OAC SuperGroups")
 ```
 
-Create plot for another variable
+Repeating the exercise for tabloid readership yields a complementary profile, so the
+two newspaper types can be contrasted across the same supergroups.
 
 ```{r}
+#| label: fig-geo-tabloids
+#| fig-cap: "Tabloid readership by OAC supergroup as deviation from the national average, complementing the broadsheet profile."
 tabloids <- c(110.8, 82.2, 104.9, 94.5, 108.4, 96.4, 96.0)
 oac_tabloids <- data.frame(oac_names, tabloids)
 
@@ -3499,9 +3852,8 @@ ggplot(oac_tabloids, aes(oac_names, tabloids)) +
     scale_x_discrete("OAC SuperGroups")
 ```
 
-To visualize how these two variables are distributed in a location such as Liverpool in this case.
-
-We load the shapefile
+To see how the classification distributes across a real city, the analysis loads a
+Liverpool output-area shapefile.
 
 ```{r}
 #load library
@@ -3521,7 +3873,8 @@ liverpool <- readShapeSpatial('liverpool_OA/liverpool', proj4string = CRS("+init
 plot(liverpool)
 ```
 
-The dataset can be attained [here](https://www.ons.gov.uk/methodology/geography/geographicalproducts/areaclassifications/2011areaclassifications/datasets) select [2011 OAC Clusters and Names csv (1.1 Mb ZIP)](https://www.ons.gov.uk/file?uri=/methodology/geography/geographicalproducts/areaclassifications/2011areaclassifications/datasets/2011oacclustersandnamescsvv2.zip)
+The OAC lookup—mapping each output area code to its supergroup, group, and subgroup—is
+read in and joined onto the shapefile by area code.
 
 ```{r}
 library(tidyverse)
@@ -3540,10 +3893,8 @@ OAC <- rio::import("images/2011oacclustersandnamescsvv2.zip") %>%
     rename("OA_CODE" = "Output Area Code")
 ```
 
-Merge data (OAC) to its location (liverpool)
-
 ```{r}
-# check dataset 
+# check dataset
 # head(liverpool@data)
 # head(OAC)
 
@@ -3553,7 +3904,12 @@ liverpool@data = data.frame(liverpool@data, OAC[match(liverpool@data[, "OA01CD"]
 head(liverpool@data)
 ```
 
+Coloring each output area by its supergroup produces a choropleth map that turns the
+abstract classification into a spatial portrait of the city's neighborhoods.
+
 ```{r}
+#| label: fig-geo-map
+#| fig-cap: "Choropleth map of Liverpool with each output area colored by its OAC supergroup, rendering the geodemographic classification as a spatial portrait of the city."
 #Define a set of colours, one for each of the OAC supergroups
 my_colour <-
     c("#33A1C9",
@@ -3607,3 +3963,30 @@ text(333410 + 5000, 380952, "5km", cex = .8)
 #Add a title
 title("OAC Group Map of Liverpool")
 ```
+
+## Key Takeaways {#sec-empirical-takeaways}
+
+The empirical models in this chapter are all answers to credit-and-value assignment,
+and they share a discipline worth restating. **Attribution** is best treated as a
+problem of *marginal* contribution rather than position: the Shapley value
+(@sec-shapley) supplies the axiomatically unique allocation but at exponential cost
+and under a fragile completeness assumption, while the Markov removal effect
+(@sec-markov-attribution) supplies a tractable counterfactual whose first-order
+duplicate-invariance justifies the standard preprocessing. **Funnel models**
+(@sec-sales-funnel) reallocate credit from channels to stages and localize leakage.
+**RFM and its clumpiness extension** (@sec-rfm) compress histories into behavioral
+sufficient statistics, and **segmentation** (@sec-segmentation) renders those
+statistics actionable through lifecycle grids, cohort and retention analysis, and
+sequence models that respect order. **Basket and sequence analysis**
+(@sec-basket) and **geodemographic classification** (@sec-geodemographic) round out
+the toolkit on the product and spatial dimensions.
+
+The recurring caution is identification. Every model attributes credit only among the
+factors it can see, so an unobserved channel, an unmodeled stage, or a missing
+covariate does not vanish—its effect is silently redistributed onto the measured
+quantities. Because conversions are observed once per customer, there is rarely a
+held-out ground truth against which to validate an attribution rule, so face validity
+and sensitivity to modeling choices must substitute for out-of-sample accuracy. The
+prudent analyst reports results under more than one rule and treats large divergences
+across rules as a signal that the budgetary stakes of the modeling assumption are
+high.
