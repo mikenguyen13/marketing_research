@@ -31,3 +31,24 @@ Status legend: ⬜ not started · 🟧 in progress · ✅ done (compiles, cited,
 
 ## Front matter
 - ⬜ index (Preface), 01-introduction (incl. master notation table)
+- 🟧 01b-history-of-marketing-thought (scaffold + verified sources gathered)
+
+## Research gathered (DOI-verified, in .editorial/research/) — to integrate
+- ✅ tellis.md (27), marinova.md (21), conjoint.md (26), branding-frontier.md (30),
+     history-of-marketing.md (23 + 2 books), seminar-inventory.md
+- ⬜ advertising.md (agent still running)
+- Spot-check (main thread, 3/3 DOIs resolved exactly) — pipeline trusted.
+- NOTE: subagents could use WebFetch→Crossref but WebSearch was sometimes blocked;
+  treat agent DOIs as verified-against-Crossref, still spot-check on integration.
+
+## Seminar gaps to ADD as chapters (from seminar-inventory.md)
+- ⬜ Causal Inference & Field Experiments (HIGH priority)
+- ⬜ AI / Machine Learning in Marketing
+- ⬜ Text/Image/Audio as Data (merge with 34-image-processing)
+- ⬜ Choice Modeling & Bayesian Methods (promote scattered content)
+- ⬜ Platforms / Two-Sided Markets (lower priority)
+
+## Toolchain decision
+- → Migrate bookdown → **Quarto** (native Mermaid in HTML/PDF/EPUB + R chunks +
+  R figures). Add GitHub Actions CI (Quarto+R+TinyTeX) building all 3 formats; user
+  also builds locally. Migration is light: only ~10 \@ref, 7 part dividers, index yaml.
