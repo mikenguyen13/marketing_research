@@ -32,6 +32,43 @@ Every substantive chapter follows this skeleton:
   text available, record it in `.editorial/citation-flags.md` (per chapter) so the
   author can check the source before publication. Do not silently keep or drop it.
 
+## Literature scope (house decision)
+- **Primary venues:** the top-4 — *Journal of Marketing* (JM), *Journal of Marketing
+  Research* (JMR), *Marketing Science*, *Journal of Consumer Research* (JCR). Also
+  draw on JCP, JAMS, *Marketing Letters*, IJRM, QME, JPP&M, and the relevant
+  finance/econ/management/CS outlets when a topic demands it.
+- Cover both the **frontier** (last ~10 years) and the **seminal** work. When a
+  chapter is thin on recent work, that is a gap to fill, not a stylistic choice.
+- **Advisor corpora to weave in where topically appropriate** (not gratuitously):
+  **Gerard J. Tellis** (advertising, innovation/new-product growth, market entry,
+  virality, international diffusion) and **Detelina Marinova** (frontline/service,
+  sales, customer engagement, AI in marketing, text analytics).
+
+## Citation integrity (HARD RULE — house decision)
+- **Every cited paper must carry a verified `doi` field in the `.bib`.** No DOI →
+  do not cite until verified.
+- **Verify before citing.** Confirm author/title/year/DOI against Crossref
+  (`https://api.crossref.org/works?query.bibliographic=...`) or `https://doi.org/<doi>`.
+  Never reconstruct a citation from memory; never invent a DOI.
+- When adding a paper, add a clean BibTeX entry **with `doi`** to `references.bib`
+  (new house bib) and cite by that key.
+- Backfill DOIs onto already-cited entries that lack them (`references1.bib`,
+  parts of `references.bib`/`book1.bib`). `packages.bib` is exempt (R packages).
+- Anything unverifiable goes to `.editorial/citation-flags.md`, never into the book.
+
+## Figures (HARD RULE — house decision)
+- **All figures are our own.** No reproduced third-party figures or journal
+  screenshots — we never want to clear permissions.
+- **Default to Mermaid** for conceptual/flow/relationship diagrams (renders crisply
+  in the HTML book). Use **R-generated** figures (DiagrammeR, ggplot2, base) when a
+  diagram must also render in PDF/EPUB or when it is data-driven.
+- Every figure has a caption and is referenced from the text.
+
+## Texture / variety
+- Vary the page: block quotes for landmark definitions or statements, callout notes
+  and footnotes for asides and caveats, tables for comparisons, figures for
+  processes and relationships. Avoid long unbroken runs of prose *or* of bullets.
+
 ## Voice
 - Third person, present tense, precise and economical. No marketing fluff.
 - Define every term on first use. Expand acronyms once: "customer lifetime value (CLV)".
