@@ -8,7 +8,7 @@ Status legend: ⬜ not started · 🟧 in progress · ✅ done (compiles, cited,
 ## STATUS SNAPSHOT (Quarto branch)
 - ✅ 31 chapters rewritten + verified (0 invented cites): Branding + wave 1 (22) + wave 2 mega (7)
 - ✅ School research batch 1 committed: Michigan, WashU, Chicago, USC, UCSD (~103 verified)
-- 🔄 School research batch 2 running: UCLA, Berkeley, Wharton, Stanford/MIT/Kellogg, Columbia/NYU/Duke/Harvard
+- ✅ School research COMPLETE (10 schools, 249 verified DOIs): +UCLA, Berkeley, Wharton, Stanford/MIT/Kellogg, Columbia/NYU/Duke/Harvard
 - ⬜ NEXT: merge ALL verified cites (169 + school ~250) into .bib; controlled weaving pass;
      stubs/thin chapters; front matter (intro+history body); seminar gap chapters; build/render fixes
 
