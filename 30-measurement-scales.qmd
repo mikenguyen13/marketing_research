@@ -1,7 +1,573 @@
 # Measurement Scales {#sec-measurement-scales}
 
--   **Handbook of Marketing Scales: Multi-Item Measures for Marketing and Consumer Behavior Research** [@bearden2011]
+Most of the constructs marketing cares about—brand equity, satisfaction,
+involvement, trust, perceived authenticity—cannot be read off a receipt. They are
+*latent*: properties of a consumer's mind that leave only indirect traces in
+answers to survey questions, in choices, and in behavior. A **measurement scale**
+is the instrument that turns those traces into numbers we can analyze, and the
+**measurement model** is the formal theory that says how the numbers relate to the
+construct they are supposed to capture. Getting the measurement model wrong is not
+a cosmetic error. It silently biases every downstream coefficient, invalidates the
+reliability and validity tests a reviewer will demand, and—most consequentially—can
+reverse a managerial recommendation, because the model dictates whether a manager
+should strengthen a coherent latent disposition or intervene on specific,
+possibly uncorrelated, drivers.
 
--   **Marketing Scales Handbook, Volume IV: Consumer Behavior** [@stewart1993]
+This chapter develops measurement as a modeling problem rather than a checklist.
+We begin with the classical theory that underwrites almost all psychometrics—**true-score
+theory**—and use it to define reliability precisely. We then draw the central
+distinction of the modern literature, between **reflective** and **formative**
+measurement, and make it formal with structural equations, including the
+identification conditions that decide whether a model can be estimated at all. With
+that machinery in place we walk through **scale development** as a disciplined
+sequence, define the standard battery of **reliability and validity** statistics
+and give their estimators and assumptions, and confront **common-method bias**—the
+contamination that arises when the same respondent supplies both predictor and
+outcome through the same instrument. Throughout, the goal is the one set in
+@sec-branding when it asked whether brand equity is reflective or formative: to let
+the reader decide a construct's measurement model on principled grounds and defend
+that decision to a skeptical referee.
 
--   Check "books" folder
+A note on scope. We treat *psychometric* measurement—scales built from multiple
+survey items—because that is where the reflective/formative question is sharpest and
+where the field's two leading handbooks of marketing scales live [@bearden2011;
+@stewart1993]. The logic transfers directly to behavioral and text-derived measures,
+which are developed in @sec-text-as-data.
+
+## True-Score Theory and the Definition of Reliability
+
+The foundation of classical test theory is disarmingly simple. An observed score
+$X$ on an item is the sum of a **true score** $T$—the construct value we wish we
+could see—and a **measurement error** $E$:
+
+$$
+X = T + E .
+$$ {#eq-truescore}
+
+The theory's content is in three assumptions about $E$: it has mean zero,
+$\mathbb{E}[E] = 0$, so $T = \mathbb{E}[X]$ is *defined* as the expected observed
+score; it is uncorrelated with the true score, $\mathrm{Cov}(T, E) = 0$; and errors
+on distinct items are mutually uncorrelated. Under these assumptions the observed
+variance decomposes additively,
+
+$$
+\sigma_X^2 = \sigma_T^2 + \sigma_E^2 ,
+$$ {#eq-varsplit}
+
+and **reliability** is *defined* as the share of observed variance that is true
+variance,
+
+$$
+\rho_{XX'} \;=\; \frac{\sigma_T^2}{\sigma_X^2} \;=\; \frac{\sigma_T^2}{\sigma_T^2 + \sigma_E^2} \in [0,1].
+$$ {#eq-reliability}
+
+Reliability is therefore not "consistency" in a loose sense; it is a variance ratio,
+equal to the squared correlation between observed and true scores and to the
+correlation between two *parallel* measurements of the same construct (hence the
+notation $\rho_{XX'}$). It says nothing about whether $T$ measures the *right*
+construct—that is validity, and the two must never be conflated. A bathroom scale
+that always reads three kilograms heavy is perfectly reliable and invalid.
+
+Reliability matters beyond bookkeeping because unreliable measurement *attenuates*
+relationships. If a predictor $X$ measures a true $T$ with reliability $\rho_{XX}$
+and an outcome $Y$ measures $U$ with reliability $\rho_{YY}$, the observable
+correlation is shrunk toward zero relative to the construct-level correlation:
+
+$$
+\mathrm{Corr}(X, Y) \;=\; \mathrm{Corr}(T, U)\,\sqrt{\rho_{XX}\,\rho_{YY}} .
+$$ {#eq-attenuation}
+
+@eq-attenuation is the *correction for attenuation*. It is why a true effect can be
+buried by a noisy scale, and why latent-variable models—which estimate $\mathrm{Corr}(T,U)$
+directly—are preferred to regressions on summed scores when reliability is modest.
+
+> Multiple-item measurement exists almost entirely to beat down $\sigma_E^2$. By the
+> Spearman–Brown logic, averaging $k$ interchangeable items whose errors are
+> independent divides the error variance of the composite by $k$ while leaving the
+> true variance intact, so a composite of many noisy items can be far more reliable
+> than any single item.[^sb] This is the engine behind multi-item scales—and, as we
+> will see, it is exactly the property a *formative* index does not have.
+
+[^sb]: The Spearman–Brown prophecy formula gives the reliability of a test lengthened
+by a factor $k$ as $\rho_k = k\rho_1 / [1 + (k-1)\rho_1]$, where $\rho_1$ is the
+reliability of the original test. It assumes the added items are *parallel*—equal
+true-score loadings and equal error variances—an assumption formative indicators
+violate by construction. <!-- CITE-NEEDED: Spearman 1910 / Brown 1910 prophecy formula -->
+
+## Reflective versus Formative Measurement
+
+The single most consequential decision in scale construction is the direction of
+causality between the latent construct and its indicators. The choice is not a
+matter of taste; it is a substantive claim about how the world works, and it
+determines which model is even identified [@coltman2008; @diamantopoulos2013quantitative].
+
+### The Reflective Model
+
+In a **reflective** (effect-indicator) model, the latent construct *causes* its
+indicators: the items are manifestations, symptoms, or reflections of an underlying
+common cause. Let $\eta$ be a scalar latent construct and $x_1,\dots,x_K$ its
+observed indicators. The model is the common-factor model,
+
+$$
+x_k \;=\; \lambda_k\, \eta \;+\; \varepsilon_k, \qquad k = 1,\dots,K,
+$$ {#eq-reflective}
+
+with $\mathbb{E}[\varepsilon_k]=0$, $\mathrm{Cov}(\eta,\varepsilon_k)=0$, and
+$\mathrm{Cov}(\varepsilon_j,\varepsilon_k)=0$ for $j\neq k$ (uncorrelated errors).
+The arrows run *from* $\eta$ *to* each $x_k$. Three properties follow and are
+diagnostic. First, because the indicators share a single common cause, they must be
+**positively correlated**; the off-diagonal covariances are $\mathrm{Cov}(x_j,x_k)=\lambda_j\lambda_k\,\sigma_\eta^2$,
+all of the same sign as the loadings. Second, the indicators are
+**interchangeable**: dropping one changes the construct's domain coverage but not
+its meaning, since each is a noisy replica of the same $\eta$. Third, internal
+consistency (Cronbach's alpha, composite reliability) is the *appropriate* quality
+criterion, precisely because @eq-reflective is the model under which @eq-reliability
+was derived.
+
+A reflective construct is the right model when the construct is a real, unitary
+attribute that radiates into measurable symptoms—the way a fever radiates into a
+high thermometer reading, a flushed face, and chills. Brand love
+[@batra2012; @bagozzi2016], satisfaction, and attitude are conventionally modeled
+this way: a more satisfied customer answers *every* satisfaction item more
+favorably, so the items co-move.
+
+### The Formative Model
+
+In a **formative** (causal-indicator) model, the indicators *cause* the construct:
+the latent variable is a composite *formed by* its indicators, which are defining
+ingredients rather than reflections. The structural equation reverses the arrows,
+
+$$
+\eta \;=\; \sum_{k=1}^{K} \gamma_k\, x_k \;+\; \zeta,
+$$ {#eq-formative}
+
+where $\gamma_k$ are formative weights and $\zeta$ is a disturbance capturing the
+part of $\eta$ not explained by the chosen indicators, with
+$\mathrm{Cov}(x_k,\zeta)=0$. Everything that was diagnostic for the reflective model
+is now reversed. The indicators need **not** be correlated—socioeconomic status
+formed from income, education, and occupation does not require that high earners be
+highly educated. The indicators are **not interchangeable**: removing one (say,
+income) deletes part of the construct's *definition*, not merely part of its
+sampling. And internal-consistency reliability is **inapplicable**: there is no
+common cause to make the items co-vary, so a low alpha is no defect. Quality is
+judged instead by indicator weights, their significance, and **multicollinearity**
+among indicators (high collinearity makes the weights unstable and
+uninterpretable), typically diagnosed with the variance inflation factor.
+
+A construct should be formative when it is constituted by a combination of distinct
+facets that need not move together. Classic examples are an index of *life stress*
+(a job loss and a marriage are both stressors but are uncorrelated causes), a
+*marketing capability* composite, or a *deprivation* index. @sec-branding raised the
+live debate over whether **brand equity** and **brand authenticity** are reflective
+or formative; the two leading authenticity scales take opposite stances—@morhart2015
+reflective, @nunes2021 formative—and the disagreement is exactly a disagreement about
+the direction of @eq-reflective versus @eq-formative.
+
+### A Formal Contrast and the MIMIC Bridge
+
+@fig-meas-models contrasts the two path structures, and the table that follows
+states the operational consequences side by side.
+
+```{mermaid}
+%%| label: fig-meas-models
+%%| fig-cap: "Reflective versus formative measurement. In the reflective model the latent construct η causes the indicators (arrows out, each indicator carries its own error ε). In the formative model the indicators cause the construct (arrows in, a single disturbance ζ attaches to the construct). A MIMIC model combines both: formative causes and reflective indicators of the same latent variable."
+flowchart LR
+  subgraph R["Reflective"]
+    direction TB
+    ETA1((η)) --> X1[x1]
+    ETA1 --> X2[x2]
+    ETA1 --> X3[x3]
+    X1 --- E1((ε1))
+    X2 --- E2((ε2))
+    X3 --- E3((ε3))
+  end
+  subgraph F["Formative"]
+    direction TB
+    Z1[x1] --> ETA2((η))
+    Z2[x2] --> ETA2
+    Z3[x3] --> ETA2
+    ZETA((ζ)) --- ETA2
+  end
+```
+
+| Property | Reflective (@eq-reflective) | Formative (@eq-formative) |
+|---|---|---|
+| Causal direction | Construct → indicators | Indicators → construct |
+| Indicator correlation | High, same sign (required) | Not required; any sign |
+| Interchangeability | Indicators interchangeable | Indicators define the construct |
+| Dropping an indicator | Narrows sampling of the domain | Changes the construct's meaning |
+| Error term | One per indicator ($\varepsilon_k$) | One per construct ($\zeta$) |
+| Reliability criterion | Internal consistency (alpha, CR, AVE) | Indicator weights; collinearity (VIF) |
+| Identification | Standard (factor model) | Needs external structure (e.g., MIMIC) |
+
+: Operational consequences of the reflective–formative distinction. {#tbl-refl-form}
+
+The deepest difference in @tbl-refl-form is the last row. A pure formative model is
+**not identified** in isolation: @eq-formative places no testable restrictions on the
+indicator covariances, the scale and location of $\eta$ are arbitrary, and the
+disturbance variance $\sigma_\zeta^2$ cannot be separated from the weights without
+further information. Identification requires that the formative construct emit *at
+least two reflective indicators* (or two paths to downstream constructs), which fixes
+its metric and disturbance. The resulting hybrid is the **multiple-indicators,
+multiple-causes (MIMIC)** model: formative causes $x_1,\dots,x_K$ feed a latent
+$\eta$, which in turn emits reflective indicators $y_1,\dots,y_M$,
+
+$$
+\eta \;=\; \sum_{k=1}^{K}\gamma_k x_k + \zeta,
+\qquad
+y_m \;=\; \lambda_m \eta + \varepsilon_m, \quad m = 1,\dots,M .
+$$ {#eq-mimic}
+
+The MIMIC structure is the standard way marketing accommodates a genuinely formative
+construct inside an estimable structural-equation model [@diamantopoulos2013quantitative].
+It also clarifies a common error: estimating @eq-formative by ordinary least squares
+treats $\eta$ as observed and conflates the formative weights with a regression of an
+*index* on its parts, discarding the disturbance and the very latency that motivated
+the construct. <!-- CITE-NEEDED: Jarvis, MacKenzie & Podsakoff 2003 on misspecification of formative vs reflective constructs -->
+<!-- CITE-NEEDED: Bollen & Lennox 1991 conventional wisdom on measurement -->
+
+### Why Misspecification Is Costly
+
+Treating a formative construct as reflective (or the reverse) is not a venial sin.
+Forcing reflective machinery onto formative indicators discards items that fail to
+correlate—dropping low-alpha items *narrows the construct's content*, biasing it
+toward whatever facet happens to be internally consistent. Conversely, modeling a
+reflective construct formatively throws away the error structure that
+@eq-attenuation depends on and inflates apparent validity. Simulation and analytic
+work show the resulting structural-coefficient bias can be large and of either sign,
+which is why the direction-of-causality decision belongs at the *start* of scale
+development, justified on conceptual grounds, not discovered after the data are in.
+<!-- CITE-NEEDED: MacKenzie, Podsakoff & Jarvis 2005 on measurement-model misspecification consequences -->
+
+## Scale Development
+
+Scale development is the disciplined translation of a construct definition into a
+validated instrument. The field's canonical paradigm is a staged procedure that
+moves from conceptual specification to a purified, validated multi-item scale, and
+modern treatments differ mainly in how much weight they place on the formative
+possibility [@bearden2011]. The stages below are reflective by default; we flag where
+a formative construct diverges.
+
+1. **Construct definition and domain specification.** State precisely what the
+   construct is and is not, its conceptual boundaries, and—critically—the *direction
+   of measurement* (@tbl-refl-form). This step decides everything downstream and
+   cannot be repaired later by statistics. <!-- CITE-NEEDED: Churchill 1979 paradigm for developing marketing measures -->
+2. **Item generation.** Draft a large pool of candidate items spanning the domain,
+   from theory, qualitative interviews, and existing scales. For reflective
+   constructs the pool should oversample each facet (items are replaceable); for
+   formative constructs the pool must *exhaust* the facets (each is constitutive).
+3. **Content validity / expert judging.** Have domain experts rate each item's
+   relevance and representativeness, retaining items with high agreement. This is a
+   qualitative check that no statistic substitutes for.
+4. **Purification on a calibration sample.** Collect data and trim items. For
+   reflective scales, drop items with low item–total correlations or weak loadings
+   and inspect exploratory factor structure for dimensionality. For formative
+   indices, *do not* trim on inter-item correlation; trim only on collinearity and
+   weight significance.
+5. **Confirmatory validation on a fresh sample.** Fit the hypothesized measurement
+   model (confirmatory factor analysis for reflective constructs; a MIMIC model for
+   formative) and assess fit, reliability, and the validity battery of
+   @sec-reliability-validity below. Cross-validation on data not used for
+   purification guards against capitalizing on chance.
+6. **Norming and replication.** Establish means, variances, and stability across
+   populations and over time, and demonstrate the nomological network—correlations
+   with antecedents and consequences in the predicted pattern.
+
+@fig-scale-dev renders the pipeline. The arrows back from validation to item
+generation are essential: scale development is iterative, and a construct that fails
+discriminant validity often needs its *definition* sharpened, not just its items
+re-fitted.
+
+```{mermaid}
+%%| label: fig-scale-dev
+%%| fig-cap: "The scale-development pipeline. Conceptual specification fixes the measurement direction; item generation and content judging are qualitative; purification and confirmatory validation are quantitative and run on separate samples. Validation failures feed back to redefinition, not merely re-estimation."
+flowchart TB
+  A[Define construct\n& measurement direction] --> B[Generate item pool]
+  B --> C[Expert content judging]
+  C --> D[Purify on\ncalibration sample]
+  D --> E[Confirm on\nfresh sample]
+  E --> F[Norm & replicate\nnomological network]
+  E -. fails discriminant/convergent .-> A
+  D -. weak items .-> B
+```
+
+## Reliability and Validity {#sec-reliability-validity}
+
+A scale must be both **reliable** (low error variance) and **valid** (measures the
+intended construct). We give the standard estimators, their assumptions, and what
+breaks them.
+
+### Internal-Consistency Reliability
+
+**Cronbach's alpha** estimates reliability from a single administration of $K$
+items as
+
+$$
+\alpha \;=\; \frac{K}{K-1}\left(1 - \frac{\sum_{k=1}^{K}\sigma_{x_k}^2}{\sigma_{X_{\text{tot}}}^2}\right),
+$$ {#eq-alpha}
+
+where $\sigma_{x_k}^2$ is item variance and $\sigma_{X_{\text{tot}}}^2$ the variance
+of the summed score. Alpha is a *lower bound* on reliability and equals it only under
+**tau-equivalence**—all items load equally on the common factor. When loadings differ
+(the congeneric case), alpha understates reliability, and **composite reliability**
+(CR), computed from the CFA loadings $\hat\lambda_k$ and error variances
+$\hat\theta_k$,
+
+$$
+\mathrm{CR} \;=\; \frac{\left(\sum_{k}\hat\lambda_k\right)^2}{\left(\sum_{k}\hat\lambda_k\right)^2 + \sum_{k}\hat\theta_k},
+$$ {#eq-cr}
+
+is preferred because it does not assume equal loadings. Both assume a *reflective*
+unidimensional model; **neither is meaningful for a formative index**, where the
+items are not expected to covary. Conventional thresholds put acceptable internal
+consistency at roughly $0.70$ and above, though the number is a heuristic, not a law.
+<!-- CITE-NEEDED: Cronbach 1951 coefficient alpha -->
+
+### Convergent and Discriminant Validity
+
+**Construct validity** asks whether the scale measures its target construct.
+@fornell1981a give the workhorse criteria for reflective constructs estimated by CFA.
+**Convergent validity**—indicators of one construct converge—is evidenced when the
+**average variance extracted** (AVE),
+
+$$
+\mathrm{AVE} \;=\; \frac{\sum_{k}\hat\lambda_k^2}{\sum_{k}\hat\lambda_k^2 + \sum_{k}\hat\theta_k},
+$$ {#eq-ave}
+
+exceeds $0.50$, i.e., the construct explains more than half the variance in its
+indicators. **Discriminant validity**—distinct constructs are empirically
+distinct—holds, by the Fornell–Larcker criterion, when each construct's
+$\sqrt{\mathrm{AVE}}$ exceeds its correlation with every other construct
+[@fornell1981a]. A construct that fails discriminant validity against a neighbor is
+not separately measurable from it, and the usual remedy is conceptual: merge the
+constructs or sharpen their definitions. These criteria are reflective; for formative
+constructs, validity is assessed through the nomological net and the significance of
+formative weights instead.
+
+### Criterion and Nomological Validity
+
+**Criterion validity** is the scale's correlation with an external criterion it
+should predict—*concurrent* when measured contemporaneously, *predictive* when the
+criterion is future behavior. **Nomological validity**, the most demanding, asks
+whether the construct relates to *other* constructs as theory dictates: a valid brand-equity
+scale should predict price premium and choice share in the direction
+@sec-branding specifies. Validity, unlike reliability, is never established by a
+single coefficient; it is the accumulated weight of a construct behaving as its
+theory says it should.
+
+### Inter-Rater Reliability for Coded Data
+
+When measurement comes from human coders rather than respondents—coding ad content,
+classifying reviews, labeling images—reliability is *agreement* between raters
+corrected for chance. **Cohen's kappa** [@Cohen_1960] for two raters is
+
+$$
+\kappa \;=\; \frac{p_o - p_e}{1 - p_e},
+$$ {#eq-kappa}
+
+where $p_o$ is observed agreement and $p_e$ is the agreement expected if raters
+labeled independently at their marginal rates. $\kappa = 1$ is perfect agreement,
+$\kappa = 0$ is chance-level; conventional benchmarks read $0.41$–$0.60$ as
+moderate and above $0.60$ as substantial [@Landis_1977]. For continuous ratings, the
+**intraclass correlation coefficient** (ICC) plays the analogous role, partitioning
+variance into rater, target, and error components [@Shrout_1979]. The worked example
+below estimates kappa for a two-coder labeling task.
+
+```{r kappa-example}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(42)
+
+# Two coders label 200 reviews as positive (1) or negative (0).
+# Simulate a shared latent truth plus idiosyncratic coder noise.
+n      <- 200
+truth  <- rbinom(n, 1, 0.5)
+flip_a <- rbinom(n, 1, 0.10)          # coder A errs 10% of the time
+flip_b <- rbinom(n, 1, 0.12)          # coder B errs 12% of the time
+coder_a <- ifelse(flip_a == 1, 1 - truth, truth)
+coder_b <- ifelse(flip_b == 1, 1 - truth, truth)
+
+tab <- table(coder_a, coder_b)
+p_o <- sum(diag(tab)) / sum(tab)                       # observed agreement
+p_e <- sum(rowSums(tab) * colSums(tab)) / sum(tab)^2   # chance agreement
+kappa <- (p_o - p_e) / (1 - p_e)
+
+cat("Observed agreement p_o:", round(p_o, 3), "\n")
+cat("Chance agreement   p_e:", round(p_e, 3), "\n")
+cat("Cohen's kappa        :", round(kappa, 3), "\n")
+```
+
+### A Worked Reflective Measurement Model
+
+To make @eq-reflective through @eq-ave concrete, we simulate a single reflective
+construct with four congeneric indicators, recover the loadings by factor analysis,
+and compute composite reliability and AVE from the estimates.
+
+```{r reflective-cfa}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(2024)
+
+n       <- 500
+lambda  <- c(0.85, 0.80, 0.75, 0.70)   # true (heterogeneous) loadings
+theta   <- 1 - lambda^2                 # error variances (unit-variance items)
+eta     <- rnorm(n)                     # latent construct, Var = 1
+
+# Generate indicators under the reflective model x_k = lambda_k * eta + e_k
+X <- sapply(seq_along(lambda), function(k) lambda[k] * eta + rnorm(n, sd = sqrt(theta[k])))
+colnames(X) <- paste0("x", seq_along(lambda))
+
+# Recover a one-factor solution; loadings are the std. correlations with the factor
+fa <- factanal(X, factors = 1, scores = "none")
+lhat <- as.numeric(fa$loadings[, 1])     # estimated loadings
+ehat <- 1 - lhat^2                       # implied error variances
+
+CR  <- sum(lhat)^2 / (sum(lhat)^2 + sum(ehat))
+AVE <- sum(lhat^2) / (sum(lhat^2) + sum(ehat))
+
+# Cronbach's alpha from the item covariance matrix
+S       <- cov(X)
+K       <- ncol(X)
+alpha   <- (K / (K - 1)) * (1 - sum(diag(S)) / sum(S))
+
+cat("Estimated loadings:", round(lhat, 3), "\n")
+cat("Cronbach's alpha  :", round(alpha, 3), "\n")
+cat("Composite reliab. :", round(CR, 3), "\n")
+cat("AVE               :", round(AVE, 3), "(> 0.50 => convergent)\n")
+```
+
+Because the loadings are heterogeneous, alpha will sit *below* composite reliability
+in this example—the tau-equivalence gap of @eq-alpha made visible. AVE above $0.50$
+confirms convergent validity for the simulated construct.
+
+## Common-Method Bias
+
+A pervasive threat to survey-based measurement is **common-method variance** (CMV):
+variance attributable to the *measurement method* rather than the constructs the
+measures represent. When the same respondent rates both an independent and a
+dependent variable, on the same scale, at the same sitting, shared method
+factors—consistency motifs, social desirability, acquiescence, common scale anchors,
+transient mood—inject a spurious component into every item. The bias, **common-method
+bias** (CMB), is the distortion this induces in observed relationships, and it can
+inflate *or* deflate correlations [@mackenzie1986].
+
+### A Formal Model of the Bias
+
+Augment the reflective model @eq-reflective with a method factor $M$ common to all
+items measured by the shared method:
+
+$$
+x_k \;=\; \lambda_k\, \eta \;+\; \omega_k\, M \;+\; \varepsilon_k,
+$$ {#eq-method-factor}
+
+with $M \perp \eta$, $M \perp \varepsilon_k$, and method loadings $\omega_k$. Two
+items measuring *different* substantive constructs $\eta$ and $\eta'$ now share the
+method factor, so their observed covariance picks up a method term that has nothing
+to do with their true relationship:
+
+$$
+\mathrm{Cov}(x_j, y_l) \;=\; \underbrace{\lambda_j \lambda_l\,\mathrm{Cov}(\eta,\eta')}_{\text{substantive}}
+\;+\; \underbrace{\omega_j \omega_l\,\sigma_M^2}_{\text{method bias}} .
+$$ {#eq-cmb-bias}
+
+When predictor and outcome share the method, the second term is added to *every*
+cross-construct covariance, biasing structural estimates—usually upward, because
+method loadings of the same sign inflate correlations, though differential signs can
+deflate. The contaminant is most dangerous in single-source, single-instrument
+designs: exactly the cross-sectional self-report survey that dominates applied
+marketing.
+
+### Procedural and Statistical Remedies
+
+Defenses fall into two families. **Procedural** remedies design the bias out before
+data collection: obtain predictor and outcome measures from *different sources* (e.g.,
+attitudes from the consumer, behavior from the firm's records) or at different times;
+separate the measurement of constructs psychologically or temporally;
+counterbalance item order; protect respondent anonymity to blunt social desirability;
+and write items to reduce ambiguity and common scale anchoring. Separating the source
+of the predictor from the source of the outcome severs the $M$ that links them in
+@eq-cmb-bias and is the single most effective remedy. <!-- CITE-NEEDED: Podsakoff, MacKenzie, Lee & Podsakoff 2003 common method biases -->
+
+**Statistical** remedies detect or partial out the method factor after the fact, and
+none is a substitute for good design. Harman's single-factor test—loading all items
+on one unrotated factor and checking that it explains less than half the
+variance—is widely reported but weak, detecting only gross contamination. Stronger is
+to estimate @eq-method-factor directly: include an unmeasured **latent method
+factor** in the CFA, let all indicators load on it alongside their substantive
+constructs, and compare structural estimates with and without it. A **marker-variable**
+approach uses a theoretically unrelated marker construct as a proxy for $M$ and
+partials its correlation out of the substantive correlations. The diagnostic below
+implements the marker-variable logic on simulated data containing a known method
+component.
+
+```{r cmb-marker}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(7)
+
+n   <- 800
+eta1 <- rnorm(n); eta2 <- rnorm(n)            # two substantive constructs
+M    <- rnorm(n)                               # shared method factor
+
+# Substantive correlation between constructs is set to ZERO here:
+# any observed X-Y correlation is pure method bias.
+w <- 0.5                                        # common method loading
+x <- 0.8 * eta1 + w * M + rnorm(n, sd = 0.3)    # predictor (one item)
+y <- 0.8 * eta2 + w * M + rnorm(n, sd = 0.3)    # outcome   (one item)
+marker <- 0.0 * eta1 + w * M + rnorm(n, sd = 0.3)  # theoretically unrelated marker
+
+raw_xy <- cor(x, y)
+
+# Marker-variable correction: subtract the method-induced correlation,
+# proxied by the smallest observed correlation with the marker.
+r_xm <- cor(x, marker); r_ym <- cor(y, marker)
+r_m  <- min(r_xm, r_ym)                         # conservative marker correlation
+adj_xy <- (raw_xy - r_m) / (1 - r_m)            # partial out shared method
+
+cat("Raw X-Y correlation (contaminated):", round(raw_xy, 3), "\n")
+cat("Marker correlation used           :", round(r_m, 3), "\n")
+cat("Method-adjusted X-Y correlation   :", round(adj_xy, 3), "\n")
+cat("True substantive correlation      : 0.000\n")
+```
+
+The raw correlation is spuriously positive—pure method bias, since the substantive
+correlation was set to zero—and the marker adjustment pulls the estimate back toward
+the truth. The lesson is the one @eq-cmb-bias formalizes: when a relationship is
+estimated from a single self-report instrument, part of it may be the instrument
+talking to itself, and the credible defense is procedural separation of sources, with
+statistical partialling as a fallback.
+
+## Key Takeaways
+
+- Measurement is a *modeling* problem. Under true-score theory (@eq-truescore),
+  reliability is a variance ratio (@eq-reliability), and unreliability *attenuates*
+  every estimated relationship (@eq-attenuation).
+- The reflective–formative distinction is a claim about the **direction of causality**
+  between construct and indicators (@eq-reflective vs. @eq-formative) and dictates the
+  entire validity battery; it must be decided conceptually, *before* data collection
+  (@tbl-refl-form).
+- A pure formative model is **not identified**; it needs external structure, most
+  commonly the **MIMIC** specification (@eq-mimic), to fix its metric and disturbance.
+- Internal-consistency reliability (alpha, CR, AVE) and the Fornell–Larcker
+  discriminant-validity criterion apply to **reflective** constructs only; formative
+  indices are judged by weights and collinearity.
+- **Common-method bias** arises when one instrument supplies both predictor and
+  outcome (@eq-cmb-bias); the strongest remedy is procedural—separate the sources—not
+  a post-hoc statistical patch.
+
+## Further Reading
+
+The two standard compendia of validated marketing instruments are the
+*Handbook of Marketing Scales* [@bearden2011] and the *Marketing Scales Handbook*
+[@stewart1993]; both organize scales by construct with reliability and validity
+evidence. For the reflective–formative debate, @coltman2008 and
+@diamantopoulos2013quantitative give the theoretical and operational decision rules,
+and @edwards2010 examines the construct-validity consequences of the choice.
+@fornell1981a remains the reference for convergent and discriminant validity with
+unobservable variables, and @mackenzie1986 for method effects in marketing
+measurement. The branding constructs whose measurement models are actively contested—brand
+love [@batra2012; @bagozzi2016] and authenticity [@morhart2015; @nunes2021]—are
+treated substantively in @sec-branding.

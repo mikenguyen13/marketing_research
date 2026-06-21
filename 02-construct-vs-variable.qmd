@@ -1,31 +1,673 @@
-# Construct vs. Variable
+# Constructs vs. Variables {#sec-construct-vs-variable}
 
-+----------+-------+------------------+------------------+
-|          |       | Reality          |                  |
-+:========:+:=====:+:================:+:================:+
-|          |       | True             | False            |
-+----------+-------+------------------+------------------+
-| Measured | True  | Correct          | Type 1 error     |
-|          |       |                  |                  |
-|          |       |                  | (False positive) |
-+----------+-------+------------------+------------------+
-|          | False | Type 2 error     | Correct          |
-|          |       |                  |                  |
-|          |       | (False Negative) |                  |
-+----------+-------+------------------+------------------+
+Almost everything marketing scientists care about is invisible. Brand equity,
+customer satisfaction, perceived quality, purchase intention, trust, involvement,
+loyalty—none of these can be read off an instrument the way a thermometer reads
+temperature. They are *constructs*: abstractions the research community invents,
+names, and agrees to treat as if they were real, precisely because doing so
+organizes a sprawl of otherwise disconnected observations. What we actually
+record—a click, a seven-point rating, a repeat purchase, a star count—are
+*variables*: observed quantities standing in for the construct we cannot see.
+The entire empirical enterprise of marketing rests on the slender bridge between
+the two, and most of what goes wrong in applied research goes wrong on that
+bridge.
 
-: measured or perceived vs. reality
+This chapter is about that bridge. It develops, formally and with reproducible
+code, the distinction between a construct and the variables that measure it; the
+act of *operationalization* that connects them; and the two properties—*validity*
+and *reliability*—that determine whether the connection is any good. These ideas
+are foundational in the literal sense: every later chapter that estimates a brand's
+worth (@sec-branding), models a response function, or runs a regression is
+implicitly trusting that its left- and right-hand-side variables measure the
+constructs the theory is about. When that trust is misplaced, no amount of
+econometric sophistication downstream can repair it. Measurement error is not a
+nuisance to be cleaned up after the interesting modeling; for latent constructs it
+is the modeling.
 
-![Measurement Error](images/measurement_error.PNG "Measurement Error"){width="100%"}
+By the end of the chapter the reader should be able to: state what a latent
+construct is and write down its measurement model; distinguish *reflective* from
+*formative* operationalizations and explain why the choice changes which validity
+tests apply; decompose an observed score into true score and error and derive
+reliability from that decomposition; estimate reliability (coefficient alpha, the
+intraclass correlation, Cohen's $\kappa$) and the components of validity
+(convergent, discriminant, nomological) from data; and recognize the
+*construct-to-measure gap*—the slippage between what we mean and what we
+record—in its many disguises. We lead with intuition and follow immediately with
+the formalism, because both audiences for this book need both.
 
-![Moderator vs. Mediator](images/moderator_mediator.PNG "Moderator vs. Mediator"){width="100%"}
+## Constructs, Variables, and the Gap Between Them
 
-![Validity](images/validity.PNG "Validity"){width="100%"}
+A **variable** is anything that varies across the units of analysis and can be
+recorded: it has a name, a measurement procedure, and a set of admissible values.
+A respondent's age, the price paid, whether a coupon was redeemed, the number on a
+Likert item—all are variables. Variables are *operational*: their meaning is
+exhausted by the procedure that produces them. There is no ambiguity about what "the
+integer the respondent circled on item 3" means once the questionnaire is fixed.
 
-![Reliability vs. Validity](images/This-figure-shows-possible-combinations-of-validity-and-reliability-Each-target_W640.jpg "Reliability vs. Validity"){width="100%"}
+A **construct** is a different kind of object. It is a conceptual term,
+deliberately constructed by researchers, that denotes a property of the unit which
+is *not* directly observable and whose meaning is given by a theoretical
+definition rather than a measurement procedure. "Customer satisfaction" is not
+identical to any single rating; it is the postulated psychological state that, the
+theory says, *causes* people to give high ratings, recommend the product, and buy
+again. The construct lives in the theory; the variables live in the dataset.
 
-picture from [@Irvine_2019]
+::: {.callout-note}
+The vocabulary is not standardized across fields. Psychometrics says *latent
+variable*; econometrics says *unobservable* or *latent factor*; structural-equation
+modeling says *factor* or *construct*; classical test theory says *true score*. We
+use **construct** for the theoretical concept, **latent variable** $\eta$ for its
+formal representation inside a model, and **indicator**, **measure**, or **manifest
+variable** $x$ for the observed quantity that proxies it. The relationships are the
+same regardless of dialect.
+:::
 
-Constructs are things we make up, define clearly
+The distinction matters because constructs and variables fail to coincide in
+predictable, consequential ways. Call the slippage the **construct-to-measure
+gap**: the difference between the construct as theoretically intended and the
+construct as actually captured by the chosen measure. The gap has at least three
+faces.
 
-Phenomena are observable variables
+First, **deficiency**: the measure omits part of the construct. A satisfaction
+scale that asks only about product quality misses satisfaction with price, service,
+and delivery; it is *construct-deficient*. Second, **contamination**: the measure
+captures things outside the construct. A self-report of "how healthy is your diet"
+is contaminated by social-desirability bias—respondents report the construct *plus*
+their desire to look good. Third, **distortion**: the measure relates to the
+construct nonlinearly or non-monotonically, so that equal differences in the
+measure do not correspond to equal differences in the construct. @fig-cm-gap
+diagrams the three failure modes against the ideal of a measure that maps cleanly
+onto its construct.
+
+```{mermaid}
+%%| label: fig-cm-gap
+%%| fig-cap: "The construct-to-measure gap. The intended construct (left) and the recorded measure (right) overlap only partially. Region D is construct deficiency (intended but unmeasured); region C is contamination (measured but unintended); the intersection V is valid variance. Distortion warps the mapping even within V."
+flowchart LR
+  subgraph Construct["Intended construct"]
+    D["D: deficiency<br/>(meant, not measured)"]
+    V1["V: valid<br/>overlap"]
+  end
+  subgraph Measure["Recorded measure"]
+    V2["V: valid<br/>overlap"]
+    C["C: contamination<br/>(measured, not meant)"]
+  end
+  V1 --- V2
+```
+
+No measure is perfectly free of all three faults; the practical question is whether
+the valid overlap $V$ is large enough, and the contamination $C$ small and
+*random* enough, for the measure to support the inferences the study wants to draw.
+Making that question precise is the work of measurement theory.
+
+> "A construct is some postulated attribute of people, assumed to be reflected in
+> test performance." A construct is admitted into a science not because it can be
+> observed but because a network of theoretical relations—a *nomological
+> network*—gives it empirical consequences that can be checked.[^cronbachmeehl]
+
+[^cronbachmeehl]: This is the central idea of construct validation in the
+classical psychometric tradition: a construct earns its keep through the lawful
+relations it enters into, not through any single observation.
+<!-- CITE-NEEDED: Cronbach & Meehl (1955), "Construct validity in psychological tests," Psychological Bulletin -->
+
+## Latent Constructs and the Measurement Model
+
+To reason formally we need to represent a construct inside a model. Let $\eta$
+(eta) denote the **latent variable** standing for the construct for a generic unit,
+and let $\mathbf{x} = (x_1,\dots,x_K)^\top$ be the vector of $K$ observed
+indicators intended to measure it. A **measurement model** is a statement about how
+$\mathbf{x}$ and $\eta$ are related. Two such statements dominate marketing, and
+choosing between them is the single most consequential measurement decision a
+researcher makes [@coltman2008; @diamantopoulos2013quantitative].
+
+### Reflective Measurement
+
+In a **reflective** (effect-indicator) model the construct is a *common cause* of
+its indicators: each indicator is a noisy manifestation of the same underlying
+$\eta$. The classic linear, unidimensional form is
+
+$$
+x_k = \tau_k + \lambda_k\,\eta + \varepsilon_k, \qquad k = 1,\dots,K,
+$$ {#eq-reflective}
+
+where $\lambda_k$ is the **loading** (how strongly indicator $k$ reflects the
+construct), $\tau_k$ an intercept, and $\varepsilon_k$ a measurement error
+satisfying $\mathbb{E}[\varepsilon_k]=0$, $\mathrm{Cov}(\eta,\varepsilon_k)=0$, and
+$\mathrm{Cov}(\varepsilon_j,\varepsilon_k)=0$ for $j\neq k$ (uncorrelated errors,
+the *local-independence* assumption). The arrows in a path diagram point *from*
+$\eta$ *to* each $x_k$, as in @fig-measurement-models.
+
+Three properties follow immediately and are diagnostic of the reflective view.
+Because all indicators share the single common cause $\eta$, they should be
+positively **intercorrelated**; because they are interchangeable expressions of the
+same thing, dropping one should not change the *meaning* of the construct, only the
+precision with which it is measured; and because each carries information about the
+same $\eta$, **internal consistency** (do the items hang together?) is the relevant
+reliability question. The price premium, perceived quality, and loyalty items of a
+brand-equity scale are typically modeled this way [@yoo2001; @keller1993].
+
+### Formative Measurement
+
+In a **formative** (causal-indicator or composite) model the arrows reverse: the
+indicators are *causes* or *components* that together compose the construct,
+
+$$
+\eta = \sum_{k=1}^{K} w_k\,x_k + \zeta,
+$$ {#eq-formative}
+
+with weights $w_k$ and a disturbance $\zeta$ capturing the part of $\eta$ not
+accounted for by the chosen indicators. Here the indicators need *not* be
+correlated—they describe different facets—and they are emphatically *not*
+interchangeable: drop one and the construct itself changes. "Socioeconomic status"
+formed from income, education, and occupation is the textbook case; in marketing,
+many "marketing-mix exposure," "deprivation," or driver-based indices are formative,
+and whether brand equity is reflective or formative is a live and unsettled dispute
+(@sec-branding) [@henseler2017; @coltman2008].
+
+::: {.callout-warning}
+Misspecifying the direction is not a stylistic slip—it biases structural estimates
+and invalidates the usual reliability and validity diagnostics. Applying
+internal-consistency tests (which *expect* correlated indicators) to a formative
+index will reject perfectly good causal indicators for the "crime" of being
+uncorrelated; conversely, applying formative weighting to reflective items throws
+away the information that their shared variance is the construct
+[@diamantopoulos2013quantitative; @bendle2018misuse].
+:::
+
+The two models are not nested and imply different psychometrics, summarized in
+@tbl-reflective-formative. The decision is theoretical, not empirical: it is
+settled by asking whether the construct *produces* its indicators (reflective) or
+is *defined by* them (formative), a question data alone cannot answer
+[@coltman2008].
+
+| Property | Reflective (@eq-reflective) | Formative (@eq-formative) |
+|---|---|---|
+| Causal direction | construct $\rightarrow$ indicators | indicators $\rightarrow$ construct |
+| Indicator intercorrelation | high, expected | not required |
+| Interchangeability | items interchangeable | items not interchangeable |
+| Effect of dropping an item | precision only | construct meaning changes |
+| Reliability logic | internal consistency ($\alpha$, $\omega$, CR) | n/a; check indicator weights & VIF |
+| Validity logic | convergent + discriminant + nomological | nomological + indicator validity |
+| Error attaches to | each indicator ($\varepsilon_k$) | the construct ($\zeta$) |
+
+: Reflective vs. formative measurement models and their consequences for assessment. {#tbl-reflective-formative}
+
+```{mermaid}
+%%| label: fig-measurement-models
+%%| fig-cap: "Reflective vs. formative measurement. In the reflective model the latent construct η is a common cause of its indicators (arrows out, errors on each indicator). In the formative model the indicators compose the construct (arrows in, error on the construct)."
+flowchart LR
+  subgraph R["Reflective"]
+    direction TB
+    eta1(("η")) --> xr1["x₁"]
+    eta1 --> xr2["x₂"]
+    eta1 --> xr3["x₃"]
+    e1>"ε₁"] --> xr1
+    e2>"ε₂"] --> xr2
+    e3>"ε₃"] --> xr3
+  end
+  subgraph F["Formative"]
+    direction TB
+    xf1["x₁"] --> eta2(("η"))
+    xf2["x₂"] --> eta2
+    xf3["x₃"] --> eta2
+    z>"ζ"] --> eta2
+  end
+```
+
+## Operationalization: From Concept to Instrument
+
+**Operationalization** is the act of specifying the procedure that turns a
+construct into a variable—the rule that says "to measure perceived quality, ask
+these four questions on these scales and average them." It is where theory makes
+contact with data, and it is irreversible in the sense that downstream analysis can
+never recover construct meaning that the operationalization failed to capture.
+
+The classical paradigm for developing a reflective scale proceeds through a
+disciplined sequence: (1) **specify the domain** of the construct from theory; (2)
+**generate an item pool** broad enough to cover the domain (guarding against
+deficiency); (3) **purify** the items by collecting data and discarding those that
+correlate poorly with the rest; (4) **assess reliability** on a fresh sample; and
+(5) **assess validity** against external criteria and related constructs.[^churchill]
+The logic is iterative because operationalization is fallible: the first item pool
+is almost always both deficient and contaminated, and only data exposes which items
+do which.
+
+[^churchill]: This sequence is the backbone of scale development in marketing; the
+purification step in particular—iteratively pruning items by item-to-total
+correlation and re-estimating reliability—originates in the marketing measurement
+literature of the late 1970s.
+<!-- CITE-NEEDED: Churchill (1979), "A paradigm for developing better measures of marketing constructs," JMR -->
+
+A single construct can be operationalized in radically different ways, and the
+choice carries assumptions. Customer satisfaction can be measured by a
+*self-reported* rating (cheap, but contaminated by mood and response styles), by
+*revealed behavior* such as repurchase (objective, but deficient—repurchase also
+reflects switching costs and availability), or by a *physiological* or *textual*
+signal mined from reviews (scalable, but distortion-prone). Each operationalization
+trades the three faces of the gap differently; none is uniquely correct, and
+reporting which one was used is part of reporting the result. A recurring error in
+applied work is to treat a convenient managerial *metric* (e.g., a single
+top-box satisfaction percentage, or a Net Promoter score) as if it were the
+construct itself, when it is one deficient operationalization among many
+[@bendle2018; @bendle2018misuse].
+
+## Classical Test Theory and the Anatomy of a Score
+
+To define reliability we need a model of what an observed score *is*. **Classical
+test theory** (CTT) supplies the simplest one. It decomposes an observed score $X$
+for a single indicator into a **true score** $T$ and an **error** $E$:
+
+$$
+X = T + E, \qquad T \equiv \mathbb{E}[X], \qquad \mathbb{E}[E] = 0, \qquad
+\mathrm{Cov}(T, E) = 0.
+$$ {#eq-ctt}
+
+The true score is *defined* as the expected value of the observed score over
+hypothetical independent replications of the measurement on the same unit—not as
+the Platonic construct value, a subtlety we return to under validity. Error is
+*random*: by construction it is mean-zero and uncorrelated with the true score.
+Because $T$ and $E$ are uncorrelated, the observed variance partitions cleanly,
+
+$$
+\sigma_X^2 = \sigma_T^2 + \sigma_E^2 .
+$$ {#eq-var-decomp}
+
+**Reliability** $\rho_{XX'}$ is then defined as the share of observed variance that
+is true-score variance,
+
+$$
+\rho_{XX'} \;=\; \frac{\sigma_T^2}{\sigma_X^2} \;=\; \frac{\sigma_T^2}{\sigma_T^2 + \sigma_E^2}
+\;=\; \mathrm{Corr}(X, X')^2\ \text{-free form}\ = \mathrm{Corr}(X, X'),
+$$ {#eq-reliability}
+
+where $X'$ is a *parallel* measurement (same $T$, same $\sigma_E^2$, independent
+error). The last equality is the operational content of the definition: reliability
+equals the correlation between two parallel measurements of the same thing, which
+is why test–retest and split-half correlations estimate it. Reliability ranges from
+0 (all noise) to 1 (no error); it has no units and is a property of *scores in a
+population*, not of an instrument in the abstract.
+
+Two immediate consequences shape everything downstream. First, **attenuation**:
+unreliability in a predictor biases its estimated effect *toward zero*. If a true
+relationship has correlation $\rho_{TY}$ but $X$ measures $T$ with reliability
+$\rho_{XX'}$, the observable correlation is
+
+$$
+\rho_{XY} = \rho_{TY}\,\sqrt{\rho_{XX'}\,\rho_{YY'}},
+$$ {#eq-attenuation}
+
+so noisy measurement systematically *understates* effects—a fact that makes
+"we found no effect" uninterpretable without a reliability figure. Second,
+**aggregation buys reliability**: averaging $K$ parallel indicators leaves the
+true score intact but shrinks error variance by $1/K$, so the reliability of a
+$K$-item sum rises with $K$ via the Spearman–Brown relation
+$\rho_K = K\rho_1 / [1 + (K-1)\rho_1]$. This is the formal reason multi-item scales
+beat single items, and why @eq-reflective is worth the trouble.
+
+## Reliability in Practice
+
+Reliability is estimated, not known. The estimator depends on which replication the
+data approximate.
+
+### Internal Consistency: Coefficient Alpha
+
+The most reported estimate is **coefficient alpha** (Cronbach's $\alpha$), which
+treats the $K$ items of one administration as approximately parallel replications.
+With $\sigma_i^2$ the variance of item $i$ and $\sigma_X^2$ the variance of the
+total score $X=\sum_i x_i$,
+
+$$
+\alpha = \frac{K}{K-1}\left(1 - \frac{\sum_{i=1}^{K}\sigma_i^2}{\sigma_X^2}\right).
+$$ {#eq-alpha}
+
+Alpha is a *lower bound* on reliability under the assumption of (essentially)
+$\tau$-equivalent items—equal loadings, @eq-reflective with all $\lambda_k$ equal.
+When loadings differ, $\alpha$ underestimates reliability, and McDonald's $\omega$
+(which uses the estimated loadings directly) is preferable. Two cautions are worth
+stating plainly: $\alpha$ rises mechanically with $K$, so a high $\alpha$ can simply
+mean "many items," not "good items"; and $\alpha$ presupposes a *reflective,
+unidimensional* construct—it is meaningless for a formative index
+(@tbl-reflective-formative).[^alpha]
+
+[^alpha]: A common abuse is to report $\alpha$ for a deliberately multidimensional
+battery and conclude the battery is "reliable." Alpha conflates dimensionality with
+consistency; a factor analysis must establish unidimensionality first.
+
+```{r alpha-demo}
+#| message: false
+#| warning: false
+#| label: alpha-demo
+#| fig-cap: "Simulated four-item reflective scale: true score plus item-specific error."
+set.seed(2718)
+
+n  <- 500                       # respondents
+K  <- 4                         # reflective indicators
+lambda <- c(0.9, 0.8, 0.7, 0.6) # item loadings
+
+eta   <- rnorm(n)                                   # latent construct (standardized)
+err   <- sapply(sqrt(1 - lambda^2),                 # error sd from loadings
+                function(s) rnorm(n, sd = s))
+X     <- sweep(err, 2, lambda, `+`) +               # x_k = lambda_k * eta + e_k
+         outer(eta, lambda)
+
+# Coefficient alpha from equation (eq-alpha), implemented directly
+cronbach_alpha <- function(items) {
+  k <- ncol(items)
+  item_var  <- sum(apply(items, 2, var))
+  total_var <- var(rowSums(items))
+  (k / (k - 1)) * (1 - item_var / total_var)
+}
+
+alpha_hat <- cronbach_alpha(X)
+round(alpha_hat, 3)
+```
+
+### Stability and Agreement: ICC and Cohen's $\kappa$
+
+When the replication is across *time* (test–retest) or across *raters*, reliability
+is an **intraclass correlation** (ICC): the share of total variance attributable to
+stable between-unit differences rather than to occasion- or rater-specific noise.
+For a one-way model with unit effect $u_i$ and residual $e_{ij}$, the ICC is
+$\sigma_u^2 / (\sigma_u^2 + \sigma_e^2)$, the same true-over-total ratio as
+@eq-reliability, now estimated from a variance-components decomposition. The
+forms—single vs. average rater, consistency vs. absolute agreement—must be matched
+to the design, a distinction made canonical for the field by @Shrout_1979.
+
+For *categorical* judgments (does this review express complaint? is this ad
+emotional?), correlation is inappropriate and the relevant statistic is **Cohen's
+$\kappa$**, which corrects observed agreement $p_o$ for the agreement
+$p_e$ expected by chance:
+
+$$
+\kappa = \frac{p_o - p_e}{1 - p_e}.
+$$ {#eq-kappa}
+
+A $\kappa$ of 0 means raters agree only as often as random labeling would predict;
+1 means perfect agreement [@Cohen_1960]. The widely used verbal benchmarks—slight,
+fair, moderate, substantial, almost perfect—come from @Landis_1977, though they are
+conventions, not laws. The example below estimates both an ICC for ratings and a
+$\kappa$ for binary codings on simulated data.
+
+```{r icc-kappa}
+#| message: false
+#| warning: false
+#| label: icc-kappa
+
+set.seed(1414)
+
+## ---- Intraclass correlation (two raters, continuous ratings) -------------
+n  <- 200
+true_q <- rnorm(n, mean = 0, sd = 1)        # stable latent quality of object i
+r1 <- true_q + rnorm(n, sd = 0.6)            # rater 1
+r2 <- true_q + rnorm(n, sd = 0.6)            # rater 2
+
+# One-way ICC via variance components (between-object / total)
+ms_between <- 2 * var(rowMeans(cbind(r1, r2)))           # 2 raters per object
+ms_within  <- mean((r1 - r2)^2) / 2
+icc <- (ms_between - ms_within) / (ms_between + ms_within)
+round(icc, 3)
+
+## ---- Cohen's kappa (two coders, binary labels) ---------------------------
+latent  <- rnorm(n)
+code1 <- as.integer(latent + rnorm(n, sd = 0.7) > 0)   # coder 1
+code2 <- as.integer(latent + rnorm(n, sd = 0.7) > 0)   # coder 2
+
+tab <- table(code1, code2)
+p_o <- sum(diag(tab)) / sum(tab)                        # observed agreement
+p_e <- sum(rowSums(tab) * colSums(tab)) / sum(tab)^2    # chance agreement
+kappa <- (p_o - p_e) / (1 - p_e)                        # equation (eq-kappa)
+round(c(p_o = p_o, p_e = p_e, kappa = kappa), 3)
+```
+
+High reliability is necessary but not sufficient. A bathroom scale that reads three
+kilograms heavy is perfectly reliable and perfectly wrong: it returns the same
+number every time (no error variance) while measuring the wrong true score. The
+missing property is validity.
+
+## Validity: Are We Measuring the Right Thing?
+
+**Validity** asks whether a measure captures the construct it claims to capture—
+whether the true score $T$ in @eq-ctt actually equals (or tracks) the construct
+$\eta$, rather than some neighboring or contaminating quantity. Modern measurement
+theory treats validity not as a property a measure simply has, but as a body of
+*evidence* accumulated for a particular interpretation and use. Several
+complementary strands of evidence are standard.
+
+**Content validity** is the (largely judgmental) question of whether the item pool
+covers the construct's domain without straying outside it—directly the
+deficiency/contamination trade-off of @fig-cm-gap, assessed by expert review before
+any data are collected.
+
+**Convergent validity** asks whether indicators that *should* measure the same
+construct actually correlate. In a reflective model it is read off the loadings:
+high, significant $\lambda_k$ mean the indicators share the common cause. A standard
+summary is the **average variance extracted** (AVE), the mean squared standardized
+loading,
+
+$$
+\mathrm{AVE} = \frac{1}{K}\sum_{k=1}^{K}\lambda_k^2 ,
+$$ {#eq-ave}
+
+interpreted as the share of indicator variance the construct explains; $\mathrm{AVE}
+\geq 0.5$ (the construct explains more than half the indicator variance) is the
+conventional threshold [@fornell1981a].
+
+**Discriminant validity** asks the reverse: whether a construct is empirically
+*distinct* from other constructs it is not supposed to be identical to. The classic
+@fornell1981a criterion requires a construct's AVE to exceed its squared correlation
+with every other construct—each construct shares more variance with its own
+indicators than with any other construct. (More recent work argues the
+heterotrait–monotrait ratio of correlations detects discriminant-validity problems
+the Fornell–Larcker criterion misses, especially when loadings are similar across
+constructs.)[^htmt]
+
+[^htmt]: The HTMT criterion compares average cross-construct item correlations to
+average within-construct item correlations; values near 1 signal that two
+"different" constructs are empirically the same.
+<!-- CITE-NEEDED: Henseler, Ringle & Sarstedt (2015), "A new criterion for assessing discriminant validity," JAMS -->
+
+**Nomological (construct) validity** is the deepest and the one that ties back to
+the definition of a construct: does the measure relate to *other* constructs the
+way theory predicts? A valid satisfaction measure should predict repurchase and
+word of mouth, correlate with perceived quality, and be largely unrelated to,
+say, respondent handedness. The web of predicted relations is the **nomological
+network**, and a measure earns construct validity by behaving as the network says
+it should. This is also where validity and reliability finally separate cleanly:
+reliability concerns the *consistency* of $X$ around its true score $T$; validity
+concerns whether $T$ is the *right* $T$. @fig-validity-types lays out the strands
+and the questions they answer.
+
+```{mermaid}
+%%| label: fig-validity-types
+%%| fig-cap: "Strands of measurement validity and the question each answers. Reliability (left) is logically prior—an unreliable measure cannot be valid—but high reliability does not imply validity."
+flowchart TB
+  M["Observed measure x"]
+  M --> REL["Reliability:<br/>is x consistent<br/>around its true score?"]
+  M --> VAL["Validity:<br/>is the true score<br/>the right construct?"]
+  VAL --> CON["Content:<br/>does it cover<br/>the domain?"]
+  VAL --> CONV["Convergent:<br/>do same-construct<br/>items agree? (AVE)"]
+  VAL --> DISC["Discriminant:<br/>is it distinct from<br/>other constructs?"]
+  VAL --> NOMO["Nomological:<br/>does it relate to<br/>other constructs<br/>as theory predicts?"]
+```
+
+### A Worked Convergent/Discriminant Check
+
+The reflective machinery is concrete. The example below simulates two correlated
+latent constructs, each with three reflective indicators, then recovers the loadings
+by factor analysis, computes each construct's AVE from @eq-ave, and applies the
+Fornell–Larcker discriminant test: AVE must exceed the squared inter-construct
+correlation.
+
+```{r validity-demo}
+#| message: false
+#| warning: false
+#| label: validity-demo
+
+set.seed(3142)
+n <- 600
+
+# Two latent constructs with a true correlation of 0.45
+Sigma <- matrix(c(1, 0.45, 0.45, 1), 2)
+L     <- chol(Sigma)
+F     <- matrix(rnorm(n * 2), n, 2) %*% L
+colnames(F) <- c("eta_A", "eta_B")
+
+lam_A <- c(0.85, 0.80, 0.75)   # loadings, construct A
+lam_B <- c(0.80, 0.78, 0.70)   # loadings, construct B
+
+make_block <- function(eta, lam) {
+  sapply(lam, function(l) l * eta + rnorm(length(eta), sd = sqrt(1 - l^2)))
+}
+A <- make_block(F[, "eta_A"], lam_A)
+B <- make_block(F[, "eta_B"], lam_B)
+dat <- data.frame(A, B)
+names(dat) <- c(paste0("a", 1:3), paste0("b", 1:3))
+
+# Recover loadings with a 2-factor maximum-likelihood EFA
+fa <- factanal(dat, factors = 2, rotation = "promax")
+load <- fa$loadings[, 1:2]
+
+# Average variance extracted per construct (eq-ave), using the dominant factor
+ave_A <- mean(load[1:3, which.max(colSums(abs(load[1:3, ])))]^2)
+ave_B <- mean(load[4:6, which.max(colSums(abs(load[4:6, ])))]^2)
+
+# Inter-construct correlation from estimated factor scores
+fs <- factanal(dat, factors = 2, rotation = "promax", scores = "regression")$scores
+phi2 <- cor(fs[, 1], fs[, 2])^2
+
+cat("AVE construct A:", round(ave_A, 3), "\n")
+cat("AVE construct B:", round(ave_B, 3), "\n")
+cat("Squared factor correlation:", round(phi2, 3), "\n")
+cat("Fornell-Larcker passes (both AVE > shared var)? ",
+    ave_A > phi2 && ave_B > phi2, "\n")
+```
+
+Both AVEs comfortably exceed 0.5 (convergent validity) and exceed the squared
+inter-construct correlation (discriminant validity): the indicators measure their
+own construct better than they measure the neighbor. Had we forced the two
+constructs to correlate near 1, the discriminant test would fail—the data would be
+telling us we had relabeled one construct as two.
+
+## Identification: What Pins a Latent Model Down
+
+A latent variable has no inherent scale—nothing in @eq-reflective fixes the units
+or origin of $\eta$, since multiplying $\eta$ by a constant and dividing every
+$\lambda_k$ by the same constant leaves all observables unchanged. A measurement
+model is **identified** only after this indeterminacy is removed and enough
+constraints are imposed that the parameters are recoverable from the covariance
+matrix of the indicators. The standard fixes are to *standardize* the latent
+variable ($\mathrm{Var}(\eta)=1$) or to fix one loading (a *marker* indicator,
+$\lambda_1 = 1$), which sets the scale; the construct's mean is fixed similarly by
+an intercept constraint.
+
+Beyond scaling, identification requires *enough indicators*. With a single latent
+factor and uncorrelated errors, the covariance structure has $K(K+1)/2$ knowns and
+$2K$ unknowns (loadings and error variances) plus one variance; the rule of thumb is
+that **at least three indicators** per reflective factor are needed for a single
+factor to be just-identified, and two suffice only when the factor is embedded in a
+larger model that supplies extra constraints. What *breaks* identification is then
+predictable: too few indicators (the model has more parameters than the covariance
+matrix can determine); error terms that are in fact correlated (violating local
+independence, so shared method variance masquerades as the construct); and—most
+relevant to the reflective/formative debate—a **formative** construct that is not
+emitted into the model with at least two outgoing paths to other constructs or
+indicators, without which @eq-formative has no scale and the weights $w_k$ are not
+separately identified [@diamantopoulos2013quantitative; @henseler2017]. The lesson
+generalizes: identification failures in latent-variable models are usually a
+symptom that the measurement model and the theory disagree about how many things are
+being measured.
+
+## Common-Method Variance and Other Contamination
+
+The CTT assumption that errors are *random and uncorrelated* (@eq-ctt,
+@eq-reflective) is the one most often violated in practice, and the violation has a
+name. **Common-method variance** (CMV) is systematic error shared across indicators
+because they were collected by the same *method*—the same respondent, on the same
+survey, at the same moment, using the same response scale. CMV induces correlation
+among the $\varepsilon_k$, which the reflective model attributes to the construct,
+inflating loadings, reliability, and—most damagingly—the correlations *between*
+constructs measured by the same method. A satisfaction–loyalty correlation
+estimated from a single self-report survey is partly a measurement of the
+respondent's consistent way of answering surveys.
+
+CMV is contamination in the precise sense of @fig-cm-gap: variance that is measured
+but not meant. It cannot be detected by reliability statistics—shared method
+variance *raises* $\alpha$—which is exactly why a high $\alpha$ is no defense.
+Procedural remedies (separating the measurement of predictor and outcome in time or
+source, varying scale formats, guaranteeing anonymity to reduce
+social-desirability pressure) attack the cause; statistical remedies (modeling a
+latent method factor that loads on all indicators, or using marker variables
+theoretically unrelated to the constructs) attempt to partition method variance from
+trait variance after the fact.[^cmv] The deeper point for this chapter is that the
+construct-to-measure gap is not a one-time design choice but a property that travels
+with the data into every downstream model; an analyst who inherits a single-source
+survey inherits its contamination whether or not the original authors named it.
+
+[^cmv]: No statistical fix fully substitutes for designing the contamination out.
+The latent-method-factor and marker-variable approaches make assumptions (about
+which variance is method variance) that are themselves untestable from the
+contaminated data.
+<!-- CITE-NEEDED: Podsakoff, MacKenzie, Lee & Podsakoff (2003), "Common method biases in behavioral research," Journal of Applied Psychology -->
+
+## From Measurement Error to Decision Error
+
+Constructs and variables ultimately serve *decisions*: launch or not, target or not,
+attribute the lift to the campaign or not. It is worth closing the loop between the
+measurement error studied above and the decision error it produces, because the two
+are routinely confused. Suppose a measure is used to classify—high-value vs.
+low-value customer, satisfied vs. dissatisfied, treatment worked vs. did not. The
+construct has a true state; the measure yields a verdict; and the four combinations
+form the confusion matrix in @tbl-error-matrix.
+
+| | Construct true | Construct false |
+|---|---|---|
+| **Measure says true** | correct (true positive) | **Type I error** (false positive) |
+| **Measure says false** | **Type II error** (false negative) | correct (true negative) |
+
+: Decision errors induced by an imperfect measure. Reliability and validity shortfalls translate into Type I and Type II error rates; which error dominates depends on where the decision threshold sits relative to the construct distribution. {#tbl-error-matrix}
+
+The connection to the earlier formalism is direct. A measure with low *validity*
+shifts the whole verdict distribution off the construct, trading one error type for
+the other systematically (a biased scale, like the three-kilo bathroom scale). A
+measure with low *reliability* fattens the spread of verdicts around the truth,
+raising *both* error rates at once (a noisy scale). And attenuation (@eq-attenuation)
+guarantees that unreliable predictors make real effects look smaller than they are,
+so the most common decision error in marketing analytics—concluding "no effect"
+from a noisy measure—is a measurement failure wearing the costume of a null result.
+The discipline of distinguishing construct from variable is, in the end, the
+discipline of knowing how much of a number to believe.
+
+## Key Takeaways
+
+- A **construct** is a theoretical concept defined by its role in a nomological
+  network; a **variable** is an observed quantity defined by its measurement
+  procedure. The **construct-to-measure gap**—deficiency, contamination,
+  distortion—is where applied research most often fails (@fig-cm-gap).
+- The **measurement model** must be specified as **reflective** (@eq-reflective,
+  construct causes indicators) or **formative** (@eq-formative, indicators compose
+  construct); the choice is theoretical, not empirical, and it dictates which
+  reliability and validity tests even apply (@tbl-reflective-formative)
+  [@coltman2008; @diamantopoulos2013quantitative].
+- **Reliability** is the true-score share of observed variance (@eq-reliability);
+  estimate it by coefficient $\alpha$ (@eq-alpha) for internal consistency, the ICC
+  [@Shrout_1979] for raters/occasions, and Cohen's $\kappa$ (@eq-kappa)
+  [@Cohen_1960; @Landis_1977] for categorical codings. Unreliability **attenuates**
+  estimated effects toward zero (@eq-attenuation).
+- **Validity** asks whether the true score is the *right* construct: content,
+  convergent (AVE, @eq-ave), discriminant (Fornell–Larcker), and nomological
+  evidence together build the case [@fornell1981a]. High reliability does *not*
+  imply validity.
+- Latent models must be **identified** (scale set, $\geq 3$ reflective indicators,
+  local independence); **common-method variance** violates the random-error
+  assumption and is invisible to reliability statistics, so it must be designed out,
+  not tested away.
+
+## Further Reading
+
+The reflective/formative distinction and its consequences for marketing measurement
+are developed in @coltman2008, @diamantopoulos2013quantitative, and @henseler2017;
+the misuse of metrics that confuse a managerial number for a construct is dissected
+in @bendle2018 and @bendle2018misuse. The classical convergent/discriminant
+apparatus traces to @fornell1981a, agreement and rater reliability to @Shrout_1979,
+@Cohen_1960, and @Landis_1977. The branding chapter (@sec-branding) shows these
+abstractions doing concrete work, where whether brand equity is reflective or
+formative remains an open and consequential question.

@@ -1,3 +1,753 @@
 # Causal Inference and Field Experiments {#sec-causal-inference}
 
-<!-- SCAFFOLD: to be written to house standard, existing-bib keys only. -->
+Marketing decisions are causal claims in disguise. "Spend another dollar on
+search advertising and we will earn three" is a statement about a counterfactual
+world that did not happen—the sales the firm *would* have realized had it not
+spent the dollar. A correlation between advertising and sales, however precisely
+estimated, does not license that statement, because the firm chose how much to
+advertise, and it chose to advertise more precisely where and when it expected to
+sell more. The gap between *what we measure* (an association in observational
+data) and *what we want to know* (the effect of an intervention we control) is the
+central problem of this chapter, and of empirical marketing more broadly.
+
+This chapter develops the modern toolkit for closing that gap. It begins with the
+**potential-outcomes framework**, the language in which a causal effect is defined
+before any estimator is chosen, and shows why the naive comparison of treated and
+untreated units is biased by **selection**. It then treats randomized experiments
+and online **A/B tests** as the benchmark that solves selection by design, and the
+four leading **quasi-experimental** designs—**difference-in-differences (DiD)**,
+**instrumental variables (IV)**, **regression discontinuity (RD)**, and the
+**synthetic control method (SCM)**—as strategies for recovering causal effects
+when randomization is infeasible. Each method is presented the same way: the
+intuition first, then the estimator, then the identifying assumptions, and—most
+important—*what breaks identification* and how a reader can tell. Throughout, the
+running applications are the two domains where causal inference has reshaped
+marketing practice: **advertising measurement** and **pricing**.
+
+The stakes are not academic. A decade of large-scale field experiments has shown
+that observational and even quasi-experimental estimates of advertising's return
+can be off not by a few percent but by an order of magnitude, and sometimes carry
+the wrong sign [@lewis2015; @gordon2019]. A marketing scientist who cannot
+distinguish a credible causal estimate from an incredible one is a liability to
+the firm. By the end of this chapter the reader will be able to state the
+estimand, choose a design, defend its assumptions, implement the estimator in R,
+and diagnose the most common failures.
+
+## The Potential-Outcomes Framework
+
+The foundational move of modern causal inference is to define the effect of a
+treatment *for each unit* before worrying about how to estimate it. Following the
+Neyman–Rubin potential-outcomes model, let $D_i \in \{0,1\}$ denote whether unit
+$i$ (a consumer, a store, a geographic market, a designated market area) receives
+a treatment—an ad campaign, a price cut, a new feature. Associate with each unit
+two **potential outcomes**: $Y_i(1)$, the outcome that *would* occur under
+treatment, and $Y_i(0)$, the outcome that *would* occur under control. The
+**unit-level treatment effect** is their difference,
+
+$$
+\tau_i = Y_i(1) - Y_i(0).
+$$ {#eq-unit-effect}
+
+The defining difficulty—the *fundamental problem of causal inference*—is that for
+any unit we observe only one potential outcome. The realized outcome is
+
+$$
+Y_i = D_i\,Y_i(1) + (1 - D_i)\,Y_i(0),
+$$ {#eq-switching}
+
+so the other potential outcome is a **counterfactual** that is missing by
+construction. We never see $\tau_i$ for any single unit. Causal inference is
+therefore, at root, a **missing-data problem**, and progress comes from estimating
+*averages* of $\tau_i$ over populations rather than the unit-level effects
+themselves.
+
+> A causal effect is a comparison of two states of the world that differ only in
+> the treatment: the outcome we observe under the treatment a unit received, and
+> the outcome that same unit would have realized under the treatment it did not
+> receive. Because only one of these is ever observed, every causal estimate rests
+> on an assumption that makes the missing outcome recoverable from the data.
+
+The chief estimand is the **average treatment effect (ATE)**,
+$\tau_{\text{ATE}} = \mathbb{E}[Y_i(1) - Y_i(0)]$, the expected effect of moving a
+randomly chosen unit from control to treatment. Two relatives matter in practice.
+The **average treatment effect on the treated (ATT)**,
+$\tau_{\text{ATT}} = \mathbb{E}[Y_i(1) - Y_i(0) \mid D_i = 1]$, is the effect for
+the units that actually received treatment—the relevant quantity when asking
+whether a campaign *that ran* paid off. The **conditional average treatment effect
+(CATE)**, $\tau(\mathbf{x}) = \mathbb{E}[Y_i(1) - Y_i(0) \mid \mathbf{X}_i =
+\mathbf{x}]$, is the effect for a subpopulation with covariates $\mathbf{x}$, the
+target of modern heterogeneous-treatment-effect and targeting
+methods.[^estimand-first]
+
+[^estimand-first]: A discipline this chapter enforces: name the estimand *before*
+choosing a method. Much confusion in applied marketing arises from estimating one
+quantity (say, an ATT among self-selected adopters) and interpreting it as
+another (the ATE the firm would obtain by treating everyone). The two coincide
+only under constant effects.
+
+### Why the Naive Comparison Fails
+
+The intuitive estimator of a treatment effect is the difference in mean outcomes
+between treated and untreated units, $\hat\Delta = \bar Y_{D=1} - \bar Y_{D=0}$.
+Decomposing its probability limit exposes exactly why it is biased. Adding and
+subtracting $\mathbb{E}[Y_i(0) \mid D_i = 1]$ gives
+
+$$
+\underbrace{\mathbb{E}[Y_i \mid D_i = 1] - \mathbb{E}[Y_i \mid D_i = 0]}_{\text{naive difference}}
+= \underbrace{\tau_{\text{ATT}}}_{\text{causal effect}}
++ \underbrace{\mathbb{E}[Y_i(0) \mid D_i = 1] - \mathbb{E}[Y_i(0) \mid D_i = 0]}_{\text{selection bias}}.
+$$ {#eq-selection-bias}
+
+The second term is **selection bias**: the difference in the *baseline* (untreated)
+outcome between the groups that did and did not get treated. It is zero only if
+treated and untreated units would have looked the same absent treatment. In
+marketing they almost never do. A firm targets ads at consumers already inclined
+to buy; it cuts prices on products whose demand is already softening; loyal
+customers self-select into a rewards program. In each case
+$\mathbb{E}[Y_i(0) \mid D_i = 1] \neq \mathbb{E}[Y_i(0) \mid D_i = 0]$, and the
+naive difference confounds the effect of the treatment with the reasons the unit
+was treated. The remainder of this chapter is a catalogue of designs that drive
+the selection-bias term to zero—by randomization, or by an assumption that makes
+the untreated a valid stand-in for the treated counterfactual.
+
+Two assumptions are maintained throughout unless stated otherwise. **SUTVA** (the
+stable-unit-treatment-value assumption) requires that one unit's potential outcomes
+not depend on other units' treatment assignments (no interference) and that there
+be a single version of the treatment. SUTVA is violated by spillovers—a price
+promotion at one store cannibalizing a neighbor, an ad shown to one household
+influencing another through word of mouth—which is why experimental units in
+marketing are often *geographies* rather than individuals. **Overlap** (positivity)
+requires $0 < \Pr(D_i = 1 \mid \mathbf{X}_i) < 1$ for all covariate values, so that
+comparable treated and control units exist at every $\mathbf{x}$.
+
+@fig-ladder situates the designs of this chapter on a spectrum from the strongest
+identification (randomization, where assumptions hold by construction) to designs
+that buy identification with progressively stronger, untestable assumptions.
+
+```{mermaid}
+%%| label: fig-ladder
+%%| fig-cap: "A hierarchy of causal designs. Moving down the ladder relaxes the requirement of randomized assignment but substitutes increasingly strong, largely untestable identifying assumptions. The estimand each design targets is named in brackets."
+flowchart TD
+    A["<b>Randomized experiment / A-B test</b><br/>assignment independent of potential outcomes<br/>[ATE, by design]"]
+    B["<b>Regression discontinuity</b><br/>treatment jumps at a known cutoff<br/>[local ATE at the cutoff]"]
+    C["<b>Instrumental variables</b><br/>an exogenous shifter of treatment<br/>[LATE: effect on compliers]"]
+    D["<b>Difference-in-differences</b><br/>parallel trends absent treatment<br/>[ATT]"]
+    E["<b>Synthetic control</b><br/>weighted donors reproduce the counterfactual<br/>[ATT for one treated unit]"]
+    A --> B --> C --> D --> E
+    style A fill:#1b7837,color:#fff
+    style B fill:#5aae61,color:#fff
+    style C fill:#a6dba0,color:#000
+    style D fill:#d9f0d3,color:#000
+    style E fill:#f7f7f7,color:#000
+```
+
+## Randomized Experiments and A/B Tests
+
+Randomization is the gold standard because it eliminates selection bias *by
+construction* rather than by assumption. If treatment $D_i$ is assigned
+independently of the potential outcomes—$\{Y_i(0), Y_i(1)\} \perp D_i$—then the
+untreated group is, in expectation, a valid counterfactual for the treated group:
+$\mathbb{E}[Y_i(0) \mid D_i = 1] = \mathbb{E}[Y_i(0) \mid D_i = 0]$. The
+selection-bias term in @eq-selection-bias vanishes, and the difference in means is
+unbiased for the ATE,
+
+$$
+\hat\tau_{\text{ATE}} = \bar Y_{D=1} - \bar Y_{D=0}.
+$$ {#eq-rct-estimator}
+
+The identifying assumption—independence of assignment and potential
+outcomes—holds because the experimenter, not the units, controls $D_i$. This is
+the single most important idea in the chapter: randomization does not make treated
+and control units *identical*, it makes them *exchangeable in expectation*, which
+is all that @eq-rct-estimator requires.
+
+In the digital economy this logic is operationalized at enormous scale as the
+**A/B test** (online controlled experiment): users arriving at a site are
+randomly bucketed into a control arm seeing the incumbent experience and one or
+more treatment arms seeing a variant, and a metric—conversion, revenue per
+session, retention—is compared across arms. The mechanics are simple; the
+discipline is in the design. Three issues dominate practice.
+
+**Power and the minimum detectable effect.** An experiment that cannot detect the
+effect sizes that matter is worse than no experiment, because it invites the
+fallacy of accepting the null. For a two-arm test of a mean with equal allocation,
+the sample size per arm needed to detect a true difference $\delta$ at
+significance level $\alpha$ and power $1-\beta$ is approximately
+
+$$
+n \;\approx\; \frac{2\,(z_{1-\alpha/2} + z_{1-\beta})^2\,\sigma^2}{\delta^2},
+$$ {#eq-power}
+
+where $\sigma^2$ is the outcome variance and $z_p$ the standard-normal quantile.
+The quadratic dependence on $\delta$ is the crux of advertising measurement: sales
+are so volatile relative to advertising's effect that the required sample is often
+larger than even large firms can muster, a point developed below.
+
+**The randomization unit and interference.** When treating a user can affect other
+users—social spillovers, marketplace competition for the same inventory, supply
+constraints—unit-level randomization violates SUTVA and biases the estimate.
+Cluster-randomizing at the level of the interference (markets, regions, social
+clusters) restores validity at the cost of effective sample size.
+
+**Peeking and the validity of the stopping rule.** Repeatedly testing a running
+experiment and stopping the first time $p < 0.05$ inflates the false-positive rate
+far above the nominal level. Either fix the sample size in advance, or adopt a
+sequential procedure (always-valid $p$-values, group-sequential boundaries) whose
+error guarantee survives continuous monitoring.
+
+The following simulation makes the bias-then-fix logic concrete: it first shows
+that a confounded observational comparison recovers the wrong effect, then that
+randomization recovers the truth.
+
+```{r ab-test-sim}
+#| echo: true
+#| message: false
+#| warning: false
+#| label: fig-ab-power
+#| fig-cap: "Sampling distribution of the difference-in-means estimator across 2,000 randomized experiments, each with 1,000 users per arm and a true lift of 0.20. The estimator is centered on the truth (dashed line); the naive observational estimator from the same data-generating process is biased upward."
+set.seed(47)
+
+# Data-generating process: a latent 'propensity' drives BOTH self-selection
+# into treatment (observationally) AND the baseline outcome -> confounding.
+make_population <- function(n, true_tau = 0.20) {
+  propensity <- rnorm(n)                       # latent buying inclination
+  Y0 <- 0.50 + 0.40 * propensity + rnorm(n)    # untreated potential outcome
+  Y1 <- Y0 + true_tau                          # constant treatment effect
+  data.frame(propensity, Y0, Y1)
+}
+
+# (1) OBSERVATIONAL: high-propensity users self-select into treatment.
+n <- 4000
+pop <- make_population(n)
+D_obs <- as.integer(pop$propensity + rnorm(n) > 0)   # selection on propensity
+Y_obs <- ifelse(D_obs == 1, pop$Y1, pop$Y0)
+naive <- mean(Y_obs[D_obs == 1]) - mean(Y_obs[D_obs == 0])
+
+# (2) RANDOMIZED: assignment independent of potential outcomes.
+rct_estimate <- function(n_per_arm = 1000, true_tau = 0.20) {
+  p <- make_population(2 * n_per_arm, true_tau)
+  D <- rep(0:1, each = n_per_arm)
+  D <- sample(D)                               # random assignment
+  Y <- ifelse(D == 1, p$Y1, p$Y0)
+  mean(Y[D == 1]) - mean(Y[D == 0])
+}
+rct_draws <- replicate(2000, rct_estimate())
+
+cat(sprintf("True effect (ATE):              %.3f\n", 0.20))
+cat(sprintf("Naive observational estimate:   %.3f  (biased)\n", naive))
+cat(sprintf("Mean of randomized estimates:   %.3f  (unbiased)\n", mean(rct_draws)))
+
+hist(rct_draws, breaks = 40, col = "grey80", border = "white",
+     main = "", xlab = "Estimated treatment effect")
+abline(v = 0.20, lwd = 2, lty = 2)
+abline(v = naive, lwd = 2, col = "firebrick")
+legend("topright", bty = "n",
+       legend = c("true effect (0.20)", "naive observational"),
+       lwd = 2, lty = c(2, 1), col = c("black", "firebrick"))
+```
+
+### Advertising Measurement: The Hard Case for Experiments
+
+Advertising is the canonical setting where experiments are both essential and
+difficult. The difficulty is statistical, and @eq-power explains it. The effect of
+a typical online display campaign on purchase probability is small in absolute
+terms, while individual purchasing is enormously variable; substituting realistic
+magnitudes into @eq-power implies that detecting advertising's true return on
+investment with confidence can require *millions* of randomized users—more than
+many campaigns ever reach [@lewis2015]. Lewis and Rao show that even well-powered
+experiments deliver confidence intervals on ROI so wide that firms cannot
+distinguish a profitable campaign from a money-losing one, and that the
+observational regressions firms typically run fare far worse.
+
+How much worse is documented by large-scale comparisons. Across digital
+advertising experiments at scale, observational methods—matching, regression
+adjustment, propensity scores—routinely yield estimates that diverge sharply from
+the experimental benchmark, frequently overstating effects by large multiples and
+occasionally reversing their sign, because no set of observed covariates fully
+captures why a platform showed a given user a given ad [@gordon2019]. The lesson
+is not that observational methods are useless but that, in advertising, the
+selection-bias term in @eq-selection-bias is large relative to the effect itself,
+so even small failures of the conditional-independence assumption swamp the signal.
+A recurrent culprit is **activity bias**: users who are online and active are both
+more likely to be served (and to "see") an ad and more likely to convert for
+reasons unrelated to the ad, manufacturing a spurious correlation that
+intention-to-treat experimental designs avoid [@lewis2011].
+
+These findings reframe the practitioner's task. The question is rarely "what is
+the point estimate of ROI?" but "is my experiment powered to answer the decision I
+face?"—and often the honest answer is to redesign the test (larger, geo-based, or
+focused on an intermediate outcome) rather than to trust an underpowered or
+observational number.
+
+## Difference-in-Differences
+
+When randomization is impossible—a competitor enters a market, a regulator changes
+a privacy rule, a firm rolls a price change out to some regions before others—the
+analyst exploits *timing*. **Difference-in-differences** compares the change in
+outcomes for a treated group, before versus after the intervention, against the
+contemporaneous change for an untreated control group. Differencing over time
+removes any fixed differences between the groups; differencing across groups
+removes any common time trend. What remains, under one key assumption, is the
+treatment effect.
+
+Formally, with two periods (pre, post) and two groups (treated $T$, control $C$),
+the DiD estimator is the difference of differences in group means,
+
+$$
+\hat\tau_{\text{DiD}}
+= \big(\bar Y_{T,\text{post}} - \bar Y_{T,\text{pre}}\big)
+- \big(\bar Y_{C,\text{post}} - \bar Y_{C,\text{pre}}\big).
+$$ {#eq-did}
+
+In panel-regression form, with unit fixed effects $\alpha_i$, time fixed effects
+$\gamma_t$, and a treatment indicator $D_{it}$ equal to one for treated units in
+post-treatment periods,
+
+$$
+Y_{it} = \alpha_i + \gamma_t + \tau\,D_{it} + \varepsilon_{it},
+$$ {#eq-twfe}
+
+and $\hat\tau$ is the DiD (two-way fixed-effects) estimator of the ATT.
+
+**Identifying assumption: parallel trends.** DiD is unbiased for the ATT if, *absent
+treatment*, the treated and control groups would have followed the same trajectory:
+
+$$
+\mathbb{E}[Y_{i,\text{post}}(0) - Y_{i,\text{pre}}(0) \mid T]
+= \mathbb{E}[Y_{i,\text{post}}(0) - Y_{i,\text{pre}}(0) \mid C].
+$$ {#eq-parallel-trends}
+
+The groups may differ in *levels*—that is differenced away—but their untreated
+*trends* must coincide. This assumption is fundamentally untestable, because the
+treated group's untreated post-period trend is the missing counterfactual. What
+*is* testable is its observable implication: if trends are parallel after
+treatment, they were typically parallel before. A **pre-trends** (event-study)
+check estimates leads and lags of the treatment and asks whether the pre-treatment
+leads are jointly zero.
+
+**What breaks identification.** Parallel trends fails whenever something other than
+the treatment moves the groups differently over the window—a localized demand
+shock, mean reversion when treatment is assigned to units with unusually low recent
+outcomes (Ashenfelter's dip), or anticipation effects. A subtler hazard has emerged
+in **staggered adoption**, where units are treated at different times: the standard
+two-way fixed-effects estimator in @eq-twfe implicitly uses already-treated units
+as controls for later-treated ones, and when effects vary over time this
+"forbidden comparison" can produce a weighted average with *negative weights* and a
+biased—even wrong-signed—estimate. Modern heterogeneity-robust estimators address
+this, and a careful analyst reports both the two-way fixed-effects number and a
+robust alternative.
+
+```{r did-sim}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(47)
+
+# Panel: 60 markets x 12 months. Treatment (a price cut) hits half the markets
+# in month 7. The control group is constructed to satisfy parallel trends.
+n_markets <- 60; n_months <- 12; treat_month <- 7; true_att <- 1.5
+markets <- 1:n_markets
+treated <- markets %in% sample(markets, n_markets / 2)
+
+panel <- expand.grid(market = markets, month = 1:n_months)
+panel$treated <- treated[panel$market]
+market_fe <- rnorm(n_markets, 10, 2)[panel$market]   # level differences (ok)
+time_fe   <- 0.20 * panel$month                       # common trend (ok)
+post      <- panel$month >= treat_month
+panel$D   <- as.integer(panel$treated & post)
+panel$sales <- market_fe + time_fe + true_att * panel$D +
+               rnorm(nrow(panel), 0, 0.8)
+
+# DiD via two-way fixed effects (unit + time dummies).
+fit <- lm(sales ~ factor(market) + factor(month) + D, data = panel)
+att_hat <- coef(fit)["D"]
+ci <- confint(fit)["D", ]
+cat(sprintf("True ATT:        %.3f\n", true_att))
+cat(sprintf("DiD estimate:    %.3f  [%.3f, %.3f]\n", att_hat, ci[1], ci[2]))
+```
+
+DiD is the workhorse of *advertising-spillover* and *pricing* studies in marketing,
+precisely because firms so often roll changes out geographically and at staggered
+times—exactly the structure DiD exploits, and exactly the structure that demands
+the heterogeneity-robust care just described.
+
+## Instrumental Variables
+
+Sometimes treatment is endogenous and no untreated group plausibly satisfies
+parallel trends, yet there exists a third variable that shifts the treatment for
+reasons unrelated to the outcome. **Instrumental variables** exploit that variable
+to isolate the slice of treatment variation that is "as good as randomly assigned."
+The motivating problem in marketing is the price endogeneity that defeats naive
+demand estimation: observed prices and quantities are jointly determined by demand
+and supply, so a regression of quantity on price recovers neither the demand curve
+nor a causal price elasticity. An instrument that shifts *supply* (and hence price)
+without shifting demand traces out the demand curve.
+
+Let the structural ("second-stage") equation of interest be
+
+$$
+Y_i = \beta_0 + \beta_1 D_i + \mathbf{x}_i^{\top}\boldsymbol{\gamma} + u_i,
+$$ {#eq-iv-structural}
+
+where $D_i$ (e.g., price) is correlated with the error $u_i$
+($\mathbb{E}[D_i u_i] \neq 0$), so OLS is biased. An instrument $Z_i$ identifies
+$\beta_1$ if it satisfies three conditions:
+
+1. **Relevance:** $Z_i$ shifts the treatment, $\operatorname{Cov}(Z_i, D_i) \neq 0$.
+   This is testable—it is the first-stage regression.
+2. **Exclusion:** $Z_i$ affects $Y_i$ *only* through $D_i$, not directly,
+   $\operatorname{Cov}(Z_i, u_i) = 0$. This is untestable and must be argued from
+   institutional knowledge.
+3. **Exogeneity (independence):** $Z_i$ is as good as randomly assigned with respect
+   to the unobservables driving $Y_i$.
+
+The estimator is **two-stage least squares (2SLS)**: regress $D_i$ on $Z_i$ and
+covariates to obtain fitted $\hat D_i$ (the exogenous part of treatment variation),
+then regress $Y_i$ on $\hat D_i$. With a single instrument and no covariates this
+reduces to the Wald ratio,
+
+$$
+\hat\beta_1^{\text{IV}}
+= \frac{\operatorname{Cov}(Y_i, Z_i)}{\operatorname{Cov}(D_i, Z_i)}
+= \frac{\widehat{\text{reduced form}}}{\widehat{\text{first stage}}}.
+$$ {#eq-wald}
+
+**What IV identifies.** With heterogeneous effects and a binary instrument, 2SLS
+does not estimate the ATE but the **local average treatment effect (LATE)**: the
+average effect among **compliers**—units whose treatment status responds to the
+instrument—under a monotonicity condition (the instrument moves no unit in the
+opposite direction). The effect on always-takers and never-takers is not
+identified. This is a feature to interpret, not a bug to hide: the LATE answers
+"what is the effect for the units a policy operating through this instrument would
+actually move?"
+
+**What breaks identification.** Two failures dominate. A **weak instrument** (low
+first-stage correlation) inflates variance and, worse, biases 2SLS toward the OLS
+estimate it was meant to fix; the conventional diagnostic is a first-stage
+$F$-statistic well above the rule-of-thumb of 10, though that threshold is now
+known to be optimistic. An **exclusion-restriction violation**—the instrument
+affecting the outcome through any channel other than the treatment—biases the
+estimate by an amount that *cannot* be detected from the data and must be defended
+by argument. In demand estimation the classic instruments are cost shifters and,
+following the differentiated-products tradition, functions of rival products'
+characteristics that shift a product's markup without entering its demand
+directly [@berry1995]. The credibility of any IV study lives or dies on the
+narrative for the exclusion restriction.
+
+```{r iv-sim}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(47)
+
+# Demand estimation with price endogeneity. A demand shock 'xi' raises BOTH
+# quantity and (through the firm's pricing) price -> OLS elasticity is biased
+# toward zero. A cost shifter 'Z' instruments for price.
+n <- 5000
+xi   <- rnorm(n)                              # unobserved demand shock
+Z    <- rnorm(n)                              # cost shifter (instrument)
+price <- 2.0 - 0.8 * Z + 1.0 * xi + rnorm(n) # price rises with demand shock
+true_elasticity <- -1.2
+logq <- 5 + true_elasticity * price + 1.5 * xi + rnorm(n)  # xi enters demand
+
+ols <- coef(lm(logq ~ price))["price"]
+
+# 2SLS by hand: first stage, then second stage on fitted price.
+first  <- lm(price ~ Z)
+phat   <- fitted(first)
+iv     <- coef(lm(logq ~ phat))["phat"]
+F_stat <- summary(first)$fstatistic["value"]
+
+cat(sprintf("True price elasticity:   %.3f\n", true_elasticity))
+cat(sprintf("OLS (biased):            %.3f\n", ols))
+cat(sprintf("2SLS (IV):               %.3f\n", iv))
+cat(sprintf("First-stage F:           %.1f\n", F_stat))
+```
+
+## Regression Discontinuity
+
+A **regression discontinuity** design exploits rules that assign treatment based on
+whether a continuous **running variable** crosses a known **cutoff**. A customer
+becomes a "gold-tier" member at 1,000 loyalty points; a buyer earns free shipping
+at a \$50 basket; an ad campaign targets ZIP codes above a median-income
+threshold. Units just below and just above the cutoff are, in every respect other
+than treatment, nearly identical—their assignment is determined by a sliver of the
+running variable that is plausibly as good as random. Comparing outcomes just above
+versus just below the threshold therefore identifies the treatment effect *at the
+cutoff*.
+
+Let $X_i$ be the running variable, $c$ the cutoff, and treatment $D_i = \mathbf{1}\{X_i \geq c\}$
+in the **sharp** design. The estimand is the jump in the conditional expectation of
+the outcome at the cutoff,
+
+$$
+\tau_{\text{RD}}
+= \lim_{x \downarrow c} \mathbb{E}[Y_i \mid X_i = x]
+- \lim_{x \uparrow c} \mathbb{E}[Y_i \mid X_i = x].
+$$ {#eq-rd}
+
+In practice $\tau_{\text{RD}}$ is estimated by fitting flexible regressions—usually
+**local linear** regressions within a bandwidth $h$ around $c$—separately on each
+side and reading off the gap at $c$. In the **fuzzy** design, crossing the cutoff
+changes the *probability* of treatment rather than treatment itself; the jump in
+outcomes is then scaled by the jump in treatment probability, making fuzzy RD a
+local IV with cutoff-crossing as the instrument.
+
+**Identifying assumption: continuity.** RD identifies the effect at the cutoff if
+the potential outcomes $\mathbb{E}[Y_i(0) \mid X_i = x]$ and
+$\mathbb{E}[Y_i(1) \mid X_i = x]$ are **continuous** in $x$ at $c$—that is, nothing
+*other* than treatment jumps at the threshold. Then any discontinuity in the
+observed outcome must be caused by the treatment.
+
+**What breaks identification.** The fatal threat is **manipulation** of the running
+variable: if units can precisely control which side of the cutoff they land on—a
+customer nudging a basket to exactly \$50, a salesperson booking revenue to clear a
+quota—then those who sort just above the cutoff differ systematically from those
+just below, and continuity fails. The standard diagnostic is the **McCrary density
+test**: a discontinuity in the *density* of $X$ at $c$ signals sorting. Two further
+practices guard validity: confirm that pre-determined covariates do *not* jump at
+the cutoff (a placebo RD on baseline characteristics), and show the estimate is
+robust to bandwidth choice, since RD trades bias (wide bandwidth, more
+extrapolation) against variance (narrow bandwidth, fewer observations). The estimand
+is also intrinsically **local**: RD recovers the effect only at $c$ and need not
+generalize to units far from the threshold.
+
+```{r rd-sim}
+#| echo: true
+#| message: false
+#| warning: false
+#| label: fig-rd
+#| fig-cap: "A sharp regression-discontinuity design. Treatment (a loyalty-tier upgrade) switches on at the cutoff of 1,000 points. Local linear fits on each side identify the jump in spending at the threshold; points are a 10% sample for legibility."
+set.seed(47)
+
+# Running variable: loyalty points. Treatment at >= 1000. Smooth baseline
+# relationship between points and spending PLUS a true jump of 8 at the cutoff.
+n <- 4000; cutoff <- 1000; true_jump <- 8
+points  <- runif(n, 600, 1400)
+D       <- as.integer(points >= cutoff)
+spend   <- 20 + 0.03 * (points - cutoff) + true_jump * D + rnorm(n, 0, 4)
+
+# Local linear RD within a bandwidth, separate slopes each side.
+h <- 150
+inb <- abs(points - cutoff) <= h
+rd_fit <- lm(spend ~ D + I(points - cutoff) + D:I(points - cutoff),
+             data = data.frame(spend, D, points), subset = inb)
+jump_hat <- coef(rd_fit)["D"]
+cat(sprintf("True jump at cutoff: %.3f\n", true_jump))
+cat(sprintf("RD estimate:         %.3f\n", jump_hat))
+
+s <- sample(n, 400)
+plot(points[s], spend[s], pch = 16, col = "grey70", cex = 0.6,
+     xlab = "Loyalty points (running variable)", ylab = "Spending")
+abline(v = cutoff, lty = 3)
+gl <- seq(cutoff - h, cutoff, length.out = 50)
+gr <- seq(cutoff, cutoff + h, length.out = 50)
+predl <- predict(rd_fit, data.frame(D = 0, points = gl))
+predr <- predict(rd_fit, data.frame(D = 1, points = gr))
+lines(gl, predl, lwd = 3); lines(gr, predr, lwd = 3)
+```
+
+## Synthetic Control
+
+Difference-in-differences needs a control group whose untreated trend matches the
+treated group's. When the treated unit is a *single* large entity—one country where
+a brand launched, one state that changed a privacy law, one market where a flagship
+store opened—no single control unit is a credible match. The **synthetic control
+method** constructs the counterfactual as a *weighted average* of untreated "donor"
+units, choosing the weights so that the synthetic unit reproduces the treated
+unit's pre-treatment outcome path (and predictors). The treatment effect is then the
+gap between the treated unit and its synthetic twin after the intervention.
+
+Let unit $1$ be treated at time $T_0$ and units $2,\dots,J+1$ be the donor pool.
+Choose nonnegative weights $\mathbf{w} = (w_2,\dots,w_{J+1})$, with
+$\sum_j w_j = 1$, to minimize pre-treatment discrepancy,
+
+$$
+\mathbf{w}^{\star} = \arg\min_{\mathbf{w}}
+\sum_{t < T_0}\Big(Y_{1t} - \sum_{j=2}^{J+1} w_j\,Y_{jt}\Big)^2,
+\quad w_j \geq 0,\ \textstyle\sum_j w_j = 1.
+$$ {#eq-scm-weights}
+
+The estimated effect at each post-period is the gap between the treated unit and
+the weighted donors,
+
+$$
+\hat\tau_{1t} = Y_{1t} - \sum_{j=2}^{J+1} w_j^{\star}\,Y_{jt},
+\qquad t \geq T_0.
+$$ {#eq-scm-effect}
+
+**Identifying assumptions.** SCM identifies the treated unit's ATT if (i) the
+weighted donors reproduce the treated unit's *pre-treatment* outcomes closely
+(good pre-fit), (ii) the donors are themselves untreated and free of spillovers
+from the treatment, and (iii) the relationship that made the synthetic control
+track the treated unit before treatment *continues to hold* absent treatment—the
+synthetic-control analogue of parallel trends, but enforced on the full
+pre-period path rather than a single trend. The convexity constraints
+($w_j \geq 0$, summing to one) prevent extrapolation outside the donor support and
+make the weights interpretable.
+
+**What breaks identification.** Poor pre-treatment fit is disqualifying: if the
+synthetic unit cannot track the treated unit *before* the intervention, the
+post-period gap is not credibly causal. **Interpolation bias** arises when donors
+are too dissimilar from the treated unit; **overfitting** to noise inflates
+apparent effects when the pre-period is short. Because there is only one treated
+unit, inference rests not on large-sample theory but on **placebo (permutation)
+tests**: reassign the treatment to each donor in turn, compute the placebo gap, and
+ask whether the true treated unit's post/pre gap ratio is extreme relative to the
+placebo distribution.
+
+```{r scm-sim}
+#| echo: true
+#| message: false
+#| warning: false
+#| label: fig-scm
+#| fig-cap: "Synthetic control for a single treated market. Donor weights are chosen to match the treated market's pre-intervention sales (vertical line at the launch period). The post-period gap between the treated market and its synthetic twin estimates the treatment effect."
+set.seed(47)
+
+# One treated market + 20 donors over 30 periods; a brand campaign starts at t=21
+# and lifts the treated market's sales by a growing amount.
+Tn <- 30; T0 <- 20; J <- 20; true_post_effect <- 6
+common <- cumsum(rnorm(Tn, 0.2, 0.4))                 # shared latent trend
+donors <- sapply(1:J, function(j)
+  3 + runif(1, 0.5, 1.5) * common + rnorm(Tn, 0, 0.6))
+# Treated market is a convex blend of three donors, pre-treatment.
+truew <- numeric(J); truew[c(2, 5, 11)] <- c(0.5, 0.3, 0.2)
+treated <- as.numeric(donors %*% truew) + rnorm(Tn, 0, 0.4)
+treated[(T0 + 1):Tn] <- treated[(T0 + 1):Tn] +
+  true_post_effect * seq_len(Tn - T0) / (Tn - T0)
+
+# Solve for nonnegative weights summing to 1 on the PRE period via a simple
+# projected optimization (quadratic loss, simplex constraint).
+pre <- 1:T0
+loss <- function(w) sum((treated[pre] - donors[pre, ] %*% w)^2)
+ui <- rbind(diag(J), rep(-1, J)); ci <- c(rep(0, J), -1)  # w>=0, sum(w)<=1
+w0 <- rep(1 / J, J)
+opt <- constrOptim(w0, loss, grad = NULL, ui = ui, ci = ci)
+w <- opt$par / sum(opt$par)
+
+synth <- as.numeric(donors %*% w)
+gap_post <- mean(treated[(T0 + 1):Tn] - synth[(T0 + 1):Tn])
+cat(sprintf("Mean post-period effect (truth ~%.2f): %.3f\n",
+            true_post_effect / 2, gap_post))
+
+plot(1:Tn, treated, type = "l", lwd = 2, xlab = "Period", ylab = "Sales",
+     ylim = range(c(treated, synth)))
+lines(1:Tn, synth, lwd = 2, lty = 2, col = "firebrick")
+abline(v = T0 + 0.5, lty = 3)
+legend("topleft", bty = "n", lwd = 2, lty = c(1, 2),
+       col = c("black", "firebrick"),
+       legend = c("treated market", "synthetic control"))
+```
+
+## Choosing a Design
+
+No design dominates; each buys identification with a different assumption, and the
+right choice depends on what variation the world (or the firm) supplies. The
+comparison below summarizes the trade-offs.
+
+```{r design-table}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: tbl-designs
+#| tbl-cap: "Causal designs compared: the estimand each targets, the assumption that does the identifying work, the diagnostic that probes it, and the failure that breaks it."
+designs <- data.frame(
+  Design = c("Randomized / A-B test", "Difference-in-differences",
+             "Instrumental variables", "Regression discontinuity",
+             "Synthetic control"),
+  Estimand = c("ATE", "ATT", "LATE (compliers)",
+               "Local effect at cutoff", "ATT (one unit)"),
+  `Key assumption` = c("Random assignment",
+                       "Parallel trends",
+                       "Exclusion + relevance",
+                       "Continuity at cutoff",
+                       "Donors match pre-trend"),
+  Diagnostic = c("Balance / power checks",
+                 "Pre-trend (event study)",
+                 "First-stage F; over-ID",
+                 "McCrary density; covariate jumps",
+                 "Pre-fit; placebo permutation"),
+  `What breaks it` = c("Interference; peeking",
+                       "Differential shocks; staggering",
+                       "Weak / invalid instrument",
+                       "Manipulation of running var.",
+                       "Poor pre-fit; spillovers"),
+  check.names = FALSE
+)
+knitr::kable(designs, align = "lllll")
+```
+
+Three principles guide the choice in marketing practice. First, **prefer
+experimentation where the cost of running it is bearable**; in advertising and
+pricing, firms increasingly hold out geographies or randomize at the user level
+precisely because the observational alternatives are so unreliable [@gordon2019].
+Second, when an experiment is infeasible, **match the design to the source of
+exogenous variation**: a sharp eligibility rule invites RD, a staggered rollout
+invites DiD, a single large treated entity invites SCM, and a credible supply-side
+shifter invites IV. Third, **triangulate**: where two designs with different
+assumptions point to the same answer, the causal claim is far more credible than
+any single estimate, because the assumptions fail for different reasons.
+
+## Threats Common to All Designs
+
+Beyond design-specific failures, several threats recur and deserve a standing
+checklist. **Spillovers and general equilibrium**: a treatment that changes one
+unit's behavior may change untreated units' behavior (SUTVA failure), and a price
+experiment that would be profitable at small scale may not survive a firm-wide
+rollout once competitors and supply respond. **Attrition and survivorship**:
+differential dropout between arms reintroduces selection even into a randomized
+design. **Outcome windows and dynamics**: advertising and brand effects accumulate
+and decay, so an effect measured over too short a window understates the true
+return; carryover (the Koyck/adstock structure of @sec-advertising) must be modeled,
+not assumed away. **Multiple comparisons**: testing many metrics, segments, or
+variants inflates false positives, demanding pre-registration of primary outcomes or
+explicit correction. **External validity**: every estimand here is local to a
+population, a period, and a level of treatment intensity; a LATE for compliers, an
+RD effect at a cutoff, or an SCM effect for one market need not transfer to the
+firm's broader decision. Naming the estimand—the discipline this chapter
+opened with—is the antidote, because it forces the analyst to state precisely whose
+effect, under what intervention, has been estimated.
+
+## Key Takeaways
+
+- A causal effect is a comparison of potential outcomes (@eq-unit-effect); because
+  only one is observed per unit (@eq-switching), every estimate rests on an
+  assumption that recovers the missing counterfactual.
+- The naive treated-minus-untreated difference is biased by selection
+  (@eq-selection-bias); randomization removes the bias by construction, which is
+  why field experiments and A/B tests are the benchmark.
+- In advertising, the effect is small relative to sales volatility, so experiments
+  must be very large to be conclusive and observational substitutes can err by
+  multiples or in sign [@lewis2015; @gordon2019].
+- Each quasi-experimental design targets a *specific* estimand under a *specific*
+  assumption—DiD/ATT under parallel trends, IV/LATE under exclusion, RD under
+  continuity, SCM/ATT under donor pre-fit—and each has a named diagnostic and a
+  named failure mode (@tbl-designs).
+- Name the estimand before choosing a method, probe the identifying assumption with
+  its diagnostic, and triangulate across designs whose assumptions fail for
+  different reasons.
+
+## Further Reading
+
+The potential-outcomes framework and the estimators in this chapter are developed
+at length in the standard graduate econometrics references
+[@cameron2005microeconometrics; @greene2003econometric] and in the econometric
+treatments of program evaluation [@heckman2007econometric; @abbring2007econometric3].
+For demand estimation with endogenous prices and instruments built from rival
+product characteristics, the differentiated-products literature is the entry point
+[@berry1995]. The advertising-measurement evidence that motivates experimentation
+over observational inference is most directly accessible through the large-scale
+experimental comparisons cited above [@lewis2011; @lewis2015; @gordon2019], and the
+dynamics of advertising response that complicate any single-window estimate are
+treated in @sec-advertising.
+
+<!-- CITE-NEEDED: Neyman-Rubin / Rubin causal model foundational potential-outcomes references -->
+<!-- CITE-NEEDED: Angrist-Imbens LATE / compliers identification -->
+<!-- CITE-NEEDED: Card-Krueger or Bertrand-Duflo-Mullainathan difference-in-differences inference -->
+<!-- CITE-NEEDED: Goodman-Bacon / Callaway-Sant'Anna staggered DiD with heterogeneous effects -->
+<!-- CITE-NEEDED: staiger-stock / stock-yogo weak instruments F-statistic -->
+<!-- CITE-NEEDED: Imbens-Lemieux / Lee-Lemieux regression discontinuity practical guide -->
+<!-- CITE-NEEDED: McCrary density manipulation test for RD -->
+<!-- CITE-NEEDED: Abadie-Diamond-Hainmueller synthetic control method -->
+<!-- CITE-NEEDED: marketing pricing field experiment exemplar (e.g., online price experimentation) -->
+<!-- CITE-NEEDED: sequential testing / always-valid p-values for online experiments (peeking) -->

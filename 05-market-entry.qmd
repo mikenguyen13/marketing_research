@@ -1,27 +1,614 @@
-# Market Entry
+# Market Entry {#sec-market-entry}
 
-[@maesen2022] Organic Specialist Store Entry effect on Incumbent stores
+When a firm brings a product to a market, *when* it arrives is a strategic
+variable as consequential as *what* it sells. Two firms with identical products,
+prices, and budgets can earn very different long-run shares solely because one
+entered first and the other entered third. The popular intuition—"first-mover
+advantage"—captures part of this, but only part: pioneers sometimes build
+durable franchises, sometimes are overtaken within a few years, and sometimes
+fail outright while a fast follower harvests the category they created. This
+chapter develops the constructs and methods needed to say *which* outcome a firm
+should expect, and *why*.
 
--   Negative Impact of organic specialist store entry on category performance at incumbent generalist stores (in term of sales)
+The chapter treats market entry as the joint outcome of three interacting
+decisions: the **order** in which firms enter relative to one another, the
+**timing** of entry relative to the market's own development, and the
+**responses** entry provokes from incumbents and prospective entrants. We begin
+by defining order-of-entry effects precisely and separating the genuine causal
+advantage of pioneering from the survivorship and selection artifacts that have
+historically inflated estimates of it. We then formalize the mechanisms that
+generate, and erode, pioneer advantage—preemption, switching costs, demand
+learning, and network effects—and the offsetting forces that make the
+*incumbent's curse* a real phenomenon. From there we move to entry-timing models
+that trade off the cost of being early against the cost of being late, to the
+game theory of entry deterrence and accommodation, and finally to a reproducible
+empirical workflow for estimating order-of-entry effects from share data. By the
+end, a reader should be able to define the effect formally, identify it from
+observational data without falling into the classic traps, and reason about the
+strategic response it implies.
 
--   It also exaggerates the impact of price on sales
+Throughout, we connect entry to constructs developed elsewhere in the book: the
+brand-share persistence that makes early entry valuable (the branding material in
+@sec-branding), the diffusion processes that govern when a market is worth
+entering, and the signaling logic that explains both pioneer reputations and
+incumbent reactions. Entry is where positioning, diffusion, and competitive
+strategy meet.
 
--   To mitigate this negative effect, the generalist stores can reduce the relative distinctiveness of the entrant along:
+## Constructs: Order, Timing, and the Pioneer {#sec-constructs}
 
-    -   variety: increase variety in organic product and organic feature
+Three distinct constructs are routinely conflated and must be separated before
+any measurement is possible.
 
-    -   price-quality
+**Order of entry** is the ordinal rank of a firm's entry into a category: the
+*pioneer* is rank 1, the *early follower* ranks 2 and 3, and *late entrants* the
+remainder. Order is a relative, competitor-referenced quantity. **Entry timing**
+is the *absolute* position of entry on the market's development clock—how far
+along the diffusion curve, technology cycle, or category life cycle the firm
+arrives. Two firms can share an order rank yet differ wildly in timing if they
+enter markets at different stages of maturity. **Pioneer (or first-mover)
+advantage** is the *causal* share or profit premium attributable to being first,
+holding the marketing mix fixed.
 
-    -   authenticity
+The third construct is the subtle one, because the pioneer differs from later
+entrants in many ways besides order, and a naive comparison attributes all of
+those differences to order. We therefore define the effect counterfactually.
 
--   Premium organic products are harmed less than frequently promoted organic products
+::: {.callout-note}
+## Definition: order-of-entry effect
 
--   Offering an organic specialist brand can mitigate this effect as well
+Let firm $i$ enter category $c$ at order rank $r_i \in \{1,2,\dots\}$ and realize
+long-run market share $s_i$. The **order-of-entry effect** is the causal
+contrast
+$$
+\Delta_r \;=\; \mathbb{E}\!\left[s_i \mid \mathrm{do}(r_i = r)\right]
+            \;-\; \mathbb{E}\!\left[s_i \mid \mathrm{do}(r_i = r+1)\right],
+$$
+the expected change in share from entering one position *earlier*, where
+$\mathrm{do}(\cdot)$ denotes an intervention that sets the entry rank while
+holding the rest of the marketing mix and the firm's intrinsic quality fixed. A
+**pioneer advantage** is the special case $\sum_{k} \Delta_k$ accumulated from
+the pioneer's rank to a reference follower's rank.
+:::
 
-[@bei2022] first vs. third party operations
+The $\mathrm{do}(\cdot)$ operator is doing heavy lifting. It is what distinguishes
+the order-of-entry *effect* from the order-of-entry *gradient* one observes in
+data, in which pioneers also tend to be the firms with better products, deeper
+pockets, and luckier timing. The empirical literature's central methodological
+contribution is to make this distinction operational, and its central empirical
+finding is that the gradient overstates the effect—often severely.
 
--   First party operation (wholesale to platform) decreases share, while third-party (selling on platform) operation increases shares.
+### The Empirical Generalization and Its Demolition
 
--   For 1P operations, share drops are bigger for brands that can't build trust with customers, especially when there are a lot of other brands and a lot of rogue sellers in the product category.
+The early empirical consensus was striking in its regularity. Across consumer
+and industrial categories, market share appeared to decline systematically with
+order of entry. A widely cited functional form fits share as a power of rank,
+$$
+s_r \;=\; s_1 \, r^{-\theta}, \qquad \theta > 0,
+$$ {#eq-rank-power}
+so that the *second* entrant earns a fraction $2^{-\theta}$ of the pioneer's
+share, the *third* $3^{-\theta}$, and so on. Estimating @eq-rank-power on the
+Assessor pretest database, @urban1986 recovered a share penalty on the order of
+a few percent of share per unit of rank, with the pioneer enjoying a substantial
+premium that survived controls for the marketing mix. Equation @eq-rank-power is
+attractive because it linearizes under logs,
+$$
+\log s_r \;=\; \log s_1 \;-\; \theta \log r,
+$$
+making $\theta$ a simple regression slope—the *order-of-entry elasticity* of
+share. The same convenience is its danger, as we will see.
 
--   the 3P share gains are bigger for non-leading brands with premium priced that have had D2C experience before.
+The consensus was then sharply qualified. @golder1993 re-examined the pioneer
+record using *historical* data—reconstructing the full population of entrants in
+50 product categories from contemporaneous sources rather than from surviving
+firms' own accounts—and reached a deflationary conclusion.
+
+> Almost half of the market pioneers failed, and the mean market share of the
+> pioneers was much lower than earlier studies suggested. … Many "pioneers" in
+> previous studies were not first to market but rather early leaders. Being first
+> confers no guarantee of success; *early market leadership*, not pioneering,
+> is the more reliable correlate of enduring share.
+>
+> --- paraphrasing @golder1993
+
+The reconciliation is not that pioneer advantage is fictional, but that the
+*measured* advantage was inflated by two artifacts, which we now formalize because
+they recur in every order-of-entry study.
+
+## Why the Gradient Lies: Survivorship and Selection
+
+Two biases pull the observed rank–share gradient away from the causal effect
+$\Delta_r$. Both are instances of conditioning on a collider or on a
+post-treatment outcome, and both bias the pioneer premium *upward*.
+
+**Survivorship bias.** Cross-sectional studies typically sample firms *alive at
+the time of measurement*. Failed pioneers leave the sample; failed late entrants
+also leave, but pioneering and failure are correlated, so the surviving pioneers
+are a favorably selected subset. Formally, let $D_i = 1$ if firm $i$ survives to
+the measurement date. The estimand the analyst can compute is
+$\mathbb{E}[s_i \mid r_i, D_i = 1]$, whereas the target is the unconditional
+$\mathbb{E}[s_i \mid \mathrm{do}(r_i)]$. If survival depends on both order and
+the latent quality that also drives share, then $D_i$ is a collider on the path
+$r_i \to D_i \leftarrow \text{quality} \to s_i$, and conditioning on survival
+opens a spurious association between order and share. The historical-population
+design of @golder1993 closes this path by sampling entrants regardless of
+survival; the resulting failure-inclusive pioneer share is far lower than the
+survivor-only figure.
+
+**Selection on unobservables (the "born-first vs. became-first" problem).**
+Firms that pioneer are not randomly assigned to do so. They tend to possess
+unobserved complementary assets—superior R&D, marketing capability, or
+managerial foresight—that *both* lead them to enter early *and* independently
+raise their share. Write the share equation with an order term and an
+unobserved firm endowment $\xi_i$,
+$$
+s_i \;=\; \alpha + \beta\, r_i + \gamma' \mathbf{x}_i + \xi_i,
+$$ {#eq-share-selection}
+and the entry-order equation as
+$$
+r_i \;=\; \delta' \mathbf{z}_i + \eta\, \xi_i + \nu_i .
+$$
+If $\eta \neq 0$—able firms self-select into early ranks—then
+$\mathrm{Cov}(r_i, \xi_i) \neq 0$, the ordinary-least-squares (OLS) estimator of
+$\beta$ in @eq-share-selection is inconsistent, and its bias has the sign of
+$-\eta$ (since lower $r$ means earlier), inflating the apparent pioneer premium.
+This is the order-of-entry version of the endogeneity that pervades marketing-mix
+estimation: the regressor is chosen by the firm in light of information the
+analyst does not see.
+
+The two biases are distinct—survivorship is selection on the *outcome*, endogeneity
+is selection on an *input*—but they compound, and both inflate the same number.
+@boulding2003 sharpen the substantive conclusion by moving from share to
+*profit*: they document a "sustainable pioneering advantage" that is real but
+conditional, residing not in mechanical share but in the pioneer's accumulated
+learning and cost position, and they show that the profit advantage can persist
+even where the share advantage decays. The lesson for the analyst is that the
+dependent variable matters: share advantages erode faster than profit
+advantages, and studies that measure only share understate the durable component
+of pioneering.
+
+@fig-bias-dag summarizes the identification problem as a causal graph; the
+estimation section returns to how each path is closed.
+
+```{mermaid}
+%%| label: fig-bias-dag
+%%| fig-cap: "Causal graph of the order-of-entry estimation problem. The analyst wants the direct path order → share, but an unobserved endowment confounds it (back-door path), and conditioning on survival (a collider) opens a second spurious path. Boxes are observed; the circle is unobserved."
+flowchart LR
+    Q(("Endowment ξ<br/>(unobserved)"))
+    R["Entry order r"]
+    S["Market share s"]
+    D["Survival D<br/>(sample filter)"]
+    Q -->|selection| R
+    Q --> S
+    R -->|"causal effect Δ (target)"| S
+    R --> D
+    Q --> D
+    S --> D
+    style Q fill:#f5f5f5,stroke:#999,stroke-dasharray: 4 3
+    style D stroke-dasharray: 4 3
+```
+
+## Mechanisms of Pioneer Advantage
+
+A causal pioneer advantage, where it exists, must run through an identifiable
+mechanism. Four are well established, and naming them matters because each
+predicts a *different* rate of erosion and a different defensive strategy.
+
+**Demand-side preemption of preferences and positioning.** The pioneer defines
+the category prototype. Later entrants are evaluated relative to it, and the
+pioneer occupies the most preferred position in the perceptual space before
+rivals arrive, forcing them into less-preferred niches. Because the pioneer also
+shapes which attributes consumers regard as relevant, it can tilt the evaluative
+criteria toward dimensions on which it excels. This mechanism is closely tied to
+brand-share persistence: early-formed brand preferences are remarkably sticky,
+persisting for decades and even traveling with consumers when they migrate across
+regions [@bronnenberg2009; @bronnenberg2010]. The persistence of early advantage
+in @bronnenberg2010 is, in effect, a measured lower bound on demand-side
+preemption.
+
+**Switching costs and habit formation.** Once consumers adopt the pioneer, the
+cost of switching—relearning, contract lock-in, lost loyalty benefits, or simply
+habit—shields its installed base from later entrants. A later entrant must
+compensate consumers for the switching cost as well as match the pioneer's
+utility, which is equivalent to a price handicap. <!-- CITE-NEEDED: switching costs and consumer lock-in as a source of first-mover advantage (Klemperer-style switching cost theory) -->
+
+**Technological and learning-curve leadership.** The pioneer accumulates
+production experience first and rides down the learning curve ahead of rivals,
+opening a unit-cost gap that a later entrant cannot close at equal volume. This
+is the cost-side counterpart of preference preemption and is the mechanism
+@boulding2003 emphasize for the *profit* advantage. <!-- CITE-NEEDED: experience/learning curve and cumulative-output cost advantage of early entrants -->
+
+**Network effects.** When a product's value to a user rises with the number of
+other users, an early lead in installed base is self-reinforcing: the leader's
+larger network makes its product more valuable, attracting still more users in a
+positive feedback loop that can tip the market [@katz1985network]. Network
+effects are the strongest source of durable first-mover advantage—but, as
+@sec-erosion shows, they are also the mechanism most often *defeated*, because a
+sufficiently superior late entrant can dislodge an entrenched network leader when
+quality differences swamp the network premium [@tellis2009].
+
+::: {.callout-tip}
+## Intuition before formalism
+
+The four mechanisms share one logic: pioneering pays when the pioneer can build a
+*stock*—of preferences, of locked-in customers, of cumulative experience, of
+network members—that later entrants cannot replicate by spending a *flow*. Where
+no such stock accumulates, order is just a date on a calendar and confers no
+advantage. The strategic question is therefore always "what stock am I building,
+and how fast does it depreciate?"
+:::
+
+### A stock-accumulation formalization
+
+The shared logic above can be written as a single state equation. Let
+$K_{it}$ be the pioneer-advantage *stock* (installed base, accumulated
+experience, or preference capital) of firm $i$, accumulating from the firm's
+marketing and sales flow $a_{it}$ and depreciating at rate $\phi$:
+$$
+K_{it} \;=\; (1-\phi)\,K_{i,t-1} \;+\; a_{it}.
+$$ {#eq-stock}
+A pioneer enters at $t=0$ with rivals absent and accumulates $K$ unopposed until
+follower entry at $t=\tau$. The pioneer's head start is the stock it banks during
+$[0,\tau)$, and the *durability* of its advantage is governed entirely by
+$\phi$. When $\phi \to 0$ (preferences and networks that never decay), the head
+start is permanent; when $\phi$ is large (fashion-driven categories, fast
+technical obsolescence), even a long monopoly period buys only a transient lead.
+Equation @eq-stock is the same perpetual-inventory logic used for brand capital
+in @sec-branding, and the parallel is not coincidental: pioneer advantage *is*
+a brand- and customer-capital stock built under temporary monopoly. The erosion
+of pioneer advantage, to which we now turn, is the statement that $\phi > 0$ for
+most categories.
+
+## Erosion of First-Mover Advantage {#sec-erosion}
+
+First-mover advantage is not self-sustaining; it decays, and sometimes reverses.
+Four forces drive the erosion, mirroring the four mechanisms that create it.
+
+**Free-riding by followers.** Later entrants observe the pioneer's costly
+investments—market education, R&D dead ends, channel development—and imitate the
+winners while skipping the losers. The pioneer pays to *resolve uncertainty* that
+followers consume for free, so the follower's expected cost of matching the
+pioneer's position is strictly lower than the pioneer's was.
+
+**Resolution of technological and market uncertainty.** Pioneers commit under
+uncertainty about which technology and which positioning the market will reward.
+Followers enter after that uncertainty resolves and can target the realized
+winning configuration directly. This is the central tension of entry timing
+formalized in @sec-timing.
+
+**Incumbent inertia and the late-entrant quality play.** A pioneer that has
+optimized around the first-generation technology and its installed base may be
+slow to adopt a superior new generation—the *incumbent's curse* (@sec-incumbent).
+Where this happens, a late entrant wins not by being early but by being *better*.
+@tellis2009 show directly that in high-technology markets **network effects do
+not guarantee that the early or larger network wins**: product quality frequently
+dominates, and a higher-quality late entrant can overturn an entrenched
+network-advantaged incumbent. This is the cleanest available evidence that even
+the strongest erosion-resistant mechanism—network effects—is defeasible by
+quality, and it is why "first but worse" is a losing position.
+
+**Category and positioning shifts.** The attribute space the pioneer preempted
+can become obsolete when consumer preferences move or a disruptive technology
+redefines the category. The pioneer's preference capital then depreciates rapidly
+(a large $\phi$ in @eq-stock), and incumbency in the old category is worth little
+in the new one.
+
+@tbl-mechanisms organizes the create-and-erode logic into a single reference.
+
+| Mechanism (creates advantage) | Erosion force (destroys it) | Persists when… |
+|---|---|---|
+| Preference/prototype preemption | Preference shifts; repositioning | Tastes are stable; category well-defined |
+| Switching costs / habit | Followers subsidize switching | Lock-in is high; relationships deep |
+| Learning-curve cost lead | Followers free-ride on learning | Experience is proprietary, not leaky |
+| Network effects | Quality-superior late entrant tips the market | Quality parity holds; standards lock in |
+
+: Sources of pioneer advantage and the forces that erode each. The right column states the condition under which the depreciation rate $\phi$ in @eq-stock is small. {#tbl-mechanisms}
+
+## The Incumbent's Curse and Incumbent Response {#sec-incumbent}
+
+Order-of-entry effects are not solely the entrant's story; they are co-produced
+by how incumbents respond. The starting point is a puzzle: incumbents have the
+resources, customers, and market knowledge to dominate the next generation, yet
+radical innovations disproportionately come from entrants. @chandy2000 document
+this **incumbent's curse** across the histories of many product categories:
+incumbents and large firms introduce radical innovations far *less* often than
+their resource advantages would predict. The explanation is not capability but
+*willingness*: an incumbent's prior investments in the current technology and its
+fear of cannibalizing existing sales create an internal disincentive to
+self-disrupt. The remedy is organizational—a demonstrated **willingness to
+cannibalize** existing products is the strongest internal driver of radical
+innovation [@chandy1998]—and it is precisely the absence of this willingness that
+opens the door for late entrants to overturn pioneers (@sec-erosion).
+
+When incumbents *do* respond to entry, the response takes recognizable forms. We
+distinguish *deterrence* (acting before entry to prevent it) from *accommodation*
+(reacting after entry to limit its damage). The line between them is the firm's
+ability to commit credibly, which the next section formalizes.
+
+### Entry deterrence and credible commitment {#sec-timing-game}
+
+The economics of entry deterrence turns on **commitment**. An incumbent would
+like to threaten a price war if an entrant comes, but a bare threat is not
+credible: once entry has occurred, fighting may be more costly to the incumbent
+than accommodating, so a rational entrant ignores the threat. @dixit1980 resolves
+this by showing that the incumbent can make the threat credible through
+*irreversible investment*—capacity, in his model—installed *before* entry. The
+sunk investment changes the incumbent's post-entry payoffs so that fighting
+becomes its best response, which deters the entrant in the first place. The
+mechanism is general: commitment value comes from foreclosing one's own future
+options.
+
+Formally, consider a two-stage game. The incumbent first chooses capacity (or
+any irreversible investment) $k$ at sunk cost; the entrant then chooses to enter
+or not, anticipating the post-entry duopoly outcome that $k$ induces. Let
+$\pi^E(k)$ be the entrant's post-entry profit net of its entry cost $F$. The
+entrant stays out iff
+$$
+\pi^E(k) \;<\; F,
+$$
+and the incumbent's problem is to choose the smallest $k$ that satisfies this
+inequality—*entry-deterring* capacity—and compare the profit from deterrence to
+the profit from accommodating entry at lower $k$. Whether deterrence or
+accommodation is optimal depends on the entry cost $F$, the size of the market,
+and how steeply the entrant's profit falls in the incumbent's commitment. The key
+qualitative result is that **investment has strategic value beyond its direct
+production value**: it shifts the rival's beliefs about the incumbent's future
+behavior.
+
+@fig-entry-game renders the deterrence game as a decision tree.
+
+```{mermaid}
+%%| label: fig-entry-game
+%%| fig-cap: "The entry-deterrence game in extensive form. The incumbent's sunk pre-entry investment changes the payoffs in the post-entry subgame, making 'fight' credible and rendering 'stay out' the entrant's best response. Without commitment, 'accommodate' is the incumbent's only credible post-entry move and entry occurs."
+flowchart TD
+    I["Incumbent: invest k?"]
+    I -->|"high k (commit)"| E1["Entrant: enter?"]
+    I -->|"low k (no commit)"| E2["Entrant: enter?"]
+    E1 -->|out| O1["Incumbent monopoly<br/>(deterrence succeeds)"]
+    E1 -->|in| F1["Incumbent fights<br/>(credible: entrant loses)"]
+    E2 -->|out| O2["Monopoly, but unstable"]
+    E2 -->|in| A2["Incumbent accommodates<br/>(duopoly)"]
+    style O1 fill:#e8f5e9,stroke:#43a047
+    style A2 fill:#fff3e0,stroke:#fb8c00
+```
+
+### Signaling and preannouncement as entry tools
+
+Commitment can also be communicated rather than built. A **preannouncement**—a
+public declaration of a forthcoming product before it ships—can shape the entry
+calculus of rivals and the expectations of customers. The signal is double-edged.
+Aimed at customers, it can stall their adoption of a rival's product (a "vaporware"
+effect); aimed at rivals, it can warn them off a contested position. But the
+signal is costly when the promise is not kept: @sorescu2007 show that
+preannouncements move shareholder value, and that *unfulfilled* promises destroy
+it—"don't make promises you can't keep." Preannouncement is therefore a credible
+signal only to the extent that reneging is punished, which ties it back to the
+costly-signaling logic developed for quality in @sec-branding: a signal works
+when high types can bear its cost and low types cannot. Specialization plays the
+same role on the entry margin, where committing to a single category credibly
+signals quality precisely because it forgoes profit elsewhere
+[@kalra2008signaling].
+
+### Incumbent response to entry: empirical evidence
+
+Beyond stylized games, entry provokes measurable incumbent reactions in real
+markets, and the magnitude depends on how *distinctive* the entrant is. In
+grocery retailing, the entry of an organic specialist store depresses category
+performance at incumbent generalist stores and sharpens consumers' price
+sensitivity; incumbents can blunt the damage by reducing the entrant's *relative
+distinctiveness*—broadening their own organic assortment, narrowing the
+price–quality gap, and shoring up authenticity, with premium organic lines
+proving more defensible than frequently promoted ones [@maesen2022]. The general
+principle is that an incumbent's optimal response is to *contest the dimension on
+which the entrant differentiates*, neutralizing the entrant's positioning rather
+than competing head-on on price.
+
+Entry decisions also interact with the *channel* through which a brand reaches
+the market. @bei2022 show that the choice between selling to a platform at
+wholesale (first-party) and selling on the platform directly (third-party) has
+asymmetric share consequences: first-party operation tends to depress a brand's
+share—more so for brands that cannot establish trust amid many rival and rogue
+sellers—whereas third-party operation tends to raise share, especially for
+non-leading premium brands with prior direct-to-consumer experience. The mode of
+entry, not merely its timing, is a lever on the share a brand can ultimately
+hold.
+
+## Entry Timing: The Cost of Early versus Late {#sec-timing}
+
+Order is relative to rivals; timing is relative to the market. The timing
+decision trades two opposing costs. Entering *too early* incurs the cost of an
+immature market—undeveloped demand, missing complements, unresolved technical
+standards—and the burden of educating customers, a cost later entrants free-ride
+upon. Entering *too late* forfeits the accumulated stock $K$ in @eq-stock and
+cedes the preferred positions. The optimum balances the two.
+
+A compact way to see the trade-off is to write the *net* value of entering at
+calendar time $t$ as the discounted stream of profit from then on, minus the
+penalty for entering before the market is ready:
+$$
+V(t) \;=\; \underbrace{\int_{t}^{\infty} e^{-\rho (u-t)}\, \pi\big(m(u),\, K(t)\big)\, du}_{\text{value of the captured market}}
+        \;-\; \underbrace{C\big(m(t)\big)}_{\text{immaturity / education cost}},
+$$ {#eq-timing}
+where $m(u)$ is market maturity (the share of ultimate demand realized by time
+$u$, e.g., the cumulative diffusion curve), $K(t)$ is the head-start stock the
+firm can bank by entering at $t$ (declining in $t$ as rivals arrive), $\rho$ is
+the discount rate, and $C(\cdot)$ is the immaturity cost, decreasing in maturity.
+The firm enters at the $t^\star$ that maximizes $V(t)$. Early in the life cycle
+$K(t)$ is large but $C(m(t))$ is also large and $m(u)$ is low; later, the
+immaturity cost falls but so does the bankable head start. The first-order
+condition $V'(t^\star)=0$ balances the *marginal decay of the head start* against
+the *marginal fall in the cost of immaturity*—a clean statement of why neither
+the earliest nor the latest entrant is generally optimal.
+
+The maturity path $m(u)$ is not exogenous to the firm's information: timing is
+fundamentally about *when uncertainty resolves*. Adoption of a new technology
+follows rank, stock, and order effects in which heterogeneous adopters cross a
+profitability threshold at different times [@karshenas1993], and the same logic
+governs when a category "takes off"—the abrupt acceleration that turns a niche
+into a mass market [@golder1997; @golder2004]. A firm timing entry to a takeoff
+must forecast that inflection, not merely the level of current demand. Entering
+just *before* takeoff captures the head start with the immaturity cost nearly
+paid down; entering long before it pays the full education cost with deep
+discounting of distant returns.
+
+::: {.callout-warning}
+## Pioneering is not the same as being early
+
+The constructs pull apart here. A firm can be the *pioneer* (rank 1) yet enter
+*late* in absolute terms if the category itself is young relative to consumer
+readiness; conversely a firm can be a *late entrant* (rank 4) yet arrive *early*
+on the maturity curve if the whole category is nascent. The empirical record of
+failed pioneers in @golder1993 is in large part a record of firms that pioneered
+*and* mistimed—first to a market that was not yet ready, exhausting resources on
+education that a better-timed follower harvested.
+:::
+
+## Estimating Order-of-Entry Effects {#sec-estimation}
+
+We now make the identification problem of @sec-constructs operational. The goal
+is to estimate the order-of-entry elasticity $\theta$ in @eq-rank-power without
+the survivorship and selection biases that inflate it.
+
+**Estimator and specification.** The workhorse specification regresses
+log-share on log-rank with controls,
+$$
+\log s_{ic} \;=\; \alpha_c \;-\; \theta \log r_{ic}
+              \;+\; \boldsymbol{\gamma}'\mathbf{x}_{ic} \;+\; \varepsilon_{ic},
+$$ {#eq-estimating}
+where $i$ indexes brands, $c$ indexes categories, $\alpha_c$ is a category fixed
+effect (absorbing category-level demand and the mechanical constraint that shares
+sum to one), $\mathbf{x}_{ic}$ collects marketing-mix and quality controls, and
+$\theta$ is the order-of-entry elasticity. Under the assumptions below, OLS on
+@eq-estimating consistently estimates $\theta$.
+
+**Identifying assumptions and what breaks them.**
+
+1. *No selection on unobservables:* $\mathbb{E}[\varepsilon_{ic} \mid r_{ic},
+   \mathbf{x}_{ic}, \alpha_c] = 0$. This fails whenever an unobserved endowment
+   $\xi_i$ drives both early entry and high share (@eq-share-selection).
+   *Remedy:* an instrument $z_i$ for entry order—shifting the *order* of entry
+   without directly affecting share, such as the firm's pre-existing presence in
+   an adjacent category or a regulatory/technological event that gated entry
+   timing—estimated by two-stage least squares. A valid instrument satisfies
+   relevance ($\mathrm{Cov}(z_i, r_i)\neq 0$) and exclusion
+   ($\mathrm{Cov}(z_i, \varepsilon_i)=0$); the exclusion restriction is the hard
+   part and must be argued, not assumed. <!-- CITE-NEEDED: instrumental-variables identification of order-of-entry effects with an order-shifting instrument -->
+2. *No survivorship filtering:* the sample includes entrants *regardless of
+   survival*. Conditioning on survival reintroduces the collider bias of
+   @fig-bias-dag. *Remedy:* historical-population sampling [@golder1993], or an
+   explicit selection model (e.g., a survival equation estimated jointly with
+   @eq-estimating).
+3. *Correct functional form:* @eq-rank-power imposes a constant elasticity. If
+   the true gradient is convex or has a pioneer-specific discontinuity (a "rank-1
+   premium" beyond the smooth curve), the constant-$\theta$ fit misattributes the
+   discontinuity. *Remedy:* add a pioneer dummy and test it separately from the
+   slope.
+
+**A reproducible illustration.** The following simulation builds a population of
+entrants with a *true* order-of-entry effect and a confounding endowment, then
+shows (i) that the naive log-share-on-log-rank regression on *survivors only*
+overstates the effect, and (ii) that estimating on the full population recovers
+it. The data-generating process encodes exactly the biases formalized above, so
+the gap between the two estimates is the bias, isolated.
+
+```{r oe-simulation, message=FALSE, warning=FALSE}
+set.seed(20260620)
+
+n_cat   <- 400          # number of categories
+k_per   <- 5            # entrants per category
+theta   <- 0.30         # TRUE order-of-entry elasticity (log share per log rank)
+eta     <- 0.60         # strength of selection: able firms enter earlier
+
+sim <- do.call(rbind, lapply(seq_len(n_cat), function(cat) {
+  # latent firm endowment xi: drives BOTH early entry and high share
+  xi   <- rnorm(k_per)
+  # entry order: firms with higher endowment tend to enter earlier (lower rank)
+  rank <- rank(-eta * xi + rnorm(k_per), ties.method = "first")
+  # log latent share: true negative order effect + endowment + noise
+  log_share_latent <- -theta * log(rank) + 0.8 * xi + rnorm(k_per, sd = 0.3)
+  share <- exp(log_share_latent)
+  share <- share / sum(share)                 # shares sum to one within category
+  # survival: better endowment AND earlier rank survive more often (collider)
+  p_surv  <- plogis(1.0 + 1.2 * xi - 0.5 * rank)
+  survive <- rbinom(k_per, 1, p_surv)
+  data.frame(cat = cat, rank = rank, share = share,
+             xi = xi, survive = survive)
+}))
+
+# (1) NAIVE estimate: survivors only, no control for endowment
+naive <- lm(log(share) ~ log(rank) + factor(cat),
+            data = subset(sim, survive == 1))
+theta_naive <- -coef(naive)[["log(rank)"]]
+
+# (2) FULL-POPULATION estimate: all entrants, controlling for the endowment
+full  <- lm(log(share) ~ log(rank) + xi + factor(cat), data = sim)
+theta_full <- -coef(full)[["log(rank)"]]
+
+cat(sprintf("True theta            : %.3f\n", theta))
+cat(sprintf("Naive (survivors only): %.3f  <- inflated\n", theta_naive))
+cat(sprintf("Full population + xi  : %.3f  <- recovers truth\n", theta_full))
+```
+
+The naive survivor-only slope overstates the true elasticity because it conflates
+the genuine order effect with the survivorship and endowment biases; the
+full-population specification that observes the endowment recovers the truth. In
+real data the endowment is unobserved, which is why the credible designs are the
+historical-population sample [@golder1993] and an order-shifting instrument—the
+two remedies in the assumption list above. The simulation makes the abstract bias
+concrete: the number to distrust is the raw rank–share gradient.
+
+## Synthesis and Strategic Implications
+
+The threads of this chapter converge on a small number of decision-relevant
+propositions. First, **order is endogenous and survivor-filtered**, so the raw
+rank–share gradient is a biased estimate of the value of entering early; the
+defensible estimate comes from failure-inclusive data or a credible instrument
+[@golder1993; @boulding2003]. Second, **pioneering pays only when it builds a
+slowly depreciating stock**—of preferences, switching costs, learning, or network
+members (@eq-stock)—and the strategic question is always the size of $\phi$, the
+depreciation rate. Third, **the strongest erosion-resistant mechanism, network
+effects, is still defeasible by quality**, so "first but worse" is not a tenable
+position [@tellis2009]. Fourth, **incumbency is a liability as well as an
+asset**: the incumbent's curse [@chandy2000] and the cannibalization disincentive
+[@chandy1998] mean that the firm best placed to win the next generation often
+will not, which is precisely the opening late entrants exploit. Fifth,
+**incumbents respond by contesting the entrant's point of differentiation**
+[@maesen2022] and, where they can commit irreversibly, by deterring entry
+outright [@dixit1980]; commitments communicated rather than built—preannouncements
+—work only when reneging is punished [@sorescu2007]. Finally, **timing is distinct
+from order** (@eq-timing): the optimal entrant arrives neither earliest nor latest
+but when the marginal decay of its head start just balances the marginal fall in
+the cost of market immaturity, an inflection tied to category takeoff
+[@golder1997; @karshenas1993].
+
+## Key Takeaways
+
+- **Separate the three constructs.** Order (rank vs. rivals), timing (position on
+  the maturity curve), and pioneer advantage (the *causal* premium for being
+  first) are distinct; conflating them produces the "failed pioneer" paradox of
+  @golder1993.
+- **Distrust the gradient.** Survivorship bias (a collider) and selection on
+  unobservables (endogenous order) both inflate the observed pioneer premium;
+  identify the effect with failure-inclusive data or an order-shifting instrument
+  (@sec-estimation).
+- **Advantage = a stock with a depreciation rate.** Pioneer advantage persists in
+  proportion to how slowly its underlying stock—preferences, switching costs,
+  learning, network—decays (@eq-stock, @tbl-mechanisms).
+- **Quality defeats networks.** Even network-effect leads can be overturned by a
+  superior late entrant [@tellis2009]; incumbency invites the incumbent's curse
+  [@chandy2000].
+- **Respond on the entrant's axis of differentiation**, deter with credible
+  irreversible commitment where feasible [@dixit1980; @maesen2022], and treat the
+  timing decision as a maturity-curve optimization, not a race to be first.
+
+## Further Reading
+
+The pioneer-advantage debate is best read as a sequence: @urban1986 for the
+share-rewards generalization, @golder1993 for its historical demolition, and
+@boulding2003 for the profit-based reconciliation. For incumbent behavior,
+@chandy2000 and @chandy1998 develop the incumbent's curse and its organizational
+remedy; @tellis2009 supplies the quality-versus-network-effects evidence. The
+strategic economics of deterrence begins with @dixit1980. Diffusion and takeoff,
+which govern entry timing, are developed in @golder1997, @golder2004, and
+@karshenas1993, and connect to the diffusion treatment elsewhere in the book. The
+persistence that makes early entry valuable is documented in @bronnenberg2009 and
+@bronnenberg2010, and links directly to the branding material in @sec-branding.

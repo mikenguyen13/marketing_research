@@ -1,5 +1,439 @@
-# Sarcasm
+# Sarcasm and Figurative Language {#sec-sarcasm}
 
--   [AI-based Learning Techniques for Sarcasm Detection of Social Media Tweets](https://link.springer.com/article/10.1007/s42979-020-00336-3)
+Consumers do not write literally. A one-star review that reads "Absolutely
+fantastic — broke on day two, exactly what I wanted" is unambiguous to a human
+and catastrophic for a sentiment classifier that scores tokens at face value.
+*Sarcasm* and the broader family of *figurative language*—irony, hyperbole,
+rhetorical questions, understatement—are pervasive in the consumer text that
+marketing researchers now mine at scale: product reviews, social-media posts,
+forum threads, and customer-service transcripts. This chapter treats figurative
+language not as a curiosity but as a *measurement problem*. When the surface form
+of a sentence systematically inverts or distorts its intended meaning, any
+pipeline that maps words to valence inherits a bias whose sign and magnitude
+depend on the prevalence and detectability of the figure. The chapter's purpose
+is to make that bias precise, to show where it does and does not threaten the
+inferences marketers draw from text, and to give the reader a defensible,
+reproducible way to handle it.
 
--   [Interpretable Multi-Head Self-Attention Architecture for Sarcasm Detection in Social Media](https://www.mdpi.com/1099-4300/23/4/394)
+The stakes are concrete. Firms increasingly treat the valence of online word of
+mouth as a real-time signal of product quality, brand health, and demand
+[@tirunillai2012; @netzer2008hidden], and review valence is correlated with sales
+[@chevalier2003measuring]. If sarcasm is more common in negative experiences than
+positive ones—which the data suggest—then a naïve sentiment model does not merely
+add noise; it adds *signed* error that is correlated with the very construct the
+firm wants to measure. The result is an attenuated or even sign-flipped estimate
+of how sentiment relates to outcomes. Honest text analytics requires knowing when
+that happens.
+
+The chapter is deliberately scoped and candid about its limits. Sarcasm detection
+is an open research problem; no method, human or machine, achieves high reliability
+on isolated short texts, because sarcasm is fundamentally *contextual*—it depends
+on shared knowledge, prosody, and speaker intent that the text alone may not carry.
+We therefore proceed from intuition to formalism: first defining figurative
+language and the construct of verbal irony, then modeling sarcasm as a hidden
+variable that corrupts sentiment measurement, then surveying detection methods with
+their estimators and failure modes, and finally giving practical guidance—often,
+the right move is to *quantify and bound* the bias rather than to chase a brittle
+classifier.
+
+## What Figurative Language Is
+
+Figurative language is any use of words whose intended meaning departs from their
+literal, compositional meaning. The departure is not an error: speaker and listener
+both understand that the literal reading is to be overridden, and the gap between
+literal and intended meaning is itself the vehicle of communication—it conveys
+attitude, humor, social bonding, or emphasis that the literal statement could not.
+
+> **Verbal irony** is the use of an utterance whose intended meaning is opposed to,
+> or markedly different from, its literal meaning, with the speaker intending the
+> listener to recognize the opposition. **Sarcasm** is verbal irony deployed with a
+> critical or contemptuous edge—irony aimed, usually, at a target.
+
+The distinction matters less for measurement than the shared mechanism: a *valence
+reversal* between surface and intent. The constructs relevant to consumer text form
+a small family, summarized in @tbl-figures.
+
+| Figure | Surface→intent relation | Consumer-text example | Threat to sentiment |
+|---|---|---|---|
+| Verbal irony / sarcasm | Inversion (often) | "Great, another update that breaks the app." | Severe: flips sign |
+| Hyperbole | Amplification | "Worst purchase in the history of mankind." | Moderate: inflates magnitude |
+| Understatement (litotes) | Attenuation | "Not exactly a bargain." | Moderate: hides magnitude |
+| Rhetorical question | Assertion as question | "Who designed this, a toddler?" | Mild–moderate |
+| Metaphor / idiom | Non-literal mapping | "This blender is a tank." | Mild: lexicon miss |
+
+: A taxonomy of figurative devices in consumer text, ordered roughly by how badly each corrupts a token-level sentiment score. {#tbl-figures}
+
+Two properties make sarcasm the hardest case. First, it is **context-dependent**:
+the same sentence ("Love waiting on hold for an hour") is sincere or sarcastic
+depending on world knowledge the reader supplies. Second, it is **incongruity-based**:
+sarcasm typically juxtaposes a positive surface against a negative situation (or
+vice versa), so its signature is an *internal contradiction* rather than any
+particular vocabulary <!-- CITE-NEEDED: incongruity / context-incongruity theory of verbal irony -->.
+Both properties defeat bag-of-words methods, which discard exactly the contextual
+and structural information sarcasm encodes.
+
+## Prevalence in Consumer Text
+
+How common is sarcasm in the corpora marketers actually analyze? The honest answer
+is that prevalence is *unknown with precision* and *heterogeneous across platforms*,
+and any single number should be treated with suspicion. Reported rates vary by an
+order of magnitude depending on the platform, the labeling protocol, and—crucially—
+how sarcasm is operationalized <!-- CITE-NEEDED: prevalence estimates of sarcasm/irony in social media and review corpora -->.
+
+A few regularities are robust enough to state, with the appropriate hedges. Sarcasm
+is **more frequent on social platforms than in product reviews**: short, public,
+performative text (microblog posts, comments) rewards wit, whereas a review written
+to inform a purchase decision is, on average, more literal
+<!-- CITE-NEEDED: platform differences in figurative-language rates -->. Within
+reviews, sarcasm concentrates in the **tails of the rating distribution** and
+especially in **negative** experiences, where irony is a common rhetorical strategy
+for expressing disappointment
+<!-- CITE-NEEDED: association between sarcasm and negative review valence -->. And
+sarcasm is **bursty**: it clusters around product failures, service breakdowns, and
+brand controversies, the same events that drive firestorms of negative word of mouth
+[@herhausen2022]. This last point is the one most consequential for marketing: the
+moments when a firm most needs an accurate read of sentiment are precisely the
+moments when figurative language is densest.
+
+::: {.callout-note}
+## Why prevalence is so hard to pin down
+Three forces conspire. (i) *Annotation disagreement*: even trained humans agree only
+moderately on whether an isolated text is sarcastic, so the "ground truth" is itself
+noisy (see @sec-annotation). (ii) *Selection in labeled corpora*: many benchmark
+datasets are built by harvesting self-labeled sarcasm (e.g., posts tagged
+`#sarcasm`), which over-represents *signaled* sarcasm and under-represents the
+deadpan variety that actually fools classifiers <!-- CITE-NEEDED: self-labeled (#sarcasm) corpus construction and its biases -->.
+(iii) *Definition drift*: studies fold irony, sarcasm, and rhetorical questions
+together or apart inconsistently. Reported prevalence is therefore a property of the
+measurement procedure as much as of the population.
+:::
+
+## Why Sarcasm Breaks Sentiment Analysis
+
+We now formalize the threat. The goal is to show *exactly* how figurative language
+maps into bias in a downstream estimate, so the reader can reason about when it
+matters.
+
+### Sentiment as a measurement model
+
+Let a document $i$ carry a latent sentiment $s_i \in \{-1, +1\}$ (negative,
+positive)—the consumer's true evaluative stance, the quantity of interest. A
+sentiment classifier produces an estimate $\hat{s}_i = f(\mathbf{w}_i)$ from the
+observed token vector $\mathbf{w}_i$. A *literal* classifier reads the surface
+polarity of the words. Introduce a hidden indicator $z_i \in \{0,1\}$ for whether
+the document is sarcastic. The core problem is that sarcasm makes the surface
+polarity an inverted signal of the intended polarity:
+
+$$
+\text{surface polarity}(\mathbf{w}_i) =
+\begin{cases}
+s_i, & z_i = 0 \quad (\text{literal}) \\
+-\,s_i, & z_i = 1 \quad (\text{sarcastic, inverting})
+\end{cases}
+$$ {#eq-inversion}
+
+@eq-inversion is the crux: under sarcasm the *most informative* surface feature
+points the wrong way. A literal classifier that achieves accuracy $1-\epsilon$ on
+non-sarcastic text and naïvely trusts surface polarity will *systematically
+misclassify* sarcastic documents, not merely err at random on them.
+
+### The bias this induces
+
+Consider the simplest downstream use: estimating the population share of positive
+documents, $\pi = \Pr(s_i = +1)$, by the sample mean of a literal classifier's
+labels. Let $q = \Pr(z_i = 1)$ be the sarcasm prevalence and—capturing the key
+empirical regularity—suppose sarcasm is concentrated among negative-intent
+documents, so that a sarcastic document presents a *positive* surface. Holding the
+non-sarcastic error aside, the literal estimator's expected value is
+
+$$
+\mathbb{E}[\hat{\pi}] \;=\; \pi \;+\; q\,\Pr(s_i = -1 \mid z_i = 1)\,\Pr(z_i=1\mid s_i=-1)\big/\!\cdots,
+$$ {#eq-bias}
+
+which, stripped to its intuition, says the bias in the estimated positive share is
+**increasing in prevalence $q$ and in the degree to which sarcasm co-occurs with
+negative intent**. Two consequences follow. First, the bias does not vanish as the
+sample grows: it is *systematic*, not sampling error, so more data does not help.
+Second, because $q$ is itself larger in negative and high-arousal contexts
+(@sec-prevalence), the bias is *correlated with the regressors* a marketer typically
+cares about—product, time, campaign—so it contaminates not just levels but
+*comparisons*.
+
+::: {.callout-important}
+## The identification problem in one sentence
+Sarcasm is a form of **non-classical measurement error in the dependent variable
+that is correlated with the construct being measured**. Classical measurement error
+in $y$ inflates standard errors but leaves slope estimates unbiased; sarcasm-induced
+error is non-classical—correlated with true sentiment and often with covariates—so
+it biases slopes and can reverse signs. No amount of data fixes a measurement model
+that is wrong about @eq-inversion.
+:::
+
+### A worked simulation
+
+The following seeded example makes the bias visible. We generate documents with
+known true sentiment, let a fraction be sarcastic (concentrated in negative
+documents), and compare a literal classifier's read of average sentiment against the
+truth.
+
+```{r sarcasm-bias-sim}
+#| label: sarcasm-bias-sim
+#| message: false
+#| warning: false
+set.seed(7)
+
+n <- 20000
+# True sentiment: 55% positive, 45% negative.
+true_pos <- rbinom(n, 1, 0.55)            # 1 = positive, 0 = negative
+
+# Sarcasm prevalence is HIGHER among negative-intent documents.
+p_sarc <- ifelse(true_pos == 1, 0.03, 0.18)
+sarcastic <- rbinom(n, 1, p_sarc)
+
+# A literal classifier reads SURFACE polarity. For sincere docs the surface
+# matches intent (with small error); for sarcastic docs it inverts.
+base_err <- 0.05
+surface_pos <- ifelse(
+  sarcastic == 1,
+  1 - true_pos,                           # inversion
+  ifelse(runif(n) < base_err, 1 - true_pos, true_pos)
+)
+
+truth   <- mean(true_pos)
+literal <- mean(surface_pos)
+
+cat(sprintf("True positive share:    %.3f\n", truth))
+cat(sprintf("Literal estimate:       %.3f\n", literal))
+cat(sprintf("Bias (literal - truth): %+.3f\n", literal - truth))
+
+# The bias is concentrated where sarcasm is: among truly-negative documents.
+neg <- true_pos == 0
+cat(sprintf("Share of TRUE-negative docs the literal model calls positive: %.3f\n",
+            mean(surface_pos[neg] == 1)))
+```
+
+The literal classifier overstates the positive share, and the error lives almost
+entirely in the negative tail—exactly the region a brand monitors most closely. A
+6-to-1 difference in sarcasm rates between negative and positive documents is enough
+to move the headline number by several points and to corrupt any regression that
+conditions on document polarity.
+
+## Detecting Sarcasm
+
+Detection methods fall on a ladder of increasing context. The pedagogical point is
+that each rung adds information that @eq-inversion shows is necessary, and each adds
+its own assumptions and failure modes.
+
+```{mermaid}
+%%| label: fig-detection-ladder
+%%| fig-cap: "A ladder of sarcasm-detection approaches, from context-free lexical cues to context-rich neural models. Each rung adds information the rung below discards; each adds assumptions and new failure modes."
+flowchart TB
+    A["Lexical / surface cues<br/>(polarity contrast, punctuation,<br/>interjections, emoji)"] --> B
+    B["Incongruity features<br/>(positive phrase in<br/>negative situation)"] --> C
+    C["Sequence models<br/>(word order, negation scope,<br/>RNN / attention)"] --> D
+    D["Context-aware neural models<br/>(thread, author history,<br/>pretrained transformers)"] --> E
+    E["Multimodal / behavioral<br/>(rating-text mismatch,<br/>conversational context)"]
+```
+
+### Surface and incongruity features
+
+The earliest and most interpretable approach engineers features that proxy for the
+internal contradiction sarcasm encodes: a positive sentiment phrase adjacent to a
+negative situation phrase, intensifiers, scare quotes, ellipses, exclamation
+patterns, and emoji that clash with the surrounding text
+<!-- CITE-NEEDED: feature-engineering / incongruity features for sarcasm detection -->.
+The estimator is a standard supervised classifier (logistic regression, SVM, or
+gradient boosting) on these features; the assumption that breaks identification is
+**stationarity of cues**—sarcasm markers drift across communities and time, so a
+model trained on one platform's conventions degrades on another. Interpretable
+feature models are nonetheless valuable in marketing precisely because the analyst
+can audit *which* cue fired, a property opaque neural models lack.
+
+A useful and lightweight signal specific to reviews is the **rating–text mismatch**:
+a five-star rating attached to scathing prose, or a one-star rating attached to
+glowing prose, is a strong prior for irony or for a mis-clicked rating. This is the
+bottom-up "behavioral" rung of @fig-detection-ladder and requires no NLP at all.
+
+```{r mismatch-flag}
+#| label: mismatch-flag
+#| message: false
+#| warning: false
+set.seed(11)
+library(dplyr)
+library(stringr)
+
+reviews <- tibble::tibble(
+  stars = c(5, 1, 5, 4, 1, 5),
+  text  = c(
+    "Absolutely fantastic, broke on day two. Exactly what I wanted.",
+    "Worst thing ever. I cannot live without it now.",
+    "Solid build, works as described, would buy again.",
+    "Does the job, no complaints.",
+    "Terrible. Stopped charging after a week and support ignored me.",
+    "Great, another 'premium' cable that frays in a month."
+  )
+)
+
+# Tiny illustrative polarity lexicon (NOT production-grade).
+pos <- c("fantastic","great","solid","works","love","premium","wanted","again")
+neg <- c("broke","worst","terrible","stopped","frays","ignored","cannot")
+
+score_text <- function(x) {
+  toks <- str_split(str_to_lower(x), "\\W+")[[1]]
+  sum(toks %in% pos) - sum(toks %in% neg)
+}
+
+reviews <- reviews |>
+  mutate(
+    text_polarity = vapply(text, score_text, numeric(1)),
+    star_sign     = sign(stars - 3),          # +1 high, -1 low
+    text_sign     = sign(text_polarity),
+    mismatch      = star_sign != 0 & text_sign != 0 & star_sign != text_sign
+  )
+
+reviews |> select(stars, text_polarity, mismatch)
+```
+
+The flagged rows are candidates for irony (or sloppy rating). Mismatch is a
+*screening* device, not a classifier: it has high recall for signaled cases and many
+false positives (a genuinely mixed review also mismatches), so it routes documents to
+review rather than relabeling them automatically.
+
+### Sequence and context-aware models
+
+Because sarcasm depends on word order (negation scope, the placement of the
+incongruous phrase) and on context beyond the sentence, the modern literature moves
+to sequence models—recurrent networks and, dominantly, attention-based transformers
+that read the whole utterance and, where available, its surrounding thread, the
+author's history, and the conversational target
+<!-- CITE-NEEDED: neural / transformer / attention models for sarcasm detection -->.
+These models can represent the positive-surface/negative-context incongruity that
+defines sarcasm, and they consistently outperform feature-engineered baselines on
+benchmark corpora <!-- CITE-NEEDED: benchmark performance of neural sarcasm detectors -->.
+Marketing has embraced deep text and image models for adjacent tasks—recovering
+brand perceptions from consumer images [@liu2020] and structuring unstructured
+review text [@buschken2016sentence; @netzer2008hidden]—so the tooling is familiar.
+
+Two cautions temper the optimism. First, **context is often unavailable** at scoring
+time: a firm's review corpus may lack the author history or thread structure that
+makes a benchmark tractable, so reported accuracies do not transfer. Second, the
+benchmarks themselves are built largely from **self-labeled or distantly-supervised**
+data (@sec-prevalence), which means the models learn to detect *signaled* sarcasm and
+remain weak on the deadpan cases that matter most for measurement. The estimator is
+strong; the identifying data are weak.
+
+## Annotation: The Ground-Truth Problem {#sec-annotation}
+
+Every supervised detector rests on labels, and sarcasm labels are unusually fragile.
+Because sarcasm is recognized rather than decoded, two competent annotators reading
+the same isolated text frequently disagree. Quantifying that disagreement is a
+prerequisite for trusting any downstream number.
+
+The standard instrument is **Cohen's $\kappa$**, the chance-corrected agreement
+between two raters. With observed agreement $p_o$ and chance agreement $p_e$,
+
+$$
+\kappa = \frac{p_o - p_e}{1 - p_e},
+$$ {#eq-kappa}
+
+where $p_e = \sum_k \hat p_{1k}\,\hat p_{2k}$ sums the product of the two raters'
+marginal rates over label categories $k$ [@Cohen_1960]. $\kappa = 1$ is perfect
+agreement, $0$ is chance; conventional (and contested) thresholds read $0.41$–$0.60$
+as "moderate" and $0.61$–$0.80$ as "substantial" [@Landis_1977]. Sarcasm annotation
+on isolated short texts routinely lands in the low-to-moderate band, and rises only
+when annotators are given conversational context
+<!-- CITE-NEEDED: inter-annotator agreement levels for sarcasm/irony annotation -->.
+The implication is structural: a detector cannot be more reliable than its labels, so
+a benchmark "accuracy" of 0.85 against ground truth that itself carries $\kappa
+\approx 0.6$ is reporting agreement with a noisy oracle, not with the truth.
+
+```{r kappa-demo}
+#| label: kappa-demo
+#| message: false
+#| warning: false
+cohen_kappa <- function(r1, r2) {
+  tab <- table(r1, r2)
+  n   <- sum(tab)
+  p_o <- sum(diag(tab)) / n
+  p_e <- sum(rowSums(tab) * colSums(tab)) / n^2
+  (p_o - p_e) / (1 - p_e)
+}
+
+set.seed(3)
+# 200 texts; "deadpan" sarcasm where raters genuinely disagree.
+truth <- rbinom(200, 1, 0.25)                       # latent sarcasm
+# Each rater detects signaled sarcasm well, deadpan poorly.
+detect <- function(t) ifelse(t == 1,
+                             rbinom(length(t), 1, 0.65),   # catch ~65% when sarcastic
+                             rbinom(length(t), 1, 0.08))   # 8% false alarm
+rater1 <- detect(truth)
+rater2 <- detect(truth)
+
+cat(sprintf("Cohen's kappa between two annotators: %.2f\n",
+            cohen_kappa(rater1, rater2)))
+```
+
+The modest $\kappa$ is not a flaw in the simulated raters; it is the signature of a
+construct that is inherently underdetermined by text alone. Honest reporting carries
+this number forward into the error bars on any sentiment estimate built on top.
+
+## What to Do About It
+
+The practical posture this chapter recommends is *bound, don't pretend*. Three
+strategies, in rough order of cost and rigor.
+
+**Quantify the exposure.** Before deploying a sentiment pipeline, estimate sarcasm
+prevalence $q$ in a hand-labeled sample of the *target* corpus (not a benchmark), and
+propagate it into @eq-bias to bound how far the headline number can be off. If $q$ is
+small and roughly balanced across the comparisons of interest, sarcasm is a footnote;
+if $q$ is large and concentrated in the negative tail, it is a threat to the central
+claim. This costs a few hundred labels and is the single highest-value step.
+
+**Screen and route, don't auto-correct.** Use cheap signals—rating–text mismatch,
+incongruity features—to flag suspect documents and route them to human review or to
+exclusion, rather than trusting a classifier to flip their labels. Screening trades
+recall for precision and keeps the analyst in the loop, which matters because a
+wrongly "corrected" label is worse than a flagged one.
+
+**Use context when you have it, and report when you don't.** Where author history,
+thread structure, or conversational context exist, a context-aware model is worth its
+cost; where they do not, say so, and treat the resulting estimate as a *bound*. The
+worst outcome is a confident sentiment number whose figurative-language exposure was
+never measured.
+
+Finally, recognize the **scope conditions**. Sarcasm matters most for fine-grained,
+document-level valence in negative, high-arousal, public text—brand firestorms,
+service failures, controversy [@herhausen2022; @schweidel2014listening]. It matters
+least for aggregate, long-horizon signals where idiosyncratic figurative error
+averages out and the quantity of interest is a trend, not a label
+[@tirunillai2012]. Knowing which regime one is in is more important than owning the
+best classifier.
+
+## Key Takeaways
+
+- **Sarcasm is a measurement problem, not a vocabulary problem.** Its signature is a
+  valence inversion between surface and intent (@eq-inversion); bag-of-words methods
+  discard exactly the contextual and structural information needed to catch it.
+- The induced error is **non-classical**: correlated with true sentiment and often
+  with covariates, so it biases comparisons and can reverse signs, and *more data does
+  not fix it* (@eq-bias).
+- **Prevalence is heterogeneous and hard to measure**, higher on social platforms
+  than in reviews, concentrated in negative tails, and bursty around the failures
+  firms most want to monitor.
+- Detection improves with **context** (@fig-detection-ladder), but benchmarks rest on
+  self-labeled data and on labels with only **moderate inter-annotator agreement**
+  (@eq-kappa), so reported accuracies overstate field performance.
+- The defensible posture is to **quantify exposure, screen rather than auto-correct,
+  and report uncertainty**—bounding the bias is usually worth more than chasing a
+  brittle classifier.
+
+## Further Reading
+
+The text-analytics foundations this chapter builds on are developed elsewhere in the
+book: extracting structure and meaning from consumer language [@netzer2008hidden;
+@buschken2016sentence], the relationship between word-of-mouth valence and sales
+[@chevalier2003measuring], firm response to negative posts and firestorms
+[@herhausen2022; @proserpio2017], and social listening as a measurement enterprise
+[@schweidel2014listening]. Readers should pair this chapter with the broader
+treatment of user-generated content and sentiment so that figurative language is
+handled as one—important—source of measurement error among several.

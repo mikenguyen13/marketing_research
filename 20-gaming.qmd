@@ -1,37 +1,538 @@
-# Games
+# Games and Gamification {#sec-gaming}
 
-[@jo2020protecting] Restriction Laws on Online Game Usage and Spending
+A *game* is a structured system of voluntary activity governed by rules that
+produce quantifiable outcomes and, crucially, *engagement*: players keep playing
+because the system makes playing intrinsically rewarding. Video games have grown
+into the largest single category of paid entertainment, larger than film and
+recorded music combined, and the economics of the industry rest less on selling a
+finished good than on sustaining a relationship in which a player returns,
+progresses, and—often—pays in small increments over months or years. That shift,
+from the boxed product to the *live service*, makes gaming a marketing problem of
+the first order: the central managerial decisions are about engagement design,
+monetization architecture, and the regulatory limits on both.
 
--   **Context:** Rise of the online gaming industry and implementation of consumer protection laws to curb excessive gaming.
+This chapter treats games as a marketing object along three axes. The first is the
+**monetization architecture**: how revenue is extracted from a population of
+players whose willingness to pay is enormously heterogeneous, and why the
+free-to-play model with in-game purchases dominates. The second is the
+**engagement mechanics**: the rule systems—progression, scarcity, social
+comparison, variable rewards—that convert attention into habit, and the construct
+of *consumer engagement* that the marketing literature uses to formalize them.
+The third is **regulation and welfare**: because the same mechanics that drive
+engagement can drive overconsumption, gaming has become one of the most heavily
+regulated consumer categories, and the evaluation of those regulations is a clean
+causal-inference problem that we develop in detail.
 
--   **Objective:** Evaluate the effectiveness of a consumer protection policy on online gaming.
+A fourth theme cuts across all of marketing rather than belonging to games alone:
+**gamification**, the transfer of game design elements—points, levels, badges,
+leaderboards, streaks—into non-game settings such as loyalty programs, fitness
+apps, and sales-force incentives. Gamification borrows the engagement machinery of
+games to serve a marketing goal, and inherits both its power and its ethical
+hazards. By the end of the chapter the reader should be able to formalize a
+free-to-play monetization model, define and measure consumer engagement, specify
+and identify the effect of a usage-restriction regulation, and reason about when a
+gamified mechanic creates value versus when it merely manufactures compulsion.
 
--   **Study Focus:** Impact of usage restriction in South Korea on gamers and the industry.
+## The Economics of In-Game Purchases
 
--   **Methodology:**
+### From Premium to Free-to-Play
 
-    -   Used individual-level game usage and spending data.
+Historically a game was a *premium* good: the player paid a fixed price once and
+received the complete experience. The dominant modern model inverts this. Under
+**free-to-play** (F2P), access is free and revenue comes from **in-game
+purchases**—small transactions, typically a few dollars, for virtual items,
+currency, cosmetic customization, time savings, or access to additional content.
+These transactions are commonly called **microtransactions**, and the business
+model is sometimes labeled *freemium* when a free tier coexists with paid upgrades.
 
-    -   Combined difference-in-differences approach, regression discontinuity design, and propensity score matching.
+The logic is a price-discrimination argument. Let consumers be indexed by a
+willingness-to-pay type $\theta$ with distribution $F(\theta)$ that is highly
+right-skewed: most players value the game modestly, a few value it intensely. A
+single premium price $p$ excludes everyone with $\theta < p$ and leaves all
+surplus from high-$\theta$ players above $p$ on the table. Free access
+($p = 0$) admits the entire population, and a menu of in-game purchases then
+extracts revenue increasing in $\theta$, approximating first-degree price
+discrimination through self-selection. Formally, if a player of type $\theta$
+chooses purchase intensity $q$ to maximize utility $u(q;\theta) - P(q)$ under a
+nonlinear price schedule $P(q)$, expected revenue per installed player is
 
--   **Key Findings:**
+$$
+R = \int_{\underline{\theta}}^{\overline{\theta}} P\big(q^\*(\theta)\big)\, dF(\theta),
+$$ {#eq-f2p-revenue}
 
-    -   Regulation reduces overall game usage.
+where $q^\*(\theta)$ is the player's optimal purchase intensity. Two features of
+@eq-f2p-revenue drive industry practice. First, because $F$ is right-skewed,
+$R$ is dominated by its upper tail: a small fraction of players—the so-called
+*whales*—account for the majority of revenue, so the schedule $P(q)$ is engineered
+to remain unbounded above (there is always something more to buy) rather than to
+clear a median consumer.[^whales] Second, since admission is free, the marginal
+admitted player has $\theta$ near zero and contributes through scale and network
+effects (see @sec-platforms) rather than direct payment; the model trades certain
+small per-unit revenue for a far larger base.
 
-    -   Effects of regulation vary by past behaviors:
+[^whales]: The colloquial taxonomy of "minnows," "dolphins," and "whales" maps
+onto quantiles of $F(\theta)$. The concentration is extreme: in many titles fewer
+than 5% of paying players, and well under 1% of all players, generate the majority
+of in-game-purchase revenue. This concentration is the source of both the model's
+profitability and its regulatory scrutiny, because the heaviest spenders are
+disproportionately likely to be the vulnerable consumers (@sec-regulation).
 
-        -   Negative impact for average gamers.
+The transition from a non-paying to a paying relationship is itself a measurable
+event. @cao2023free study the monetization of a non-advertising-based app and show
+that the timing and design of the conversion from free to paid materially shapes
+both retention and revenue: converting too aggressively sheds the low-$\theta$ base
+that sustains network value, while converting too late forgoes extractable surplus
+from high-$\theta$ users. The managerial object is therefore not a price but a
+*conversion policy*—when, and on what, to begin charging a player who arrived for
+free.
 
-        -   Lesser impact on heavy gamers.
+### A Taxonomy of In-Game Purchases
 
-        -   Directionally opposite effect for the heaviest gamers.
+Not all microtransactions are alike, and the distinction matters for both welfare
+and regulation. @tbl-iap-types organizes the major types by what they sell and the
+externality they impose on other players.
 
-    -   Revenue impact of the regulation is negligible; gamers' spending remains consistent.
+| Type | What is sold | Effect on other players | Regulatory salience |
+|---|---|---|---|
+| Cosmetic | Appearance, skins, emotes | None (purely expressive) | Low |
+| Convenience / time-savers | Faster progression, energy refills | Mild (pacing) | Moderate |
+| Pay-to-win | Competitive advantage | Strong negative | High |
+| Content / expansion | New levels, characters | None | Low |
+| Loot boxes / gacha | Randomized item bundles | Varies | Very high |
 
--   **Implications:**
+: A taxonomy of in-game purchases by object sold and externality. {#tbl-iap-types}
 
-    -   Usage restriction laws may deter light gamers but not effective for heavy gamers.
+The economically and ethically distinctive category is the **loot box** (also
+called *gacha* after the Japanese capsule-toy machine): a sealed bundle whose
+contents are randomized, purchased before the buyer knows what it contains. A loot
+box is a lottery. If a box costs $c$ and yields item $j$ with probability $\pi_j$
+and subjective value $v_j$, the player buys when expected value exceeds price,
 
-    -   Suggests the need for a more nuanced approach than blanket usage restrictions.
+$$
+\sum_j \pi_j\, v_j \;>\; c,
+$$ {#eq-lootbox}
 
-    -   Raises questions about the role of such laws in controlling overconsumption and protecting consumers.
+but the structural similarity to gambling is exact: a stochastic payout purchased
+for a fixed stake, with the operator setting $\{\pi_j\}$ to its advantage. The
+resemblance is the reason loot boxes have attracted the heaviest regulatory
+attention of any monetization mechanic, a point we return to in @sec-regulation.
+The behavioral force is not the expected value in @eq-lootbox but the *variable
+schedule* of reinforcement the randomization creates, which we formalize next.
+
+## Engagement Mechanics
+
+### Consumer Engagement as a Construct
+
+Marketing formalizes the "stickiness" of games through the construct of
+**consumer engagement**. Following the engagement literature, engagement is a
+consumer's investment of operant (behavioral) and operand (cognitive, emotional)
+resources in interactions with a focal object beyond the act of purchase
+[@hollebeek2011; @harmeling2016]. It is explicitly a multidimensional construct
+with cognitive, emotional, and behavioral facets, and it is *cumulative*: today's
+engagement raises the probability of tomorrow's, which is precisely the dynamic a
+game's reward system is designed to exploit. Engagement sits inside the broader
+**customer experience** and **customer journey** framework, the end-to-end set of
+touchpoints through which a consumer moves [@lemon2016], and it is the proximal
+driver of the retention and monetization outcomes in @eq-f2p-revenue.
+
+> Customer engagement is the intensity of an individual's participation in and
+> connection with an organization's offerings and activities, reflecting investment
+> of resources beyond what is required for the transaction itself.
+
+The reason engagement is the right construct—rather than, say, satisfaction or
+loyalty—is that it captures *behavioral investment that is not yet a purchase*. A
+player who logs in daily, completes a streak, or climbs a leaderboard has invested
+without paying; that accumulated investment is what later converts to spending and
+what a player is loath to abandon (a sunk-cost dynamic). Engagement is thus the
+mediating state between admission and monetization.
+
+### The Reward-Schedule Model
+
+The engineering core of an engagement mechanic is its **reward schedule**: the
+rule mapping player actions to rewards. The foundational result, from the
+psychology of reinforcement, is that *variable-ratio* schedules—rewards delivered
+after an unpredictable number of actions—produce the highest and most persistent
+response rates, far exceeding fixed schedules.<!-- CITE-NEEDED: Skinner / variable-ratio reinforcement schedules and response persistence -->
+Loot boxes, random drops, and gacha pulls are variable-ratio schedules
+instantiated as commerce.
+
+A tractable formalization treats play as a sequence of actions, each of which may
+return a reward. Let the per-action reward be a random variable $r_t$ with mean
+$\mu$ and variance $\sigma^2$, and let the player continue playing as long as the
+*recent* experienced reward keeps an internal motivation state $m_t$ above a
+quit threshold $\bar m$. A simple updating rule is
+
+$$
+m_t = \alpha\, m_{t-1} + (1-\alpha)\, r_t, \qquad 0 < \alpha < 1,
+$$ {#eq-motivation}
+
+where $\alpha$ is the persistence of motivation. Under a *fixed* reward ($r_t = \mu$
+deterministically) the state converges monotonically and the player habituates: the
+reward becomes predictable and $m_t$ drifts toward a constant the designer cannot
+push above $\bar m$ without raising $\mu$ (costly). Under a *variable* reward with
+the same mean $\mu$ but variance $\sigma^2 > 0$, occasional large draws repeatedly
+spike $m_t$ and reset the approach to the threshold, sustaining play at *no
+additional expected reward cost*. The designer's lever is therefore $\sigma^2$, not
+$\mu$: variance is free engagement. This is the formal statement of why randomized
+rewards dominate, and why they are simultaneously the most effective and the most
+hazardous mechanic. The same logic explains why **streaks** and **daily login
+bonuses** work—they convert the quit decision into a recurring loss frame, so that
+not playing forfeits accumulated progress.
+
+The following simulation makes the contrast concrete, comparing session length
+under fixed versus variable rewards with identical means.
+
+```{r reward-schedule-sim}
+#| label: fig-reward-schedule
+#| fig-cap: "Simulated player drop-out under fixed versus variable reward schedules
+#|   with identical mean reward. Variable rewards sustain motivation above the quit
+#|   threshold for longer by repeatedly spiking the motivation state."
+#| message: false
+#| warning: false
+set.seed(20)
+
+simulate_play <- function(n = 200, mu = 1, sigma = 0, alpha = 0.8,
+                          quit = 0.6, m0 = 1) {
+  m <- m0
+  for (t in 1:n) {
+    r <- if (sigma == 0) mu else rgamma(1, shape = mu^2 / sigma^2,
+                                        scale = sigma^2 / mu)
+    m <- alpha * m + (1 - alpha) * r
+    if (m < quit) return(t)          # player quits this session
+  }
+  n
+}
+
+reps <- 2000
+fixed_len    <- replicate(reps, simulate_play(sigma = 0))
+variable_len <- replicate(reps, simulate_play(sigma = 1.5))
+
+cat("Median session length (fixed reward):   ", median(fixed_len), "\n")
+cat("Median session length (variable reward):", median(variable_len), "\n")
+
+hist(variable_len, breaks = 30, col = rgb(0, 0, 1, 0.4),
+     xlab = "Session length (actions before quit)", main = "",
+     xlim = range(c(fixed_len, variable_len)))
+hist(fixed_len, breaks = 30, col = rgb(1, 0, 0, 0.4), add = TRUE)
+legend("topright", legend = c("Variable reward", "Fixed reward"),
+       fill = c(rgb(0, 0, 1, 0.4), rgb(1, 0, 0, 0.4)), bty = "n")
+```
+
+### The Engagement-to-Revenue Loop
+
+Engagement mechanics, monetization, and acquisition form a closed loop, shown in
+@fig-engagement-loop. Acquisition delivers players into a *core loop* of action
+and reward governed by @eq-motivation; sustained engagement produces the behavioral
+investment that both converts to in-game purchases (@eq-f2p-revenue) and, through
+social and streaming visibility, feeds acquisition of new players. Live streaming
+is an empirically important arm of this loop: @huang2025promotional, using
+high-frequency Twitch data and within-day variation in top streamers' broadcast
+hours for identification, estimate a positive but modest and short-lived elasticity
+of concurrent players to live-stream viewership (about $0.027$), with the strongest
+effects for lesser-known titles where streams resolve quality uncertainty.
+Influencer content cuts both ways, however: @li2024opposing, studying YouTube
+influencers in the video-game industry, document *opposing* purchase and usage
+effects—exposure can raise purchase intent while substituting for the consumer's
+own play time—so the net effect on the engagement loop is not signed a priori.
+
+```{mermaid}
+%%| label: fig-engagement-loop
+%%| fig-cap: "The engagement-to-revenue loop in a free-to-play game. The core
+%%|   action-reward loop sustains engagement, which both monetizes through in-game
+%%|   purchases and feeds acquisition through social and streaming visibility."
+flowchart LR
+    A[Acquisition<br/>free admission] --> B[Core loop<br/>action and reward]
+    B --> C{Motivation<br/>state m_t}
+    C -->|above threshold| B
+    C -->|sustained| D[Engagement<br/>behavioral investment]
+    D --> E[In-game purchases<br/>monetization]
+    D --> F[Social and<br/>streaming visibility]
+    F --> A
+    E --> G[Revenue]
+    C -->|below threshold| H[Churn]
+```
+
+## Gamification in Marketing
+
+**Gamification** is the application of game-design elements—points, levels,
+badges, leaderboards, challenges, streaks, and randomized rewards—to contexts
+whose primary purpose is not play. In marketing the canonical applications are
+loyalty programs (status tiers, points, progress bars), mobile engagement apps
+(streaks, daily goals), referral programs (unlockable rewards), and internal
+sales-force or service incentives (leaderboards, badges). The premise is that the
+engagement machinery of @eq-motivation can be ported to serve a marketing
+objective—repeat purchase, app usage, word of mouth—without the underlying activity
+being a game.
+
+The mechanism that gamification exploits is the conversion of an instrumental task
+into one with intrinsic and social reward structure. Three behavioral levers
+recur. First, **goal gradient and endowed progress**: progress toward a salient
+goal accelerates effort as the goal nears, and artificially endowing early
+progress (e.g., a loyalty card pre-stamped twice) increases completion.<!-- CITE-NEEDED: goal-gradient / endowed-progress effect in loyalty programs -->
+Second, **operational transparency and effort visibility**: making the effort or
+progress visible increases valuation and persistence. Third, **social comparison**:
+leaderboards and visible status convert a private task into a positional one. The
+emotional facet matters here—the satisfaction of completing a streak or holding a
+status tier is an affective reward, and the literature on how time and activity are
+experienced as fun or productive bears directly on gamified design [@etkin2015;
+@tonietto2020].
+
+Gamification, however, inherits the ethical hazard of its source. The same
+mechanics that increase desirable engagement can manufacture compulsion, and
+several documented effects warn against naive deployment. Public, social
+gamification can backfire through *slacktivist* dynamics, in which a token public
+act of engagement *reduces* subsequent substantive effort—an effect of
+"private versus public" token support that managers of badge- and share-based
+programs should anticipate [@kristofferson2013]. And because gamified metrics are
+visible and incentivized, they invite gaming-of-the-metric: participants optimize
+the tracked behavior rather than the underlying objective, a generic failure of
+incentive design.<!-- CITE-NEEDED: gaming-the-metric / Goodhart's law in incentive design -->
+The design question is therefore whether a gamified mechanic *aligns* the tracked
+behavior with genuine value (a well-designed loyalty tier rewarding real repeat
+custom) or merely *manufactures* a behavior that looks like value (a streak that
+compels logins of no benefit to the consumer). @tbl-gamification contrasts
+value-creating with value-extracting gamification along this axis.
+
+| Dimension | Value-creating gamification | Value-extracting gamification |
+|---|---|---|
+| Objective alignment | Tracked behavior $\approx$ genuine value | Tracked behavior decoupled from value |
+| Consumer welfare | Consumer surplus rises | Surplus transferred to firm or destroyed |
+| Reward structure | Predictable, earned | Variable-ratio, engineered for compulsion |
+| Transparency | Odds and rules disclosed | Odds opaque (e.g., undisclosed drop rates) |
+| Exit | Low switching/quit cost | High sunk-cost lock-in |
+
+: Value-creating versus value-extracting gamification. The same mechanics serve
+either end; the distinction is whether the tracked behavior is aligned with
+consumer value and whether the design preserves the consumer's capacity to exit.
+{#tbl-gamification}
+
+## Regulation of Gaming and Welfare {#sec-regulation}
+
+### Why Regulate
+
+The welfare case for regulating games rests on the gap between the engagement
+mechanics of @eq-motivation and consumer sovereignty. When a variable-reward
+schedule sustains play and spending past the point a fully-informed, self-controlled
+consumer would choose, the consumer's revealed behavior no longer reveals
+preference; the standard welfare theorems fail. Three regulatory concerns follow,
+in rough order of consensus. The first is **minors and spending**: in-game
+purchases by children, who lack both the means and the judgment to consent to
+financial commitments, made through frictionless payment. The second is **gambling
+mechanics**: loot boxes (@eq-lootbox) replicate the structure of gambling, and
+several jurisdictions have moved to classify them as such, with consequences for
+age-gating and disclosure. The third is **time use and overconsumption**: excessive
+play time, particularly among adolescents, framed as a public-health concern. These
+motivate three corresponding instruments—spending caps and parental controls,
+loot-box disclosure or prohibition, and **usage-restriction laws** that cap or
+curfew play time. The remainder of this section develops the evaluation of the
+third, which has produced the cleanest natural experiment.
+
+### A Natural Experiment: Usage-Restriction Laws
+
+The sharpest evidence on usage restriction comes from South Korea's *Shutdown Law*
+(the "Cinderella law"), which barred players under 16 from accessing online games
+between midnight and 6 a.m. @jo2020protecting evaluate this policy on
+individual-level usage and spending data and reach a set of conclusions that should
+temper enthusiasm for blunt restriction. Regulation reduced overall game usage, but
+the effect was sharply heterogeneous in *past behavior*: it bound on average
+players, had a smaller effect on heavy players, and ran in the *opposite* direction
+for the very heaviest—the consumers the law was most meant to protect. And the
+revenue impact was negligible: restricted players reallocated rather than reduced
+spending. The policy lesson is that a curfew deters light, marginal players while
+the heaviest—plausibly the at-risk population—are unmoved or even intensify, so a
+blunt usage cap is poorly targeted at the welfare problem it names.
+
+### Identifying the Effect of a Usage Restriction
+
+The Korean setting is valuable precisely because it permits credible identification,
+and @jo2020protecting combine three complementary designs. We state each as an
+estimator with its identifying assumption and what breaks it, because the
+combination—not any single design—is what makes the conclusion robust. The cross-cutting
+machinery here connects to the broader treatment of causal inference in
+@sec-causal-inference.
+
+**Difference-in-differences (DiD).** With an age-based cutoff defining treated
+(under-16) and control (just over the cutoff) players observed before and after the
+law, the canonical two-way fixed-effects estimator for outcome $y_{it}$ (usage or
+spending) is
+
+$$
+y_{it} = \alpha_i + \gamma_t + \tau\, D_{it} + \varepsilon_{it},
+$$ {#eq-did}
+
+where $\alpha_i$ and $\gamma_t$ are individual and time fixed effects, $D_{it}=1$
+for treated players in the post-period, and $\tau$ is the average treatment effect.
+Identification requires the **parallel-trends** assumption: absent the law, treated
+and control outcomes would have moved in parallel,
+$\mathbb{E}[y_{it}(0) - y_{i,t-1}(0)\mid D]$ is independent of treatment status.
+This breaks if under-16 and over-16 players were already on diverging usage
+trajectories (developmental differences in gaming intensity by age make this a live
+threat), or if the law triggered compositional change—e.g., minors migrating to
+unregulated platforms or borrowing adult credentials, which contaminates both the
+treated outcome and the control group.
+
+**Regression discontinuity (RD).** The age threshold furnishes a sharp
+discontinuity: a player just under 16 is restricted, one just over is not. Comparing
+outcomes in a narrow bandwidth $h$ around the cutoff $a_0 = 16$,
+
+$$
+\tau_{\text{RD}} = \lim_{a \downarrow a_0} \mathbb{E}[y \mid a] -
+                   \lim_{a \uparrow a_0} \mathbb{E}[y \mid a],
+$$ {#eq-rd}
+
+identifies the *local* effect at the cutoff under the assumption that all other
+determinants of $y$ are continuous in age at $a_0$—players cannot precisely
+manipulate their recorded age, and nothing else changes discontinuously at exactly
+16. Manipulation (misreported birthdates to evade the curfew) is the canonical
+threat and would show as a density discontinuity in the running variable; the
+estimate is also only local to age 16 and need not generalize to younger children.
+
+**Propensity-score matching (PSM).** To compare restricted and unrestricted players
+who are otherwise observationally similar, each treated player $i$ is matched to
+controls with a similar propensity score $e(\mathbf{x}_i) = \Pr(D_i = 1 \mid
+\mathbf{x}_i)$ estimated from pre-treatment covariates $\mathbf{x}_i$ (past usage,
+spending, tenure). The matched estimator is
+
+$$
+\hat\tau_{\text{PSM}} = \frac{1}{N_1}\sum_{i:\,D_i=1}
+   \Big( y_i - \textstyle\sum_{j} w_{ij}\, y_j \Big),
+$$ {#eq-psm}
+
+where $w_{ij}$ weights controls $j$ by closeness in $e(\cdot)$. PSM identifies the
+effect on the treated under **selection on observables** (conditional
+unconfoundedness): treatment is as-good-as-random given $\mathbf{x}$, and there is
+common support. It breaks under selection on *unobservables*—if an unmeasured trait
+(say, a player's underlying self-control or propensity to seek out gaming) drives
+both treatment-relevant behavior and outcomes, matching on observed covariates
+leaves bias. PSM cannot, by construction, fix this; it is why @jo2020protecting
+triangulate with RD, whose identification does not lean on observables.
+
+The discipline of the design is that the three estimators lean on *different*
+assumptions—parallel trends, continuity at the cutoff, selection on observables—so
+their agreement is more convincing than any one alone. Where they would disagree
+tells the analyst which assumption is binding. @tbl-identification summarizes the
+comparison.
+
+| Design | Estimand | Key assumption | What breaks it |
+|---|---|---|---|
+| DiD (@eq-did) | ATT, average over time | Parallel trends | Diverging age trends; migration to unregulated play |
+| RD (@eq-rd) | Local effect at age 16 | Continuity at cutoff | Age manipulation; non-generalizable locally |
+| PSM (@eq-psm) | ATT on matched sample | Selection on observables | Selection on unobservables (e.g., self-control) |
+
+: Three identification strategies for a usage-restriction law and the assumption
+each rests on. Their combination is robust because the assumptions are
+non-overlapping. {#tbl-identification}
+
+### A Reproducible Difference-in-Differences
+
+The following simulation reproduces the *structure* of the usage-restriction
+evaluation—not the Korean data—to make the DiD estimator and its heterogeneity
+concrete. We generate treated (minor) and control players with a treatment effect
+that varies by baseline intensity, mirroring the central finding of
+@jo2020protecting that restriction binds on average players but not the heaviest.
+
+```{r did-simulation}
+#| label: tbl-did-results
+#| tbl-cap: "Difference-in-differences estimates of a simulated usage-restriction
+#|   law, overall and by baseline-intensity tercile. The overall effect masks
+#|   heterogeneity: the restriction reduces usage for light and average players but
+#|   not for the heaviest, mirroring the qualitative finding of Jo et al. (2020)."
+#| message: false
+#| warning: false
+set.seed(20)
+library(dplyr)
+
+n <- 4000
+players <- tibble(
+  id        = 1:n,
+  treated   = rbinom(n, 1, 0.5),                 # under-16 (restricted) vs. control
+  baseline  = rgamma(n, shape = 2, scale = 5)    # pre-period usage (hours/week)
+) |>
+  mutate(intensity = ntile(baseline, 3))         # 1 = light, 3 = heaviest
+
+# Treatment effect: -30% for light, -15% for average, ~0 for heaviest players.
+te <- c(`1` = -0.30, `2` = -0.15, `3` = 0.02)
+
+panel <- players |>
+  tidyr::expand_grid(post = c(0, 1)) |>
+  mutate(
+    effect = treated * post * te[as.character(intensity)],
+    usage  = baseline * (1 + effect) +
+             rnorm(n(), 0, 1) +                   # noise
+             post * 0.5,                          # common time trend (seasonality)
+    D      = treated * post
+  )
+
+# Two-way fixed-effects DiD via the interaction term.
+did_overall <- lm(usage ~ treated + post + D, data = panel)
+overall_tau <- coef(did_overall)["D"]
+
+# Heterogeneity: estimate tau within each baseline-intensity tercile.
+by_tercile <- panel |>
+  group_by(intensity) |>
+  group_modify(~ broom::tidy(lm(usage ~ treated + post + D, data = .x))) |>
+  filter(term == "D") |>
+  transmute(intensity, tau = estimate, se = std.error)
+
+knitr::kable(
+  bind_rows(
+    by_tercile,
+    tibble(intensity = NA, tau = overall_tau,
+           se = summary(did_overall)$coefficients["D", "Std. Error"])
+  ),
+  digits = 3,
+  col.names = c("Intensity tercile", "DiD estimate (hours/week)", "Std. error"),
+  caption = NULL
+)
+```
+
+The estimated $\hat\tau$ is sharply negative for the lightest tercile, attenuated
+for the middle, and indistinguishable from zero for the heaviest—the pattern that
+makes a blunt curfew a poorly targeted instrument. A regulator reading only the
+pooled coefficient would conclude the law "works"; the heterogeneity reveals that it
+works on exactly the players who were not the problem.
+
+### Loot Boxes, Disclosure, and the Limits of Restriction
+
+The loot-box debate sharpens the regulatory dilemma. Because @eq-lootbox makes a
+loot box a lottery, the live policy options are (i) **prohibition**, classifying
+loot boxes as gambling and banning their sale to minors (the route taken in some
+jurisdictions); (ii) **disclosure**, mandating publication of the drop
+probabilities $\{\pi_j\}$ so that @eq-lootbox is at least computable by the
+consumer; and (iii) **spending caps and friction**, limiting the rate at which a
+player can purchase. Disclosure is the lightest-touch instrument and the most
+defensible on consumer-sovereignty grounds—it restores the information the variance
+lever of @eq-motivation conceals—but it does not address the behavioral force,
+since the appeal of randomized rewards survives full knowledge of the odds.
+Prohibition addresses the mechanic directly but at the cost of the surplus
+legitimate players derive from cosmetic randomization, and invites substitution
+toward unregulated grey-market trading. The general lesson of @jo2020protecting—that
+restrictions bind on marginal, not at-risk, consumers and induce reallocation
+rather than reduction—travels to loot boxes and counsels against assuming any single
+instrument is sufficient.<!-- CITE-NEEDED: empirical evaluation of loot-box disclosure mandates and gambling reclassification -->
+
+## Key Takeaways
+
+- The dominant **free-to-play** model is a price-discrimination scheme
+  (@eq-f2p-revenue): free admission maximizes the base, and a menu of in-game
+  purchases extracts surplus from a right-skewed willingness-to-pay distribution
+  dominated by its upper tail. The managerial object is a *conversion policy*, not
+  a price [@cao2023free].
+- **Engagement** is the construct that mediates admission and monetization
+  [@hollebeek2011; @harmeling2016; @lemon2016]; its engineering core is the
+  **reward schedule**, and the decisive design lever is reward *variance*, not mean
+  (@eq-motivation)—variance is free engagement, which is why randomized rewards are
+  both the most effective and the most hazardous mechanic.
+- **Loot boxes** are structurally lotteries (@eq-lootbox); their behavioral force
+  is the variable-ratio schedule, not the expected value, which is why disclosure of
+  odds is necessary but not sufficient.
+- **Gamification** ports game mechanics into marketing and inherits both their power
+  and their ethical hazard; the test is whether the tracked behavior is *aligned*
+  with consumer value or merely *manufactured* (@tbl-gamification), and social
+  gamification can backfire [@kristofferson2013].
+- **Usage-restriction laws** are evaluable as a natural experiment, and the cleanest
+  evidence triangulates DiD, RD, and PSM on non-overlapping assumptions
+  (@tbl-identification). The central finding [@jo2020protecting] is that restriction
+  binds on light and average players but not the heaviest, with negligible revenue
+  effect—so blunt restriction is poorly targeted at the overconsumption it names
+  (@sec-causal-inference).

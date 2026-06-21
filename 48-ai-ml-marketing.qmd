@@ -1,3 +1,710 @@
 # Artificial Intelligence and Machine Learning in Marketing {#sec-ai-ml}
 
-<!-- SCAFFOLD: to be written to house standard, existing-bib keys only. -->
+*Machine learning* is the study of algorithms that improve their performance on a
+task as they are exposed to more data, rather than by being explicitly programmed
+with the rules of that task. *Artificial intelligence* (AI) is the broader project
+of building systems that perform tasks we associate with human cognition;
+contemporary AI in marketing is, almost entirely, applied machine learning at
+scale. The distinction matters less than what the two share: a willingness to let
+flexible, high-capacity function approximators discover structure in data that a
+human analyst could neither specify in advance nor write down as equations. That
+willingness is also the source of every pitfall in this chapter.
+
+Marketing is an unusually hospitable host for these methods, for three reasons.
+First, the field is awash in the kind of data—clickstreams, transactions, images,
+reviews, search queries—on which modern learning algorithms thrive
+[@wedel2016; @martin2017data]. Second, many marketing tasks are natively
+*predictive*: which customer will churn, which creative will earn the click, which
+product to surface next. Prediction is exactly what supervised learning does well.
+Third, the economic stakes of small improvements are large, because marketing
+decisions are made billions of times a day across recommendation, bidding, and
+targeting systems, so a one-percent lift compounds into real money
+[@varian2016; @gao2024big].
+
+This chapter has two jobs. The first is to give a working, formal command of the
+methods—supervised and unsupervised learning, recommender systems, deep learning,
+and large language models—at a level that lets the reader state each method's
+estimator, its assumptions, and the conditions under which it fails. The second is
+to install a discipline that the hype around AI actively erodes: the distinction
+between **prediction** and **inference**, and with it a sober catalogue of the ways
+machine learning quietly breaks in deployment—leakage, distribution drift, and
+unfairness. A model that predicts well in a notebook and harms the business in
+production is the modal failure, not the exception, and most of those failures are
+conceptual rather than computational. By the end, the reader should be able to map
+a marketing problem onto the right learning paradigm, build and validate a model
+that does not lie to them, and recognize when a predictive tool is being asked,
+illegitimately, to answer a causal question.
+
+We assume familiarity with the regression and choice-modeling machinery developed
+earlier in the book (@sec-measurement-scales for measurement; the causal-inference
+and marketing-mix chapters for identification), and we connect to them rather than
+re-deriving them.
+
+## Prediction Versus Inference: The Organizing Distinction
+
+The single most consequential idea in this chapter is also the one most often
+skipped. Consider a generic supervised relationship between an outcome $Y$ and
+features $\mathbf{X}$,
+$$
+Y = f(\mathbf{X}) + \varepsilon, \qquad \mathbb{E}[\varepsilon \mid \mathbf{X}] = 0,
+$$ {#eq-aiml-dgp}
+with $\hat f$ an estimate learned from data. There are two fundamentally different
+things one can want from $\hat f$, and conflating them is the root of most misuse
+of machine learning in marketing.
+
+> In a **prediction** problem the object of interest is $\hat f(\mathbf{x})$ itself:
+> we want accurate values of $Y$ at new inputs and treat $\hat f$ as a black box. In
+> an **inference** problem the object of interest is some functional of $f$—a
+> coefficient, an elasticity, a treatment effect—and $\hat f$ is a means to learn
+> *how* $\mathbf{X}$ relates to $Y$, not merely to forecast $Y$.
+
+The two goals reward different choices. Prediction tolerates—indeed often
+prefers—biased, uninterpretable, highly flexible estimators, because the only
+scorecard is out-of-sample loss, $\mathbb{E}[L(Y, \hat f(\mathbf{X}))]$ on data the
+model has never seen. The bias–variance trade-off is the governing law: expected
+squared prediction error decomposes as
+$$
+\mathbb{E}\!\left[(Y - \hat f(\mathbf{x}_0))^2\right]
+= \underbrace{\big(\mathbb{E}[\hat f(\mathbf{x}_0)] - f(\mathbf{x}_0)\big)^2}_{\text{bias}^2}
++ \underbrace{\operatorname{Var}\!\big(\hat f(\mathbf{x}_0)\big)}_{\text{variance}}
++ \underbrace{\sigma^2_\varepsilon}_{\text{irreducible}},
+$$ {#eq-aiml-bv}
+and a method that accepts some bias to cut variance can win. Inference, by contrast,
+demands an estimator whose sampling distribution we understand—unbiasedness or a
+known bias, valid standard errors, an identification argument linking the estimand
+to features of the data-generating process. A random forest can have lower test
+error than a linear regression while being *useless* for the question "what is the
+effect of a \$1 price cut," because flexible learners trade interpretable,
+consistent parameters for predictive accuracy [@varian2016].
+
+The practical hazard is that a predictive model's coefficients—or its
+feature-importance scores—look like answers to inference questions and are routinely
+read as such. They are not. A churn model may load heavily on "number of support
+tickets," but acting on that association by *suppressing* support tickets would be
+disastrous; the feature predicts churn because both are caused by underlying
+dissatisfaction. Predictive importance is not causal importance, and no amount of
+test-set accuracy converts one into the other. When the marketing question is "what
+will happen," supervised learning is the right tool; when it is "what should we do,"
+the model must be embedded in a design that identifies a causal effect—a randomized
+experiment, an instrument, or one of the causal-machine-learning estimators we reach
+at the end of the chapter. @fig-aiml-pred-inf fixes the fork in the road.
+
+```{mermaid}
+%%| label: fig-aiml-pred-inf
+%%| fig-cap: "The prediction–inference fork. The same data and even the same algorithm serve different goals, validated by different criteria. Reading a predictive model's internals as causal estimates is the central error this chapter warns against."
+flowchart TD
+  Q["Marketing question"] --> D{"What is the<br/>object of interest?"}
+  D -->|"Accurate Y at new inputs"| P["PREDICTION<br/>(black-box f-hat)"]
+  D -->|"A functional of f:<br/>effect, elasticity"| I["INFERENCE<br/>(structure of f)"]
+  P --> PV["Validate by:<br/>out-of-sample loss,<br/>cross-validation"]
+  I --> IV["Validate by:<br/>identification,<br/>standard errors, design"]
+  PV --> PU["Use: scoring, ranking,<br/>forecasting, matching"]
+  IV --> IU["Use: pricing, budget<br/>allocation, policy"]
+  PU -.->|"Do NOT read feature<br/>importance as causal"| IU
+```
+
+## Supervised Learning
+
+In **supervised learning** the training data are labeled pairs
+$\{(\mathbf{x}_i, y_i)\}_{i=1}^n$, and the goal is to learn a mapping
+$\hat f : \mathcal{X} \to \mathcal{Y}$ that generalizes to unlabeled inputs. When
+$Y$ is continuous the task is *regression*; when $Y$ is categorical it is
+*classification*. Almost every workhorse marketing model—propensity to buy, churn,
+response, lifetime-value, lead scoring, ad click-through—is a supervised classifier
+or regressor.
+
+### The learning problem and regularization
+
+Formally, learning chooses $\hat f$ to minimize *regularized empirical risk*,
+$$
+\hat f = \arg\min_{f \in \mathcal{F}} \; \frac{1}{n}\sum_{i=1}^{n} L\big(y_i, f(\mathbf{x}_i)\big) + \lambda\, \Omega(f),
+$$ {#eq-aiml-erm}
+where $L$ is a loss function (squared error for regression, log-loss/cross-entropy
+for classification), $\mathcal{F}$ is the hypothesis class (linear functions, trees,
+neural networks), $\Omega(f)$ is a complexity penalty, and $\lambda \ge 0$ tunes the
+trade-off. Minimizing training loss alone ($\lambda = 0$, $\mathcal{F}$ rich) yields
+*overfitting*: $\hat f$ memorizes noise and generalizes poorly, the high-variance
+failure in @eq-aiml-bv. The penalty $\Omega$ buys generalization by shrinking the
+effective complexity of $\hat f$. For linear models the two canonical choices are
+the $\ell_2$ (ridge) penalty $\Omega(\boldsymbol\beta)=\|\boldsymbol\beta\|_2^2$,
+which shrinks coefficients smoothly, and the $\ell_1$ (lasso) penalty
+$\Omega(\boldsymbol\beta)=\|\boldsymbol\beta\|_1$, which sets some coefficients
+exactly to zero and thereby performs variable selection—valuable when the feature
+space is wide, as it almost always is with behavioral data [@varian2016].
+
+The assumptions behind @eq-aiml-erm are easy to state and easy to violate. Empirical
+risk minimization is consistent for the risk-minimizing $f$ only if the training
+data are drawn from the *same distribution* as the deployment data (the
+identically-distributed assumption) and if observations are *exchangeable* in the
+way the validation scheme assumes (commonly independence). Both assumptions fail
+routinely in marketing: deployment data drift away from training data over time
+(@sec-aiml-drift), and observations are correlated within customers, sessions, and
+time, which—if ignored—makes naïve cross-validation report accuracy the model will
+never achieve in production.
+
+### Tree ensembles: the marketing workhorse
+
+For tabular marketing data—mixed numeric and categorical features, nonlinearities,
+interactions, missingness—ensembles of decision trees are, empirically, the default
+high-performer. A single regression tree partitions $\mathcal{X}$ into rectangular
+regions $R_1,\dots,R_M$ and predicts the within-region mean, $\hat
+f(\mathbf{x})=\sum_m c_m \mathbf{1}\{\mathbf{x}\in R_m\}$; it is interpretable but
+high-variance. Two ensemble strategies tame the variance. **Random forests** average
+many trees grown on bootstrap samples with randomly restricted split candidates,
+reducing variance through decorrelation. **Gradient-boosted trees** instead fit
+trees *sequentially*, each new tree $h_t$ targeting the gradient of the loss left by
+the running ensemble,
+$$
+\hat f_t(\mathbf{x}) = \hat f_{t-1}(\mathbf{x}) + \nu\, h_t(\mathbf{x}), \qquad
+h_t \approx -\,\frac{\partial L}{\partial \hat f_{t-1}},
+$$ {#eq-aiml-boost}
+with learning rate $\nu \in (0,1]$. Boosting reduces bias and variance jointly and
+typically tops leaderboards on tabular data, at the cost of more careful tuning to
+avoid overfitting (the number of trees becomes a regularization parameter set by
+validation). The worked example below builds a churn classifier and—critically—shows
+how to validate it honestly. <!-- CITE-NEEDED: gradient boosting / random forests canonical reference (Breiman; Friedman) not in allowlist -->
+
+```{r aiml-churn, message=FALSE, warning=FALSE}
+set.seed(48)
+
+# --- Simulate a customer-churn dataset with a known structure ----------------
+n <- 4000
+tenure        <- rpois(n, lambda = 18)                       # months as customer
+monthly_spend <- round(rgamma(n, shape = 2, scale = 25), 2)  # $ per month
+support_calls <- rpois(n, lambda = 1 + 0.05 * (40 - pmin(tenure, 40)))
+discount_user <- rbinom(n, 1, 0.35)
+
+# True churn propensity: short tenure, low spend, many support calls raise risk.
+lin <- -1.0 - 0.06 * tenure - 0.015 * monthly_spend +
+        0.45 * support_calls + 0.30 * discount_user
+prob_churn <- plogis(lin)
+churn <- rbinom(n, 1, prob_churn)
+
+dat <- data.frame(churn = factor(churn, labels = c("stay", "leave")),
+                  tenure, monthly_spend, support_calls,
+                  discount_user = factor(discount_user))
+
+# --- Honest train/test split -------------------------------------------------
+idx   <- sample(seq_len(n), size = floor(0.7 * n))
+train <- dat[idx, ]
+test  <- dat[-idx, ]
+
+# --- Gradient-boosted trees (gbm); fall back to logistic if gbm absent -------
+has_gbm <- requireNamespace("gbm", quietly = TRUE)
+if (has_gbm) {
+  fit <- gbm::gbm(I(as.integer(churn) - 1) ~ tenure + monthly_spend +
+                    support_calls + discount_user,
+                  data = train, distribution = "bernoulli",
+                  n.trees = 600, interaction.depth = 3,
+                  shrinkage = 0.03, bag.fraction = 0.7, verbose = FALSE)
+  best <- gbm::gbm.perf(fit, plot.it = FALSE, method = "OOB")
+  p_hat <- gbm::predict.gbm(fit, test, n.trees = best, type = "response")
+} else {
+  fit   <- glm(churn ~ tenure + monthly_spend + support_calls + discount_user,
+               data = train, family = binomial())
+  p_hat <- predict(fit, test, type = "response")
+}
+
+# --- Out-of-sample evaluation: AUC and a calibration check -------------------
+auc <- function(score, label) {              # rank-based AUC, no extra packages
+  pos <- score[label == "leave"]; neg <- score[label == "stay"]
+  mean(outer(pos, neg, ">") + 0.5 * outer(pos, neg, "=="))
+}
+cat("Test AUC:", round(auc(p_hat, test$churn), 3), "\n")
+
+# Calibration: do predicted probabilities match realized churn rates?
+bins <- cut(p_hat, breaks = quantile(p_hat, 0:5/5), include.lowest = TRUE)
+calib <- aggregate(as.integer(test$churn) - 1 ~ bins, FUN = mean)
+calib$predicted <- tapply(p_hat, bins, mean)
+names(calib) <- c("bin", "observed_churn", "mean_predicted")
+calib
+```
+
+The example reports two diagnostics, not one. *Discrimination* (AUC) measures
+whether the model ranks churners above non-churners; *calibration* measures whether
+a predicted 30% churn probability corresponds to a 30% realized rate. A model can
+discriminate well yet be badly calibrated, and marketing decisions that multiply
+predicted probabilities by margins—expected-value targeting—need calibration, not
+just ranking [@neumann2019frontiers]. Reporting only AUC is a common and costly
+omission.
+
+### Classification thresholds and the cost of errors
+
+A classifier outputs a score $\hat p(\mathbf{x}) = \widehat{\Pr}(Y=1\mid\mathbf{x})$;
+turning it into an action requires a threshold $\tau$ such that we treat customers
+with $\hat p > \tau$. The optimal threshold is *not* $0.5$—it depends on the
+asymmetric costs of false positives and false negatives. If contacting a non-churner
+costs $c_{\text{FP}}$ and failing to retain a churner costs $c_{\text{FN}}$, the
+expected-cost-minimizing rule acts when
+$\hat p / (1-\hat p) > c_{\text{FP}} / c_{\text{FN}}$. This is the point at which the
+predictive model meets the decision problem, and it is where the marketing economics
+re-enter: the ROC and precision–recall curves exist precisely because the right
+operating point is a business choice, not a statistical default.
+
+## Unsupervised Learning
+
+In **unsupervised learning** the data are unlabeled, $\{\mathbf{x}_i\}_{i=1}^n$, and
+the goal is to discover latent structure—groups, dimensions, topics—without a target
+variable to supervise the search. The two dominant marketing uses are
+*segmentation* (clustering customers or products) and *dimension reduction*
+(compressing high-dimensional behavior into interpretable factors). Because there is
+no label, there is no test-set accuracy to adjudicate "correctness"; validation is
+intrinsically harder and more judgmental, which is both the method's flexibility and
+its danger.
+
+### Clustering and the segmentation problem
+
+The canonical objective is *$k$-means*, which partitions observations into $K$
+clusters to minimize within-cluster squared distance,
+$$
+\min_{\{S_k\}}\; \sum_{k=1}^{K}\sum_{\mathbf{x}_i \in S_k} \big\|\mathbf{x}_i - \boldsymbol\mu_k\big\|_2^2,
+\qquad \boldsymbol\mu_k = \frac{1}{|S_k|}\sum_{\mathbf{x}_i \in S_k}\mathbf{x}_i.
+$$ {#eq-aiml-kmeans}
+This connects directly to the *a priori* versus *post hoc* segmentation distinction
+of @sec-segmentation-targeting: post hoc segmentation is precisely the application of
+a clustering algorithm to behavioral or attitudinal data to *discover* segments
+rather than impose them. The estimator (Lloyd's algorithm) alternates assigning
+points to the nearest centroid and recomputing centroids; it converges to a *local*
+optimum, so results depend on initialization and on the (analyst-chosen) number of
+clusters $K$. Three assumptions break identification of a "true" segmentation, and
+all three are routinely violated in practice: $k$-means presumes roughly spherical,
+equal-variance clusters (Euclidean distance encodes this); it is not scale-invariant,
+so features must be standardized or the largest-variance feature dominates; and $K$
+is not learned but assumed. Model-based clustering via finite mixtures replaces the
+hard geometry with a probabilistic generative model and lets information criteria
+choose $K$, at the cost of distributional assumptions. The deeper caution is that a
+clustering algorithm *always* returns clusters, whether or not the population is
+actually clustered; the burden is on the analyst to show the segments are stable,
+managerially distinguishable, and reproducible out of sample, not merely that the
+algorithm ran.
+
+```{r aiml-segmentation, message=FALSE, warning=FALSE}
+set.seed(48)
+
+# Three latent customer segments differing in recency, frequency, monetary value
+make_seg <- function(n, r, f, m) data.frame(
+  recency   = pmax(1, round(rnorm(n, r, 8))),
+  frequency = pmax(1, round(rnorm(n, f, 3))),
+  monetary  = pmax(5, round(rnorm(n, m, 40)))
+)
+rfm <- rbind(make_seg(300, 10, 14,  220),   # champions
+             make_seg(300, 45,  4,   60),   # at-risk
+             make_seg(300, 25,  8,  130))   # mainstream
+
+# Standardize before clustering: k-means is NOT scale-invariant
+rfm_z <- scale(rfm)
+km <- kmeans(rfm_z, centers = 3, nstart = 25)
+
+# Profile the recovered segments on the original (interpretable) scale
+prof <- aggregate(rfm, by = list(segment = km$cluster), FUN = function(x) round(mean(x), 1))
+prof$size <- as.integer(table(km$cluster))
+prof
+```
+
+### Dimension reduction
+
+When behavior is high-dimensional—thousands of SKUs, pages, or features—*dimension
+reduction* finds a low-dimensional representation that preserves the information that
+matters. Principal component analysis (PCA) projects $\mathbf{X}$ onto the orthogonal
+directions of maximal variance, the leading eigenvectors of the covariance matrix;
+the first few components often capture interpretable axes of behavior (e.g., overall
+intensity, then category mix). Non-negative matrix factorization and, for
+text, *topic models* such as latent Dirichlet allocation generalize the idea to
+parts-based and probabilistic decompositions [@tirunillai2014a; @buschken2016sentence].
+The methods double as a feature-engineering step for supervised models and as a
+listening tool: factorizing the term–document matrix of online reviews recovers the
+latent dimensions of quality consumers actually discuss, a structure managers cannot
+specify in advance [@tirunillai2014a; @netzer2008].
+
+## Recommender Systems
+
+Recommender systems are the most economically consequential deployment of machine
+learning in marketing: they choose which of millions of items to surface to each
+user, and on platforms from retail to streaming they drive a large share of demand.
+Formally, a recommender estimates a *utility* or *preference* score
+$\hat r_{ui}$ for each user $u$ and item $i$, then ranks items by that score. The
+data are a sparse user–item matrix $\mathbf{R}$, mostly missing, with observed
+entries being ratings, clicks, or purchases.
+
+Two paradigms, with a hybrid, organize the field. **Content-based** filtering
+recommends items similar to those a user has liked, using item features; it handles
+new items but cannot discover tastes outside a user's history. **Collaborative
+filtering** ignores item content and exploits the wisdom of the crowd—users who
+agreed in the past will agree in the future—and is the more powerful approach when
+interaction data are dense. The dominant collaborative formulation is *matrix
+factorization*, which embeds users and items in a shared latent space of dimension
+$K$ and models preference as an inner product,
+$$
+\hat r_{ui} = \mathbf{p}_u^{\top}\mathbf{q}_i + b_u + b_i + \mu,
+\qquad
+\min_{\mathbf{P},\mathbf{Q},\mathbf{b}} \sum_{(u,i)\in\mathcal{K}}
+\big(r_{ui} - \hat r_{ui}\big)^2 + \lambda\big(\|\mathbf{p}_u\|^2 + \|\mathbf{q}_i\|^2 + b_u^2 + b_i^2\big),
+$$ {#eq-aiml-mf}
+where $\mathbf{p}_u, \mathbf{q}_i \in \mathbb{R}^K$ are the learned user and item
+factors, $b_u, b_i, \mu$ are bias terms, and the sum runs only over *observed*
+entries $\mathcal{K}$. The $K$ latent dimensions are discovered, not specified, and
+often correspond to interpretable axes of taste. The regularizer is essential
+because $\mathbf{R}$ is extremely sparse. <!-- CITE-NEEDED: matrix factorization for recommender systems (Koren, Bell, Volinsky) not in allowlist -->
+
+Three structural problems define the research frontier and the deployment risk.
+The **cold-start** problem—no data for new users or items—forces a fallback to
+content features or popularity until interaction data accrue. **Feedback loops** are
+subtler and more dangerous: a recommender trained on logged interactions learns from
+data its own past recommendations generated, so popular items get recommended,
+become more popular, and crowd out the long tail, narrowing exposure in ways that can
+entrench rather than reveal preferences [@zheng2023recommending]. And recommendations
+that maximize predicted clicks need not maximize *incremental* value: an item the
+user would have bought anyway earns the recommender credit it did not create, a
+confound between prediction and causal lift that only experimentation resolves. The
+example below factorizes a small implicit-feedback matrix.
+
+```{r aiml-recsys, message=FALSE, warning=FALSE}
+set.seed(48)
+
+# --- Simulate implicit feedback from latent tastes (rank-2 truth) ------------
+n_users <- 200; n_items <- 60; K_true <- 2
+P_true <- matrix(rnorm(n_users * K_true), n_users)
+Q_true <- matrix(rnorm(n_items * K_true), n_items)
+logits <- P_true %*% t(Q_true)
+R <- matrix(rbinom(n_users * n_items, 1, plogis(logits)), n_users)  # 1 = engaged
+
+# Hide 15% of entries as a test set (missing-at-random for illustration)
+mask <- matrix(runif(length(R)) > 0.15, n_users)   # TRUE = observed in training
+Rtr  <- R; Rtr[!mask] <- NA
+
+# --- Matrix factorization by regularized alternating least squares -----------
+K <- 2; lambda <- 0.1; iters <- 30
+P <- matrix(rnorm(n_users * K, sd = 0.1), n_users)
+Q <- matrix(rnorm(n_items * K, sd = 0.1), n_items)
+solve_factor <- function(fixed, target_row, obs) {   # ridge solve per row
+  F <- fixed[obs, , drop = FALSE]; y <- target_row[obs]
+  solve(t(F) %*% F + lambda * diag(ncol(fixed)), t(F) %*% y)
+}
+for (it in seq_len(iters)) {
+  for (u in seq_len(n_users)) { o <- which(!is.na(Rtr[u, ])); if (length(o)) P[u, ] <- solve_factor(Q, Rtr[u, ], o) }
+  for (i in seq_len(n_items)) { o <- which(!is.na(Rtr[, i])); if (length(o)) Q[i, ] <- solve_factor(P, Rtr[, i], o) }
+}
+R_hat <- P %*% t(Q)
+
+# Evaluate ranking quality on held-out entries via AUC
+test_idx <- which(!mask)
+auc_rank <- {
+  s <- R_hat[test_idx]; y <- R[test_idx]
+  pos <- s[y == 1]; neg <- s[y == 0]
+  mean(outer(pos, neg, ">") + 0.5 * outer(pos, neg, "=="))
+}
+cat("Held-out ranking AUC:", round(auc_rank, 3), "\n")
+```
+
+## Deep Learning
+
+*Deep learning* refers to neural networks with many layers of learned, nonlinear
+transformations. A feedforward network composes affine maps and nonlinearities,
+$$
+\hat f(\mathbf{x}) = \sigma_L\!\big(\mathbf{W}_L\,\sigma_{L-1}(\cdots \sigma_1(\mathbf{W}_1\mathbf{x}+\mathbf{b}_1)\cdots)+\mathbf{b}_L\big),
+$$ {#eq-aiml-dnn}
+where each $\mathbf{W}_\ell$ is a learned weight matrix, $\mathbf{b}_\ell$ a bias,
+and $\sigma_\ell$ an elementwise nonlinearity (commonly the rectified linear unit,
+$\sigma(z)=\max(0,z)$). The parameters are fit by gradient descent on the loss in
+@eq-aiml-erm, with gradients computed by *backpropagation*—the chain rule applied
+layer by layer—and the data scanned in mini-batches (stochastic gradient descent).
+Depth matters because composition lets the network build features from features:
+early layers learn simple patterns, later layers compose them into abstractions, so
+the network learns its own representation rather than relying on hand-engineered
+features. <!-- CITE-NEEDED: foundational deep learning reference (LeCun, Bengio, Hinton) not in allowlist -->
+
+The marketing payoff is largest where the data are *unstructured*—precisely the
+domains where hand-engineering features is hopeless. Convolutional networks read
+images, enabling brand-perception measurement directly from consumer-generated
+photos at a scale and speed no survey could match: @liu2020 train a multi-label
+convolutional network to detect perceptual brand attributes in user images,
+recovering survey-consistent perceptions in near real time, and image content
+systematically shapes engagement [@Li_2019]. Recurrent and, later, attention-based
+architectures read sequences—text, clickstreams, purchase histories—turning the
+unstructured trace of customer behavior into predictive features
+[@martin2017data]. <!-- CITE-NEEDED: deep sequence/representation models for clickstream and text in marketing -->. The price of this expressive power is steep:
+deep models are data-hungry, computationally expensive, prone to overfitting without
+heavy regularization (dropout, early stopping, weight decay), and—most relevant to
+this chapter—they are *opaque*, which makes them excellent predictors and poor
+instruments of inference. The temptation to read a neural network's learned
+representations as explanations is the deep-learning incarnation of the
+prediction–inference confusion.
+
+For tabular marketing data of modest size, it bears emphasizing that deep learning
+usually does *not* beat gradient-boosted trees; the deep-learning advantage is
+specific to large, unstructured, high-signal data. Choosing a neural network for a
+50-feature churn table is a common and avoidable error.
+
+## Large Language Models
+
+*Large language models* (LLMs) are deep neural networks—almost always
+*transformers*, built on the self-attention mechanism—trained on internet-scale text
+to predict the next token, and then adapted to follow instructions. Their relevance
+to marketing is twofold. As *measurement instruments*, they convert the field's vast
+unstructured text—reviews, social posts, support transcripts, open-ended
+survey responses—into structured variables: sentiment, topics, stance, entities,
+and the latent dimensions of consumer voice that earlier text methods recovered more
+laboriously [@netzer2008hidden; @buschken2016sentence]. As
+*generators*, they produce marketing content—copy, product descriptions,
+personalized email, synthetic chat—at near-zero marginal cost, reshaping the economics
+of content production across the funnel [@appel2020future].
+
+The transformer's core operation is *attention*, which lets each token's
+representation be a weighted average of the others, with weights computed from
+learned query, key, and value projections,
+$$
+\operatorname{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V}) =
+\operatorname{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^{\top}}{\sqrt{d_k}}\right)\mathbf{V},
+$$ {#eq-aiml-attn}
+where $\mathbf{Q},\mathbf{K},\mathbf{V}$ are linear projections of the input sequence
+and $d_k$ is the key dimension. This mechanism, stacked and scaled, is what lets the
+model condition each word on the entire context. <!-- CITE-NEEDED: transformer architecture (Vaswani et al., "Attention Is All You Need") not in allowlist -->
+
+Three properties demand discipline when LLMs are used as research instruments.
+First, **hallucination**: an LLM optimizes for plausible continuations, not truth,
+and will fabricate confidently; outputs used as data must be validated against ground
+truth, ideally with a human-labeled audit sample and an inter-rater reliability
+check (@sec-measurement-scales). Second, **non-determinism and version drift**: the
+same prompt can yield different outputs, and the underlying model changes under the
+analyst's feet, so a measurement pipeline built on a hosted LLM is not automatically
+reproducible—prompts, model versions, and decoding parameters must be logged like any
+other instrument. Third, **contamination and circularity**: an LLM trained on the
+open web may have seen the very reviews or constructs under study, so "predicting"
+them is not out-of-sample, and using an LLM both to generate and to evaluate content
+risks a closed loop that measures the model's preferences rather than consumers'.
+Used as instruments, LLMs are powerful but require the same validity scaffolding as
+any measure; used as generators, they require the brand-safety, factuality, and
+fairness controls developed in the rest of this chapter.
+
+## Machine Learning Across the Marketing Funnel
+
+The methods above are not siloed by funnel stage; the same supervised, unsupervised,
+and generative tools recur, retargeted at different objectives. Organizing them by
+the customer journey clarifies *what* is being predicted at each step and *where* the
+prediction–inference distinction bites. @tbl-aiml-funnel maps the terrain, and the
+recurring lesson is that most funnel applications are predictive scoring problems,
+while the decisions they feed—how much to spend, what to charge, whom to
+target—are causal questions that prediction alone cannot answer.
+
+| Funnel stage | Representative task | Learning paradigm | Pred. vs. inf. | Anchor |
+|---|---|---|---|---|
+| Awareness | Audience look-alike modeling; media-mix forecasting | Supervised classification; sequence models | Prediction (lift is causal) | @wedel2016 |
+| Consideration | Search/social listening; brand-perception mining | Unsupervised; LLM/text | Prediction (measurement) | @netzer2008; @liu2020 |
+| Conversion | Propensity-to-buy; dynamic creative; recommendation | Supervised; recommender | Prediction; *targeting is causal* | @neumann2019frontiers |
+| Retention | Churn prediction; next-best-action | Supervised classification | Prediction; *action is causal* | @neumann2019frontiers |
+| Advocacy | Review/UGC analysis; influencer identification | Unsupervised; LLM/text | Prediction (measurement) | @tirunillai2014a |
+
+: Machine learning across the marketing funnel. Most applications are predictive scoring tasks; the decisions they inform are causal. {#tbl-aiml-funnel}
+
+The "prediction (lift is causal)" and "action is causal" entries flag the same trap
+in different clothes. A look-alike model predicts who *resembles* a converter, but
+whether advertising to them *causes* incremental conversion is a question only a
+holdout experiment answers. A churn model predicts who *will* leave, but the right
+retention action depends on who will leave *because of, or despite,* the
+intervention—an uplift, not a prediction, problem. <!-- CITE-NEEDED: Ascarza (2018, JMR) on retention-targeting / uplift; churn-prediction-vs-uplift distinction --> The funnel view
+is useful precisely because it keeps surfacing the boundary the chapter is built
+around.
+
+## Pitfalls: How Machine Learning Quietly Breaks
+
+A model that scores well offline and fails in production is the rule, not the
+exception, and the failures cluster into three families: *leakage*, which inflates
+offline performance with information that will not exist at decision time; *drift*,
+which erodes performance as the world moves away from the training distribution; and
+*unfairness*, which encodes and amplifies inequities the data inherited. None of the
+three is a coding bug; all three are violations of the assumptions behind
+@eq-aiml-erm. @fig-aiml-lifecycle situates them in the model lifecycle.
+
+```{mermaid}
+%%| label: fig-aiml-lifecycle
+%%| fig-cap: "Where the three pitfalls strike in the machine-learning lifecycle. Leakage corrupts training and validation before deployment; drift degrades a correct model after it; fairness harms accrue at the decision boundary and feed back into future data."
+flowchart LR
+  A["Data collection"] --> B["Feature engineering<br/>& training"]
+  B --> C["Offline validation"]
+  C --> D["Deployment &<br/>decisions"]
+  D --> E["Monitoring"]
+  E -.->|"new data"| A
+  B -. "LEAKAGE<br/>(future/target info<br/>leaks into features)" .-> C
+  D -. "DRIFT<br/>(world moves away<br/>from training dist.)" .-> E
+  D -. "FAIRNESS<br/>(disparate harm at<br/>the decision boundary)" .-> A
+```
+
+### Data leakage
+
+**Leakage** occurs when information unavailable at prediction time contaminates the
+training data, so the model "cheats" offline and collapses in production. The signature
+is an offline metric that is too good to be true. Leakage takes several forms, each
+common in marketing pipelines. *Target leakage* includes a feature that is a proxy
+for, or a consequence of, the outcome—predicting purchase using "added-to-cart in the
+same session," which is nearly the outcome itself. *Temporal leakage* uses
+information from after the prediction timestamp—computing a customer's average order
+value over a window that includes the very order being predicted. *Preprocessing
+leakage* is the most insidious because it survives a careful feature audit: when
+scaling, imputation, feature selection, or target encoding is fit on the *full*
+dataset before the train/test split, statistics from the test set bleed into
+training, and cross-validation reports an accuracy the deployed model cannot reach.
+
+The discipline that prevents leakage is to fit *every* data-dependent transformation
+inside the cross-validation fold, on training data only, and to respect time: when
+data are temporally ordered—as marketing data almost always are—validation must use a
+forward-chaining split that trains on the past and tests on the future, never a random
+split that lets the model peek ahead. The example contrasts the two and quantifies the
+illusion.
+
+```{r aiml-leakage, message=FALSE, warning=FALSE}
+set.seed(48)
+
+# Time-ordered data where the signal is non-stationary (drifts over time)
+N <- 1500
+time  <- seq_len(N)
+beta_t <- 1.5 - 1.0 * (time / N)          # the effect of x decays over time
+x <- rnorm(N)
+y <- as.integer(plogis(-0.2 + beta_t * x + rnorm(N, 0, 0.5)) > 0.5)
+df <- data.frame(time, x, y)
+
+auc <- function(score, label) {
+  pos <- score[label == 1]; neg <- score[label == 0]
+  if (!length(pos) || !length(neg)) return(NA_real_)
+  mean(outer(pos, neg, ">") + 0.5 * outer(pos, neg, "=="))
+}
+
+# (a) RANDOM split: leaks future into training on non-stationary data
+ridx  <- sample(N, 0.7 * N)
+m_rand <- glm(y ~ x, df[ridx, ], family = binomial())
+auc_rand <- auc(predict(m_rand, df[-ridx, ], type = "response"), df[-ridx, ]$y)
+
+# (b) FORWARD-CHAINING split: train on past, test on future (honest)
+cut    <- floor(0.7 * N)
+m_fwd  <- glm(y ~ x, df[df$time <= cut, ], family = binomial())
+auc_fwd <- auc(predict(m_fwd, df[df$time > cut, ], type = "response"),
+               df[df$time > cut, ]$y)
+
+cat("AUC, random split (optimistic):  ", round(auc_rand, 3), "\n")
+cat("AUC, forward-chaining (honest):  ", round(auc_fwd, 3), "\n")
+```
+
+The random-split AUC overstates the performance the model will actually deliver on
+future data, because random splitting on a non-stationary process lets the model
+borrow the future to predict the past. The gap between the two numbers is a direct
+measure of self-deception, and it is invisible to anyone who validates with a random
+split—the default in most tutorials.
+
+### Distribution drift {#sec-aiml-drift}
+
+Even a leakage-free model decays, because the assumption that deployment data share
+the training distribution expires. **Drift** comes in two flavors that demand
+different responses. *Covariate shift* changes the input distribution while the
+relationship is stable, $p_{\text{test}}(\mathbf{x}) \neq p_{\text{train}}(\mathbf{x})$
+but $p(y\mid\mathbf{x})$ unchanged—a new acquisition channel brings customers unlike
+the training population. *Concept drift* changes the relationship itself,
+$p_{\text{test}}(y\mid\mathbf{x}) \neq p_{\text{train}}(y\mid\mathbf{x})$—a recession,
+a competitor's launch, or a pandemic rewrites how features map to behavior, exactly
+the non-stationarity simulated above. Marketing is a near-worst case for drift
+because the environment is adversarial and reflexive: competitors react, consumer
+tastes move, and—uniquely—the model's *own actions* change the data it next sees, so a
+targeting model trained on one policy's data is evaluated under another. The defenses
+are monitoring (track input distributions and live performance against a holdout, and
+alarm on divergence), scheduled or triggered retraining, and—where decisions feed back
+into data—maintaining randomized holdouts so the model never fully determines its own
+training distribution.
+
+### Fairness and algorithmic bias
+
+Machine-learning models inherit and can amplify the biases latent in their training
+data, with legal and ethical force when marketing decisions touch credit, housing,
+employment, insurance, or protected groups. The mechanism is not malice but
+statistics: if historical data reflect discrimination, a model that faithfully
+predicts the historical target reproduces the discrimination, and *omitting* a
+protected attribute does not fix it, because correlated proxies (postal code, device,
+browsing history) reconstruct the attribute—a phenomenon known as redundant encoding.
+
+Fairness must therefore be defined, measured, and traded off explicitly, and a basic
+impossibility result disciplines expectations: several intuitive fairness
+criteria—equal false-positive and false-negative rates across groups (equalized odds)
+versus equal calibration across groups versus statistical parity in selection
+rates—*cannot in general all hold simultaneously* unless base rates are equal or the
+classifier is perfect. There is no single "fair" model; there is a choice among
+incompatible fairness criteria, and that choice is normative, not technical. The
+worked example audits a scorer for *disparate impact*—whether selection rates differ
+across groups—and shows that proxy features carry bias even when the protected
+attribute is excluded. <!-- CITE-NEEDED: algorithmic fairness foundations (Barocas, Hardt, Narayanan; Kleinberg et al. impossibility) not in allowlist -->
+
+```{r aiml-fairness, message=FALSE, warning=FALSE}
+set.seed(48)
+
+n <- 6000
+group <- rbinom(n, 1, 0.5)                       # protected attribute A in {0,1}
+# A proxy correlated with the protected group (e.g., neighborhood), NOT the label cause
+proxy <- rnorm(n, mean = 0.8 * group)
+quality <- rnorm(n)                              # the legitimately relevant signal
+# True outcome depends ONLY on quality (group is irrelevant to merit)...
+y <- rbinom(n, 1, plogis(1.2 * quality))
+df <- data.frame(y, quality, proxy, group)
+
+# Model that EXCLUDES the protected attribute but KEEPS the correlated proxy
+fit <- glm(y ~ quality + proxy, df, family = binomial())
+df$score <- predict(fit, type = "response")
+tau <- quantile(df$score, 0.7)                   # select top 30%
+df$selected <- as.integer(df$score > tau)
+
+# Disparate impact: ratio of selection rates across groups (4/5ths rule -> >= 0.8)
+sel_rate <- tapply(df$selected, df$group, mean)
+di_ratio <- min(sel_rate) / max(sel_rate)
+cat("Selection rate by group:", round(sel_rate, 3), "\n")
+cat("Disparate-impact ratio:  ", round(di_ratio, 3),
+    if (di_ratio < 0.8) " (FAILS 4/5ths rule)" else " (passes)", "\n")
+```
+
+The disparate-impact ratio falls below the conventional four-fifths threshold even
+though the protected attribute never entered the model and plays no role in the true
+outcome—the proxy alone manufactures the gap. The lesson generalizes: fairness is a
+property of a model-in-context that must be measured on outcomes, not assumed from the
+feature list, and remediation (reweighting, constrained optimization, post-hoc
+threshold adjustment by group) is an explicit, auditable design choice with its own
+trade-offs against accuracy and against other fairness criteria.
+
+## From Prediction to Decision: Causal Machine Learning
+
+The chapter's organizing distinction has a constructive resolution. The right way to
+use machine learning's flexibility for *inference* is not to read coefficients off a
+predictive model but to embed flexible learners inside an estimator whose
+identification comes from design. *Double/debiased machine learning* uses
+nonparametric learners to flexibly absorb high-dimensional confounders while
+preserving valid inference on a low-dimensional causal parameter, via
+orthogonalization and cross-fitting that immunize the target estimate against the
+nuisance learner's regularization bias. *Causal forests* and related heterogeneous-
+treatment-effect estimators adapt tree ensembles to estimate how a treatment effect
+$\tau(\mathbf{x}) = \mathbb{E}[Y(1) - Y(0)\mid \mathbf{X}=\mathbf{x}]$ varies across
+customers—the *uplift* that retention and targeting decisions actually require, as
+distinct from the *level* a churn model predicts. These methods, developed in the
+causal-inference chapters, are the principled bridge from machine learning's
+predictive power to the causal questions marketing decisions pose, and they are where
+the field's frontier is moving [@varian2016]. <!-- CITE-NEEDED: double/debiased ML (Chernozhukov et al.) and causal forests (Wager & Athey; Athey & Imbens) not in allowlist -->
+
+## Key Takeaways
+
+- The **prediction–inference distinction** (@eq-aiml-dgp) is the organizing idea:
+  predictive accuracy and causal interpretation are different goals validated by
+  different criteria, and a model's internals are not causal estimates no matter how
+  well it predicts.
+- **Supervised learning** minimizes regularized empirical risk (@eq-aiml-erm); for
+  tabular marketing data, gradient-boosted trees are the empirical default, and honest
+  evaluation requires *both* discrimination and calibration, on a split that respects
+  time.
+- **Unsupervised learning** discovers structure without labels; clustering always
+  returns clusters, so the burden of proof is on the analyst to show segments are
+  stable and managerially meaningful, not merely that the algorithm converged.
+- **Recommender systems** turn sparse user–item data into rankings via matrix
+  factorization (@eq-aiml-mf), but cold-start, feedback loops, and the
+  prediction-versus-incremental-lift gap make naïve click-maximization a trap.
+- **Deep learning and LLMs** excel on unstructured data (images, text, sequences) and
+  are powerful measurement and generation instruments, but their opacity makes them
+  poor instruments of inference and demands explicit validity, reproducibility, and
+  factuality controls.
+- The three deployment pitfalls—**leakage**, **drift**, and **unfairness**—are
+  assumption violations, not bugs: validate inside the fold and forward in time,
+  monitor and retrain against a moving world, and measure fairness on outcomes because
+  proxies encode protected attributes even when those attributes are excluded.
+- The constructive resolution is **causal machine learning**, which embeds flexible
+  learners inside design-based estimators to recover the *uplift* that marketing
+  decisions require.

@@ -1,65 +1,508 @@
-# Modeling in Marketing
+# Modeling in Marketing {#sec-modeling}
 
-## Definitions
+A *model* is a deliberately incomplete description of a marketing system, built to
+answer a specific question. Models are not the world; they are arguments about the
+world, made precise enough that their assumptions can be stated, their logic
+checked, and their predictions confronted with data. Every quantitative chapter in
+the methodology part of this book builds a model of some kind, and the chapters
+differ less in subject matter than in the *kind* of question each model is licensed
+to answer. This chapter is the map. It distinguishes the three modeling traditions
+that organize quantitative marketing—**analytical** (game-theoretic), **empirical**
+(econometric and structural), and **predictive** (statistical and machine
+learning)—and gives the reader a principled way to decide which one a given problem
+calls for.
 
--   Structural in quantitative marketing: An estimation strategy where we assume and impose a structure to the consumer's maximization problem and these parameters are of the consumers' utility functions [@erdem1996a].
+The distinction matters because the three traditions answer different questions and
+fail in different ways. An analytical model asks *what should happen* when rational
+firms and consumers interact under stated rules; it trades realism for logical
+transparency and yields comparative statics—signed predictions about how
+equilibrium outcomes move with primitives. An empirical model asks *what is
+happening, and why*; it recovers parameters of preferences, costs, or response
+functions from data and, when those parameters are invariant to the policies under
+study, supports counterfactual prediction. A predictive model asks *what will
+happen next*; it learns a flexible mapping from features to outcomes and is judged
+almost entirely by out-of-sample accuracy, with little claim on the mechanism that
+generated the data. Confusing these aims is the most common and most expensive error
+in applied marketing modeling: a model fit for prediction is routinely, and wrongly,
+read as if it identified a causal effect, and a stylized analytical result is
+routinely, and wrongly, taken as an empirical fact.
 
-    -   These parameter are policy-invariant.
+This chapter proceeds from the shared anatomy of a model to the three traditions in
+turn, formalizing each with its canonical object, its notion of a "solution" or
+"estimate," and the assumption whose failure is fatal. It closes with a decision
+framework and a worked illustration that runs the *same* marketing question—how a
+price change affects demand—through all three lenses, so the reader can see exactly
+where they agree, where they diverge, and why. The goal is not to rank the
+traditions but to make the reader fluent in choosing among them. Subsequent chapters
+develop each in depth: analytical models in @sec-analytical-models and
+@sec-industrial-organization, empirical and structural models in
+@sec-empirical-models, @sec-structural-models, and @sec-marketing-mix-models, and
+predictive methods in @sec-ai-ml.
 
--   Reduced form brand choice model: functions of marketing strategy variables (e..g, marketing mix). Hence, reduced-form models' parameters are variant to policy. So it's hard to study outcome of policy implementation may be reliable.
+## What a Model Is
 
-Uncertainty about product characteristics + learning behavior affect brand choice.
+Before partitioning models into traditions, it helps to fix the parts every model
+shares. Strip away the subject matter and a quantitative marketing model is a tuple
+of four objects: **primitives**, **structure**, **a solution or estimation concept**,
+and **an empirical content**.
 
-Two models (good in cases where consumer learning is vital to the choice process):
+The *primitives* are the objects taken as given and not themselves explained:
+consumer preferences, firm cost functions, the information each agent holds, the
+timing of moves, the data-generating distribution. The *structure* is the set of
+assumptions that link primitives to observable outcomes—a utility function, a demand
+system, a conduct assumption about how firms compete, a likelihood. The *solution or
+estimation concept* is the rule that turns structure into an answer: an equilibrium
+notion in an analytical model, an estimator in an empirical one, a learning
+algorithm and loss function in a predictive one. The *empirical content* is whatever
+the model says about data we can observe—signs of comparative statics, point
+estimates with standard errors, or a forecast with a quantified error.
 
--   Dynamic structural model with immediate utility maximization
+> A model is a representation that is simpler than the system it represents, built so
+> that reasoning about the model is a reliable guide to reasoning about the system,
+> within a stated scope. Its value lies entirely in the gap between the assumptions
+> we impose and the conclusions we can then defend.
 
--   Forward-looking dynamic structural model (i.e., consumers don't choose products based on their current utility, but also future utility).
+The decisive property that separates the traditions is what each model holds fixed
+when the environment changes. A **policy-invariant** parameter is one that does not
+shift when the policy under study shifts—a consumer's taste for a product attribute,
+say, which should not change merely because a firm reprices. A **policy-variant**
+relationship is one that is itself a function of the policy environment—a reduced-form
+regression of sales on price confounds the demand the analyst wants with the supply
+behavior that set the price, so its coefficient changes if pricing conduct changes.
+This distinction, central to the structural tradition, is the thread we follow
+throughout: it explains why two models can fit the same data equally well yet give
+opposite answers to a counterfactual question.
 
-## Quasi-Experimental
+::: {.callout-note}
+## Notation for this chapter
 
-[@goldfarb2022] for a review
+Following the book's master notation (@sec-data), scalars are italic ($p$, $x$),
+vectors bold lowercase ($\mathbf{x}$), matrices bold uppercase ($\mathbf{X}$),
+estimators carry hats ($\hat\beta$), and $\mathbb{E}[\cdot]$ denotes expectation.
+A *parameter* $\theta$ is a feature of the data-generating process; an *estimate*
+$\hat\theta$ is a function of a finite sample; a *prediction* $\hat y$ is a model's
+output for a new input.
+:::
 
--   Settings: Weather, border, contract changes, firm policy, life or regulatory changes.
+## A Taxonomy of Marketing Models {#sec-modeling-taxonomy}
 
--   Nine Stages to go through in a quasi-experimental design
+The three traditions can be placed on two axes that together explain most of their
+differences in practice. The first axis is **the role of optimizing behavior**:
+whether the model derives outcomes from agents solving stated optimization problems
+(analytical, and the structural branch of empirical work) or treats outcomes as the
+realization of a statistical process to be fit (reduced-form empirical and predictive
+work). The second axis is **the target of inference**: explanation and counterfactual
+prediction on one side, out-of-sample forecasting on the other. @fig-modeling-map
+locates the traditions, and the table that follows gives the formal contrast.
 
-    1.  Research Question
+```{mermaid}
+%%| label: fig-modeling-map
+%%| fig-cap: "Three modeling traditions in marketing, placed by the role of optimizing behavior and the primary target of inference. Structural empirical work shares the optimizing foundations of analytical models but, unlike them, takes parameters to data; reduced-form and predictive work relax optimization in exchange for flexibility."
+flowchart TB
+    Q["A marketing question"]
+    Q --> A["Analytical / game-theoretic<br/>(what should happen?)"]
+    Q --> E["Empirical / econometric<br/>(what is happening, and why?)"]
+    Q --> P["Predictive / machine learning<br/>(what will happen next?)"]
 
-    2.  Data Question
+    A --> A1["Primitives: payoffs, info, timing"]
+    A --> A2["Solution: equilibrium"]
+    A --> A3["Output: comparative statics"]
 
-    3.  Identification Strategy
+    E --> E1["Structural: utilities, costs (invariant)"]
+    E --> E2["Reduced-form: response functions (variant)"]
+    E --> E3["Output: estimates + counterfactuals"]
 
-    4.  Empirical Analysis
+    P --> P1["Features and a loss function"]
+    P --> P2["Solution: regularized fit"]
+    P --> P3["Output: forecasts, scored by test error"]
+```
 
-    5.  challenges to research design
+| Dimension | Analytical | Empirical (structural) | Empirical (reduced-form) | Predictive (ML) |
+|---|---|---|---|---|
+| Core question | What *should* happen | Why does it happen | What *is* the effect | What happens next |
+| Canonical object | Game $(N, S, u)$ | Likelihood from optimization | Conditional mean $\mathbb{E}[y\mid \mathbf{x}]$ | Mapping $\hat f:\mathbf{x}\mapsto \hat y$ |
+| "Solution" concept | Equilibrium | (Quasi-)MLE / GMM | OLS / IV | Empirical-risk minimization |
+| Data role | None (or calibration) | Disciplines parameters | Identifies an effect | Trains and tests $\hat f$ |
+| Key virtue | Logical transparency | Counterfactual validity | Credible causal estimate | Predictive accuracy |
+| Fatal assumption | Wrong game / behavior | Misspecified structure | Confounding / weak instrument | Distribution shift |
+| Generalizes via | Theory | Invariant parameters | Design (exogenous variation) | i.i.d. test data |
 
-    6.  Robustness
+: Formal contrast of the three modeling traditions. The empirical column is split because structural and reduced-form work, though both "empirical," differ exactly on policy invariance—the structural branch recovers invariant primitives and so supports counterfactuals, while the reduced-form branch estimates a possibly policy-variant response function and so supports causal claims only under the design that produced its variation. {#tbl-modeling-contrast}
 
-    7.  Mechanism
+The remaining sections take each tradition in turn. The reader should keep
+@tbl-modeling-contrast in view: nearly every methodological decision in the rest of
+the book is a choice among its columns.
 
-    8.  External validity
+## Analytical Models {#sec-modeling-analytical}
 
-    9.  Unproven or Caveats
+An analytical model derives marketing outcomes as the *equilibrium* of a game played
+by rational agents. It contains no data. Its purpose is to establish, with the
+certainty of a proof, that under stated assumptions a particular force operates in a
+particular direction—that, say, increased competition lowers equilibrium price, or
+that informative advertising can support a separating equilibrium in which only
+high-quality firms advertise. The payoff is a *comparative static*: the sign, and
+sometimes the magnitude, of the derivative of an equilibrium outcome with respect to
+a primitive.
 
-## Transformation
+Formally, a game is a triple $(N, \{S_i\}_{i \in N}, \{u_i\}_{i \in N})$ where $N$ is
+the set of players (firms, consumers), $S_i$ is player $i$'s strategy set (prices,
+advertising levels, qualities), and $u_i: \prod_j S_j \to \mathbb{R}$ is $i$'s payoff
+as a function of the chosen profile. A pure-strategy **Nash equilibrium**
+[@nash1950] is a profile $\mathbf{s}^\* = (s_1^\*, \dots, s_n^\*)$ such that no player
+can improve unilaterally,
 
-### Log-transformation
+$$
+u_i(s_i^\*, \mathbf{s}_{-i}^\*) \;\ge\; u_i(s_i, \mathbf{s}_{-i}^\*)
+\qquad \text{for all } s_i \in S_i,\ \text{all } i \in N,
+$$ {#eq-nash}
 
-[@Manchanda_2004; @Wies_2019] used 1 in place of 0 for log-transformation. And also use 0.5 and 0.0001 for sensitivity analysis.
+where $\mathbf{s}_{-i}$ denotes the strategies of $i$'s rivals. The equilibrium is the
+solution concept: it plays the role that an estimator plays in empirical work. To
+*solve* the model is to characterize $\mathbf{s}^\*$ and then differentiate it with
+respect to a primitive to obtain the comparative static of interest.
 
-To control for firm size effects, [@Wies_2019] scale advertising investments by the firm's total assets in the given year
+A concrete instance fixes the idea. Consider two firms choosing prices for
+horizontally differentiated products located at the ends of a unit interval, with
+consumers uniformly distributed and incurring a quadratic "transport" cost $t$ for
+distance from their preferred variety—the Hotelling spatial-competition setup
+[@hotelling1929; @dixit1980]. Each firm $i$ has constant marginal cost $c$ and earns
+$\pi_i = (p_i - c)\, D_i(p_i, p_j)$, where the demand $D_i$ is the mass of consumers
+who prefer firm $i$ at the posted prices. Solving the first-order conditions and
+imposing symmetry yields the equilibrium price
 
-## Endogeneity
+$$
+p^\* = c + t,
+$$ {#eq-hotelling}
 
-Check [Background in strucutral Models section under marketing mix models](#background-structural-models) for more up-to-date academic practice.
+a closed-form result whose comparative statics are immediate and exact:
+$\partial p^\* / \partial t > 0$ and $\partial p^\* / \partial c = 1$. Greater
+differentiation (larger $t$) softens competition and raises equilibrium margins; the
+result holds for *every* admissible parameter value, with no data and no estimation.
+This is the characteristic strength of the analytical tradition—universally valid,
+sign-definite conclusions—and its characteristic limitation: the conclusion is true
+*of the model*, and whether the model resembles any real market is a separate
+question the framework cannot answer. Marketing's analytical literature has used this
+machinery to study product line design, channel structure, advertising, and pricing
+[@moorthy1985; @moorthy1988; @moorthy1993; @narasimhan1988b; @villas-boas1999;
+@iyer2005], and signaling games to rationalize how brands credibly convey unobservable
+quality [@spence1973; @akerlof1970; @nelson1974].
 
-Modal paper that address both selection bias and endogenoueity [@frennea2018]
+The assumption whose failure is fatal to an analytical model is the specification of
+the *game itself*: the players' rationality, the information they hold, the order of
+moves, and the equilibrium concept invoked. If real firms do not best-respond, or
+hold different beliefs, or the relevant equilibrium is not the one selected, the
+comparative statics need not describe the world even approximately. Analytical models
+therefore earn their keep as *theories*—sources of sharp, falsifiable hypotheses and
+of the behavioral content that disciplines structural estimation—rather than as
+descriptions to be read off as fact. @sec-analytical-models develops the solution
+techniques and @sec-industrial-organization the equilibrium models of competition
+that structural work later takes to data.
 
-### Control Function
+## Empirical Models {#sec-modeling-empirical}
 
-In the context of consumer choice model [@Petrin_2010]
+An empirical model confronts structure with data to recover parameters. The
+tradition splits along the policy-invariance line introduced above, and the split is
+the single most important methodological distinction in the chapter.
 
-## Variance Info Factors
+### The Reduced-Form Branch
 
-Sometimes you can decrease the maximum variance inflation factor by removing the squared terms and centering all non-dummy regressors.
+A **reduced-form** model specifies a response function relating an outcome to
+marketing and control variables, and estimates it without deriving that function from
+an explicit optimization problem. The workhorse is the regression of a sales or
+choice outcome $y$ on marketing inputs $\mathbf{x}$ and controls $\mathbf{w}$,
+
+$$
+y_i = \mathbf{x}_i^\top \boldsymbol{\beta} + \mathbf{w}_i^\top \boldsymbol{\gamma}
+       + \varepsilon_i,
+$$ {#eq-reduced-form}
+
+estimated by ordinary least squares (OLS) when the regressors are exogenous, or by
+instrumental variables (IV) / two-stage least squares when they are not
+[@greene2003econometric; @cameron2005microeconometrics]. The marketing-mix and
+response-modeling literatures are largely reduced-form in this sense
+[@Little_1970; @Little_1976; @lambin1970a; @clarke1976; @lilien1992marketing], and
+@sec-marketing-mix-models treats them at length.
+
+The defining hazard of @eq-reduced-form is **endogeneity**: a regressor correlated
+with the error makes the OLS estimator inconsistent, $\mathbb{E}[\hat{\boldsymbol\beta}]
+\neq \boldsymbol\beta$. Price is the canonical offender—firms set higher prices where
+they observe (but the analyst does not) higher demand, so $\mathrm{Cov}(p_i,
+\varepsilon_i) > 0$ and the naive price coefficient is biased toward zero, sometimes
+to the point of the wrong sign. The remedies are an instrument $\mathbf{z}$ that
+shifts $\mathbf{x}$ without entering the outcome directly, or a **control function**
+that conditions on the endogenous portion of the regressor [@Petrin_2010], or a
+research design that isolates exogenous variation. The marketing literature has
+matured on exactly this point: modal recent work addresses both sample selection and
+endogeneity rather than one in isolation [@frennea2018], and the rise of
+quasi-experimental designs—exploiting borders, weather, regulatory changes, and
+abrupt firm-policy shifts—gives reduced-form estimates a credible causal warrant
+[@goldfarb2022]. A reduced-form estimate, properly identified, answers "what is the
+effect of this intervention, here." It does *not*, in general, answer "what would
+happen under a policy we have never observed," because the estimated $\boldsymbol\beta$
+may itself be a function of the prevailing policy regime—it is policy-variant.
+
+::: {.callout-warning}
+## Reduced-form does not mean atheoretic
+
+A reduced-form model can be every bit as causally credible as a structural one when
+its identifying variation is genuinely exogenous; "reduced-form" is a statement about
+where the estimating equation comes from, not about rigor. What reduced-form
+estimates lack is *portability*: their coefficients are valid for counterfactuals
+spanned by the variation that identified them, and silent about the rest.
+:::
+
+### The Structural Branch
+
+A **structural** model imposes the optimization problem itself and estimates the
+parameters of its primitives—utilities and costs—rather than a response function.
+Following @erdem1996a, structural estimation "assumes and imposes a structure on the
+consumer's maximization problem," and the recovered parameters are those of the
+consumers' utility functions, which are taken to be **policy-invariant**. Because the
+primitives do not move when the policy moves, the estimated model can be simulated
+under counterfactual policies the data never contained—the property that justifies
+the additional assumptions structural work requires [@reiss2011;
+@chintagunta2006structural; @dube2002structural].
+
+The canonical structural object in marketing is the **random-utility discrete-choice
+model** [@mcfadden1986choice; @mcfadden2001economic]. Consumer $i$ obtains utility
+
+$$
+u_{ij} = \mathbf{x}_j^\top \boldsymbol{\beta}_i - \alpha_i p_j + \xi_j + \varepsilon_{ij}
+$$ {#eq-rum}
+
+from alternative $j$, where $\mathbf{x}_j$ are observed attributes, $p_j$ is price,
+$\xi_j$ is a demand shock observed by firms and consumers but not the analyst, and
+$\varepsilon_{ij}$ is idiosyncratic taste. Under a Type-I extreme-value assumption on
+$\varepsilon_{ij}$ the choice probabilities take the multinomial-logit form, and with
+random coefficients $(\boldsymbol\beta_i, \alpha_i)$ integrated over a population
+distribution one obtains the mixed-logit / BLP demand system estimated by maximum
+likelihood or GMM [@guadagni1983; @berry1994estimating; @berry1995; @rossi2014;
+@dube2021random]. The structural-marketing program has extended @eq-rum to consumers
+who *learn* about product quality through experience and forward-looking dynamics
+[@erdem1996a; @erdem1998; @erdem2008impact; @chintagunta1998; @seetharaman1999;
+@allenby1999dynamic; @gilbride2004; @bradlow2004learning; @sun2011learning], to firm
+conduct and equilibrium pricing [@kadiyali2001structural; @misra2011structural], and
+to dynamic competition [@gowrisankaran2012dynamics; @Borkovsky_2017]. The estimation
+machinery—mixed logit, hierarchical Bayes, GMM—is the subject of
+@sec-structural-models and @sec-choice-bayesian.
+
+The crucial contrast between the two structural choice models in marketing is whether
+the consumer is **myopic** or **forward-looking**. A myopic model has the consumer
+choose to maximize *current-period* utility given current beliefs; a forward-looking
+model has the consumer choose to maximize the expected present value of utility,
+internalizing how today's choice affects tomorrow's information and options—relevant
+precisely when learning about uncertain product characteristics drives the choice
+process [@erdem1996a]. The two can rationalize the same observed choices yet imply
+sharply different responses to, for example, a temporary promotion, which a
+forward-looking consumer partly anticipates.
+
+The assumption whose failure is fatal to a structural model is **specification**: if
+the imposed utility, the error distribution, or the conduct assumption is wrong, the
+estimated "primitives" absorb the misspecification and the counterfactuals built on
+them are unreliable. Structural work thus buys counterfactual portability at the
+price of strong, and contestable, functional-form and behavioral assumptions—the
+exact trade reduced-form work declines to make. Neither dominates; the right choice
+depends on the question, as @sec-modeling-decision argues.
+
+## Predictive Models {#sec-modeling-predictive}
+
+A predictive model learns a flexible mapping from features to an outcome and is
+judged by how well it forecasts data it has not seen. It makes minimal commitments
+about the mechanism that generated the data; in exchange it can fit relationships far
+richer than the linear-in-parameters forms of @eq-reduced-form, and it scales to the
+high-dimensional, unstructured data—text, images, clickstreams—that now pervade
+marketing [@wedel2016; @athey2017digital]. The aim is not to estimate $\boldsymbol\beta$
+but to construct an $\hat f$ that minimizes expected loss on future inputs.
+
+Formally, given a loss $L(y, \hat y)$ and a joint distribution $\mathcal{P}$ over
+$(\mathbf{x}, y)$, the target is the function minimizing **risk**, the expected loss,
+
+$$
+f^\* = \arg\min_{f \in \mathcal{F}} \; \mathbb{E}_{(\mathbf{x}, y)\sim\mathcal{P}}
+        \big[\, L(y, f(\mathbf{x})) \,\big].
+$$ {#eq-risk}
+
+Because $\mathcal{P}$ is unknown, the model minimizes **empirical risk**—average loss
+on a training sample—typically with a penalty that controls complexity,
+
+$$
+\hat f = \arg\min_{f \in \mathcal{F}} \;
+        \frac{1}{n}\sum_{i=1}^{n} L\big(y_i, f(\mathbf{x}_i)\big)
+        \;+\; \lambda\, \Omega(f),
+$$ {#eq-erm}
+
+where $\Omega(f)$ penalizes complexity (e.g., the $\ell_1$ norm of coefficients in
+the lasso, tree depth in a gradient-boosted ensemble) and $\lambda \ge 0$ is a
+regularization strength chosen by cross-validation. The whole apparatus exists to
+manage the **bias–variance trade-off**: a model too simple to capture the signal is
+biased; one flexible enough to memorize the training noise has high variance and
+generalizes poorly. The discipline of the tradition is that performance is reported on
+a held-out test set, never on the data used to fit—so the relevant guarantee is i.i.d.
+generalization, not parameter recovery. Marketing applications span churn and
+response scoring, recommendation, and the extraction of structured signal from text
+and images for downstream marketing use [@netzer2008; @toubia2013; @ansari2018;
+@tirunillai2014a; @buschken2016sentence; @hauser2006]; @sec-ai-ml develops the methods
+and @sec-text-as-data their application to language.
+
+The assumption whose failure is fatal to a predictive model is **distributional
+stability**: @eq-risk presumes that future $(\mathbf{x}, y)$ are drawn from the same
+$\mathcal{P}$ as the training data. When the deployment environment shifts—a new
+competitor enters, a price moves outside its historical range, a recommendation
+changes the very behavior it predicts—the i.i.d. assumption breaks and accuracy can
+collapse without warning. This failure mode is the deep reason a predictive model,
+however accurate, does not license a causal or counterfactual claim. A model that
+predicts churn superbly from a feature that *includes* a retention discount cannot be
+used to evaluate *changing* that discount: intervening on the feature changes the
+distribution, and @eq-risk no longer applies. The point generalizes—predictive
+accuracy and causal validity are distinct objectives, and optimizing one does not
+deliver the other [@athey2017digital].
+
+::: {.callout-note}
+## Prediction policy versus parameter
+
+A useful test of which tradition a problem belongs to: ask whether the decision
+requires knowing the *effect of an action you will take*, or only an *accurate
+forecast given actions already in train*. Choosing whom to target with a retention
+offer, conditional on the offer policy, is a prediction problem. Choosing *whether to
+change* the offer policy is a causal problem and needs an empirical or analytical
+model. Many marketing tasks are prediction-policy problems—who, not whether—and for
+those a predictive model is exactly right.
+:::
+
+## Choosing a Modeling Approach {#sec-modeling-decision}
+
+The traditions are complements, not rivals, and mature marketing science routinely
+chains them: theory generates a hypothesis (analytical), an estimate tests it and
+quantifies a counterfactual (empirical), and a predictive model operationalizes the
+resulting policy at scale. The choice for a given study turns on three questions,
+asked in order.
+
+First, **what must the answer support**? If the deliverable is a counterfactual—what
+would profits be under a price the firm has never charged, a product it has never
+launched, a market structure that does not yet exist—the model must recover
+policy-invariant primitives, which points to structural estimation
+(@sec-modeling-empirical) disciplined by analytical theory (@sec-modeling-analytical).
+If the deliverable is the causal effect of an intervention *within* the observed
+regime, a credibly identified reduced-form design suffices and is usually preferable
+for its weaker assumptions [@goldfarb2022]. If the deliverable is an accurate forecast
+or a ranking conditional on a fixed policy, a predictive model is the right tool
+(@sec-modeling-predictive).
+
+Second, **where does identifying variation come from**? A causal or structural answer
+requires variation in the cause that is independent of the unobserved drivers of the
+outcome—an instrument, a natural experiment, or a randomized trial. Absent such
+variation, no amount of modeling sophistication recovers an effect; the honest move is
+to retreat to prediction and say so. Predictive models, by contrast, need only that
+the future resemble the past, a much weaker and more often satisfied condition.
+
+Third, **what is the cost of a wrong assumption**? Structural models deliver the most
+but assume the most, and a misspecified structure quietly corrupts every
+counterfactual built on it. Reduced-form designs assume less and fail more visibly.
+Predictive models assume least about mechanism but stake everything on distributional
+stability. The right model is the one whose fatal assumption (the last column of
+@tbl-modeling-contrast) is the most defensible in the application at hand—not the most
+sophisticated available.
+
+## Illustration: One Question, Three Lenses {#sec-modeling-illustration}
+
+To make the contrast concrete, consider a single question—*how does a price change
+affect demand?*—and run it through all three traditions on a common simulated market.
+The exercise is deliberately small and fully reproducible; its point is conceptual,
+not computational. We simulate a market in which firms set prices partly in response
+to an unobserved demand shock, creating textbook price endogeneity, and then show how
+each tradition treats it.
+
+```{r modeling-dgp, message=FALSE, warning=FALSE}
+set.seed(2025)
+n <- 4000
+
+# Unobserved (to the analyst) demand shifter xi; firms see it and price on it.
+xi    <- rnorm(n, 0, 1)
+cost  <- rnorm(n, 2, 0.4)              # exogenous cost shifter (a valid instrument)
+# Pricing rule: price rises with both cost and the latent demand shock -> endogeneity
+price <- 1.5 + 0.8 * cost + 0.6 * xi + rnorm(n, 0, 0.2)
+
+# True structural demand: utility decreasing in price, increasing in xi.
+alpha_true <- -1.2                     # the policy-invariant price coefficient
+util  <- 3 + alpha_true * price + xi
+prob  <- plogis(util)                  # logit choice probability
+buy   <- rbinom(n, 1, prob)
+
+dat <- data.frame(buy, price, cost, xi)
+round(cor(dat[, c("price", "cost", "xi")]), 2)
+```
+
+The correlation matrix confirms the design: `price` is correlated with the
+unobserved `xi`, so any model that regresses purchase on price *without* addressing
+this correlation will recover a biased price effect. Now the three lenses.
+
+**Predictive lens.** Fit a flexible classifier to predict `buy` from `price` and
+`cost`, and evaluate it out of sample. The model is excellent at forecasting and says
+nothing trustworthy about the *effect* of moving price.
+
+```{r modeling-predictive, message=FALSE, warning=FALSE}
+train <- 1:3000; test <- 3001:n
+pred_fit <- glm(buy ~ poly(price, 2) + cost, data = dat[train, ],
+                family = binomial)
+phat <- predict(pred_fit, newdata = dat[test, ], type = "response")
+# Out-of-sample area under the ROC curve (rank accuracy), computed from scratch.
+pos  <- phat[dat$buy[test] == 1]; neg <- phat[dat$buy[test] == 0]
+auc  <- mean(outer(pos, neg, ">")) + 0.5 * mean(outer(pos, neg, "=="))
+cat("Out-of-sample AUC:", round(auc, 3), "\n")
+```
+
+**Reduced-form (naive) lens.** A logit of purchase on price recovers a coefficient
+that is biased toward zero, because price proxies for the omitted positive demand
+shock `xi`.
+
+```{r modeling-reduced-naive, message=FALSE, warning=FALSE}
+naive <- glm(buy ~ price, data = dat, family = binomial)
+cat("Naive price coefficient:", round(coef(naive)["price"], 3),
+    " (true:", alpha_true, ")\n")
+```
+
+**Structural / IV lens.** Exploit the exogenous cost shifter as an instrument via a
+control function: regress the endogenous price on the instrument, take the residual,
+and include it in the choice model to absorb the correlation with `xi`
+[@Petrin_2010]. The price coefficient now recovers the policy-invariant primitive and
+supports counterfactual repricing.
+
+```{r modeling-structural-cf, message=FALSE, warning=FALSE}
+first   <- lm(price ~ cost, data = dat)          # first stage on the instrument
+dat$cfv <- resid(first)                          # control-function residual
+struct  <- glm(buy ~ price + cfv, data = dat, family = binomial)
+cat("Control-function price coefficient:",
+    round(coef(struct)["price"], 3), " (true:", alpha_true, ")\n")
+```
+
+The three numbers tell the chapter's whole story. The predictive model attains high
+out-of-sample accuracy yet its fitted price terms are not the demand slope and must
+not be read as such. The naive reduced-form coefficient is attenuated by endogeneity,
+a quantitative bias that no added flexibility would cure—only identifying variation
+does. The control-function estimate, using the exogenous cost instrument, recovers the
+true policy-invariant price coefficient and so, alone among the three, can answer the
+counterfactual "what happens to demand if the firm reprices." Same data, same
+question, three answers—because the three models target different things and rest on
+different assumptions. Choosing among them is the skill this part of the book builds.
+
+## Key Takeaways
+
+- A model is an argument about a marketing system, valued for the gap between the
+  assumptions it imposes and the conclusions it then licenses; the traditions differ
+  in what they hold fixed when the environment changes (@sec-modeling-taxonomy).
+- **Analytical** models derive equilibrium comparative statics from stated games
+  [@nash1950]; they yield sign-definite, universally valid conclusions *about the
+  model*, and are fatal to mis-specify the game (@sec-modeling-analytical).
+- **Empirical** models split on **policy invariance**: structural estimation recovers
+  invariant utility and cost primitives and so supports counterfactuals
+  [@erdem1996a; @mcfadden1986choice], whereas reduced-form work estimates a possibly
+  policy-variant response function and supports causal claims only under its
+  identifying design [@goldfarb2022; @frennea2018] (@sec-modeling-empirical).
+- **Predictive** models minimize out-of-sample risk over a flexible function class
+  [@wedel2016; @athey2017digital]; they excel at forecasting under a fixed policy but
+  collapse under distribution shift and never, by themselves, license a causal claim
+  (@sec-modeling-predictive).
+- The traditions are complements: choose by what the answer must support, where
+  identifying variation comes from, and which fatal assumption is most defensible
+  (@sec-modeling-decision); the same pricing question yields three different,
+  internally valid answers depending on the lens (@sec-modeling-illustration).

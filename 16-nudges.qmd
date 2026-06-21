@@ -1,11 +1,536 @@
-# Nudges
+# Nudges and Choice Architecture {#sec-nudges}
 
-[@Garbinsky_2020] uncovers that people under save because they have positive illusion of financial responsibility (i.e., they thought they are financially more responsible than the average).
+Every choice a consumer faces arrives wrapped in a *context*: an order in which
+options appear, a pre-checked box, a number printed on a label, a sentence that
+frames the same outcome as a gain or a loss. None of these features alters the
+underlying options, yet each reliably moves what people choose. A **choice
+architect** is anyone who organizes the context in which decisions are made—the
+designer of an enrollment form, the merchandiser who sets a shelf, the platform
+engineer who selects a default. A **nudge** is any aspect of that architecture
+that predictably changes behavior *without* forbidding options or materially
+changing economic incentives. The defining feature is that the intervention is
+cheap to avoid: a true nudge leaves the menu and the prices intact and works
+through how the choice is presented, not through what is on offer.
 
-[@Mrkva_2021] found that choice architecture influences inequities across people. More specifically, people with the following dimensions enjoy the most benefit from nudges:
+This chapter treats choice architecture as both a scientific object and a
+managerial instrument. Scientifically, nudges are where the behavioral-economics
+account of the consumer—bounded rationality, reference dependence, present bias,
+sensitivity to social information—meets the firm's ability to engineer the
+environment. Commercially, the same levers that a public-health agency uses to
+raise organ-donor registration are the levers a retailer uses to raise basket
+size, and the line between a welfare-improving nudge and an exploitative "dark
+pattern" is drawn by *whose* objective the architecture serves. We therefore give
+equal weight to mechanism (why defaults, framing, social proof, and salience
+work), to measurement (how field experiments identify a nudge effect and what
+breaks that identification), and to ethics and welfare (when steering a chooser
+is legitimate). By the end the reader should be able to formalize a nudge as a
+shift in a choice model, design a field test that recovers its causal effect,
+and reason explicitly about the welfare claim that justifies it.
 
--   Low socioeconomic status (SES)
--   Low numerical ability
--   Low knowledge
+The intellectual debt is to the heuristics-and-biases program—the systematic
+departures from expected-utility maximization catalogued by @tversky1974 and
+@tversky1981—and to the reference-dependent account of value in @thaler1985. The
+managerial program that builds on it, **libertarian paternalism**, holds that
+because choices are *never* presented context-free, the architect cannot avoid
+influencing behavior; the only question is whether that influence is exercised
+thoughtfully and in the chooser's interest.[^lp] We adopt that framing while
+treating the welfare claim as something to be argued, not assumed.
 
-Hence, we should use nudges to reduce SES disparities.
+[^lp]: The phrase is deliberately paradoxical: *libertarian* because options are
+preserved and opting out is free; *paternalistic* because the architect arranges
+the default to steer the inattentive chooser toward what the architect judges
+better for them. Critics argue the paternalism is real and the libertarianism
+partly illusory whenever opting out carries even small frictions—a tension we
+return to in @sec-nudge-welfare.
+
+## What a Nudge Is, Formally
+
+Intuitively, a nudge changes behavior without changing the rational consumer's
+problem. To make this precise, consider a chooser selecting from a menu
+$\mathcal{C} = \{1,\dots,J\}$ of options, each with attributes
+$\mathbf{x}_j$ and price $p_j$. In the standard random-utility model the chooser
+selects option $j$ when its latent utility is largest,
+$$
+U_j = V(\mathbf{x}_j, p_j) + \varepsilon_j, \qquad
+j^\star = \arg\max_{j \in \mathcal{C}} U_j ,
+$$ {#eq-rum}
+with $V$ the deterministic (systematic) component and $\varepsilon_j$ an
+idiosyncratic shock. A *price cut* or a *quality improvement* moves choices by
+changing $V$ through $p_j$ or $\mathbf{x}_j$. A *ban* moves choices by deleting
+$j$ from $\mathcal{C}$. A **nudge does neither.** It is a feature $a$ of the
+choice architecture that enters utility (or the choice rule) without changing the
+menu $\mathcal{C}$ or the economic terms $(\mathbf{x}_j, p_j)$:
+$$
+\tilde U_j = V(\mathbf{x}_j, p_j) + \gamma\, d_j(a) + \varepsilon_j ,
+$$ {#eq-nudge}
+where $d_j(a)$ encodes how architecture $a$ touches option $j$—an indicator that
+$j$ is the default, the rank of $j$ in a list, the salience weight on $j$'s
+price—and $\gamma$ is the behavioral sensitivity. Under the neoclassical axioms
+$\gamma = 0$: presentation is irrelevant and choice is invariant to anything but
+$(\mathbf{x}_j, p_j)$. Every nudge is, in this notation, a claim that
+$\gamma \neq 0$ for some architecture-dependent term that a fully rational agent
+would ignore.
+
+> A **nudge** is any aspect of the choice architecture that alters people's
+> behavior in a predictable way without forbidding any options or significantly
+> changing their economic incentives. To count as a mere nudge, the intervention
+> must be easy and cheap to avoid.
+>
+> --- after the standard definition in the libertarian-paternalism literature
+
+Two corollaries follow and discipline the rest of the chapter. First, because the
+nudge operates through $\gamma\, d_j(a)$ rather than through preferences, its
+effect is a property of the *interaction* between the architecture and the
+population's behavioral parameters—the same default can be inert in one segment
+and decisive in another (@sec-nudge-heterogeneity). Second, the welfare
+evaluation of a nudge cannot be read off revealed choice in the usual way:
+if $\gamma \neq 0$, the option chosen under architecture $a$ need not be the one
+that maximizes the chooser's *experienced* utility, so the architect must invoke
+a welfare criterion external to the choice itself (@sec-nudge-welfare).
+
+It is useful to separate two channels by which $d_j(a)$ can act, because they
+imply different robustness and different ethics. A nudge may **supply
+information or structure** that a rational but cognitively limited agent would
+want—reducing search cost, correcting a misperception, making a consequence
+vivid—in which case it moves choice toward what the agent would pick on
+reflection. Or it may **exploit a bias**—anchoring on an arbitrary number,
+triggering loss aversion, leveraging inertia—in which case it moves choice
+toward what the architect wants regardless of the chooser's interest. The same
+formal object, $\gamma\, d_j(a)$, covers both; the welfare sign is not in the
+math but in the mapping from the manipulated choice to the chooser's own ends.
+
+## The Core Levers
+
+Four families of nudge recur across domains because each maps onto a robust
+regularity in how people depart from @eq-rum. @tbl-levers organizes them by the
+behavioral primitive each exploits, the formal object it perturbs, and the
+canonical field application. We then treat each in turn.
+
+| Lever | Behavioral primitive | What it perturbs in @eq-nudge | Canonical application |
+|---|---|---|---|
+| **Default** | Status-quo bias, inertia, effort cost | Sets $d_j(a)=1$ for the opt-out option | Auto-enrollment in retirement saving; organ donation |
+| **Framing** | Reference dependence, loss aversion | Relabels the *reference point* in $V$ | "90% lean" vs. "10% fat"; gain/loss appeals |
+| **Social proof** | Conformity, descriptive norms | Adds a term in others' choices to $V$ | "Most guests reuse their towels"; energy reports |
+| **Salience** | Limited attention, fluency | Reweights an attribute already in $V$ | Calorie labels; "sale" tags; traffic-light nutrition |
+
+: Four core nudge levers, the behavioral primitive each exploits, and where each enters the choice model. {#tbl-levers}
+
+### Defaults
+
+A **default** is the outcome that obtains when the chooser does nothing. Defaults
+are the most powerful nudge because doing nothing is the cheapest action: any
+positive cost of deliberation, comprehension, or execution makes the pre-set
+option disproportionately likely to stand. Formally, let the chooser realize the
+default $j_0$ unless she pays an idiosyncratic switching cost $c_i$ to move,
+choosing to switch only when the utility gain exceeds that cost,
+$$
+\Pr(\text{switch from } j_0 \text{ to } j) = \Pr\!\big(U_{ij} - U_{ij_0} > c_i\big).
+$$ {#eq-default}
+When $c_i$ is small the default barely matters; when $c_i$ is large—or when the
+chooser never engages the comparison at all because attention is itself
+costly—the default captures nearly the whole market. Three forces inflate the
+effective $c_i$: **inertia** (status-quo bias, an instance of loss aversion in
+which moving away from the reference point registers as a loss), **implied
+endorsement** (the chooser reads the default as the architect's recommendation),
+and **effort** (comprehending and executing a change has real cognitive and
+procedural cost). The celebrated cross-country contrast in organ-donor rates—near
+universal registration under opt-out regimes, sparse registration under opt-in,
+holding stated attitudes roughly constant—is the limiting case in which $c_i$
+dominates the modest utility difference between registering and not.<!-- CITE-NEEDED: organ-donation opt-in vs opt-out default effects (Johnson & Goldstein) -->
+
+The same mechanism drives the marquee result in household finance: automatic
+enrollment in defined-contribution retirement plans raises participation sharply
+and persistently, because the inattentive employee inherits the saving rate and
+fund the plan sets rather than the one she would choose on reflection.<!-- CITE-NEEDED: automatic enrollment 401(k) participation (Madrian & Shea; Thaler & Benartzi) --> That defaults can
+*remedy* under-saving is non-trivial precisely because under-saving is itself
+partly a behavioral failure: @Garbinsky_2020 show that many people save too
+little not from rational impatience but from a **positive illusion of financial
+responsibility**—they believe themselves more financially responsible than the
+average person, and that flattering self-view dampens the felt need to save. A
+default that raises the saving rate works *with* the grain of what these
+consumers would, on reflection, endorse, which is part of why it is defensible on
+welfare grounds.
+
+Defaults are not uniformly benign. The identical inertia that lifts retirement
+saving also sustains **negative-option** marketing: a free trial that silently
+converts to a paid subscription, or a pre-checked add-on at checkout, harvests
+the same $c_i$ for the firm's benefit rather than the chooser's. The welfare sign
+of a default thus depends entirely on whether the pre-set option is the one the
+chooser would choose with full attention—a question the architecture is designed
+to prevent her from confronting.
+
+### Framing
+
+A **frame** is a description of options that is logically equivalent across
+versions but psychologically distinct. Framing effects are the direct empirical
+signature of the reference dependence in prospect theory: because the value
+function is defined over *gains and losses* relative to a reference point rather
+than over final states, and is steeper for losses than for equivalent gains,
+the same outcome described as a loss looms larger than when described as a gain
+[@tversky1981; @thaler1985]. Write the chooser's valuation as reference-dependent,
+$$
+V_j = v\!\big(\mathbf{x}_j - \mathbf{r}\big), \qquad
+v'(z) > 0,\quad v''(z) < 0 \text{ for } z>0,\quad v'(0^-) > v'(0^+),
+$$ {#eq-frame}
+where $\mathbf{r}$ is the reference point and the last inequality—the kink at
+zero—is **loss aversion**. A frame is an intervention on $\mathbf{r}$: describing
+ground beef as "90% lean" sets the reference at the favorable attribute, while
+"10% fat" sets it at the unfavorable one, even though the product is identical.
+The neoclassical chooser, valuing final states, is invariant to $\mathbf{r}$ and
+hence to the frame; the loss-averse chooser is not.
+
+Framing pervades marketing communication. Attribute frames recolor evaluation of
+a fixed product; goal frames cast the *same* action as avoiding a loss or
+securing a gain, with loss frames typically more motivating for prevention
+behaviors. The "buy now, pay later" (BNPL) instrument studied by @maesen2024buy
+is, in part, a framing device: splitting a price into interest-free installments
+reframes the reference point for the expenditure, and the authors show with
+retailer transaction data (in a difference-in-differences design around BNPL
+introduction) and three preregistered experiments that the installment frame
+*reduces perceived financial constraint and perceived cost and improves felt
+budget control*, raising both purchase incidence and basket size relative to
+lump-sum payment. The effect is concentrated among smaller-basket and
+credit-reliant shoppers—evidence that the frame bites hardest where the
+behavioral primitive (here, narrow bracketing of the payment) is strongest, and
+a reminder that a frame that "helps" budget control can simultaneously raise
+spending in a way the chooser may not, on reflection, endorse.
+
+### Social Proof
+
+A **social-proof** nudge supplies information about what others do, exploiting
+the human tendency to treat peers' behavior as evidence about the correct or
+acceptable action—a **descriptive norm**. The mechanism adds a term in others'
+choices to systematic utility,
+$$
+V_{ij} = V_0(\mathbf{x}_j, p_j) + \theta\, s_{j} ,
+$$ {#eq-social}
+where $s_{j}$ is the (perceived) share of relevant others choosing $j$ and
+$\theta$ the conformity weight. Two cautions are built into the construct.
+First, the *reference group* matters: norms move behavior most when the
+comparison others are similar or proximate, so a generic "most people" appeal is
+weaker than one keyed to the chooser's own group [@cialdini1990]. Second, a
+descriptive norm can **backfire**. Telling people that an undesirable behavior is
+common normalizes it, dragging the below-average performer up but pulling the
+above-average performer down toward the mean—the *boomerang* effect—which is why
+effective normative interventions pair the descriptive norm with an **injunctive**
+cue (social approval or disapproval) that protects already-good performers
+[@cialdini1990]. The household energy reports that print a neighbor comparison
+alongside a smiley face for low users are the canonical field deployment of
+exactly this descriptive-plus-injunctive design.<!-- CITE-NEEDED: home energy report social-norm field experiments (Allcott; Schultz et al.) -->
+
+Social proof also operates through observation of others in the moment of
+consumption rather than through reported statistics: the mere revealed presence
+of other consumers, and the composition of that crowd, shifts evaluations and
+choices, a continuity with the brand-evaluation evidence on virtual supporters
+discussed in @sec-branding. The lever's power and its fragility share a root:
+because it works by transmitting what is *normal*, it is only as good as the
+honesty and relevance of the norm it transmits.
+
+### Salience
+
+A **salience** nudge changes which attribute the chooser attends to, without
+changing the attribute set or the prices. Limited attention means the chooser
+behaves as if maximizing a *distorted* utility that overweights whatever is
+perceptually or cognitively prominent. Let attention weights $\omega_k \ge 0$
+multiply the attributes,
+$$
+\hat V_j = \sum_{k} \omega_k\, \beta_k\, x_{jk}, \qquad
+\omega_k = \omega_k(\text{salience of attribute } k),
+$$ {#eq-salience}
+so that a fully attentive chooser has $\omega_k \equiv 1$ and recovers @eq-rum,
+while an inattentive one sets $\omega_k$ near zero on neglected attributes
+(a tax not shown at the shelf, a shrouded fee) and above one on prominent ones
+(a bold "sale" tag, a traffic-light nutrition label). A salience nudge is an
+intervention on $\omega_k$: posting calorie counts raises the weight on the
+health attribute; displaying tax-inclusive prices raises the weight on the
+true price. Crucially—and unlike framing—a salience nudge can be welfare-improving
+*precisely because* it pushes $\omega_k$ back toward one, undoing a distortion
+the chooser would not endorse, rather than introducing a new one.
+
+The clean identification of salience effects comes from settings where the
+*information* is unchanged but its *prominence* varies: making an already-disclosed
+fee conspicuous, or an already-available calorie figure visible at the point of
+choice, changes behavior even though a rational agent had access to the number all
+along. Salience is also the lens through which to read "decoy" and assortment
+effects in @sec-pricing and @sec-choice-models: adding a dominated option or
+reordering a shelf reweights attention across an unchanged menu.
+
+## Heterogeneity, Distribution, and the Equity of Nudging {#sec-nudge-heterogeneity}
+
+Because a nudge acts through $\gamma\, d_j(a)$ rather than through preferences,
+its effect is intrinsically heterogeneous: it is largest for the choosers whose
+behavioral parameters make them most susceptible and smallest for those who would
+choose deliberately regardless. This is not a nuisance to be averaged away; it is
+the policy-relevant heart of the matter, because it determines *who* a nudge
+moves and therefore its distributional consequences.
+
+@Mrkva_2021 establish this directly: choice-architecture interventions—defaults,
+attribute ordering, partitioning—have systematically *larger* effects on
+consumers with **lower socioeconomic status, lower numeracy, and lower domain
+knowledge**. The mechanism is the susceptibility logic above: those with less
+knowledge or numerical fluency engage the deliberate comparison less and so
+inherit the architecture more. The distributional implication cuts two ways.
+A welfare-improving default (auto-enrollment in saving, a healthier cafeteria
+arrangement) disproportionately *helps* the disadvantaged and can **narrow** the
+gap that arises when the savvy navigate complex choices and the rest default into
+bad ones. The very same asymmetry means an exploitative architecture
+disproportionately *harms* the disadvantaged. Heterogeneity is thus an
+amplifier whose sign is set by the architect's objective, and a nudge's equity
+case rests on aligning that objective with the interests of the most susceptible.
+
+This connects to the welfare argument that follows: the standard libertarian
+defense—"opting out is free, so no one is worse off"—is weakest exactly where the
+nudge is strongest, because the populations least likely to opt out are the
+least-resourced. The freedom to opt out is not equally distributed.
+
+## Welfare and Ethics {#sec-nudge-welfare}
+
+Evaluating a nudge requires a welfare criterion, and revealed preference cannot
+supply one when $\gamma \neq 0$. If the architecture itself moves choice, then the
+chosen option is no longer a clean signal of what the chooser values, and the
+analyst cannot infer "she chose it, therefore it made her better off." The
+behavioral-welfare-economics response is to define welfare relative to the
+chooser's preferences as they would be **absent the manipulating frame**—what she
+would choose with full attention, no inertia, and a neutral reference point—and
+to judge a nudge by whether it moves actual choice toward that **as-if-rational**
+benchmark. A nudge that closes the gap between distorted and undistorted choice is
+welfare-improving; one that opens it is not. The difficulty, and it is genuine, is
+that the undistorted benchmark is partly a construct of the analyst, not an
+observable.
+
+Three principles operationalize the criterion and double as design tests. First,
+**preserve and cheapen opt-out**: the libertarian half of the program is honored
+only if exiting the default carries trivial cost, and—per
+@sec-nudge-heterogeneity—trivial *for the least-resourced chooser*, not merely for
+the analyst. Second, **publicity**: a nudge is more likely legitimate if the
+architect would be willing to defend it openly to those nudged; covert exploitation
+of a bias fails this test where transparent information provision passes it. Third,
+**interest alignment**: ask whether $d_j(a)$ steers toward the chooser's own ends
+(saving, health, accurate prices) or the architect's (subscription revenue,
+larger baskets). The BNPL frame in @maesen2024buy is instructive here—it improves
+*felt* budget control while raising spending, so its welfare sign depends on
+whether the additional purchases are ones the consumer would endorse on reflection
+or ones the frame extracts by narrowing attention to the installment.
+
+The adversarial twin of the nudge is the **dark pattern**: a choice-architecture
+device engineered to serve the firm at the chooser's expense—pre-checked add-ons,
+buried unsubscribe links, drip-priced fees, confirmshaming, manufactured scarcity.
+Dark patterns are nudges that fail all three tests at once: opt-out is made
+costly, the design would not survive disclosure, and it steers against the
+chooser's interest. The privacy literature documents the analogous machinery in
+data collection. @adjerid2019choice show that consumers' privacy choices are
+malleable to framing and to subtle changes in how options are presented, and that
+the same misdirection that depresses privacy-protective choice can be reversed;
+@acquisti2012impact demonstrate that the *control* a platform appears to grant
+over disclosure is itself a lever—paradoxically, giving people more nominal
+control over publication can increase their willingness to disclose sensitive
+information, a control-as-nudge that benefits the data collector. These are the
+welfare hard cases: architecture that feels empowering while steering against the
+chooser's privacy interest.
+
+@fig-welfare summarizes the decision the architect actually faces: not *whether*
+to architect—context is unavoidable—but whether the architecture they cannot help
+imposing is aimed at the chooser's ends or their own.
+
+```{mermaid}
+%%| label: fig-welfare
+%%| fig-cap: "Classifying a choice-architecture intervention by its welfare sign. The same formal object—a non-zero behavioral sensitivity to presentation—can be a welfare-improving nudge or an exploitative dark pattern; the three tests separate them."
+flowchart TD
+    A[Choice architecture<br/>γ·d_j a ≠ 0] --> B{Is opt-out cheap<br/>for the least-resourced chooser?}
+    B -- No --> D[Dark pattern]
+    B -- Yes --> C{Would the design<br/>survive public disclosure?}
+    C -- No --> D
+    C -- Yes --> E{Does it steer toward the<br/>chooser's ends or the architect's?}
+    E -- Architect's --> D
+    E -- Chooser's --> F[Welfare-improving nudge]
+    D --> G[Reject / regulate]
+    F --> H[Deploy and audit]
+```
+
+## Identifying a Nudge Effect in the Field {#sec-nudge-identification}
+
+A nudge is a causal claim—$\gamma \neq 0$ for a specific $d_j(a)$—and the gold
+standard for recovering $\gamma$ is the randomized field experiment, because
+laboratory framing effects routinely shrink or vanish under real stakes,
+deliberation, and repetition. The estimand is the average treatment effect of
+architecture $a$ on the choice of interest. With chooser $i$ randomized to the
+nudge ($T_i=1$) or the status-quo architecture ($T_i=0$), and outcome $Y_i$ (e.g.,
+enrollment, basket size, the share choosing the target option),
+$$
+\tau = \mathbb{E}[Y_i \mid T_i = 1] - \mathbb{E}[Y_i \mid T_i = 0],
+$$ {#eq-ate}
+identified under randomization by the independence of $T_i$ from potential
+outcomes. The **estimator** is the difference in means (or a regression of $Y_i$
+on $T_i$ with pre-treatment covariates to soak up residual variance); its
+**assumptions** are (i) successful randomization, so treatment is orthogonal to
+potential outcomes; (ii) the stable-unit-treatment-value assumption (SUTVA)—no
+interference between units—which a *social-proof* nudge can threaten precisely
+because it operates through peers; and (iii) no differential attrition between
+arms. **What breaks identification:** spillovers (the nudged and un-nudged talk,
+or share a shelf), non-compliance (the default is overridden administratively),
+and outcome measures that capture short-run novelty rather than persistent
+behavior. The persistence question is first-order for defaults, whose entire
+value rests on inertia *lasting*; a one-week bump that decays is not the same
+asset as auto-enrollment that compounds for decades.
+
+When randomization is infeasible because the nudge is rolled out to everyone at
+once, the workhorse is **difference-in-differences** (DiD), exactly the design
+@maesen2024buy use around the introduction of BNPL. For unit $i$ in period $t$,
+$$
+Y_{it} = \alpha_i + \delta_t + \beta\, (\text{Post}_t \times \text{Treated}_i)
+        + \mathbf{z}_{it}^\top\boldsymbol{\gamma} + \varepsilon_{it},
+$$ {#eq-did}
+where $\alpha_i$ are unit fixed effects, $\delta_t$ time fixed effects, and
+$\beta$ the nudge effect. DiD identifies $\beta$ under **parallel trends**:
+absent the nudge, treated and control units would have moved in parallel. That
+assumption fails if the nudge is rolled out *because* the treated group was
+already trending differently (selection on trends), if a contemporaneous shock
+hits one group only, or if treatment timing is staggered and effects are
+heterogeneous across cohorts—the last a now-well-understood pitfall in
+two-way-fixed-effects estimation. The credible applications buttress parallel
+trends with pre-period event-study coefficients (flat pre-trends) and placebo
+outcomes that the nudge should not move.
+
+The simulation below makes the design concrete and reproducible. We generate a
+default nudge with a known true effect, embed realistic heterogeneity (the nudge
+bites harder on low-knowledge choosers, per @Mrkva_2021), and recover the
+treatment effect by the @eq-ate estimator.
+
+```{r nudge-experiment}
+#| echo: true
+#| message: false
+#| warning: false
+#| label: fig-nudge-power
+#| fig-cap: "Simulated default-nudge field experiment. Left: enrollment rates under the opt-in (status quo) and opt-out (nudge) architectures, overall and split by domain knowledge. Right: the sampling distribution of the estimated treatment effect across 2,000 replications, centered on the true effect (dashed line)."
+
+set.seed(16)
+
+simulate_nudge_trial <- function(n = 4000,
+                                 base_enroll = 0.30,   # opt-in baseline take-up
+                                 tau_low = 0.45,       # nudge effect, low-knowledge
+                                 tau_high = 0.15) {    # nudge effect, high-knowledge
+  # Half the sample is low domain knowledge (more susceptible per Mrkva 2021).
+  low_knowledge <- rbinom(n, 1, 0.5)
+  treat <- rbinom(n, 1, 0.5)                      # randomized opt-out default
+  tau_i <- ifelse(low_knowledge == 1, tau_low, tau_high)
+  # Enrollment probability is the baseline plus the (heterogeneous) nudge bump.
+  p <- pmin(base_enroll + treat * tau_i, 0.99)
+  enroll <- rbinom(n, 1, p)
+  data.frame(enroll, treat, low_knowledge)
+}
+
+dat <- simulate_nudge_trial()
+
+# Difference-in-means estimator of the ATE (eq-ate).
+ate_hat <- mean(dat$enroll[dat$treat == 1]) - mean(dat$enroll[dat$treat == 0])
+
+# Subgroup effects to expose heterogeneity.
+sub <- aggregate(enroll ~ treat + low_knowledge, dat, mean)
+
+# Sampling distribution of the estimator across replications.
+reps <- replicate(2000, {
+  d <- simulate_nudge_trial()
+  mean(d$enroll[d$treat == 1]) - mean(d$enroll[d$treat == 0])
+})
+
+true_ate <- 0.5 * 0.45 + 0.5 * 0.15   # population-average true effect
+
+op <- par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+
+# Panel 1: enrollment by architecture and knowledge.
+bar_mat <- matrix(sub$enroll[order(sub$low_knowledge, sub$treat)],
+                  nrow = 2,
+                  dimnames = list(c("opt-in", "opt-out"),
+                                  c("high know.", "low know.")))
+barplot(bar_mat, beside = TRUE, ylim = c(0, 1),
+        col = c("grey70", "steelblue"),
+        ylab = "enrollment rate", main = "Take-up by architecture")
+legend("topleft", c("opt-in (status quo)", "opt-out (nudge)"),
+       fill = c("grey70", "steelblue"), bty = "n", cex = 0.8)
+
+# Panel 2: sampling distribution of the estimated ATE.
+hist(reps, breaks = 30, col = "grey85", border = "white",
+     xlab = expression(hat(tau)), main = "Estimated treatment effect")
+abline(v = true_ate, lty = 2, lwd = 2)
+
+par(op)
+
+cat("Estimated ATE (single trial): ", round(ate_hat, 3), "\n")
+cat("True population ATE:          ", round(true_ate, 3), "\n")
+```
+
+The recovered effect lands on the true population average, and the subgroup panel
+reproduces the @Mrkva_2021 pattern: the same default moves low-knowledge choosers
+roughly three times as much as high-knowledge ones, the heterogeneity that drives
+both the equity case and the exploitation risk. Two practical lessons generalize.
+First, power the experiment for the *subgroups* that motivate the policy, not just
+the pooled effect, because the distributional claim is usually the point. Second,
+measure persistence: re-run the outcome at a horizon long enough to distinguish a
+durable behavior change from a novelty response, since a default's value is an
+annuity that only pays if the inertia endures.
+
+## Pitfalls and Boundary Conditions
+
+Nudges are neither free nor reliably small, and a disciplined account closes with
+where they fail. **Effects decay and are context-bound.** A frame that works in
+one population, at one stake level, with one reference point, often shrinks under
+real consequences or familiarity; the field-versus-lab gap is the single most
+common reason a promising laboratory nudge disappoints at scale, which is why
+@sec-nudge-identification insists on field randomization and persistence
+measurement rather than one-shot lab demonstrations.
+
+**Nudges interact, sometimes destructively.** Stacking a default, a social-proof
+message, and a salience cue is not additive: a descriptive norm can *boomerang*
+against above-average performers even as it lifts the rest [@cialdini1990], and a
+salience nudge that raises attention to one attribute necessarily lowers the
+relative weight on others (@eq-salience), so "more salient labels" can crowd out
+the very dimension a second nudge was meant to promote. The architect optimizes a
+*system* of weights, not a list of independent levers.
+
+**Reactance and distrust.** A nudge perceived as manipulation can trigger
+reactance, reversing the intended effect and eroding trust in the architect—a
+risk that scales with how covert the steering is and that the publicity test in
+@sec-nudge-welfare is designed to forestall. **Crowding-out of intrinsic
+motivation** is the subtler cousin: a nudge that does the deliberating *for* the
+chooser may atrophy the capacity to choose well unaided, a cost invisible in the
+short-run outcome metric but real over a consumer's lifetime of decisions.
+
+Finally, the **measurement of welfare remains the binding constraint.** Because
+the undistorted benchmark in @sec-nudge-welfare is partly constructed by the
+analyst, two honest researchers can disagree about a nudge's sign even given the
+same effect estimate. The responsible posture is to make the welfare model
+explicit—state the assumed reference preference, justify it, and report the effect
+on the susceptible subgroups separately—rather than to let an impressive average
+treatment effect stand in for a welfare argument it cannot make.
+
+## Key Takeaways
+
+- A **nudge** changes behavior through the choice architecture
+  ($\gamma\, d_j(a)$ in @eq-nudge) without altering the menu or the economic
+  terms; under the neoclassical axioms $\gamma = 0$, so every nudge is a claim
+  that presentation matters where a rational agent would ignore it.
+- The four core levers map onto distinct behavioral primitives: **defaults**
+  exploit inertia (@eq-default), **framing** exploits reference dependence and
+  loss aversion (@eq-frame), **social proof** exploits descriptive norms
+  (@eq-social), and **salience** exploits limited attention (@eq-salience).
+- Nudge effects are **intrinsically heterogeneous** and largest for low-SES,
+  low-numeracy, low-knowledge choosers [@Mrkva_2021], so a nudge's distributional
+  sign is set by the architect's objective—amplifying help or harm alike.
+- **Welfare cannot be read off revealed choice** when $\gamma \neq 0$; legitimacy
+  turns on cheap opt-out, surviving public disclosure, and alignment with the
+  chooser's own ends. **Dark patterns** are nudges that fail all three.
+- Identifying $\gamma$ in the field means a randomized experiment (@eq-ate) or a
+  parallel-trends DiD (@eq-did), powered for the susceptible subgroups and
+  measured for **persistence**, not novelty.
+
+## Further Reading
+
+The reference-dependence and heuristics foundations are @tversky1974,
+@tversky1981, and @thaler1985; the normative social-influence machinery is
+@cialdini1990. For frontier field and behavioral evidence weave the
+saving-illusion result of @Garbinsky_2020, the choice-architecture-and-inequity
+result of @Mrkva_2021, the BNPL framing evidence of @maesen2024buy, and the
+privacy choice-architecture work of @adjerid2019choice and @acquisti2012impact.
+The construct connects forward to assortment and decoy effects in
+@sec-choice-models, price framing in @sec-pricing, and the social-evaluation
+evidence in @sec-branding.

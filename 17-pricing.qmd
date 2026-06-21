@@ -1,16 +1,721 @@
-# Pricing
+# Pricing {#sec-pricing}
 
-[@yang2024express]
+Price is the only element of the marketing mix that directly produces revenue;
+every other element—product, promotion, place—creates cost. It is also the most
+quickly adjusted lever a firm controls, the one most visible to competitors, and
+the one most freighted with psychological meaning for buyers. A one-percentage-point
+improvement in realized price typically lifts operating profit by far more than an
+equivalent improvement in volume or variable cost, because price flows to the bottom
+line undiluted. Yet pricing decisions are routinely delegated to spreadsheets and
+gut feel, precisely because the object the manager most needs—each buyer's
+*willingness to pay*—is unobserved and actively concealed during exchange.
 
--   Adding an additional discount tier (e.g., buy one price) alongside a quantity discount makes the quantity discount more attractive by enhancing perceived savings.
+This chapter treats pricing as the problem of recovering a latent demand object and
+acting on it. We begin with the primitive: the **reservation price**, the maximum a
+buyer will pay, and the demand curve that aggregates reservation prices across a
+market. From the demand curve we derive the monopolist's optimal price and the
+central quantity managers actually estimate—the **price elasticity of demand**—along
+with its identification problem. We then study how firms extract more surplus than a
+single price allows through **price discrimination** in its three textbook
+degrees, and how that machinery is implemented as versioning, bundling, and
+nonlinear tariffs. The second half of the chapter turns behavioral: buyers do not
+respond to prices as the textbook supposes. They evaluate prices against
+**reference points**, they treat a discount differently from a surcharge, they read
+price as a signal of quality, and they are moved by the framing of a promotion as
+much as by its depth. We close on the contemporary frontier—**dynamic and
+personalized pricing**—where firms set prices that vary across time, context, and
+individual, and where the gains from discrimination collide with consumer
+perceptions of fairness and with privacy regulation.
 
--   Studies show that multitier discounts can increase clickthrough rates, with effects influenced by factors like additional tier price, purchase frequency, and distrust of original prices.
+The through-line is measurement. A price is only as good as the demand estimate
+behind it, and every method we present—from a logit demand model to a conjoint
+study to a field experiment—is in the end a strategy for estimating how quantity
+responds to price when price is set by a firm that already knows something the
+analyst does not. We lead with the economic intuition, give each method its
+estimator and the assumption that breaks its identification, and supply seeded,
+runnable code.
 
-    -   **Additional Tier Price Level**: Lower additional tier prices amplify the effect, making quantity discounts seem more attractive.
+## Reservation Prices and Willingness to Pay
 
-    ```{=html}
-    <!-- -->
-    ```
-    -   **Purchase Frequency**: Consumers who frequently purchase are more responsive to multitier discounts.
+The atomic construct of pricing is the **reservation price**, also called
+*willingness to pay* (WTP): the maximum amount a particular consumer would pay for a
+unit of a product rather than forgo it. Formally, let a consumer derive gross
+utility (in monetary units) $v$ from acquiring one unit. Facing price $p$, the
+consumer buys if and only if consumer surplus is nonnegative,
 
-    -   **Distrust of Advertised Prices**: Consumers with high distrust of original prices are less affected by multitier discounts.
+$$
+\text{buy} \iff v - p \ge 0 \iff p \le v,
+$$ {#eq-reservation}
+
+so $v$ *is* the reservation price: the indifference price at which the consumer is
+exactly willing to transact. Reservation prices are heterogeneous across consumers;
+the distribution of $v$ in the population is the economic content of "demand."
+
+### From Reservation Prices to the Demand Curve
+
+Let $F(\cdot)$ be the cumulative distribution function of reservation prices across a
+unit mass of potential buyers, so $F(p) = \Pr(v \le p)$. At posted price $p$, the
+buyers are exactly those with $v \ge p$, a fraction $1 - F(p)$. Market demand is
+therefore
+
+$$
+Q(p) = M\,\bigl[1 - F(p)\bigr],
+$$ {#eq-demand-from-wtp}
+
+where $M$ is market size. The demand curve is the *survival function* of the
+reservation-price distribution, scaled by $M$. This identity is the conceptual
+bridge between the behavioral object (what individuals will pay) and the aggregate
+object (how quantity responds to price): the slope of demand is governed by how
+reservation prices are dispersed. A market in which everyone values the good
+identically yields a flat demand curve with a single kink; wide dispersion in $v$
+yields a smooth, gently sloped curve.
+
+::: {.callout-note}
+## Reservation price is not the same as the price a consumer *expects* or *prefers*
+The reservation price is a *threshold*—the worst deal the consumer would still
+accept—not the price the consumer hopes to pay or considers fair. Survey methods
+that ask "what is a reasonable price?" measure a reference price (covered in
+@sec-reference-prices), not the reservation price. Conflating the two systematically
+understates WTP and leaves money on the table.
+:::
+
+### The Monopolist's Price and the Elasticity
+
+A firm with constant marginal cost $c$ choosing a single price solves
+$\max_p (p - c)\,Q(p)$. The first-order condition can be written in the canonical
+**inverse-elasticity (Lerner) form**
+
+$$
+\frac{p^\star - c}{p^\star} = -\frac{1}{\varepsilon(p^\star)},
+\qquad
+\varepsilon(p) \equiv \frac{\partial Q}{\partial p}\frac{p}{Q},
+$$ {#eq-lerner}
+
+where $\varepsilon < 0$ is the **price elasticity of demand**, the percentage change
+in quantity per percentage change in price. The optimal markup over cost, expressed
+as a fraction of price, equals the reciprocal of the (absolute) elasticity: inelastic
+demand ($|\varepsilon|$ small) supports a high markup; elastic demand forces price
+toward cost. Profit maximization requires operating where $|\varepsilon| > 1$;
+no firm optimally prices on the inelastic portion of its demand curve, because there
+a price increase would raise revenue *and* cut cost. The elasticity is thus the
+single most consequential number in pricing, and most of empirical pricing research
+is, at bottom, the estimation of $\varepsilon$.
+
+A workhorse functional form is constant-elasticity (log-log) demand,
+$\log Q = \alpha + \varepsilon \log p + u$, under which $\varepsilon$ is a single
+parameter. The following seeded example simulates a market of heterogeneous
+reservation prices, recovers the demand curve as the empirical survival function per
+@eq-demand-from-wtp, and locates the profit-maximizing price.
+
+```{r wtp-demand, message=FALSE, warning=FALSE}
+set.seed(17)
+M <- 100000                       # market size
+v <- rlnorm(M, meanlog = log(40), sdlog = 0.5)   # reservation prices
+c <- 15                           # marginal cost
+
+price_grid <- seq(15, 120, by = 1)
+demand  <- sapply(price_grid, function(p) mean(v >= p)) * M   # eq-demand-from-wtp
+profit  <- (price_grid - c) * demand
+
+p_star  <- price_grid[which.max(profit)]
+q_star  <- demand[which.max(profit)]
+
+# point elasticity at the optimum via numerical derivative
+dQ <- diff(demand) / diff(price_grid)
+elas_at_star <- dQ[which.max(profit)] * p_star / q_star
+
+cat("Optimal price p*:        ", p_star, "\n")
+cat("Quantity at p*:          ", round(q_star), "\n")
+cat("Elasticity at p*:        ", round(elas_at_star, 2), "\n")
+cat("Lerner markup (p*-c)/p*: ", round((p_star - c) / p_star, 3),
+    " vs. -1/elasticity =", round(-1 / elas_at_star, 3), "\n")
+```
+
+The recovered markup matches $-1/\varepsilon$ to within grid resolution, confirming
+@eq-lerner numerically.
+
+### Eliciting Willingness to Pay
+
+Because reservation prices are private, firms must elicit them. Four families of
+methods dominate, trading off realism against control.
+
+**Direct survey** methods ask consumers their WTP, either openly or through a
+sequence of yes/no purchase questions (the contingent-valuation tradition). They are
+cheap but suffer **hypothetical bias**: respondents overstate WTP when no money
+changes hands, and the open-ended format invites strategic understatement.
+
+**Incentive-compatible mechanisms** make truth-telling a dominant strategy by
+binding the respondent to a real transaction. In the **Becker–DeGroot–Marschak
+(BDM)** procedure the respondent states a bid $b$; a price $p$ is then drawn at
+random, and the respondent buys at $p$ if $b \ge p$. Because the stated bid never
+sets the price the respondent pays, only whether they transact, the respondent's
+optimal bid is exactly their true reservation price $v$.<!-- CITE-NEEDED: Becker, DeGroot, Marschak (1964) measuring utility by a single-response sequential method --> Second-price (Vickrey) auctions
+share this incentive property.
+
+**Conjoint analysis** infers WTP indirectly from trade-offs. Respondents choose
+among profiles that vary attributes (including price); a discrete-choice model
+recovers part-worth utilities, and the **monetary value of an attribute** is the
+ratio of its part-worth to the price coefficient. If utility is
+$U_{ij} = \mathbf{x}_j'\boldsymbol{\beta} + \beta_p\,p_j + \varepsilon_{ij}$, the WTP
+for a unit change in attribute $k$ is $-\beta_k/\beta_p$, and the reservation price
+for a whole profile is the price that drives its choice probability against the
+outside option to one-half. Choice-based conjoint with hierarchical Bayes estimation
+is the industry standard for new-product pricing precisely because it disciplines the
+hypothetical task with realistic competitive trade-offs and recovers
+*individual-level* heterogeneity in $\boldsymbol{\beta}$ [@toubia2013; @ding2015learning].
+A complementary structural approach maps the conjoint primitives directly into
+demand and competitive equilibrium so that the elicited utilities deliver an optimal
+price rather than a ranking [@jedidi2003; @jedidi2021].
+
+**Revealed-preference / market data** methods recover WTP from actual purchases.
+These are the most credible because choices are consequential, but they are silent
+about prices never observed in the data and carry the identification problem we turn
+to next.
+
+::: {.callout-tip}
+## Estimator box: WTP from a choice model
+Given choice data, estimate $\boldsymbol{\beta}$ and $\beta_p$ by maximum likelihood
+(logit) or hierarchical Bayes (mixed logit). The WTP for attribute $k$ is
+$\widehat{\text{WTP}}_k = -\hat\beta_k/\hat\beta_p$. **What breaks it:** the ratio is
+fragile when $\hat\beta_p \approx 0$ (a weak or wrong-signed price coefficient sends
+WTP to $\pm\infty$); price endogeneity biases $\hat\beta_p$ toward zero and inflates
+WTP; and a fixed $\beta_p$ across respondents imposes the implausible restriction
+that the marginal utility of income is identical for all, which the mixed-logit
+random coefficient relaxes [@dube2021random].
+:::
+
+## The Identification Problem in Demand Estimation
+
+Estimating elasticity from observational price–quantity data confronts the oldest
+problem in econometrics: **price is endogenous**. Firms set prices in response to
+demand conditions the analyst does not see—a popular item is priced high *because*
+it is popular—so a naïve regression of quantity on price recovers a tangle of the
+demand curve and the firm's pricing rule, biasing the elasticity toward zero (often
+to the wrong sign). Identification requires an instrument or structure that shifts
+price without shifting demand.
+
+### The Logit Demand System and BLP
+
+The modern standard for differentiated-products demand is the random-coefficients
+logit, estimated by the method of @berry1995 (BLP). Consumer $i$'s indirect utility
+for product $j$ in market $t$ is
+
+$$
+u_{ijt} = \mathbf{x}_{jt}'\boldsymbol{\beta}_i - \alpha_i\,p_{jt} + \xi_{jt} + \varepsilon_{ijt},
+$$ {#eq-blp}
+
+where $\mathbf{x}_{jt}$ are observed characteristics, $p_{jt}$ is price,
+$\xi_{jt}$ is the **unobserved (to the analyst) product quality** that consumers and
+firms see, and $\varepsilon_{ijt}$ is an extreme-value taste shock. The coefficients
+$(\boldsymbol{\beta}_i, \alpha_i)$ are random across consumers, generating realistic
+substitution patterns. The endogeneity is explicit and structural: price is
+correlated with $\xi_{jt}$ because firms price higher where unobserved quality is
+higher, $\mathbb{E}[p_{jt}\,\xi_{jt}] \ne 0$.
+
+**Estimator.** Invert market shares to recover the mean utility
+$\delta_{jt}(\boldsymbol{\theta}) = \mathbf{x}_{jt}'\boldsymbol{\beta} - \alpha p_{jt} + \xi_{jt}$,
+form the structural error $\xi_{jt}(\boldsymbol{\theta})$, and choose the parameters
+by GMM to satisfy the moment condition $\mathbb{E}[\xi_{jt} \mid \mathbf{z}_{jt}] = 0$
+for instruments $\mathbf{z}_{jt}$. **What identifies it:** valid instruments shift
+price (markups) but are mean-independent of $\xi_{jt}$—cost shifters, and the classic
+*BLP instruments* formed from characteristics of *rival* products, which move a
+firm's markup through competition without entering its own demand shock. **What
+breaks it:** weak instruments (rival characteristics that barely move price) inflate
+standard errors and bias estimates toward OLS; instruments correlated with
+$\xi_{jt}$ (e.g., rival quality that proxies own quality in a correlated market)
+reintroduce the bias the design was meant to remove. The structural demand literature
+in marketing builds directly on this machinery to estimate price response with panel
+and scanner data [@chintagunta2006structural; @reiss2011; @nair2017].
+
+### Why Field Experiments Are the Clean Benchmark
+
+A randomized price experiment severs the link between price and $\xi_{jt}$ by
+construction: when the firm assigns price at random, $\mathbb{E}[p\,\xi] = 0$ by
+design, and the elasticity is identified by the experimental contrast alone. This is
+why pricing field experiments are the gold standard for elasticity, and why much
+recent work prices via controlled tests rather than relying on historical variation
+[@simester2010]. The cost is external validity—an experiment identifies the
+elasticity at the tested prices, in the tested context, for the tested population—and
+the standard practical hazard is that competitors or consumers detect and react to
+the test. @fig-identification summarizes the identification logic that organizes the
+remainder of the methods in this chapter.
+
+```{mermaid}
+%%| label: fig-identification
+%%| fig-cap: "The price-endogeneity problem and three identification strategies. Unobserved demand shifters drive both price and quantity; credible elasticity estimates require breaking that back-door path."
+flowchart TD
+    XI["Unobserved demand<br/>shifter (quality, ξ)"] -->|firm prices higher| P["Price p"]
+    XI -->|raises demand| Q["Quantity Q"]
+    P -->|true causal effect ε| Q
+    P -.->|"naïve OLS conflates<br/>both arrows"| BIAS["Biased elasticity"]
+    IV["Instrument:<br/>cost / rival shifters"] -->|shifts p, not ξ| P
+    EXP["Randomized price"] -->|cuts ξ→p link| P
+    STR["Structural model:<br/>BLP moments"] -->|"E[ξ|z]=0"| P
+    style XI fill:#f8d7da,stroke:#842029
+    style EXP fill:#d1e7dd,stroke:#0f5132
+    style IV fill:#fff3cd,stroke:#664d03
+    style STR fill:#cfe2ff,stroke:#084298
+```
+
+## Price Discrimination
+
+A single price leaves surplus uncaptured on both sides: high-WTP buyers pocket
+consumer surplus, and low-WTP buyers who would have paid more than cost are priced
+out entirely. **Price discrimination**—charging different prices that do not
+reflect differences in cost—aims to recover both. The classical taxonomy
+distinguishes three degrees by the information the firm exploits.
+
+| Degree | Information used | Mechanism | Surplus captured | Real-world example |
+|---|---|---|---|---|
+| First | Each buyer's exact $v$ | Personalized price | All surplus (in theory) | Negotiated B2B deals; algorithmic personalization |
+| Second | $v$ self-revealed through choice | Versioning, bundling, quantity discounts, nonlinear tariffs | Partial; buyers sort themselves | Software tiers; airline fare classes; family-size packs |
+| Third | Observable group membership correlated with $v$ | Different price per segment | Partial; bounded by arbitrage | Student/senior discounts; geographic pricing |
+
+: The three degrees of price discrimination, by the information the firm exploits. {#tbl-discrimination}
+
+### First-Degree (Perfect) Discrimination
+
+Under **first-degree** discrimination the firm knows each buyer's reservation price
+and charges exactly $v$, extracting the entire surplus and selling to everyone whose
+$v$ exceeds marginal cost. Output is efficient (no willing buyer-above-cost is
+excluded) but all surplus accrues to the firm. Perfect discrimination is an idealization,
+but it is the conceptual ceiling that personalized pricing (@sec-dynamic-personalized)
+approaches as the firm's information about individual WTP improves.
+
+### Second-Degree Discrimination: Self-Selection
+
+When the firm cannot observe $v$ but knows its distribution, it offers a *menu* and
+lets buyers sort themselves—**second-degree** discrimination via self-selection. The
+design problem is a screening problem: construct options so that each consumer type
+prefers the option intended for it. Two constraints bind. **Individual rationality
+(IR):** each type must (weakly) prefer its option to no purchase. **Incentive
+compatibility (IC):** each type must (weakly) prefer its own option to every other
+option on the menu. The IC constraint is what forces the firm to leave **information
+rent** to high-WTP types: to stop a high type from masquerading as a low type, the
+firm must discount the high type's option relative to first-degree, a markdown that
+is the price of not observing $v$ directly.
+
+Three implementations recur:
+
+*Versioning* offers quality-differentiated variants—a full-featured product and a
+deliberately degraded one—so that high-WTP buyers self-select into the premium
+version. The damaged-goods logic explains why firms incur cost to *remove* features:
+the degraded version exists to make the premium version's price incentive-compatible
+for high types.<!-- CITE-NEEDED: Deneckere & McAfee (1996) damaged goods -->
+
+*Bundling* sells goods together at a price below the sum of standalone prices. When
+reservation prices for components are **negatively correlated** across buyers,
+bundling reduces the dispersion of total WTP and lets the firm price closer to the
+common bundle value, raising profit—the classic Stigler result.<!-- CITE-NEEDED: Stigler (1963) / Adams & Yellen (1976) bundling --> *Mixed bundling*,
+offering components both separately and as a bundle, dominates pure bundling when
+component valuations are heterogeneous, and is the architecture behind cable tiers
+and software suites.
+
+*Nonlinear (quantity) pricing* charges a per-unit price that depends on quantity—a
+two-part tariff (fixed fee plus marginal price) or block tariff. With heterogeneous
+demand intensity, the optimal nonlinear schedule again leaves information rent to
+high-volume buyers and distorts the low-volume option downward. The marketing
+literature studies how such schedules interact with competition and with consumers'
+misperception of their own future usage [@iyer2005].
+
+### Third-Degree Discrimination: Observable Segments
+
+When the firm observes a segment indicator correlated with WTP—age, location,
+student status, purchase history—it sets a separate optimal price per segment, each
+satisfying its own Lerner condition: charge the *more inelastic* segment the *higher*
+price. **Third-degree** discrimination is the most common in practice (coupons,
+geographic and channel pricing, demographic discounts) and is bounded by
+**arbitrage**: if low-price buyers can resell to high-price buyers, the scheme
+unravels, which is why discriminated goods are typically services, perishable, or
+identity-linked (a student ID, a loyalty account). The following example contrasts
+uniform pricing with optimal third-degree pricing across two segments with different
+elasticities.
+
+```{r third-degree, message=FALSE, warning=FALSE}
+set.seed(170)
+c <- 15
+# Two segments with constant-elasticity demand Q = A * p^eps
+seg <- data.frame(
+  name = c("price-sensitive", "price-insensitive"),
+  A    = c(5e6, 2e6),
+  eps  = c(-2.5, -1.4)
+)
+
+# Optimal monopoly price under constant elasticity: p* = c * eps/(eps+1)
+seg$p_opt  <- c * seg$eps / (seg$eps + 1)
+seg$q_opt  <- seg$A * seg$p_opt^seg$eps
+seg$profit <- (seg$p_opt - c) * seg$q_opt
+
+# Uniform price: maximize total profit over a single price
+pg <- seq(16, 80, by = 0.5)
+tot <- sapply(pg, function(p) sum((p - c) * seg$A * p^seg$eps))
+p_uniform <- pg[which.max(tot)]
+profit_uniform <- max(tot)
+
+knitr::kable(
+  transform(seg, p_opt = round(p_opt, 2), profit = round(profit)),
+  col.names = c("Segment", "Scale A", "Elasticity", "Optimal price", "Quantity", "Profit"),
+  caption = "Optimal third-degree prices differ across segments by elasticity."
+)
+cat("Uniform price:        ", p_uniform, " | profit:", round(profit_uniform), "\n")
+cat("Discrimination profit:", round(sum(seg$profit)),
+    " | gain:", round(100 * (sum(seg$profit) / profit_uniform - 1), 1), "%\n")
+```
+
+The price-insensitive segment optimally pays the higher price, and segmenting raises
+profit over the best single price—the basic dividend of discrimination.
+
+## Promotions and Discounting
+
+Few products sell at a constant price for long. **Temporary price promotions**—a
+discount of limited duration—are ubiquitous in consumer packaged goods, where a large
+share of volume moves on deal. The empirical study of promotions is among the most
+mature in marketing because scanner data make deal incidence, depth, and timing
+directly observable.
+
+### Why Promotions Exist: Price Discrimination Over Time
+
+A leading rationale for promotions is **intertemporal price discrimination**.
+Consumers differ in search and storage costs: price-sensitive "cherry pickers" pay
+attention to deals and stockpile, while loyal or time-pressed buyers pay the regular
+price. A pattern of high regular prices punctuated by deep discounts lets the firm
+charge the two groups different effective prices without an observable segment
+indicator—a temporal analogue of second-degree discrimination. @narasimhan1988b
+models this coupon-and-deal logic, and @varian1980 shows that even with *homogeneous*
+goods, the mix of informed and uninformed consumers supports an equilibrium in which
+firms randomize prices (run sales) rather than converging on a single price. The
+implication is structural, not merely tactical: price *dispersion* and promotional
+*cycling* are equilibrium outcomes, not pricing errors.
+
+### Decomposing the Sales Spike
+
+A promotion's observed sales bump aggregates several distinct consumer responses,
+and a credible promotion model must separate them because they have opposite
+implications for incremental profit:
+
+- **Brand switching**—buyers substitute toward the promoted brand from competitors;
+  genuinely incremental to the brand.
+- **Category expansion**—buyers consume more of the category; incremental to the
+  category.
+- **Purchase acceleration**—buyers who would have bought later buy now; a timing
+  shift that *borrows* from future sales.
+- **Stockpiling**—buyers increase inventory at home, depressing post-promotion demand
+  (the **post-promotion dip**).
+
+Estimating these shares is the central task of promotion analytics. Household panel
+decompositions consistently find that the large majority of a promotion's sales spike
+comes from brand switching rather than category expansion, which means much
+promotional volume is incremental to the *brand* but cannibalizes the firm's own
+future sales and rival sales rather than growing the pie [@vanheerde2007; @bell1998].
+@guyt2014 show that the decomposition itself depends on whether the analyst uses
+store or household data and on the deal-frequency environment, a caution against
+reading a single elasticity off aggregate data.
+
+### The Reference-Price Trap and Promotion Dynamics
+
+Frequent discounting is not free even when each deal is individually profitable.
+Promotions erode the **reference price**—the internal benchmark against which buyers
+judge the next price (@sec-reference-prices)—so that a brand which deals often trains
+its customers to wait, raising deal elasticity and depressing baseline sales over
+time [@kopalle1992].<!-- CITE-NEEDED: Mela, Gupta & Lehmann (1997) long-term promotion effects on brand choice --> The dynamic optimal promotion policy therefore trades
+the short-run volume gain against the long-run reference-price cost; @kopalle1992
+characterize this as a dynamic-programming problem in which the state is the prevailing
+reference price. Promotions also have **asymmetric** competitive effects: a stronger
+or higher-tier brand's promotion steals more share than a weaker brand's promotion of
+equal depth, so promotional power is not symmetric across the price tier
+[@sethuraman2011].<!-- CITE-NEEDED: Blattberg & Wisniewski (1989) price-tier competition asymmetry -->
+
+
+### Promotion Framing and the Multitier Discount
+
+How a discount is *communicated* affects response beyond its arithmetic depth—a
+behavioral theme we develop fully in @sec-behavioral-pricing. One frontier result
+concerns **multitier discounting**: presenting a quantity discount alongside an
+additional discount tier (for example, a "buy-one" price displayed next to a
+"buy-more" price) makes the quantity discount more attractive by inflating the
+perceived savings, even though the additional tier need not be the option chosen.
+@yang2024express show that such multitier displays raise clickthrough, with the effect
+strengthening when the additional tier's price is lower (amplifying perceived
+savings), among frequent category purchasers, and weakening among consumers who
+distrust advertised reference prices. The mechanism is reference-dependent: the extra
+tier resets the comparison standard against which the chosen option is evaluated,
+which is why the same discount performs differently under different framings.
+
+## Reference Prices {#sec-reference-prices}
+
+The standard model treats demand as a function of the *absolute* price. Decades of
+evidence contradict this: consumers judge a price relative to an internal standard,
+the **reference price**, and respond to the *deviation* between the observed price and
+that standard. The reference price may be **internal** (recalled from past purchases,
+formed from price history) or **external** (a manufacturer's suggested price, a
+"regular price" struck through on the tag, a competitor's displayed price). Reference
+effects are the empirical foundation of behavioral pricing.
+
+### Loss Aversion and Asymmetric Response
+
+The dominant theoretical account imports **prospect theory** [@tversky1981]:<!-- CITE-NEEDED: Kahneman & Tversky (1979) prospect theory original --> buyers
+code a price below their reference point as a **gain** and a price above it as a
+**loss**, and because losses loom larger than gains (loss aversion), the demand
+response to a price *increase* above the reference exceeds the response to an equal
+price *decrease* below it. Let $r$ denote the reference price and $p$ the observed
+price. A reference-dependent demand specification splits the price deviation into gain
+and loss regions,
+
+$$
+\log Q = \alpha + \beta\,\log p
+        + \gamma_{\text{gain}}\,(r - p)^{+}
+        - \gamma_{\text{loss}}\,(p - r)^{+} + u,
+$$ {#eq-reference-demand}
+
+where $(\cdot)^{+} = \max(\cdot, 0)$ and loss aversion predicts
+$\gamma_{\text{loss}} > \gamma_{\text{gain}} > 0$. The empirical literature, beginning
+with brand-choice models on scanner panels, robustly finds this asymmetry: surcharges
+relative to the reference price suppress purchase more than equal discounts stimulate
+it.<!-- CITE-NEEDED: Winer (1986) reference price brand choice; Kalwani et al. (1990) asymmetric reference effects --> The asymmetry is the reason a sequence of small increases is less damaging
+than one large increase, and why "everyday low pricing" can outperform high-low
+promotion for some categories: it stabilizes the reference point.
+
+### Estimating the Reference Price
+
+The reference price is latent, which raises an identification problem of its own:
+the analyst must *posit* a formation rule before estimating response. The two leading
+formulations are a **memory-based** rule, in which the reference adapts toward
+observed prices via exponential smoothing,
+$r_t = \theta\,r_{t-1} + (1-\theta)\,p_{t-1}$, and a **stimulus-based** (contextual)
+rule, in which the reference is constructed from prices currently on the shelf. The
+two are observationally distinct and frequently both contribute; a model that omits
+the operative rule mis-attributes reference effects to absolute-price response.
+Crucially, the smoothing parameter $\theta$ and the response coefficients
+$(\gamma_{\text{gain}}, \gamma_{\text{loss}})$ are **jointly** identified only with
+sufficient *independent* variation in price and price history—if price follows a
+deterministic high-low cycle, the reference and the current price move together and
+the gain/loss coefficients are not separately identified from the level coefficient
+$\beta$. This is the reference-price analogue of the endogeneity problem in
+@sec-identification: collinearity between the price and its own lagged transform, not
+firm behavior, is what breaks identification here.
+
+```{r reference-price, message=FALSE, warning=FALSE}
+set.seed(1717)
+n <- 400
+theta <- 0.7                      # reference-price memory
+p <- 10 + 2 * sin(seq_len(n) / 5) + rnorm(n, 0, 0.8)   # noisy price path
+
+# build the memory-based reference price
+r <- numeric(n); r[1] <- p[1]
+for (t in 2:n) r[t] <- theta * r[t - 1] + (1 - theta) * p[t - 1]
+
+gain <- pmax(r - p, 0); loss <- pmax(p - r, 0)
+# data-generating demand with loss aversion: loss coef > gain coef
+logQ <- 6 - 0.8 * log(p) + 0.5 * gain - 1.6 * loss + rnorm(n, 0, 0.05)
+
+fit <- lm(logQ ~ log(p) + gain + loss)
+round(coef(summary(fit))[, 1:2], 3)
+```
+
+The fitted loss coefficient is larger in magnitude than the gain coefficient,
+recovering the loss-aversion asymmetry the data were built with—provided the price
+path carries enough independent variation to separate the two.
+
+## Behavioral Pricing {#sec-behavioral-pricing}
+
+Reference dependence is one of a broader family of departures from the rational
+single-price model. **Behavioral pricing** studies how the *psychology* of price
+perception—framing, fluency, signaling, and mental accounting—shapes demand in ways
+the firm can exploit (or be exploited by). We organize the main effects below; each
+has a clean experimental signature and a pricing implication.
+
+### Price as a Quality Signal
+
+When quality is unobservable before purchase, price itself carries information:
+buyers infer that a higher price signals higher quality, especially in categories
+where quality is hard to judge and stakes are high. This **price–quality inference**
+inverts the usual demand logic over a range—raising price can *raise* perceived value
+and, in thin information environments, raise demand. The mechanism is the signaling
+logic of @sec-branding and the lemons problem of @akerlof1970: price can support a
+separating equilibrium in which only high-quality firms can profitably sustain a high
+price, so a high price is credible quality information. The pricing implication is
+that *underpricing a premium product can suppress demand* by signaling inferior
+quality, a failure mode invisible to a model in which demand is monotone decreasing
+in price.
+
+### Price Endings, Precision, and Fluency
+
+Prices are not processed as raw numbers. **Just-below (9-ending) pricing**—\$9.99
+rather than \$10.00—raises demand beyond the trivial one-cent saving, through a
+left-digit anchoring effect (the leading digit dominates magnitude perception) and a
+learned association of 9-endings with discounts.<!-- CITE-NEEDED: Stiving & Winer (1997); Anderson & Simester (2003) 9-ending field experiments --> The framing of a price's
+**precision** also matters: round prices are processed more fluently and feel
+"right" for emotional or hedonic purchases, while precise prices signal that a figure
+was carefully computed and can anchor negotiations more effectively
+[@janiszewski2016]. These effects are robust enough to be exploited routinely in
+retail, but they are also category- and context-dependent, and a 9-ending that signals
+"discount" can *undercut* a premium positioning.
+
+### Partitioned Pricing, Drip Pricing, and Mental Accounting
+
+How a total price is *split* changes its perceived magnitude. **Partitioned
+pricing**—separating a base price from a surcharge (shipping, handling, a resort
+fee)—can lower the perceived total because attention anchors on the salient base
+component and underweights add-ons. Its aggressive cousin, **drip pricing**, reveals
+mandatory charges sequentially during checkout, exploiting the sunk cost of search
+effort already invested. The mechanism is **mental accounting** [@thaler1985]:
+consumers evaluate gains and losses in separate cognitive accounts rather than
+integrating them, so the framing of a price into components—and the framing of a
+promotion as a *discount* versus a *rebate* versus a *bonus pack*—changes evaluation
+even when the net economics are identical. The same logic explains why bundling a
+small loss with a larger gain (silver linings) and segregating multiple gains
+maximizes perceived value.
+
+### The Pennies-a-Day and Temporal Reframing
+
+Reframing a price's *temporal* unit alters its acceptability: \$365 per year framed as
+"a dollar a day" recruits a more favorable comparison standard (a trivial daily
+expenditure) and lifts compliance, the **pennies-a-day** effect. Subscription pricing
+exploits this directly. The common thread across these effects is that the *number*
+the consumer compares against—the reference, the salient digit, the temporal unit—is
+malleable, and the firm partly controls it through framing. @fig-behavioral organizes
+the behavioral effects by the cognitive mechanism each exploits.
+
+```{mermaid}
+%%| label: fig-behavioral
+%%| fig-cap: "A map of behavioral pricing effects by underlying mechanism. Each effect is a lever on the comparison standard or the perceived magnitude of a price, not on its arithmetic level."
+flowchart LR
+    subgraph REF["Reference dependence"]
+      A1["Loss aversion<br/>(asymmetric response)"]
+      A2["Promotion erosion<br/>of reference price"]
+      A3["Multitier discount<br/>framing"]
+    end
+    subgraph FLU["Fluency & anchoring"]
+      B1["9-ending / left-digit"]
+      B2["Round vs. precise prices"]
+    end
+    subgraph MA["Mental accounting"]
+      C1["Partitioned / drip pricing"]
+      C2["Pennies-a-day reframing"]
+      C3["Discount vs. rebate framing"]
+    end
+    subgraph SIG["Inference"]
+      D1["Price–quality signaling"]
+    end
+    REF --> OUT["Demand deviates from<br/>the single-price benchmark"]
+    FLU --> OUT
+    MA --> OUT
+    SIG --> OUT
+    style OUT fill:#d1e7dd,stroke:#0f5132
+```
+
+## Dynamic and Personalized Pricing {#sec-dynamic-personalized}
+
+The classical theory sets one price for all buyers at one time. Digital commerce
+relaxes both restrictions. **Dynamic pricing** varies price over time in response to
+demand, inventory, and competition; **personalized pricing** varies price across
+individuals in response to what the firm infers about each buyer's WTP. Together they
+push pricing toward the first-degree ideal of @tbl-discrimination—and toward its
+ethical and regulatory limits.
+
+### Dynamic Pricing: Learning and Inventory
+
+Two distinct forces drive price over time. The first is **demand learning**: a firm
+uncertain about the demand curve experiments with prices to estimate elasticity, then
+exploits the estimate—a price-setting bandit problem in which the firm balances the
+*exploration* value of an informative price against the *exploitation* value of the
+currently estimated optimum. The second is **intertemporal capacity allocation**: when
+capacity is fixed and perishable (airline seats, hotel nights, event tickets), the
+firm raises price as the sell-by date approaches and inventory tightens, the logic of
+revenue management. Both are now studied structurally on transaction data
+[@elberg2019dynamic; @cosguner2022dynamic], and both interact with **forward-looking
+consumers** who anticipate price paths: when buyers expect a clearance, they delay,
+and the firm's optimal path must account for strategic waiting—the durable-goods
+monopolist's commitment problem.
+
+### Personalized Pricing and the Value of Data
+
+Personalized pricing conditions the offer on individual data—browsing history, device,
+location, purchase record—to approximate each buyer's reservation price. Online, the
+firm can in principle observe a behavioral proxy for WTP and price against it, an
+operational route toward first-degree discrimination. The economics are double-edged.
+@shapiro2016 and the price-discrimination-with-data literature show that **better
+consumer information** lets the firm extract more surplus, but competition can flip the
+sign: when rivals also personalize, the same data that enables extraction also
+intensifies price competition for each contestable consumer, and consumers can be made
+*better* off in aggregate. The welfare and profit consequences of personalization thus
+depend on market structure—monopoly personalization transfers surplus to the firm,
+competitive personalization can dissipate it [@chen2009; @aguirre2016]. The data
+itself becomes a strategic asset whose value is exactly the incremental surplus the
+firm can extract by conditioning price on it.
+
+### Algorithmic Pricing and Collusion
+
+When competing firms delegate pricing to learning algorithms, a new hazard emerges:
+algorithms that independently learn to set supra-competitive prices, sustaining
+**tacit collusion** without any explicit agreement. Because the algorithms reach a
+collusive outcome through repeated interaction rather than communication, the conduct
+falls outside the reach of antitrust doctrine built for human agreements, an active
+concern at the marketing–policy frontier.<!-- CITE-NEEDED: Calvano, Calzolari, Denicolò & Pastorello (2020) algorithmic collusion --> The same automation that lets a
+firm respond to demand in real time can, in a market of similar algorithms, soften
+price competition without anyone intending it.
+
+### Fairness and the Backlash Constraint
+
+The binding constraint on personalized and dynamic pricing is often not the law but
+**perceived fairness**. Consumers judge price differences they cannot attribute to
+cost as unfair, and react with reduced purchase, reduced loyalty, and reputational
+punishment. The reference-transaction model of fairness holds that buyers anchor on a
+fair *reference price* (the price others pay, or the price they paid before) and treat
+a personalized surcharge as a loss imposed on them—linking fairness directly to the
+reference-dependence machinery of @sec-reference-prices. The canonical cautionary
+case is the consumer backlash against early online price experiments that charged
+different customers different prices for the same item; the lesson generalizes to
+surge pricing, where transparency and a cost-based rationale moderate the backlash.
+**Surcharge framing** (a fee added) provokes more outrage than **discount framing** (a
+lower price offered) for the identical price schedule, a direct consequence of loss
+aversion. The managerial upshot is that the *feasible* degree of discrimination is set
+not by the firm's data but by what consumers will tolerate before the fairness
+penalty exceeds the discrimination dividend.
+
+### Privacy Regulation as a Constraint on Personalization
+
+Personalized pricing runs on personal data, so privacy regulation directly bounds it.
+Restrictions on tracking and data collection—and consumers' own privacy choices—shrink
+the information set on which prices can be conditioned, attenuating the firm's move
+toward first-degree discrimination. The evidence is that privacy regulation and
+opt-out reduce the granularity of targeting available to firms, with measurable effects
+on the data economy that underwrites personalization [@acquisti2012impact;
+@johnson2014emergence]. Privacy is thus not merely a compliance overlay but a
+first-order determinant of how far personalized pricing can go: the legal ceiling on
+data acquisition is, in effect, a ceiling on price discrimination.
+
+## Key Takeaways
+
+- The primitive of pricing is the **reservation price**; the demand curve is the
+  survival function of the reservation-price distribution (@eq-demand-from-wtp), and
+  the **elasticity** governs the optimal markup through the Lerner condition
+  (@eq-lerner). Estimating elasticity is the core empirical task.
+- Observational price data are **endogenous**—firms price on information the analyst
+  cannot see—so credible elasticities require an instrument (cost or rival shifters),
+  a structural model (BLP, @eq-blp), or a randomized price experiment.
+- **Price discrimination** recovers surplus a single price forgoes, in three degrees
+  distinguished by information (@tbl-discrimination); second-degree menus must satisfy
+  incentive compatibility, which forces the firm to leave **information rent** to
+  high-WTP buyers.
+- **Promotions** are largely intertemporal price discrimination; most of a deal's
+  spike is brand switching, and frequent dealing erodes the **reference price**,
+  imposing a dynamic cost on tactical gains.
+- Buyers respond to prices relative to a **reference point** with **loss-averse
+  asymmetry** (@eq-reference-demand), and to framing, fluency, signaling, and mental
+  accounting—levers on the comparison standard rather than the price level.
+- **Dynamic and personalized pricing** push toward first-degree extraction, but their
+  feasible reach is bounded by competition, by **perceived fairness** (itself a
+  reference-dependence phenomenon), and by **privacy regulation**.
+
+## Further Reading
+
+For the structural estimation of demand and price response, the differentiated-products
+literature beginning with @berry1995 and developed in marketing by
+@chintagunta2006structural and @nair2017 is the entry point; @dube2021random treats
+random-coefficient logit estimation in depth. On promotions, @vanheerde2007 and
+@kopalle1992 cover decomposition and the dynamic reference-price cost. The behavioral
+strand connects to @sec-branding (price–quality signaling) and to the
+prospect-theoretic foundations in @tversky1981 and @thaler1985. The personalization
+frontier and its welfare economics are surveyed through @shapiro2016, @chen2009, and
+@aguirre2016, with privacy constraints in @acquisti2012impact.
