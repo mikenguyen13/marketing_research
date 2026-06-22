@@ -3,11 +3,9 @@ name: Build book
 # Verifies the Quarto book renders to HTML, PDF, and EPUB.
 # Does NOT publish — deployment to Posit Connect is a separate, gated step.
 on:
-  push:
-    branches: [master, main, quarto-migration]
-  pull_request:
-    branches: [master, main]
-  workflow_dispatch:
+  workflow_dispatch:   # manual only — Posit serves the committed _book/, so this fresh-runner
+                       # build (which lacks local R packages) is not the deploy path and just
+                       # emailed failures on every push. Render/publish happens locally instead.
 
 jobs:
   build:
