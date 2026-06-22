@@ -31,14 +31,19 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Set up R dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          packages: |
-            any::knitr
-            any::rmarkdown
-            any::downlit
-            any::xml2
+      - name: Install R packages (resilient — tolerates archived/unavailable)
+        run: |
+          Rscript -e '
+            pkgs <- c("knitr","rmarkdown","downlit","xml2","tidyverse","ggplot2",
+              "dplyr","tidyr","purrr","purrrlyr","tibble","stringr","lubridate",
+              "scales","kableExtra","broom","plm","MASS","zoo","reshape","reshape2",
+              "plyr","plotly","ggrepel","ggthemes","gridExtra","RColorBrewer",
+              "markovchain","topicmodels","conjoint","irr","DescTools","jsonlite",
+              "rio","plotrix","expm","philentropy","visNetwork","rfm","gbm",
+              "TraMineR","sfaR","frontier","GameTheory","ChannelAttribution","anchors");
+            options(repos = "https://cloud.r-project.org");
+            for (p in pkgs) try(if (!requireNamespace(p, quietly = TRUE)) install.packages(p))
+          '
 
       - name: Render HTML
         run: quarto render --to html
