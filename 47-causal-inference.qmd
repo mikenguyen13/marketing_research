@@ -27,13 +27,600 @@ marketing practice: **advertising measurement** and **pricing**.
 The stakes are not academic. A decade of large-scale field experiments has shown
 that observational and even quasi-experimental estimates of advertising's return
 can be off not by a few percent but by an order of magnitude, and sometimes carry
-the wrong sign [@lewis2015; @gordon2019]. A marketing scientist who cannot
+the wrong sign [@Lewis_2015; @gordon2019]. A marketing scientist who cannot
 distinguish a credible causal estimate from an incredible one is a liability to
 the firm. By the end of this chapter the reader will be able to state the
 estimand, choose a design, defend its assumptions, implement the estimator in R,
 and diagnose the most common failures.
 
-## The Potential-Outcomes Framework
+## Semester arc {#sec-causal-semester-arc}
+
+This chapter is organized as a fourteen-week doctoral seminar in causal inference
+and field experiments, tuned to quantitative-marketing applications—advertising
+measurement, pricing, promotions, and digital/platform experimentation. The arc
+matches how the topic is taught in the empirical track of top programs (MIT,
+Chicago Booth, Stanford GSB, Berkeley, Wharton, Columbia, Kellogg, NYU Stern, and
+the economics and statistics departments marketing students cross-register into).
+The single organizing question is *what makes the treatment as-good-as-randomly
+assigned, conditional on what we observe and how we designed the study?*
+
+The **first third** establishes the framework (potential outcomes and the
+assignment mechanism), the gold standard (randomized experiments and large-scale
+A/B testing), and the realistic case where randomization is absent (selection on
+observables, and why regression is not magic). The ordering is deliberate:
+students internalize the experimental ideal before judging how far an
+observational design falls short of it. The **middle third** is a tour of
+quasi-experimental designs, each motivated by a different source of
+as-good-as-random variation: instrumental variables, difference-in-differences,
+regression discontinuity, synthetic control, panel/event-study methods, and
+matching/weighting. A recurring theme is that the past decade *re-litigated the
+workhorses*—most dramatically the two-way fixed-effects DiD estimator, long the
+default, shown to be badly biased under staggered adoption and heterogeneous
+effects. The seminar treats this episode as the field's central methodological
+cautionary tale: a method can be standard, published thousands of times, and still
+wrong. The **final third** turns to the machine-learning and marketing-platform
+frontier: ML for heterogeneous treatment effects; advertising measurement when
+effects are tiny relative to sales noise; the experimental designs platforms
+actually use (ghost ads, PSA holdouts, geo experiments); incrementality, pricing,
+and targeting-policy evaluation; and the interference/spillover problems that break
+SUTVA in marketplaces and social networks. The course closes on the question every
+marketing dissertation must answer: *given that the effect is real but small and
+the platform is non-stationary, what is the credible research design, and can it
+scale?*
+
+The standing textbooks for the whole course are Imbens and Rubin's *Causal
+Inference for Statistics, Social, and Biomedical Sciences* (Cambridge, 2015, the
+potential-outcomes spine), Angrist and Pischke's *Mostly Harmless Econometrics*
+(Princeton, 2009, the applied quasi-experimental workhorse), Cunningham's *Causal
+Inference: The Mixtape* (Yale, 2021, a modern code-forward synthesis), and
+Wooldridge's *Econometric Analysis of Cross Section and Panel Data*, 2nd ed. (MIT,
+2010, the panel/fixed-effects reference). Each weekly module below names its
+**topic**, **subtopics**, **methods**, **key readings** (with DOI links and a
+one-line rationale; foundational works are marked **[F]**, frontier works **[R]**),
+and **central debate**. The detailed derivations, R simulations, and worked
+marketing examples that follow the weekly map—the potential-outcomes algebra, the
+A/B-power simulation, the DiD/IV/RD/SCM code, and the design-comparison table—are
+the seminar's lab sessions; they are kept intact and cross-referenced from the
+weeks they support.
+
+### Week 1 — Potential Outcomes and the Assignment Mechanism {#sec-causal-week01}
+
+**Topic.** [F] The Neyman–Rubin potential-outcomes model as the language in which a
+causal effect is defined before any estimator is chosen.
+
+**Subtopics.** The fundamental problem of causal inference; SUTVA; the estimands
+(ATE, ATT, CATE); the assignment mechanism as the central object; "no causation
+without manipulation"; causal versus predictive questions.
+
+**Methods.** Writing an estimand precisely; distinguishing
+estimand / identification / estimation / inference; recognizing when a question is
+causal versus descriptive. Worked algebra in
+@sec-causal-potential-outcomes below.
+
+**Key readings.**
+
+- Rubin, D. B. (1974). "Estimating Causal Effects of Treatments in Randomized and
+  Nonrandomized Studies." *Journal of Educational Psychology* 66(5), 688–701.
+  [doi:10.1037/h0037350](https://doi.org/10.1037/h0037350) — **[F]** the founding
+  statement of the potential-outcomes framework.
+- Holland, P. W. (1986). "Statistics and Causal Inference." *Journal of the
+  American Statistical Association* 81(396), 945–960.
+  [doi:10.1080/01621459.1986.10478354](https://doi.org/10.1080/01621459.1986.10478354)
+  — **[F]** formalizes the framework and the "no causation without manipulation"
+  doctrine; the field's conceptual touchstone.
+- Imbens, G. W. & Rubin, D. B. (2015). *Causal Inference for Statistics, Social,
+  and Biomedical Sciences*, Part I. Cambridge University Press *(book)* — **[F]**
+  potential outcomes and the assignment mechanism, in book length.
+
+**Debate.** Is "manipulation" required for causality (what of immutable
+characteristics)? ATE versus ATT versus policy-relevant estimands; design-based
+versus model-based inference.
+
+### Week 2 — Randomized Experiments and A/B Testing at Scale {#sec-causal-week02}
+
+**Topic.** [F]→[R] Randomization as the assignment mechanism that identifies the
+ATE, scaled up to industrial web experimentation.
+
+**Subtopics.** Fisher's sharp null and randomization inference versus Neyman's
+repeated-sampling inference; covariate balance, stratification, and blocking;
+CUPED-style variance reduction; the engineering of web experimentation,
+sample-ratio mismatch, peeking/optional stopping, and the experimentation platform
+as an organizational artifact.
+
+**Methods.** Running Fisherian permutation tests; computing Neyman variance;
+designing stratified/clustered assignment; variance reduction; diagnosing
+sample-ratio mismatch. Lab: the A/B-power simulation in
+@sec-causal-rct below (@fig-ab-power).
+
+**Key readings.**
+
+- Kohavi, R., Longbotham, R., Sommerfield, D. & Henne, R. M. (2009). "Controlled
+  Experiments on the Web: Survey and Practical Guide." *Data Mining and Knowledge
+  Discovery* 18(1), 140–181.
+  [doi:10.1007/s10618-008-0114-1](https://doi.org/10.1007/s10618-008-0114-1) —
+  **[R]** the practitioner canon for industrial-scale A/B testing; the pitfalls
+  students will actually hit.
+- Bojinov, I. & Shephard, N. (2019). "Time Series Experiments and Causal
+  Estimands: Exact Randomization Tests and Trading." *Journal of the American
+  Statistical Association* 114(528), 1665–1682.
+  [doi:10.1080/01621459.2018.1527225](https://doi.org/10.1080/01621459.2018.1527225)
+  — **[R]** extends design-based randomization inference to single-unit,
+  switchback-style time-series experiments (directly relevant to one-market
+  pricing/ad tests).
+- Imbens, G. W. & Rubin, D. B. (2015). *Causal Inference...*, Part II. Cambridge
+  University Press *(book)* — **[F]** classical randomized experiments; Fisher and
+  Neyman inference.
+
+**Debate.** Fisher versus Neyman inference; fixed-horizon versus
+sequential/always-valid testing; how much can web A/B testing actually learn given
+non-stationarity and short windows?
+
+### Week 3 — Regression and Selection on Observables {#sec-causal-week03}
+
+**Topic.** [F] The conditional-independence (unconfoundedness) assumption and what
+regression actually estimates under it.
+
+**Subtopics.** Regression as a weighting/comparison estimator and what it estimates
+under heterogeneity; "bad controls" and collider bias; the overlap/common-support
+condition; omitted-variable bias and sensitivity.
+
+**Methods.** Specifying a credible conditioning set; drawing causal DAGs to spot
+bad controls and colliders; checking overlap; OVB sensitivity bounds. The
+selection-bias decomposition is derived in
+@sec-causal-naive-comparison below.
+
+**Key readings.**
+
+- Athey, S. & Imbens, G. W. (2017). "The State of Applied Econometrics: Causality
+  and Policy Evaluation." *Journal of Economic Perspectives* 31(2), 3–32.
+  [doi:10.1257/jep.31.2.3](https://doi.org/10.1257/jep.31.2.3) — **[R]** the modern
+  map of identification strategies and where selection-on-observables sits among
+  them; assigned as the course's strategic overview.
+- Angrist, J. D. & Pischke, J.-S. (2009). *Mostly Harmless Econometrics*, ch. 3.
+  Princeton University Press *(book)* — **[F]** regression and the
+  conditional-independence assumption; the "bad control" problem.
+- Imbens, G. W. & Rubin, D. B. (2015). *Causal Inference...*, Part III. Cambridge
+  University Press *(book)* — **[F]** unconfoundedness and regression.
+
+**Debate.** When is "control for everything" self-defeating? How much faith can
+selection-on-observables ever earn without a design?
+
+### Week 4 — Instrumental Variables {#sec-causal-week04}
+
+**Topic.** [F] Recovering causal effects from an exogenous shifter of an endogenous
+treatment.
+
+**Subtopics.** The IV/2SLS estimator; the LATE theorem and the
+monotonicity/exclusion/relevance assumptions; compliers and what LATE is the
+effect *for*; weak instruments; judge/examiner and shift-share designs; IV in
+marketing (price endogeneity, demand estimation).
+
+**Methods.** 2SLS and its LATE interpretation; first-stage *F* / weak-IV
+diagnostics; reasoning about exclusion and monotonicity in a real application. Lab:
+the demand-estimation IV simulation in @sec-causal-iv below.
+
+**Key readings.**
+
+- Imbens, G. W. & Angrist, J. D. (1994). "Identification and Estimation of Local
+  Average Treatment Effects." *Econometrica* 62(2), 467–475.
+  [doi:10.2307/2951620](https://doi.org/10.2307/2951620) — **[F]** the LATE
+  theorem; redefines what IV identifies under heterogeneity.
+- Angrist, J. D., Imbens, G. W. & Rubin, D. B. (1996). "Identification of Causal
+  Effects Using Instrumental Variables." *Journal of the American Statistical
+  Association* 91(434), 444–455.
+  [doi:10.1080/01621459.1996.10476902](https://doi.org/10.1080/01621459.1996.10476902)
+  — **[F]** embeds IV in potential outcomes; the canonical compliers/defiers
+  exposition.
+- Angrist, J. D. & Pischke, J.-S. (2009). *Mostly Harmless Econometrics*, ch. 4.
+  Princeton University Press *(book)* — **[F]** applied IV and weak-instrument
+  diagnostics.
+
+**Debate.** Is LATE a "policy-relevant" estimand or an artifact of the instrument?
+Are most instruments' exclusion restrictions defensible?
+
+### Week 5 — Difference-in-Differences I: Foundations and the 2×2 {#sec-causal-week05}
+
+**Topic.** [F] The canonical 2×2 DiD and the parallel-trends assumption.
+
+**Subtopics.** Event-study/pre-trend plots; clustered and serially correlated
+standard errors; placebo and pre-trend tests; DiD for marketing launches, entry,
+and policy/regulatory shocks.
+
+**Methods.** Building event-study plots; testing parallel pre-trends; clustering
+and wild-cluster bootstrap; placebo tests. Lab: the DiD panel simulation in
+@sec-causal-did below.
+
+**Key readings.**
+
+- Bertrand, M., Duflo, E. & Mullainathan, S. (2004). "How Much Should We Trust
+  Differences-in-Differences Estimates?" *The Quarterly Journal of Economics*
+  119(1), 249–275.
+  [doi:10.1162/003355304772839588](https://doi.org/10.1162/003355304772839588) —
+  **[F]** exposes serial-correlation underestimation of DiD standard errors; the
+  inference cautionary tale.
+- Card, D. & Krueger, A. B. (2000). "Minimum Wages and Employment: A Case Study of
+  the Fast-Food Industry in New Jersey and Pennsylvania: Reply." *American Economic
+  Review* 90(5), 1397–1420.
+  [doi:10.1257/aer.90.5.1397](https://doi.org/10.1257/aer.90.5.1397) — **[F]** the
+  verified record for the canonical minimum-wage DiD program; the design that made
+  DiD a default tool. (The original Card & Krueger 1994 *AER* article is *(DOI to
+  verify)*.)
+- Angrist, J. D. & Pischke, J.-S. (2009). *Mostly Harmless Econometrics*, ch. 5.
+  Princeton University Press *(book)* — **[F]** DiD and fixed effects, the
+  classical treatment.
+
+**Debate.** Is parallel trends testable, or only falsifiable on pre-periods? How
+much should inference (not point estimates) drive DiD credibility?
+
+### Week 6 — Difference-in-Differences II: Staggered Adoption and the TWFE Critique {#sec-causal-week06}
+
+**Topic.** [R] The field's central recent methodological episode: why two-way
+fixed-effects DiD is biased under staggered timing and heterogeneous effects, and
+the family of robust estimators that replaced it.
+
+**Subtopics.** "Forbidden comparisons" and negative weights; decomposition
+diagnostics; the new robust estimators (group-time ATTs, interaction-weighted event
+studies, imputation); choosing among them; honest pre-trends.
+
+**Methods.** Running Goodman-Bacon decompositions; estimating the
+Callaway–Sant'Anna, Sun–Abraham, and Borusyak–Jaravel–Spiess estimators and
+reconciling them; honest pre-trend (HonestDiD-style) sensitivity. The TWFE failure
+is introduced in the DiD discussion at @sec-causal-did.
+
+**Key readings.**
+
+- Goodman-Bacon, A. (2021). "Difference-in-Differences with Variation in Treatment
+  Timing." *Journal of Econometrics* 225(2), 254–277.
+  [doi:10.1016/j.jeconom.2021.03.014](https://doi.org/10.1016/j.jeconom.2021.03.014)
+  — **[R]** the decomposition showing TWFE is a weighted average of all 2×2s,
+  including "forbidden" already-treated comparisons.
+- de Chaisemartin, C. & d'Haultfœuille, X. (2020). "Two-Way Fixed Effects
+  Estimators with Heterogeneous Treatment Effects." *American Economic Review*
+  110(9), 2964–2996.
+  [doi:10.1257/aer.20181169](https://doi.org/10.1257/aer.20181169) — **[R]** proves
+  TWFE can put negative weights on treatment effects; offers a robust alternative.
+- Callaway, B. & Sant'Anna, P. H. C. (2021). "Difference-in-Differences with
+  Multiple Time Periods." *Journal of Econometrics* 225(2), 200–230.
+  [doi:10.1016/j.jeconom.2020.12.001](https://doi.org/10.1016/j.jeconom.2020.12.001)
+  — **[R]** the group-time ATT estimator that is now a default robust DiD.
+- Sun, L. & Abraham, S. (2021). "Estimating Dynamic Treatment Effects in Event
+  Studies with Heterogeneous Treatment Effects." *Journal of Econometrics* 225(2),
+  175–199.
+  [doi:10.1016/j.jeconom.2020.09.006](https://doi.org/10.1016/j.jeconom.2020.09.006)
+  — **[R]** fixes contamination of event-study coefficients; the interaction-weighted
+  estimator.
+- Borusyak, K., Jaravel, X. & Spiess, J. (2024). "Revisiting Event-Study Designs:
+  Robust and Efficient Estimation." *Review of Economic Studies* 92(5), 3253–3285.
+  [doi:10.1093/restud/rdae007](https://doi.org/10.1093/restud/rdae007) — **[R]** the
+  imputation (efficient) estimator and a unifying view of event-study designs.
+- Roth, J., Sant'Anna, P. H. C., Bilinski, A. & Poe, J. (2023). "What's Trending in
+  Difference-in-Differences? A Synthesis of the Recent Econometrics Literature."
+  *Journal of Econometrics* 235(2), 2218–2244.
+  [doi:10.1016/j.jeconom.2023.03.008](https://doi.org/10.1016/j.jeconom.2023.03.008)
+  — **[R]** the synthesis/decision guide assigned as the week's anchor.
+
+**Debate.** Which robust estimator, when? Is the efficient imputation estimator's
+stronger modeling worth it? How much published DiD work is invalidated?
+
+### Week 7 — Regression Discontinuity Designs {#sec-causal-week07}
+
+**Topic.** [F]→[R] Identifying the local effect at a known assignment threshold,
+with modern robust inference.
+
+**Subtopics.** Sharp and fuzzy RDD; continuity-based versus local-randomization
+views; bandwidth/kernel choice and the bias–variance tradeoff; manipulation/sorting
+tests (density discontinuity); RDD in marketing (loyalty-tier thresholds, ad-auction
+reserve prices, eligibility cutoffs).
+
+**Methods.** Local-polynomial estimation; MSE-optimal and CER-optimal bandwidths;
+density (McCrary-style) manipulation tests; placebo cutoffs. Lab: the loyalty-tier
+RD simulation in @sec-causal-rd below (@fig-rd).
+
+**Key readings.**
+
+- Imbens, G. W. & Lemieux, T. (2008). "Regression Discontinuity Designs: A Guide to
+  Practice." *Journal of Econometrics* 142(2), 615–635.
+  [doi:10.1016/j.jeconom.2007.05.001](https://doi.org/10.1016/j.jeconom.2007.05.001)
+  — **[F]** the practitioner's guide that standardized RDD practice.
+- Calonico, S., Cattaneo, M. D. & Titiunik, R. (2014). "Robust Nonparametric
+  Confidence Intervals for Regression-Discontinuity Designs." *Econometrica* 82(6),
+  2295–2326. [doi:10.3982/ecta11757](https://doi.org/10.3982/ecta11757) — **[R]**
+  robust bias-corrected inference and data-driven bandwidths; the modern default.
+
+**Debate.** Continuity versus local-randomization framing; how local is "local,"
+and external validity at the cutoff; robustness to bandwidth.
+
+### Week 8 — Synthetic Control {#sec-causal-week08}
+
+**Topic.** [F]→[R] Constructing a single treated unit's counterfactual from a
+weighted average of donors.
+
+**Subtopics.** The synthetic-control estimator as a data-driven weighted comparison;
+placebo/permutation inference; pre-treatment fit and donor-pool selection;
+extensions—generalized synthetic control (interactive fixed effects), synthetic
+DiD, and Bayesian structural-time-series "CausalImpact" (geo/ad applications).
+
+**Methods.** Constructing donor pools and weights; permutation/placebo inference;
+choosing among SC / synthetic DiD / gsynth / CausalImpact for a marketing case.
+Lab: the single-market SCM simulation in @sec-causal-scm below (@fig-scm).
+
+**Key readings.**
+
+- Abadie, A., Diamond, A. & Hainmueller, J. (2010). "Synthetic Control Methods for
+  Comparative Case Studies: Estimating the Effect of California's Tobacco Control
+  Program." *Journal of the American Statistical Association* 105(490), 493–505.
+  [doi:10.1198/jasa.2009.ap08746](https://doi.org/10.1198/jasa.2009.ap08746) —
+  **[F]** the canonical synthetic-control method and placebo inference.
+- Abadie, A. (2021). "Using Synthetic Controls: Feasibility, Data Requirements, and
+  Methodological Aspects." *Journal of Economic Literature* 59(2), 391–425.
+  [doi:10.1257/jel.20191450](https://doi.org/10.1257/jel.20191450) — **[F]** the
+  authoritative how-to/when-not-to review.
+- Arkhangelsky, D., Athey, S., Hirshberg, D. A., Imbens, G. W. & Wager, S. (2021).
+  "Synthetic Difference-in-Differences." *American Economic Review* 111(12),
+  4088–4118. [doi:10.1257/aer.20190159](https://doi.org/10.1257/aer.20190159) —
+  **[R]** unifies SC and DiD; the frontier estimator for panel comparisons.
+- Xu, Y. (2017). "Generalized Synthetic Control Method: Causal Inference with
+  Interactive Fixed Effects Models." *Political Analysis* 25(1), 57–76.
+  [doi:10.1017/pan.2016.2](https://doi.org/10.1017/pan.2016.2) — **[R]** the
+  SC ⇄ factor-model bridge for multiple treated units.
+- Brodersen, K. H., Gallusser, F., Koehler, J., Remy, N. & Scott, S. L. (2015).
+  "Inferring Causal Impact Using Bayesian Structural Time-Series Models." *The
+  Annals of Applied Statistics* 9(1), 247–274.
+  [doi:10.1214/14-aoas788](https://doi.org/10.1214/14-aoas788) — **[R]** the
+  "CausalImpact" approach used widely for ad/geo impact at platforms.
+
+**Debate.** Is placebo inference valid with few units? Convex-weight restriction
+versus regression-based panel methods; overfitting pre-treatment fit.
+
+### Week 9 — Panel and Event-Study Methods {#sec-causal-week09}
+
+**Topic.** [F]→[R] The causal content of fixed-effects and event-study panel
+estimators, and the design-based view of panel experiments.
+
+**Subtopics.** Fixed-effects and first-difference estimators and their causal
+content; event-study specification and dynamic treatment effects; the
+finite-population, design-based view of panel/switchback experiments;
+matrix-completion / factor approaches; serial-correlation-robust inference.
+
+**Methods.** Specifying dynamic event studies correctly (cf. Week 6); design-based
+versus model-based panel inference; matrix-completion estimation. Connects to the
+TWFE specification at @sec-causal-did.
+
+**Key readings.**
+
+- Bojinov, I., Rambachan, A. & Shephard, N. (2021). "Panel Experiments and Dynamic
+  Causal Effects: A Finite Population Perspective." *Quantitative Economics* 12(4),
+  1171–1196. [doi:10.3982/qe1744](https://doi.org/10.3982/qe1744) — **[R]**
+  design-based estimands for panel/switchback experiments; ties experiments to
+  event studies (directly relevant to platform rollouts).
+- Athey, S. & Imbens, G. W. (2017). "The State of Applied Econometrics: Causality
+  and Policy Evaluation." *Journal of Economic Perspectives* 31(2), 3–32.
+  [doi:10.1257/jep.31.2.3](https://doi.org/10.1257/jep.31.2.3) — **[R]** situates
+  panel/matrix-completion approaches within the broader toolkit (read here for the
+  panel sections; reprised from Week 3).
+- Wooldridge, J. M. (2010). *Econometric Analysis of Cross Section and Panel Data*,
+  2nd ed., panel chapters. MIT Press *(book)* — **[F]** the FE/FD reference
+  treatment.
+
+**Debate.** When is FE identifying a causal effect versus an artifact? Design-based
+versus model-based panel inference; overlap with the staggered-DiD literature.
+
+### Week 10 — Matching and Weighting {#sec-causal-week10}
+
+**Topic.** [F]→[R] Balancing observables via the propensity score, up to
+high-dimensional balancing.
+
+**Subtopics.** The propensity score and its balancing property; matching,
+subclassification, and inverse-propensity weighting; doubly-robust / AIPW
+estimation; covariate-balancing and entropy/approximate-residual balancing in high
+dimensions; observational ad-effect estimation and its failure modes.
+
+**Methods.** Estimating and diagnosing propensity scores; assessing overlap and
+balance; AIPW/doubly-robust estimation; balancing weights. Motivated by the
+observational-versus-experimental ad-measurement evidence at
+@sec-causal-ad-measurement.
+
+**Key readings.**
+
+- Rosenbaum, P. R. & Rubin, D. B. (1983). "The Central Role of the Propensity Score
+  in Observational Studies for Causal Effects." *Biometrika* 70(1), 41–55.
+  [doi:10.1093/biomet/70.1.41](https://doi.org/10.1093/biomet/70.1.41) — **[F]**
+  defines the propensity score and the balancing theorem.
+- Hirano, K., Imbens, G. W. & Ridder, G. (2003). "Efficient Estimation of Average
+  Treatment Effects Using the Estimated Propensity Score." *Econometrica* 71(4),
+  1161–1189.
+  [doi:10.1111/1468-0262.00442](https://doi.org/10.1111/1468-0262.00442) — **[F]**
+  efficient IPW; why the *estimated* score helps.
+- Abadie, A. & Imbens, G. W. (2016). "Matching on the Estimated Propensity Score."
+  *Econometrica* 84(2), 781–807.
+  [doi:10.3982/ecta11293](https://doi.org/10.3982/ecta11293) — **[R]** correct
+  inference for propensity-score matching (a long-standing error).
+- Athey, S., Imbens, G. W. & Wager, S. (2018). "Approximate Residual Balancing:
+  Debiased Inference of Average Treatment Effects in High Dimensions." *Journal of
+  the Royal Statistical Society Series B* 80(4), 597–623.
+  [doi:10.1111/rssb.12268](https://doi.org/10.1111/rssb.12268) — **[R]** frontier
+  balancing for many covariates; bridges to ML (Week 11).
+
+**Debate.** Matching versus weighting versus doubly-robust; can balancing ever
+substitute for a design? The "propensity-score paradox" (over-trimming).
+
+### Week 11 — Machine Learning for Heterogeneous Treatment Effects {#sec-causal-week11}
+
+**Topic.** [R] Estimating the CATE and learning targeting policies with modern ML.
+
+**Subtopics.** The CATE and policy learning; causal trees/forests and honest
+splitting; double/debiased ML (Neyman-orthogonal moments, cross-fitting);
+generalized random forests; targeting and best-linear-projection summaries of
+heterogeneity.
+
+**Methods.** Fitting causal forests / DML with cross-fitting; estimating CATEs and
+the best-linear-projection of the CATE; constructing and validating targeting
+policies. The CATE estimand is defined at @sec-causal-potential-outcomes.
+
+**Key readings.**
+
+- Athey, S. & Imbens, G. (2016). "Recursive Partitioning for Heterogeneous Causal
+  Effects." *Proceedings of the National Academy of Sciences* 113(27), 7353–7360.
+  [doi:10.1073/pnas.1510489113](https://doi.org/10.1073/pnas.1510489113) — **[F]**
+  the "causal tree" with honest estimation; foundation of the HTE-by-ML program.
+- Wager, S. & Athey, S. (2018). "Estimation and Inference of Heterogeneous
+  Treatment Effects Using Random Forests." *Journal of the American Statistical
+  Association* 113(523), 1228–1242.
+  [doi:10.1080/01621459.2017.1319839](https://doi.org/10.1080/01621459.2017.1319839)
+  — **[R]** causal forests with valid pointwise confidence intervals.
+- Athey, S., Tibshirani, J. & Wager, S. (2019). "Generalized Random Forests." *The
+  Annals of Statistics* 47(2), 1148–1178.
+  [doi:10.1214/18-aos1709](https://doi.org/10.1214/18-aos1709) — **[R]** the general
+  forest-as-local-estimator framework behind `grf`.
+- Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W. &
+  Robins, J. (2018). "Double/Debiased Machine Learning for Treatment and Structural
+  Parameters." *The Econometrics Journal* 21(1), C1–C68.
+  [doi:10.1111/ectj.12097](https://doi.org/10.1111/ectj.12097) — **[R]**
+  orthogonalization plus cross-fitting; the dominant ML-for-causal-inference recipe.
+- Athey, S. & Imbens, G. W. (2019). "Machine Learning Methods That Economists Should
+  Know About." *Annual Review of Economics* 11, 685–725.
+  [doi:10.1146/annurev-economics-080217-053433](https://doi.org/10.1146/annurev-economics-080217-053433)
+  — **[R]** the survey assigned as the week's bridge from prediction to causal ML.
+
+**Debate.** Inference after model selection; do flexible HTE estimates replicate?
+Heterogeneity discovery versus confirmatory testing; orthogonality versus plug-in
+bias.
+
+### Week 12 — Platforms and Marketing I: Advertising Measurement {#sec-causal-week12}
+
+**Topic.** [R] The marketing-specific core: measuring advertising effects when they
+are tiny relative to sales variance.
+
+**Subtopics.** The "unfavorable economics" of ad measurement; intent-to-treat
+designs, PSA/holdout controls, and ghost ads; selection/endogeneity in ad delivery;
+experiments versus observational methods for ad ROI; advertising-as-signal measured
+experimentally.
+
+**Methods.** Powering ad experiments and MDE calculations; ITT versus exposure
+effects and the ghost-ad/PSA logic; benchmarking observational estimators against
+RCTs. Worked motivation in @sec-causal-ad-measurement below.
+
+**Key readings.**
+
+- Lewis, R. A. & Rao, J. M. (2015). "The Unfavorable Economics of Measuring the
+  Returns to Advertising." *The Quarterly Journal of Economics* 130(4), 1941–1973.
+  [doi:10.1093/qje/qjv023](https://doi.org/10.1093/qje/qjv023) — **[F]** shows even
+  huge experiments struggle to detect ad effects; sets the statistical-power agenda
+  for the field [@Lewis_2015].
+- Johnson, G. A., Lewis, R. A. & Nubbemeyer, E. I. (2017). "Ghost Ads: Improving the
+  Economics of Measuring Online Ad Effectiveness." *Journal of Marketing Research*
+  54(6), 867–884.
+  [doi:10.1509/jmr.15.0297](https://doi.org/10.1509/jmr.15.0297) — **[R]** the
+  ghost-ads design: a clean, low-cost counterfactual for would-be-exposed users
+  [@johnson2017].
+- Gordon, B. R., Zettelmeyer, F., Bhargava, N. & Chapsky, D. (2019). "A Comparison
+  of Approaches to Advertising Measurement: Evidence from Big Field Experiments at
+  Facebook." *Marketing Science* 38(2), 193–225.
+  [doi:10.1287/mksc.2018.1135](https://doi.org/10.1287/mksc.2018.1135) — **[R]**
+  observational methods badly mismeasure ad lift versus RCT benchmarks [@gordon2019].
+- Gordon, B. R., Moakler, R. & Zettelmeyer, F. (2023). "Close Enough? A Large-Scale
+  Exploration of Non-Experimental Approaches to Advertising Measurement." *Marketing
+  Science* 42(4), 768–793.
+  [doi:10.1287/mksc.2022.1413](https://doi.org/10.1287/mksc.2022.1413) — **[R]**
+  when (rarely) observational ad measurement gets "close enough."
+- Sahni, N. S., Zou, D. & Chintagunta, P. K. (2017). "Do Targeted Discount Offers
+  Serve as Advertising? Evidence from 70 Field Experiments." *Management Science*
+  63(8), 2688–2705.
+  [doi:10.1287/mnsc.2016.2450](https://doi.org/10.1287/mnsc.2016.2450) — **[R]**
+  promotions carry advertising-like (information) effects beyond redemption; bridges
+  to Week 13.
+
+**Debate.** Can advertising ROI ever be measured precisely enough to manage? Are
+platform-run experiments trustworthy and replicable? Lift versus attribution.
+
+### Week 13 — Platforms and Marketing II: Incrementality, Geo, and Pricing Experiments {#sec-causal-week13}
+
+**Topic.** [R] Measuring incremental lift and evaluating targeting and pricing
+policies from experiments.
+
+**Subtopics.** Incrementality versus last-touch attribution; geo experiments and
+matched-market/synthetic-control designs; pricing field experiments and price-ending
+effects; coupon/promotion experiments; bandit "learning-and-earning" pricing;
+targeting-policy *evaluation* from experiments.
+
+**Methods.** Designing geo/matched-market experiments and CausalImpact-style
+readouts (cf. Week 8); incrementality test design; off-policy/targeting-policy
+evaluation; power for pricing/promo tests.
+
+**Key readings.**
+
+- Blake, T., Nosko, C. & Tadelis, S. (2015). "Consumer Heterogeneity and Paid Search
+  Effectiveness: A Large-Scale Field Experiment." *Econometrica* 83(1), 155–174.
+  [doi:10.3982/ecta12423](https://doi.org/10.3982/ecta12423) — **[R]** eBay's
+  brand-keyword experiment: paid search was largely non-incremental for known
+  customers; the incrementality cautionary tale [@blake2015].
+- Anderson, E. T. & Simester, D. I. (2003). "Effects of \$9 Price Endings on Retail
+  Sales: Evidence from Field Experiments." *Quantitative Marketing and Economics*
+  1(1), 93–110.
+  [doi:10.1023/a:1023581927405](https://doi.org/10.1023/a:1023581927405) — **[F]**
+  a clean pricing field experiment isolating a behavioral price-ending effect.
+- Simester, D., Timoshenko, A. & Zoumpoulis, S. I. (2020). "Efficiently Evaluating
+  Targeting Policies: Improving on Champion vs. Challenger Experiments." *Management
+  Science* 66(8), 3412–3424.
+  [doi:10.1287/mnsc.2019.3379](https://doi.org/10.1287/mnsc.2019.3379) — **[R]** how
+  to evaluate many targeting policies from a single experiment.
+- Simester, D., Timoshenko, A. & Zoumpoulis, S. I. (2020). "Targeting Prospective
+  Customers: Robustness of Machine-Learning Methods to Typical Data Challenges."
+  *Management Science* 66(6), 2495–2522.
+  [doi:10.1287/mnsc.2019.3308](https://doi.org/10.1287/mnsc.2019.3308) — **[R]** how
+  ML targeting from experimental data holds up under real data pathologies.
+
+**Debate.** Geo experiments (few large units, interference) versus user-level
+randomization; attribution versus incrementality in industry practice; can targeting
+policies be both learned and validated on the same data?
+
+### Week 14 — Interference, Spillovers, and SUTVA Violations {#sec-causal-week14}
+
+**Topic.** [R] Synthesis and research craft: causal inference when one unit's
+treatment affects another.
+
+**Subtopics.** SUTVA violations in marketplaces and social networks;
+partial-interference and exposure-mapping estimands; cluster/graph-cluster
+randomization to bound bias; the reflection problem and identifying peer/social
+effects; marketplace equilibrium effects (treatment "cannibalizes" control);
+research craft—feasible designs under interference, pre-analysis plans, refereeing.
+
+**Methods.** Specifying exposure mappings; cluster/graph-cluster randomization
+design; partial-interference estimands; writing a referee report and a pre-analysis
+plan. SUTVA is introduced at @sec-causal-potential-outcomes and revisited in
+@sec-causal-threats.
+
+**Key readings.**
+
+- Aronow, P. M. & Samii, C. (2017). "Estimating Average Causal Effects Under General
+  Interference, with Application to a Social Network Experiment." *The Annals of
+  Applied Statistics* 11(4), 1912–1947.
+  [doi:10.1214/16-aoas1005](https://doi.org/10.1214/16-aoas1005) — **[R]**
+  design-based estimation under interference via exposure mappings.
+- Sävje, F., Aronow, P. M. & Hudgens, M. G. (2021). "Average Treatment Effects in
+  the Presence of Unknown Interference." *The Annals of Statistics* 49(2), 673–701.
+  [doi:10.1214/20-aos1973](https://doi.org/10.1214/20-aos1973) — **[R]** what
+  experiments still estimate when interference is present but unmodeled.
+- Eckles, D., Karrer, B. & Ugander, J. (2017). "Design and Analysis of Experiments
+  in Networks: Reducing Bias from Interference." *Journal of Causal Inference* 5(1),
+  20150021.
+  [doi:10.1515/jci-2015-0021](https://doi.org/10.1515/jci-2015-0021) — **[R]**
+  graph-cluster randomization to cut interference bias in social/ad experiments.
+- Blake, T. & Coey, D. (2014). "Why Marketplace Experimentation Is Harder Than It
+  Seems: The Role of Test-Control Interference." *Proceedings of the Fifteenth ACM
+  Conference on Economics and Computation (EC '14)*, 567–582.
+  [doi:10.1145/2600057.2602837](https://doi.org/10.1145/2600057.2602837) — **[R]**
+  marketplace interference biases naive A/B tests (eBay); the applied motivation.
+- Manski, C. F. (1993). "Identification of Endogenous Social Effects: The Reflection
+  Problem." *The Review of Economic Studies* 60(3), 531–542.
+  [doi:10.2307/2298123](https://doi.org/10.2307/2298123) — **[F]** the foundational
+  impossibility result for separating endogenous from contextual peer effects.
+
+**Debate.** When does interference bias dominate, and is cluster randomization worth
+the power loss? Can peer effects ever be point-identified? How should marketing
+referee non-replicable platform experiments?
+
+## The Potential-Outcomes Framework {#sec-causal-potential-outcomes}
 
 The foundational move of modern causal inference is to define the effect of a
 treatment *for each unit* before worrying about how to estimate it. Following the
@@ -85,7 +672,7 @@ quantity (say, an ATT among self-selected adopters) and interpreting it as
 another (the ATE the firm would obtain by treating everyone). The two coincide
 only under constant effects.
 
-### Why the Naive Comparison Fails
+### Why the Naive Comparison Fails {#sec-causal-naive-comparison}
 
 The intuitive estimator of a treatment effect is the difference in mean outcomes
 between treated and untreated units, $\hat\Delta = \bar Y_{D=1} - \bar Y_{D=0}$.
@@ -141,7 +728,7 @@ flowchart TD
     style E fill:#f7f7f7,color:#000
 ```
 
-## Randomized Experiments and A/B Tests
+## Randomized Experiments and A/B Tests {#sec-causal-rct}
 
 Randomization is the gold standard because it eliminates selection bias *by
 construction* rather than by assumption. If treatment $D_i$ is assigned
@@ -246,7 +833,7 @@ legend("topright", bty = "n",
        lwd = 2, lty = c(2, 1), col = c("black", "firebrick"))
 ```
 
-### Advertising Measurement: The Hard Case for Experiments
+### Advertising Measurement: The Hard Case for Experiments {#sec-causal-ad-measurement}
 
 Advertising is the canonical setting where experiments are both essential and
 difficult. The difficulty is statistical, and @eq-power explains it. The effect of
@@ -254,7 +841,7 @@ a typical online display campaign on purchase probability is small in absolute
 terms, while individual purchasing is enormously variable; substituting realistic
 magnitudes into @eq-power implies that detecting advertising's true return on
 investment with confidence can require *millions* of randomized users—more than
-many campaigns ever reach [@lewis2015]. Lewis and Rao show that even well-powered
+many campaigns ever reach [@Lewis_2015]. Lewis and Rao show that even well-powered
 experiments deliver confidence intervals on ROI so wide that firms cannot
 distinguish a profitable campaign from a money-losing one, and that the
 observational regressions firms typically run fare far worse.
@@ -279,7 +866,7 @@ face?"—and often the honest answer is to redesign the test (larger, geo-based,
 focused on an intermediate outcome) rather than to trust an underpowered or
 observational number.
 
-## Difference-in-Differences
+## Difference-in-Differences {#sec-causal-did}
 
 When randomization is impossible—a competitor enters a market, a regulator changes
 a privacy rule, a firm rolls a price change out to some regions before others—the
@@ -371,7 +958,7 @@ precisely because firms so often roll changes out geographically and at staggere
 times—exactly the structure DiD exploits, and exactly the structure that demands
 the heterogeneity-robust care just described.
 
-## Instrumental Variables
+## Instrumental Variables {#sec-causal-iv}
 
 Sometimes treatment is endogenous and no untreated group plausibly satisfies
 parallel trends, yet there exists a third variable that shifts the treatment for
@@ -464,7 +1051,7 @@ cat(sprintf("2SLS (IV):               %.3f\n", iv))
 cat(sprintf("First-stage F:           %.1f\n", F_stat))
 ```
 
-## Regression Discontinuity
+## Regression Discontinuity {#sec-causal-rd}
 
 A **regression discontinuity** design exploits rules that assign treatment based on
 whether a continuous **running variable** crosses a known **cutoff**. A customer
@@ -547,7 +1134,7 @@ predr <- predict(rd_fit, data.frame(D = 1, points = gr))
 lines(gl, predl, lwd = 3); lines(gr, predr, lwd = 3)
 ```
 
-## Synthetic Control
+## Synthetic Control {#sec-causal-scm}
 
 Difference-in-differences needs a control group whose untreated trend matches the
 treated group's. When the treated unit is a *single* large entity—one country where
@@ -688,7 +1275,7 @@ shifter invites IV. Third, **triangulate**: where two designs with different
 assumptions point to the same answer, the causal claim is far more credible than
 any single estimate, because the assumptions fail for different reasons.
 
-## Threats Common to All Designs
+## Threats Common to All Designs {#sec-causal-threats}
 
 Beyond design-specific failures, several threats recur and deserve a standing
 checklist. **Spillovers and general equilibrium**: a treatment that changes one
@@ -708,6 +1295,58 @@ firm's broader decision. Naming the estimand—the discipline this chapter
 opened with—is the antidote, because it forces the analyst to state precisely whose
 effect, under what intervention, has been estimated.
 
+## Foundational vs. frontier at a glance {#sec-causal-foundational-frontier}
+
+The seminar marks every method as foundational (qualifying-exam material the
+left column) or frontier (where dissertations are written, the right column). The
+marketing-specific value-add over a generic econometrics course is concentrated in
+Weeks 12–14—advertising measurement, incrementality/geo/pricing experiments, and
+marketplace interference—and in framing every method around small effects,
+non-stationary platforms, and targeting decisions.
+
+| Block | Foundational core [F] | Frontier extensions [R] |
+|---|---|---|
+| Framework (Wk 1) | Rubin 1974; Holland 1986; Imbens–Rubin | design- vs. model-based inference |
+| Experiments / A/B (Wk 2) | Fisher/Neyman inference; Kohavi | time-series/switchback; always-valid inference |
+| Selection on observables (Wk 3) | CIA, bad controls, overlap (Angrist–Pischke) | sensitivity analysis; Athey–Imbens overview |
+| IV (Wk 4) | Imbens–Angrist LATE; Angrist–Imbens–Rubin | weak-IV; judge/shift-share designs |
+| DiD I (Wk 5) | Card–Krueger; Bertrand–Duflo–Mullainathan | wild-cluster inference |
+| DiD II — staggered (Wk 6) | the *critique itself* is now foundational | Goodman-Bacon; CS; dCDH; Sun–Abraham; BJS; Roth et al. |
+| RDD (Wk 7) | Imbens–Lemieux guide | Calonico–Cattaneo–Titiunik robust inference |
+| Synthetic control (Wk 8) | Abadie–Diamond–Hainmueller; Abadie JEL | synthetic DiD; gsynth; CausalImpact |
+| Panel/event-study (Wk 9) | FE/FD (Wooldridge) | design-based panel experiments; matrix completion |
+| Matching/weighting (Wk 10) | Rosenbaum–Rubin; Hirano–Imbens–Ridder | approximate residual balancing; PS-matching inference |
+| ML for HTE (Wk 11) | Athey–Imbens causal trees | causal forests; GRF; double/debiased ML |
+| Ad measurement (Wk 12) | Lewis–Rao unfavorable economics | ghost ads; experiments-vs-observational (Gordon et al.) |
+| Incrementality/geo/pricing (Wk 13) | Blake–Nosko–Tadelis; Anderson–Simester | targeting-policy evaluation; bandit pricing |
+| Interference (Wk 14) | Manski reflection problem | Aronow–Samii; Sävje et al.; graph-cluster designs |
+
+Week 6 is the rare case where a *critique* has itself become foundational: no
+student can use DiD today without knowing the staggered-adoption failure of the
+two-way fixed-effects estimator. A paper is promoted from frontier to foundational
+only once it is standard qualifying-exam material—the staggered-DiD critique is the
+current example mid-transition.
+
+## How this chapter expands {#sec-causal-expansion}
+
+This chapter is a living syllabus. Future revisions should (1) reconcile this
+canonical ordering against actual week-by-week reading lists pulled from live PhD
+syllabi (MIT applied econometrics, Chicago Booth's causal-inference and
+quantitative-marketing sequences, Stanford GSB/Econ causal-ML courses, Berkeley
+digital-experiments, and the Wharton/Columbia/Kellogg marketing-methods seminars),
+citing program and URL; (2) track Week 6, which moves fastest, as the robust-DiD
+literature consolidates (continuous treatment, non-absorbing treatment,
+triple-difference, design-based DiD); (3) deepen the marketing-platform core of
+Weeks 12–14 with incrementality and geo-experiment methodology as version-of-record
+DOIs appear (much of it currently lives in working papers and platform tech
+reports), plus the growing experimentation-under-interference literature for
+marketplaces and recommender systems; (4) add a power/design appendix on MDE/power
+for small-lift ad experiments, variance reduction (CUPED), cluster-randomization
+power loss, and sequential testing; (5) add a software/replication appendix mapping
+methods to canonical packages (`grf`, `DoubleML`/`econml`, `did`, `fixest`/`sunab`,
+`rdrobust`, `Synth`/`synthdid`/`gsynth`, `CausalImpact`); and (6) maintain the
+foundational/frontier marking as the load-bearing pedagogical device.
+
 ## Key Takeaways
 
 - A causal effect is a comparison of potential outcomes (@eq-unit-effect); because
@@ -718,7 +1357,7 @@ effect, under what intervention, has been estimated.
   why field experiments and A/B tests are the benchmark.
 - In advertising, the effect is small relative to sales volatility, so experiments
   must be very large to be conclusive and observational substitutes can err by
-  multiples or in sign [@lewis2015; @gordon2019].
+  multiples or in sign [@Lewis_2015; @gordon2019].
 - Each quasi-experimental design targets a *specific* estimand under a *specific*
   assumption—DiD/ATT under parallel trends, IV/LATE under exclusion, RD under
   continuity, SCM/ATT under donor pre-fit—and each has a named diagnostic and a
@@ -737,7 +1376,7 @@ For demand estimation with endogenous prices and instruments built from rival
 product characteristics, the differentiated-products literature is the entry point
 [@berry1995]. The advertising-measurement evidence that motivates experimentation
 over observational inference is most directly accessible through the large-scale
-experimental comparisons cited above [@lewis2011; @lewis2015; @gordon2019], and the
+experimental comparisons cited above [@lewis2011; @Lewis_2015; @gordon2019], and the
 dynamics of advertising response that complicate any single-window estimate are
 treated in @sec-advertising.
 

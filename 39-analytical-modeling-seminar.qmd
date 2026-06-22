@@ -5,37 +5,26 @@ game-theoretic models—small enough to solve in closed form, rich enough to
 isolate one strategic force—and reading their equilibria for managerial and
 policy implications. Where the empirical chapters of this book estimate
 parameters from data, this chapter studies the logic that generates the data:
-how a platform that can both host and compete with its sellers prices entry,
-how a monopolist sequences bundles across time, how a search engine's ranking
-rule trades commission against advertising revenue, and how a fairness
-constraint on an algorithm reshapes a firm's incentive to learn. The unifying
-method is the same throughout. State the players, their information, and the
-timing; solve backward for subgame-perfect (or perfect Bayesian) equilibrium;
-and characterize how the equilibrium moves with the primitives.
+why competing firms randomize discounts, when a manufacturer wants its retailers
+to compete, why personalization can hurt the firm doing it. The unifying method
+is the same throughout. State the players, their information, and the timing;
+solve backward for subgame-perfect (or perfect Bayesian) equilibrium; and
+characterize how the equilibrium moves with the primitives.
 
-The chapter is organized by economic problem rather than by technique, because
-the same techniques—Hotelling differentiation, signaling, mechanism design,
-Nash bargaining, sequential search—recur across problems. We begin with
-**platform competition and design**, the dominant frontier of the analytical
-marketing literature, where the platform is simultaneously a marketplace, a
-retailer, and an information intermediary. We then turn to **intertemporal
-pricing and bundling**, where the strategic tension is between a seller's future
-self and forward-looking consumers. A short treatment of **algorithmic fairness**
-shows how a normative constraint becomes an economic distortion. We close with
-**decentralized channels** and **consumer search**, the two classical engines
-that most of the platform models are built on top of. Throughout, intuition
-leads and the formal model follows in full: every model is stated with its
-players, its information structure, its equilibrium concept, and the condition
-that breaks identification of the equilibrium.
-
-A short methodological note frames the whole enterprise. An analytical model is
-*not* a forecast; it is a controlled thought experiment whose value is the
-comparative static it isolates. A good model is judged by whether its driving
-assumption is transparent and its mechanism is robust to reasonable
-perturbation, not by realism in every detail. The seminar habit worth
-internalizing is to ask, of any result, *which single assumption is doing the
-work*—because that is the assumption a referee will attack and the one a
-practitioner must check against their own market.
+This chapter is built as a **full-semester PhD seminar**—the analytical /
+game-theoretic (economic-theory) track taught in the quantitative-modeling
+sequence of top doctoral programs. It opens with *tools* before *topics*: a
+demanding refresher in non-cooperative game theory and the solution concepts the
+literature actually uses (Nash, subgame perfection, Perfect Bayesian
+Equilibrium, and the mechanism-design / information-design vocabulary). It then
+walks the canonical application areas in the order theory developed them—price
+competition, promotions, channels, advertising, product line and signaling,
+information and disclosure, salesforce contracting—before turning to the dynamic
+and behavioral frontier. An analytical model is *not* a forecast; it is a
+controlled thought experiment whose value is the comparative static it isolates.
+The seminar habit worth internalizing is to ask, of any result, *which single
+assumption is doing the work*—because that is the assumption a referee will
+attack and the one a practitioner must check against their own market.
 
 ::: {.callout-note}
 ## Presenting analytical work
@@ -49,7 +38,398 @@ first. These are rhetorical, not scientific, but they materially change how a
 correct result is received.
 :::
 
-## Platform Competition and Design {#sec-ams-platforms}
+## Semester arc {#sec-analytical-semester-arc}
+
+The analytical-modeling seminar trains students to *build and solve equilibrium
+models of marketing phenomena*—to take a managerial puzzle, strip it to a
+tractable game, solve for equilibrium, and extract a testable, often
+counterintuitive comparative-static result. The semester therefore opens with
+**tools** before **topics**: a fast, demanding refresher in non-cooperative game
+theory and the solution concepts the literature uses. Students arriving from a
+first-year microeconomic-theory sequence find weeks 1–2 a consolidation; those
+from an empirical background find them the steepest climb of the course.
+
+The middle of the semester walks the **canonical application areas in the order
+theory developed them**: price competition and promotions; vertical channels and
+distribution; advertising as persuasion and as information; product line,
+quality, and signaling; information, disclosure, and reviews; and salesforce /
+principal–agent contracting. The ordering is pedagogically deliberate—each block
+reuses and sharpens the tools introduced earlier (promotions motivate mixed
+strategies; channels motivate double-marginalization and contracting machinery;
+signaling motivates PBE; salesforce motivates moral hazard and the revelation
+principle). Throughout, the seminar insists on the distinction between *modeling
+for insight* (the marketing-science tradition: simple models whose comparative
+statics overturn a managerial intuition) and *modeling for measurement* (the
+structural / empirical-IO tradition of the adjacent seminar). The recurring
+refrain is Moorthy's and Wernerfelt's question: *what is the simplest model that
+produces this effect, and is the effect robust to the obvious extensions?*
+
+The final third turns to **dynamics and frontier structure**: durable-goods and
+forward-looking-consumer pricing; behavior-based price discrimination and
+customer recognition; network effects, platforms, and two-sided markets; and
+behavioral industrial organization. The course closes with a synthesis week on
+research craft—how to find a modeling question, how to know when a model is
+"done," how analytical and empirical work speak to each other, and how to
+referee theory. Assessment is uniformly a **referee report plus an original
+model proposal**, because the terminal skill is not reading theory but producing
+it.
+
+## Week 1 — Game-Theory Tools I: Static Games, Nash, and the Modeling Stance {#sec-analytical-week01}
+
+**Topic.** Normal-form games and the "modeling for insight" stance that defines
+analytical marketing. *Foundational.*
+
+**Subtopics.** Normal-form games and Nash equilibrium; pure vs. mixed
+strategies; best-response and reaction functions; Bertrand vs. Cournot as the
+two workhorses of marketing competition; what makes a good marketing-theory
+question.
+
+**Methods.** Writing down a game (players, actions, payoffs, timing,
+information); solving for pure- and mixed-strategy Nash; comparative statics.
+
+**Key readings.**
+
+- Moorthy, K. S. (1985), "Using Game Theory to Model Competition," *Journal of Marketing Research* 22(3), pp. 262–282. *(DOI to verify)* — the field's manifesto for analytical marketing modeling. [F]
+- Tirole, J. (1988), *The Theory of Industrial Organization*, chs. 0–5, MIT Press. (book) — standard IO background on competition and the solution concepts the literature reuses. [F]
+- Fudenberg, D. and Tirole, J. (1991), *Game Theory*, selected chapters, MIT Press. (book) — the reference grammar for everything that follows. [F]
+
+**Debate.** Insight vs. realism; the role of functional-form assumptions; when a
+"result" is an artifact of the demand specification rather than a feature of the
+strategic environment.
+
+## Week 2 — Game-Theory Tools II: Dynamic Games, Information, and Refinement {#sec-analytical-week02}
+
+**Topic.** Extensive-form games, incomplete information, and the equilibrium
+refinements modern marketing theory relies on. *Foundational.*
+
+**Subtopics.** Extensive form and backward induction; subgame perfection; games
+of incomplete information and Bayesian Nash equilibrium; Perfect Bayesian and
+sequential equilibrium; signaling and belief refinements (intuitive criterion);
+a first look at mechanism/information design as the modern toolkit.
+
+**Methods.** Solving signaling games; constructing and refining off-path
+beliefs; reading an information-design argument.
+
+**Key readings.**
+
+- Fudenberg, D. and Tirole, J. (1991), *Game Theory* (dynamic games, PBE, refinements), MIT Press. (book) — the canonical treatment of refinement. [F]
+- Iyer, G. and Singh, S. (2022), "Persuasion Contest: Disclosing Own and Rival Information," *Marketing Science* 41(4), pp. 682–709, [doi:10.1287/mksc.2021.1333](https://doi.org/10.1287/mksc.2021.1333) — a frontier illustration of how Bayesian-persuasion / information-design ideas enter competitive marketing; the "where the tools are going" capstone. [R]
+
+**Debate.** Multiplicity of equilibria and the legitimacy of refinements;
+whether information design is a genuinely new toolkit or a repackaging of
+signaling.
+
+## Week 3 — Price Competition and Differentiation {#sec-analytical-week03}
+
+**Topic.** How firms soften price competition through differentiation.
+*Foundational.*
+
+**Subtopics.** The Bertrand paradox and its resolutions; horizontal
+differentiation (Hotelling / spatial competition) and the principle of
+(minimum/maximum) differentiation; vertical differentiation and quality; the
+strategic value of *softening* price competition.
+
+**Methods.** Solving location-then-price two-stage games; deriving
+differentiation as an equilibrium device.
+
+**Key readings.**
+
+- Hotelling, H. (1929), "Stability in Competition," *Economic Journal* 39(153), pp. 41–57. *(DOI to verify)* — the origin of spatial differentiation. [F]
+- Iyer, G. and Kuksov, D. (2012), "Competition in Consumer Shopping Experience," *Marketing Science* 31(6), pp. 913–933, [doi:10.1287/mksc.1120.0734](https://doi.org/10.1287/mksc.1120.0734) — shows when a non-price instrument (experience) differentiates vs. triggers escalation. [R]
+- Pazgal, A., Soberman, D., and Thomadsen, R. (2016), "Profit-Increasing Asymmetric Entry," *International Journal of Research in Marketing* 33(1), pp. 107–122, [doi:10.1016/j.ijresmar.2015.08.002](https://doi.org/10.1016/j.ijresmar.2015.08.002) — counterintuitive: entry can raise incumbent profit by relaxing price competition. [R]
+
+**Debate.** Do firms differentiate to avoid competition or to match
+heterogeneous tastes? Is "minimum differentiation" robust to the pricing stage?
+
+## Week 4 — Promotions, Price Discrimination, and Mixed-Strategy Pricing {#sec-analytical-week04}
+
+**Topic.** Why competing firms randomize discounts, and when price
+discrimination is constrained. *Foundational (Narasimhan) → frontier
+(price-matching, fairness).*
+
+**Subtopics.** Why competing firms randomize discounts (loyal vs. switcher
+segments); temporal price discrimination and Hi-Lo vs. EDLP; price-matching
+guarantees as discrimination vs. collusion; behavioral limits on price
+discrimination.
+
+**Methods.** Constructing mixed-strategy equilibria; segment-based
+price-discrimination models.
+
+**Key readings.**
+
+- Narasimhan, C. (1988), "Competitive Promotional Strategies," *Journal of Business* 61(4), pp. 427–449, [doi:10.1086/296442](https://doi.org/10.1086/296442) — the mixed-strategy rationale for randomized promotions [@narasimhan1988b]. [F]
+- Chen, Y., Narasimhan, C., and Zhang, Z. J. (2001), "Consumer Heterogeneity and Competitive Price-Matching Guarantees," *Marketing Science* 20(3), pp. 300–314, [doi:10.1287/mksc.20.3.300.9766](https://doi.org/10.1287/mksc.20.3.300.9766) — reframes a common practice as price discrimination, not collusion. [R]
+- Feinberg, F. M., Krishna, A., and Zhang, Z. J. (2002), "Do We Care What Others Get? A Behaviorist Approach to Targeted Promotions," *Journal of Marketing Research* 39(3), pp. 277–291, [doi:10.1509/jmkr.39.3.277.19108](https://doi.org/10.1509/jmkr.39.3.277.19108) — social comparison / fairness constrains targeted discounting. [R]
+- Varian, H. R. (1980), "A Model of Sales," *American Economic Review* 70(4), pp. 651–659. *(DOI to verify)* — the canonical equilibrium-dispersion model of promotions. [F]
+
+**Debate.** Are promotions discrimination, inventory/competition artifacts, or
+behavioral cues? Do price-match guarantees raise or lower prices?
+
+## Week 5 — Channels and Distribution I: Coordination and Double Marginalization {#sec-analytical-week05}
+
+**Topic.** Why decentralized channels underperform and which contracts fix it.
+*Foundational.*
+
+**Subtopics.** Double marginalization and channel coordination; two-part
+tariffs, quantity discounts, and resale price maintenance as coordinating
+contracts; coordinating channels under price *and* non-price competition;
+manufacturer control of retail competition.
+
+**Methods.** Vertical-contracting models; designing wholesale contracts to align
+incentives; manufacturer-Stackelberg leadership.
+
+**Key readings.**
+
+- Jeuland, A. P. and Shugan, S. M. (1983), "Managing Channel Profits," *Marketing Science* 2(3), pp. 239–272. *(DOI to verify)* — the foundational channel-coordination paper. [F]
+- Iyer, G. (1998), "Coordinating Channels Under Price and Nonprice Competition," *Marketing Science* 17(4), pp. 338–355, [doi:10.1287/mksc.17.4.338](https://doi.org/10.1287/mksc.17.4.338) — the multi-instrument result: the optimal degree of retail competition differs across price and service. [F]
+- Moorthy, K. S. (1987), "Managing Channel Profits: Comment," *Marketing Science* 6(4), pp. 375–379. *(DOI to verify)* — the canonical refinement of the coordination argument. [F]
+
+**Debate.** Which contractual instruments achieve coordination, and why is
+coordination so often *not* observed in practice?
+
+## Week 6 — Channels and Distribution II: Power, Conflict, and the Retail-Media Frontier {#sec-analytical-week06}
+
+**Topic.** Channel power, bargaining, and the modern retail-media turn.
+*Foundational → frontier.*
+
+**Subtopics.** Channel power and bargaining; vertical restraints and
+exclusivity; private labels and the manufacturer–retailer game; the modern
+"retail media" / in-store-media turn.
+
+**Methods.** Bargaining solutions in vertical settings; dynamic channel pricing.
+
+**Key readings.**
+
+- Dukes, A. and Liu, Y. (2010), "In-Store Media and Distribution Channel Coordination," *Marketing Science* 29(1), pp. 94–107, [doi:10.1287/mksc.1080.0483](https://doi.org/10.1287/mksc.1080.0483) — in-store-media revenue alters retailer incentives and can mitigate double marginalization (an early theory of retail media networks). [R]
+- Cosguner, K., Chan, T. Y., and Seetharaman, P. B. (2018), "Dynamic Pricing in a Distribution Channel in the Presence of Switching Costs," *Management Science* 64(3), pp. 1212–1229, [doi:10.1287/mnsc.2016.2649](https://doi.org/10.1287/mnsc.2016.2649) — bridges channels and dynamics: inertial demand lets the retailer raise margins. [R]
+- McGuire, T. W. and Staelin, R. (1983), "An Industry Equilibrium Analysis of Downstream Vertical Integration," *Marketing Science* 2(2), pp. 161–191. *(DOI to verify)* — the classic case for decentralization as a strategic commitment. [F]
+
+**Debate.** Who holds channel power and how is it modeled (Nash bargaining vs.
+Stackelberg)? Is retail media a coordination device or a rent-extraction tool?
+
+## Week 7 — Advertising: Persuasion, Information, and Targeting {#sec-analytical-week07}
+
+**Topic.** Advertising as persuasion vs. information, and the strategic logic of
+targeting. *Foundational (Nelson) → frontier (targeting, cheap talk).*
+
+**Subtopics.** Advertising as persuasion vs. information vs. complement;
+informative advertising and price competition; the *targeting* of advertising
+and its effect on differentiation; advertising as (cheap) talk.
+
+**Methods.** Equilibrium advertising-intensity models; cheap-talk and
+verifiable-disclosure games.
+
+**Key readings.**
+
+- Iyer, G., Soberman, D., and Villas-Boas, J. M. (2005), "The Targeting of Advertising," *Marketing Science* 24(3), pp. 461–476, [doi:10.1287/mksc.1050.0117](https://doi.org/10.1287/mksc.1050.0117) — the modern result that advertising less to switchers raises differentiation and softens price competition [@iyer2005]. [F]
+- Gardete, P. M. (2013), "Cheap-Talk Advertising and Misrepresentation in Vertically Differentiated Markets," *Marketing Science* 32(4), pp. 609–621, [doi:10.1287/mksc.2013.0772](https://doi.org/10.1287/mksc.2013.0772) — when unverifiable quality claims can still credibly transmit information. [R]
+- Grossman, G. M. and Shapiro, C. (1984), "Informative Advertising with Differentiated Products," *Review of Economic Studies* 51(1), pp. 63–81. *(DOI to verify)* — the workhorse model of informative advertising and price competition. [F]
+
+**Debate.** Is advertising informative, persuasive, or a complementary good?
+When does targeting intensify vs. soften competition?
+
+## Week 8 — Product Line, Quality, and Signaling {#sec-analytical-week08}
+
+**Topic.** Designing a product line and signaling unobservable quality.
+*Foundational.*
+
+**Subtopics.** Product-line design and self-selection (second-degree price
+discrimination / damaged goods); quality choice; price and advertising as
+*signals* of quality; product variety with consumer evaluation costs.
+
+**Methods.** Mechanism-design / self-selection (incentive-compatibility,
+single-crossing); separating vs. pooling signaling equilibria.
+
+**Key readings.**
+
+- Villas-Boas, J. M. (2009), "Product Variety and Endogenous Pricing with Evaluation Costs," *Management Science* 55(8), pp. 1338–1346, [doi:10.1287/mnsc.1090.1024](https://doi.org/10.1287/mnsc.1090.1024) — fewer products can commit the firm not to extract all surplus when evaluation is costly. [F]
+- Moorthy, K. S. (1984), "Market Segmentation, Self-Selection, and Product Line Design," *Marketing Science* 3(4), pp. 288–307. *(DOI to verify)* — the foundational self-selection model of the product line. [F]
+- Milgrom, P. and Roberts, J. (1986), "Price and Advertising Signals of Product Quality," *Journal of Political Economy* 94(4), pp. 796–821. *(DOI to verify)* — the canonical model of dissipative signaling of quality. [F]
+
+**Debate.** When is dissipative signaling (e.g., uninformative ad spend)
+credible? How fine should a product line be, and is cannibalization a bug or a
+feature?
+
+## Week 9 — Information, Disclosure, and Online Reviews {#sec-analytical-week09}
+
+**Topic.** Strategic disclosure, manipulated word of mouth, and information
+design in markets. *Frontier (with foundational disclosure roots).*
+
+**Subtopics.** Verifiable disclosure and unraveling; strategic / selective
+disclosure by firms and media; manipulation of word of mouth and reviews;
+information design / Bayesian persuasion in markets.
+
+**Methods.** Disclosure/unraveling arguments; persuasion as choice of a signal
+structure.
+
+**Key readings.**
+
+- Mayzlin, D. (2006), "Promotional Chat on the Internet," *Marketing Science* 25(2), pp. 155–163, [doi:10.1287/mksc.1050.0137](https://doi.org/10.1287/mksc.1050.0137) — firms post disguised promotional chat; rational consumers partially undo it. [F]
+- Zhu, Y. and Dukes, A. (2015), "Selective Reporting of Factual Content by Commercial Media," *Journal of Marketing Research* 52(1), pp. 56–76, [doi:10.1509/jmr.12.0379](https://doi.org/10.1509/jmr.12.0379) — endogenous selective (not false) reporting by ad-funded media. [R]
+- Iyer, G. and Singh, S. (2022), "Persuasion Contest: Disclosing Own and Rival Information," *Marketing Science* 41(4), pp. 682–709, [doi:10.1287/mksc.2021.1333](https://doi.org/10.1287/mksc.2021.1333) — competitive information design. [R]
+- Kamenica, E. and Gentzkow, M. (2011), "Bayesian Persuasion," *American Economic Review* 101(6), pp. 2590–2615. *(DOI to verify)* — the foundational statement of persuasion as the choice of a signal structure. [F]
+
+**Debate.** Does information unravel in equilibrium? When can a sender benefit
+from committing to a noisy signal?
+
+## Week 10 — Salesforce, Incentives, and Principal–Agent Theory {#sec-analytical-week10}
+
+**Topic.** Optimal sales compensation under moral hazard, and the structural
+turn. *Foundational (Basu–Lal–Srinivasan–Staelin) → frontier (structural
+compensation).*
+
+**Subtopics.** Moral hazard and optimal sales-compensation contracts; quotas,
+commissions, and bonuses; multitasking and contract uniformity; the
+"estimate-then-optimize-then-implement" structural turn.
+
+**Methods.** Principal–agent contracting (IC and IR constraints); multitasking;
+bridging theory to estimable dynamic models.
+
+**Key readings.**
+
+- Misra, S. and Nair, H. S. (2011), "A Structural Model of Sales-Force Compensation Dynamics: Estimation and Field Implementation," *Quantitative Marketing and Economics* 9(3), pp. 211–257, [doi:10.1007/s11129-011-9096-1](https://doi.org/10.1007/s11129-011-9096-1) — recovers agents' dynamic response to nonlinear incentives and redesigns the plan in the field [@misra2011structural]. [R]
+- Daljord, Ø., Misra, S., and Nair, H. S. (2016), "Homogeneous Contracts for Heterogeneous Agents: Aligning Sales Force Composition and Compensation," *Journal of Marketing Research* 53(2), pp. 161–182, [doi:10.1509/jmr.14.0018](https://doi.org/10.1509/jmr.14.0018) — why uniform contracts can be an equilibrium given selection. [R]
+- Basu, A. K., Lal, R., Srinivasan, V., and Staelin, R. (1985), "Salesforce Compensation Plans: An Agency Theoretic Perspective," *Marketing Science* 4(4), pp. 267–291. *(DOI to verify)* — the foundational agency model of sales compensation. [F]
+
+**Debate.** How rich should real contracts be relative to theory's predictions?
+Why are observed plans simpler than the optimum?
+
+## Week 11 — Dynamic Models I: Durable Goods, Forward-Looking Consumers, and Learning {#sec-analytical-week11}
+
+**Topic.** Pricing against a forward-looking buyer and the seller's own future.
+*Foundational (Coase, Bass) → frontier (consumer learning, dynamic pricing).*
+
+**Subtopics.** The Coase conjecture and durable-goods pricing; intertemporal
+price discrimination with forward-looking consumers; new-product diffusion and
+dynamic pricing; consumer learning and endogenous loyalty.
+
+**Methods.** Dynamic optimization / Markov-perfect equilibrium; the difference
+between open-loop and closed-loop strategies.
+
+**Key readings.**
+
+- Villas-Boas, J. M. (2004), "Consumer Learning, Brand Loyalty, and Competition," *Marketing Science* 23(1), pp. 134–145, [doi:10.1287/mksc.1030.0044](https://doi.org/10.1287/mksc.1030.0044) — forward-looking marginal consumers can be *less* price-sensitive than myopic ones. [F]
+- Nair, H. (2007), "Intertemporal Price Discrimination with Forward-Looking Consumers: Application to the US Market for Console Video-Games," *Quantitative Marketing and Economics* 5(3), pp. 239–292, [doi:10.1007/s11129-007-9026-4](https://doi.org/10.1007/s11129-007-9026-4) — the structural counterpart; quantifies declining-price paths for durables. [R]
+- Coase, R. H. (1972), "Durability and Monopoly," *Journal of Law and Economics* 15(1), pp. 143–149. *(DOI to verify)* — the conjecture that a durable-goods monopolist competes with its own future. [F]
+
+**Debate.** How binding is the Coase conjecture with commitment devices? Myopic
+vs. rational-expectations consumers in pricing models.
+
+## Week 12 — Dynamic Models II: Behavior-Based Price Discrimination and Customer Recognition {#sec-analytical-week12}
+
+**Topic.** Recognizing past customers and the strategic perils of
+personalization. *Frontier.*
+
+**Subtopics.** Customer recognition and price cycles; behavior-based price
+discrimination (BBPD); poaching vs. retention; behavior-based *advertising*; the
+strategic perils of personalization.
+
+**Methods.** Two-period (and infinite-horizon) recognition games; mapping
+privacy/data regimes to equilibrium prices.
+
+**Key readings.**
+
+- Villas-Boas, J. M. (2004), "Price Cycles in Markets with Customer Recognition," *RAND Journal of Economics* 35(3), pp. 486–501, [doi:10.2307/1593704](https://doi.org/10.2307/1593704) — endogenous price cycles over the customer relationship. [F]
+- Zhang, J. (2011), "The Perils of Behavior-Based Personalization," *Marketing Science* 30(1), pp. 170–186, [doi:10.1287/mksc.1100.0607](https://doi.org/10.1287/mksc.1100.0607) — personalization can intensify competition and erode profits. [R]
+- Chen, Y., Narasimhan, C., and Zhang, Z. J. (2001), "Individual Marketing with Imperfect Targetability," *Marketing Science* 20(1), pp. 23–41, [doi:10.1287/mksc.20.1.23.10201](https://doi.org/10.1287/mksc.20.1.23.10201) — when better targeting is "win-win" vs. cut-throat. [R]
+- Shen, Q. and Villas-Boas, J. M. (2018), "Behavior-Based Advertising," *Management Science* 64(5), pp. 2047–2064, [doi:10.1287/mnsc.2016.2719](https://doi.org/10.1287/mnsc.2016.2719) — BBPD's advertising analogue. [R]
+
+**Debate.** Does data-driven targeting help or hurt the firms that use it? What
+is the welfare and privacy verdict on BBPD?
+
+## Week 13 — Network Effects, Platforms, and Two-Sided Markets {#sec-analytical-week13}
+
+**Topic.** Network effects, tipping, and the platform-design problem. *Frontier
+(with foundational network-effects roots).*
+
+**Subtopics.** Direct and indirect network effects; tipping and winner-take-all
+dynamics; two-sided pricing and the platform-design problem; commercial-network
+formation.
+
+**Methods.** Two-sided pricing models; coordination games and tipping;
+network-formation equilibria.
+
+**Key readings.**
+
+- Dubé, J.-P., Hitsch, G. J., and Chintagunta, P. K. (2010), "Tipping and Concentration in Markets with Indirect Network Effects," *Marketing Science* 29(2), pp. 216–249, [doi:10.1287/mksc.1090.0541](https://doi.org/10.1287/mksc.1090.0541) — measures tipping from indirect network effects (video-game consoles). [R]
+- Katona, Z. and Sarvary, M. (2008), "Network Formation and the Structure of the Commercial World Wide Web," *Marketing Science* 27(5), pp. 764–778, [doi:10.1287/mksc.1070.0349](https://doi.org/10.1287/mksc.1070.0349) — equilibrium link-buying explains web specialization [@katona2008]. [R]
+- Wilbur, K. C. (2008), "A Two-Sided, Empirical Model of Television Advertising and Viewing Markets," *Marketing Science* 27(3), pp. 356–378, [doi:10.1287/mksc.1070.0303](https://doi.org/10.1287/mksc.1070.0303) — the two-sided media-market modeling benchmark. [R]
+- Katz, M. L. and Shapiro, C. (1985), "Network Externalities, Competition, and Compatibility," *American Economic Review* 75(3), pp. 424–440. *(DOI to verify)* — the foundational statement of network externalities [@katz1985network]. [F]
+
+**Debate.** When do markets tip? Who should subsidize which side, and does
+platform competition discipline pricing?
+
+## Week 14 — Behavioral Industrial Organization and Research Craft (Synthesis) {#sec-analytical-week14}
+
+**Topic.** Non-standard consumers in equilibrium, and the craft of producing and
+refereeing theory. *Frontier.*
+
+**Subtopics.** Models with non-standard consumers—reference dependence, fairness,
+limited attention, naïveté/present bias; how behavioral assumptions change
+equilibrium predictions; **research craft**: finding a question, knowing when a
+model is "done," theory ↔ empirics, and refereeing.
+
+**Methods.** Embedding behavioral primitives in equilibrium models; reading and
+writing a referee report; constructing an original modeling proposal.
+
+**Key readings.**
+
+- Zhu, Y. and Dukes, A. (2017), "Prominent Attributes Under Limited Attention," *Marketing Science* 36(5), pp. 683–698, [doi:10.1287/mksc.2017.1037](https://doi.org/10.1287/mksc.2017.1037) — firms make attributes prominent to exploit limited attention, reshaping price competition. [R]
+- Misra, K., Schwartz, E. M., and Abernethy, J. (2019), "Dynamic Online Pricing with Incomplete Information Using Multiarmed Bandit Experiments," *Marketing Science* 38(2), pp. 226–252, [doi:10.1287/mksc.2018.1129](https://doi.org/10.1287/mksc.2018.1129) — learning-and-earning pricing where the firm, not just the consumer, is the learner. [R]
+- Dubé, J.-P. and Misra, S. (2023), "Personalized Pricing and Consumer Welfare," *Journal of Political Economy* 131(1), pp. 131–189, [doi:10.1086/720793](https://doi.org/10.1086/720793) — a capstone tying theory, ML, and welfare. [R]
+- DellaVigna, S. (2009), "Psychology and Economics: Evidence from the Field," *Journal of Economic Literature* 47(2), pp. 315–372. *(DOI to verify)* — the survey that frames behavioral primitives for equilibrium modeling. [F]
+
+**Debate.** Do behavioral models *predict* better or merely *rationalize*? How
+should analytical and empirical marketing inform each other?
+
+## Foundational vs. frontier at a glance {#sec-analytical-foundational-frontier}
+
+| Block | Foundational core (the "must-know") | Frontier extensions (active research) |
+|---|---|---|
+| Tools (Wk 1–2) | Nash, SPE, PBE, signaling refinements | Bayesian persuasion / information design |
+| Pricing & promotions (Wk 3–4) | Hotelling differentiation; Narasimhan mixed-strategy promotions | fairness / social-comparison limits; price-matching as discrimination |
+| Channels (Wk 5–6) | Jeuland–Shugan / Iyer coordination; double marginalization | retail media; dynamic channel pricing with switching costs |
+| Advertising (Wk 7) | Iyer–Soberman–Villas-Boas targeting; informative-advertising models | cheap-talk / disclosure advertising |
+| Product line & signaling (Wk 8) | Moorthy self-selection; Milgrom–Roberts signaling | endogenous variety with evaluation costs |
+| Information & disclosure (Wk 9) | unraveling; Mayzlin promotional chat | competitive information design |
+| Salesforce / P-A (Wk 10) | Basu–Lal–Srinivasan–Staelin; Holmström | structural compensation, field implementation |
+| Dynamics (Wk 11–12) | Coase, Bass; Villas-Boas learning & price cycles | forward-looking-consumer structural models; BBPD & personalization perils |
+| Platforms (Wk 13) | Katz–Shapiro / Rochet–Tirole network effects | empirical tipping; two-sided media models |
+| Behavioral IO (Wk 14) | reference dependence, limited attention | prominence/attention competition; bandit pricing; personalized-pricing welfare |
+
+**Reading the map.** A student must be fluent in the left column to pass
+qualifying exams; the right column is where dissertations are written. The
+seminar's value-add over a pure economics IO course is the marketing-specific
+frontier—channels, salesforce, targeting, reviews/WOM, and the
+personalization/privacy interface—where marketing scholars, not economists, set
+the agenda.
+
+## How this chapter expands {#sec-analytical-expands}
+
+The week-by-week map above is the seminar's backbone; the worked models below are
+its frontier face. The remaining sections develop a connected set of
+**platform-design** models in full detail—players, information, equilibrium
+concept, and the single assumption that breaks each result—so that students see
+how the Week 5–6 channel machinery, the Week 13 two-sided-market logic, and the
+Week 14 personalization frontier combine in current research. They are
+deliberately deeper than a syllabus entry: each is a template for the kind of
+original model a seminar referee report and proposal must produce.
+
+Three priorities should guide future revisions. First, **verify and promote the
+named-but-uncited canon**: works flagged *(DOI to verify)* above—Moorthy (1984,
+1985, 1987), Jeuland–Shugan (1983), McGuire–Staelin (1983),
+Basu–Lal–Srinivasan–Staelin (1985), Milgrom–Roberts (1986), Coase (1972),
+Hotelling (1929), Varian (1980), Grossman–Shapiro (1984), Kamenica–Gentzkow
+(2011), Katz–Shapiro (1985), and DellaVigna (2009)—are the textbook spine of the
+seminar and should be confirmed against the Crossref version of record and added
+to the bibliography. Second, **track the fast-moving frontier modules**:
+information design, behavioral IO, platforms/two-sided markets, and the
+personalization–privacy interface each turn over 2–3 version-of-record papers per
+revision cycle. Third, **consider promoting two modules to their own chapters**:
+platforms / two-sided markets and the analytics–theory bridge (bandit pricing,
+ML-driven personalized pricing) are both large enough to stand alone.
+
+## Worked Frontier: Platform Competition and Design {#sec-ams-platforms}
 
 A *platform* is a firm that intermediates transactions between two or more
 groups whose participation decisions are interdependent—the canonical
@@ -382,7 +762,7 @@ managerial lesson generalizes beyond subscriptions: a platform that bundles
 substitutes can coordinate the channel only when it holds an instrument that
 prices the competitive externality its bundle creates.
 
-## Intertemporal Pricing and Bundling {#sec-ams-intertemporal}
+## Worked Frontier: Intertemporal Pricing and Bundling {#sec-ams-intertemporal}
 
 The second family of models studies a seller's pricing *across time*. The
 strategic tension is not between competing firms but between the seller and its
@@ -472,7 +852,7 @@ profitable when demand becomes more inelastic over time. The model rationalizes 
 pervasive empirical regularity—price rigidity under demand variation—as an
 equilibrium outcome rather than a friction.
 
-## Algorithmic Fairness as an Economic Constraint {#sec-ams-fairness}
+## Worked Frontier: Algorithmic Fairness as an Economic Constraint {#sec-ams-fairness}
 
 When a firm uses a machine-learning algorithm to screen consumers—approving loans,
 say—a *fairness constraint* on the algorithm is a normative input with economic
@@ -506,7 +886,7 @@ criterion is not a free constraint laid over a fixed algorithm but an argument i
 the firm's optimization, and equilibrium adjustment of *learning effort* can
 reverse the criterion's intended distributional effect.
 
-## Decentralized Channels {#sec-ams-channels}
+## Worked Frontier: Decentralized Channels {#sec-ams-channels}
 
 Most platform and pricing models above sit atop a **distribution channel**: an
 upstream supplier or manufacturer and a downstream retailer, whose separately
@@ -583,7 +963,7 @@ analytical counterpart to the empirical pass-through literature and explains why
 dominant online retailers have migrated many categories from wholesale to agency
 terms.
 
-## Consumer Search {#sec-ams-search}
+## Worked Frontier: Consumer Search {#sec-ams-search}
 
 The final family of models is the engine beneath most of the platform results:
 **sequential consumer search** in the tradition of @wolinsky1986. A consumer who
@@ -722,6 +1102,9 @@ it is the craft that turns a correct model into a published one.
 
 ## Key Takeaways {#sec-ams-takeaways}
 
+- The seminar is built **tools-first**: weeks 1–2 establish Nash, subgame
+  perfection, PBE, and signaling refinements before any application, because every
+  later block reuses them (@sec-analytical-semester-arc).
 - A **hybrid platform** is simultaneously marketplace, retailer, and information
   intermediary (@fig-ams-platform-roles); its conflicts of interest—entry against
   its own sellers, ranking that favors first-party listings—are the engine of the

@@ -3992,3 +3992,382 @@ and sensitivity to modeling choices must substitute for out-of-sample accuracy. 
 prudent analyst reports results under more than one rule and treats large divergences
 across rules as a signal that the budgetary stakes of the modeling assumption are
 high.
+
+## Full-semester seminar reading map {#sec-empirical-seminar-reading-map}
+
+The empirical models above are the working parts of a much larger doctoral
+curriculum. This section reframes the chapter as the methodological spine of a
+~13–14 week PhD seminar in empirical/quantitative marketing, mapping each week to
+its canonical readings, methods, and the live debate that organizes class
+discussion. The reading map is deliberately structured the way top programs
+converge on the material: the demand-estimation workhorse first, the twin threats
+of heterogeneity and endogeneity next, and the dynamic and causal frontier last.
+Readings carry a Crossref-style bibliographic line with a verbatim DOI link; works
+already in this book's bibliography are cited by key, and works not (yet) in the
+bibliography are named in full so the citation can be added later. Each reading is
+tagged **[F]** foundational (stable canon, taught nearly everywhere) or **[R]**
+frontier (last ~10–15 years, more program-specific).
+
+**Semester arc.** The quantitative-models seminar moves from *what we measure* to
+*how we identify it* to *how we model behavior over time*. The first third installs
+the discrete-choice demand workhorse — the multinomial and nested logit on
+individual scanner-panel data (Guadagni–Little), the aggregate random-coefficients
+logit on market shares (Berry; BLP; Nevo) — because nearly every downstream question
+(pricing, promotion, advertising, product line, welfare) is answered through a demand
+system. Students learn to read a model as a set of identifying assumptions, not a
+regression: what variation in the data pins down the price coefficient, and what
+would bias it. The middle third confronts the two threats that define the field's
+empirical standards: **unobserved heterogeneity** and **endogeneity**. Heterogeneity
+is handled either by integrating it out (random coefficients, mixed logit) or by
+estimating it hierarchically (hierarchical Bayes, the Allenby–Rossi program), and the
+seminar treats the Bayesian and classical (GMM / simulated maximum likelihood) camps
+as complementary toolkits rather than rival faiths. Endogeneity — prices and
+marketing-mix variables set in response to demand shocks the econometrician does not
+see — motivates instrumental variables, the BLP contraction-and-GMM machinery, and
+control-function approaches, alongside a candid critique of weak instruments in
+marketing (Rossi 2014). The final third turns dynamic and causal: **state dependence
+vs. heterogeneity** (is brand loyalty real switching cost or just persistent taste?),
+**forward-looking consumers and firms** (dynamic discrete choice à la Rust; learning
+models à la Erdem–Keane; dynamic advertising), and the **field-experiment /
+design-based** turn that reframed advertising-effect measurement (Lewis–Rao,
+Blake–Nosko–Tadelis) and pushed the field toward heterogeneous-treatment-effect
+estimation and ML-assisted targeting. The course closes on applied syntheses —
+attribution and customer-lifetime-value modeling — where the semester's tools are
+assembled into managerially decision-relevant systems. Throughout, weekly problem
+sets are estimation-heavy: students code a logit and a random-coefficients logit from
+scratch, run a Gibbs sampler, solve a small dynamic program, and replicate a
+published result.
+
+### Week 1 — Foundations: the demand-estimation paradigm & identification thinking {#sec-em-week01}
+
+**Topic.** What "structural" means and why a demand system is the organizing object
+of empirical marketing.
+
+**Subtopics.** Demand systems as the organizing object; identification vs.
+estimation; reading a paper for its identifying variation; the logit inversion that
+turns a demand model into an estimating equation.
+
+**Methods.** Utility-maximization micro-foundations; the share inversion; GMM vs.
+likelihood preview; extracting identifying assumptions from a published paper.
+
+**Key readings**
+
+- Berry, S. T. (1994), "Estimating Discrete-Choice Models of Product Differentiation," *RAND Journal of Economics* 25(2), pp. 242–262, [doi:10.2307/2555829](https://doi.org/10.2307/2555829) — @berry1994discretechoice. The share-inversion idea that turns a demand model into a linear-in-mean-utility estimating equation; the conceptual hinge of the course. [F]
+- Nevo, A. (2000), "A Practitioner's Guide to Estimation of Random-Coefficients Logit Models of Demand," *Journal of Economics & Management Strategy* 9(4), pp. 513–548, [doi:10.1111/j.1430-9134.2000.00513.x](https://doi.org/10.1111/j.1430-9134.2000.00513.x). The "practitioner's guide" everyone assigns to make BLP estimable; sets the computational template. [F]
+- Rossi, P. E. & Allenby, G. M. (2003), "Bayesian Statistics and Marketing," *Marketing Science* 22(3), pp. 304–328, [doi:10.1287/mksc.22.3.304.17739](https://doi.org/10.1287/mksc.22.3.304.17739). Frames the Bayesian alternative early so students see the two estimation paradigms side by side. [F]
+
+**Debate.** Structural ("estimate primitives, do counterfactuals") vs.
+reduced-form / design-based ("estimate a credible causal effect") — introduced here,
+revisited all semester.
+
+### Week 2 — Discrete choice I: logit/probit on individual panel data {#sec-em-week02}
+
+**Topic.** The multinomial logit on scanner-panel data and the econometrics of
+individual choice.
+
+**Subtopics.** MNL and the IIA property; nested logit; the scanner-panel data
+environment; loyalty / last-purchase variables.
+
+**Methods.** Coding an MNL likelihood; IIA tests; conditional / fixed-effects logit;
+interpreting marginal effects and elasticities.
+
+**Key readings**
+
+- Guadagni, P. M. & Little, J. D. C. (1983), "A Logit Model of Brand Choice Calibrated on Scanner Data," *Marketing Science* 2(3), pp. 203–238, [doi:10.1287/mksc.2.3.203](https://doi.org/10.1287/mksc.2.3.203) — @guadagni1983logit. The paper that launched scanner-data choice modeling in marketing; the canonical MNL-with-loyalty specification. [F]
+- Chamberlain, G. (1980), "Analysis of Covariance with Qualitative Data," *Review of Economic Studies* 47(1), pp. 225–238, [doi:10.2307/2297110](https://doi.org/10.2307/2297110). Conditional (fixed-effects) logit — how panel structure controls persistent unobserved heterogeneity; the econometric backbone. [F]
+
+**Debate.** Is the Guadagni–Little loyalty variable capturing structural state
+dependence or merely soaking up heterogeneity? (Foreshadows Week 9.)
+
+### Week 3 — Unobserved heterogeneity I: mixed logit & random coefficients {#sec-em-week03}
+
+**Topic.** Modeling taste heterogeneity so substitution patterns are not straitjacketed
+by IIA.
+
+**Subtopics.** The IIA problem and substitution patterns; random-coefficients logit;
+simulated maximum likelihood; finite-mixture (latent-class) models.
+
+**Methods.** Monte Carlo integration / SML; latent-class EM; comparing fixed vs.
+random heterogeneity specifications.
+
+**Key readings**
+
+- Gönül, F. & Srinivasan, K. (1993), "Modeling Multiple Sources of Heterogeneity in Multinomial Logit Models: Methodological and Managerial Issues," *Marketing Science* 12(3), pp. 213–229, [doi:10.1287/mksc.12.3.213](https://doi.org/10.1287/mksc.12.3.213). Multiple sources of heterogeneity in MNL; the managerial-vs-methodological framing marketing students need. [F]
+- Allenby, G. M. & Rossi, P. E. (1998), "Marketing Models of Consumer Heterogeneity," *Journal of Econometrics* 89(1–2), pp. 57–78, [doi:10.1016/s0304-4076(98)00055-4](https://doi.org/10.1016/s0304-4076(98)00055-4) — @allenby1998heterogeneity. The case for modeling continuous heterogeneity and its consequences for pricing/targeting. [F]
+
+**Debate.** Parametric mixing distribution vs. nonparametric / finite-mixture; how
+much heterogeneity is "real" vs. an artifact of misspecification.
+
+### Week 4 — Hierarchical Bayes & MCMC estimation {#sec-em-week04}
+
+**Topic.** Hierarchical Bayes as the marketing-native engine for individual-level
+inference.
+
+**Subtopics.** The hierarchical model; Gibbs sampling and data augmentation;
+individual-level posterior estimates; shrinkage and borrowing strength.
+
+**Methods.** Writing a Gibbs sampler for a hierarchical multinomial logit/probit;
+convergence diagnostics; posterior predictive checks.
+
+**Key readings**
+
+- Rossi, P. E., McCulloch, R. E. & Allenby, G. M. (1996), "The Value of Purchase History Data in Target Marketing," *Marketing Science* 15(4), pp. 321–340, [doi:10.1287/mksc.15.4.321](https://doi.org/10.1287/mksc.15.4.321) — @rossi1996purchasehistory. The flagship demonstration that household-level Bayesian estimates have direct target-marketing value. [F]
+- Rossi, P. E. & Allenby, G. M. (2003), "Bayesian Statistics and Marketing," *Marketing Science* 22(3), pp. 304–328, [doi:10.1287/mksc.22.3.304.17739](https://doi.org/10.1287/mksc.22.3.304.17739). The agenda-setting review of Bayesian methods for marketing decision problems. [F]
+
+**Debate.** Bayes vs. classical for heterogeneity — individual-level inference and
+decision-theoretic loss vs. frequentist guarantees.
+
+### Week 5 — Aggregate demand: the BLP random-coefficients model {#sec-em-week05}
+
+**Topic.** Estimating demand from market shares with endogenous prices — the BLP
+machinery.
+
+**Subtopics.** Demand from market shares; the contraction mapping; supply side and
+markups; micro-moments / combining macro and micro data.
+
+**Methods.** The BLP contraction; nested GMM; computing own/cross price elasticities
+and implied markups.
+
+**Key readings**
+
+- Berry, S., Levinsohn, J. & Pakes, A. (1995), "Automobile Prices in Market Equilibrium," *Econometrica* 63(4), pp. 841–890, [doi:10.2307/2171802](https://doi.org/10.2307/2171802) — @berry1995. The foundational aggregate random-coefficients model with endogenous prices; the field's most-imitated method. [F]
+- Nevo, A. (2001), "Measuring Market Power in the Ready-to-Eat Cereal Industry," *Econometrica* 69(2), pp. 307–342, [doi:10.1111/1468-0262.00194](https://doi.org/10.1111/1468-0262.00194). The canonical applied BLP used to teach implementation and the market-power counterfactual. [F]
+- Nevo, A. (2000), "A Practitioner's Guide to Estimation of Random-Coefficients Logit Models of Demand," *Journal of Economics & Management Strategy* 9(4), pp. 513–548, [doi:10.1111/j.1430-9134.2000.00513.x](https://doi.org/10.1111/j.1430-9134.2000.00513.x). The estimation recipe students actually code against. [F]
+
+**Debate.** Aggregate vs. individual data — what is gained/lost by estimating from
+shares; numerical fragility and the "BLP is hard to get right" literature.
+
+### Week 6 — Endogeneity I: instrumental variables & control functions {#sec-em-week06}
+
+**Topic.** Price endogeneity and the two main fixes — IV/GMM and control functions.
+
+**Subtopics.** Price endogeneity from unobserved product/demand shocks; cost-shifter
+and Hausman/BLP instruments; the control-function alternative for nonlinear models.
+
+**Methods.** 2SLS/GMM with logit; control-function (residual-inclusion) estimation;
+instrument-relevance/validity diagnostics.
+
+**Key readings**
+
+- Villas-Boas, J. M. & Winer, R. S. (1999), "Endogeneity in Brand Choice Models," *Management Science* 45(10), pp. 1324–1338, [doi:10.1287/mnsc.45.10.1324](https://doi.org/10.1287/mnsc.45.10.1324) — @villas-boas1999. The paper that put price endogeneity on the marketing field's agenda for brand-choice models. [F]
+- Petrin, A. & Train, K. (2010), "A Control Function Approach to Endogeneity in Consumer Choice Models," *Journal of Marketing Research* 47(1), pp. 3–13, [doi:10.1509/jmkr.47.1.3](https://doi.org/10.1509/jmkr.47.1.3) — @Petrin_2010. The control-function approach — the practical alternative to BLP-style IV inside choice models. [F]
+- Chintagunta, P., Dubé, J.-P. & Goh, K. Y. (2005), "Beyond the Endogeneity Bias: The Effect of Unmeasured Brand Characteristics on Household-Level Brand Choice Models," *Management Science* 51(5), pp. 832–849, [doi:10.1287/mnsc.1040.0323](https://doi.org/10.1287/mnsc.1040.0323) — @chintagunta2005. Endogeneity from unobserved brand characteristics at the household level; bridges micro and aggregate treatments. [F]
+
+**Debate.** IV vs. control function; what makes a credible marketing instrument.
+
+### Week 7 — Endogeneity II: the IV critique & the credibility standard {#sec-em-week07}
+
+**Topic.** When instruments fail, and the credibility standard the field now demands.
+
+**Subtopics.** Weak/invalid instruments; the bias–variance trade-off of IV; when to
+prefer direct measurement or design over instrumenting.
+
+**Methods.** First-stage F-stats and weak-instrument diagnostics; overidentification
+(J) tests; sensitivity analysis.
+
+**Key readings**
+
+- Rossi, P. E. (2014), "Even the Rich Can Make Themselves Poor: A Critical Examination of IV Methods in Marketing Applications," *Marketing Science* 33(5), pp. 655–672, [doi:10.1287/mksc.2014.0860](https://doi.org/10.1287/mksc.2014.0860) — @rossi2014. The influential critique arguing strong, valid instruments are rare in marketing. [R]
+- Hansen, L. P. (1982), "Large Sample Properties of Generalized Method of Moments Estimators," *Econometrica* 50(4), pp. 1029–1054, [doi:10.2307/1912775](https://doi.org/10.2307/1912775). GMM foundations — the inferential machinery (and overidentification test) underneath IV and BLP. [F]
+
+**Debate.** The "credibility revolution" reaches marketing — instrument-based vs.
+experimental/design-based identification; how much to trust structural counterfactuals
+built on weak IVs.
+
+### Week 8 — Panel data, fixed effects & dynamic panels {#sec-em-week08}
+
+**Topic.** Within vs. between variation and the econometrics of nonlinear panels.
+
+**Subtopics.** Within vs. between variation; fixed vs. random effects; the
+incidental-parameters problem; lagged-dependent-variable bias.
+
+**Methods.** FE/RE estimation and Hausman testing; handling initial-conditions and
+incidental-parameters problems; clustering/inference in panels.
+
+**Key readings**
+
+- Chamberlain, G. (1980), "Analysis of Covariance with Qualitative Data," *Review of Economic Studies* 47(1), pp. 225–238, [doi:10.2307/2297110](https://doi.org/10.2307/2297110). Conditional-likelihood estimation that differences out fixed effects in nonlinear panels. [F]
+- Keane, M. P. (1997), "Modeling Heterogeneity and State Dependence in Consumer Choice Behavior," *Journal of Business & Economic Statistics* 15(3), pp. 310–327, [doi:10.1080/07350015.1997.10524709](https://doi.org/10.1080/07350015.1997.10524709) — @keane1997statedependence. The reference treatment of heterogeneity vs. state dependence in panel choice data; the methodological heart of the course's dynamics half. [F]
+
+**Debate.** Fixed effects (robust, costly in degrees of freedom) vs.
+random effects / hierarchical (efficient, requires distributional assumptions).
+
+### Week 9 — State dependence vs. heterogeneity (consumer inertia) {#sec-em-week09}
+
+**Topic.** The field's signature identification problem: real switching costs vs.
+persistent taste.
+
+**Subtopics.** Structural state dependence vs. persistent heterogeneity; loyalty as
+switching cost; initial conditions; identification from price/promotion variation.
+
+**Methods.** Specifying lagged-choice effects; controlling for unobserved
+heterogeneity while estimating state dependence; exploiting moves/shocks for
+identification.
+
+**Key readings**
+
+- Keane, M. P. (1997), "Modeling Heterogeneity and State Dependence in Consumer Choice Behavior," *Journal of Business & Economic Statistics* 15(3), pp. 310–327, [doi:10.1080/07350015.1997.10524709](https://doi.org/10.1080/07350015.1997.10524709) — @keane1997statedependence. The framing paper: disentangling true state dependence from spurious persistence. [F]
+- Dubé, J.-P., Hitsch, G. J. & Rossi, P. E. (2010), "State Dependence and Alternative Explanations for Consumer Inertia," *RAND Journal of Economics* 41(3), pp. 417–445, [doi:10.1111/j.1756-2171.2010.00106.x](https://doi.org/10.1111/j.1756-2171.2010.00106.x). The modern reference distinguishing genuine switching costs from alternative explanations for inertia. [R]
+- Bronnenberg, B. J., Dubé, J.-P. & Gentzkow, M. (2012), "The Evolution of Brand Preferences: Evidence from Consumer Migration," *American Economic Review* 102(6), pp. 2472–2508, [doi:10.1257/aer.102.6.2472](https://doi.org/10.1257/aer.102.6.2472). Brand capital and persistent preferences identified from consumer migration — a clean natural-experiment take on "why preferences persist." [R]
+
+**Debate.** What variation separates habit/loyalty from taste, and why it matters for
+pricing and promotion policy.
+
+### Week 10 — Dynamic discrete choice: forward-looking consumers & firms {#sec-em-week10}
+
+**Topic.** Estimating choice when agents are forward-looking.
+
+**Subtopics.** The dynamic-programming choice framework; conditional value functions;
+nested fixed-point estimation; stockpiling and learning.
+
+**Methods.** Solving a discrete DP by value-function iteration; the nested
+fixed-point algorithm; likelihood for forward-looking choices.
+
+**Key readings**
+
+- Rust, J. (1987), "Optimal Replacement of GMC Bus Engines: An Empirical Model of Harold Zurcher," *Econometrica* 55(5), pp. 999–1033, [doi:10.2307/1911259](https://doi.org/10.2307/1911259). The foundational dynamic-discrete-choice model; the estimation template (NFXP) for forward-looking agents. [F]
+- Erdem, T. & Keane, M. P. (1996), "Decision-Making Under Uncertainty: Capturing Dynamic Brand Choice Processes in Turbulent Consumer Goods Markets," *Marketing Science* 15(1), pp. 1–20, [doi:10.1287/mksc.15.1.1](https://doi.org/10.1287/mksc.15.1.1) — @erdem1996learning. Brings dynamic decision-making under uncertainty (Bayesian learning) into marketing brand choice. [F]
+- Erdem, T., Keane, M. P. & Sun, B. (2008), "A Dynamic Model of Brand Choice When Price and Advertising Signal Product Quality," *Marketing Science* 27(6), pp. 1111–1125, [doi:10.1287/mksc.1080.0362](https://doi.org/10.1287/mksc.1080.0362). Price and advertising as quality signals in a dynamic learning model — frontier integration of dynamics, information, and marketing mix. [R]
+
+**Debate.** Myopic vs. forward-looking specifications; the heavy
+computational/identification cost of full-solution dynamics vs. two-step (CCP)
+estimators.
+
+### Week 11 — Advertising & marketing-mix dynamics; aggregate response {#sec-em-week11}
+
+**Topic.** Dynamic advertising and aggregate marketing-mix response.
+
+**Subtopics.** Advertising carryover/goodwill stocks; dynamic firm advertising
+policy; aggregate marketing-mix response; sponsored-search/digital dynamics.
+
+**Methods.** Estimating Koyck/goodwill carryover; dynamic optimization of a marketing
+instrument; aggregate response identification.
+
+**Key readings**
+
+- Dubé, J.-P., Hitsch, G. J. & Manchanda, P. (2005), "An Empirical Model of Advertising Dynamics," *Quantitative Marketing and Economics* 3(2), pp. 107–144, [doi:10.1007/s11129-005-0334-2](https://doi.org/10.1007/s11129-005-0334-2). Estimating advertising goodwill dynamics and rationalizing pulsing — the modern dynamic-advertising reference. [R]
+- Yao, S. & Mela, C. F. (2011), "A Dynamic Model of Sponsored Search Advertising," *Marketing Science* 30(3), pp. 447–468, [doi:10.1287/mksc.1100.0626](https://doi.org/10.1287/mksc.1100.0626). A dynamic structural model of sponsored-search advertising; ports dynamics to digital marketplaces. [R]
+
+**Debate.** Structural dynamic models of advertising vs. design-based field-experiment
+measurement (sets up Week 12).
+
+### Week 12 — Causal inference & field experiments in marketing {#sec-em-week12}
+
+**Topic.** The experimental turn in advertising-effect measurement.
+
+**Subtopics.** The experimental turn in advertising measurement; regression
+discontinuity and natural experiments; selection and endogenous targeting in
+observational ad data.
+
+**Methods.** Designing/analyzing large field experiments; power analysis for ad
+effects; RD estimation and validity checks.
+
+**Key readings**
+
+- Lewis, R. A. & Rao, J. M. (2015), "The Unfavorable Economics of Measuring the Returns to Advertising," *Quarterly Journal of Economics* 130(4), pp. 1941–1973, [doi:10.1093/qje/qjv023](https://doi.org/10.1093/qje/qjv023) — @Lewis_2015. Why observational and even experimental advertising-ROI estimates are so noisy — recalibrated the field's expectations. [R]
+- Blake, T., Nosko, C. & Tadelis, S. (2015), "Consumer Heterogeneity and Paid Search Effectiveness: A Large-Scale Field Experiment," *Econometrica* 83(1), pp. 155–174, [doi:10.3982/ecta12423](https://doi.org/10.3982/ecta12423) — @blake2015. The eBay paid-search field experiment showing large observational estimates collapse under randomization. [R]
+- Hartmann, W., Nair, H. S. & Narayanan, S. (2011), "Identifying Causal Marketing Mix Effects Using a Regression Discontinuity Design," *Marketing Science* 30(6), pp. 1079–1097, [doi:10.1287/mksc.1110.0670](https://doi.org/10.1287/mksc.1110.0670). Regression-discontinuity identification of marketing-mix effects — quasi-experimental design inside a marketing setting. [R]
+
+**Debate.** Experiments vs. structural models — internal validity and causal
+credibility vs. counterfactual richness and external extrapolation.
+
+### Week 13 — Heterogeneous treatment effects, targeting & ML-meets-econometrics {#sec-em-week13}
+
+**Topic.** Estimating who responds, and turning that into a targeting policy.
+
+**Subtopics.** CATE estimation; causal forests / honest trees; ML for policy
+targeting; robustness to real data challenges.
+
+**Methods.** Estimating CATEs; constructing and evaluating targeting policies;
+cross-fitting and honesty; out-of-sample policy value.
+
+**Key readings**
+
+- Wager, S. & Athey, S. (2018), "Estimation and Inference of Heterogeneous Treatment Effects Using Random Forests," *Journal of the American Statistical Association* 113(523), pp. 1228–1242, [doi:10.1080/01621459.2017.1319839](https://doi.org/10.1080/01621459.2017.1319839). Causal forests for heterogeneous-treatment-effect estimation with valid inference — the bridge from ML to causal targeting. [R]
+- Simester, D., Timoshenko, A. & Zoumpoulis, S. I. (2020), "Targeting Prospective Customers: Robustness of Machine-Learning Methods to Typical Data Challenges," *Management Science* 66(6), pp. 2495–2522, [doi:10.1287/mnsc.2019.3308](https://doi.org/10.1287/mnsc.2019.3308). Field-experiment evaluation of ML targeting methods under typical marketing-data pathologies. [R]
+
+**Debate.** Prediction vs. causal targeting; can off-the-shelf ML deliver valid
+policies, and when does it break?
+
+### Week 14 — Applied synthesis: attribution & customer-lifetime-value models {#sec-em-week14}
+
+**Topic.** Assembling the semester's tools into CLV and attribution systems.
+
+**Subtopics.** Buy-till-you-die / Pareto-NBD models; RFM and CLV; multichannel
+attribution; carryover and spillover across touchpoints; social interactions as a
+recurring identification challenge.
+
+**Methods.** Fitting Pareto/NBD and BG/NBD; computing CLV; estimating attribution
+with carryover/spillover; recognizing the reflection problem.
+
+**Key readings**
+
+- Schmittlein, D. C., Morrison, D. G. & Colombo, R. (1987), "Counting Your Customers: Who Are They and What Will They Do Next?," *Management Science* 33(1), pp. 1–24, [doi:10.1287/mnsc.33.1.1](https://doi.org/10.1287/mnsc.33.1.1). The Pareto/NBD model — foundation of probabilistic CLV. [F]
+- Fader, P. S., Hardie, B. G. S. & Lee, K. L. (2005), "RFM and CLV: Using Iso-Value Curves for Customer Base Analysis," *Journal of Marketing Research* 42(4), pp. 415–430, [doi:10.1509/jmkr.2005.42.4.415](https://doi.org/10.1509/jmkr.2005.42.4.415). RFM-to-CLV via iso-value curves — the bridge from the academic model to managerial customer-base analysis. [F]
+- Li, H. (A.) & Kannan, P. K. (2014), "Attributing Conversions in a Multichannel Online Marketing Environment: An Empirical Model and a Field Experiment," *Journal of Marketing Research* 51(1), pp. 40–56, [doi:10.1509/jmr.13.0050](https://doi.org/10.1509/jmr.13.0050) — @li2014. Multichannel attribution combining an empirical model with a field experiment — the capstone integrating choice, dynamics, and experiments. [R]
+- Hartmann, W. R., Manchanda, P., Nair, H., Bothner, M., Dodds, P., Godes, D., Hosanagar, K. & Tucker, C. (2008), "Modeling Social Interactions: Identification, Empirical Methods and Policy Implications," *Marketing Letters* 19(3–4), pp. 287–304, [doi:10.1007/s11002-008-9048-z](https://doi.org/10.1007/s11002-008-9048-z). Identification of social interactions — the reflection problem students must recognize whenever "network" effects appear. [R]
+
+**Debate.** Correlation vs. causation in attribution and "viral" effects; model-based
+CLV vs. machine-learned churn/value scoring.
+
+### Foundational vs. frontier at a glance {#sec-em-foundational-vs-frontier}
+
+- **Demand/choice.** *Foundational:* logit/MNL (Guadagni–Little); the Berry inversion;
+  BLP; Nevo's practitioner's guide. *Frontier:* combining micro and macro data;
+  ML-based demand.
+- **Heterogeneity.** *Foundational:* random coefficients; hierarchical Bayes
+  (Allenby–Rossi). *Frontier:* nonparametric heterogeneity; deep/embedding models.
+- **Endogeneity.** *Foundational:* IV/GMM (Hansen); control functions (Petrin–Train).
+  *Frontier:* the IV critique (Rossi 2014); design-based identification.
+- **Panel/dynamics.** *Foundational:* fixed-effects/conditional logit (Chamberlain);
+  state dependence (Keane); dynamic discrete choice (Rust). *Frontier:* Bayesian
+  learning (Erdem–Keane); CCP/two-step estimators.
+- **Causal/experiments.** *Foundational:* newer to the canon. *Frontier:* field
+  experiments (Lewis–Rao; Blake–Nosko–Tadelis); regression discontinuity;
+  heterogeneous-treatment-effect / causal forests (Wager–Athey).
+- **Applied synthesis.** *Foundational:* Pareto/NBD (Schmittlein–Morrison–Colombo);
+  CLV (Fader–Hardie–Lee). *Frontier:* multichannel attribution (Li–Kannan); ML
+  targeting (Simester et al.).
+
+The first ~8 weeks are highly stable across programs and decades; weeks 12–13 are
+where syllabi differ most (Stanford/Berkeley/MIT lean experiments and ML; Ohio
+State/Wharton lean Bayes; Chicago/Yale lean structural IO). A 13-week version
+typically merges Weeks 6–7 (endogeneity) or Weeks 11–12 (dynamics/experiments).
+
+### How this reading map expands {#sec-em-reading-map-expands}
+
+This reading map is a living scaffold meant to grow alongside the runnable code in
+the rest of the chapter:
+
+1. **Estimation walk-throughs as worked code.** Each foundational module should ship a
+   reproducible estimator in the book's house style: a hand-coded MNL log-likelihood,
+   a random-coefficients logit via simulated ML, a Gibbs sampler for a hierarchical
+   probit, a small value-function iteration for a Rust-style dynamic program, and a
+   BLP contraction. These are the chapter's highest-value, longest-lived assets.
+2. **Identification call-outs.** For every model, add a boxed "what identifies the key
+   parameter" note and a "what breaks it" note — the seminar's central skill, and what
+   differentiates the chapter from a methods cookbook.
+3. **The structural-vs-design debate as a through-line.** Rather than confining it to a
+   single week, thread the tension (counterfactual richness vs. causal credibility)
+   across demand, endogeneity, dynamics, and experiments, and close with a synthesis
+   on when each approach is decision-relevant.
+4. **Frontier refresh cadence.** Weeks 12–13 (experiments, HTE/ML, targeting) and the
+   digital-dynamics material age fastest; budget a periodic pass to add current
+   top-journal work on platform/algorithmic demand, privacy-constrained measurement,
+   and LLM/embedding-based demand models.
+5. **Cross-references.** Wire the map to sibling chapters — conjoint/preference
+   measurement (choice foundations), advertising and marketing-mix modeling
+   (Weeks 11–12), the CLV material (Week 14, and @sec-rfm here), structural models
+   (Weeks 5 and 10), and the data/estimation craft chapters.
+6. **Replication appendix.** Add a "replicate a classic" exercise (a teaching-scale BLP
+   on public market-share data; a Pareto/NBD on a CDNOW-style dataset) so students
+   leave having reproduced a published result.
+
+As bibliography entries are added for the works named in full above (Nevo 2000/2001,
+Rossi–Allenby 2003, Chamberlain 1980, Gönül–Srinivasan 1993, Hansen 1982,
+Dubé–Hitsch–Rossi 2010, Bronnenberg–Dubé–Gentzkow 2012, Rust 1987,
+Erdem–Keane–Sun 2008, Dubé–Hitsch–Manchanda 2005, Yao–Mela 2011,
+Hartmann–Nair–Narayanan 2011, Wager–Athey 2018, Simester–Timoshenko–Zoumpoulis 2020,
+Schmittlein–Morrison–Colombo 1987, Fader–Hardie–Lee 2005, and the Hartmann et al. 2008
+social-interactions review), each prose citation can be upgraded to an `@`-key citation
+without changing the surrounding text.

@@ -1163,3 +1163,498 @@ treatment of zero shares and platform competition, @dube2021random and @tan2021e
 The structural marketing applications—@cosguner2022dynamic, @cosguner2017behavioral,
 @zhang2017dynamically, and @chintagunta2010effects—are entry points to the empirical
 literature that puts these models to work.
+
+## Full-semester seminar reading map {#sec-io-seminar-reading-map}
+
+The discrete-choice and structural material developed above is, in most doctoral
+programs, only the first movement of a full-semester sequence in structural
+econometrics / empirical industrial organization (EIO). This section appends a
+13–14 week seminar reading map that situates the chapter's BLP-style demand model
+inside the broader EIO pipeline—demand, then supply and conduct, then
+counterfactuals, taught first for static markets and then again for dynamic ones.
+Every reading carries a Crossref-verified version-of-record DOI (copied verbatim from
+the source syllabus, verified 2026-06-21); where a work has no entry in this book's
+bibliography it is named in full rather than cited by key. Foundational canon is marked
+**[F]** and frontier / actively-contested methods **[R]**.
+
+### The semester arc {#sec-io-semester-arc}
+
+The structural-IO seminar is organized as a single methodological pipeline taught
+twice—once for *static* markets and once for *dynamic* ones. The spine is the
+demand–supply equilibrium model of a differentiated-products oligopoly: students first
+learn to estimate **demand** for differentiated products (logit, nested logit, and the
+random-coefficients/BLP workhorse), then to layer a **supply side** (Bertrand–Nash
+pricing, markups, conduct) on top, and finally to use the estimated structural
+parameters to run **counterfactuals** (mergers, new goods, price regulation, taxes).
+This static arc—roughly the first half of the term—is where the field's identification
+arguments, instruments, and estimation algorithms (GMM, the BLP nested fixed point, and
+MPEC) are taught most carefully, because every later model reuses them.
+
+The second half generalizes the same logic to settings where agents are
+**forward-looking**. Consumers become dynamic when goods are durable or storable; firms
+become dynamic when they invest, enter, or exit. The methodological payload here is
+**dynamic discrete choice**—Rust's nested fixed point and the conditional-choice-
+probability (CCP) shortcut of Hotz–Miller—extended to dynamic games via two-step
+estimators. The seminar then surveys the major application areas that have organized the
+field's recent agenda: entry and market structure, auctions, two-sided/platform markets,
+and consumer search and consideration. The term typically closes on the active frontier
+where machine learning meets structural estimation (heterogeneous treatment effects,
+text-as-data, high-dimensional demand) and on a recurring debate that runs through the
+whole course: structural vs. reduced-form / "credible" design-based inference.
+Pedagogically, most programs intertwine three threads every week: the economic *model*
+and its equilibrium concept; the *econometrics* of what is identified, from what
+variation, under what exclusion restrictions; and *computation*—students are expected to
+code estimators (increasingly in Python with PyBLP, or in Julia/MATLAB) and replicate a
+canonical paper. The marketing version of the seminar leans harder on individual-level
+scanner/CRM data, consumer heterogeneity, micro-moments, and managerial counterfactuals
+than the economics version, which leans toward antitrust and policy.
+
+### Week 1 — Foundations: the structural approach and the modeling cycle {#sec-io-week01}
+
+**Topic:** What the structural approach buys and what it costs, and the demand–supply–
+counterfactual loop that organizes the rest of the term.
+
+**Subtopics:** What "structural" buys you (welfare, counterfactuals, extrapolation) vs.
+its costs (assumptions, computation); the demand–supply–counterfactual loop; the
+structural vs. reduced-form debate.
+
+**Methods:** Reading a structural paper; mapping primitives → estimating equations →
+counterfactual.
+
+**Key readings:**
+
+- **[F]** @berry1994discretechoice — Berry, S. (1994), "Estimating Discrete-Choice Models
+  of Product Differentiation," *RAND Journal of Economics* 25(2): 242–262.
+  [doi:10.2307/2555829](https://doi.org/10.2307/2555829). The mean-utility inversion that
+  makes aggregate differentiated-products demand estimable—the conceptual on-ramp to the
+  whole field.
+- **[F]** Nevo, A. (2000), "A Practitioner's Guide to Estimation of Random-Coefficients
+  Logit Models of Demand," *Journal of Economics & Management Strategy* 9(4): 513–548.
+  [doi:10.1162/105864000567954](https://doi.org/10.1162/105864000567954). The teaching
+  reference that turns BLP into runnable code; a near-universal Week 1–3 reading.
+
+**Debate:** When are structural assumptions worth their cost vs. a clean natural
+experiment?
+
+### Week 2 — Discrete-choice demand I: logit and nested logit {#sec-io-week02}
+
+**Topic:** Random-utility demand and the substitution patterns that logit and nested
+logit can and cannot represent.
+
+**Subtopics:** Random utility; IIA and its failures; the logit "red bus/blue bus"
+problem; nested logit and the substitution-pattern fix; aggregate vs. individual data.
+
+**Methods:** Deriving choice probabilities; computing own- and cross-price elasticities;
+handling the "outside good."
+
+**Key readings:**
+
+- **[F]** @berry1994estimating — Berry, S. (1994), *RAND J. Econ.* 25(2): 242–262.
+  [doi:10.2307/2555829](https://doi.org/10.2307/2555829). (Re-used) the mean-utility
+  inversion specializes cleanly to logit and nested logit.
+
+**Debate:** Is IIA an acceptable approximation, or does it doom logit for policy work?
+
+### Week 3 — Discrete-choice demand II: random coefficients / BLP {#sec-io-week03}
+
+**Topic:** The random-coefficients demand-and-supply workhorse and the endogeneity
+problem it solves.
+
+**Subtopics:** Unobserved product characteristics (ξ) and price endogeneity; random
+coefficients for flexible substitution; the contraction mapping; BLP instruments.
+
+**Methods:** GMM with the BLP nested fixed point; constructing demand-side instruments;
+micro-moments.
+
+**Key readings:**
+
+- **[F]** @berry1995automobile — Berry, S., Levinsohn, J., & Pakes, A. (1995),
+  "Automobile Prices in Market Equilibrium," *Econometrica* 63(4): 841–890.
+  [doi:10.2307/2171802](https://doi.org/10.2307/2171802). The foundational
+  random-coefficients demand-and-supply paper; the workhorse of the field.
+- **[F]** Nevo, A. (2001), "Measuring Market Power in the Ready-to-Eat Cereal Industry,"
+  *Econometrica* 69(2): 307–342.
+  [doi:10.1111/1468-0262.00194](https://doi.org/10.1111/1468-0262.00194). The canonical
+  applied BLP study; introduces brand-specific intercepts and panel structure to control
+  for ξ.
+- **[R]** @berry2004differentiated — Berry, S., Levinsohn, J., & Pakes, A. (2004),
+  "Differentiated Products Demand Systems from a Combination of Micro and Macro Data: The
+  New Car Market," *Journal of Political Economy* 112(1): 68–105.
+  [doi:10.1086/379939](https://doi.org/10.1086/379939). Shows how consumer-level
+  micro-moments sharpen identification of heterogeneity; the template for modern marketing
+  applications.
+
+**Debate:** What variation actually identifies the random coefficients, and how fragile
+is it to weak instruments?
+
+### Week 4 — Identification & instruments in demand estimation {#sec-io-week04}
+
+**Topic:** What differentiated-products demand identifies nonparametrically, and which
+instruments deliver it.
+
+**Subtopics:** Price endogeneity; cost-shifters, Hausman, and BLP-type instruments;
+nonparametric identification of demand; instrument relevance and validity.
+
+**Methods:** Exclusion restrictions; testing instrument strength; the "connected
+substitutes" condition.
+
+**Key readings:**
+
+- **[R]** Berry, S. & Haile, P. (2014), "Identification in Differentiated Products Markets
+  Using Market Level Data," *Econometrica* 82(5): 1749–1797.
+  [doi:10.3982/ECTA9027](https://doi.org/10.3982/ECTA9027). Establishes nonparametric
+  identification of differentiated-products demand and supply; reframes BLP's parametric
+  choices as identification, not just estimation.
+
+**Debate:** Are the standard instruments (rival characteristics, cost shifters) credible,
+and what do they identify nonparametrically?
+
+### Week 5 — Estimation & computation: GMM, NFP, and MPEC {#sec-io-week05}
+
+**Topic:** How the BLP estimator is actually computed, and how much numerical choices move
+published results.
+
+**Subtopics:** GMM objective and weighting; the nested fixed-point (NFP) algorithm; MPEC
+(constrained optimization) as an alternative; numerical pitfalls (tight inner loops,
+local minima); modern software.
+
+**Methods:** Coding the contraction; MPEC vs. NFP; optimal instruments; supply-side
+moments; PyBLP.
+
+**Key readings:**
+
+- **[R]** Dubé, J.-P., Fox, J. T., & Su, C.-L. (2012), "Improving the Numerical
+  Performance of Static and Dynamic Aggregate Discrete Choice Random Coefficients Demand
+  Estimation," *Econometrica* 80(5): 2231–2267.
+  [doi:10.3982/ecta8585](https://doi.org/10.3982/ecta8585). Reformulates BLP estimation as
+  MPEC, showing the NFP inner-loop tolerance can bias estimates; reshaped how the field
+  computes BLP.
+- **[R]** @conlon2020 — Conlon, C. & Gortmaker, J. (2020), "Best Practices for
+  Differentiated Products Demand Estimation with PyBLP," *RAND Journal of Economics* 51(4):
+  1108–1161. [doi:10.1111/1756-2171.12352](https://doi.org/10.1111/1756-2171.12352). The
+  current computational standard and the software most students now use; consolidates two
+  decades of practical lessons.
+
+**Debate:** How much do numerical choices (tolerances, optimizers, starting values) drive
+published BLP results?
+
+### Week 6 — Supply, conduct, and markups {#sec-io-week06}
+
+**Topic:** Adding the supply side—recovering marginal costs and markups, and testing how
+firms compete.
+
+**Subtopics:** Bertrand–Nash pricing with differentiated products; recovering marginal
+costs from the first-order conditions; testing conduct (Cournot vs. Bertrand vs.
+collusion); identification of the conduct parameter.
+
+**Methods:** Inverting FOCs for markups/marginal costs; ownership matrices; conduct
+tests.
+
+**Key readings:**
+
+- **[F]** Bresnahan, T. F. (1982), "The Oligopoly Solution Concept Is Identified,"
+  *Economics Letters* 10(1–2): 87–92.
+  [doi:10.1016/0165-1765(82)90121-5](https://doi.org/10.1016/0165-1765(82)90121-5). The
+  original result that demand rotations identify the conduct parameter; foundation of the
+  "new empirical IO."
+- **[F]** Nevo, A. (1998), "Identification of the Oligopoly Solution Concept in a
+  Differentiated-Products Industry," *Economics Letters* 59(3): 391–395.
+  [doi:10.1016/s0165-1765(98)00061-5](https://doi.org/10.1016/s0165-1765(98)00061-5).
+  Extends conduct identification to differentiated products; the bridge from Bresnahan to
+  BLP-style supply.
+- **[F]** Nevo, A. (2001), *Econometrica* 69(2): 307–342.
+  [doi:10.1111/1468-0262.00194](https://doi.org/10.1111/1468-0262.00194). (Re-used)
+  recovers cereal markups and decomposes them into cost, markup, and portfolio effects.
+
+**Debate:** Can conduct be credibly tested, or must it be assumed? (the "testing vs.
+calibrating conduct" problem)
+
+### Week 7 — Counterfactuals & merger / policy simulation {#sec-io-week07}
+
+**Topic:** Using estimated demand and supply to recompute equilibria under mergers, new
+goods, and policy changes.
+
+**Subtopics:** Recomputing equilibrium prices under new ownership (mergers), new goods,
+taxes/regulation; welfare and consumer surplus from logit/BLP; passthrough; the role of
+supply-side assumptions in counterfactuals.
+
+**Methods:** Solving for post-merger equilibrium; computing compensating variation;
+sensitivity of counterfactuals to conduct.
+
+**Key readings:**
+
+- **[F]** Nevo, A. (2000), *J. Econ. & Mgmt. Strategy* 9(4): 513–548.
+  [doi:10.1162/105864000567954](https://doi.org/10.1162/105864000567954). (Re-used) lays
+  out the merger-simulation mechanics that follow directly from estimated demand and FOCs.
+- **[F]** @petrin2002minivan — Petrin, A. (2002), "Quantifying the Benefits of New
+  Products: The Case of the Minivan," *Journal of Political Economy* 110(4): 705–729.
+  [doi:10.1086/340779](https://doi.org/10.1086/340779). The canonical "value of a new good"
+  counterfactual; shows how micro-data discipline the welfare numbers.
+
+**Debate:** How much do counterfactuals depend on un-tested supply assumptions and
+out-of-sample extrapolation?
+
+### Week 8 — Dynamic demand: durable and storable goods {#sec-io-week08}
+
+**Topic:** Forward-looking consumers and the bias from ignoring durability or
+stockpiling.
+
+**Subtopics:** Forward-looking consumers; the durable-goods problem (Coase) and
+intertemporal price discrimination; stockpiling and storable goods; dynamic demand
+estimation.
+
+**Methods:** Solving consumer dynamic programs; integrating dynamics into BLP-style
+demand; managing the state space.
+
+**Key readings:**
+
+- **[R]** Gowrisankaran, G. & Rysman, M. (2012), "Dynamics of Consumer Demand for New
+  Durable Goods," *Journal of Political Economy* 120(6): 1173–1219.
+  [doi:10.1086/669540](https://doi.org/10.1086/669540). The workhorse framework for
+  estimating dynamic demand for durables (digital camcorders); falling prices and
+  forward-looking buyers.
+- **[R]** Hendel, I. & Nevo, A. (2006), "Measuring the Implications of Sales and Consumer
+  Inventory Behavior," *Econometrica* 74(6): 1637–1673.
+  [doi:10.1111/j.1468-0262.2006.00721.x](https://doi.org/10.1111/j.1468-0262.2006.00721.x).
+  Shows how ignoring consumer stockpiling biases demand elasticities; the canonical
+  storable-goods paper.
+- **[R]** Nair, H. (2007), "Intertemporal Price Discrimination with Forward-Looking
+  Consumers: Application to the US Market for Console Video-Games," *Quantitative Marketing
+  and Economics* 5(3): 239–292.
+  [doi:10.1007/s11129-007-9026-4](https://doi.org/10.1007/s11129-007-9026-4). The
+  marketing-canon dynamic-demand application; links forward-looking demand to optimal
+  dynamic pricing.
+
+**Debate:** How to handle expectations about future prices/products without overfitting
+the dynamics?
+
+### Week 9 — Dynamic discrete choice: Rust and CCP {#sec-io-week09}
+
+**Topic:** Single-agent dynamic programming and the two-step shortcut that makes it
+estimable.
+
+**Subtopics:** Single-agent dynamic programming; the nested fixed-point (Rust) estimator;
+conditional-choice-probability (Hotz–Miller) inversion; finite dependence; the curse of
+dimensionality.
+
+**Methods:** Value-function iteration; CCP estimation; simulation of dynamic programs.
+
+**Key readings:**
+
+- **[F]** Rust, J. (1987), "Optimal Replacement of GMC Bus Engines: An Empirical Model of
+  Harold Zurcher," *Econometrica* 55(5): 999–1033.
+  [doi:10.2307/1911259](https://doi.org/10.2307/1911259). The foundational single-agent
+  dynamic discrete-choice model and nested fixed-point estimator.
+- **[F]** Hotz, V. J. & Miller, R. A. (1993), "Conditional Choice Probabilities and the
+  Estimation of Dynamic Models," *Review of Economic Studies* 60(3): 497–529.
+  [doi:10.2307/2298122](https://doi.org/10.2307/2298122). The CCP inversion that avoids the
+  full dynamic-programming solution; the basis for all modern two-step dynamic estimators.
+- **[R]** Aguirregabiria, V. & Mira, P. (2010), "Dynamic Discrete Choice Structural
+  Models: A Survey," *Journal of Econometrics* 156(1): 38–67.
+  [doi:10.1016/j.jeconom.2009.09.007](https://doi.org/10.1016/j.jeconom.2009.09.007). The
+  standard survey tying NFP, CCP, and two-step methods together; the module's roadmap.
+
+**Debate:** NFP (full solution) vs. CCP (two-step)—efficiency vs. tractability and
+robustness.
+
+### Week 10 — Dynamic games: entry, exit, and investment {#sec-io-week10}
+
+**Topic:** Extending dynamic discrete choice to oligopoly games with strategic
+interaction.
+
+**Subtopics:** Markov-perfect equilibrium; the Ericson–Pakes framework; two-step
+estimators for dynamic games; multiplicity of equilibria.
+
+**Methods:** Estimating policy functions; forward simulation; handling equilibrium
+multiplicity.
+
+**Key readings:**
+
+- **[R]** Bajari, P., Benkard, C. L., & Levin, J. (2007), "Estimating Dynamic Models of
+  Imperfect Competition," *Econometrica* 75(5): 1331–1370.
+  [doi:10.1111/j.1468-0262.2007.00796.x](https://doi.org/10.1111/j.1468-0262.2007.00796.x).
+  The general two-step (BBL) estimator for dynamic oligopoly games; a foundational frontier
+  method.
+- **[R]** Pakes, A., Ostrovsky, M., & Berry, S. (2007), "Simple Estimators for the
+  Parameters of Discrete Dynamic Games (with Entry/Exit Examples)," *RAND Journal of
+  Economics* 38(2): 373–399.
+  [doi:10.1111/j.1756-2171.2007.tb00073.x](https://doi.org/10.1111/j.1756-2171.2007.tb00073.x).
+  A tractable moment-based estimator for entry/exit games; widely taught alongside BBL.
+- **[R]** Aguirregabiria, V. & Mira, P. (2007), "Sequential Estimation of Dynamic Discrete
+  Games," *Econometrica* 75(1): 1–53.
+  [doi:10.1111/j.1468-0262.2007.00731.x](https://doi.org/10.1111/j.1468-0262.2007.00731.x).
+  The nested pseudo-likelihood (NPL) estimator for dynamic games; the third pillar of the
+  estimation toolkit.
+
+**Debate:** How to estimate games with multiple equilibria, and how credible are the
+Markov/MPE assumptions?
+
+### Week 11 — Static entry and market structure {#sec-io-week11}
+
+**Topic:** What entry patterns alone reveal about competition when prices and quantities
+are unobserved.
+
+**Subtopics:** Entry as a revealed-preference inequality; ordered/sequential entry; what
+entry thresholds reveal about competition and fixed costs; market structure without
+price/quantity data.
+
+**Methods:** Estimating entry models from count/threshold data; inequality-based
+inference; identifying fixed costs.
+
+**Key readings:**
+
+- **[F]** Bresnahan, T. F. & Reiss, P. C. (1991), "Entry and Competition in Concentrated
+  Markets," *Journal of Political Economy* 99(5): 977–1009.
+  [doi:10.1086/261786](https://doi.org/10.1086/261786). The foundational entry-threshold
+  approach: how the number of firms a market supports reveals competitive conduct.
+- **[F]** Bresnahan, T. F. & Reiss, P. C. (1990), "Entry in Monopoly Markets," *Review of
+  Economic Studies* 57(4): 531–553.
+  [doi:10.2307/2298085](https://doi.org/10.2307/2298085). The companion paper formalizing
+  entry decisions in small isolated markets; the empirical setup students replicate.
+
+**Debate:** What can entry patterns identify about competition when prices and quantities
+are unobserved?
+
+### Week 12 — Auctions {#sec-io-week12}
+
+**Topic:** Structural inversion from observed bids to the underlying distribution of
+bidder valuations.
+
+**Subtopics:** First-price sealed-bid auctions and the equilibrium bid function;
+structural inversion from bids to valuations; nonparametric identification; private vs.
+common values; risk aversion.
+
+**Methods:** Inverting the bid function; kernel estimation of bid densities; testing for
+common values.
+
+**Key readings:**
+
+- **[F]** Guerre, E., Perrigne, I., & Vuong, Q. (2000), "Optimal Nonparametric Estimation
+  of First-Price Auctions," *Econometrica* 68(3): 525–574.
+  [doi:10.1111/1468-0262.00123](https://doi.org/10.1111/1468-0262.00123). The GPV two-step
+  nonparametric estimator that recovers the value distribution from observed bids; the
+  canonical structural-auctions paper.
+- **[R]** Campo, S., Guerre, E., Perrigne, I., & Vuong, Q. (2011), "Semiparametric
+  Estimation of First-Price Auctions with Risk-Averse Bidders," *Review of Economic
+  Studies* 78(1): 112–147.
+  [doi:10.1093/restud/rdq001](https://doi.org/10.1093/restud/rdq001). Extends GPV to
+  risk-averse bidders and the identification of preferences; the frontier reading for the
+  module.
+
+**Debate:** Private vs. common values and the limits of identification from bid data
+alone.
+
+### Week 13 — Two-sided markets and platforms {#sec-io-week13}
+
+**Topic:** Structural estimation of indirect network effects and platform pricing across
+two customer groups.
+
+**Subtopics:** Network effects across two customer groups; platform pricing and the
+"see-saw"; vertical integration and exclusivity; structural estimation of indirect
+network effects.
+
+**Methods:** Estimating cross-side externalities; modeling adoption on both sides;
+platform counterfactuals.
+
+**Key readings:**
+
+- **[F]** Rysman, M. (2004), "Competition Between Networks: A Study of the Market for
+  Yellow Pages," *Review of Economic Studies* 71(2): 483–512.
+  [doi:10.1111/0034-6527.00512](https://doi.org/10.1111/0034-6527.00512). The foundational
+  structural estimation of a two-sided market with indirect network effects.
+- **[R]** Lee, R. S. (2013), "Vertical Integration and Exclusivity in Platform and
+  Two-Sided Markets," *American Economic Review* 103(7): 2960–3000.
+  [doi:10.1257/aer.103.7.2960](https://doi.org/10.1257/aer.103.7.2960). A structural model
+  of platform competition (video-game consoles) with exclusive content; the modern
+  platform-IO template.
+
+**Debate:** Identifying network effects vs. unobserved quality, and the welfare effects of
+platform exclusivity.
+
+### Week 14 — Consumer search & consideration; ML + structural; synthesis {#sec-io-week14}
+
+**Topic:** Limited demand from search and inattention, and where machine learning
+complements or substitutes for economic structure.
+
+**Subtopics:** Sequential vs. simultaneous search; consideration sets vs. full-information
+demand; search/switching costs; machine learning for high-dimensional demand,
+heterogeneity, and unstructured data; the structural-vs-design-based debate revisited.
+
+**Methods:** Estimating search models; consideration-set inference; integrating ML
+predictors and heterogeneity into structural objectives.
+
+**Key readings:**
+
+- **[R]** De los Santos, B., Hortaçsu, A., & Wildenbeest, M. R. (2012), "Testing Models of
+  Consumer Search Using Data on Web Browsing and Purchasing Behavior," *American Economic
+  Review* 102(6): 2955–2980.
+  [doi:10.1257/aer.102.6.2955](https://doi.org/10.1257/aer.102.6.2955). Uses clickstream
+  data to discriminate between sequential and fixed-sample search; the canonical empirical
+  search paper.
+- **[R]** Honka, E. (2014), "Quantifying Search and Switching Costs in the US Auto
+  Insurance Industry," *RAND Journal of Economics* 45(4): 847–884.
+  [doi:10.1111/1756-2171.12073](https://doi.org/10.1111/1756-2171.12073). A marketing-canon
+  structural search-and-consideration model separating search costs from switching costs.
+- **[R]** Gentzkow, M., Kelly, B., & Taddy, M. (2019), "Text as Data," *Journal of Economic
+  Literature* 57(3): 535–574.
+  [doi:10.1257/jel.20181020](https://doi.org/10.1257/jel.20181020). The reference survey for
+  bringing unstructured text into structural/empirical work; anchors the ML-meets-structural
+  discussion.
+- **[R]** Wager, S. & Athey, S. (2018), "Estimation and Inference of Heterogeneous
+  Treatment Effects Using Random Forests," *Journal of the American Statistical Association*
+  113(523): 1228–1242.
+  [doi:10.1080/01621459.2017.1319839](https://doi.org/10.1080/01621459.2017.1319839).
+  Causal/generalized forests for flexible heterogeneity; the entry point for ML-based
+  heterogeneity in demand and policy.
+
+**Debate:** Search vs. preferences vs. inattention as competing explanations for "limited"
+demand; and where ML complements vs. substitutes for structure.
+
+### Foundational vs. frontier at a glance {#sec-io-foundational-vs-frontier}
+
+**Foundational [F] — the canon every student must master.** Berry 1994 (the share
+inversion); BLP 1995 (random coefficients); Nevo 2000/2001 (applied BLP, markups, merger
+simulation); Bresnahan 1982 and Nevo 1998 (conduct identification); Rust 1987 (single-
+agent DDC) and Hotz–Miller 1993 (CCP); Bresnahan–Reiss 1990/1991 (entry);
+Guerre–Perrigne–Vuong 2000 (auctions); Rysman 2004 (two-sided markets); with Nevo's 2000
+practitioner's guide and Petrin 2002 (counterfactuals / new goods) as the teaching and
+applied backbone.
+
+**Frontier [R] — methods still moving and actively contested.** Berry–Haile 2014
+(nonparametric identification, which reframes what BLP identifies); Dubé–Fox–Su 2012
+(MPEC) and Conlon–Gortmaker 2020 (PyBLP best practices), as computation keeps evolving;
+Bajari–Benkard–Levin 2007, Pakes–Ostrovsky–Berry 2007, and Aguirregabiria–Mira 2007/2010
+(dynamic games and two-step estimation); Gowrisankaran–Rysman 2012, Hendel–Nevo 2006, and
+Nair 2007 (dynamic demand); Lee 2013 (platforms, bundling, vertical integration);
+De los Santos–Hortaçsu–Wildenbeest 2012 and Honka 2014 (search/consideration); and
+Gentzkow–Kelly–Taddy 2019 together with Wager–Athey 2018 (text-as-data and generalized
+random forests) at the ML + structural frontier.
+
+### How this reading map expands {#sec-io-reading-map-expansion}
+
+The arc above is meant to deepen within modules rather than sprawl into disconnected
+topics; the demand → supply/conduct → counterfactual spine, taught static-then-dynamic,
+stays fixed. The most productive directions to extend it are:
+
+1. **Demand frontier.** Add micro-BLP with consumer-level data and the newer PyBLP
+   micro-moment workflow, plus nonparametric and "demand for characteristics" approaches
+   building on Berry–Haile.
+2. **Conduct-testing renaissance.** The post-2020 literature on testing firm conduct with
+   instruments deserves its own subsection (paired with Bresnahan 1982 as the historical
+   anchor) once those version-of-record DOIs are confirmed.
+3. **Dynamic games at scale.** Add moment-inequality and machine-learning approaches to
+   large state spaces, and reinforcement-learning solution methods for dynamic oligopoly.
+4. **Platforms / digital markets.** Expand Week 13 into two weeks as the platform-IO and
+   digital-advertising auction literatures mature (sponsored search, ad auctions,
+   recommendation systems).
+5. **Search & inattention.** Track the growing marketing literature on consideration sets,
+   rational inattention, and search with rich clickstream/CRM data.
+6. **ML + structural.** The fastest-moving module: double machine learning, causal forests,
+   deep learning for demand, and LLM/text-as-data for product attributes and reviews, with
+   the methodological debate about combining flexible prediction with economic structure.
+7. **Marketing-specific counterfactuals.** Deepen managerial counterfactuals—dynamic
+   pricing, advertising and targeting, product-line and assortment, and CRM/
+   personalization—each tied back to the estimated structural model.
+
+Every new reading added here should carry a Crossref-verified version-of-record DOI before
+inclusion, and should attach to an existing module rather than open a new front.

@@ -4,50 +4,95 @@ Most marketing decisions reduce to a question about choice: which brand a shoppe
 puts in the cart, which subscription tier a household keeps, which car a buyer
 drives off the lot. The data that record these decisions are not the continuous
 quantities of classical regression but *discrete selections* from a menu—one
-alternative chosen, the rest forgone. A demand model that respects this structure
-must explain why one option was picked over its rivals, predict how that
-probability shifts when a price moves or a feature is added, and do so from data in
-which each person reveals only the tip of their preference. Discrete-choice
-modeling, grounded in random-utility theory, is the apparatus marketing uses to
-turn such observations into estimates of preference, willingness to pay, and
-demand elasticities.
+alternative chosen, the rest forgone. Discrete-choice modeling, grounded in
+random-utility theory, is the apparatus marketing uses to turn such observations
+into estimates of preference, willingness to pay, and demand elasticities; the
+Bayesian hierarchy is the technology that makes those estimates individual-level
+and usable for targeting.
 
-This chapter builds that apparatus from first principles and then confronts the two
-problems that dominate its practice. The first is *substitution structure*: the
-workhorse logit model embeds an assumption—independence of irrelevant alternatives
-(IIA)—that is empirically false in most markets and produces nonsensical demand
-predictions when violated. The second is *heterogeneity*: consumers differ, and a
-model that estimates a single "representative" taste vector both misstates
-aggregate demand and is useless for targeting. The modern resolution of both
-problems runs through the same machinery—mixing distributions over individual
-tastes—and the dominant estimation technology for that machinery is Bayesian:
-hierarchical models fit by Markov chain Monte Carlo (MCMC). By the end of the
-chapter the reader can specify a random-utility model, recognize when IIA breaks
-it, choose among nested, probit, and mixed-logit remedies, and estimate
-individual-level preferences by hierarchical Bayes with runnable code.
+This chapter is organized as a full-semester doctoral seminar—a reading map that
+runs from the micro-foundation of individual choice up to the modern Bayesian
+computation that fits these models at scale. The structure mirrors how the
+discrete-choice/Bayesian-methods seminar is taught across the leading quantitative
+marketing programs (Ohio State/Fisher, Chicago/Booth, Wharton, Columbia,
+Michigan/Ross), and every reading below was DOI-verified against Crossref. The
+technical core—random-utility theory, the logit and its IIA pathology, the
+nested/probit/mixed remedies, hierarchical Bayes, and a runnable MCMC worked
+example—is developed in full within the relevant weeks, so the chapter reads both
+as a syllabus and as a self-contained treatment. We connect the demand-estimation
+thread to its industrial-organization counterpart (@sec-marketing-finance) and to
+preference measurement via conjoint analysis, whose hierarchical-Bayes practice is
+the applied face of everything developed here.
 
-The intellectual lineage is worth stating up front. The random-utility foundation
-and the conditional logit estimator are due to McFadden, whose program connected
-econometric choice models to consumer theory and earned the field its modeling
-language [@mcfadden1986choice; @mcfadden2001economic]. The transplant of those
-methods into marketing began with the logit model of brand choice calibrated on
-supermarket scanner data [@guadagni1983; @guadagni2008logit], which remains the
-template for how the discipline links observed purchases to a utility
-specification. The Bayesian turn—treating heterogeneity as a distribution to be
-inferred rather than a nuisance to be differenced away—reorganized the field around
-hierarchical models and simulation-based estimation [@rossi2014]. We connect the
-demand-estimation thread to its industrial-organization counterpart
-(@sec-marketing-finance) and to preference measurement via conjoint analysis, whose
-hierarchical-Bayes practice is the applied face of everything developed here.
+## Semester arc {#sec-cb-semester-arc}
 
-## Random-Utility Theory
+The seminar is a single intellectual staircase from **theory of individual choice**
+up to **modern Bayesian computation and scale**. It opens with the micro-foundation
+that organizes everything else—random utility maximization (RUM)—and the workhorse
+it produces, the multinomial/conditional logit. The first third of the course
+exhausts what closed-form logit can and cannot do: the
+independence-of-irrelevant-alternatives (IIA) restriction, the substitution
+pathologies it implies, and the two classical escapes from it—*generalized extreme
+value* (nested logit), which keeps a closed form, and *probit*, which abandons
+closed form and forces the course into simulation (the GHK simulator, simulated
+maximum likelihood). By the time random-coefficients/mixed logit arrives, students
+see it as the field's preferred resolution: it relaxes IIA, accommodates unobserved
+heterogeneity, approximates any RUM, and is estimable either by simulation or by
+Bayesian MCMC.
+
+The middle third pivots from estimators to the **Bayesian paradigm**, the
+distinctive emphasis of the marketing version of this seminar. Students learn the
+Bayesian logic of inference, conjugacy, and the two engines of modern practice—the
+Gibbs sampler and the Metropolis–Hastings algorithm—and then the idea that made
+Bayes the default tool of quantitative marketing: **hierarchical Bayes for consumer
+heterogeneity**. The hierarchical normal model that shrinks individual-level
+parameters toward a population distribution is the conceptual heart of the course,
+because it simultaneously solves the small-data-per-consumer problem, delivers
+individual-level posteriors useful for targeting, and unifies choice modeling with
+conjoint/preference measurement.
+
+The final third applies and extends the machinery: **conjoint and preference
+measurement** as the marketing-native application of HB choice models; **dynamics
+and state dependence** (Bayesian learning vs. spurious persistence—the field's
+central identification debate); **aggregate-data demand** (BLP-style
+random-coefficients logit and its Bayesian counterpart); **model comparison** (Bayes
+factors, DIC/WAIC, cross-validation); and the computational frontier—**Hamiltonian
+Monte Carlo/Stan** and **scalable and variational methods** for the large, sparse,
+high-dimensional data that now dominate marketing. The arc ends where the field's
+frontier is: probabilistic programming and approximate inference at scale.
+
+A typical assessment structure is weekly reading memos, two or three problem sets
+that build an estimator from scratch (a hand-coded Gibbs sampler for a hierarchical
+logit is the signature assignment—see the worked example in @sec-cb-week-7), a referee
+report, and a replication-or-extension paper on a real choice dataset (scanner
+panel, conjoint, or aggregate market shares).
+
+The three foundational books the seminar is built around recur throughout and are
+cited as "(book)": **Train (2009), *Discrete Choice Methods with Simulation*, 2nd
+ed. (Cambridge)**—the standard graduate text for RUM, logit/GEV/probit, mixed
+logit, and simulation- and Bayes-assisted estimation; **Rossi, Allenby & McCulloch
+(2005), *Bayesian Statistics and Marketing* (Wiley)**—the field's defining text on
+hierarchical Bayesian methods for marketing and the `bayesm` package; and **Gelman
+et al. (2013), *Bayesian Data Analysis*, 3rd ed. (Chapman & Hall/CRC)**—the
+general-statistics reference for Bayesian modeling, MCMC, and predictive evaluation.
+
+### Week 1 — Random utility theory & the choice-modeling worldview {#sec-cb-week-1}
+
+**Topic.** The random-utility-maximization (RUM) foundation; why marketing models
+choice rather than continuous demand; utility, choice probabilities, and the
+identification of scale and level.
+
+**Subtopics.** Deterministic vs. random components; additive RUM; the logit error
+(Type-I extreme value); welfare and the log-sum; observable vs. latent utility;
+normalization (only differences and scale are identified).
+
+**Methods.** Setting up a choice probability from a utility specification; deriving
+logit from i.i.d. extreme-value errors.
 
 The premise of random-utility theory is that a decision maker assigns a latent
 utility to each available alternative and chooses the one with the highest utility.
-The analyst does not observe utility; the analyst observes only the choice and some
-attributes of the alternatives and the chooser. The randomness in "random utility"
-is the analyst's, not the consumer's: it represents everything that bears on the
-decision but is unobserved by the modeler.
+The randomness is the analyst's, not the consumer's: it represents everything that
+bears on the decision but is unobserved by the modeler.
 
 ::: {.callout-note}
 ## Landmark definition: random utility
@@ -91,18 +136,41 @@ identified**: multiplying all utilities by a positive constant leaves the argmax
 unchanged, so the variance of $\varepsilon_{nj}$ must be normalized. Third, the form
 of the choice probability is determined entirely by the **assumed joint distribution
 of the unobserved terms** $\boldsymbol{\varepsilon}_n = (\varepsilon_{n1},\dots)$.
-Different assumptions about that distribution generate the logit, probit, nested,
-and mixed models that organize the rest of this section.
+Different assumptions generate the logit, probit, nested, and mixed models that
+organize the rest of the course.
 
-## The Conditional Logit Model
+**Key readings.**
+
+- McFadden (1974), "Conditional Logit Analysis of Qualitative Choice Behavior," in
+  *Frontiers in Econometrics* (Academic Press), pp. 105–142 — book chapter, no
+  Crossref DOI; cite by chapter/volume. The origin of RUM-based conditional logit;
+  the Nobel-cited founding paper. [F]
+- Train (2009), *Discrete Choice Methods with Simulation*, ch. 1–3 (book) — the
+  textbook RUM setup and logit derivation. [F]
+- @chintagunta2011discretechoice — assigned here (and again in @sec-cb-week-9) as the
+  marketing-specific overview of why and how marketing uses discrete choice. [F]
+
+**Debate.** Is RUM a behavioral theory or just a flexible statistical container?
+What is genuinely identified—and the perennial student trap of interpreting levels
+or scale?
+
+### Week 2 — Logit: the workhorse {#sec-cb-week-2}
+
+**Topic.** Multinomial/conditional logit; estimation, interpretation, elasticities,
+and willingness-to-pay.
+
+**Subtopics.** Likelihood and concavity (global maximum); own/cross elasticities;
+the log-sum/inclusive value; aggregation; the value and limits of marginal effects.
+
+**Methods.** Maximum likelihood; Newton-type optimization; delta-method standard
+errors for WTP and elasticities.
 
 The conditional (or multinomial) logit model arises from a single distributional
 assumption: the unobserved utility terms are independent across alternatives and
 each follows a type-I extreme-value (Gumbel) distribution,
-$F(\varepsilon_{nj}) = \exp(-e^{-\varepsilon_{nj}})$. This assumption is convenient
-because the difference of two independent Gumbel variates is logistic, which
-collapses the multidimensional integral in @eq-choiceprob to a closed form. The
-choice probability becomes
+$F(\varepsilon_{nj}) = \exp(-e^{-\varepsilon_{nj}})$. The difference of two
+independent Gumbel variates is logistic, which collapses the multidimensional
+integral in @eq-choiceprob to a closed form:
 
 $$
 P_{ni} = \frac{\exp(\mathbf{x}_{ni}^{\top}\boldsymbol{\beta})}
@@ -113,10 +181,10 @@ This is the model that brought random-utility estimation into marketing. Calibra
 on household scanner data, with $\mathbf{x}_{nj}$ containing price, promotion
 indicators, and—critically—a *loyalty* variable summarizing the household's past
 purchases, it predicts brand choice well enough to anchor demand analysis for
-packaged goods [@guadagni1983; @guadagni2008logit]. The loyalty term is an early,
-informal device for capturing persistence in tastes that the homogeneous logit
-cannot otherwise represent, foreshadowing the heterogeneity machinery developed
-below.
+packaged goods [@guadagni1983; @guadagni2008logit; @guadagni1983logit]. The loyalty
+term is an early, informal device for capturing persistence in tastes that the
+homogeneous logit cannot otherwise represent, foreshadowing the heterogeneity
+machinery developed below.
 
 **Estimation.** With independent observations the logit log-likelihood is globally
 concave in $\boldsymbol{\beta}$, so maximum likelihood is straightforward and
@@ -130,8 +198,7 @@ $$ {#eq-loglik}
 which Newton–Raphson or any quasi-Newton routine maximizes reliably. The scale
 normalization is implicit: the Gumbel variance is fixed at $\pi^2/6$, so
 $\boldsymbol{\beta}$ is identified only up to that scale, and coefficients across
-models with different error variances are not directly comparable—a subtlety that
-resurfaces when comparing choice data sources.
+models with different error variances are not directly comparable.
 
 **Elasticities.** The managerial output of a choice model is usually an elasticity.
 For a price coefficient $\beta_p$ entering $V_{nj}$ linearly, the own- and
@@ -145,9 +212,28 @@ $$ {#eq-elast}
 The cross-elasticity $E_{ij}$ is the source of the model's most consequential
 defect: it depends on $j$ only through $P_{nj}$, so *every* alternative has the same
 proportional cross-elasticity with respect to a change in $j$. This is IIA, examined
-next.
+in @sec-cb-week-3.
 
-## The Independence of Irrelevant Alternatives
+**Key readings.**
+
+- Train (2009), ch. 3 "Logit" (book) — canonical treatment. [F]
+- @guadagni1983logit — the foundational marketing application of logit to
+  scanner-panel brand choice; introduced the loyalty variable and defined empirical
+  choice modeling in marketing for a decade. [F]
+
+**Debate.** When is logit "good enough"? The gap between statistical fit and the
+implausible substitution it can imply motivates Weeks 3–5.
+
+### Week 3 — IIA, GEV & nested logit {#sec-cb-week-3}
+
+**Topic.** The independence-of-irrelevant-alternatives property, its
+substitution-pattern consequences, the red-bus/blue-bus problem, and the closed-form
+escape via generalized extreme value (GEV)/nested logit.
+
+**Subtopics.** IIA derivation; proportional substitution; nesting structure and the
+dissimilarity (nesting) parameter; testing IIA.
+
+**Methods.** Nested-logit estimation; Hausman-type specification tests.
 
 The logit model's defining property is that the ratio of any two choice
 probabilities is independent of the attributes—indeed of the existence—of every
@@ -160,9 +246,9 @@ $$
 $$ {#eq-50-iia}
 
 which contains nothing about any third option $k$. This **independence of
-irrelevant alternatives** (IIA) is a direct consequence of the assumed
-independence of the Gumbel error terms across alternatives. It is mathematically
-elegant and behaviorally implausible.
+irrelevant alternatives** (IIA) is a direct consequence of the assumed independence
+of the Gumbel error terms across alternatives. It is mathematically elegant and
+behaviorally implausible.
 
 The standard illustration is the *red-bus/blue-bus* paradox. A commuter chooses
 between a car and a red bus with equal probability, $\tfrac{1}{2}$ each, so
@@ -170,12 +256,12 @@ $P_{\text{car}}/P_{\text{red}} = 1$. Introduce a blue bus identical to the red b
 in every respect but color. Behaviorally the two buses should split the original bus
 share, leaving car at $\tfrac{1}{2}$ and each bus at $\tfrac{1}{4}$. The logit
 model instead preserves all pairwise ratios, forcing
-$P_{\text{car}} = P_{\text{red}} = P_{\text{blue}} = \tfrac{1}{3}$: adding a near-duplicate
-*steals* share from the car as readily as from the bus it nearly clones. In a
-marketing setting the same failure means a logit demand model predicts that a new
-product cannibalizes every incumbent in proportion to its share, regardless of how
-close a substitute it actually is—a prediction that misvalues line extensions, new
-entrants, and assortment changes.
+$P_{\text{car}} = P_{\text{red}} = P_{\text{blue}} = \tfrac{1}{3}$: adding a
+near-duplicate *steals* share from the car as readily as from the bus it nearly
+clones. In a marketing setting the same failure means a logit demand model predicts
+that a new product cannibalizes every incumbent in proportion to its share,
+regardless of how close a substitute it actually is—a prediction that misvalues line
+extensions, new entrants, and assortment changes.
 
 ::: {.callout-warning}
 ## What IIA gets wrong, and when it is safe
@@ -191,35 +277,37 @@ patterns are not merely imprecise—they are structurally wrong, and the remedie
 the next sections are required rather than optional.
 :::
 
-The IIA property is also the reason the logit can be estimated on a *sampled* subset
-of alternatives when the full choice set is enormous (thousands of SKUs): because
-ratios of probabilities ignore the rest of the set, a correctly weighted sample of
-non-chosen alternatives yields consistent estimates. This is a genuine computational
-benefit—the same property that makes the model behaviorally restrictive makes it
-tractable at scale.
+The IIA property is also why the logit can be estimated on a *sampled* subset of
+alternatives when the full choice set is enormous (thousands of SKUs): because ratios
+of probabilities ignore the rest of the set, a correctly weighted sample of
+non-chosen alternatives yields consistent estimates—the same property that makes the
+model behaviorally restrictive makes it tractable at scale.
 
-## Relaxing IIA: Probit, Nested, and Mixed Logit
+**Key readings.**
 
-Every remedy for IIA works by abandoning the assumption of independent, identically
-distributed Gumbel errors. They differ in *how* they let the unobserved terms
-correlate across alternatives, and that difference determines the substitution
-patterns the model can represent and the cost of estimating it. @fig-choice-family
-maps the family.
+- @hausman1984specification — the standard test for the IIA restriction; defines how
+  students diagnose logit's central weakness. [F]
+- McFadden (1978), "Modelling the Choice of Residential Location," in *Spatial
+  Interaction Theory and Planning Models* (North-Holland) — book chapter, no
+  Crossref DOI; the GEV/nested-logit foundation. [F]
+- Train (2009), ch. 4 "GEV" (book) — textbook synthesis of nested and cross-nested
+  logit. [F]
 
-```{mermaid}
-%%| label: fig-choice-family
-%%| fig-cap: "The discrete-choice model family, organized by the assumed structure of the unobserved utility terms. Each branch relaxes a restriction of the conditional logit and pays for it in estimation cost."
-flowchart TD
-    A["Random-utility model<br/>U = V + e"] --> B{"Distribution of<br/>unobserved e?"}
-    B -->|"iid Gumbel"| C["Conditional logit<br/>closed form, imposes IIA"]
-    B -->|"correlated normal"| D["Multinomial probit<br/>full covariance, no IIA"]
-    B -->|"Gumbel within nests,<br/>correlated across"| E["Nested logit<br/>IIA within nest only"]
-    B -->|"Gumbel + random beta_n"| F["Mixed (random-coefficients) logit<br/>any substitution pattern"]
-    F --> G["Heterogeneity as a<br/>mixing distribution"]
-    G --> H["Hierarchical Bayes<br/>estimation via MCMC"]
-```
+**Debate.** IIA as bug vs. feature; whether nesting structure is theory-driven or
+data-mined; nested logit as a stopgap before mixed logit/probit.
 
-### Multinomial Probit
+### Week 4 — Probit & simulation: the GHK simulator {#sec-cb-week-4}
+
+**Topic.** Multinomial probit (MNP), full correlation in errors, the absence of a
+closed form, and simulation-based estimation (GHK).
+
+**Subtopics.** Identification in MNP (covariance normalization); the GHK
+(Geweke–Hajivassiliou–Keane) recursive simulator; simulated maximum likelihood (SML)
+vs. method of simulated moments (MSM); Bayesian (Gibbs/data-augmentation) MNP as the
+alternative path.
+
+**Methods.** GHK simulation; SML/MSM; Gibbs sampling with latent-utility data
+augmentation.
 
 The multinomial probit model replaces the independent Gumbel errors with a
 multivariate normal vector, $\boldsymbol{\varepsilon}_n \sim
@@ -237,60 +325,45 @@ $$ {#eq-probit}
 For more than three or four alternatives this integral must be approximated by
 simulation. McFadden's **method of simulated moments** made probit estimation
 feasible by replacing the intractable probabilities with smooth, unbiased
-frequency-simulator analogues and matching simulated to observed choice frequencies,
-preserving consistency as the number of draws grows [@mcfadden1986method]. A further
-subtlety is identification: because only utility differences matter and scale is
-free, not all elements of $\boldsymbol{\Sigma}$ are identified—one differences the
-system and fixes one variance, leaving $J(J-1)/2 - 1$ free covariance parameters.
-Overlooking this leaves the likelihood flat in unidentified directions. In marketing
-practice probit's flexibility is most valuable when correlation structure is itself
-of interest, but the mixed logit below typically achieves the same flexibility with
-a more interpretable and more scalable parameterization, which is why probit is now
-less common than it once was.
+frequency-simulator analogues [@mcfadden1986method]. A further subtlety is
+identification: because only utility differences matter and scale is free, not all
+elements of $\boldsymbol{\Sigma}$ are identified—one differences the system and fixes
+one variance, leaving $J(J-1)/2 - 1$ free covariance parameters. The Bayesian route
+sidesteps the simulated-likelihood maximization entirely by augmenting the latent
+utilities and sampling them as additional unknowns.
 
-### Nested Logit
+**Key readings.**
 
-Nested logit is the parsimonious middle ground. It groups alternatives into *nests*
-within which IIA still holds but across which it does not, capturing the leading case
-of correlated unobservables—subsets of close substitutes—without a full covariance
-matrix. The bus example resolves cleanly: place the red and blue buses in one nest
-and the car in another, and a share gain by one bus is drawn disproportionately from
-the other bus rather than uniformly from all alternatives.
+- @mcculloch1994exactprobit — the Bayesian/data-augmentation route to MNP that became
+  the marketing standard; bridges Weeks 4 and 6. [F]
+- @geweke1994probit — the head-to-head of GHK/SML vs. Bayesian MCMC for MNP; defines
+  the simulation toolkit and its trade-offs. [F]
+- Train (2009), ch. 5 "Probit" and ch. 9 "Simulation-Assisted Estimation" (book) —
+  textbook GHK and SML/MSM. [F]
 
-The model follows from a generalized-extreme-value error structure. With nests
-indexed by $k$ and the alternative $j$ belonging to nest $B_k$, the probability
-factors into a within-nest conditional choice and a between-nest marginal choice,
+**Debate.** Probit's flexible correlation vs. its identification fragility and
+computational cost; classical simulation vs. Bayesian data augmentation as the more
+reliable estimator.
 
-$$
-P_{nj} = \underbrace{\frac{\exp\!\big(V_{nj}/\lambda_k\big)}
-                          {\sum_{m \in B_k}\exp\!\big(V_{nm}/\lambda_k\big)}}_{\text{within nest } k}
-         \;\times\;
-         \underbrace{\frac{\exp\!\big(\lambda_k\, I_{nk}\big)}
-                          {\sum_{\ell}\exp\!\big(\lambda_\ell\, I_{n\ell}\big)}}_{\text{across nests}},
-\qquad
-I_{nk} = \log\!\sum_{m \in B_k}\exp\!\big(V_{nm}/\lambda_k\big),
-$$ {#eq-nested}
+### Week 5 — Mixed / random-coefficients logit {#sec-cb-week-5}
 
-where $I_{nk}$ is the *inclusive value* (the expected utility of nest $k$) and
-$\lambda_k \in (0,1]$ is the **log-sum coefficient** governing within-nest
-correlation. The boundary $\lambda_k = 1$ recovers the plain logit (no extra
-within-nest correlation); $\lambda_k \to 0$ implies near-perfect substitution within
-the nest. A value *outside* $(0,1]$ is inconsistent with random-utility
-maximization, so an estimate of $\hat\lambda_k > 1$ is a warning that the nesting
-structure is misspecified rather than a substantive finding. Nested logit's
-limitations are that the analyst must impose the nesting structure a priori—the data
-do not choose it—and that an alternative can sit in only one nest, so it cannot
-represent cross-cutting similarities (a product that is both a "premium" item and a
-"family-size" item).
+**Topic.** Mixed (random-parameters) logit: heterogeneous tastes integrated over a
+mixing distribution; the field's preferred way to relax IIA and approximate any RUM.
 
-### Mixed (Random-Coefficients) Logit
+**Subtopics.** Random vs. fixed coefficients; mixing distributions (normal,
+lognormal, bounded); panel/repeated-choice mixed logit; the McFadden–Train
+universal-approximation result; classical (simulated ML) vs. Bayesian
+(Allenby–Train) estimation.
+
+**Methods.** Simulated maximum likelihood with Halton draws; hierarchical
+Bayes/Gibbs–MH estimation of the mixing distribution.
 
 Mixed logit is the model that subsumes the others. Its idea is to let the taste
 parameters themselves vary across decision makers according to a *mixing
-distribution*, $\boldsymbol{\beta}_n \sim g(\boldsymbol{\beta} \mid \boldsymbol{\theta})$,
-while retaining an iid Gumbel idiosyncratic term. Conditional on a draw of
-$\boldsymbol{\beta}_n$ the model is a plain logit, but the unconditional choice
-probability integrates over the distribution of tastes,
+distribution*, $\boldsymbol{\beta}_n \sim g(\boldsymbol{\beta} \mid
+\boldsymbol{\theta})$, while retaining an iid Gumbel idiosyncratic term. Conditional
+on a draw of $\boldsymbol{\beta}_n$ the model is a plain logit, but the unconditional
+choice probability integrates over the distribution of tastes,
 
 $$
 P_{ni} = \int
@@ -307,12 +380,27 @@ distributed in the population. And it is **fully flexible**: any random-utility
 model—including probit—can be approximated arbitrarily well by a mixed logit with a
 suitable mixing distribution. The cost, as with probit, is that the integral in
 @eq-mixedlogit has no closed form and must be simulated; classical estimation uses
-simulated maximum likelihood with draws of $\boldsymbol{\beta}_n$, while the
-Bayesian approach developed below targets the same integral through MCMC and is, for
-the standard normal-mixing case, often the more reliable route
-[@rossi2014; @allenby1999dynamic].
+simulated maximum likelihood with draws of $\boldsymbol{\beta}_n$, while the Bayesian
+approach (@sec-cb-week-7) targets the same integral through MCMC and is, for the standard
+normal-mixing case, often the more reliable route [@rossi2014; @allenby1999dynamic].
 
-@tbl-iia-remedies summarizes the trade-offs.
+The family is mapped in @fig-choice-family, which organizes every model in the course
+by the assumed structure of the unobserved utility terms.
+
+```{mermaid}
+%%| label: fig-choice-family
+%%| fig-cap: "The discrete-choice model family, organized by the assumed structure of the unobserved utility terms. Each branch relaxes a restriction of the conditional logit and pays for it in estimation cost."
+flowchart TD
+    A["Random-utility model<br/>U = V + e"] --> B{"Distribution of<br/>unobserved e?"}
+    B -->|"iid Gumbel"| C["Conditional logit<br/>closed form, imposes IIA"]
+    B -->|"correlated normal"| D["Multinomial probit<br/>full covariance, no IIA"]
+    B -->|"Gumbel within nests,<br/>correlated across"| E["Nested logit<br/>IIA within nest only"]
+    B -->|"Gumbel + random beta_n"| F["Mixed (random-coefficients) logit<br/>any substitution pattern"]
+    F --> G["Heterogeneity as a<br/>mixing distribution"]
+    G --> H["Hierarchical Bayes<br/>estimation via MCMC"]
+```
+
+@tbl-iia-remedies summarizes the trade-offs across the IIA remedies of Weeks 3–5.
 
 | Model | Error structure | IIA? | Closed form? | Main cost |
 |---|---|---|---|---|
@@ -323,26 +411,82 @@ the standard normal-mixing case, often the more reliable route
 
 : Remedies for IIA and their trade-offs. Mixed logit dominates on flexibility but inherits the simulation cost shared by every non-logit model. {#tbl-iia-remedies}
 
-## Heterogeneity and the Hierarchical Bayesian Approach
+**Key readings.**
 
-The mixing distribution $g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$ in
+- @mcfadden2000mixedmnl — proves mixed logit can approximate any random-utility model
+  arbitrarily well; the theoretical license for the whole approach. [F]
+- @revelt1998mixedlogit — the canonical panel/repeated-choice mixed-logit
+  application; template for individual-level taste recovery. [F]
+- @train2005boundedmixedlogit — bounded/correlated mixing distributions so estimated
+  partworths stay economically sensible; a standard refinement for applied mixed
+  logit and conjoint. [F]
+- Train (2009), ch. 6 "Mixed Logit" and ch. 12 (Bayesian procedures) (book). [F]
+
+**Debate.** Choice of mixing distribution (normal vs. lognormal vs. nonparametric);
+whether random coefficients capture *taste* heterogeneity or absorb misspecification;
+simulated-ML vs. Bayesian estimation.
+
+### Week 6 — Bayesian foundations & MCMC: Gibbs and Metropolis–Hastings {#sec-cb-week-6}
+
+**Topic.** The Bayesian paradigm and the two computational engines that made it
+practical for choice models.
+
+**Subtopics.** Prior, likelihood, posterior; conjugacy; data augmentation (latent
+utilities) for choice models; the Gibbs sampler; Metropolis–Hastings; convergence
+diagnostics and mixing.
+
+**Methods.** Hand-coding a Gibbs sampler; MH proposals and acceptance; assessing
+convergence.
+
+MCMC constructs a Markov chain whose stationary distribution is exactly the
+posterior; running the chain long enough and discarding an initial *burn-in* yields
+dependent draws from that posterior, from which any quantity of interest is computed
+as a sample average. Two building blocks suffice for choice models. **Gibbs
+sampling** cycles through the parameter blocks, drawing each from its *full
+conditional* distribution—exploiting conjugacy so that conditionals reduce to
+textbook draws. **The Metropolis–Hastings step** handles blocks that are not
+conjugate: a candidate is proposed and accepted with a probability that depends only
+on the likelihood and prior, never on the intractable normalizing constant. For
+probit and multinomial models, **data augmentation** restores conjugacy by sampling
+the latent utilities as additional unknowns. The full mechanics—including the
+acceptance ratio and one sampler sweep—are developed concretely in @sec-cb-week-7.
+
+**Key readings.**
+
+- @gelfand1990sampling — the paper that launched modern applied MCMC by popularizing
+  the Gibbs sampler for marginal-density computation. [F]
+- @casella1992gibbs — the pedagogically standard, intuition-first introduction to
+  Gibbs sampling. [F]
+- @chib1995metropolis — the companion intuition-first treatment of
+  Metropolis–Hastings; with Casella–George it is the canonical "learn MCMC" pair. [F]
+- Gelman et al. (2013), *Bayesian Data Analysis* (book) — the reference text for the
+  underlying theory. [F]
+
+**Debate.** Subjective vs. objective priors; how much prior matters in hierarchical
+models; diagnosing convergence honestly (autocorrelation, multiple chains).
+
+### Week 7 — Hierarchical Bayes for heterogeneity (the heart of the course) {#sec-cb-week-7}
+
+**Topic.** Hierarchical (multilevel) Bayesian models of consumer heterogeneity;
+shrinkage; individual-level posteriors for targeting.
+
+**Subtopics.** The hierarchical normal prior over individual coefficients;
+random-effects logit/probit; borrowing strength; the value of individual-level
+inference; scale-usage and related nuisance heterogeneity.
+
+**Methods.** Two-stage Gibbs for hierarchical logit/probit; posterior summaries at
+the individual level.
+
+The mixing distribution $g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$ of
 @eq-mixedlogit is where heterogeneity lives, and treating it carefully is what
-separates a model that merely fits aggregate shares from one that supports
-targeting, segmentation, and individual-level prediction. Two facts make
-heterogeneity unavoidable. First, *ignoring* it biases even aggregate quantities: a
-single representative-agent logit systematically misstates demand elasticities
-because the curvature of the share function differs between a homogeneous population
-and a mixed one. Second, marketing's most valuable outputs—who to target, which
-household values a feature, what each segment will pay—are statements about the
-*distribution* of tastes, not its mean.
-
-The Bayesian hierarchy is the natural language for this. The key obstacle is that
-each consumer supplies only a handful of choices, far too few to estimate an
-individual taste vector $\boldsymbol{\beta}_n$ on its own. The hierarchical model
-solves this by *borrowing strength*: it assumes individuals are drawn from a common
-population distribution and lets each person's estimate shrink toward the population
-mean by an amount governed by how informative that person's own data are. A
-three-level specification makes this concrete:
+separates a model that merely fits aggregate shares from one that supports targeting,
+segmentation, and individual-level prediction. The Bayesian hierarchy is the natural
+language for this. The key obstacle is that each consumer supplies only a handful of
+choices, far too few to estimate an individual taste vector $\boldsymbol{\beta}_n$ on
+its own. The hierarchical model solves this by *borrowing strength*: it assumes
+individuals are drawn from a common population distribution and lets each person's
+estimate shrink toward the population mean by an amount governed by how informative
+that person's own data are. A three-level specification makes this concrete:
 
 $$
 \begin{aligned}
@@ -363,11 +507,9 @@ individual with many observations is driven by the first line (their own data); 
 individual with few is pulled toward $\bar{\boldsymbol{\beta}}$ by the second. This
 shrinkage is not a regularization hack but the optimal pooling of individual and
 population information under the model, and it is the reason hierarchical Bayes
-recovers usable individual-level estimates from sparse data—the property that made
-it the standard estimator for choice-based conjoint and household-level demand
-[@rossi2014; @kamakura2005choice]. The same hierarchy underwrites dynamic and
-multi-category extensions, where the within-person dependence across purchase
-occasions further sharpens individual posteriors [@allenby1999dynamic; @chib].
+recovers usable individual-level estimates from sparse data—the property that made it
+the standard estimator for choice-based conjoint and household-level demand
+[@rossi2014; @kamakura2005choice; @allenby1998heterogeneity].
 
 ::: {.callout-note}
 ## Why Bayesian, not just penalized likelihood?
@@ -379,45 +521,19 @@ posteriors: it delivers a full posterior distribution for each
 $\boldsymbol{\beta}_n$—hence honest uncertainty for targeting decisions—and it
 sidesteps the simulated-likelihood maximization that is numerically fragile for
 high-dimensional mixing distributions. The cost is the construction and tuning of an
-MCMC sampler, the subject of the next section.
+MCMC sampler.
 :::
 
-A caveat on the mixing distribution itself: the normal assumption in
-@eq-hierarchy is a modeling choice, not a fact. It cannot represent multimodal
-tastes (genuine segments), and a normally distributed price coefficient places
-positive probability on consumers who *prefer* higher prices, which is economically
-incoherent. Remedies include log-normal or sign-constrained coefficients, finite
-mixtures of normals for true segments, and—where the analyst doubts any parametric
-form—nonparametric mixing. Identification of the mixing distribution is delicate:
-flexible mixtures can fit in-sample while being poorly pinned down, so model
-comparison and holdout validation are essential rather than ornamental
-[@chintagunta2006structural].
+#### The MCMC engine
 
-## Markov Chain Monte Carlo Estimation
-
-MCMC is the engine that makes the hierarchy in @eq-hierarchy estimable. The idea is
-to construct a Markov chain whose stationary distribution is exactly the posterior
-$p(\{\boldsymbol{\beta}_n\}, \bar{\boldsymbol{\beta}}, \mathbf{V}_\beta \mid
-\text{data})$; running the chain long enough and discarding an initial *burn-in*
-yields dependent draws from that posterior, from which any quantity of interest—a
-posterior mean, a credible interval, an elasticity—is computed as a sample average.
-Two building blocks suffice for choice models.
-
-**Gibbs sampling** cycles through the parameter blocks, drawing each from its *full
-conditional* distribution—its distribution given the data and the current values of
-all other parameters. The hierarchy is built so that two of its three conditionals
-are conjugate and therefore drawn directly: given the individual $\boldsymbol{\beta}_n$,
-the population mean $\bar{\boldsymbol{\beta}}$ has a normal full conditional and the
-covariance $\mathbf{V}_\beta$ an inverse-Wishart full conditional. This conjugacy is
-precisely why the normal–inverse-Wishart hyperprior is chosen: it turns two of the
-three sampling steps into textbook draws.
-
-**The Metropolis–Hastings step** handles the one block that is not conjugate. The
-individual logit likelihood is not conjugate to the normal prior on
-$\boldsymbol{\beta}_n$, so its full conditional cannot be sampled directly. Instead a
-candidate $\boldsymbol{\beta}_n^{\star}$ is proposed (commonly by a random walk,
-$\boldsymbol{\beta}_n^{\star} = \boldsymbol{\beta}_n + \boldsymbol{\eta}$ with
-$\boldsymbol{\eta} \sim \mathcal{N}(\mathbf{0}, s\,\mathbf{V}_\beta)$) and accepted
+MCMC makes the hierarchy in @eq-hierarchy estimable. **Gibbs sampling** cycles
+through the parameter blocks. Two of the three conditionals are conjugate and drawn
+directly: given the individual $\boldsymbol{\beta}_n$, the population mean
+$\bar{\boldsymbol{\beta}}$ has a normal full conditional and the covariance
+$\mathbf{V}_\beta$ an inverse-Wishart full conditional—which is precisely why the
+normal–inverse-Wishart hyperprior is chosen. **The Metropolis–Hastings step** handles
+the non-conjugate individual logit block. A candidate
+$\boldsymbol{\beta}_n^{\star}$ is proposed (commonly by a random walk) and accepted
 with probability
 
 $$
@@ -428,13 +544,9 @@ $$
 $$ {#eq-mh}
 
 The acceptance ratio depends only on the likelihood and prior, never on the
-intractable normalizing constant, which is what makes the method work for models
-with no closed-form posterior. For probit and multinomial models a complementary
-trick, **data augmentation**, restores conjugacy by sampling the latent utilities
-$U_{nj}$ as additional unknowns; conditional on the imputed latent utilities the
-model becomes a linear-normal regression with standard conjugate draws, a device
-central to the Bayesian treatment of multivariate and multi-category choice
-[@chib]. @fig-gibbs sketches one sweep of the resulting sampler.
+intractable normalizing constant. For probit and multinomial models, **data
+augmentation** restores conjugacy by sampling the latent utilities $U_{nj}$ as
+additional unknowns [@chib; @mcculloch1994exactprobit]. @fig-gibbs sketches one sweep.
 
 ```{mermaid}
 %%| label: fig-gibbs
@@ -448,26 +560,17 @@ flowchart LR
     D -->|"yes"| E["Retain post-burn-in draws<br/>= posterior sample"]
 ```
 
-**Convergence is not automatic and must be checked.** Because the draws are
-autocorrelated, an apparently long run can carry little information. Standard
-diagnostics are the trace plot (the chain should mix rather than drift), the
-potential-scale-reduction factor $\hat R$ comparing within- to between-chain
-variance across multiple chains started at dispersed values (values near $1.0$
-indicate convergence), and the effective sample size, which discounts the nominal
-draw count by autocorrelation. Reporting a posterior without these diagnostics is
-the Bayesian analogue of reporting a maximum-likelihood estimate without checking
-that the optimizer converged. The structural-modeling literature in marketing treats
-this diligence as a precondition for credible inference [@chintagunta2006structural].
+**Convergence is not automatic and must be checked.** Standard diagnostics are the
+trace plot, the potential-scale-reduction factor $\hat R$ across multiple dispersed
+chains (values near $1.0$ indicate convergence), and the effective sample size, which
+discounts the nominal draw count by autocorrelation [@chintagunta2006structural].
 
-## Worked Example: Hierarchical Bayes for Brand Choice
+#### Worked example: hierarchical Bayes for brand choice
 
 The following self-contained example simulates a choice-based experiment with
 heterogeneous consumers, fits a homogeneous logit and a hierarchical-Bayes mixed
 logit, and shows that the hierarchical model recovers the individual-level taste
-distribution the homogeneous model cannot see. The data-generating process gives
-each consumer a price sensitivity and brand preferences drawn from a population
-distribution; the hierarchical estimator's job is to recover that distribution from
-short individual choice sequences.
+distribution the homogeneous model cannot see.
 
 ```{r choice-setup, message=FALSE, warning=FALSE}
 set.seed(50)
@@ -507,8 +610,7 @@ cat("Simulated", n_consumers, "consumers x", n_tasks, "tasks.\n")
 ```
 
 A pooled logit that ignores heterogeneity recovers the population *mean* tastes
-reasonably but, by construction, says nothing about their spread—and its implied
-substitution patterns inherit IIA.
+reasonably but, by construction, says nothing about their spread.
 
 ```{r pooled-logit, message=FALSE, warning=FALSE}
 # Negative log-likelihood for a homogeneous conditional logit
@@ -588,8 +690,7 @@ rbind(true_mean = beta_bar, hb_posterior_mean = hb_mean)
 
 The hierarchical posterior recovers not only the population means but the
 *heterogeneity* the pooled model discards—the diagonal of $\mathbf{V}_\beta$, which
-quantifies how widely price sensitivity and brand preference vary across the
-population.
+quantifies how widely price sensitivity and brand preference vary.
 
 ```{r hb-heterogeneity, message=FALSE, warning=FALSE}
 post_V_diag <- apply(keep_V, c(2, 3), mean)
@@ -607,13 +708,10 @@ legend("topright", c("true value", "posterior mean"),
        lty = c(2, 1), lwd = 2, bty = "n")
 ```
 
-The economic payoff is that with individual posteriors in hand the analyst can
-compute a *distribution* of willingness to pay for the feature—the ratio of the
-feature coefficient to the (negated) price coefficient for each consumer—rather than
-a single number, and can target the consumers whose posteriors place them above a
-profitability threshold. This individual-level inference is what the homogeneous
-logit cannot deliver and what makes the hierarchical Bayes machinery worth its
-computational cost.
+With individual posteriors in hand the analyst can compute a *distribution* of
+willingness to pay for the feature—the ratio of the feature coefficient to the
+(negated) price coefficient for each consumer—rather than a single number, and can
+target the consumers whose posteriors place them above a profitability threshold.
 
 ```{r wtp, message=FALSE, warning=FALSE}
 # Willingness to pay for the feature, per consumer (posterior means of beta_i)
@@ -622,51 +720,286 @@ wtp <- wtp[is.finite(wtp) & wtp > 0]
 summary(round(wtp, 2))
 ```
 
-## Estimation in Marketing Practice
+**Key readings.**
 
-The methods above are not interchangeable, and choosing among them is itself a
-modeling decision with commercial stakes. Three considerations recur.
+- @allenby1998heterogeneity — the manifesto for hierarchical-Bayes heterogeneity in
+  marketing; argues for individual-level inference over representative-agent models.
+  [F]
+- @rossi1996purchasehistory — the template HB application: individual-level posteriors
+  (shrinkage toward the population) raise the value of household data for targeting.
+  [F]
+- @allenby1995reassessing — an early, influential hierarchical choice model showing
+  how heterogeneity reshapes substantive conclusions about loyalty and price
+  sensitivity. [F]
+- @rossi2001scaleusage — shows how hierarchical Bayes cleanly removes a pervasive
+  nuisance (respondents using rating scales differently); a model template beyond
+  choice. [F]
 
-The first is the **source and structure of the choice data**. Revealed-preference
-data—scanner panels, transaction logs, clickstreams—record actual purchases under
-real prices and are the gold standard for demand elasticities, but they suffer
-endogeneity: prices and promotions are set by firms that observe demand shifters the
-analyst does not, biasing price coefficients toward zero. The standard corrections
-are instrumental variables and control-function approaches, though these carry their
-own pitfalls in marketing applications, where weak or invalid instruments can do
-more harm than the bias they purport to fix [@rossi2014]. Stated-preference data
-from conjoint experiments avoid price endogeneity by *designing* the attribute
-variation, at the cost of hypothetical bias; the hierarchical-Bayes estimator
-developed here is the dominant tool for recovering individual partworths from such
-designs. Aggregate market-share data, where individual choices are unobserved,
-require the random-coefficients demand system that inverts shares to recover
-mean utilities and estimates the mixing distribution from share variation across
-markets [@berry1995; @berry1995automobile]—the bridge between the consumer-level
-models of this chapter and industry-level demand analysis, with active work on the
-practical edge cases such as zero-share products [@dube2021random].
+**Debate.** Continuous (HB) vs. discrete (latent-class/finite-mixture) heterogeneity;
+how much structure to put in the upper-level prior; whether individual posteriors are
+"real" or regularization artifacts.
 
-The second is **what the model is for**. If the deliverable is an aggregate
-elasticity for a pricing decision, a carefully estimated mixed logit or
-random-coefficients demand model suffices and the individual posteriors are a
-by-product. If the deliverable is a targeting policy—who receives the offer—the
-individual-level posteriors are the product, and the full hierarchical Bayes
-apparatus is warranted. The choice between continuous (normal-mixing) heterogeneity
-and discrete latent-class segmentation likewise turns on use: continuous mixing
-predicts better when tastes vary smoothly, while latent classes are more
-interpretable and align with managerial segmentation when genuine clusters exist
-[@kamakura2005choice].
+### Week 8 — Conjoint & preference measurement {#sec-cb-week-8}
 
-The third is **disciplined validation**. A choice model's in-sample fit is a weak
-guide; the operative tests are holdout choice prediction, the recovery of known
-substitution patterns, and—for any model relaxing IIA—evidence that the relaxation
-changes substantive conclusions and not merely the likelihood. The structural
-tradition in marketing has codified these standards, insisting that identification
-be argued from the data and the design rather than asserted, and that the economic
-content of estimates be interrogated before they inform a decision
-[@chintagunta2006structural; @dube2021random]. The recurring lesson is that the
-hard part of choice modeling is rarely the optimizer or the sampler; it is matching
-the model's substitution structure and heterogeneity to the market and the decision
-at hand.
+**Topic.** Choice-based conjoint and preference measurement as the marketing-native
+application of HB choice models.
+
+**Subtopics.** Partworth estimation via HB; reduced designs and borrowing strength;
+constrained/sign-restricted priors; heterogeneity-distribution choice; adaptive and
+efficient design.
+
+**Methods.** HB conjoint estimation; experimental design for choice; holdout
+prediction.
+
+The hierarchical estimator of @sec-cb-week-7 is the dominant tool for recovering
+individual partworths from conjoint designs in which each respondent answers far
+fewer profiles than there are parameters. The normal-mixing assumption is a modeling
+choice, not a fact: it cannot represent multimodal tastes (genuine segments), and a
+normally distributed price coefficient places positive probability on consumers who
+*prefer* higher prices. Remedies include log-normal or sign-constrained coefficients,
+finite mixtures of normals for true segments, and—where the analyst doubts any
+parametric form—nonparametric mixing. Identification is delicate, so model comparison
+and holdout validation (@sec-cb-week-11) are essential rather than ornamental
+[@chintagunta2006structural].
+
+**Key readings.**
+
+- @lenk1996hbconjoint — foundational HB conjoint: recovers heterogeneous partworths
+  even when each respondent answers far fewer profiles than parameters. [F]
+- @allenby1995priorknowledge — shows how economically motivated (e.g.,
+  sign-constrained) priors improve partworth plausibility and prediction. [F]
+- @andrews2002hbvsmixture — the standard HB-vs-finite-mixture comparison; ties Week
+  7's heterogeneity debate to a concrete conjoint application. [F]
+- @train2005boundedmixedlogit (see @sec-cb-week-5) — bounded/correlated partworth
+  distributions for conjoint. [F]
+
+**Debate.** Continuous vs. discrete heterogeneity in conjoint; constrained vs.
+unconstrained partworths; whether better designs or better priors matter more for
+small per-respondent samples.
+
+### Week 9 — Aggregate-data demand & integrating out heterogeneity {#sec-cb-week-9}
+
+**Topic.** Random-coefficients logit demand from aggregate market shares (BLP); the
+Bayesian counterpart; the mechanics of integrating out heterogeneity and endogeneity.
+
+**Subtopics.** The BLP contraction and GMM; the inversion from shares to mean
+utilities; instruments and price endogeneity; the Bayesian (Jiang–Manchanda–Rossi)
+approach; numerical reliability (MPEC).
+
+**Methods.** GMM with the BLP contraction; MSM; Bayesian estimation from aggregate
+data; MPEC reformulation.
+
+When individual choices are unobserved and only market shares are recorded, the
+random-coefficients demand system inverts shares to recover mean utilities and
+estimates the mixing distribution from share variation across markets
+[@berry1995; @berry1995automobile]—the bridge between the consumer-level models of
+this chapter and industry-level demand analysis (@sec-marketing-finance), with active
+work on practical edge cases such as zero-share products [@dube2021random]. The
+Bayesian counterpart integrates out heterogeneity from aggregate shares via MCMC.
+
+**Key readings.**
+
+- @berry1994discretechoice — introduces the share-inversion that lets discrete-choice
+  demand be estimated from aggregate data with endogenous prices. [F]
+- @berry1995automobile — the canonical BLP random-coefficients aggregate-demand model;
+  the reference point for all market-share choice estimation. [F]
+- @jiang2009bayesianblp — the Bayesian counterpart to BLP; shows how MCMC integrates
+  out heterogeneity from aggregate shares. [F → R]
+- @chintagunta2011discretechoice — the marketing-specific synthesis of the whole
+  discrete-choice demand toolkit; the natural anchor/overview citation. [F]
+- @petrin2002minivan — shows how BLP-style demand plus micro-moments yields
+  welfare/counterfactual answers; a model application. [F]
+
+**Debate.** GMM/BLP vs. Bayesian estimation of the same model; instrument validity
+and weak instruments; numerical fragility of the nested contraction (and MPEC as the
+fix, Dubé–Fox–Su, [10.3982/ecta8585](https://doi.org/10.3982/ecta8585)).
+
+### Week 10 — Dynamics & state dependence {#sec-cb-week-10}
+
+**Topic.** Dynamic choice: Bayesian learning, structural state dependence, and the
+central identification problem of distinguishing genuine persistence from unobserved
+heterogeneity.
+
+**Subtopics.** Forward-looking vs. myopic consumers; Bayesian learning about brand
+attributes; habit/inertia/loyalty; the heterogeneity-vs-state-dependence confound;
+the initial-conditions problem.
+
+**Methods.** Dynamic structural estimation; hierarchical Bayes with
+autocorrelated/lagged terms; careful identification design.
+
+**Key readings.**
+
+- @erdem1996learning — the founding consumer-learning choice model: forward-looking
+  Bayesian consumers learning brand quality from experience and advertising. [F → R]
+- @keane1997statedependence — the methodological statement of the
+  heterogeneity-vs-state-dependence identification problem; required reading for the
+  debate. [F]
+- Dubé, Hitsch & Rossi (2010), "State Dependence and Alternative Explanations for
+  Consumer Inertia," *RAND J. Econ.* 41(3):417–445,
+  [10.1111/j.1756-2171.2010.00106.x](https://doi.org/10.1111/j.1756-2171.2010.00106.x)
+  — the modern resolution isolating genuine state dependence from persistent
+  heterogeneity. [R]
+
+**Debate.** Structural state dependence vs. spurious persistence from heterogeneity;
+forward-looking vs. reduced-form dynamics; how much the initial-conditions assumption
+drives results.
+
+### Week 11 — Model comparison: Bayes factors, DIC, WAIC, cross-validation {#sec-cb-week-11}
+
+**Topic.** Comparing and checking Bayesian choice models.
+
+**Subtopics.** Marginal likelihood and Bayes factors; sensitivity to priors
+(Lindley/Bartlett paradox); DIC and the effective number of parameters; WAIC;
+leave-one-out cross-validation (PSIS-LOO); posterior predictive checks.
+
+**Methods.** Computing marginal likelihoods (Chib's method); DIC/WAIC; LOO; posterior
+predictive checking.
+
+**Key readings.**
+
+- @kass1995bayesfactors — the definitive treatment of Bayes factors for model
+  comparison; sets up the marginal-likelihood approach and its prior sensitivity. [F]
+- @spiegelhalter2002dic — introduces DIC and the effective number of parameters; the
+  most-used hierarchical-model comparison criterion in applied marketing. [F]
+- @gelman2014predictiveic — unifies AIC/DIC/WAIC and predictive evaluation; the modern
+  conceptual map for choosing a criterion. [F → R]
+- @vehtari2017loo — the current practical standard (PSIS-LOO + WAIC) with the `loo`
+  package; what students should actually run today. [R]
+
+**Debate.** Bayes factors (and prior sensitivity) vs. predictive criteria
+(WAIC/LOO); DIC's known pathologies; in-sample fit vs. holdout prediction as the
+right target for marketing models.
+
+### Week 12 — Hamiltonian Monte Carlo & Stan {#sec-cb-week-12}
+
+**Topic.** Gradient-based MCMC and probabilistic programming as the modern default
+engine.
+
+**Subtopics.** Why random-walk MH/Gibbs mix poorly in high dimensions; Hamiltonian
+dynamics; the No-U-Turn Sampler (NUTS); non-centered parameterization for
+hierarchical models; the Stan ecosystem.
+
+**Methods.** Coding a hierarchical choice model in Stan; HMC/NUTS diagnostics
+(divergences, energy, R-hat, effective sample size); reparameterization.
+
+**Key readings.**
+
+- @carpenter2017stan — the reference for Stan; the tool most students will use to fit
+  hierarchical choice models going forward. [R]
+- Hoffman & Gelman (2014), "The No-U-Turn Sampler," *Journal of Machine Learning
+  Research* 15:1593–1623 — JMLR, no Crossref DOI; cite by volume/pages. The NUTS
+  algorithm underlying Stan's sampler. [R]
+- Gelman et al. (2013), *Bayesian Data Analysis*, HMC chapter (book) — textbook
+  treatment. [F]
+
+**Debate.** HMC/NUTS vs. problem-specific Gibbs samplers (speed vs. generality); when
+divergences signal a real modeling problem vs. a tuning problem; the
+centered/non-centered parameterization trade-off in hierarchical models.
+
+### Week 13 — Scalable & variational methods {#sec-cb-week-13}
+
+**Topic.** Approximate Bayesian inference for large, high-dimensional, sparse
+marketing data.
+
+**Subtopics.** Mean-field and structured variational inference; the ELBO; automatic
+differentiation variational inference (ADVI); stochastic/streaming variants;
+accuracy-vs-speed trade-offs; where VI fails for choice models.
+
+**Methods.** Variational inference; ADVI in Stan/PyMC; diagnostics for approximate
+posteriors.
+
+**Key readings.**
+
+- @blei2017variational — the standard statistician-facing introduction to variational
+  inference; the conceptual anchor for the scalable-methods week. [R]
+- @ansari2003ecustomization — a marketing exemplar of high-dimensional Bayesian
+  modeling for personalization at scale; motivates why scalable inference matters. [F]
+- @yang2003interdependent — a Bayesian spatial-autoregressive choice model; shows how
+  richer dependence structures (and the computation they demand) extend the
+  hierarchical-choice toolkit. [F]
+- @carpenter2017stan (see @sec-cb-week-12) — Stan also implements ADVI, the bridge from
+  HMC to VI. [R]
+
+**Debate.** Variational approximation bias vs. MCMC accuracy; whether VI's posterior
+uncertainties can be trusted for inference (vs. only point prediction); the
+encroachment of ML/deep methods on Bayesian choice modeling.
+
+### Week 14 — Synthesis, frontier & research design {#sec-cb-week-14}
+
+**Topic.** Pulling the threads together; designing a choice-modeling research paper;
+the open frontier.
+
+**Subtopics.** Matching estimator to question (closed-form vs. simulation vs. MCMC vs.
+VI); identification storytelling; replication and reproducibility (`bayesm`, Stan,
+`loo`); current frontiers—ML/Bayesian hybrids, text/image as choice covariates,
+privacy-constrained estimation, scalable personalization.
+
+**Methods.** Referee report; replication-or-extension project presentation.
+
+The recurring lesson across the semester is that the hard part of choice modeling is
+rarely the optimizer or the sampler; it is matching the model's substitution
+structure and heterogeneity to the market and the decision at hand. Revealed-
+preference data suffer endogeneity (instruments and control functions, with their own
+pitfalls); stated-preference conjoint avoids price endogeneity by design at the cost
+of hypothetical bias; aggregate data require the BLP machinery of @sec-cb-week-9. A
+choice model's in-sample fit is a weak guide—holdout prediction, recovery of known
+substitution patterns, and evidence that an IIA relaxation changes substantive
+conclusions are the operative tests [@chintagunta2006structural; @dube2021random].
+
+**Key readings.** Student-selected frontier papers plus the field syntheses already
+assigned: @allenby1998heterogeneity, @chintagunta2011discretechoice, and the
+Bayesian-marketing review Rossi & Allenby (2003), *Marketing Science* 22(3):304–328,
+[10.1287/mksc.22.3.304.17739](https://doi.org/10.1287/mksc.22.3.304.17739). [R]
+
+**Debate.** The whole-course tension: structural/behavioral interpretability vs.
+predictive flexibility; Bayesian vs. classical estimation of identical models; how
+much marketing's choice-modeling tradition will be absorbed into machine learning.
+
+## Foundational vs. frontier at a glance {#sec-cb-foundational-frontier}
+
+| Week | Topic | Status |
+|---|---|---|
+| 1 | RUM theory | Foundational |
+| 2 | Logit | Foundational |
+| 3 | IIA / GEV / nested | Foundational |
+| 4 | Probit & GHK simulation | Foundational |
+| 5 | Mixed / random-coefficients logit | Foundational (bridges to frontier) |
+| 6 | Bayesian foundations & MCMC | Foundational |
+| 7 | Hierarchical Bayes for heterogeneity | Foundational (course core) |
+| 8 | Conjoint / preference measurement | Foundational application; design is frontier |
+| 9 | Aggregate demand / integrating out heterogeneity | Foundational → frontier |
+| 10 | Dynamics & state dependence | Foundational → frontier |
+| 11 | Model comparison (Bayes factors / DIC / WAIC / LOO) | Foundational (LOO/WAIC are the modern frontier) |
+| 12 | HMC / Stan | Frontier, now standard |
+| 13 | Scalable & variational methods | Frontier |
+| 14 | Synthesis & research frontier | Frontier / craft |
+
+Weeks 1–11 are the durable canon a chapter must cover; Weeks 12–14 are where the
+chapter dates fastest and needs the most active maintenance.
+
+## How this chapter expands {#sec-cb-how-expands}
+
+1. **Keep the spine fixed, refresh the engine.** Weeks 1–11 (RUM → logit/GEV/probit →
+   mixed logit → Bayesian/MCMC → HB → conjoint → aggregate demand → dynamics → model
+   comparison) are stable for a generation. The *computation* weeks (12–13) turn over
+   fastest; budget for revising them every edition as Stan, PyMC, JAX-based samplers,
+   and normalizing-flow/amortized VI mature.
+2. **Promote model comparison from afterthought to spine.** WAIC/PSIS-LOO
+   (@sec-cb-week-11) have already displaced DIC/Bayes factors in practice; future editions
+   should foreground predictive evaluation and posterior predictive checking.
+3. **Add a dedicated "ML × Bayesian choice" frontier section.** As deep generative
+   models, embeddings, and amortized inference enter choice modeling, @sec-cb-week-13 will
+   likely split into (a) classical scalable Bayes (VI) and (b) neural/ML-hybrid choice
+   models—pending verified, DOI-bearing papers.
+4. **Grow the unstructured-data covariate strand.** Text, image, audio, and video as
+   inputs to choice increasingly fuse with this seminar; a future section can connect
+   representation learning to RUM covariates.
+5. **Track the privacy/identification frontier.** Privacy-constrained and
+   aggregated-data estimation pushes the field back toward the aggregate-demand
+   methods of @sec-cb-week-9 and differential-privacy-aware Bayes—a natural growth area.
+6. **Maintain the cross-references.** This chapter shares readings with preference
+   measurement (conjoint) and structural models (BLP, dynamics, MPEC). Keep shared
+   entries synchronized rather than duplicated, and re-verify DOIs each edition.
 
 ## Key Takeaways
 
