@@ -127,7 +127,7 @@ $\eta$. The classic linear, unidimensional form is
 
 $$
 x_k = \tau_k + \lambda_k\,\eta + \varepsilon_k, \qquad k = 1,\dots,K,
-$$ {#eq-reflective}
+$$ {#eq-02-reflective}
 
 where $\lambda_k$ is the **loading** (how strongly indicator $k$ reflects the
 construct), $\tau_k$ an intercept, and $\varepsilon_k$ a measurement error
@@ -152,7 +152,7 @@ indicators are *causes* or *components* that together compose the construct,
 
 $$
 \eta = \sum_{k=1}^{K} w_k\,x_k + \zeta,
-$$ {#eq-formative}
+$$ {#eq-02-formative}
 
 with weights $w_k$ and a disturbance $\zeta$ capturing the part of $\eta$ not
 accounted for by the chosen indicators. Here the indicators need *not* be
@@ -179,7 +179,7 @@ settled by asking whether the construct *produces* its indicators (reflective) o
 is *defined by* them (formative), a question data alone cannot answer
 [@coltman2008].
 
-| Property | Reflective (@eq-reflective) | Formative (@eq-formative) |
+| Property | Reflective (@eq-02-reflective) | Formative (@eq-02-formative) |
 |---|---|---|
 | Causal direction | construct $\rightarrow$ indicators | indicators $\rightarrow$ construct |
 | Indicator intercorrelation | high, expected | not required |
@@ -277,7 +277,7 @@ is true-score variance,
 $$
 \rho_{XX'} \;=\; \frac{\sigma_T^2}{\sigma_X^2} \;=\; \frac{\sigma_T^2}{\sigma_T^2 + \sigma_E^2}
 \;=\; \mathrm{Corr}(X, X')^2\ \text{-free form}\ = \mathrm{Corr}(X, X'),
-$$ {#eq-reliability}
+$$ {#eq-02-reliability}
 
 where $X'$ is a *parallel* measurement (same $T$, same $\sigma_E^2$, independent
 error). The last equality is the operational content of the definition: reliability
@@ -293,7 +293,7 @@ $\rho_{XX'}$, the observable correlation is
 
 $$
 \rho_{XY} = \rho_{TY}\,\sqrt{\rho_{XX'}\,\rho_{YY'}},
-$$ {#eq-attenuation}
+$$ {#eq-02-attenuation}
 
 so noisy measurement systematically *understates* effects—a fact that makes
 "we found no effect" uninterpretable without a reliability figure. Second,
@@ -301,7 +301,7 @@ so noisy measurement systematically *understates* effects—a fact that makes
 true score intact but shrinks error variance by $1/K$, so the reliability of a
 $K$-item sum rises with $K$ via the Spearman–Brown relation
 $\rho_K = K\rho_1 / [1 + (K-1)\rho_1]$. This is the formal reason multi-item scales
-beat single items, and why @eq-reflective is worth the trouble.
+beat single items, and why @eq-02-reflective is worth the trouble.
 
 ## Reliability in Practice
 
@@ -317,10 +317,10 @@ total score $X=\sum_i x_i$,
 
 $$
 \alpha = \frac{K}{K-1}\left(1 - \frac{\sum_{i=1}^{K}\sigma_i^2}{\sigma_X^2}\right).
-$$ {#eq-alpha}
+$$ {#eq-02-alpha}
 
 Alpha is a *lower bound* on reliability under the assumption of (essentially)
-$\tau$-equivalent items—equal loadings, @eq-reflective with all $\lambda_k$ equal.
+$\tau$-equivalent items—equal loadings, @eq-02-reflective with all $\lambda_k$ equal.
 When loadings differ, $\alpha$ underestimates reliability, and McDonald's $\omega$
 (which uses the estimated loadings directly) is preferable. Two cautions are worth
 stating plainly: $\alpha$ rises mechanically with $K$, so a high $\alpha$ can simply
@@ -349,7 +349,7 @@ err   <- sapply(sqrt(1 - lambda^2),                 # error sd from loadings
 X     <- sweep(err, 2, lambda, `+`) +               # x_k = lambda_k * eta + e_k
          outer(eta, lambda)
 
-# Coefficient alpha from equation (eq-alpha), implemented directly
+# Coefficient alpha from equation (eq-02-alpha), implemented directly
 cronbach_alpha <- function(items) {
   k <- ncol(items)
   item_var  <- sum(apply(items, 2, var))
@@ -368,7 +368,7 @@ is an **intraclass correlation** (ICC): the share of total variance attributable
 stable between-unit differences rather than to occasion- or rater-specific noise.
 For a one-way model with unit effect $u_i$ and residual $e_{ij}$, the ICC is
 $\sigma_u^2 / (\sigma_u^2 + \sigma_e^2)$, the same true-over-total ratio as
-@eq-reliability, now estimated from a variance-components decomposition. The
+@eq-02-reliability, now estimated from a variance-components decomposition. The
 forms—single vs. average rater, consistency vs. absolute agreement—must be matched
 to the design, a distinction made canonical for the field by @Shrout_1979.
 
@@ -379,7 +379,7 @@ $p_e$ expected by chance:
 
 $$
 \kappa = \frac{p_o - p_e}{1 - p_e}.
-$$ {#eq-kappa}
+$$ {#eq-02-kappa}
 
 A $\kappa$ of 0 means raters agree only as often as random labeling would predict;
 1 means perfect agreement [@Cohen_1960]. The widely used verbal benchmarks—slight,
@@ -414,7 +414,7 @@ code2 <- as.integer(latent + rnorm(n, sd = 0.7) > 0)   # coder 2
 tab <- table(code1, code2)
 p_o <- sum(diag(tab)) / sum(tab)                        # observed agreement
 p_e <- sum(rowSums(tab) * colSums(tab)) / sum(tab)^2    # chance agreement
-kappa <- (p_o - p_e) / (1 - p_e)                        # equation (eq-kappa)
+kappa <- (p_o - p_e) / (1 - p_e)                        # equation (eq-02-kappa)
 round(c(p_o = p_o, p_e = p_e, kappa = kappa), 3)
 ```
 
@@ -445,7 +445,7 @@ loading,
 
 $$
 \mathrm{AVE} = \frac{1}{K}\sum_{k=1}^{K}\lambda_k^2 ,
-$$ {#eq-ave}
+$$ {#eq-02-ave}
 
 interpreted as the share of indicator variance the construct explains; $\mathrm{AVE}
 \geq 0.5$ (the construct explains more than half the indicator variance) is the
@@ -493,7 +493,7 @@ flowchart TB
 
 The reflective machinery is concrete. The example below simulates two correlated
 latent constructs, each with three reflective indicators, then recovers the loadings
-by factor analysis, computes each construct's AVE from @eq-ave, and applies the
+by factor analysis, computes each construct's AVE from @eq-02-ave, and applies the
 Fornell–Larcker discriminant test: AVE must exceed the squared inter-construct
 correlation.
 
@@ -526,7 +526,7 @@ names(dat) <- c(paste0("a", 1:3), paste0("b", 1:3))
 fa <- factanal(dat, factors = 2, rotation = "promax")
 load <- fa$loadings[, 1:2]
 
-# Average variance extracted per construct (eq-ave), using the dominant factor
+# Average variance extracted per construct (eq-02-ave), using the dominant factor
 ave_A <- mean(load[1:3, which.max(colSums(abs(load[1:3, ])))]^2)
 ave_B <- mean(load[4:6, which.max(colSums(abs(load[4:6, ])))]^2)
 
@@ -549,7 +549,7 @@ telling us we had relabeled one construct as two.
 
 ## Identification: What Pins a Latent Model Down
 
-A latent variable has no inherent scale—nothing in @eq-reflective fixes the units
+A latent variable has no inherent scale—nothing in @eq-02-reflective fixes the units
 or origin of $\eta$, since multiplying $\eta$ by a constant and dividing every
 $\lambda_k$ by the same constant leaves all observables unchanged. A measurement
 model is **identified** only after this indeterminacy is removed and enough
@@ -570,7 +570,7 @@ matrix can determine); error terms that are in fact correlated (violating local
 independence, so shared method variance masquerades as the construct); and—most
 relevant to the reflective/formative debate—a **formative** construct that is not
 emitted into the model with at least two outgoing paths to other constructs or
-indicators, without which @eq-formative has no scale and the weights $w_k$ are not
+indicators, without which @eq-02-formative has no scale and the weights $w_k$ are not
 separately identified [@diamantopoulos2013quantitative; @henseler2017]. The lesson
 generalizes: identification failures in latent-variable models are usually a
 symptom that the measurement model and the theory disagree about how many things are
@@ -579,7 +579,7 @@ being measured.
 ## Common-Method Variance and Other Contamination
 
 The CTT assumption that errors are *random and uncorrelated* (@eq-ctt,
-@eq-reflective) is the one most often violated in practice, and the violation has a
+@eq-02-reflective) is the one most often violated in practice, and the violation has a
 name. **Common-method variance** (CMV) is systematic error shared across indicators
 because they were collected by the same *method*—the same respondent, on the same
 survey, at the same moment, using the same response scale. CMV induces correlation
@@ -629,7 +629,7 @@ The connection to the earlier formalism is direct. A measure with low *validity*
 shifts the whole verdict distribution off the construct, trading one error type for
 the other systematically (a biased scale, like the three-kilo bathroom scale). A
 measure with low *reliability* fattens the spread of verdicts around the truth,
-raising *both* error rates at once (a noisy scale). And attenuation (@eq-attenuation)
+raising *both* error rates at once (a noisy scale). And attenuation (@eq-02-attenuation)
 guarantees that unreliable predictors make real effects look smaller than they are,
 so the most common decision error in marketing analytics—concluding "no effect"
 from a noisy measure—is a measurement failure wearing the costume of a null result.
@@ -642,18 +642,18 @@ discipline of knowing how much of a number to believe.
   network; a **variable** is an observed quantity defined by its measurement
   procedure. The **construct-to-measure gap**—deficiency, contamination,
   distortion—is where applied research most often fails (@fig-cm-gap).
-- The **measurement model** must be specified as **reflective** (@eq-reflective,
-  construct causes indicators) or **formative** (@eq-formative, indicators compose
+- The **measurement model** must be specified as **reflective** (@eq-02-reflective,
+  construct causes indicators) or **formative** (@eq-02-formative, indicators compose
   construct); the choice is theoretical, not empirical, and it dictates which
   reliability and validity tests even apply (@tbl-reflective-formative)
   [@coltman2008; @diamantopoulos2013quantitative].
-- **Reliability** is the true-score share of observed variance (@eq-reliability);
-  estimate it by coefficient $\alpha$ (@eq-alpha) for internal consistency, the ICC
-  [@Shrout_1979] for raters/occasions, and Cohen's $\kappa$ (@eq-kappa)
+- **Reliability** is the true-score share of observed variance (@eq-02-reliability);
+  estimate it by coefficient $\alpha$ (@eq-02-alpha) for internal consistency, the ICC
+  [@Shrout_1979] for raters/occasions, and Cohen's $\kappa$ (@eq-02-kappa)
   [@Cohen_1960; @Landis_1977] for categorical codings. Unreliability **attenuates**
-  estimated effects toward zero (@eq-attenuation).
+  estimated effects toward zero (@eq-02-attenuation).
 - **Validity** asks whether the true score is the *right* construct: content,
-  convergent (AVE, @eq-ave), discriminant (Fornell–Larcker), and nomological
+  convergent (AVE, @eq-02-ave), discriminant (Fornell–Larcker), and nomological
   evidence together build the case [@fornell1981a]. High reliability does *not*
   imply validity.
 - Latent models must be **identified** (scale set, $\geq 3$ reflective indicators,
