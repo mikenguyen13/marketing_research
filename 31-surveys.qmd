@@ -284,18 +284,40 @@ heterogeneity. Identification improves as the number of vignettes $J$ grows—mo
 anchors pin down each respondent's thresholds more tightly—but there is a bias–variance
 trade-off: each additional vignette is itself measured with error, so adding vignettes
 trades sharper threshold identification against more measurement noise [@hopkins2010].
-The `anchors` package implements both estimators; the chunk below is illustrative and
-not evaluated in the build.
+The `anchors` package that implemented these estimators was archived from CRAN, but the
+nonparametric recoding is simple to reproduce directly. The illustration below takes three
+respondents with *identical* true ability who differ only in how harshly they rate, and
+shows that anchoring collapses their incomparable raw self-ratings to the same position.
 
-```{r anchors-demo, eval=FALSE}
-# install.packages("anchors")
-library(anchors)
+```{r anchors-demo, message=FALSE, warning=FALSE}
+library(tidyverse)
 
-data("freedom")                       # example data shipped with the package
-a1 <- anchors(self ~ vign2 + vign3 + vign4 + vign5 + vign6,
-              data = freedom, method = "C")   # "C" = nonparametric (ties as intervals)
-summary(a1)
+# Each respondent rates three vignettes of known increasing quality (v1 < v2 < v3) plus
+# themselves, on a 1-5 scale. They share the same true level but differ in strictness.
+demo <- tribble(
+  ~respondent, ~self, ~v1, ~v2, ~v3,
+  "lenient",      5L,   3L,  4L,  5L,
+  "moderate",     4L,   2L,  3L,  4L,
+  "harsh",        3L,   1L,  2L,  3L
+)
+
+# Nonparametric anchoring ("C"): locate each self-rating relative to the respondent's
+# OWN vignette ratings (ties -> interval categories); the personal scale shift cancels.
+anchor_pos <- function(self, v) {
+  v <- sort(v)
+  paste0(sum(self > v), " above, ", sum(self == v), " tied")
+}
+
+demo %>%
+  rowwise() %>%
+  mutate(anchored = anchor_pos(self, c(v1, v2, v3))) %>%
+  ungroup() %>%
+  select(respondent, raw_self = self, v1, v2, v3, anchored)
 ```
+
+The raw self-ratings (5, 4, 3) look different, but every respondent rates themselves
+"2 above, 1 tied" relative to their own vignettes—anchoring reveals the apparent gap was
+pure rating strictness, exactly what the parametric ordered-probit version corrects for.
 
 ## Experiments
 

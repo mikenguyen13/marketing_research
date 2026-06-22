@@ -1647,9 +1647,17 @@ score collapses.
 ```{r}
 #| label: fig-rfm-scatter
 #| fig-cap: "Bivariate scatter plots of the three RFM dimensions, exposing the pairwise dependence the composite score collapses."
-rfm_rm_plot(rfm_result)
-rfm_fm_plot(rfm_result)
-rfm_rf_plot(rfm_result)
+# the rfm package's rfm_rm_plot/rfm_fm_plot/rfm_rf_plot helpers error on this version,
+# so we draw the three pairwise scatters directly from the scored RFM table
+library(ggplot2)
+rfm_df <- rfm_result$rfm
+p_rm <- ggplot(rfm_df, aes(amount, recency_days)) + geom_point(alpha = .4) +
+    labs(x = "Monetary", y = "Recency (days)", title = "Recency vs Monetary") + theme_bw()
+p_fm <- ggplot(rfm_df, aes(amount, transaction_count)) + geom_point(alpha = .4) +
+    labs(x = "Monetary", y = "Frequency", title = "Frequency vs Monetary") + theme_bw()
+p_rf <- ggplot(rfm_df, aes(transaction_count, recency_days)) + geom_point(alpha = .4) +
+    labs(x = "Frequency", y = "Recency (days)", title = "Recency vs Frequency") + theme_bw()
+gridExtra::grid.arrange(p_rm, p_fm, p_rf, ncol = 3)
 ```
 
 ### Adding Clumpiness: RFMC {#sec-rfmc}
@@ -2164,12 +2172,23 @@ label, realized CLV to date, an acquisition campaign with its CAC, and a predict
 *potential* CLV.
 
 ```{r}
-#| eval: false
 # loading libraries
 library(dplyr)
 library(reshape2)
 library(ggplot2)
-library(googleVis)
+library(networkD3)
+
+# helper: render a from/to/weight link table as an embeddable D3 Sankey diagram.
+# networkD3 produces a self-contained htmlwidget; googleVis's gvisSankey only opens a
+# browser window and cannot embed in the rendered book, so we replace it here.
+make_sankey <- function(links, from = "from", to = "to", weight = "n", font = 11) {
+  nodes <- data.frame(name = unique(c(links[[from]], links[[to]])), stringsAsFactors = FALSE)
+  links$.src <- match(links[[from]], nodes$name) - 1L
+  links$.tgt <- match(links[[to]],   nodes$name) - 1L
+  networkD3::sankeyNetwork(Links = links, Nodes = nodes, Source = ".src",
+                           Target = ".tgt", Value = weight, NodeID = "name",
+                           fontSize = font, nodeWidth = 20)
+}
 
 set.seed(10)
 # creating orders data sample
@@ -2466,17 +2485,7 @@ for (i in 2:ncol(df.sankey)) {
 }
 
 # plotting
-plot(gvisSankey(
-    df.sankey.plot,
-    from = 'from',
-    to = 'to',
-    weight = 'n',
-    options = list(
-        height = 900,
-        width = 1800,
-        sankey = "{link:{color:{fill:'lightblue'}}}"
-    )
-))
+make_sankey(df.sankey.plot)
 
 # purchasing pace
 
@@ -3388,7 +3397,7 @@ columns, and the transitions between consecutive orders are tallied as flow weig
 #| label: fig-basket-sankey
 #| fig-cap: "Sankey diagram of cart composition across successive orders. Band width is proportional to the number of customers making each cart-to-cart transition."
 # loading libraries
-library(googleVis)
+library(networkD3)
 library(dplyr)
 library(reshape2)
 
@@ -3464,17 +3473,7 @@ for (i in 2:ncol(orders)) {
 
 }
 
-plot(gvisSankey(
-    orders.plot,
-    from = 'from',
-    to = 'to',
-    weight = 'n',
-    options = list(
-        height = 900,
-        width = 1800,
-        sankey = "{link:{color:{fill:'lightblue'}}}"
-    )
-))
+make_sankey(orders.plot)
 ```
 
 ### In-Depth Sequence Analysis {#sec-basket-sequence}
@@ -3492,7 +3491,7 @@ interval.
 library(dplyr)
 library(TraMineR)
 library(reshape2)
-library(googleVis)
+library(networkD3)
 
 # creating an example of shopping carts
 set.seed(10)
@@ -3634,17 +3633,7 @@ for (i in 2:ncol(df.sankey)) {
     df.sankey.plot <- rbind(df.sankey.plot, df.sankey.cache)
 }
 
-plot(gvisSankey(
-    df.sankey.plot,
-    from = 'from',
-    to = 'to',
-    weight = 'n',
-    options = list(
-        height = 900,
-        width = 1800,
-        sankey = "{link:{color:{fill:'lightblue'}}}"
-    )
-))
+make_sankey(df.sankey.plot)
 
 rm(df.sankey, df.sankey.cache, df.sankey.plot, i)
 ```
@@ -3856,23 +3845,19 @@ ggplot(oac_tabloids, aes(oac_names, tabloids)) +
 To see how the classification distributes across a real city, the analysis loads a
 Liverpool output-area shapefile.
 
-```{r}
-#| eval: false
-#load library
-library(maptools)
+```{r geo-load-shapefile, message=FALSE, warning=FALSE}
+# `sf` is the modern, maintained replacement for the retired maptools/sp stack
+library(sf)
+library(tidyverse)
 
+# the Liverpool output-area shapefile is bundled in images/; unzip to a temp dir
+oa_dir <- file.path(tempdir(), "liverpool_OA")
+unzip("images/liverpool_OA.zip", exdir = oa_dir)
+shp <- list.files(oa_dir, pattern = "[.]shp$", recursive = TRUE, full.names = TRUE)[1]
 
-#download file
-# download.file("https://raw.githubusercontent.com/nickbearman/r-geodemographic-analysis-20140710/master/liverpool_OA.zip", "liverpool_OA.zip", method = "internal") #if you are running this on OSX, you will need to replace method = "internal" with method = "curl"
-
-#unzip file
-unzip("images/liverpool_OA.zip")
-
-
-#read in shapefile
-liverpool <- readShapeSpatial('liverpool_OA/liverpool', proj4string = CRS("+init=epsg:27700"))
-
-plot(liverpool)
+# read the geometry and set the British National Grid CRS (EPSG:27700)
+liverpool <- st_read(shp, quiet = TRUE)
+st_crs(liverpool) <- 27700
 ```
 
 The OAC lookup—mapping each output area code to its supergroup, group, and subgroup—is
@@ -3895,15 +3880,17 @@ OAC <- rio::import("images/2011oacclustersandnamescsvv2.zip") %>%
     rename("OA_CODE" = "Output Area Code")
 ```
 
-```{r}
-# check dataset
-# head(liverpool@data)
-# head(OAC)
+```{r geo-join}
+# join the OAC classification onto the output-area geometry by area code
+liverpool <- liverpool %>%
+    left_join(OAC, by = c("OA01CD" = "OA_CODE")) %>%
+    drop_na(`Supergroup Code`)
 
-#Join OAC classification on to LSOA shapefile
-liverpool@data = data.frame(liverpool@data, OAC[match(liverpool@data[, "OA01CD"], OAC[, "OA_CODE"]),]) %>% drop_na()
-#Show head of liverpool
-head(liverpool@data)
+# show the attribute head (geometry dropped for display)
+liverpool %>%
+    st_drop_geometry() %>%
+    select(OA01CD, `Supergroup Name`, `Supergroup Code`) %>%
+    head()
 ```
 
 Coloring each output area by its supergroup produces a choropleth map that turns the
@@ -3921,49 +3908,15 @@ my_colour <-
       "#B7B7B7",
       "#9F79EE",
       "#FCC08F")
-#Create a basic OAC choropleth map
-plot(liverpool,
-     col = my_colour[liverpool@data$Supergroup.Code],
-     axes = FALSE,
-     border = NA)
-
-
-#Name the groups we've used
-oac_names <-
-    liverpool@data %>% select(Supergroup.Name, Supergroup.Code) %>% unique() %>% arrange(Supergroup.Code) %>% select(Supergroup.Name) %>% deframe()
-
-
-#Add the legend (the oac_names object was created earlier)
-legend(
-    x = 332210,
-    y = 385752,
-    legend = oac_names,
-    fill = my_colour,
-    bty = "n",
-    cex = .8,
-    ncol = 1
-)
-#Add North Arrow
-SpatialPolygonsRescale(
-    layout.north.arrow(2),
-    offset = c(332610, 385852),
-    scale = 1600,
-    plot.grid = F
-)
-#Add Scale Bar
-SpatialPolygonsRescale(
-    layout.scale.bar(),
-    offset = c(333210, 381252),
-    scale = 5000,
-    fill = c("white", "black"),
-    plot.grid = F
-)
-#Add text to scale bar
-text(333410, 380952, "0km", cex = .8)
-text(333410 + 2500, 380952, "2.5km", cex = .8)
-text(333410 + 5000, 380952, "5km", cex = .8)
-#Add a title
-title("OAC Group Map of Liverpool")
+# build the choropleth: one fill colour per OAC supergroup, ordered by code
+liverpool %>%
+    mutate(Supergroup = fct_reorder(`Supergroup Name`, `Supergroup Code`)) %>%
+    ggplot() +
+    geom_sf(aes(fill = Supergroup), color = NA) +
+    scale_fill_manual(values = my_colour, name = "OAC supergroup") +
+    labs(title = "OAC Supergroup Map of Liverpool") +
+    theme_void() +
+    theme(legend.position = "right")
 ```
 
 ## Key Takeaways {#sec-empirical-takeaways}
