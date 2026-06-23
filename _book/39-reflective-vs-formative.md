@@ -1,7 +1,0 @@
-# Measurement Scales
-
--   **Handbook of Marketing Scales: Multi-Item Measures for Marketing and Consumer Behavior Research** [@bearden2011]
-
--   **Marketing Scales Handbook, Volume IV: Consumer Behavior** [@stewart1993]
-
--   Check "books" folder

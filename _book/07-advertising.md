@@ -1,2 +1,0 @@
-# Advertising 
-People don't like intrusive ads, especially when they are vulnerable [@kellogg_2005, p.143]
