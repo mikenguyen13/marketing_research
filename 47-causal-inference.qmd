@@ -1208,7 +1208,7 @@ treated[(T0 + 1):Tn] <- treated[(T0 + 1):Tn] +
 pre <- 1:T0
 loss <- function(w) sum((treated[pre] - donors[pre, ] %*% w)^2)
 ui <- rbind(diag(J), rep(-1, J)); ci <- c(rep(0, J), -1)  # w>=0, sum(w)<=1
-w0 <- rep(1 / J, J)
+w0 <- rep(0.9 / J, J)   # interior start: sum < 1, so constrOptim's strict-feasibility check passes
 opt <- constrOptim(w0, loss, grad = NULL, ui = ui, ci = ci)
 w <- opt$par / sum(opt$par)
 
