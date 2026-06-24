@@ -1,0 +1,699 @@
+# Choice Modeling and Demand Estimation Seminar {#sec-choice-demand-seminar}
+
+*Choice modeling* and *demand estimation* are the empirical heart of quantitative
+marketing and of the industrial-organization tradition it borrows from. The field
+rests on a single, powerful idea: that observed purchases are the realized outcome
+of a latent, utility-maximizing comparison among alternatives, so that a model of
+how individuals *choose* can be aggregated into a model of how a market *demands*.
+This seminar traces the arc from the random-utility microfoundation, through the
+estimation of individual choice on disaggregate panel data, to the recovery of
+aggregate demand systems from market-level data—and on to the counterfactual and
+welfare questions those demand systems were built to answer. It is the doctoral
+reading-map companion to the technical chapters that develop the estimators in
+full: the choice and Bayesian-methods chapter (@sec-choice-bayesian), and the
+structural-modeling and industrial-organization material, to which this seminar
+stands in the same relation that the analytical-modeling seminar stands to its
+methods chapters.
+
+The science matters because demand is the object on which nearly every managerial
+and policy question ultimately rests. A price elasticity is a demand derivative; a
+merger simulation is a demand counterfactual; the welfare gain from a new product
+is an integral under a demand curve; the return on an advertising or assortment
+decision is a demand response. Commercially, the same machinery powers pricing
+engines, assortment optimization, and the regulatory review of mergers in
+differentiated-product industries. The intellectual payoff of the seminar is that
+it teaches a student to see these disparate applications as instances of one
+estimation problem and to know which assumptions each application is buying.
+
+The central tension that animates every week is *identification*. Preferences are
+never observed; only choices are. The analyst must recover taste parameters—and,
+crucially, price sensitivity—from data in which the very prices a consumer faces
+are set by firms who observe demand shifters the analyst does not. Endogenous
+prices, unobserved product quality, and unrestricted preference heterogeneity all
+threaten to contaminate the elasticity estimates on which everything downstream
+depends. The history of the field is in large part a history of instruments,
+control functions, and distributional assumptions devised to break this
+contamination. A student who completes the seminar can read a demand paper and
+locate, immediately, the source of variation that identifies its price
+coefficient, the assumption that makes that variation exogenous, and the
+counterfactual that assumption licenses.
+
+## Semester arc
+
+The fourteen-week arc moves along three nested levels. The first third
+(Weeks 1–4) builds the **random-utility microfoundation and its disaggregate
+estimators**: McFadden's conditional logit and its psychological antecedents in
+Thurstone and Luce; the first marketing applications to scanner panels; the
+independence-of-irrelevant-alternatives (IIA) problem and its nested-logit and
+generalized-extreme-value (GEV) repairs; and the random-coefficients or mixed
+logit that dissolves IIA by integrating taste heterogeneity out of the choice
+probabilities. The middle third (Weeks 5–8) confronts **heterogeneity and
+aggregation**: hierarchical Bayes estimation of individual-level parameters,
+conjoint and stated-preference measurement, and then the pivotal transition from
+individual choice to *aggregate* demand in the Berry inversion and the
+Berry–Levinsohn–Pakes (BLP) random-coefficients demand model, together with the
+practitioner's craft of estimating it.
+
+The final third (Weeks 9–14) takes the static demand system *dynamic and strategic*
+and then closes the loop to welfare. Weeks 9 and 10 relax the static,
+full-information benchmark: consumers stockpile, wait for durable-good prices to
+fall, and search over an endogenous consideration set rather than evaluating the
+full assortment. Weeks 11 and 12 are method-forward, treating endogeneity in choice
+models (control functions, copulas, instruments) and the Bayesian and
+Markov-chain-Monte-Carlo (MCMC) machinery that makes rich heterogeneous models
+estimable. Week 13 brings the machine-learning frontier—flexible demand prediction
+and heterogeneous-treatment-effect estimation—into contact with structural demand.
+Week 14 returns to first principles: the demand system exists to compute welfare and
+counterfactuals, so the capstone reads the new-product and merger-welfare papers
+that justify the entire enterprise.
+
+The reading map uses two tags. **[F] = Foundational** marks canon a choice-and-
+demand scholar is expected to know cold; **[R] = Frontier/Recent** marks an active
+research front, refreshed as the literature moves. Each week pairs at least one
+foundational anchor with a more recent or methodological counterpart. DOIs are
+reproduced as verified against the Crossref REST API; works without a verifiable
+DOI—chiefly the canonical books and a 1974 edited-volume chapter—are named without a
+link and flagged as such in the text.
+
+## Week 1 — Random-utility foundations {#sec-cdem-week01}
+
+**Topic.** The random-utility model (RUM) as the microfoundation of all that
+follows: a chooser maximizes a latent utility that the analyst observes only up to
+a random component, and the distribution of that component generates the choice
+probabilities.
+
+**Subtopics.** Deterministic vs. stochastic utility; the additive-error
+specification; the extreme-value distributional assumption and the logit closed
+form; the psychological roots of stochastic choice.
+
+**Methods.** Maximum-likelihood estimation of the multinomial/conditional logit;
+identification up to scale and level; the log-likelihood and its concavity.
+
+**Key readings.**
+
+- McFadden (1974), "Conditional Logit Analysis of Qualitative Choice Behavior," in
+  Zarembka (ed.), *Frontiers in Econometrics*, Academic Press — the founding
+  derivation linking utility maximization with extreme-value errors to the logit
+  choice probability; no Crossref DOI (edited-volume chapter), named without link.
+  **[F]**
+- Luce (1959), *Individual Choice Behavior: A Theoretical Analysis*, Wiley — the
+  choice-axiom (independence from irrelevant alternatives) that the logit
+  operationalizes; canonical book, no DOI. **[F]**
+- Thurstone (1927), "A Law of Comparative Judgment," *Psychological Review* — the
+  original random-utility/discriminal-process idea that anchors the whole tradition.
+  [doi:10.1037/h0070288](https://doi.org/10.1037/h0070288) — the probit-flavored
+  ancestor of stochastic choice. **[F]**
+
+**Debate.** Is the logit's tractable extreme-value error a substantive behavioral
+claim or a mathematical convenience whose IIA implication must later be undone?
+
+## Week 2 — Brand choice on scanner data {#sec-cdem-week02}
+
+**Topic.** The first great marketing application of the RUM: estimating brand-choice
+probabilities from supermarket scanner panels, where the same household is observed
+choosing repeatedly across many purchase occasions.
+
+**Subtopics.** Loyalty and state dependence; the brand-loyalty and
+purchase-event-feedback variables; marketing-mix covariates (price, display,
+feature) in the utility; the incidence/quantity decisions surrounding brand choice.
+
+**Methods.** Conditional logit on panel choice data; constructing exponentially
+smoothed loyalty regressors; modeling purchase timing and quantity jointly with
+brand choice.
+
+**Key readings.**
+
+- Guadagni & Little (1983), "A Logit Model of Brand Choice Calibrated on Scanner
+  Data," *Marketing Science*.
+  [doi:10.1287/mksc.2.3.203](https://doi.org/10.1287/mksc.2.3.203) — the paper that
+  brought the conditional logit into marketing and defined the loyalty-variable
+  template. **[F]**
+- Gupta (1988), "Impact of Sales Promotions on When, What, and How Much to Buy,"
+  *Journal of Marketing Research*.
+  [doi:10.2307/3172945](https://doi.org/10.2307/3172945) — decomposes promotional
+  response into purchase-timing, brand-choice, and quantity components, extending the
+  scanner-choice program beyond brand choice alone. **[F]**
+
+**Debate.** Does the loyalty variable capture genuine structural state dependence or
+merely soak up persistent unobserved heterogeneity—an identification confound that
+later mixed-logit and hierarchical-Bayes work would target directly?
+
+## Week 3 — IIA, nested logit, and GEV {#sec-cdem-week03}
+
+**Topic.** The Achilles' heel of the simple logit—independence from irrelevant
+alternatives—and the family of generalized-extreme-value models built to relax it
+while preserving a closed form.
+
+**Subtopics.** The red-bus/blue-bus problem; proportional substitution and its
+implausibility; nesting correlated alternatives; the GEV class and its
+inclusive-value structure; cross-elasticity patterns.
+
+**Methods.** Nested-logit estimation; the inclusive value and dissimilarity
+parameter; testing IIA; GEV generating functions.
+
+**Key readings.**
+
+- McFadden (1980), "Econometric Models for Probabilistic Choice Among Products,"
+  *The Journal of Business*.
+  [doi:10.1086/296093](https://doi.org/10.1086/296093) — develops the GEV framework
+  and the modeling of substitution patterns among differentiated products, the
+  direct ancestor of structural demand. **[F]**
+- Guadagni & Little (1983), "A Logit Model of Brand Choice Calibrated on Scanner
+  Data," *Marketing Science*.
+  [doi:10.1287/mksc.2.3.203](https://doi.org/10.1287/mksc.2.3.203) — revisited here
+  as the canonical setting where IIA's restrictive substitution is most visibly
+  violated by close-substitute brands. **[F]**
+
+**Debate.** Nested logit fixes IIA *within* a pre-specified tree—but who chooses the
+tree, and does an analyst-imposed nesting merely relocate the maintained assumption
+rather than test it?
+
+## Week 4 — Random coefficients and mixed logit {#sec-cdem-week04}
+
+**Topic.** The mixed (random-coefficients) logit: letting taste parameters vary
+across individuals according to a mixing distribution dissolves IIA entirely and can
+approximate any random-utility model.
+
+**Subtopics.** The mixing distribution over tastes; correlated random coefficients;
+flexible substitution patterns; panel mixed logit with repeated choices.
+
+**Methods.** Simulated maximum likelihood and maximum simulated likelihood; Halton
+draws; the McFadden–Train approximation theorem.
+
+**Key readings.**
+
+- McFadden & Train (2000), "Mixed MNL Models for Discrete Response," *Journal of
+  Applied Econometrics*.
+  [doi:10.1002/1099-1255(200009/10)15:5<447::aid-jae570>3.0.co;2-1](https://doi.org/10.1002/1099-1255(200009/10)15:5<447::aid-jae570>3.0.co;2-1)
+  — proves that mixed logit can approximate any RUM choice probabilities arbitrarily
+  well; the theoretical license for the whole approach. **[F]**
+- Revelt & Train (1998), "Mixed Logit with Repeated Choices: Households' Choices of
+  Appliance Efficiency Level," *The Review of Economics and Statistics*.
+  [doi:10.1162/003465398557735](https://doi.org/10.1162/003465398557735) — the
+  template for estimating mixed logit on panel data with within-household
+  correlation. **[F]**
+- Train (2009), *Discrete Choice Methods with Simulation*, 2nd ed., Cambridge
+  University Press — the standard graduate reference for simulation-based estimation;
+  cited as a book without a single-work DOI. **[F]**
+
+**Debate.** Is the freedom of the mixing distribution a virtue or a trap—does a
+mis-specified parametric mixing law (e.g., normal price coefficients implying
+positive price sensitivity) distort the very heterogeneity it claims to recover?
+
+## Week 5 — Heterogeneity and hierarchical Bayes {#sec-cdem-week05}
+
+**Topic.** Estimating *individual-level* preference parameters by pooling
+information across consumers through a hierarchical prior—the Bayesian counterpart
+to mixed logit, and the workhorse of marketing's heterogeneity tradition.
+
+**Subtopics.** The random-effects/hierarchical prior; shrinkage toward the
+population mean; individual-level posteriors for targeting; the value of purchase
+history.
+
+**Methods.** Hierarchical Bayes; Gibbs sampling and data augmentation; the
+multivariate-normal heterogeneity distribution; posterior means as individual
+estimates.
+
+**Key readings.**
+
+- Allenby & Rossi (1998), "Marketing Models of Consumer Heterogeneity," *Journal of
+  Econometrics*.
+  [doi:10.1016/S0304-4076(98)00055-4](https://doi.org/10.1016/S0304-4076(98)00055-4)
+  — the manifesto for treating heterogeneity as the object of interest rather than a
+  nuisance, with the hierarchical-Bayes machinery to recover it. **[F]**
+- Rossi, McCulloch & Allenby (1996), "The Value of Purchase History Data in Target
+  Marketing," *Marketing Science*.
+  [doi:10.1287/mksc.15.4.321](https://doi.org/10.1287/mksc.15.4.321) — shows how
+  individual-level posteriors sharpen targeting, the commercial payoff of
+  heterogeneity estimation. **[F]**
+
+**Debate.** Do individual-level posteriors recover real heterogeneity or merely
+project a parametric prior onto thin per-person data—and how much purchase history
+is enough before the prior stops doing the work?
+
+## Week 6 — Conjoint analysis and preference measurement {#sec-cdem-week06}
+
+**Topic.** Eliciting preferences from designed choice experiments rather than market
+data—the stated-preference complement to revealed-preference demand estimation.
+
+**Subtopics.** Full-profile vs. choice-based conjoint; experimental design and
+attribute balance; part-worth utilities; the bridge from conjoint to choice
+simulators and willingness-to-pay.
+
+**Methods.** Designed factorial/fractional experiments; choice-based conjoint
+estimated by (hierarchical Bayes) logit; reliability and external validity.
+
+**Key readings.**
+
+- Green & Srinivasan (1978), "Conjoint Analysis in Consumer Research: Issues and
+  Outlook," *Journal of Consumer Research*.
+  [doi:10.1086/208721](https://doi.org/10.1086/208721) — the field-defining review
+  that established conjoint as marketing's preference-measurement method. **[F]**
+- Green & Srinivasan (1990), "Conjoint Analysis in Marketing: New Developments with
+  Implications for Research and Practice," *Journal of Marketing*.
+  [doi:10.1177/002224299005400402](https://doi.org/10.1177/002224299005400402) —
+  the decadal update that reoriented conjoint toward choice-based designs compatible
+  with the RUM. **[F]**
+
+**Debate.** Do stated preferences from hypothetical choices recover the same
+parameters as revealed preferences from market choices—and when does hypothetical
+bias make conjoint willingness-to-pay an unreliable demand input?
+
+## Week 7 — Aggregate demand and the BLP model {#sec-cdem-week07}
+
+**Topic.** The pivotal transition from individual choice to *aggregate* demand:
+recovering structural demand parameters from market-level shares when individual
+data are unavailable and prices are endogenous.
+
+**Subtopics.** The unobserved product-quality term; the market-share inversion;
+random coefficients at the market level; instrumenting for price.
+
+**Methods.** The Berry inversion (shares to mean utilities); the BLP contraction
+mapping; generalized method of moments (GMM) with demand-side instruments.
+
+**Key readings.**
+
+- Berry (1994), "Estimating Discrete-Choice Models of Product Differentiation,"
+  *The RAND Journal of Economics*.
+  [doi:10.2307/2555829](https://doi.org/10.2307/2555829) — introduces the
+  share-inversion idea that turns an aggregate-demand problem into a linear
+  instrumental-variables problem in mean utilities. **[F]**
+- Berry, Levinsohn & Pakes (1995), "Automobile Prices in Market Equilibrium,"
+  *Econometrica*.
+  [doi:10.2307/2171802](https://doi.org/10.2307/2171802) — the full
+  random-coefficients aggregate-demand model with supply-side equilibrium; the
+  single most influential demand paper of the era. **[F]**
+
+**Debate.** The BLP instruments (rival-product characteristics, cost shifters) rest
+on the assumption that product characteristics are exogenous to the unobserved
+quality $\xi$—is that assumption credible when firms design products knowing $\xi$?
+The worked treatment in @sec-cdem-worked develops the estimator and this exclusion
+restriction in full.
+
+## Week 8 — BLP in practice {#sec-cdem-week08}
+
+**Topic.** The craft of actually estimating random-coefficients aggregate demand:
+the numerical, instrumental, and identification choices that separate a credible BLP
+estimate from a fragile one.
+
+**Subtopics.** Choice of instruments and the weak-instrument problem; the inner
+contraction and outer GMM loops; numerical pitfalls and convergence; market power
+and markups recovered from demand.
+
+**Methods.** Nested fixed-point GMM; optimal instruments; supply-side pricing
+moments; the cereal-industry application.
+
+**Key readings.**
+
+- Nevo (2000), "A Practitioner's Guide to Estimation of Random-Coefficients Logit
+  Models of Demand," *Journal of Economics & Management Strategy*.
+  [doi:10.1162/105864000567954](https://doi.org/10.1162/105864000567954) — the
+  pedagogical guide that made BLP estimable by a generation of students. **[F]**
+- Nevo (2001), "Measuring Market Power in the Ready-to-Eat Cereal Industry,"
+  *Econometrica*.
+  [doi:10.1111/1468-0262.00194](https://doi.org/10.1111/1468-0262.00194) — the
+  canonical applied BLP study, recovering markups and market power from estimated
+  demand. **[R]**
+
+**Debate.** How much of a BLP estimate is identified by the instruments versus by
+the parametric functional form and distributional assumptions—and does the
+practitioner's toolkit paper understate how fragile the numerics can be?
+
+## Week 9 — Dynamic demand: stockpiling and durables {#sec-cdem-week09}
+
+**Topic.** Relaxing the static benchmark: when consumers are forward-looking, today's
+demand depends on expected future prices, so a price cut shifts the *timing* of
+purchases, not only their level.
+
+**Subtopics.** Inventory and stockpiling on storable goods; forward-looking adoption
+of durables with falling prices; the distinction between intertemporal substitution
+and genuine demand expansion; dynamic discrete-choice solution methods.
+
+**Methods.** Dynamic programming/Bellman value functions in demand; estimating
+expectations; conditional-choice-probability and nested-fixed-point estimators.
+
+**Key readings.**
+
+- Erdem & Keane (1996), "Decision-Making Under Uncertainty: Capturing Dynamic Brand
+  Choice Processes in Turbulent Consumer Goods Markets," *Marketing Science*.
+  [doi:10.1287/mksc.15.1.1](https://doi.org/10.1287/mksc.15.1.1) — brings
+  forward-looking learning and uncertainty into brand choice, founding the dynamic
+  structural tradition in marketing. **[F]**
+- Hendel & Nevo (2006), "Measuring the Implications of Sales and Consumer Inventory
+  Behavior," *Econometrica*.
+  [doi:10.1111/j.1468-0262.2006.00721.x](https://doi.org/10.1111/j.1468-0262.2006.00721.x)
+  — shows that ignoring stockpiling biases static demand elasticities and long-run
+  policy conclusions. **[F]**
+- Gowrisankaran & Rysman (2012), "Dynamics of Consumer Demand for New Durable Goods,"
+  *Journal of Political Economy*.
+  [doi:10.1086/669540](https://doi.org/10.1086/669540) — a tractable dynamic BLP for
+  durables with falling prices and improving quality. **[R]**
+
+**Debate.** Dynamic demand models need consumer expectations the analyst cannot
+observe—does the rational-expectations closure earn its keep, or does it smuggle in
+the conclusions it is meant to deliver?
+
+## Week 10 — Search and consideration sets {#sec-cdem-week10}
+
+**Topic.** Relaxing full information: consumers do not evaluate the entire
+assortment but form a *consideration set* through costly search, so observed choice
+is a choice from an endogenous, latent subset.
+
+**Subtopics.** Consideration-set formation; sequential vs. simultaneous search;
+advertising as an awareness shifter; identification of search costs from choice and
+search data.
+
+**Methods.** Structural search models; consideration-then-choice two-stage models;
+identifying consideration from the pattern of choices and (where available) search
+data.
+
+**Key readings.**
+
+- Roberts & Lattin (1991), "Development and Testing of a Model of Consideration Set
+  Composition," *Journal of Marketing Research*.
+  [doi:10.2307/3172783](https://doi.org/10.2307/3172783) — the early marketing
+  formalization of consideration-set formation and its effect on choice. **[F]**
+- Mehta, Rajiv & Srinivasan (2003), "Price Uncertainty and Consumer Search: A
+  Structural Model of Consideration Set Formation," *Marketing Science*.
+  [doi:10.1287/mksc.22.1.58.12849](https://doi.org/10.1287/mksc.22.1.58.12849) —
+  embeds costly search for prices inside a structural choice model. **[R]**
+- Honka, Hortaçsu & Vitorino (2017), "Advertising, Consumer Awareness, and Choice:
+  Evidence from the U.S. Banking Industry," *The RAND Journal of Economics*.
+  [doi:10.1111/1756-2171.12188](https://doi.org/10.1111/1756-2171.12188) —
+  separately identifies awareness, consideration, and choice, with advertising acting
+  on the awareness stage. **[R]**
+
+**Debate.** Consideration sets are latent—can the analyst distinguish "not
+considered" from "considered and rejected" without search data, or does the
+identification rest entirely on functional form?
+
+## Week 11 — Endogeneity in choice models {#sec-cdem-week11}
+
+**Topic.** The identification problem at the center of the seminar: prices (and other
+marketing-mix variables) correlate with unobserved demand shifters, biasing the
+price coefficient that every counterfactual depends on.
+
+**Subtopics.** Price endogeneity at the disaggregate level; control functions vs.
+instrumental variables; copula-based correction without external instruments;
+unobserved product characteristics.
+
+**Methods.** Control-function (two-stage residual-inclusion) estimation; the Gaussian
+copula method; instrument construction and validity testing.
+
+**Key readings.**
+
+- Villas-Boas & Winer (1999), "Endogeneity in Brand Choice Models," *Management
+  Science*.
+  [doi:10.1287/mnsc.45.10.1324](https://doi.org/10.1287/mnsc.45.10.1324) — documents
+  that ignoring price endogeneity biases brand-choice elasticities in scanner data.
+  **[F]**
+- Petrin & Train (2010), "A Control Function Approach to Endogeneity in Consumer
+  Choice Models," *Journal of Marketing Research*.
+  [doi:10.1509/jmkr.47.1.3](https://doi.org/10.1509/jmkr.47.1.3) — the control-
+  function alternative to BLP-style instruments at the individual level. **[R]**
+- Park & Gupta (2012), "Handling Endogenous Regressors by Joint Estimation Using
+  Copulas," *Marketing Science*.
+  [doi:10.1287/mksc.1120.0718](https://doi.org/10.1287/mksc.1120.0718) — corrects
+  endogeneity without external instruments by exploiting non-normality of the
+  endogenous regressor. **[R]**
+
+**Debate.** The copula method buys identification from a distributional assumption
+(non-normal regressors, normal errors) rather than from an instrument—is trading an
+exclusion restriction for a distributional one a genuine advance or a relabeling of
+the maintained assumption?
+
+## Week 12 — Bayesian estimation and MCMC {#sec-cdem-week12}
+
+**Topic.** The Bayesian computational toolkit that makes rich, heterogeneous choice
+models estimable: data augmentation, Gibbs sampling, and the Metropolis–Hastings
+algorithm applied to discrete-choice likelihoods.
+
+**Subtopics.** Data augmentation for probit/logit; conjugate hierarchical priors;
+mixing and convergence diagnostics; demand for variety and corner solutions.
+
+**Methods.** Gibbs sampling with latent-utility augmentation; random-walk
+Metropolis–Hastings for non-conjugate blocks; hierarchical priors over heterogeneous
+parameters.
+
+**Key readings.**
+
+- Rossi, Allenby & McCulloch (2005), *Bayesian Statistics and Marketing*, Wiley —
+  the standard reference uniting Bayesian computation with marketing choice models;
+  cited as a book without a single-work DOI. **[F]**
+- Allenby, Arora & Ginter (1998), "On the Heterogeneity of Demand," *Journal of
+  Marketing Research*.
+  [doi:10.2307/3152035](https://doi.org/10.2307/3152035) — a worked demonstration of
+  hierarchical-Bayes heterogeneity recovery and its managerial implications. **[F]**
+- Kim, Allenby & Rossi (2002), "Modeling Consumer Demand for Variety," *Marketing
+  Science*.
+  [doi:10.1287/mksc.21.3.229.143](https://doi.org/10.1287/mksc.21.3.229.143) —
+  extends Bayesian choice modeling to multiple-discreteness and corner solutions
+  beyond single-unit choice. **[R]**
+
+**Debate.** Bayesian and classical (simulated-likelihood) estimators of the same
+mixed logit are asymptotically equivalent—so is the choice between them substantive
+or merely computational, and when does the prior actually change the conclusion?
+
+## Week 13 — Machine learning and demand {#sec-cdem-week13}
+
+**Topic.** The machine-learning frontier: flexible prediction of demand and
+data-driven recovery of heterogeneous responses, in tension and dialogue with
+structural demand estimation.
+
+**Subtopics.** Flexible/nonparametric demand prediction and model combination;
+heterogeneous-treatment-effect estimation by recursive partitioning; deep-learning
+models of product choice over large assortments; prediction vs. structural
+identification.
+
+**Methods.** Regularized and ensemble prediction; causal/honest trees and forests
+for treatment-effect heterogeneity; neural choice models.
+
+**Key readings.**
+
+- Bajari, Nekipelov, Ryan & Yang (2015), "Machine Learning Methods for Demand
+  Estimation," *American Economic Review (Papers & Proceedings)*.
+  [doi:10.1257/aer.p20151021](https://doi.org/10.1257/aer.p20151021) — benchmarks
+  machine-learning predictors against structural demand on out-of-sample fit. **[R]**
+- Athey & Imbens (2016), "Recursive Partitioning for Heterogeneous Causal Effects,"
+  *Proceedings of the National Academy of Sciences*.
+  [doi:10.1073/pnas.1510489113](https://doi.org/10.1073/pnas.1510489113) — the
+  causal-tree method for recovering heterogeneous marketing responses with valid
+  inference. **[R]**
+- Gabel & Timoshenko (2022), "Product Choice with Large Assortments: A Scalable
+  Deep-Learning Model," *Management Science*.
+  [doi:10.1287/mnsc.2021.3969](https://doi.org/10.1287/mnsc.2021.3969) — a neural
+  choice model that scales to assortments far larger than classical logit can handle.
+  **[R]**
+
+**Debate.** Machine learning excels at prediction but is silent on
+counterfactuals—can flexible predictors deliver the price elasticities and welfare
+integrals that structural demand exists to compute, or do they answer a different
+question?
+
+## Week 14 — Welfare, counterfactuals, and synthesis {#sec-cdem-week14}
+
+**Topic.** The terminus of the arc: the demand system exists to compute welfare and
+counterfactuals, so the capstone evaluates new-product gains, merger effects, and the
+consumer surplus that estimated demand makes measurable.
+
+**Subtopics.** Compensating variation from the logit inclusive value; the welfare
+value of new products and variety; merger simulation; the bias from ignoring
+preference heterogeneity in welfare.
+
+**Methods.** Consumer-surplus computation from estimated demand; counterfactual
+equilibrium simulation; the log-sum welfare formula.
+
+**Key readings.**
+
+- Petrin (2002), "Quantifying the Benefits of New Products: The Case of the
+  Minivan," *Journal of Political Economy*.
+  [doi:10.1086/340779](https://doi.org/10.1086/340779) — uses estimated BLP demand
+  to compute the consumer-welfare gain from a product innovation, the paradigmatic
+  payoff of the whole enterprise. **[F]**
+- Trajtenberg (1989), "The Welfare Analysis of Product Innovations, with an
+  Application to Computed Tomography Scanners," *Journal of Political Economy*.
+  [doi:10.1086/261611](https://doi.org/10.1086/261611) — an early discrete-choice
+  welfare analysis of innovation that anticipates the new-goods literature. **[F]**
+- Nevo (2001), "Measuring Market Power in the Ready-to-Eat Cereal Industry,"
+  *Econometrica*.
+  [doi:10.1111/1468-0262.00194](https://doi.org/10.1111/1468-0262.00194) — revisited
+  as the canonical counterfactual exercise: recovering markups and simulating mergers
+  from estimated demand. **[R]**
+
+**Debate.** Counterfactual welfare numbers inherit every maintained assumption of the
+demand model—how much should a regulator or manager trust a surplus estimate whose
+magnitude depends on an unidentified tail of the taste distribution?
+
+## Foundational vs. frontier at a glance {#sec-cdem-ff}
+
+The **foundational core**—the canon a choice-and-demand scholar must know cold—runs
+from the random-utility microfoundation through the aggregate-demand revolution:
+Thurstone (1927), Luce (1959), and McFadden (1974, 1980) for the RUM and its GEV
+extensions; Guadagni & Little (1983) and Gupta (1988) for the scanner-choice
+application; McFadden & Train (2000) and Revelt & Train (1998) for mixed logit;
+Allenby & Rossi (1998) and Rossi, McCulloch & Allenby (1996) for hierarchical-Bayes
+heterogeneity; Green & Srinivasan (1978, 1990) for preference measurement; Berry
+(1994) and Berry, Levinsohn & Pakes (1995) for aggregate demand; Erdem & Keane
+(1996) and Hendel & Nevo (2006) for dynamics; Villas-Boas & Winer (1999) for
+endogeneity; and Petrin (2002) and Trajtenberg (1989) for welfare. These are the
+papers and books a dissertation in the area is expected to cite without prompting.
+
+The **frontier**, refreshed each edition, tracks where the field is actively
+moving: Nevo (2001) and Gowrisankaran & Rysman (2012) for applied and dynamic BLP;
+Mehta, Rajiv & Srinivasan (2003) and Honka, Hortaçsu & Vitorino (2017) for
+structural search and consideration; Petrin & Train (2010) and Park & Gupta (2012)
+for endogeneity corrections; Kim, Allenby & Rossi (2002) for multiple-discreteness;
+and Bajari et al. (2015), Athey & Imbens (2016), and Gabel & Timoshenko (2022) for
+the machine-learning interface. The split is pedagogical, not chronological: a 1995
+paper is foundational because the field still builds on its inversion and GMM, while
+a 2016 method is "frontier" because its integration with structural demand is still
+being worked out.
+
+## How this chapter expands {#sec-cdem-expands}
+
+The weekly map is a backbone designed to grow along several axes.
+
+1. **A refresh cadence of two to three years on the frontier modules.** The
+   machine-learning, dynamic-demand, and search modules turn over fastest; frontier
+   readings should be replaced or supplemented as new methods and applications
+   appear, while the foundational anchors (the RUM, the Berry inversion, mixed logit)
+   stay fixed.
+2. **Emerging modules as the field grows:** machine-learning demand at scale
+   (regularized and ensemble demand systems, double/debiased estimation of demand
+   parameters); LLM- and embedding-based preference models that represent products
+   and consumers in learned latent spaces and raise fresh identification questions;
+   and demand estimation under privacy constraints and aggregated/differentially
+   private data. Each should follow the template—foundational anchor, frontier paper,
+   identification debate.
+3. **A parallel methods spine.** Each module already names its identifying
+   assumption (the extreme-value error, the nesting tree, the mixing distribution,
+   the BLP exclusion restriction, the rational-expectations closure, the copula's
+   distributional assumption). A future edition should add a short companion per week
+   that states the estimator, its moment or likelihood, and what breaks
+   identification—turning the reading map into a methods course, of which the worked
+   BLP section below is the model.
+4. **An applications track** pairing each estimator with a canonical industry case
+   (autos, cereal, durables, banking, retail assortments), so students see the same
+   machinery re-identified across settings with different sources of exogenous
+   variation.
+
+The following section supplies the worked treatment the map points to.
+
+### BLP demand as an estimator {#sec-cdem-worked}
+
+The Berry (1994) / Berry–Levinsohn–Pakes (1995) model is the hinge of the whole
+seminar: it carries the random-utility logic from individual choice to *aggregate*
+demand and confronts price endogeneity head-on. The treatment here states the
+estimator, its inversion, and the single assumption on which identification rests.
+
+Consumer $i$ in market $t$ derives utility from product $j$,
+$$
+u_{ijt} = \mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i - \alpha_i\, p_{jt}
+          + \xi_{jt} + \varepsilon_{ijt},
+$$ {#eq-cdem-utility}
+where $\mathbf{x}_{jt}$ are observed characteristics, $p_{jt}$ is price, $\xi_{jt}$
+is the **unobserved** (to the analyst) product quality in market $t$, and
+$\varepsilon_{ijt}$ is an i.i.d. extreme-value taste shock. The **random
+coefficients** $(\boldsymbol{\beta}_i, \alpha_i)$ vary across consumers with a
+parametric distribution, say
+$(\boldsymbol{\beta}_i,\alpha_i) = (\bar{\boldsymbol{\beta}},\bar\alpha) +
+\boldsymbol{\Sigma}\,\boldsymbol{\nu}_i$ with $\boldsymbol{\nu}_i \sim \Phi$. The
+outside good $j=0$ has utility normalized to $u_{i0t}=\varepsilon_{i0t}$.
+
+Integrating the logit choice probabilities over the taste distribution gives the
+model's predicted market share for product $j$,
+$$
+s_{jt}(\boldsymbol{\delta}_t,\boldsymbol{\theta}_2)
+= \int
+  \frac{\exp\!\big(\delta_{jt} + \mu_{ijt}(\boldsymbol{\theta}_2)\big)}
+       {1 + \sum_{k} \exp\!\big(\delta_{kt} + \mu_{ikt}(\boldsymbol{\theta}_2)\big)}
+  \, d\Phi(\boldsymbol{\nu}),
+$$ {#eq-cdem-share}
+where $\delta_{jt} = \mathbf{x}_{jt}^{\top}\bar{\boldsymbol{\beta}} -
+\bar\alpha\,p_{jt} + \xi_{jt}$ is the **mean utility** of product $j$ and
+$\mu_{ijt}$ collects the individual deviations governed by the heterogeneity
+parameters $\boldsymbol{\theta}_2=\mathrm{vec}(\boldsymbol{\Sigma})$. The integral
+has no closed form and is approximated by simulation over draws of
+$\boldsymbol{\nu}_i$.
+
+The key result of Berry (1994) is that, holding $\boldsymbol{\theta}_2$ fixed, the
+mapping from mean utilities to shares is **invertible**: there is a unique vector
+$\boldsymbol{\delta}_t$ that equates predicted shares to observed shares
+$\mathbf{S}_t$. BLP compute it as the fixed point of the **contraction mapping**
+$$
+\delta_{jt}^{(r+1)} = \delta_{jt}^{(r)}
+   + \ln S_{jt} - \ln s_{jt}\!\big(\boldsymbol{\delta}_t^{(r)},\boldsymbol{\theta}_2\big),
+$$ {#eq-cdem-contraction}
+iterated to convergence. This inversion turns an aggregate-demand problem into a
+linear-in-$\xi$ model: once $\boldsymbol{\delta}_t(\boldsymbol{\theta}_2)$ is
+recovered, the structural error is
+$$
+\xi_{jt}(\boldsymbol{\theta})
+= \delta_{jt}(\boldsymbol{\theta}_2)
+  - \mathbf{x}_{jt}^{\top}\bar{\boldsymbol{\beta}} + \bar\alpha\, p_{jt}.
+$$ {#eq-cdem-xi}
+
+Estimation proceeds by **GMM**. Because price $p_{jt}$ is correlated with the
+unobserved quality $\xi_{jt}$ (firms set higher prices for products with higher
+$\xi$), ordinary regression of $\delta$ on price is biased. Identification instead
+requires a vector of **instruments** $\mathbf{z}_{jt}$ that satisfy the population
+moment condition
+$$
+\mathbb{E}\!\left[\, \xi_{jt}(\boldsymbol{\theta}_0)\,\big|\, \mathbf{z}_{jt} \right] = 0
+\quad\Longrightarrow\quad
+\mathbb{E}\!\left[\, \mathbf{z}_{jt}\, \xi_{jt}(\boldsymbol{\theta}_0)\,\right]=0,
+$$ {#eq-cdem-moment}
+and the estimator minimizes the empirical analogue,
+$$
+\hat{\boldsymbol{\theta}}
+= \arg\min_{\boldsymbol{\theta}}\;
+  \Big(\tfrac{1}{N}\textstyle\sum_{jt}\mathbf{z}_{jt}\,\xi_{jt}(\boldsymbol{\theta})\Big)^{\!\top}
+  \mathbf{W}
+  \Big(\tfrac{1}{N}\textstyle\sum_{jt}\mathbf{z}_{jt}\,\xi_{jt}(\boldsymbol{\theta})\Big),
+$$ {#eq-cdem-gmm}
+with weight matrix $\mathbf{W}$. The standard instruments are **cost shifters** and
+functions of **rival products' characteristics** (the BLP instruments), which shift
+a product's price and markup through competition without entering its own demand.
+
+The entire causal content rests on one **identifying assumption**: instrument
+exogeneity, $\mathbb{E}[\xi_{jt}\mid \mathbf{z}_{jt}]=0$. Substantively, this
+requires that product characteristics and cost shifters be uncorrelated with the
+*unobserved* quality $\xi_{jt}$. That is precisely the assumption the Week 7 debate
+contests—firms that observe $\xi$ when they design and price products may choose
+characteristics correlated with it, in which case the instruments fail and the
+recovered price elasticity, along with every markup, merger, and welfare number
+built on it, is biased. As with the seminar's other estimators, the BLP demand
+parameter becomes a *finding* only once its moment condition and its exclusion
+restriction are stated and defended in full.
+
+## Key Takeaways
+
+- The seminar's spine is a single arc—**random utility → individual choice →
+  aggregate demand → welfare**—and a student's job is to see pricing, assortment,
+  merger, and new-product questions as instances of one estimation problem with one
+  recurring threat, endogenous prices correlated with unobserved quality.
+- The microfoundation runs from Thurstone (1927), Luce (1959), and McFadden (1974,
+  1980) through the scanner-choice application of Guadagni & Little (1983); the
+  **IIA** limitation of the simple logit is repaired first by GEV/nested logit and
+  then dissolved by the **mixed logit**, which McFadden & Train (2000) show can
+  approximate any random-utility model.
+- **Heterogeneity** is recovered either by hierarchical Bayes (Allenby & Rossi
+  1998) or by the mixing distribution of mixed logit; the two are asymptotically
+  equivalent, so the choice between Bayesian MCMC and simulated likelihood is largely
+  computational.
+- The **Berry inversion** and the **BLP** random-coefficients model (Berry 1994;
+  Berry, Levinsohn & Pakes 1995) carry the RUM to market-level data; as
+  @sec-cdem-worked shows, the contraction (@eq-cdem-contraction) linearizes the model
+  in $\xi$ and the GMM moment (@eq-cdem-moment) identifies demand *only* under
+  instrument exogeneity.
+- Relaxing the static, full-information benchmark—**stockpiling and durables**
+  (Erdem & Keane 1996; Hendel & Nevo 2006; Gowrisankaran & Rysman 2012) and
+  **search/consideration** (Roberts & Lattin 1991; Honka et al. 2017)—buys realism at
+  the cost of additional unobservables (expectations, latent consideration) that must
+  themselves be identified.
+- **Endogeneity corrections** (Villas-Boas & Winer 1999; Petrin & Train 2010; Park &
+  Gupta 2012) and the **machine-learning frontier** (Bajari et al. 2015; Athey &
+  Imbens 2016; Gabel & Timoshenko 2022) extend the toolkit, but the demand system's
+  ultimate purpose remains the **welfare and counterfactual** computation that Petrin
+  (2002) and Trajtenberg (1989) exemplify—numbers that inherit every maintained
+  assumption of the model that produced them.

@@ -1,0 +1,710 @@
+# Field Experiments and Causal Inference Seminar {#sec-field-experiments-seminar}
+
+*Causal inference* is the discipline of saying not merely that two things move
+together but that one *makes* the other move. This chapter is a graduate seminar
+in how marketing and economics learned to make such claims credibly. Its organizing
+event is the **credibility revolution**: the shift, over roughly the past four
+decades, from regressions whose causal interpretation rested on untestable
+functional-form assumptions to *design-based* identification, where the credibility
+of a finding flows from how the data were generated—randomization, a discontinuity,
+an instrument, a policy shock—rather than from the cleverness of the estimator
+applied after the fact [doi:10.1257/jep.24.2.3](https://doi.org/10.1257/jep.24.2.3).
+The seminar treats the randomized field experiment as the gold standard and then
+works outward to the quasi-experimental designs—difference-in-differences,
+regression discontinuity, instrumental variables, synthetic control—that recover
+causal effects when randomization is impossible.
+
+The substance matters because nearly every consequential marketing decision is a
+causal question. Does this advertising campaign *cause* incremental sales, or does
+it merely correlate with customers who would have bought anyway? Does a price cut
+*cause* enough new demand to pay for itself? The single most important empirical
+lesson of the past fifteen years—that observational estimates of advertising
+returns are off by an order of magnitude relative to experimental ones
+[doi:10.1093/qje/qjv023](https://doi.org/10.1093/qje/qjv023)—is a causal-inference
+lesson. A doctoral student who leaves this seminar should be able to read a paper
+and name its identification strategy, state the assumption under which its estimate
+is causal, identify what would break that assumption, and design a credible study
+of their own.
+
+The central tension that runs through every week is **internal versus external
+validity**. A perfectly randomized experiment on a narrow population at a single
+firm identifies a causal effect *for that setting* with near-certainty (high
+internal validity) but says little, by itself, about whether the effect
+generalizes (external validity). Quasi-experiments and observational designs trade
+in the other direction, buying scope and realism at the cost of stronger
+assumptions. The frontier of the field—heterogeneous treatment effects, the
+economics of scaling, the replication crisis—is largely a sustained attack on this
+tension, asking how an effect estimated in one place transports to another, larger,
+later place.
+
+This chapter is the doctoral **reading-map companion** to the technical chapter on
+causal inference (@sec-causal-inference). Where that chapter derives the
+estimators, states the assumptions formally, and supplies runnable code, this one
+supplies the *intellectual map*: a full-semester progression through the canonical
+and frontier literature, the debates that animate each design, and the lineage that
+connects Rubin's potential-outcomes notation to today's double-machine-learning and
+marketplace-experiment frontiers. Read the two together: the map here, the
+machinery there.
+
+## Semester arc
+
+A doctoral seminar in causal inference is the methodological backbone of modern
+empirical marketing and economics. It does not ask "what do consumers want?" but
+"how do we *know* that a marketing action caused the outcome we observed?" The arc
+begins with the **conceptual foundation**—the potential-outcomes (Neyman–Rubin)
+framework that defines a causal effect as a comparison of counterfactual states,
+and the fundamental problem that only one of those states is ever observed for any
+unit. From this footing the seminar establishes the *experimental ideal*:
+randomized and field experiments, online A/B testing at industrial scale, and the
+measurement of advertising returns, where experiments overturned two decades of
+observational consensus.
+
+The middle of the semester is a systematic tour of **quasi-experimental designs**,
+each a strategy for approximating the experimental ideal when randomization is
+unavailable: difference-in-differences (and its modern reckoning with
+heterogeneous treatment timing), regression discontinuity, instrumental variables
+and the local-average-treatment-effect interpretation, synthetic control, and
+matching on the propensity score. Each design is taught the same way—intuition,
+identifying assumption, the threat that breaks it, and a marketing or economics
+application that made the design canonical. A short module on mediation and
+mechanism asks the harder question of *why* an effect occurs, where the
+identification problems multiply.
+
+The seminar closes with the **frontier**: causal machine learning for
+heterogeneous treatment effects, the economics of external validity and scaling
+(why effects shrink when programs go to scale), the open-science and replication
+movement that disciplined the whole enterprise, and the newest designs for
+marketplaces where units interfere with one another and the stable-unit-treatment-value
+assumption fails. Throughout, the pedagogy is design-forward: every module names
+the *identifying assumption*—unconfoundedness, parallel trends, the exclusion
+restriction, continuity at the cutoff, no-interference—that stands between a
+comparison and a causal claim.
+
+The reading map uses two tags: **[F] = Foundational** (canon a causal-inference
+scholar is expected to know cold) and **[R] = Frontier/Recent** (an active research
+front, refreshed as the literature moves). Each week pairs at least one foundational
+anchor with one frontier paper. DOIs are reproduced as verified against Crossref;
+works without a DOI-verified record—chiefly scholarly books and a pre-1995 journal
+article AEA never registered—are named without a link and flagged as such.
+
+## Week 1 — Potential outcomes and the credibility revolution {#sec-fexp-week01}
+
+**Topic.** The conceptual foundation of all causal inference: the potential-outcomes
+framework, the fundamental problem of causal inference, and the historical shift
+toward design-based identification.
+
+**Subtopics.** Counterfactuals and the Neyman–Rubin causal model; treatment
+assignment mechanisms; the stable-unit-treatment-value assumption (SUTVA);
+unconfoundedness; why "no causation without manipulation."
+
+**Methods.** Conceptual; the algebra of potential outcomes; randomization as the
+benchmark assignment mechanism.
+
+**Key readings.**
+
+- Rubin (1974), "Estimating Causal Effects of Treatments in Randomized and
+  Nonrandomized Studies," *Journal of Educational Psychology*.
+  [doi:10.1037/h0037350](https://doi.org/10.1037/h0037350) — formalizes the
+  potential-outcomes definition of a causal effect; the bedrock notation of the
+  field. **[F]**
+- Holland (1986), "Statistics and Causal Inference," *Journal of the American
+  Statistical Association*.
+  [doi:10.1080/01621459.1986.10478354](https://doi.org/10.1080/01621459.1986.10478354)
+  — names the "fundamental problem of causal inference" and the "no causation
+  without manipulation" dictum. **[F]**
+- Angrist & Pischke (2010), "The Credibility Revolution in Empirical Economics:
+  How Better Research Design Is Taking the Con out of Econometrics," *Journal of
+  Economic Perspectives*.
+  [doi:10.1257/jep.24.2.3](https://doi.org/10.1257/jep.24.2.3) — the manifesto of
+  design-based identification. **[F]**
+- Imbens & Rubin (2015), *Causal Inference for Statistics, Social, and Biomedical
+  Sciences*, Cambridge University Press — the comprehensive modern textbook
+  treatment of the potential-outcomes approach (book; cited without DOI). **[F]**
+
+**Debate.** Potential outcomes (Rubin) vs. structural/graphical (Pearl) causal
+frameworks—rival languages or complementary ones? Is "no causation without
+manipulation" too restrictive for marketing constructs?
+
+The potential-outcomes algebra introduced here—the definition of the
+average treatment effect and the selection-bias decomposition that randomization
+eliminates—is developed as a worked example in @sec-causal-inference.
+
+## Week 2 — Randomized and field experiments {#sec-fexp-week02}
+
+**Topic.** Randomization as the assignment mechanism that makes treatment
+independent of potential outcomes; the move from the lab to the field.
+
+**Subtopics.** Randomized controlled trials (RCTs); the taxonomy of field
+experiments (artefactual, framed, natural); covariate balance and stratification;
+the econometrics of experiments and design-based standard errors.
+
+**Methods.** Randomization inference; regression adjustment of experiments;
+clustered and stratified designs.
+
+**Key readings.**
+
+- Harrison & List (2004), "Field Experiments," *Journal of Economic Literature*.
+  [doi:10.1257/0022051043004577](https://doi.org/10.1257/0022051043004577) — the
+  field-defining taxonomy distinguishing lab, field, and natural experiments. **[F]**
+- Athey & Imbens (2017), "The Econometrics of Randomized Experiments," in *Handbook
+  of Economic Field Experiments*.
+  [doi:10.1016/bs.hefe.2016.10.003](https://doi.org/10.1016/bs.hefe.2016.10.003)
+  — the modern econometric treatment of analyzing experiments. **[F]**
+- Gerber & Green (2012), *Field Experiments: Design, Analysis, and Interpretation*,
+  W. W. Norton — the standard graduate text on experimental design and analysis
+  (book; cited without DOI). **[F]**
+- Simester (2017), "Field Experiments in Marketing," in *Handbook of Economic Field
+  Experiments*.
+  [doi:10.1016/bs.hefe.2016.07.001](https://doi.org/10.1016/bs.hefe.2016.07.001)
+  — surveys the design and pitfalls of marketing field experiments specifically.
+  **[R]**
+
+**Debate.** Do field experiments sacrifice control for realism, and how much? Are
+randomization-inference and design-based standard errors a genuine improvement or a
+formalization of what regression already did?
+
+## Week 3 — A/B testing and online experiments at scale {#sec-fexp-week03}
+
+**Topic.** The industrialization of the experiment: running thousands of randomized
+trials on live digital products.
+
+**Subtopics.** Controlled experiments on the web; overall evaluation criteria and
+metric design; sample-ratio mismatch and other trust pitfalls; sequential testing
+and peeking; the ghost-ad design for unbiased advertising baselines.
+
+**Methods.** Large-scale A/B platforms; variance reduction (CUPED); sequential and
+always-valid inference; ghost/PSA control groups.
+
+**Key readings.**
+
+- Kohavi, Longbotham, Sommerfield & Henne (2009), "Controlled Experiments on the
+  Web: Survey and Practical Guide," *Data Mining and Knowledge Discovery*.
+  [doi:10.1007/s10618-008-0114-1](https://doi.org/10.1007/s10618-008-0114-1) — the
+  canonical practitioner's guide to industrial online experimentation. **[F]**
+- Johnson, Lewis & Nubbemeyer (2017), "Ghost Ads: Improving the Economics of
+  Measuring Online Ad Effectiveness," *Journal of Marketing Research*.
+  [doi:10.1509/jmr.15.0297](https://doi.org/10.1509/jmr.15.0297) — a design that
+  builds an unbiased, low-cost counterfactual for ad exposure. **[R]**
+- Kohavi, Tang & Xu (2020), *Trustworthy Online Controlled Experiments: A Practical
+  Guide to A/B Testing*, Cambridge University Press — the comprehensive modern
+  reference on experimentation platforms and pitfalls (book; cited without DOI).
+  **[R]**
+
+**Debate.** Does the ability to run millions of experiments substitute for theory,
+or does cheap experimentation make theory more valuable for choosing what to test?
+Are short-window experimental metrics a good proxy for long-run value?
+
+## Week 4 — Advertising returns and measurement {#sec-fexp-week04}
+
+**Topic.** The empirical episode in which experiments overturned observational
+wisdom: measuring the causal return to advertising.
+
+**Subtopics.** Endogeneity of ad exposure (activity bias, targeting); the
+statistical power problem when sales are noisy and ad effects small; experimental
+vs. observational estimates of return on ad spend; brand keyword search and
+incrementality.
+
+**Methods.** Large-field advertising experiments; comparison of experimental and
+regression/matching estimates; power analysis for small effects.
+
+**Key readings.**
+
+- Lewis & Rao (2015), "The Unfavorable Economics of Measuring the Returns to
+  Advertising," *The Quarterly Journal of Economics*.
+  [doi:10.1093/qje/qjv023](https://doi.org/10.1093/qje/qjv023) — shows that even
+  very large experiments often cannot detect plausible ad effects, and that
+  observational methods mislead. **[F]**
+- Blake, Nosko & Tadelis (2015), "Consumer Heterogeneity and Paid Search
+  Effectiveness: A Large-Scale Field Experiment," *Econometrica*.
+  [doi:10.3982/ecta12423](https://doi.org/10.3982/ecta12423) — eBay's branded
+  paid-search experiment finds near-zero incremental returns for established firms.
+  **[F]**
+
+**Debate.** If advertising returns are this hard to measure, how should firms set
+budgets? Is the gap between observational and experimental estimates a
+generalizable warning or specific to digital channels?
+
+## Week 5 — Difference-in-differences {#sec-fexp-week05}
+
+**Topic.** Identifying causal effects from policy or treatment changes by comparing
+the *change* in treated and control groups over time.
+
+**Subtopics.** The 2×2 DiD estimator; the parallel-trends identifying assumption;
+two-way fixed-effects (TWFE) regression; the modern critique of staggered adoption
+(negative weights, "forbidden comparisons"); heterogeneity-robust estimators.
+
+**Methods.** TWFE regression; event-study/dynamic specifications;
+Goodman-Bacon decomposition; Callaway–Sant'Anna group-time estimators.
+
+**Key readings.**
+
+- Card & Krueger (1994), "Minimum Wages and Employment: A Case Study of the
+  Fast-Food Industry in New Jersey and Pennsylvania," *American Economic Review* —
+  the canonical DiD application that helped launch the credibility revolution
+  (named without DOI link: the 1994 AER article predates AEA's DOI registration;
+  flagged). **[F]**
+- Goodman-Bacon (2021), "Difference-in-Differences with Variation in Treatment
+  Timing," *Journal of Econometrics*.
+  [doi:10.1016/j.jeconom.2021.03.014](https://doi.org/10.1016/j.jeconom.2021.03.014)
+  — decomposes the TWFE estimator and exposes the negative-weighting problem under
+  staggered timing. **[R]**
+- Callaway & Sant'Anna (2021), "Difference-in-Differences with Multiple Time
+  Periods," *Journal of Econometrics*.
+  [doi:10.1016/j.jeconom.2020.12.001](https://doi.org/10.1016/j.jeconom.2020.12.001)
+  — a heterogeneity-robust group-time estimator that repairs the staggered-DiD
+  bias. **[R]**
+- de Chaisemartin & D'Haultfœuille (2020), "Two-Way Fixed Effects Estimators with
+  Heterogeneous Treatment Effects," *American Economic Review*.
+  [doi:10.1257/aer.20181169](https://doi.org/10.1257/aer.20181169) — characterizes
+  when TWFE recovers a sensibly weighted average of treatment effects. **[R]**
+
+**Debate.** Is parallel trends ever testable, or only ever made plausible? Has the
+staggered-DiD literature genuinely changed conclusions, or mostly changed standard
+errors? This module is developed as the chapter's worked example in
+@sec-fexp-worked.
+
+## Week 6 — Regression discontinuity {#sec-fexp-week06}
+
+**Topic.** Recovering a causal effect from a threshold rule that assigns treatment
+discontinuously in a running variable.
+
+**Subtopics.** Sharp vs. fuzzy designs; the continuity-at-the-cutoff identifying
+assumption; local linear estimation and bandwidth choice; manipulation of the
+running variable (the McCrary density test); the local nature of the RD estimand.
+
+**Methods.** Local polynomial regression; bias-corrected robust inference;
+bandwidth selection; density and covariate-balance tests.
+
+**Key readings.**
+
+- Imbens & Lemieux (2008), "Regression Discontinuity Designs: A Guide to Practice,"
+  *Journal of Econometrics*.
+  [doi:10.1016/j.jeconom.2007.05.001](https://doi.org/10.1016/j.jeconom.2007.05.001)
+  — the practical estimation guide. **[F]**
+- Lee & Lemieux (2010), "Regression Discontinuity Designs in Economics," *Journal of
+  Economic Literature*.
+  [doi:10.1257/jel.48.2.281](https://doi.org/10.1257/jel.48.2.281) — the conceptual
+  and applied survey, including the local-randomization interpretation. **[F]**
+- Hartmann, Nair & Narayanan (2011), "Identifying Causal Marketing Mix Effects
+  Using a Regression Discontinuity Design," *Marketing Science*.
+  [doi:10.1287/mksc.1110.0670](https://doi.org/10.1287/mksc.1110.0670) — brings the
+  RD design into marketing-mix measurement. **[R]**
+
+**Debate.** How local is "local"—does an RD estimate at the cutoff inform decisions
+away from it? When is the continuity assumption more credible than parallel trends
+or an exclusion restriction?
+
+## Week 7 — Instrumental variables and the LATE {#sec-fexp-week07}
+
+**Topic.** Using an instrument—a variable that shifts treatment but affects the
+outcome only through it—to identify causal effects under endogeneity.
+
+**Subtopics.** Relevance and the exclusion restriction; the local average treatment
+effect (LATE) and compliance types (compliers, always-takers, never-takers,
+defiers); weak instruments; the monotonicity assumption.
+
+**Methods.** Two-stage least squares; the Wald estimator; weak-instrument
+diagnostics; the LATE theorem.
+
+**Key readings.**
+
+- Angrist, Imbens & Rubin (1996), "Identification of Causal Effects Using
+  Instrumental Variables," *Journal of the American Statistical Association*.
+  [doi:10.1080/01621459.1996.10476902](https://doi.org/10.1080/01621459.1996.10476902)
+  — the potential-outcomes interpretation of IV and the LATE result. **[F]**
+- Rossi (2014), "Even the Rich Can Make Themselves Poor: A Critical Examination of
+  IV Methods in Marketing Applications," *Marketing Science*.
+  [doi:10.1287/mksc.2014.0860](https://doi.org/10.1287/mksc.2014.0860) — a
+  skeptical reassessment of instruments routinely used in marketing. **[R]**
+
+**Debate.** Is the LATE a useful estimand or "the effect for an unidentifiable
+subpopulation"? How credible are the instruments common in marketing (e.g.,
+cost-shifters, weather, BLP-style instruments)?
+
+## Week 8 — Synthetic control {#sec-fexp-week08}
+
+**Topic.** Constructing a counterfactual for a single treated unit as a weighted
+combination of untreated units.
+
+**Subtopics.** The synthetic-control estimator and donor pool; pre-treatment fit as
+the credibility criterion; placebo/permutation inference; comparative case studies;
+the relationship to DiD and matrix-completion methods.
+
+**Methods.** Convex-weight optimization; placebo tests across units and time;
+sensitivity to donor-pool choice.
+
+**Key readings.**
+
+- Abadie, Diamond & Hainmueller (2010), "Synthetic Control Methods for Comparative
+  Case Studies: Estimating the Effect of California's Tobacco Control Program,"
+  *Journal of the American Statistical Association*.
+  [doi:10.1198/jasa.2009.ap08746](https://doi.org/10.1198/jasa.2009.ap08746) — the
+  estimator and the canonical Proposition 99 application. **[F]**
+- Abadie (2021), "Using Synthetic Controls: Feasibility, Data Requirements, and
+  Methodological Aspects," *Journal of Economic Literature*.
+  [doi:10.1257/jel.20191450](https://doi.org/10.1257/jel.20191450) — the mature
+  survey: when the method is credible and what its assumptions require. **[R]**
+
+**Debate.** Is a good pre-treatment fit sufficient evidence of a valid
+counterfactual, or can it be overfit? How should inference work with a single
+treated unit?
+
+## Week 9 — Matching and propensity scores {#sec-fexp-week09}
+
+**Topic.** Approximating an experiment in observational data by balancing covariates
+between treated and control units under unconfoundedness.
+
+**Subtopics.** The propensity score and its balancing property; matching, weighting,
+and subclassification; overlap/common support; the selection-on-observables
+assumption and its non-testability; sensitivity analysis.
+
+**Methods.** Propensity-score matching and inverse-probability weighting;
+nearest-neighbor and kernel matching; balance diagnostics; replication of
+experimental benchmarks.
+
+**Key readings.**
+
+- Rosenbaum & Rubin (1983), "The Central Role of the Propensity Score in
+  Observational Studies for Causal Effects," *Biometrika*.
+  [doi:10.1093/biomet/70.1.41](https://doi.org/10.1093/biomet/70.1.41) — proves the
+  propensity score is a balancing score; the theoretical foundation. **[F]**
+- Dehejia & Wahba (2002), "Propensity Score-Matching Methods for Nonexperimental
+  Causal Studies," *Review of Economics and Statistics*.
+  [doi:10.1162/003465302317331982](https://doi.org/10.1162/003465302317331982) —
+  tests whether matching can recover an experimental benchmark (the LaLonde
+  challenge). **[F]**
+
+**Debate.** When does matching recover the experimental answer, and when does it
+fail (the LaLonde debate)? Is unconfoundedness ever defensible without a design
+argument behind it?
+
+## Week 10 — Mediation and mechanism {#sec-fexp-week10}
+
+**Topic.** Moving from "does it work?" to "why does it work?"—decomposing a total
+effect into pathways, and the identification problems that creates.
+
+**Subtopics.** The Baron–Kenny causal-steps procedure and its critique; direct and
+indirect effects; sequential ignorability; the danger of treating a *measured*
+mediator as if it were randomized; experimental manipulation of mediators.
+
+**Methods.** Causal-steps and bootstrap mediation; the potential-outcomes mediation
+framework; sensitivity analysis for sequential ignorability; manipulation-of-mediator
+and measurement-of-mediation designs.
+
+**Key readings.**
+
+- Baron & Kenny (1986), "The Moderator–Mediator Variable Distinction in Social
+  Psychological Research," *Journal of Personality and Social Psychology*.
+  [doi:10.1037/0022-3514.51.6.1173](https://doi.org/10.1037/0022-3514.51.6.1173) —
+  the procedure that dominated applied mediation for decades. **[F]**
+- Zhao, Lynch & Chen (2010), "Reconsidering Baron and Kenny: Myths and Truths about
+  Mediation Analysis," *Journal of Consumer Research*.
+  [doi:10.1086/651257](https://doi.org/10.1086/651257) — the consumer-research
+  reframing toward indirect-effect tests. **[F]**
+- Imai, Keele & Tingley (2010), "A General Approach to Causal Mediation Analysis,"
+  *Psychological Methods*.
+  [doi:10.1037/a0020761](https://doi.org/10.1037/a0020761) — the formal
+  potential-outcomes treatment with sensitivity analysis. **[R]**
+- Bullock, Green & Ha (2010), "Yes, But What's the Mechanism? (Don't Expect an Easy
+  Answer)," *Journal of Personality and Social Psychology*.
+  [doi:10.1037/a0018933](https://doi.org/10.1037/a0018933) — argues that mediation
+  is far harder to identify than the standard procedure admits. **[R]**
+
+**Debate.** Can mechanism ever be established from a single experiment that
+randomizes only the treatment? Is the measured mediator an outcome, not a cause?
+
+## Week 11 — Heterogeneous effects and causal machine learning {#sec-fexp-week11}
+
+**Topic.** Estimating how treatment effects vary across units, using machine
+learning to discover heterogeneity without overfitting.
+
+**Subtopics.** Conditional average treatment effects (CATE); honest sample
+splitting; causal trees and forests; double/debiased (orthogonalized) machine
+learning; policy learning and targeting.
+
+**Methods.** Causal trees and generalized random forests; Neyman-orthogonal moment
+conditions with cross-fitting; targeting-policy evaluation.
+
+**Key readings.**
+
+- Athey & Imbens (2016), "Recursive Partitioning for Heterogeneous Causal Effects,"
+  *Proceedings of the National Academy of Sciences*.
+  [doi:10.1073/pnas.1510489113](https://doi.org/10.1073/pnas.1510489113) — "honest"
+  causal trees for valid inference on subgroup effects. **[F]**
+- Wager & Athey (2018), "Estimation and Inference of Heterogeneous Treatment
+  Effects Using Random Forests," *Journal of the American Statistical Association*.
+  [doi:10.1080/01621459.2017.1319839](https://doi.org/10.1080/01621459.2017.1319839)
+  — causal forests with asymptotically valid confidence intervals. **[R]**
+- Chernozhukov, Chetverikov, Demirer, Duflo, Hansen, Newey & Robins (2018),
+  "Double/Debiased Machine Learning for Treatment and Structural Parameters," *The
+  Econometrics Journal*.
+  [doi:10.1111/ectj.12097](https://doi.org/10.1111/ectj.12097) — orthogonalization
+  and cross-fitting that let flexible ML estimate nuisances without contaminating
+  the treatment estimate. **[R]**
+- Athey & Imbens (2019), "Machine Learning Methods That Economists Should Know
+  About," *Annual Review of Economics*.
+  [doi:10.1146/annurev-economics-080217-053433](https://doi.org/10.1146/annurev-economics-080217-053433)
+  — the bridge survey tying prediction tools to causal estimands. **[R]**
+
+**Debate.** Does data-driven heterogeneity discovery survive multiple-testing and
+specification-search concerns? Is "optimal targeting" from a CATE model robust to
+the distribution shift it induces?
+
+## Week 12 — External validity, scaling, and generalizability {#sec-fexp-week12}
+
+**Topic.** Why effects estimated in one experiment shrink or vanish when programs
+are scaled, and how to anticipate it.
+
+**Subtopics.** The "voltage drop" from pilot to scale; the threats to scalability
+(false positives, representativeness of population and situation, spillovers,
+supply-side constraints); nudge effects at scale; meta-analysis across sites.
+
+**Methods.** Cross-site meta-analysis; structural reasoning about general-equilibrium
+and supply-side effects; comparison of academic vs. at-scale effect sizes.
+
+**Key readings.**
+
+- Al-Ubaydli, List & Suskind (2017), "What Can We Learn from Experiments?
+  Understanding the Threats to the Scalability of Experimental Results," *American
+  Economic Review (Papers & Proceedings)*.
+  [doi:10.1257/aer.p20171115](https://doi.org/10.1257/aer.p20171115) — frames the
+  scalability problem and its sources. **[F]**
+- DellaVigna & Linos (2022), "RCTs to Scale: Comprehensive Evidence from Two Nudge
+  Units," *Econometrica*.
+  [doi:10.3982/ecta18709](https://doi.org/10.3982/ecta18709) — finds nudge effects
+  at scale are roughly a quarter of published academic estimates. **[R]**
+- Al-Ubaydli, List & Suskind (2020), "The Science of Using Science: Toward an
+  Understanding of the Threats to Scalability" (Klein Lecture), *International
+  Economic Review*.
+  [doi:10.1111/iere.12476](https://doi.org/10.1111/iere.12476) — the extended
+  treatment of why and when scaling fails. **[R]**
+- List (2022), *The Voltage Effect: How to Make Good Ideas Great and Great Ideas
+  Scale*, Currency — the synthesizing book-length account of scaling failures
+  (book; cited without DOI). **[R]**
+
+**Debate.** Is the publication-to-scale shrinkage a story of publication bias, of
+non-representative samples, or of genuine general-equilibrium effects? Can external
+validity be designed in, or only diagnosed after the fact?
+
+## Week 13 — Open science, power, and replication {#sec-fexp-week13}
+
+**Topic.** The methodological reckoning that disciplined causal-inference practice:
+researcher degrees of freedom, underpowered studies, and replication.
+
+**Subtopics.** $p$-hacking and the garden of forking paths; pre-registration and
+registered reports; statistical power and the winner's curse; large-scale
+replication projects and their verdicts.
+
+**Methods.** Pre-registration and pre-analysis plans; power analysis; multi-lab
+replication; meta-analytic correction for bias.
+
+**Key readings.**
+
+- Simmons, Nelson & Simonsohn (2011), "False-Positive Psychology: Undisclosed
+  Flexibility in Data Collection and Analysis Allows Presenting Anything as
+  Significant," *Psychological Science*.
+  [doi:10.1177/0956797611417632](https://doi.org/10.1177/0956797611417632) —
+  demonstrates how researcher degrees of freedom manufacture false positives. **[F]**
+- Open Science Collaboration (2015), "Estimating the Reproducibility of
+  Psychological Science," *Science*.
+  [doi:10.1126/science.aac4716](https://doi.org/10.1126/science.aac4716) — the
+  large-scale replication that put the crisis on the map. **[F]**
+- Camerer et al. (2018), "Evaluating the Replicability of Social Science Experiments
+  in Nature and Science Between 2010 and 2015," *Nature Human Behaviour*.
+  [doi:10.1038/s41562-018-0399-z](https://doi.org/10.1038/s41562-018-0399-z) —
+  systematic replication of high-profile social-science experiments. **[R]**
+
+**Debate.** Is pre-registration a cure or a constraint on discovery? How should a
+field weight a striking original finding against a null replication?
+
+## Week 14 — Frontier and synthesis: interference, marketplaces, and the design hierarchy {#sec-fexp-week14}
+
+**Topic.** Where SUTVA fails—interference between units in marketplaces and
+networks—and a closing synthesis of how the designs rank.
+
+**Subtopics.** Interference and spillovers; switchback and cluster-randomized
+designs for two-sided platforms; the bias from treating interfering units as
+independent; assembling the designs into a credibility hierarchy.
+
+**Methods.** Switchback and cluster/geo experiments; randomization inference under
+interference; design-choice reasoning.
+
+**Key readings.**
+
+- Bojinov, Simchi-Levi & Zhao (2023), "Design and Analysis of Switchback
+  Experiments," *Management Science*.
+  [doi:10.1287/mnsc.2022.4583](https://doi.org/10.1287/mnsc.2022.4583) — formal
+  design of time-alternating experiments that handle temporal interference in
+  marketplaces. **[R]**
+- Lewis & Rao (2015), "The Unfavorable Economics of Measuring the Returns to
+  Advertising," *The Quarterly Journal of Economics*.
+  [doi:10.1093/qje/qjv023](https://doi.org/10.1093/qje/qjv023) — revisited as the
+  capstone cautionary tale on power and design (from Week 4). **[F]**
+- Angrist & Pischke (2010), "The Credibility Revolution in Empirical Economics,"
+  *Journal of Economic Perspectives*.
+  [doi:10.1257/jep.24.2.3](https://doi.org/10.1257/jep.24.2.3) — returned to as the
+  synthesizing statement of the design-based program. **[F]**
+
+**Debate.** When units interfere, is any design fully credible, or only
+less-biased? What is the right hierarchy: experiment > RD > DiD > IV > matching, or
+is the ranking context-dependent?
+
+## Foundational vs. frontier at a glance {#sec-fexp-ff}
+
+**Foundational core** (every causal-inference student must know): Rubin (1974);
+Rosenbaum & Rubin (1983); Baron & Kenny (1986); Holland (1986); Card & Krueger
+(1994); Angrist, Imbens & Rubin (1996); Dehejia & Wahba (2002); Harrison & List
+(2004); Imbens & Lemieux (2008); Lee & Lemieux (2010); Angrist & Pischke (2010);
+Imbens & Rubin (2015); Abadie, Diamond & Hainmueller (2010); Athey & Imbens (2016,
+2017); Lewis & Rao (2015); Blake, Nosko & Tadelis (2015); Kohavi et al. (2009);
+Gerber & Green (2012).
+
+**Frontier / actively updated** (refresh each edition): Hartmann, Nair & Narayanan
+(2011); Rossi (2014); Wager & Athey (2018); Chernozhukov et al. (2018); Athey &
+Imbens (2019); Goodman-Bacon (2021); Callaway & Sant'Anna (2021); de Chaisemartin &
+D'Haultfœuille (2020); Sun & Abraham (2021); Abadie (2021); Imai, Keele & Tingley
+(2010); Bullock, Green & Ha (2010); Johnson, Lewis & Nubbemeyer (2017); Kohavi,
+Tang & Xu (2020); Al-Ubaydli, List & Suskind (2017, 2020); DellaVigna & Linos
+(2022); List (2022); Simmons, Nelson & Simonsohn (2011); Open Science Collaboration
+(2015); Camerer et al. (2018); Bojinov, Simchi-Levi & Zhao (2023); Simester (2017).
+
+The split is pedagogical, not chronological: Rubin (1974) is foundational because
+the field still writes in its notation; the staggered-DiD reckoning of 2020–2021 is
+"frontier" because its estimators are still entering applied practice. Each module
+deliberately pairs at least one foundational anchor with a live frontier paper so
+students see both the canon and its moving edge.
+
+## How this chapter expands {#sec-fexp-expands}
+
+The weekly map is a backbone, not a ceiling. It is designed to grow along four
+axes, with the worked section below as a template for turning a reading into an
+*estimator with explicit identifying assumptions*.
+
+1. **A worked estimator per design.** Each quasi-experimental week deserves the
+   treatment that @sec-fexp-worked gives difference-in-differences: the estimator,
+   the identifying assumption stated formally, and the modern critique. Future
+   editions should add parallel worked sections for RD (continuity and local
+   polynomials), IV (the LATE and weak-instrument bias), and synthetic control
+   (the weighting program and placebo inference), each cross-linked to the
+   technical chapter @sec-causal-inference.
+2. **A marketing-application companion per week.** Several modules already anchor on
+   marketing applications (ghost ads, eBay paid search, RD marketing mix). A fuller
+   edition would pair every design with a top-4 marketing study that deployed it,
+   so the chapter teaches *how marketing scholars adjudicate causal claims*, not
+   only how economists do.
+3. **A refreshed frontier every two to three years.** The heterogeneous-effects,
+   scaling, and interference modules turn over fastest. Replace or supplement
+   frontier readings as new estimators (matrix completion, synthetic
+   difference-in-differences, modern bandit and adaptive designs) mature, keeping
+   the foundational anchors fixed.
+4. **Emerging modules as the field grows:** adaptive and bandit experimentation;
+   privacy-preserving and federated measurement as third-party identifiers
+   disappear; long-run and surrogate outcomes; and causal inference with
+   text/image data and large language models as treatments or mediators. Each
+   should follow the template—foundational anchor, frontier paper, identification
+   debate.
+
+The following section supplies the worked treatment the map points to.
+
+### Difference-in-differences and the parallel-trends assumption {#sec-fexp-worked}
+
+Difference-in-differences (DiD) is the workhorse of design-based identification when
+a treatment switches on for some units at some time and randomization is
+unavailable. The cleanest case is the **2×2** design: two groups (treated $T=1$,
+control $T=0$) observed in two periods (pre $t=0$, post $t=1$). Let $Y_{gt}$ denote
+the average outcome in group $g$ at time $t$. The DiD estimator is the *difference
+of the two differences*,
+$$
+\hat\tau_{\text{DiD}}
+= \big(\bar Y_{1,1} - \bar Y_{1,0}\big) - \big(\bar Y_{0,1} - \bar Y_{0,0}\big),
+$$ {#eq-fexp-did2x2}
+which removes any time-invariant level difference between the groups (the first
+subtraction in each term) and any common time trend (the second difference across
+groups). Equivalently, DiD is estimated by the **two-way fixed-effects** (TWFE)
+regression
+$$
+Y_{it} = \alpha_i + \lambda_t + \tau\, D_{it} + \varepsilon_{it},
+$$ {#eq-fexp-twfe}
+where $\alpha_i$ is a unit fixed effect, $\lambda_t$ a time fixed effect,
+$D_{it}\in\{0,1\}$ indicates that unit $i$ is treated at time $t$, and $\tau$ is the
+parameter of interest. In the 2×2 case the OLS estimate of $\tau$ in
+@eq-fexp-twfe exactly equals @eq-fexp-did2x2.
+
+Identification rests on the **parallel-trends assumption**. Writing $Y_{it}(0)$ for
+the potential outcome under no treatment, the assumption is that, absent treatment,
+the treated and control groups would have evolved in parallel:
+$$
+\mathbb{E}\!\left[Y_{i1}(0) - Y_{i0}(0) \mid T=1\right]
+= \mathbb{E}\!\left[Y_{i1}(0) - Y_{i0}(0) \mid T=0\right].
+$$ {#eq-fexp-parallel}
+Parallel trends licenses using the control group's observed change as the
+counterfactual change the treated group *would have* experienced. Under
+@eq-fexp-parallel, $\hat\tau_{\text{DiD}}$ is unbiased for the average treatment
+effect on the treated,
+$$
+\text{ATT} = \mathbb{E}\!\left[Y_{i1}(1) - Y_{i1}(0) \mid T=1\right].
+$$ {#eq-fexp-att}
+The assumption is fundamentally untestable—it concerns an unobserved
+counterfactual—but it is made *plausible* by inspecting pre-treatment trends and
+estimating an event-study specification that allows the treatment effect to vary by
+lead and lag; coefficients on the pre-treatment leads should be statistically
+indistinguishable from zero if trends were parallel before treatment.
+
+The modern critique concerns the common case of **staggered adoption**, where units
+are treated at different times. When @eq-fexp-twfe is estimated with such data,
+the single coefficient $\tau$ is not a clean average of treatment effects. The TWFE
+estimand is a weighted average of all possible 2×2 comparisons, and crucially some
+of those comparisons use *already-treated* units as controls for *newly-treated*
+ones. When treatment effects are heterogeneous across groups or grow over time,
+these "forbidden comparisons" enter with **negative weights**, so $\tau$ can be
+biased—even, in extreme cases, opposite in sign to every unit-level effect
+[doi:10.1016/j.jeconom.2021.03.014](https://doi.org/10.1016/j.jeconom.2021.03.014).
+Formally, the Goodman-Bacon decomposition writes the TWFE estimate as
+$$
+\hat\tau_{\text{TWFE}} = \sum_{k} s_k\, \hat\tau_k,
+\qquad \sum_k s_k = 1,
+$$ {#eq-fexp-bacon}
+a weighted sum over the distinct 2×2 sub-experiments indexed by $k$, where some
+weights $s_k$ attached to already-treated-as-control comparisons can be negative.
+Heterogeneity-robust estimators repair this by restricting attention to *clean*
+comparisons—newly treated units against not-yet-treated controls—and aggregating
+group-time average treatment effects $\text{ATT}(g,t)$ with non-negative weights
+[doi:10.1016/j.jeconom.2020.12.001](https://doi.org/10.1016/j.jeconom.2020.12.001);
+[doi:10.1016/j.jeconom.2020.09.006](https://doi.org/10.1016/j.jeconom.2020.09.006).
+The lesson generalizes: an estimator is only as credible as the comparison it
+secretly makes, and a single regression coefficient can hide an unfavorable
+weighting of the effects it claims to average.
+
+## Key Takeaways
+
+- Causal inference rests on the **potential-outcomes** framework: a causal effect
+  compares counterfactual states, only one of which is ever observed, so every
+  design is a strategy for constructing a credible counterfactual
+  [doi:10.1037/h0037350](https://doi.org/10.1037/h0037350);
+  [doi:10.1080/01621459.1986.10478354](https://doi.org/10.1080/01621459.1986.10478354).
+- The **credibility revolution** reorganized empirical work around design rather
+  than functional form; the 14-week map runs from randomized and field experiments
+  through the quasi-experimental designs (DiD, RD, IV, synthetic control, matching)
+  to the frontier of heterogeneous effects, scaling, and interference
+  [doi:10.1257/jep.24.2.3](https://doi.org/10.1257/jep.24.2.3).
+- Experiments overturned observational consensus on **advertising returns**:
+  large field experiments find effects far smaller—and often statistically
+  undetectable—relative to regression and matching estimates
+  [doi:10.1093/qje/qjv023](https://doi.org/10.1093/qje/qjv023);
+  [doi:10.3982/ecta12423](https://doi.org/10.3982/ecta12423).
+- **Difference-in-differences** identifies the ATT under parallel trends
+  (@eq-fexp-parallel), but with staggered timing the naive TWFE coefficient
+  (@eq-fexp-twfe) is a negatively-weighted mixture of effects
+  (@eq-fexp-bacon); heterogeneity-robust group-time estimators restore clean
+  comparisons
+  [doi:10.1016/j.jeconom.2021.03.014](https://doi.org/10.1016/j.jeconom.2021.03.014);
+  [doi:10.1016/j.jeconom.2020.12.001](https://doi.org/10.1016/j.jeconom.2020.12.001).
+- The field's hardest open problems are about **external validity**: effects shrink
+  from pilot to scale [doi:10.3982/ecta18709](https://doi.org/10.3982/ecta18709),
+  mechanism is far harder to identify than total effect
+  [doi:10.1037/a0018933](https://doi.org/10.1037/a0018933), and replication
+  disciplines the whole enterprise
+  [doi:10.1126/science.aac4716](https://doi.org/10.1126/science.aac4716).
+- This reading map is the doctoral companion to the technical causal-inference
+  chapter (@sec-causal-inference): the map names the designs, debates, and lineage;
+  the technical chapter supplies the estimators, assumptions, and code.

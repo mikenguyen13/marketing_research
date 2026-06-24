@@ -1,0 +1,671 @@
+# Dynamic Structural Models Seminar {#sec-dynamic-structural-seminar}
+
+*Dynamic structural models* take seriously the idea that the agents marketing
+studies—consumers and firms alike—are *forward-looking*: a choice today is made
+in the shadow of its consequences for tomorrow. A consumer deciding whether to
+buy a durable now or wait for a lower price, a household stockpiling detergent
+against future need, a firm timing a product launch or an entry, a salesperson
+pacing effort against a quota—each solves, implicitly, a dynamic optimization
+problem. This seminar studies how economists and marketing scientists write such
+problems down as *Markov decision processes*, estimate their deep parameters from
+choice data, and then use the estimated model to run *counterfactuals*: what
+would demand, prices, or profits look like under a policy the data never
+contained?
+
+The intellectual arc runs from the *single-agent dynamic discrete choice* (DDC)
+problem—one forward-looking agent against an exogenous environment—to *dynamic
+games*, in which forward-looking firms best-respond to one another and the
+relevant equilibrium concept is Markov-perfect. The single-agent problem supplies
+the machinery: the Bellman equation, the value function, conditional choice
+probabilities, and the two great estimation paradigms (nested fixed point versus
+conditional-choice-probability methods). Dynamic games inherit that machinery and
+add the burden of equilibrium—multiplicity, computation, and the identification
+of payoffs from observed strategies. Marketing's contribution has been to carry
+both into substantive territory the industrial-organization literature did not
+reach: consumer learning, stockpiling, customer-relationship dynamics, salesforce
+incentives, and advertising goodwill.
+
+The central tension is unmistakable and worth stating at the outset. Dynamic
+structural models are *expensive*—computationally (solving and re-solving a
+dynamic program inside an estimation loop) and in terms of *identification* (the
+discount factor and per-period payoffs are notoriously hard to separate without
+strong normalizations or exclusion restrictions). What buys back that cost is the
+ability to answer questions a reduced-form regression structurally cannot: the
+effect of a price path never observed, the long-run consequence of a merger, the
+profit of a compensation plan not yet deployed. The seminar's recurring
+discipline is to ask, of every model, *what counterfactual does this buy, and at
+what identifying price?*
+
+A doctoral student who completes this map should be able to read a DDC or
+dynamic-games paper and reconstruct its primitives (state space, flow payoff,
+transition law, discount factor), name its estimator and identifying assumptions,
+and judge whether its counterfactual is credible. This chapter is the
+reading-map companion to the more technical treatments elsewhere in the book: the
+strategic and dynamic models chapter (@sec-strategic-dynamic-models) develops the
+optimal-control and differential-game machinery, and the structural models
+chapter develops static demand and supply estimation. Here the object is the
+*dynamics*—forward-looking optimization estimated structurally—and the seminar is
+organized to take a student from Rust's bus engines to deep reinforcement
+learning over fourteen weeks.
+
+## Semester arc
+
+The semester is built in three movements. The **first** (Weeks 1–2) installs the
+single-agent framework and its two estimation paradigms. Rust's (1987) bus-engine
+model is the field's *Drosophila*: a single decision-maker (replace or keep an
+engine) whose optimal policy solves a Bellman equation, estimated by the nested
+fixed point (NFXP) algorithm. The conditional-choice-probability (CCP) revolution
+of Hotz and Miller (1993) then shows that the value function can be recovered from
+observed choice probabilities, trading a hard inner loop for a statistical
+inversion. These two weeks supply vocabulary the rest of the course presumes.
+
+The **second movement** (Weeks 3–6) carries the single-agent model into
+marketing's demand-side questions: forward-looking consumers facing falling
+durable prices, Bayesian consumer learning about quality, stockpiling of storable
+goods, and the dynamics of the customer relationship. Here marketing diverges from
+classical IO: the state variable is often a *belief* or an *inventory* internal to
+the consumer, and the data are panel scanner or CRM records rather than aggregate
+market shares. The **third movement** (Weeks 7–12) turns to *dynamic games*: the
+Ericson–Pakes framework and its estimation, then four substantive arenas—
+advertising goodwill, new-product launch and pricing, entry/exit and investment,
+and salesforce dynamics—where strategic forward-looking behavior is the object.
+The course closes (Weeks 13–14) at the *computational frontier*—machine learning
+and reinforcement learning for high-dimensional dynamics—and on counterfactuals,
+validation, and synthesis.
+
+Two tags organize the readings. **[F] = Foundational** marks canon a structural
+modeler must know cold—the framework papers and estimators the field still builds
+on. **[R] = Frontier/Recent** marks an active research front, refreshed as the
+literature moves. Each week pairs at least one foundational anchor with a frontier
+application or method. DOIs are reproduced as verified against Crossref; works
+without a confirmed DOI record (older books, in particular) are named without a
+link and flagged. The Crossref-DOI convention is deliberate: every linked citation
+below resolves to a record whose author, title, year, and venue were confirmed, so
+a student can trust the link as a primary-source pointer rather than a
+reconstruction from memory.
+
+## Week 1 — The dynamic discrete choice framework {#sec-dyns-week01}
+
+**Topic.** The single-agent forward-looking decision problem as a Markov decision
+process; the Bellman equation as the organizing object of the field.
+
+**Subtopics.** State variables and the Markov transition law; the per-period
+(flow) payoff; the discount factor; the value function and the optimal policy;
+the additive-separability and conditional-independence assumptions that make the
+problem tractable.
+
+**Methods.** Dynamic programming; value-function iteration; the contraction
+mapping that defines the fixed point.
+
+**Key readings.**
+
+- Rust (1987), "Optimal Replacement of GMC Bus Engines: An Empirical Model of
+  Harold Zurcher," *Econometrica*—the founding empirical DDC model and the
+  template for the entire literature.
+  [doi:10.2307/1911259](https://doi.org/10.2307/1911259) **[F]**
+- Bellman (1957), "A Markovian Decision Process," *Indiana University Mathematics
+  Journal*—the dynamic-programming foundation the empirical literature inherits.
+  [doi:10.1512/iumj.1957.6.56038](https://doi.org/10.1512/iumj.1957.6.56038) **[F]**
+- Aguirregabiria & Mira (2010), "Dynamic Discrete Choice Structural Models: A
+  Survey," *Journal of Econometrics*—the field's canonical map; read as the
+  syllabus-in-one-paper.
+  [doi:10.1016/j.jeconom.2009.09.007](https://doi.org/10.1016/j.jeconom.2009.09.007) **[F]**
+
+**Debate.** Is the conditional-independence assumption (the unobservable enters
+additively and is i.i.d. over time) a harmless tractability device or a binding
+substantive restriction? When does serially correlated unobserved heterogeneity
+break the standard framework?
+
+## Week 2 — Estimation: NFXP versus CCP {#sec-dyns-week02}
+
+**Topic.** The two estimation paradigms for single-agent DDC and the computational
+trade-off between them.
+
+**Subtopics.** The nested fixed point algorithm (solve the dynamic program at
+every trial parameter, then evaluate the likelihood); the Hotz–Miller inversion
+(recover choice-specific value differences from observed conditional choice
+probabilities); conditional-choice simulation; two-step versus iterated CCP.
+
+**Methods.** Nested fixed point maximum likelihood; Hotz–Miller inversion;
+forward-simulation of value functions; the nested pseudo-likelihood (NPL)
+iteration.
+
+**Key readings.**
+
+- Rust (1987), "Optimal Replacement of GMC Bus Engines," *Econometrica*—NFXP as
+  the full-solution benchmark estimator.
+  [doi:10.2307/1911259](https://doi.org/10.2307/1911259) **[F]**
+- Hotz & Miller (1993), "Conditional Choice Probabilities and the Estimation of
+  Dynamic Models," *Review of Economic Studies*—the inversion that frees the value
+  function from the inner loop.
+  [doi:10.2307/2298122](https://doi.org/10.2307/2298122) **[F]**
+- Hotz, Miller, Sanders & Smith (1994), "A Simulation Estimator for Dynamic Models
+  of Discrete Choice," *Review of Economic Studies*—conditional-choice simulation
+  that makes CCP estimation practical.
+  [doi:10.2307/2297981](https://doi.org/10.2307/2297981) **[F]**
+- Aguirregabiria & Mira (2002), "Swapping the Nested Fixed Point Algorithm: A
+  Class of Estimators for Discrete Markov Decision Models," *Econometrica*—the NPL
+  algorithm bridging NFXP and CCP.
+  [doi:10.1111/1468-0262.00340](https://doi.org/10.1111/1468-0262.00340) **[R]**
+
+**Debate.** Full-solution (NFXP) versus two-step (CCP): NFXP is statistically
+efficient but computationally heavy and sensitive to the inner-loop tolerance;
+CCP is fast but loses efficiency and leans on a first-stage estimate of choice
+probabilities. Which trade-off dominates depends on state-space size and sample.
+
+## Week 3 — Forward-looking consumers: durables and adoption {#sec-dyns-week03}
+
+**Topic.** Consumers who delay purchase of a durable in anticipation of falling
+prices or improving quality, and the demand dynamics that follow.
+
+**Subtopics.** Intertemporal substitution in durable demand; the option value of
+waiting; adoption timing; price expectations; aggregation of forward-looking
+heterogeneous consumers.
+
+**Methods.** Dynamic discrete choice with a "wait" option; estimation under price
+expectations; embedding DDC in a differentiated-products demand system.
+
+**Key readings.**
+
+- Gowrisankaran & Rysman (2012), "Dynamics of Consumer Demand for New Durable
+  Goods," *Journal of Political Economy*—the workhorse dynamic-demand model for
+  durables with falling prices and rising quality.
+  [doi:10.1086/669540](https://doi.org/10.1086/669540) **[F]**
+- Nair (2007), "Intertemporal Price Discrimination with Forward-Looking Consumers:
+  Application to the US Market for Console Video-Games," *Quantitative Marketing
+  and Economics*—forward-looking consumers enable (and constrain) skimming.
+  [doi:10.1007/s11129-007-9026-4](https://doi.org/10.1007/s11129-007-9026-4) **[R]**
+- Melnikov (2012), "Demand for Differentiated Durable Products: The Case of the
+  U.S. Computer Printer Market," *Economic Inquiry*—an early forward-looking
+  durable-demand model (long-circulated as a 2001 working paper).
+  [doi:10.1111/j.1465-7295.2012.00501.x](https://doi.org/10.1111/j.1465-7295.2012.00501.x) **[F]**
+
+**Debate.** How are consumers' *price expectations* identified—rational
+expectations imposed, or expectations estimated from the observed price process?
+Does ignoring forward-looking behavior bias the price elasticity, and in which
+direction?
+
+## Week 4 — Consumer learning {#sec-dyns-week04}
+
+**Topic.** Consumers who are uncertain about product quality and learn over time
+from experience and signals, generating dynamics in brand choice.
+
+**Subtopics.** Bayesian updating of quality beliefs; experimentation and the value
+of information; risk aversion over uncertain quality; the distinction between
+state dependence and learning.
+
+**Methods.** Dynamic structural models with Bayesian belief states; estimation of
+learning parameters from panel choice; separating learning from heterogeneity.
+
+**Key readings.**
+
+- Erdem & Keane (1996), "Decision-Making Under Uncertainty: Capturing Dynamic
+  Brand Choice Processes in Turbulent Consumer Goods Markets," *Marketing
+  Science*—the foundational consumer-learning model in marketing.
+  [doi:10.1287/mksc.15.1.1](https://doi.org/10.1287/mksc.15.1.1) **[F]**
+- Crawford & Shum (2005), "Uncertainty and Learning in Pharmaceutical Demand,"
+  *Econometrica*—learning about match quality drives demand persistence in
+  prescription drugs.
+  [doi:10.1111/j.1468-0262.2005.00612.x](https://doi.org/10.1111/j.1468-0262.2005.00612.x) **[R]**
+
+**Debate.** Learning versus *structural state dependence* versus persistent
+unobserved heterogeneity—three observationally similar sources of choice
+persistence. What variation (e.g., quality shocks, signal informativeness)
+separates them?
+
+## Week 5 — Stockpiling and dynamics in demand {#sec-dyns-week05}
+
+**Topic.** Households that hold inventory of storable goods and time purchases to
+sales, so that observed demand confounds consumption with stockpiling.
+
+**Subtopics.** Consumer inventory as a state variable; the dynamic response to
+temporary price cuts; the bias in static price elasticities from ignoring
+stockpiling; promotion dynamics and post-promotion troughs.
+
+**Methods.** Dynamic discrete/continuous choice with an inventory state; estimation
+from household scanner panels; counterfactual elimination of sales.
+
+**Key readings.**
+
+- Hendel & Nevo (2006), "Measuring the Implications of Sales and Consumer
+  Inventory Behavior," *Econometrica*—the structural model that separates
+  stockpiling from genuine demand response.
+  [doi:10.1111/j.1468-0262.2006.00721.x](https://doi.org/10.1111/j.1468-0262.2006.00721.x) **[F]**
+- Hendel & Nevo (2006), "Sales and Consumer Inventory," *RAND Journal of
+  Economics*—the companion treatment of why firms run sales when consumers store.
+  [doi:10.1111/j.1756-2171.2006.tb00030.x](https://doi.org/10.1111/j.1756-2171.2006.tb00030.x) **[F]**
+
+**Debate.** How much of the measured short-run price elasticity is *intertemporal
+substitution* (stockpiling) versus *consumption response*? The distinction matters
+enormously for the welfare and profit evaluation of promotions.
+
+## Week 6 — Customer and CRM dynamics {#sec-dyns-week06}
+
+**Topic.** The customer relationship as a dynamic system: forward-looking customers
+responding to coupons, prices, and service, and firms managing the relationship
+over its lifetime.
+
+**Subtopics.** Expectations of future promotions and their effect on current
+purchase; dynamic customer-relationship pricing; acquisition versus retention as a
+dynamic trade-off; proactive, adaptive customer management.
+
+**Methods.** Dynamic structural models of purchase timing; dynamic programming for
+customer-level pricing; adaptive (Bayesian) learning over customer types.
+
+**Key readings.**
+
+- Gönül & Srinivasan (1996), "Estimating the Impact of Consumer Expectations of
+  Coupons on Purchase Behavior: A Dynamic Structural Model," *Marketing Science*—
+  forward-looking coupon expectations shape current purchase.
+  [doi:10.1287/mksc.15.3.262](https://doi.org/10.1287/mksc.15.3.262) **[F]**
+- Lewis (2005), "A Dynamic Programming Approach to Customer Relationship Pricing,"
+  *Management Science*—pricing the customer as a dynamic-programming problem over
+  acquisition and retention.
+  [doi:10.1287/mnsc.1050.0373](https://doi.org/10.1287/mnsc.1050.0373) **[R]**
+- Sun, Li & Zhou (2006), "'Adaptive' Learning and 'Proactive' Customer
+  Relationship Management," *Journal of Interactive Marketing*—adaptive learning
+  over customer responses for proactive intervention.
+  [doi:10.1002/dir.20069](https://doi.org/10.1002/dir.20069) **[R]**
+
+**Debate.** Do customers truly anticipate future promotions (rational
+expectations), and does serving them dynamically beat a myopic policy by enough to
+justify the modeling cost? Where does the CRM-dynamics literature meet the customer
+lifetime value chapter's reduced-form tradition?
+
+## Week 7 — Dynamic games: theory {#sec-dyns-week07}
+
+**Topic.** Forward-looking firms in strategic interaction; the Markov-perfect
+equilibrium concept and the Ericson–Pakes framework for industry dynamics.
+
+**Subtopics.** Markov strategies and Markov-perfect equilibrium (MPE); the state of
+the industry as the payoff-relevant state; entry, exit, and investment as the
+dynamic controls; existence and the computation of equilibrium.
+
+**Methods.** Stochastic games; value-function iteration in strategy space; the
+Pakes–McGuire algorithm for computing MPE.
+
+**Key readings.**
+
+- Ericson & Pakes (1995), "Markov-Perfect Industry Dynamics: A Framework for
+  Empirical Work," *Review of Economic Studies*—the framework that makes dynamic
+  oligopoly empirically tractable.
+  [doi:10.2307/2297841](https://doi.org/10.2307/2297841) **[F]**
+- Pakes & McGuire (1994), "Computing Markov-Perfect Nash Equilibria: Numerical
+  Implications of a Dynamic Differentiated Product Model," *RAND Journal of
+  Economics*—the computational engine behind the framework.
+  [doi:10.2307/2555975](https://doi.org/10.2307/2555975) **[F]**
+
+**Debate.** *Equilibrium multiplicity* is the field's original sin: when many MPE
+exist, which does the data reflect, and what does a counterfactual mean if the
+equilibrium itself can shift? Is the Markov restriction on strategies substantive
+or a convenience?
+
+## Week 8 — Estimation of dynamic games {#sec-dyns-week08}
+
+**Topic.** Bringing dynamic games to data without solving for equilibrium at every
+trial parameter; two-step estimators built on the CCP idea.
+
+**Subtopics.** Recovering policies (CCPs) in a first stage, payoffs in a second;
+forward-simulation of value functions; the asymptotic-least-squares and
+pseudo-maximum-likelihood approaches; handling multiple equilibria in estimation.
+
+**Methods.** Two-step CCP estimation for games; minimum-distance and
+least-squares estimators; simulation of continuation values.
+
+**Key readings.**
+
+- Bajari, Benkard & Levin (2007), "Estimating Dynamic Models of Imperfect
+  Competition," *Econometrica*—the simulation-based two-step estimator for dynamic
+  games.
+  [doi:10.1111/j.1468-0262.2007.00796.x](https://doi.org/10.1111/j.1468-0262.2007.00796.x) **[F]**
+- Aguirregabiria & Mira (2007), "Sequential Estimation of Dynamic Discrete Games,"
+  *Econometrica*—the nested pseudo-likelihood estimator for games.
+  [doi:10.1111/j.1468-0262.2007.00731.x](https://doi.org/10.1111/j.1468-0262.2007.00731.x) **[F]**
+- Pesendorfer & Schmidt-Dengler (2008), "Asymptotic Least Squares Estimators for
+  Dynamic Games," *Review of Economic Studies*—a general least-squares class
+  unifying the two-step estimators.
+  [doi:10.1111/j.1467-937x.2008.00496.x](https://doi.org/10.1111/j.1467-937x.2008.00496.x) **[R]**
+
+**Debate.** Two-step estimators sidestep equilibrium computation but assume the
+data are generated by a *single* equilibrium played consistently. Is that
+assumption tenable across markets, and how do finite-sample biases in the
+first-stage CCPs propagate into payoff estimates?
+
+## Week 9 — Advertising dynamics {#sec-dyns-week09}
+
+**Topic.** Advertising as an investment in a goodwill stock that decays, and the
+dynamic competition in advertising that follows.
+
+**Subtopics.** The Nerlove–Arrow goodwill stock; carryover and decay; pulsing
+versus even advertising; dynamic advertising competition between firms.
+
+**Methods.** Optimal-control foundations (goodwill capital); empirical dynamic
+games of advertising; estimation of carryover and competitive response.
+
+**Key readings.**
+
+- Nerlove & Arrow (1962), "Optimal Advertising Policy under Dynamic Conditions,"
+  *Economica*—the goodwill-stock formulation underlying all advertising dynamics.
+  [doi:10.2307/2551549](https://doi.org/10.2307/2551549) **[F]**
+- Dubé, Hitsch & Manchanda (2005), "An Empirical Model of Advertising Dynamics,"
+  *Quantitative Marketing and Economics*—a structural dynamic game rationalizing
+  advertising pulsing.
+  [doi:10.1007/s11129-005-0334-2](https://doi.org/10.1007/s11129-005-0334-2) **[R]**
+
+**Debate.** Does the data support *pulsing* as an equilibrium of a dynamic
+advertising game, or is it an artifact of S-shaped response and budget
+constraints? How is advertising's long-run carryover separated from persistent
+demand shocks? This connects to the advertising-elasticity generalizations woven
+through the marketing-strategy seminar (@sec-marketing-strategy-seminar).
+
+## Week 10 — New-product and pricing dynamics {#sec-dyns-week10}
+
+**Topic.** The firm's dynamic problem of when to launch, how to price over the
+life cycle, and when to exit, under demand uncertainty and forward-looking buyers.
+
+**Subtopics.** Optimal launch and exit timing; learning about demand after launch;
+intertemporal price discrimination (skimming) against forward-looking consumers;
+the interaction of supply-side dynamics with demand-side dynamics.
+
+**Methods.** Single-agent dynamic programming for the firm; demand estimation with
+forward-looking consumers feeding a dynamic pricing problem.
+
+**Key readings.**
+
+- Hitsch (2006), "An Empirical Model of Optimal Dynamic Product Launch and Exit
+  Under Demand Uncertainty," *Marketing Science*—launch and exit as a dynamic
+  optimization with Bayesian demand learning.
+  [doi:10.1287/mksc.1050.0140](https://doi.org/10.1287/mksc.1050.0140) **[F]**
+- Nair (2007), "Intertemporal Price Discrimination with Forward-Looking
+  Consumers," *Quantitative Marketing and Economics*—dynamic pricing when buyers
+  strategically delay (revisited from Week 3 on the supply side).
+  [doi:10.1007/s11129-007-9026-4](https://doi.org/10.1007/s11129-007-9026-4) **[R]**
+
+**Debate.** When consumers are forward-looking, the firm's optimal price path can
+*invert* the textbook skimming logic; how much pricing power survives consumer
+patience, and is the welfare loss from strategic delay first-order?
+
+## Week 11 — Entry, exit, and investment {#sec-dyns-week11}
+
+**Topic.** Industry dynamics estimated structurally: how firms enter, exit, and
+invest, and how counterfactual policy reshapes market structure.
+
+**Subtopics.** Sunk entry costs and scrap values; capacity and technology
+investment; environmental and regulatory shocks; equilibrium market structure as a
+counterfactual object.
+
+**Methods.** Estimation of dynamic entry/exit games (two-step CCP); structural
+recovery of fixed and sunk costs; policy counterfactuals on market structure.
+
+**Key readings.**
+
+- Pakes, Ostrovsky & Berry (2007), "Simple Estimators for the Parameters of
+  Discrete Dynamic Games (with Entry/Exit Examples)," *RAND Journal of
+  Economics*—accessible estimators for entry/exit dynamics.
+  [doi:10.1111/j.1756-2171.2007.tb00073.x](https://doi.org/10.1111/j.1756-2171.2007.tb00073.x) **[F]**
+- Ryan (2012), "The Costs of Environmental Regulation in a Concentrated Industry,"
+  *Econometrica*—a full dynamic-games policy evaluation of the Clean Air Act in
+  cement.
+  [doi:10.3982/ecta6750](https://doi.org/10.3982/ecta6750) **[R]**
+
+**Debate.** Ryan's central methodological point—that *static* welfare analysis
+misses the entry-deterring effect of regulation that only a *dynamic* model
+captures—is the strongest single argument for the whole enterprise. When does the
+dynamic correction reverse the sign of a policy's welfare verdict?
+
+## Week 12 — Salesforce and agent dynamics {#sec-dyns-week12}
+
+**Topic.** The forward-looking employee: salespeople who pace effort against
+nonlinear incentive schemes, and the structural design of optimal compensation.
+
+**Subtopics.** Dynamic effort under quotas and bonuses; ratcheting and gaming of
+incentive plans; structural estimation of effort costs; counterfactual contract
+design and field validation.
+
+**Methods.** Dynamic structural models of agent effort; estimation from
+individual sales records; field experiments validating counterfactual contracts.
+
+**Key readings.**
+
+- Misra & Nair (2011), "A Structural Model of Sales-Force Compensation Dynamics:
+  Estimation and Field Implementation," *Quantitative Marketing and Economics*—a
+  dynamic model estimated and then *deployed*, with measured profit gains.
+  [doi:10.1007/s11129-011-9096-1](https://doi.org/10.1007/s11129-011-9096-1) **[F]**
+- Chung, Steenburgh & Sudhir (2014), "Do Bonuses Enhance Sales Productivity? A
+  Dynamic Structural Analysis of Bonus-Based Compensation Plans," *Marketing
+  Science*—decomposing how quarterly and annual bonuses move dynamic effort.
+  [doi:10.1287/mksc.2013.0815](https://doi.org/10.1287/mksc.2013.0815) **[R]**
+
+**Debate.** Misra & Nair's field implementation is the field's gold standard for
+*validation*—the counterfactual contract was actually run and raised revenue. Does
+this set the bar that dynamic structural counterfactuals should clear, and is it
+attainable outside settings where the firm is a co-author?
+
+## Week 13 — Computational frontier: ML, RL, and high-dimensional dynamics {#sec-dyns-week13}
+
+**Topic.** Machine learning and reinforcement learning as tools for the two
+bottlenecks of the field—approximating value functions over high-dimensional
+states and learning policies without solving the model analytically.
+
+**Subtopics.** Function approximation of the value function (neural networks,
+sieves); temporal-difference and Q-learning; deep reinforcement learning;
+algorithmic pricing agents as a substantive *and* methodological object.
+
+**Methods.** Neural-network approximation of dynamic programs; reinforcement
+learning; simulation-based policy learning at scale.
+
+**Key readings.**
+
+- Norets (2012), "Estimation of Dynamic Discrete Choice Models Using Artificial
+  Neural Network Approximations," *Econometric Reviews*—neural networks to
+  approximate the value function inside DDC estimation.
+  [doi:10.1080/07474938.2011.607089](https://doi.org/10.1080/07474938.2011.607089) **[F]**
+- Mnih et al. (2015), "Human-Level Control Through Deep Reinforcement Learning,"
+  *Nature*—the deep-RL anchor (deep Q-networks) the marketing literature now
+  borrows for high-dimensional dynamics.
+  [doi:10.1038/nature14236](https://doi.org/10.1038/nature14236) **[R]**
+- Calvano, Calzolari, Denicolò & Pastorello (2020), "Artificial Intelligence,
+  Algorithmic Pricing, and Collusion," *American Economic Review*—RL pricing
+  agents that learn to collude, a frontier where method and substance fuse.
+  [doi:10.1257/aer.20190623](https://doi.org/10.1257/aer.20190623) **[R]**
+
+**Debate.** Reinforcement learning *solves* dynamic programs that were previously
+intractable, but at the cost of the interpretability and identification that made
+structural models useful for counterfactuals. Is an RL-learned policy a structural
+object one can run counterfactuals on, or a black-box predictor? Where ML buys
+flexibility, what identifying discipline replaces the parametric structure it
+discards?
+
+## Week 14 — Counterfactuals, model validation, and synthesis {#sec-dyns-week14}
+
+**Topic.** The payoff and the peril of the whole enterprise: computing
+counterfactuals, validating them, and judging when the dynamic apparatus earns its
+cost.
+
+**Subtopics.** Counterfactual policy simulation; out-of-sample and field
+validation; the role of identification (discount factor, normalization) in
+counterfactual credibility; choosing between reduced-form and structural answers.
+
+**Methods.** Counterfactual simulation under the estimated model; validation
+against held-out or experimental data; sensitivity analysis over identifying
+assumptions.
+
+**Key readings.**
+
+- Misra & Nair (2011), "A Structural Model of Sales-Force Compensation Dynamics,"
+  *QME*—field validation as the standard for a credible dynamic counterfactual
+  (revisited as a capstone).
+  [doi:10.1007/s11129-011-9096-1](https://doi.org/10.1007/s11129-011-9096-1) **[F]**
+- Ryan (2012), "The Costs of Environmental Regulation in a Concentrated Industry,"
+  *Econometrica*—the canonical demonstration that the dynamic counterfactual
+  reverses the static welfare verdict.
+  [doi:10.3982/ecta6750](https://doi.org/10.3982/ecta6750) **[R]**
+- Magnac & Thesmar (2002), "Identifying Dynamic Discrete Decision Processes,"
+  *Econometrica*—what is and is not identified, and therefore which
+  counterfactuals are credible.
+  [doi:10.1111/1468-0262.00306](https://doi.org/10.1111/1468-0262.00306) **[F]**
+
+**Debate.** The capstone question: given that the discount factor and flow payoffs
+are jointly under-identified without restrictions, *which* counterfactuals are
+robust to the normalization, and which silently inherit it? When should a
+researcher prefer a transparent reduced-form design to a structural model whose
+counterfactual rests on an untestable assumption?
+
+## Foundational vs. frontier at a glance {#sec-dyns-ff}
+
+**Foundational core** (every student must know cold): Bellman (1957) on Markov
+decision processes; Rust (1987) for the single-agent model and NFXP; Hotz & Miller
+(1993) and Hotz, Miller, Sanders & Smith (1994) for the CCP revolution; Magnac &
+Thesmar (2002) for identification; Erdem & Keane (1996) for consumer learning;
+Hendel & Nevo (2006) for stockpiling; Gönül & Srinivasan (1996) for CRM dynamics;
+Ericson & Pakes (1995) and Pakes & McGuire (1994) for dynamic-games theory; Bajari,
+Benkard & Levin (2007) and Aguirregabiria & Mira (2007) for their estimation;
+Nerlove & Arrow (1962) for advertising goodwill; Hitsch (2006) for launch/exit;
+Pakes, Ostrovsky & Berry (2007) for entry/exit; Misra & Nair (2011) for salesforce
+dynamics; and Aguirregabiria & Mira (2010) as the field's survey.
+
+**Frontier / actively updated** (refresh each edition): Gowrisankaran & Rysman
+(2012) and Nair (2007) on durable and dynamic-pricing demand; Crawford & Shum
+(2005) on learning; Lewis (2005) and Sun, Li & Zhou (2006) on CRM dynamics;
+Pesendorfer & Schmidt-Dengler (2008) on game estimation; Dubé, Hitsch & Manchanda
+(2005) on advertising; Ryan (2012) on dynamic policy evaluation; Chung, Steenburgh
+& Sudhir (2014) on bonus dynamics; and the computational frontier—Norets (2012),
+Mnih et al. (2015), and Calvano et al. (2020). The split is pedagogical, not
+chronological: Rust (1987) is foundational because the field still writes its
+models in his notation; Ryan (2012) is "frontier" because its dynamic-policy method
+is still being extended.
+
+## How this chapter expands {#sec-dyns-expands}
+
+The weekly map is a backbone designed to grow along several axes.
+
+1. **A computation-and-code companion per estimator.** Each estimator week (NFXP,
+   CCP, two-step games, RL) should gain a runnable companion—value-function
+   iteration on Rust's bus problem, a Hotz–Miller inversion on simulated data, a
+   Bajari–Benkard–Levin two-step on a toy entry game—so students implement, not
+   merely read, the algorithms. The worked section below seeds this with the
+   single-agent core.
+2. **A refreshed computational frontier.** Week 13 turns over fastest. As deep
+   reinforcement learning, transformers for sequence-valued states, and
+   neural-network-accelerated structural estimation mature, replace or supplement
+   the frontier readings while keeping the foundational estimators fixed.
+3. **An identification-and-validation spine.** Every week names an identification
+   challenge (the discount factor, the conditional-independence assumption,
+   equilibrium multiplicity, first-stage CCP bias). A future edition should add a
+   short identification note per week—exclusion restrictions for the discount
+   factor, instruments for dynamic demand, validation designs—so the chapter
+   teaches *why a counterfactual is credible*, not only how it is computed.
+4. **Marketing-native applications as first-class modules.** The IO scaffolding can
+   be progressively rebalanced toward marketing's own data and questions—CRM
+   panels, recommendation and platform dynamics, dynamic targeting under
+   privacy—each following the template of foundational estimator plus frontier
+   application plus identification debate.
+
+The following section supplies the worked treatment the map points to.
+
+### The single-agent dynamic discrete choice model {#sec-dyns-worked}
+
+Consider an agent who, in each period $t$, observes a state $s_t = (x_t,
+\varepsilon_t)$, where $x_t$ is *observed* by the econometrician and
+$\varepsilon_t = \{\varepsilon_t(a)\}_{a \in A}$ is a vector of choice-specific
+shocks *unobserved* by the econometrician but known to the agent. The agent
+chooses an action $a_t$ from a finite set $A$ to maximize the expected present
+value of flow payoffs, discounted at factor $\beta \in (0,1)$:
+$$
+\mathbb{E}\!\left[\sum_{\tau=t}^{\infty} \beta^{\tau-t}\,
+u(x_\tau, a_\tau) + \varepsilon_\tau(a_\tau) \,\middle|\, s_t \right].
+$$ {#eq-dyns-objective}
+Two assumptions make this tractable (Rust 1987). *Additive separability*: the
+unobservable enters the period payoff additively as $\varepsilon_t(a)$.
+*Conditional independence*: $x_{t+1}$ depends on $(x_t, a_t)$ but not on
+$\varepsilon_t$, and $\varepsilon_{t+1}$ is i.i.d. over time given $x_{t+1}$. The
+state then evolves by a Markov transition $p(x_{t+1} \mid x_t, a_t)$.
+
+Define the *integrated* (or ex-ante) value function $V(x)$ as the expected value
+before $\varepsilon$ is realized. The Bellman equation is
+$$
+V(x) = \int \max_{a \in A}
+\Big\{ u(x,a) + \varepsilon(a)
++ \beta\, \mathbb{E}\big[\,V(x') \mid x, a\,\big] \Big\}\,
+g(\varepsilon)\, d\varepsilon ,
+$$ {#eq-dyns-bellman}
+where $\mathbb{E}[V(x') \mid x,a] = \sum_{x'} V(x')\, p(x' \mid x, a)$. It is
+convenient to define the *choice-specific value function* (the conditional value,
+net of the current shock):
+$$
+\bar v(x,a) = u(x,a) + \beta\, \sum_{x'} V(x')\, p(x' \mid x, a).
+$$ {#eq-dyns-choicevalue}
+The agent chooses $a$ if $\bar v(x,a) + \varepsilon(a) \ge \bar v(x,a') +
+\varepsilon(a')$ for all $a'$.
+
+When $\varepsilon$ is i.i.d. Type-I extreme value, two classic results follow. The
+*conditional choice probability* (CCP) takes the multinomial-logit form
+$$
+P(a \mid x) = \frac{\exp\!\big(\bar v(x,a)\big)}
+{\sum_{a' \in A} \exp\!\big(\bar v(x,a')\big)},
+$$ {#eq-dyns-ccp}
+and the integrated value function has the closed form $V(x) = \log \sum_{a}
+\exp(\bar v(x,a)) + \gamma$ (with $\gamma$ Euler's constant). The map $T$ defined
+by @eq-dyns-bellman is a contraction with modulus $\beta$, so value-function
+iteration $V^{(k+1)} = T V^{(k)}$ converges to the unique fixed point—the inner
+loop of the **nested fixed point** (NFXP) estimator. NFXP maximizes the likelihood
+$\prod_{i,t} P(a_{it} \mid x_{it}; \theta)$ over structural parameters $\theta =
+(u\text{-parameters}, \beta)$, re-solving @eq-dyns-bellman at every trial $\theta$.
+
+The **Hotz–Miller inversion** (Hotz & Miller 1993) breaks this dependence on the
+inner loop. Under extreme-value errors, choice-specific value *differences* are
+recovered directly from the CCPs:
+$$
+\bar v(x,a) - \bar v(x,a_0) = \log P(a \mid x) - \log P(a_0 \mid x),
+$$ {#eq-dyns-hm}
+for a reference action $a_0$. Because the CCPs $\hat P(a \mid x)$ can be estimated
+nonparametrically in a first stage, the continuation value can be expressed as a
+function of those estimated probabilities (the "inversion"), and the structural
+payoff parameters recovered in a fast second stage—often by forward-*simulating*
+paths under $\hat P$ (Hotz, Miller, Sanders & Smith 1994). This is the
+**CCP** estimator: cheaper than NFXP, at some cost in efficiency and a dependence
+on the first-stage $\hat P$.
+
+The **identification problem** is the field's defining caveat. Two normalizations
+are unavoidable. First, the level of $u$ is not separately identified from the
+location of $\varepsilon$, so the flow payoff of a reference action is normalized
+(typically to zero). Second, and more seriously, the **discount factor** $\beta$ is
+generically *not* identified jointly with the flow payoff from choice data alone:
+many $(u,\beta)$ pairs rationalize the same CCPs (Magnac & Thesmar 2002). The
+standard practice is to *fix* $\beta$ at a calibrated value (e.g., $0.95$ per
+period). Identifying $\beta$ from the data requires an *exclusion restriction*—a
+state variable that shifts the continuation value (it affects future payoffs)
+without entering the current flow payoff—so that variation in the future-only
+channel pins down how much the agent discounts. Whether a credible exclusion
+restriction exists is, in every application, the question on which the model's
+dynamic counterfactuals ultimately stand or fall.
+
+## Key Takeaways
+
+- Dynamic structural models treat consumers and firms as *forward-looking*
+  optimizers solving a Markov decision process; the single-agent DDC model (Rust
+  1987) supplies the Bellman equation, value function, and conditional choice
+  probabilities (@eq-dyns-bellman, @eq-dyns-ccp) that the entire literature, single-
+  agent and games alike, presumes.
+- Estimation splits into the **full-solution** nested fixed point (efficient,
+  heavy) and the **two-step** CCP family (fast, less efficient), the latter built
+  on the Hotz–Miller inversion (@eq-dyns-hm) and extended to dynamic games by
+  Bajari–Benkard–Levin and Aguirregabiria–Mira.
+- Marketing carried the framework into its own questions—forward-looking durable
+  demand (Gowrisankaran & Rysman 2012), consumer learning (Erdem & Keane 1996),
+  stockpiling (Hendel & Nevo 2006), CRM and salesforce dynamics (Gönül &
+  Srinivasan 1996; Misra & Nair 2011)—where the state is a belief, an inventory, or
+  a relationship rather than a firm's capital.
+- Dynamic *games* add equilibrium (Ericson & Pakes 1995), and with it multiplicity
+  and computational cost; their payoff to marketing and policy is the dynamic
+  counterfactual—Ryan (2012) shows the dynamic correction can reverse a static
+  welfare verdict, and Misra & Nair (2011) show a counterfactual contract can be
+  *validated in the field*.
+- The computational frontier (Norets 2012; Mnih et al. 2015; Calvano et al. 2020)
+  uses machine learning and reinforcement learning to break the curse of
+  dimensionality, trading parametric structure for flexibility—and raising anew the
+  question of whether a learned policy supports credible counterfactuals.
+- The discipline that governs everything is **identification**: the discount factor
+  and flow payoffs are jointly under-identified (Magnac & Thesmar 2002), so most
+  studies fix $\beta$ and lean on exclusion restrictions; a dynamic counterfactual
+  is credible only to the extent its identifying normalization is defensible.

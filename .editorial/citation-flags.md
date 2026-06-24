@@ -43,6 +43,19 @@ consider essential and I will weave them back in:
   @cialdini1990, @amabile1983, @edsonescalas, @aggarwal2004 (duplicate line),
   @aaker1994 (kept), @hsu2015 (kept)
 
+## Ch. 64 — Innovation, New Products, and Diffusion Seminar
+
+- **Katz & Shapiro (1985), "Network Externalities, Competition, and
+  Compatibility," *American Economic Review*** — no verifiable Crossref DOI (older
+  AER articles predate Crossref registration; the JSTOR stable id 10.2307/1814809
+  returns no Crossref record). Cited named-without-link per the house rule and
+  flagged here. Confirm the citation before publication or substitute a
+  DOI-bearing alternative (e.g., Katz & Shapiro 1994 JEP "Systems Competition and
+  Network Effects," doi:10.1257/jep.8.2.93).
+- **Books cited without DOI (expected, no action needed):** Rogers, *Diffusion of
+  Innovations*; Urban & Hauser, *Design and Marketing of New Products* (1993);
+  Christensen, *The Innovator's Dilemma* (1997).
+
 ### Production note
 - Four `images/paste-*.png` screenshots reproduced from journal articles were
   removed (copyright). If any figure is essential, it must be redrawn as an original
