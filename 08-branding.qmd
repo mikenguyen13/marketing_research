@@ -80,73 +80,457 @@ for weak brands, independent of respondents' ability to attribute them correctly
 [@dahlén2005]—evidence that brand strength spills onto the evaluation of the brand's
 own elements.
 
-## Brand Equity
+## Brand Equity {#sec-brand-equity}
 
 Brand equity is the value a brand name adds beyond a product's functional utility.
-Following @keller1993, *customer-based brand equity* (CBBE) is the **differential
-effect of brand knowledge on consumer response** to the brand's marketing: the same
-product at the same price elicits a more favorable response under a strong brand. A
-transparent operationalization is the price premium a brand commands over an
-otherwise-equivalent generic,
+It is the central construct of the chapter and one of the few in marketing that has
+generated two largely separate measurement literatures: a *customer-based* tradition
+that reads equity from the consumer's mind (surveys, scales, choices) and a
+*financial/market-based* tradition that reads it from prices, profits, and stock
+returns. The two traditions rarely cite one another, yet they are measuring the same
+underlying asset from opposite ends. The most consequential recent development is not
+a new definition but a new *instrument set*: always-on computational measurement from
+social text, images, co-purchase graphs, and, most recently, large language models.
+This section leads with that computational frontier, then grounds it in the classical
+customer-based and financial traditions, and closes by bridging explicitly to the
+marketing-finance machinery of @sec-marketing-finance.
+
+Two reference frameworks organize everything that follows. The first is Keller's
+[@keller1993] definition of *customer-based brand equity* (CBBE) as the differential
+effect of brand knowledge on consumer response to the brand's marketing: the same
+product at the same price elicits a more favorable response under a strong brand. The
+second is the *brand value chain* of @kellerlehmann2006, which traces equity through
+four stages, marketing investment, customer mindset (awareness, associations,
+attitudes), market performance (price premium, share, loyalty), and finally
+shareholder value. The value chain is the spine that connects the customer-based and
+financial traditions: customer-based measures sit at the mindset and market-
+performance stages, financial measures at the shareholder-value stage, and a credible
+account of brand equity must explain how value propagates from one to the next.
+@srinivasan2009 (Srinivasan and Hanssens) supply the
+empirical-methods companion to that conceptual chain, cataloguing the metrics (Tobin's
+$q$, abnormal returns, event-study CARs) and methods (persistence models, vector
+autoregressions, value-relevance regressions) that link marketing assets, brand equity
+among them, to firm value. Bridging the two traditions matters because each is
+incomplete alone: mindset measures can move without ever reaching the cash register,
+and financial measures can move for reasons that have nothing to do with the brand.
+
+A transparent operationalization at the market-performance stage is the price premium
+a brand commands over an otherwise-equivalent generic,
 $$
 \text{BE}_b = p_b - p_{\text{generic}}
 $$ {#eq-brand-premium}
 which is conceptually distinct from *value added*, $p - c$ (price over cost of
 production). A generic can carry value added (e.g., convenience) without carrying
 brand equity; equity is specifically the increment attributable to the *name*
-[@Aaker_1996]. A complementary distinction separates the **functional**,
-**emotional**, and **self-expressive** benefits a brand's value proposition
-delivers [@Aaker_1996]: functional benefits derive from product attributes;
-emotional benefits from feelings during private use; self-expressive benefits from
-public signaling of identity. Because mass production has commoditized quality,
-quality alone no longer confers status [@Holt_1998], and the self-expressive
-component carries an increasing share of equity.
+[@Aaker_1996]. A complementary distinction separates the **functional**, emotional,
+and self-expressive benefits a brand's value proposition delivers [@Aaker_1996]:
+functional benefits derive from product attributes; emotional benefits from feelings
+during private use; self-expressive benefits from public signaling of identity.
+Because mass production has commoditized quality, quality alone no longer confers
+status [@Holt_1998], and the self-expressive component carries an increasing share of
+equity.
 
-### Is Equity Reflective or Formative?
+### The Computational Frontier {#sec-be-frontier}
 
-A consequential and unsettled question is whether CBBE is a **reflective** or a
-**formative** construct—because the answer dictates which validity tests apply and
-how the construct may legitimately be aggregated (@sec-measurement-scales).
-Let $\eta$ denote latent brand equity and let $x_1,\dots,x_K$ be observed
-dimensions (perceived quality, associations, awareness, loyalty). The **reflective**
-specification treats the dimensions as *manifestations* of equity,
+The classical instruments for measuring equity (surveys, scanner regressions, choice
+experiments) are periodic, expensive, and backward-looking. The defining shift of the
+past decade is the migration of measurement onto continuous digital traces: review
+text, social posts, follower graphs, consumer-posted images, co-purchase baskets, and
+now synthetic respondents generated by language models. The methodological
+through-line across this work is *representation plus validation*: every method pairs
+a learned representation (topics, embeddings, image features, model judgments) with an
+external validation against a traditional brand metric (a survey perceptual map, a
+mindset tracker, a stock return). The right pedagogical emphasis is that pairing, not
+any single algorithm.
+
+The reference architecture for always-on tracking is @rust2021, who build a
+continuously updating brand-reputation index from social-media streams and validate it
+against established survey brand metrics. The lesson is that a well-constructed
+real-time index can stand in for a quarterly survey, collapsing the measurement lag
+from months to hours. Perception can also be recovered from network structure rather
+than content: @culotta2016 infer brand perceptual attributes (eco-friendly, luxury,
+nutritious) from *who follows whom* on social platforms, showing that the company a
+brand keeps is itself a measurement instrument. From raw text, two complementary
+geometries emerge. @netzer2012 recover competitive market structure from forum
+co-mentions, turning unstructured chatter into a brand map; @tirunillai2014a (cited as
+the LDA "chatter" study) extract latent quality dimensions, their valence, and their
+dynamics from hundreds of thousands of reviews. The second wave replaces topic counts
+with *embeddings*: @timoshenko2019 use word embeddings to extract non-redundant
+customer needs from user-generated content, and @gabel2019map introduce P2V-MAP, a
+product2vec model that learns interpretable brand and product positions from
+basket co-occurrence at retail scale. @berger2020text codify the resulting toolkit
+(dictionaries, topics, embeddings, classifiers) and, importantly for a measurement
+chapter, its validation requirements.
+
+Brand image is increasingly read from pixels rather than words. @liu2020 train a
+deep convolutional network (BrandImageNet) that recovers perceptual brand attributes
+directly from consumer-posted images, "visual listening in" as a complement to text
+listening, and @hartmann2021power show that the *type* of consumer image (a "selfie"
+with the brand versus a "packshot" of it) carries distinct brand meaning and drives
+engagement differently. The social signal also propagates to firm value:
+@tirunillai2012 establish that the volume of online chatter leads abnormal stock
+returns, @luo2013 show social-media metrics are leading indicators of firm equity
+value, and @colicev2018b route owned versus earned social
+media through mindset metrics (awareness, satisfaction) to shareholder value, closing
+the value chain in the social era.
+
+The newest stream treats the language model itself as the measurement device.
+@licastelo2024 test whether an LLM can generate brand perceptual maps and attribute
+scores that match human survey perceptions, validating with a triplet-agreement
+criterion (do model and humans agree which of two brands is closer to a third?). The
+broader "silicon sampling" idea, simulating human respondents with a language model,
+traces to @argyle2023. The stream is the most active and least settled: LLMs can scale
+and pre-test brand measures cheaply, but current evidence is that they require a human
+anchor for validity rather than replacing human respondents outright. We return to a
+worked, API-free version of the perceptual-map idea in @sec-be-code.
+
+### Customer-Based Measurement {#sec-be-cbbe}
+
+The customer-based tradition measures equity from the consumer mindset. Its
+managerial origin is Aaker's five-asset framework (awareness, perceived quality,
+associations, loyalty, and other proprietary assets) in *Managing Brand Equity*
+(Aaker 1991) and the "Brand Equity Ten" measurement battery in *Building Strong
+Brands* (Aaker 1996, @Aaker_1996); its psychological grounding is Keller's CBBE
+[@keller1993]. The dominant survey instruments operationalize these constructs as
+multi-item scales. @yoo2001 give a parsimonious multidimensional consumer-based
+brand-equity scale (loyalty, perceived quality, awareness/associations) plus a
+four-item overall-equity scale; @netemeyer2004 develop and validate facet measures
+(perceived quality, perceived value, uniqueness, and willingness to pay a price
+premium) and show the price-premium facet is the proximal driver of purchase intent,
+a result that motivates reading equity off market behavior directly.
+
+#### Is Equity Reflective or Formative? {#sec-be-reflective-formative}
+
+A consequential and unsettled question is whether CBBE is a reflective or a formative
+construct, because the answer dictates which validity tests apply and how the
+construct may legitimately be aggregated (@sec-measurement-scales). Let $\eta$ denote
+latent brand equity and let $x_1,\dots,x_K$ be observed dimensions (perceived quality,
+associations, awareness, loyalty). The reflective specification treats the dimensions
+as manifestations of equity,
 $$ x_k = \lambda_k \eta + \varepsilon_k, \qquad k = 1,\dots,K, $$
 so the indicators should be internally consistent and interchangeable; this is the
-view of @yoo2001. The **formative** specification reverses the arrows, treating the
-dimensions as *causes* that compose equity,
+view of @yoo2001. The formative specification reverses the arrows, treating the
+dimensions as causes that compose equity,
 $$ \eta = \sum_{k=1}^{K} w_k x_k + \zeta, $$
-so the indicators need not correlate and are not interchangeable; this is the view
-of @henseler2017. The two are not nested and imply different psychometrics:
-reflective models are evaluated by internal-consistency and convergent/discriminant
-validity, whereas formative models are evaluated by indicator weights and
-multicollinearity diagnostics. A pragmatic third position treats equity as an
-*outcome* measured directly (e.g., the premium in
-@eq-brand-premium) rather than scaled from its drivers; this is
+so the indicators need not correlate and are not interchangeable; this is the view of
+@henseler2017. The two are not nested and imply different psychometrics: reflective
+models are evaluated by internal-consistency and convergent/discriminant validity,
+whereas formative models are evaluated by indicator weights and multicollinearity
+diagnostics. A pragmatic third position treats equity as an outcome measured directly
+(e.g., the premium in @eq-brand-premium) rather than scaled from its drivers; this is
 often easier to defend to reviewers but is not the field's consensus.
 
-### Measuring Equity
+#### Revenue and Price Premium {#sec-be-premium}
 
-Quantitatively, @kamakura1993 decompose brand value from single-source scanner
-panel data into a tangible (attribute-driven) component and an intangible
-(name-driven) component within a choice model, yielding a revealed-preference
-estimate of equity. Subsequent work links brand equity to **customer equity** and
-long-horizon value [@rust2021; @mitra2006]. Survey-based scales remain the dominant
-qualitative instruments [@yoo2001; @lassar1995; @keller1993]. Processing-fluency
-moderators matter at the margin: congruence between the construal level of a
-message and the psychological distance to the brand makes information easier to
-process and lifts response and spending [@Connors_2020].
+Reading equity off market behavior rather than surveys yields outcome measures that
+are forward-looking and hard to game. @ailawadi2003 define the *revenue premium*, the
+difference in revenue (price times volume) between a brand and a comparable
+private-label or generic, net of cost, as an outcome measure of brand equity
+computable directly from scanner data. The price-premium family (Aaker's "Brand Equity
+Ten" premium item, @Aaker_1996) isolates the per-unit price a brand commands at equal
+share. Revealed-preference decompositions in the same spirit recover equity from
+single-source panels: @kamakura1993 split brand value into a tangible
+(attribute-driven) and an intangible (name-driven) component within a choice model.
+The revenue-premium computation, including a side estimate of own-price elasticity, is
+demonstrated on simulated scanner data in @sec-be-code.
 
-### Equity and Firm Value
+#### Conjoint and Choice-Based Equity {#sec-be-choice}
 
-The financial relevance of CBBE is now well established. Customer-based brand equity
-is positively associated with stock returns, firm value, and credit ratings, and
-negatively associated with idiosyncratic risk and earnings volatility
-[@bharadwaj2011a; @larkin2013; @madden2006; @mizik2008; @rego2009]. The asset is
-even priced in the managerial labor market: executives accept lower pay to be
-associated with strong brands, an effect concentrated among CEOs and younger
-executives [@tavassoli2014employee]. We formalize the marketing–finance linkage and
-its event-study machinery in @sec-marketing-finance and revisit valuation
-quantitatively at the end of this chapter.
+A third route recovers equity from trade-offs in choice. @parksrinivasan1994 decompose
+brand equity in a survey-based conjoint into an attribute-based component (the part
+explained by measured attributes) and a non-attribute, brand-specific residual, and
+link the residual to extendibility. @swait1993equalization define the *equalization
+price*, the price reduction that makes a no-name option as attractive as the branded
+one in a discrete-choice model, giving equity a clean monetary interpretation as the
+value of the brand's intangible utility. @erdemswait1998 supply the microfoundation:
+brands act as *signals* that reduce perceived risk and information costs, so equity is
+the credibility and clarity of that signal, mapping directly onto choice-model
+utility. The equalization-price calculation is worked end-to-end on simulated choice
+data in @sec-be-code.
+
+### Financial and Market-Based Valuation {#sec-be-financial}
+
+The financial tradition measures equity from the firm's market value. The foundational
+method is @simon1993 (Simon and Sullivan), who estimate brand equity from financial-
+market value: total intangible value is the excess of market value over the
+replacement cost of tangible assets (a Tobin's $q$ logic), and brand equity is the
+share of that intangible attributable to brand-related drivers (advertising share,
+order of entry, the advertising-to-sales ratio). @barth1998brand show that published
+brand-value estimates are *value-relevant*: they explain share prices and returns
+incrementally over book equity and earnings, legitimizing brand value as an
+accounting-relevant intangible. The Interbrand "Best Global Brands"
+discounted-economic-profit method (implemented in the worked InterBrand demo later in
+this chapter) is the leading practitioner instrument, and its academic legitimacy
+rests on Barth et al. A Simon-Sullivan-style Tobin's $q$ decomposition on simulated
+firm financials is given in @sec-be-code, and it is the explicit computational bridge
+to @sec-mf-q.
+
+#### Stock-Return and Risk Evidence {#sec-be-stock}
+
+Brand equity shows up in stock returns and risk, not merely in accounting value.
+@madden2006 (Madden, Fehle, and Fournier) form portfolios of strong-brand firms from
+the Interbrand list and show they earn higher returns with lower risk than the market
+and matched firms, a branding "alpha" after Fama-French and Carhart adjustment.
+@mizik2008 (cited in the project as Mizik and Jacobson) show perceptual brand
+attributes from the Young & Rubicam BrandAsset Valuator predict future stock returns,
+implying the market does not fully or immediately impound brand-perception changes.
+@aakerjacobson2001 establish the same leading relationship for brand attitude in
+high-technology markets, and @johansson2012 show strong brands lost less value in the
+2008 financial crisis, evidence that equity buffers downside risk. The estimation
+problem of recovering the total financial impact of equity from short time series is
+treated by @mizik2014. A simulated brand-portfolio long-short return spread, mirroring
+@madden2006, appears in @sec-be-code.
+
+### Bridge to the Marketing-Finance Interface {#sec-be-bridge}
+
+The customer-based and financial traditions meet at firm value, and the meeting point
+is the Tobin's $q$ valuation regression developed in @sec-mf-q. There, $q_{it}$, the
+ratio of a firm's market value to the replacement cost of its assets, is regressed on
+marketing assets with firm and year fixed effects,
+$$ q_{it} = \beta\,\text{BrandIndex}_{it} + \mathbf{x}_{it}^{\top}\boldsymbol{\gamma}
+   + \alpha_i + \delta_t + u_{it}, $$ {#eq-be-q}
+so that a customer-based brand index (an embedding-derived equity score, a survey
+mindset metric, a revenue premium) enters the same regression that prices any other
+marketing asset. This is the literal computational bridge between the two traditions:
+the customer-based literature supplies $\text{BrandIndex}_{it}$, and the
+marketing-finance literature supplies the identification machinery and the firm-value
+outcome. @srinivasan2009 is the methodological map for that regression, and the
+caveats of @sec-mf-aatq (reverse causality, omitted intangibles, accounting-proxy
+bias in $q$) apply in full. The financial relevance of customer-based equity is by now
+well established: it is positively associated with stock returns, firm value, and
+credit ratings and negatively associated with idiosyncratic risk and earnings
+volatility [@bharadwaj2011a; @larkin2013; @madden2006; @mizik2008; @rego2009], and the
+asset is even priced in the managerial labor market, where executives accept lower pay
+to be associated with strong brands, an effect concentrated among CEOs and younger
+executives [@tavassoli2014employee]. We revisit valuation quantitatively at the end of
+this chapter and formalize the event-study machinery in @sec-marketing-finance.
+
+### Worked Computations {#sec-be-code}
+
+The five demonstrations below run on simulated data, span both measurement traditions,
+and carry the marketing-finance bridge. They use base R plus `dplyr`, `ggplot2`, and
+`MASS`, all already standard in this book.
+
+A first demonstration computes the *revenue premium* of @ailawadi2003 on simulated
+weekly scanner data for a national brand and a comparable private label across stores,
+and recovers each brand's own-price elasticity as a side metric.
+
+```{r be-revenue-premium, message=FALSE, warning=FALSE}
+library(dplyr)
+set.seed(42)
+
+n_stores <- 30; n_weeks <- 52
+grid <- expand.grid(store = 1:n_stores, week = 1:n_weeks)
+
+# National brand: higher baseline price and stronger baseline demand (equity);
+# private label: cheaper, weaker baseline. Both face log-log demand in price.
+sim_brand <- function(base_logdemand, base_price, elasticity, n, sd_price) {
+  price <- pmax(0.5, base_price + rnorm(n, 0, sd_price))
+  units <- exp(base_logdemand + elasticity * log(price) + rnorm(n, 0, 0.20))
+  data.frame(price = price, units = units)
+}
+
+nb <- sim_brand(base_logdemand = 7.0, base_price = 3.20, elasticity = -1.8,
+                n = nrow(grid), sd_price = 0.25)
+pl <- sim_brand(base_logdemand = 6.2, base_price = 2.10, elasticity = -2.4,
+                n = nrow(grid), sd_price = 0.20)
+
+scan_dat <- bind_rows(
+  cbind(grid, brand = "National", nb),
+  cbind(grid, brand = "PrivateLabel", pl)
+)
+
+# Revenue premium = (revenue of national brand) - (revenue of private label),
+# aggregated to the store-week and averaged (Ailawadi, Lehmann & Neslin 2003).
+rev_long <- scan_dat |>
+  mutate(revenue = price * units) |>
+  group_by(store, week, brand) |>
+  summarise(revenue = sum(revenue), .groups = "drop")
+
+rev_nb <- rev_long$revenue[rev_long$brand == "National"]
+rev_pl <- rev_long$revenue[rev_long$brand == "PrivateLabel"]
+revenue_premium <- mean(rev_nb - rev_pl)
+
+# Own-price elasticity per brand from a log-log regression.
+elas <- scan_dat |>
+  group_by(brand) |>
+  summarise(elasticity = coef(lm(log(units) ~ log(price)))[["log(price)"]],
+            .groups = "drop")
+
+cat("Mean revenue premium per store-week: $",
+    format(round(revenue_premium), big.mark = ","), "\n", sep = "")
+print(elas)
+```
+
+The second demonstration is the Simon-Sullivan financial decomposition. Across a
+cross-section of simulated firms it computes Tobin's $q$, isolates intangible value as
+market value net of tangible replacement cost, regresses that intangible on
+brand-related drivers, and reports the fitted brand-equity share. This is the same
+$q$ object used in @sec-mf-q.
+
+```{r be-simon-sullivan, message=FALSE, warning=FALSE}
+set.seed(7)
+N <- 400
+firm <- data.frame(
+  tangible_repl = runif(N, 50, 500),                 # replacement cost of tangibles
+  ad_share      = rbeta(N, 2, 5),                     # advertising share of sales
+  order_entry   = sample(1:6, N, replace = TRUE),     # 1 = pioneer (more equity)
+  rd_intensity  = rbeta(N, 2, 8)                      # other intangible (control)
+)
+
+# True data-generating process: intangible value rises in advertising share and
+# pioneering (low order-of-entry number), plus non-brand intangibles (R&D) + noise.
+brand_intangible <- 120 * firm$ad_share + 15 * (7 - firm$order_entry)
+other_intangible <- 200 * firm$rd_intensity
+firm$market_value <- firm$tangible_repl + brand_intangible + other_intangible +
+  rnorm(N, 0, 25)
+
+firm$q          <- firm$market_value / firm$tangible_repl
+firm$intangible <- firm$market_value - firm$tangible_repl
+
+# Regress intangible value on brand drivers (+ control); fitted brand component
+# is the brand-equity share of intangible value (Simon & Sullivan 1993 logic).
+fit <- lm(intangible ~ ad_share + I(7 - order_entry) + rd_intensity, data = firm)
+firm$brand_equity_hat <- coef(fit)["ad_share"] * firm$ad_share +
+  coef(fit)["I(7 - order_entry)"] * (7 - firm$order_entry)
+
+brand_share <- mean(firm$brand_equity_hat) / mean(firm$intangible)
+
+cat("Mean Tobin's q:                 ", round(mean(firm$q), 3), "\n")
+cat("Brand share of intangible value:", round(100 * brand_share, 1), "%\n")
+```
+
+The third demonstration mirrors @madden2006: it simulates monthly returns for a
+strong-brand and a weak-brand portfolio (the strong portfolio carries a small positive
+alpha and lower idiosyncratic volatility), recovers alpha and beta from a CAPM-style
+time-series regression on the strong portfolio, and reports the long-short
+(strong minus weak) spread with a $t$-statistic.
+
+```{r be-portfolio-spread, message=FALSE, warning=FALSE}
+set.seed(2024)
+Tm  <- 240                                   # 20 years of monthly returns
+mkt <- rnorm(Tm, mean = 0.006, sd = 0.045)   # market excess return
+rf  <- 0.0
+alpha_strong <- 0.0025                        # ~30 bps/yr branding alpha
+strong <- alpha_strong + 0.95 * mkt + rnorm(Tm, 0, 0.020)  # lower idio vol
+weak   <- 0.0000      + 1.10 * mkt + rnorm(Tm, 0, 0.035)   # higher idio vol
+
+capm   <- lm(I(strong - rf) ~ I(mkt - rf))
+spread <- strong - weak
+tt     <- t.test(spread)
+
+cat("CAPM alpha (monthly):", round(coef(capm)[1], 5),
+    " annualized:", round(((1 + coef(capm)[1])^12 - 1) * 100, 2), "%\n")
+cat("CAPM beta:           ", round(coef(capm)[2], 3), "\n")
+cat("Long-short mean spread (monthly):", round(mean(spread), 5),
+    " t =", round(tt$statistic, 2), "\n")
+```
+
+The fourth demonstration computes the equalization-price equity of
+@swait1993equalization on a simulated choice experiment. Three brands and a no-name
+outside option vary in price and quality; a multinomial logit is fit by maximum
+likelihood (hand-coded, no external choice package), and the equalization price is the
+brand-specific intercept divided by the absolute price coefficient, that is, the price
+cut that would make the no-name option as attractive as the branded one.
+
+```{r be-equalization-price, message=FALSE, warning=FALSE}
+set.seed(11)
+n_resp <- 1500
+J <- 4                                  # 3 brands + 1 no-name outside option
+
+# True utilities: brand-specific intercepts (ASCs), price (neg), quality (pos).
+asc   <- c(BrandA = 1.6, BrandB = 1.0, BrandC = 0.4, NoName = 0.0)
+b_pr  <- -0.9
+b_qu  <-  0.7
+
+# Each respondent sees one choice set with random price/quality per alternative.
+make_set <- function() {
+  price   <- runif(J, 1, 5)
+  quality <- runif(J, 0, 3)
+  V <- asc + b_pr * price + b_qu * quality
+  p <- exp(V) / sum(exp(V))
+  choice <- sample(1:J, 1, prob = p)
+  data.frame(alt = 1:J, price = price, quality = quality,
+             chosen = as.integer(1:J == choice))
+}
+dat <- do.call(rbind, lapply(1:n_resp, function(i)
+  cbind(set = i, make_set())))
+
+# Design matrix: 3 brand dummies (NoName is the reference) + price + quality.
+X <- cbind(
+  BrandA  = as.integer(dat$alt == 1),
+  BrandB  = as.integer(dat$alt == 2),
+  BrandC  = as.integer(dat$alt == 3),
+  price   = dat$price,
+  quality = dat$quality
+)
+negll <- function(par) {
+  V <- as.vector(X %*% par)
+  df <- data.frame(set = dat$set, V = V, chosen = dat$chosen)
+  denom <- tapply(exp(df$V), df$set, sum)
+  ll <- sum(df$V[df$chosen == 1]) - sum(log(denom))
+  -ll
+}
+est <- optim(rep(0, 5), negll, method = "BFGS")$par
+names(est) <- colnames(X)
+
+eq_price <- est[c("BrandA", "BrandB", "BrandC")] / abs(est["price"])
+cat("Estimated coefficients:\n"); print(round(est, 3))
+cat("\nEqualization price (value of brand over no-name), $/unit:\n")
+print(round(eq_price, 3))
+```
+
+The fifth demonstration builds a brand *perceptual map* from text, in the spirit of
+@netzer2012, @timoshenko2019, and @gabel2019map, without any external corpus or API.
+Each brand is given a profile over latent association words; a term-by-brand matrix is
+embedded with a low-rank singular value decomposition (a stand-in for word2vec or LLM
+embeddings); brands are then projected to two dimensions by classical multidimensional
+scaling and plotted with `ggplot2`. The same pipeline accepts real embeddings (from
+`text2vec` or an `ellmer` call to a language model) in place of the simulated matrix.
+
+```{r be-perceptual-map, message=FALSE, warning=FALSE, fig.width=6, fig.height=5}
+library(ggplot2)
+set.seed(99)
+
+brands <- c("Summit", "Vela", "Norden", "Aero", "Lumen", "Cobalt")
+assoc  <- c("rugged", "premium", "playful", "eco", "techy", "trusted",
+            "affordable", "youthful")
+
+# Latent positioning: each brand emphasizes a few associations.
+profile <- matrix(rgamma(length(brands) * length(assoc), shape = 0.4, rate = 1),
+                  nrow = length(assoc), dimnames = list(assoc, brands))
+profile["rugged",  "Summit"] <- 6; profile["eco",     "Summit"]  <- 4
+profile["premium", "Vela"]   <- 6; profile["trusted", "Vela"]    <- 4
+profile["trusted", "Norden"] <- 6; profile["eco",     "Norden"]  <- 5
+profile["techy",   "Aero"]   <- 6; profile["youthful","Aero"]    <- 4
+profile["playful", "Lumen"]  <- 6; profile["youthful","Lumen"]   <- 5
+profile["premium", "Cobalt"] <- 5; profile["techy",   "Cobalt"]  <- 5
+
+# TF-IDF-style weighting, then a low-rank SVD embedding of the term-brand matrix.
+tf  <- t(t(profile) / colSums(profile))
+idf <- log(ncol(profile) / (rowSums(profile > 0.5) + 1))
+M   <- tf * idf
+sv  <- svd(M)
+brand_emb <- diag(sv$d[1:4]) %*% t(sv$v[, 1:4])   # 4-dim brand embeddings
+colnames(brand_emb) <- brands
+
+# Classical MDS (base R) from cosine distances between brand embeddings.
+cos_sim <- function(A) {
+  A <- scale(A, center = FALSE, scale = sqrt(colSums(A^2)))
+  t(A) %*% A
+}
+D   <- as.dist(1 - cos_sim(brand_emb))
+mds <- cmdscale(D, k = 2)
+map_df <- data.frame(brand = brands, Dim1 = mds[, 1], Dim2 = mds[, 2])
+
+ggplot(map_df, aes(Dim1, Dim2, label = brand)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_text(vjust = -0.9) +
+  labs(title = "Simulated brand perceptual map (embedding + MDS)",
+       x = "Dimension 1", y = "Dimension 2") +
+  theme_minimal() +
+  coord_cartesian(clip = "off")
+```
 
 ### Brand Loyalty, Awareness, and Prominence
 

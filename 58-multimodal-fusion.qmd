@@ -1,0 +1,530 @@
+# Multimodal Fusion and Foundation Models {#sec-multimodal-fusion}
+
+The preceding chapters of this part took the unstructured modalities one at a time:
+text, images, audio, video, and the family of behavioral, geospatial, network, and
+sensor signals. Each chapter ended at the same place. A raw artifact, whatever its
+modality, was passed through a learned encoder and emerged as a vector of features
+that the book's downstream methods then consumed as if they were ordinary covariates.
+That recurring move is not incidental. It is the organizing fact of the entire part,
+and this capstone chapter makes it explicit, generalizes it, and confronts what
+happens when the artifacts that marketing actually cares about arrive in several
+modalities at once.
+
+Real marketing objects are rarely unimodal. A TikTok advertisement is moving image,
+synchronized audio, on-screen text, a written caption, and a stream of viewer
+comments. A product listing is a set of photographs, a title, structured attributes,
+bullet-point copy, and a corpus of reviews. A livestream-commerce session is video,
+the host's speech, a scrolling chat, and a clickstream of purchases. To model these
+objects faithfully, an analyst cannot treat each modality as a separate study and hope
+the pieces reconcile. The modalities must be brought into a single representation that
+a predictor, a demand model, or a causal estimator can use. That bringing-together is
+**multimodal fusion**, and the engines that increasingly perform it are **foundation
+models**: large, pretrained, general-purpose networks that map text, images, and
+their combinations into shared representation spaces.
+
+This chapter proceeds from the concrete to the conceptual. It begins with the case for
+fusing modalities at all. It then lays out the three canonical fusion strategies and
+demonstrates two of them in genuinely runnable R, comparing early fusion against late
+fusion on simulated multimodal customer data. From there it treats the representational
+backbone of modern fusion: contrastive image-text models in the style of CLIP, and
+the multimodal large language models that have absorbed them. It examines the use of
+those models as measurement instruments, including the contested practice of treating a
+language model as a synthetic survey respondent. It turns to demand and response
+estimation when the right-hand side contains text and image features, and to the
+production machinery (feature stores, embedding pipelines, foundation-model APIs) that
+makes any of this operational at scale. It closes by stating the throughline that has
+run silently beneath every chapter of the part, and by surveying the frontier.
+
+## The Case for Fusion {#sec-mmf-case}
+
+Why fuse at all? The first answer is **complementarity**. Distinct modalities carry
+non-redundant information about the same underlying object, and a model with access to
+all of them can resolve ambiguities that no single modality can. A product photograph
+reveals form, color, and finish that the title never states; the title encodes brand,
+model, and category that pixels render only implicitly; the reviews supply experiential
+attributes (durability, fit, smell) that neither image nor title contains. Each
+modality is a different, lossy projection of a richer latent object, and fusion is the
+attempt to invert several projections jointly rather than one at a time.
+
+The second answer is **disambiguation and grounding**. Modalities discipline one
+another. A caption that reads "absolutely sick" is praise or complaint depending on the
+image it sits beside; a smiling face in a frame reads as warmth or as sarcasm depending
+on the words spoken over it. Audio prosody separates a sincere "great service" from a
+withering one (the *how it is said* versus *what is said* distinction introduced in the
+audio chapter). When modalities are modeled jointly, each constrains the interpretation
+of the others, and the fused representation is less brittle than any unimodal one.
+
+The third answer is **robustness**. Modalities fail independently. A listing may have
+no review text, a video may have no speech, an image may be missing or corrupted.
+A model that has learned to draw on whatever modalities are present degrades gracefully
+when one drops out, whereas a unimodal pipeline simply goes blind. Missingness is the
+norm in marketing data, not the exception, and a fusion architecture that tolerates it
+is worth more in production than a marginally more accurate one that does not.
+
+The fourth answer is **measurement reach**. Many marketing constructs are inherently
+multimodal and cannot be measured from one channel. Ad creative "quality," brand
+"warmth," influencer "authenticity," and listing "appeal" are perceived by consumers
+through the simultaneous arrival of sight, sound, and language. A measure built on text
+alone, or images alone, captures a shadow of the construct. Fusion is what lets the
+analyst measure the construct as the consumer experiences it.
+
+Against these benefits stands a real cost, and it is the same caution the entire part
+has been building toward. Every modality enters the model as a *generated feature*: the
+output of an upstream encoder, estimated with error, and that error can correlate with
+the outcome. Fusing modalities multiplies the channels through which generated-regressor
+problems enter. The case for fusion is strong, but it raises the stakes on validation
+and identification rather than lowering them, a point @sec-mmf-demand develops in full.
+
+## Fusion Strategies {#sec-mmf-strategies}
+
+Given several per-modality representations, where in the modeling pipeline should they
+be combined? Three strategies span the design space, distinguished by *when* fusion
+occurs relative to the modality-specific processing.
+
+**Early fusion** (feature-level fusion) concatenates the per-modality feature vectors
+into one long vector and fits a single model on the combined input. If text yields a
+$d_T$-dimensional embedding, image a $d_I$-dimensional embedding, and behavior a
+$d_B$-dimensional vector, early fusion forms the $(d_T + d_I + d_B)$-dimensional stack
+and learns a single predictor over it. Its virtue is that the model can learn arbitrary
+cross-modal interactions directly: the effect of an image feature is free to depend on
+a text feature. Its costs are dimensionality (the concatenated vector can be very wide,
+straining the sample size), sensitivity to differences in scale and noise across
+modalities, and intolerance of missingness, since a single absent block leaves a hole
+in every observation's input.
+
+**Late fusion** (decision-level fusion) fits a separate model per modality and combines
+their *outputs*, typically by averaging the predicted scores or by training a small
+**meta-learner** (a stacking model) on the per-modality predictions. Its virtues mirror
+early fusion's vices: each modality model can be tuned to its own structure, modalities
+of wildly different dimension and scale never have to share a feature space, and a
+missing modality simply drops one input to the combiner rather than corrupting a shared
+vector. Its limitation is that cross-modal interactions are captured only insofar as the
+combiner can recover them from the per-modality scores; rich interactions that require
+seeing raw features from two modalities together are unavailable, because each base model
+has already collapsed its modality to a scalar before fusion.
+
+**Joint fusion** (intermediate or embedding-level fusion) sits between the two. Each
+modality is passed through its own learnable encoder, the resulting intermediate
+representations are combined (by concatenation, by summation, or by cross-attention
+between modalities), and the entire stack, encoders and combiner together, is trained
+end to end against the final objective. Joint fusion is the architecture of essentially
+all modern deep multimodal systems, because it learns *modality-specific* representations
+and their *interaction* simultaneously, letting gradient signal from the task reshape
+each encoder. Its cost is that it requires end-to-end differentiable training, large
+data, and the engineering apparatus of deep learning; it is not, in general, something
+one fits with a few lines of base R. The contrastive and transformer models of
+@sec-mmf-clip and @sec-mmf-mllm are joint-fusion systems at scale.
+
+A useful way to hold the three together: early fusion fuses *features*, late fusion
+fuses *decisions*, and joint fusion fuses *representations*, learning those
+representations as it goes. The runnable demonstration below contrasts the two that can
+be built from off-the-shelf, maintained packages: early fusion with a penalized linear
+model and late fusion with per-modality random forests combined by a stacking
+meta-learner. Joint fusion is treated conceptually, because its honest demonstration
+requires a deep-learning stack outside this book's runnable scope.
+
+### A Runnable Early-versus-Late Demonstration {#sec-mmf-demo}
+
+The demonstration is deliberately synthetic so that the data-generating process is
+known and the comparison is interpretable. We simulate per-customer features standing
+in for three modalities. A 20-dimensional **text-embedding block** stands in for, say,
+a sentence-embedding of a customer's reviews and messages; a 15-dimensional
+**image-feature block** stands in for a CNN or vision-transformer embedding of
+customer-associated images; and an 8-dimensional **behavioral block** stands in for
+clickstream and transaction summaries. Each block is generated from a single latent
+driver plus independent noise, so that within a block the features are correlated
+(as real embeddings are) and across blocks the signal is genuinely complementary: the
+binary outcome (a conversion, say) depends on all three latents. This construction is
+exactly the situation fusion is meant for, and it lets us see what each strategy
+recovers.
+
+```{r mmf-setup, message=FALSE, warning=FALSE}
+set.seed(58)
+suppressMessages({
+  library(glmnet)        # penalized regression for early fusion
+  library(randomForest)  # per-modality learners for late fusion
+})
+
+n      <- 1500            # customers
+d_text <- 20             # text-embedding dimension
+d_img  <- 15             # image-feature dimension
+d_beh  <- 8              # behavioral-feature dimension
+
+# One latent driver per modality. The outcome depends on all three,
+# so no single modality is sufficient: this is the case for fusion.
+z_text <- rnorm(n)
+z_img  <- rnorm(n)
+z_beh  <- rnorm(n)
+
+# Each modality block: a latent loading plus independent noise, so that
+# features within a block are correlated, as learned embeddings are.
+make_block <- function(z, d, loading) {
+  L <- rnorm(d, mean = 0, sd = loading)        # per-dimension loadings
+  outer(z, L) + matrix(rnorm(n * d, sd = 1), n, d)
+}
+
+X_text <- make_block(z_text, d_text, loading = 0.9)
+X_img  <- make_block(z_img,  d_img,  loading = 0.9)
+X_beh  <- make_block(z_beh,  d_beh,  loading = 1.1)
+colnames(X_text) <- paste0("txt", seq_len(d_text))
+colnames(X_img)  <- paste0("img", seq_len(d_img))
+colnames(X_beh)  <- paste0("beh", seq_len(d_beh))
+
+# Binary outcome driven by all three latents (true complementarity).
+eta <- 1.1 * z_text + 0.8 * z_img + 0.9 * z_beh - 0.5
+y   <- rbinom(n, size = 1, prob = 1 / (1 + exp(-eta)))
+
+# Train / test split.
+train <- sample(seq_len(n), size = 1000)
+test  <- setdiff(seq_len(n), train)
+
+# Rank-based AUC (Mann-Whitney form); no extra package needed.
+auc <- function(y_true, p_hat) {
+  r  <- rank(p_hat)
+  n1 <- sum(y_true == 1); n0 <- sum(y_true == 0)
+  (sum(r[y_true == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0)
+}
+```
+
+With the data in hand, **early fusion** concatenates the three blocks into one wide
+matrix and fits a single elastic-net logistic model over it. The penalty matters here:
+the concatenated input is 43-dimensional with correlated columns, and regularization is
+what keeps a wide, partly redundant feature stack from overfitting. This is the typical
+shape of a real fused-embedding regression, where the right-hand side is hundreds or
+thousands of embedding dimensions wide.
+
+```{r mmf-early, message=FALSE, warning=FALSE}
+X_all <- cbind(X_text, X_img, X_beh)        # concatenation = early fusion
+
+cv_early <- cv.glmnet(X_all[train, ], y[train],
+                      family = "binomial", alpha = 0.5)
+p_early  <- as.vector(predict(cv_early, X_all[test, ],
+                              s = "lambda.min", type = "response"))
+
+cat("Early fusion (elastic-net) AUC:", round(auc(y[test], p_early), 3), "\n")
+```
+
+**Late fusion** fits a separate random forest to each modality, then combines their
+predictions. We show two combiners. The first is a simple average of the three
+per-modality probabilities, the most common and most robust late-fusion rule. The
+second is a **stacked** combiner: a logistic meta-learner trained on the base models'
+predictions. Crucially, the meta-learner is trained on each forest's *out-of-bag*
+predictions for the training customers, not on its in-sample fits, so that the stacking
+model learns to weight modalities on honest, held-out signal rather than on the base
+models' overfit training scores. This out-of-bag construction is what makes stacking
+defensible rather than leaky.
+
+```{r mmf-late, message=FALSE, warning=FALSE}
+fit_rf <- function(X) {
+  randomForest(x = X[train, ], y = factor(y[train]), ntree = 300)
+}
+prob_test <- function(model, X) {
+  predict(model, X[test, ], type = "prob")[, 2]
+}
+
+rf_text <- fit_rf(X_text)
+rf_img  <- fit_rf(X_img)
+rf_beh  <- fit_rf(X_beh)
+
+# Per-modality predictions on the test set.
+p_text <- prob_test(rf_text, X_text)
+p_img  <- prob_test(rf_img,  X_img)
+p_beh  <- prob_test(rf_beh,  X_beh)
+
+# Combiner 1: simple average of decisions.
+p_late_avg <- (p_text + p_img + p_beh) / 3
+
+# Combiner 2: stacked logistic meta-learner trained on OUT-OF-BAG
+# predictions, so the stack does not see the base models' in-sample fits.
+oob <- function(model) model$votes[, 2]
+stack_train <- data.frame(
+  y = factor(y[train]),
+  a = oob(rf_text), b = oob(rf_img), c = oob(rf_beh)
+)
+meta <- glm(y ~ a + b + c, data = stack_train, family = "binomial")
+p_late_stack <- as.vector(predict(
+  meta, newdata = data.frame(a = p_text, b = p_img, c = p_beh),
+  type = "response"
+))
+
+cat("Late fusion (average)  AUC:", round(auc(y[test], p_late_avg),   3), "\n")
+cat("Late fusion (stacked)  AUC:", round(auc(y[test], p_late_stack), 3), "\n")
+```
+
+To make the value of fusion itself visible, we also report what a single modality
+achieves on its own. The comparison is the point of the whole exercise: because the
+outcome depends on all three latents, no unimodal model can reach what a fused model
+reaches, and the gap between the best single modality and either fusion strategy is the
+empirical case for fusing.
+
+```{r mmf-compare, message=FALSE, warning=FALSE}
+results <- data.frame(
+  approach = c("Text only", "Image only", "Behavior only",
+               "Early fusion (concat)",
+               "Late fusion (average)", "Late fusion (stacked)"),
+  AUC = round(c(
+    auc(y[test], p_text), auc(y[test], p_img), auc(y[test], p_beh),
+    auc(y[test], p_early), auc(y[test], p_late_avg), auc(y[test], p_late_stack)
+  ), 3)
+)
+print(results[order(-results$AUC), ], row.names = FALSE)
+```
+
+The qualitative pattern is what the data-generating process guarantees and what the
+literature reports on real data. Every unimodal model trails the fused models, because
+each sees only one of the three drivers. Among the fusion strategies, early and late
+fusion land close together on this clean synthetic problem; which one wins in practice
+depends on the data. Early fusion tends to lead when cross-modal interactions are strong
+and the sample is large enough to estimate a wide model, because only early (or joint)
+fusion can see raw features from two modalities together. Late fusion tends to lead when
+modalities are heterogeneous in scale and noise, when some modalities are frequently
+missing, or when sample size is tight relative to the concatenated dimension, because
+each base model is fit and regularized to its own modality and the combiner has few
+parameters to estimate. The honest takeaway is not that one strategy dominates but that
+the choice is an empirical, validated decision, and that fusing beats not fusing whenever
+the modalities carry complementary signal.
+
+## Shared Representations and Contrastive Models {#sec-mmf-clip}
+
+Early and late fusion as demonstrated above take the per-modality representations as
+*given*. The deeper question is where a shared, comparable representation across
+modalities comes from in the first place. The answer that reorganized the field is
+**contrastive image-text pretraining**, exemplified by CLIP (Contrastive
+Language-Image Pre-training), introduced by Radford and colleagues at OpenAI in 2021
+(ICML 2021; the foundational paper has no canonical Crossref DOI and is cited here by
+name and venue). The idea is conceptually simple and is best understood as a learned,
+*joint* embedding space.
+
+CLIP trains two encoders together: an image encoder and a text encoder. It is fed a very
+large corpus of image-caption pairs scraped from the web. For each batch, it computes an
+image embedding for every image and a text embedding for every caption, and it optimizes
+a contrastive objective: the embedding of an image should have high similarity (inner
+product) to the embedding of *its own* caption and low similarity to the embeddings of
+the *other* captions in the batch, and symmetrically for captions. After training on
+hundreds of millions of pairs, the two encoders share a single embedding space in which
+an image of a red sneaker and the text "a red sneaker" land near each other, while
+unrelated images and texts land far apart.
+
+Two properties make this transformative for marketing measurement. The first is **a
+common space**: because images and text are embedded into the *same* geometry, the
+cosine similarity between an image embedding and a text embedding is meaningful. One can
+score how well a product photo matches the phrase "premium and minimalist," or rank
+thousands of ad creatives by their alignment to a brand-attribute phrase, with no
+labeled training data for that attribute. The second is **zero-shot transfer**: novel
+categories can be scored by writing them as text prompts rather than by collecting
+labeled examples, which collapses the cost of building an image classifier for a new
+marketing construct from a labeling project to a sentence. Successor models in the same
+family (for example SigLIP, which replaces the contrastive softmax with a sigmoid loss)
+refine the training objective while preserving the shared-space property.
+
+For the analyst, the practical consequence is that the per-modality feature blocks of
+@sec-mmf-demo are increasingly drawn from a *single shared encoder family* rather than
+from separate, incommensurable models. When the text embedding and the image embedding
+already live in a common space, fusion becomes partly a matter of geometry rather than
+of ad hoc concatenation, and the comparability that contrastive pretraining buys is
+itself a form of joint fusion performed once, at scale, by the foundation model
+provider. In marketing, vision-language models of this lineage have been shown to
+classify marketing images effectively and to bridge the gap from image-only
+convolutional pipelines to general-purpose foundation models [@witte2026language].
+
+## Multimodal LLMs and the LLM-as-Instrument {#sec-mmf-mllm}
+
+The contrastive models of the previous section produce *embeddings*. The next
+development absorbs vision encoders into generative language models to produce
+**multimodal large language models** (MLLMs): systems that ingest interleaved text and
+images (and, increasingly, audio and video frames) and *emit text*, including
+structured outputs. Architecturally, an MLLM typically couples a vision encoder of the
+CLIP lineage to a transformer language model (the transformer architecture is due to
+Vaswani and colleagues, NeurIPS 2017, and like CLIP is cited by name and venue rather
+than by a canonical Crossref DOI), so that image patches are projected into the
+language model's token space and processed alongside words. The GPT-4o-class, Claude,
+and Gemini model families, together with open-weight vision-language models, are the
+current instances. For the marketing researcher, what matters is less the architecture
+than the new *interface* it offers: one can hand the model an image and a question
+about it, or a product listing and an instruction to extract attributes, and receive a
+structured answer.
+
+This reframes the foundation model as a **measurement instrument**. Rather than training
+a bespoke classifier for each marketing construct, the analyst prompts a general model
+to read an artifact and emit a measure: the sentiment of a review, the attributes
+visible in a product photo, the emotional arc of a video ad, the persuasion tactics in
+ad copy. The text chapter introduced the LLM-as-annotator pattern; the multimodal
+version extends it across modalities, and the integrative survey of machine learning and
+artificial intelligence in marketing situates this shift within the broader arc of
+connecting computational power to substantive marketing insight [@ma2020machine]. The
+appeal is obvious: speed, breadth, and zero marginal labeling cost. The cautions are
+equally real and are taken up in @sec-mmf-demand, because an LLM-derived measure is a
+generated regressor par excellence, produced by an opaque model whose errors may be
+systematic and outcome-correlated.
+
+A more radical proposal pushes the instrument metaphor further: the **LLM as simulated
+respondent**, or *silicon sampling*. Here the language model is prompted to role-play a
+consumer with specified demographics and dispositions, and its responses are treated as
+synthetic survey or experimental data, a "silicon sample" standing in for human
+participants. The attraction is the prospect of cheap, fast pilot studies, pretesting of
+stimuli, and exploration of segments that are expensive to recruit. The literature that
+examines this practice in consumer and marketing research is explicit that it is a
+frontier with serious hazards rather than a settled method, and it offers guidelines
+accordingly [@sarstedt2024silicon]. The central concerns are that silicon samples can
+homogenize away the heterogeneity that is the whole point of sampling, can reflect the
+biases and the training-data demographics of the underlying model rather than any real
+population, can be confidently wrong in ways that are hard to detect without the human
+data they are meant to replace, and can drift as the underlying model is updated, so
+that a "respondent" is not a stable object across time. The responsible posture treats
+silicon samples as a hypothesis-generating and stimulus-pretesting tool whose outputs
+require validation against human data before they bear any inferential weight, never as
+a drop-in substitute for primary research.
+
+## Demand and Response Estimation with Multimodal Data {#sec-mmf-demand}
+
+The destination of all this representation work, for the empirical marketing scientist,
+is usually a model of demand or response in which text and image features appear on the
+right-hand side. A flagship example fuses the visual frames, the audio, and the spoken
+and on-screen text of short-form influencer video advertisements to predict sales,
+demonstrating both that the fused representation carries real predictive signal and that
+the fusion of modalities outperforms any one of them [@yang2024engagement]. The pattern
+generalizes: image features predict product return rates, visual brand portrayal
+predicts brand perceptions, and review text predicts demand, each by inserting a learned
+representation into an otherwise standard predictive or causal model.
+
+Precisely because the representation is *learned*, the identification cautions that have
+recurred throughout this part apply with full force, and fusion compounds them. Three
+deserve restatement in the multimodal setting.
+
+The first is the **generated-regressor problem**. Every fused feature is the output of
+an upstream encoder estimated with error. Inserting it into a second-stage regression
+as if it were measured without error understates standard errors and, more seriously,
+can bias coefficients when the encoder's error is correlated with the outcome. With
+several modalities, there are several such channels, and they need not be independent;
+a shared foundation-model backbone can induce correlated errors *across* the text and
+image features that the analyst treats as separate covariates. The honest analysis
+acknowledges that the right-hand-side variables are estimates and propagates that
+uncertainty, whether by sample splitting, by bootstrapping the full pipeline including
+the encoding step, or by the two-stage corrections the methodology chapters develop.
+
+The second is **endogeneity of the artifact**. Multimodal artifacts are choices.
+A firm selects which photographs to show, an influencer designs a video, a consumer
+decides whether and what to post. The features extracted from these artifacts are
+therefore correlated with the unobserved strategies and types that also drive the
+outcome. A measured association between a visual feature and sales may reflect that
+better firms make better images *and* sell more, not that the image causes the sale.
+Fusion does not solve this and can obscure it by burying the endogenous artifact inside
+a high-dimensional embedding where the analyst loses sight of it. Credible causal claims
+still require the identification apparatus of the rest of the book: experiments,
+instruments, or design-based variation in the artifact.
+
+The third is **construct validity of the learned measure**. A CLIP similarity to
+"luxurious," or an MLLM's judgment that an ad is "authentic," is a model's operational
+proxy for a human construct, and the proxy must be validated against human judgment on a
+held-out sample before it is trusted, exactly as the sentiment-analysis benchmarking
+logic of the text chapter requires. A fused, foundation-model-derived feature is more
+opaque than a hand-built one, which raises rather than lowers the validation burden. The
+convenience of zero-shot measurement is real, but it does not exempt the measure from
+the requirement that it actually measure what it claims to.
+
+## Industry and Production Practice {#sec-mmf-production}
+
+Operationalizing multimodal fusion at scale is as much an engineering problem as a
+modeling one, and the production patterns have converged on a recognizable stack.
+
+At the center sits the **embedding pipeline**. Raw artifacts (images, text, audio,
+video frames) are passed through encoders, usually hosted **foundation-model APIs** or
+self-hosted open-weight models, to produce embeddings. Because encoding is the expensive
+step and embeddings are reused across many downstream tasks, embeddings are computed once
+and persisted rather than recomputed per model. This is the role of the **feature store**:
+a system that holds precomputed per-entity features, including embeddings, keyed by entity
+(customer, product, creative) and timestamp, and serves them consistently to both training
+and inference. The feature store solves two problems that otherwise sink multimodal
+projects. It enforces **train-serve consistency**, guaranteeing that the embedding a model
+sees at inference time was produced by the same encoder version as the one it was trained
+on, and it enables **point-in-time correctness**, returning the feature value as it stood
+at the moment of a historical event rather than its current value, which is essential to
+avoid leakage in any model trained on time-stamped marketing data.
+
+**Versioning** is the discipline that holds the stack together. Foundation models are
+updated, and an embedding produced by one model version is not interchangeable with one
+produced by another; cosine similarities and learned downstream weights are only valid
+within a fixed encoder version. Production systems therefore pin encoder versions, store
+the version alongside every embedding, and treat a model upgrade as a re-embedding and
+re-validation event, not a transparent swap. This is the engineering face of the silicon-
+sampling drift concern from @sec-mmf-mllm: a measure built on a foundation model inherits
+that model's mutability.
+
+A few further practices recur. Embeddings are often **dimension-reduced** (by PCA or a
+learned projection) before entering downstream models, to control the width of the fused
+input. **Vector databases** index embeddings for similarity search and retrieval, which
+is the substrate of retrieval-augmented pipelines. And **cost and latency** govern
+architecture choices in production in a way they never do in a paper: batch precomputation
+of embeddings, caching, and the choice between a hosted API and a self-hosted model are
+driven by throughput and unit economics as much as by accuracy. None of this changes the
+statistics, but all of it determines whether a multimodal model is something a firm can
+actually run.
+
+## The Representation Throughline {#sec-mmf-throughline}
+
+It is now possible to state plainly the idea that has run beneath every chapter of this
+part. **Every modality reduces to a learned representation, and once it is a vector, the
+book's downstream methods take over.** Text became embeddings; images became CNN or
+vision-transformer features; audio became prosodic and spectral features or wav2vec-style
+embeddings; video became fused frame, audio, and text features; behavior, geography,
+networks, and sensors each became a feature vector. The encoders differ, the modalities
+differ, but the output type is the same, and that common output type is the seam along
+which the unstructured-data part attaches to the rest of the book.
+
+This is why the part can exist as a coherent unit rather than a list of unrelated
+techniques. The regression, classification, choice, causal-inference, and Bayesian
+machinery developed elsewhere in the book does not need to know whether a covariate
+originated as a pixel, a phoneme, a click, or a word. It needs the covariate to be a
+number, or a vector of numbers, with a defensible claim to measuring something. Fusion is
+the operation that combines several such vectors; foundation models are the engines that
+increasingly produce them; and the generated-regressor caution is the price of admission
+that every one of them must pay. The representation is the universal interface, and the
+discipline of the part is to remember, at every step, that the interface is *learned* and
+therefore *uncertain*.
+
+Stated as a principle: unstructured data of any modality becomes a learned, lossy feature
+vector, and that vector is a generated regressor whose error may correlate with the
+outcome. Every modality chapter specialized this caution; this capstone generalizes it.
+The methods that consume the vector are powerful, but they inherit whatever the encoding
+got wrong, and no amount of downstream sophistication repairs a representation that does
+not measure what the analyst believes it measures.
+
+## Frontier and Expansion {#sec-mmf-frontier}
+
+Several directions are moving quickly enough to reshape the practice within the life of
+this edition.
+
+**Any-to-any and natively multimodal models.** The trajectory is toward single models
+trained from the outset on text, images, audio, and video jointly, rather than a language
+model with a vision encoder bolted on. As the modalities share more of the architecture
+and the pretraining, the line between "fusion strategy" and "model" dissolves: fusion
+becomes an internal property of a natively multimodal network rather than a choice the
+analyst makes downstream.
+
+**Agentic and tool-using measurement.** Foundation models that can call tools, retrieve
+documents, and execute multistep procedures turn measurement from a single prompt into a
+pipeline the model itself orchestrates. This raises the ceiling on what can be measured
+from raw artifacts and simultaneously lowers the transparency of how the measure was
+produced, sharpening the validation problem rather than relaxing it.
+
+**Generative multimodal artifacts.** The same models that measure creative can generate
+it. Synthetic ad images, video, and copy are now cheap to produce, which collapses the
+cost of creative experimentation and at the same time pollutes the observational record
+with machine-made artifacts whose provenance the analyst may not know. Modeling demand in
+a world where some of the creative was generated by the same model class used to measure
+it is an open and consequential problem.
+
+**Causal multimodal inference.** The hardest and most valuable frontier is integrating
+learned multimodal representations into credible causal designs: using fused features as
+controls without inducing collider bias, isolating the causal effect of a manipulable
+visual or textual attribute while holding the rest of a complex artifact fixed, and
+propagating encoding uncertainty through a causal estimate. The methods exist in pieces
+across the book; assembling them for high-dimensional, multimodal, foundation-model-
+derived features is where the next decade of empirical marketing methodology will largely
+be spent.
+
+The arc of this part runs from a single modality measured in isolation to many modalities
+fused through general-purpose foundation models. The constant across that arc is the
+representation: learned, lossy, powerful, and uncertain. Holding all four of those
+adjectives in mind at once is the whole discipline of doing marketing science with
+unstructured and multimodal data.

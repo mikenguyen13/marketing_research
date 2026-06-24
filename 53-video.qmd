@@ -1,0 +1,525 @@
+# Video {#sec-video}
+
+Video is the densest marketing artifact a consumer encounters and the hardest to
+measure. A single fifteen-second TikTok ad is, simultaneously, a stream of images
+(the visual frames), a stream of sound (speech, music, ambient audio), a stream of
+language (the spoken script, the on-screen captions, the post caption and hashtags),
+and a stream of *motion* (camera movement, cuts, the pace at which all of the above
+changes). Every modality treated separately in the preceding chapters reappears here
+at once, and a new dimension, time, organizes them. The marketing payoff of video is
+precisely this richness: pacing, the moment a brand first appears, the emotional arc
+from hook to call-to-action, and the synchrony of music with cuts are creative levers
+that no still image or transcript can capture. The measurement burden is the same
+richness seen from the other side: a thirty-frame-per-second clip is a high-dimensional
+object whose informative structure lives in the *relationships* across frames and
+across modalities, not in any frame alone.
+
+This chapter treats video as an intrinsically multimodal, temporal data type and builds
+the analyst's representation from the frame outward. It opens with the marketing
+applications that make video a first-class modality (television and streaming ads,
+short-form vertical video, livestream commerce, user-generated video). It then develops
+the **frame-based representation**, the honest foundation on which all video analysis
+rests, and demonstrates it with runnable code that samples a short synthetic clip,
+extracts per-frame visual features, and computes temporal-difference signals that flag
+shot changes. From there it layers the methods that make video more than a bag of
+frames: scene and shot segmentation, action and motion recognition, and the temporal
+architectures (3D convolutional networks, two-stream and SlowFast designs, video
+transformers) that model dynamics directly. It then turns to **multimodal fusion**, the
+joint modeling of frame, audio, and text streams that is the empirical heart of modern
+video-as-data marketing research, and to **engagement and creative analytics**, where
+extracted features predict watch time, completion, and conversion. It closes with the
+industrial reality of how platforms and brands analyze video at scale, and with the
+frontier of video-native foundation models. Throughout, the generated-regressor caution
+that unifies @sec-text-as-data and @sec-image-processing applies with compounded force:
+every video feature is a model output, and a video pipeline stacks several such models
+in series, so the correlated-error problem accumulates across the stack.
+
+## Why Video Is a Marketing Data Type {#video-applications}
+
+Video earns a dedicated treatment because the marketing economy now runs on it, and
+because the questions managers ask of video cannot be answered by analyzing its frames
+or its transcript in isolation.
+
+**Television and streaming advertising.** The oldest video-marketing question, what makes
+a commercial work, has been transformed by the migration of the thirty-second spot from
+broadcast to connected television and ad-supported streaming. The creative object is
+unchanged in form but newly measurable at scale: streaming platforms log exposure,
+completion, and downstream behavior at the household level, so the content of the ad
+(its scenes, its pacing, when the brand appears, the emotional trajectory) can be linked
+to response in a way that broadcast panels never permitted. The analyst's task is to turn
+the creative into features and relate those features to lift.
+
+**Short-form vertical video.** TikTok, Instagram Reels, and YouTube Shorts have made the
+nine-to-sixty-second vertical clip the dominant unit of attention for large consumer
+segments. Short-form video compresses the entire persuasive arc, hook, demonstration,
+and call-to-action, into seconds, which puts a premium on pacing and on the first frames
+(the "hook"). Influencer-produced short-form advertising is now a major channel, and the
+flagship marketing study of it, @yang2024engagement on TikTok, shows that fusing the
+video, audio, and text streams of influencer ads predicts product sales, and that
+*engagement* signals mediate the path from creative to revenue. Short-form video is also
+where algorithmic distribution is most aggressive: a clip's reach is determined by a
+recommender that itself consumes the video's features, so creative analysis and
+distribution analysis are entangled.
+
+**Livestream and live commerce.** Live shopping, a host demonstrating and selling products
+in real time to a chat-interacting audience, fuses video, continuous speech, and a
+real-time text stream (the chat) with an immediate transactional outcome (purchases during
+the stream). It is the most explicitly multimodal commercial video format, and it has begun
+to attract rigorous measurement. Wen and colleagues analyze livestreaming e-commerce with
+multimodal machine learning, decomposing a salesperson's on-screen effectiveness into
+visual, vocal, and verbal components and using explainable-AI methods to attribute sales to
+them.<!-- CITE-NEEDED: Wen, Xu, Huang & Liao, "Salesperson Attractiveness Beyond Looks in Livestreaming E-commerce: Mixed Method of Multimodal Machine Learning and Explainable AI," Journal of Interactive Marketing (2026), DOI 10.1177/10949968261464927 (Crossref-verified) --> Live commerce is distinctive because the outcome is contemporaneous with the content,
+which sharpens both the opportunity (within-stream dynamics map directly onto within-stream
+sales) and the identification challenge (the host adapts in real time to the chat).
+
+**User-generated video: reviews, unboxings, hauls.** Consumers now narrate their product
+experiences on camera. A video review carries information that a text review cannot: the
+product shown in use, the reviewer's facial affect, vocal tone, the demonstration of fit or
+scale. Unboxing and haul videos are a genre unto themselves with measurable engagement
+consequences. For the firm, user-generated video is both a listening channel (what do
+consumers actually do with the product, and how do they feel) and a demand signal (review
+video volume and sentiment predict sales), extending the online word-of-mouth tradition of
+review-to-sales research from text to the screen.<!-- CITE-NEEDED: Chevalier & Mayzlin, "The Effect of Word of Mouth on Sales: Online Book Reviews," Journal of Marketing Research 43(3), 2006, 345-354, DOI 10.1509/jmkr.43.3.345 (Crossref-verified) -->
+
+The common thread is that the marketing question is almost always about *content and its
+dynamics*: which creative choices, appearing *when* in the clip, drive attention, engagement,
+and conversion. Answering it requires turning the video into features that respect both its
+multimodality and its temporal structure. The rest of the chapter builds that representation.
+
+## The Frame-Based Representation {#video-frames}
+
+A video is, at bottom, an ordered sequence of still images sampled at a frame rate, with
+a synchronized audio track. The honest foundation of all video analysis is therefore the
+*frame*: whatever sophistication follows (motion models, multimodal transformers) is built
+on top of a decision about which frames to look at and what to extract from each. This
+section develops that foundation and demonstrates it with code that genuinely runs.
+
+### Frame sampling
+
+Processing every frame of a clip is usually wasteful and sometimes infeasible: a one-minute
+clip at thirty frames per second is eighteen hundred images, most of them near-duplicates of
+their neighbors. The practical pipeline samples frames, and the sampling policy is a real
+modeling choice with consequences:
+
+- **Uniform sampling** takes one frame every $k$ frames (or every $t$ seconds). It is simple,
+  reproducible, and unbiased with respect to content, but it can miss fast events that fall
+  between samples and oversample static stretches.
+- **Keyframe sampling** takes one representative frame per shot, detected by the shot-segmentation
+  methods below. It aligns the sample with the video's own editorial structure and is efficient,
+  but it presupposes a shot detector and discards within-shot motion.
+- **Content-adaptive sampling** allocates more frames where the visual signal changes fastest,
+  trading reproducibility for information density.
+
+In tools, frame extraction is typically delegated to `ffmpeg` or `OpenCV`, which decode the
+container and emit images at the chosen cadence. For the conceptual and pedagogical purposes of
+this chapter, we work with the maintained `magick` R package, which wraps ImageMagick and gives
+us honest, runnable image manipulation. We will not pretend to run a deep video model locally;
+instead we demonstrate the frame-level substrate, simulating a short clip, extracting interpretable
+per-frame features, and computing the temporal signals that drive shot detection, all of which the
+later sections build upon.
+
+### Per-frame features
+
+Once frames are in hand, each is an image and the entire apparatus of @sec-image-processing applies:
+interpretable hand-engineered features (color, brightness, saturation, edge density / complexity)
+when the construct is simple and interpretability matters, and learned CNN or vision-transformer
+embeddings when meaning is required. The video-specific move is to treat each per-frame feature as a
+*time series*: a clip becomes a matrix whose rows are frames and whose columns are features, and the
+temporal structure of that matrix (how features rise, fall, and jump) carries the pacing and
+editing information that distinguishes video from a photo album.
+
+### A runnable frame-level demonstration
+
+The code below is genuinely executed when the book is rendered. It uses `magick` to *synthesize* a
+short sequence of frames, mimicking a clip with two scene changes (a calm opening, a vivid product
+shot, a busy closing), then extracts per-frame brightness, colorfulness, and edge-density features,
+and finally computes a frame-to-frame difference signal whose spikes localize the cuts. This is the
+foundation, made concrete, on which the conceptual deep pipelines later in the chapter rest.
+
+```{r video-magick-frames, message=FALSE, warning=FALSE}
+# Frame-level foundation with the maintained `magick` package.
+# We simulate a short clip as a sequence of synthetic frames, extract
+# per-frame visual features, and derive a temporal shot-change signal.
+# This is a genuinely runnable demonstration of the substrate that
+# real (deep) video pipelines sit on top of; it is NOT a deep model.
+
+library(magick)
+set.seed(53)
+
+# A helper that draws one synthetic frame as a solid base color with
+# additive noise (a stand-in for "scene content"). Returns a magick image.
+make_frame <- function(r, g, b, noise = 0.04, size = 96) {
+  base <- array(0, dim = c(size, size, 3))
+  base[, , 1] <- r; base[, , 2] <- g; base[, , 3] <- b
+  base <- base + array(rnorm(size * size * 3, 0, noise), dim = dim(base))
+  base <- pmin(pmax(base, 0), 1)
+  image_read(base)              # magick reads an [H, W, C] array in [0,1]
+}
+
+# Build a 9-frame "clip" with three scenes of three frames each:
+#   frames 1-3  : calm gray opening (low saturation, low complexity)
+#   frames 4-6  : vivid warm product shot (high saturation/colorfulness)
+#   frames 7-9  : busy high-noise closing (high edge density)
+scene_specs <- list(
+  c(0.55, 0.55, 0.55, 0.02),   # calm
+  c(0.55, 0.55, 0.55, 0.02),
+  c(0.55, 0.55, 0.55, 0.02),
+  c(0.85, 0.35, 0.15, 0.04),   # warm
+  c(0.85, 0.35, 0.15, 0.04),
+  c(0.85, 0.35, 0.15, 0.04),
+  c(0.50, 0.50, 0.50, 0.22),   # busy
+  c(0.50, 0.50, 0.50, 0.22),
+  c(0.50, 0.50, 0.50, 0.22)
+)
+frames <- lapply(scene_specs, function(s) make_frame(s[1], s[2], s[3], s[4]))
+clip   <- image_join(frames)   # an image sequence == our simulated video
+length(clip)                   # number of frames in the clip
+```
+
+With the clip in hand, we extract interpretable per-frame features. We pull each frame back into a
+numeric array via `magick`, then compute brightness, a colorfulness proxy, and an edge-density
+complexity proxy, exactly the constructs introduced for still images, now indexed by frame.
+
+```{r video-perframe-features, message=FALSE, warning=FALSE}
+# Convert a single magick frame to an [H, W, 3] numeric array in [0,1].
+frame_to_array <- function(im) {
+  as.numeric(image_data(im, channels = "rgb")) -> v   # raw bytes 0-255
+  arr <- array(v, dim = c(3, image_info(im)$width, image_info(im)$height))
+  arr <- aperm(arr, c(3, 2, 1))                        # -> [H, W, C]
+  arr / 255
+}
+
+brightness <- function(im) {
+  a <- frame_to_array(im)
+  mean(0.299 * a[, , 1] + 0.587 * a[, , 2] + 0.114 * a[, , 3])
+}
+colorfulness <- function(im) {
+  a <- frame_to_array(im)
+  rg <- a[, , 1] - a[, , 2]
+  yb <- 0.5 * (a[, , 1] + a[, , 2]) - a[, , 3]
+  sqrt(sd(rg)^2 + sd(yb)^2) + 0.3 * sqrt(mean(rg)^2 + mean(yb)^2)
+}
+edge_density <- function(im) {
+  a   <- frame_to_array(im)
+  lum <- 0.299 * a[, , 1] + 0.587 * a[, , 2] + 0.114 * a[, , 3]
+  gx  <- abs(lum[-1, ] - lum[-nrow(lum), ])
+  gy  <- abs(lum[, -1] - lum[, -ncol(lum)])
+  mean(gx) + mean(gy)
+}
+
+feat <- data.frame(
+  frame        = seq_len(length(clip)),
+  brightness   = vapply(seq_len(length(clip)),
+                        function(i) brightness(clip[i]), numeric(1)),
+  colorfulness = vapply(seq_len(length(clip)),
+                        function(i) colorfulness(clip[i]), numeric(1)),
+  edge_density = vapply(seq_len(length(clip)),
+                        function(i) edge_density(clip[i]), numeric(1))
+)
+feat[, -1] <- round(feat[, -1], 3)
+knitr::kable(feat,
+  caption = "Per-frame interpretable features for the simulated nine-frame clip.")
+```
+
+The feature matrix already exposes the editorial structure: colorfulness jumps when the warm product
+scene begins (frame 4) and edge density jumps when the busy closing begins (frame 7). To localize
+those transitions automatically, we compute a *temporal-difference* signal, the frame-to-frame change
+in the feature vector, which is the elementary form of the shot-change detector developed in the next
+section.
+
+```{r video-shot-change, message=FALSE, warning=FALSE}
+# Frame-to-frame difference in the standardized feature vector.
+# A large difference between frame t and t-1 signals a shot change.
+F  <- scale(as.matrix(feat[, c("brightness", "colorfulness", "edge_density")]))
+d  <- c(NA, sqrt(rowSums((F[-1, ] - F[-nrow(F), ])^2)))   # Euclidean step
+diff_signal <- data.frame(
+  transition  = paste0(seq_len(length(clip) - 1), "->", 2:length(clip)),
+  frame_delta = round(d[-1], 3)
+)
+# Flag transitions whose change exceeds a simple threshold (mean + 1 SD).
+thr <- mean(d[-1]) + sd(d[-1])
+diff_signal$shot_change <- diff_signal$frame_delta > thr
+knitr::kable(diff_signal,
+  caption = "Temporal-difference signal: large frame-to-frame changes flag the two scene cuts (3->4 and 6->7).")
+```
+
+The two flagged transitions, 3 to 4 and 6 to 7, are exactly the scene boundaries we built into the
+simulated clip. This is the entire logic of classical shot detection in miniature: represent each
+frame as a feature vector, difference consecutive frames, and threshold the difference. Everything
+that follows, learned per-frame embeddings instead of hand-crafted features, learned temporal models
+instead of a fixed threshold, is a sophistication of these three steps, not a departure from them. The
+honesty of this demonstration matters: the deep pipelines below are the production reality, but they
+are not runnable on a laptop without GPUs and large pretrained weights, so we present them as clearly
+labeled conceptual code rather than as something this chapter pretends to execute.
+
+## Temporal and Scene Methods {#video-temporal}
+
+The frame-level demonstration treats the clip as a sequence of independent images differenced over
+time. Real video understanding models the temporal dimension directly. This section develops the
+methods in rough order of how much temporal structure they exploit.
+
+### Shot and scene segmentation
+
+A **shot** is an unbroken run of frames from a single camera take; a **scene** is a semantically
+coherent group of shots. Segmenting a video into shots is the first structural operation in most
+pipelines, because shots are the natural unit for keyframe sampling and for measuring *pacing*
+(shots per minute, mean shot duration), a creative variable with direct marketing relevance: fast
+cutting is a hallmark of high-energy short-form advertising. Classical shot-boundary detection is
+exactly the thresholded frame-difference of the demonstration above, typically on color histograms
+or edge maps, with refinements to distinguish *hard cuts* (a single large jump) from *gradual
+transitions* (fades and dissolves, which spread the change over several frames and require detecting
+a sustained ramp rather than a spike). Modern detectors learn the boundary from data, but the
+construct is unchanged.
+
+### Action and motion recognition
+
+Beyond *where* the cuts are lies *what is happening* between them. Action recognition assigns labels
+to motion (a person pouring, applying, unboxing, dancing), and it is the canonical task that forced
+the field to model time rather than frames. The reference benchmark is **Kinetics**, introduced
+alongside the inflated-3D-convolution (I3D) model by Carreira and Zisserman, which established that
+large-scale video pretraining transfers to downstream action tasks much as ImageNet pretraining
+transfers for images.<!-- CITE-NEEDED: Carreira & Zisserman, "Quo Vadis, Action Recognition? A New Model and the Kinetics Dataset," CVPR 2017, DOI 10.1109/cvpr.2017.502 (Crossref-verified) --> For marketing, action recognition is what lets a pipeline detect *product use*
+(the demonstration moment in a review or a livestream) as opposed to mere product *presence*, a
+distinction that still-frame analysis cannot make.
+
+### Temporal architectures
+
+Three families of architecture model video dynamics, and they trade off temporal fidelity against
+cost:
+
+- **3D convolutional networks** extend the 2D convolution of an image CNN to a third, temporal axis,
+  so a single learned filter spans several frames and captures short-range motion. I3D
+  is the canonical instance, inflating a pretrained 2D image network into 3D.<!-- CITE-NEEDED: Carreira & Zisserman, "Quo Vadis, Action Recognition?" CVPR 2017, DOI 10.1109/cvpr.2017.502 (Crossref-verified) -->
+- **Two-stream and multi-rate designs** process appearance and motion on separate pathways. The
+  **SlowFast** network of Feichtenhofer and colleagues runs a slow, high-resolution pathway to capture
+  semantics (what is in the scene) alongside a fast, low-resolution pathway to capture rapid motion
+  (how it moves), then fuses them, an architecture that maps cleanly onto the marketing intuition that
+  *content* and *pacing* are distinct creative dimensions.<!-- CITE-NEEDED: Feichtenhofer, Fan, Malik & He, "SlowFast Networks for Video Recognition," ICCV 2019, DOI 10.1109/iccv.2019.00630 (Crossref-verified) -->
+- **Video transformers** apply self-attention across both space and time, treating a clip as a sequence
+  of spatiotemporal patches. They are the video analogue of the vision transformer surveyed by
+  Khan and colleagues, and they currently dominate large-scale video benchmarks at the cost of large
+  data and compute requirements.<!-- CITE-NEEDED: Khan, Naseer, Hayat, Zamir, Khan & Shah, "Transformers in Vision: A Survey," ACM Computing Surveys 54(10s), 2022, DOI 10.1145/3505244 (Crossref-verified) -->
+
+The following conceptual block sketches a temporal pipeline. It is deliberately written as *labeled
+pseudocode in R syntax*, not as runnable analysis: a faithful version requires `ffmpeg`, a deep-learning
+backend, and pretrained weights that this chapter does not assume are installed. The point is to show
+the shape of the production pipeline honestly, not to hand-wave it.
+
+```{r video-temporal-conceptual, eval=FALSE}
+# CONCEPTUAL ONLY (not evaluated): a temporal video pipeline.
+# Requires ffmpeg/OpenCV for decoding and a deep-learning backend
+# (e.g. torch/keras) with pretrained video weights. Shown for shape.
+
+# 1. Decode and sample frames at a fixed cadence (e.g. 8 fps).
+frames <- decode_video("ad_clip.mp4", fps = 8)        # ~ tensor [T, H, W, 3]
+
+# 2. Per-frame appearance embeddings from an image backbone (ResNet/ViT).
+frame_emb <- image_backbone(frames)                   # [T, d_frame]
+
+# 3. Optical flow between consecutive frames -> a motion stream.
+flow      <- optical_flow(frames)                     # [T-1, H, W, 2]
+motion_emb <- motion_backbone(flow)                   # [T-1, d_motion]
+
+# 4. A temporal model over the per-frame embeddings:
+#    a 3D-CNN / SlowFast / video-transformer that returns a clip embedding.
+clip_emb  <- temporal_model(frame_emb, motion_emb)    # [d_clip]
+
+# 5. Shot boundaries from a learned (or thresholded) frame-difference signal,
+#    yielding pacing features (shots per minute, mean shot length).
+shots     <- detect_shots(frame_emb)                  # list of [start, end]
+pacing    <- shot_pacing_features(shots)              # interpretable controls
+```
+
+The deliberate split between the runnable `magick` foundation and this conceptual temporal block is the
+methodological honesty the chapter insists on: the analyst should understand the frame-level signal
+concretely and treat the deep temporal model as a powerful but heavyweight black box whose outputs are,
+once again, generated features.
+
+## Multimodal Video Models {#video-multimodal}
+
+The defining empirical fact about marketing video is that meaning is distributed across modalities and
+their *synchrony*. A product named in the script (text), shown on screen (frame), and underscored by a
+music swell (audio) at the same instant is more persuasive than any one cue alone, and the persuasion
+lives in the alignment. Single-modality analysis systematically misses this, which is why the leading
+video-as-data marketing studies fuse modalities.
+
+### The three streams
+
+A marketing video decomposes into three analyzable streams, each handled by the apparatus of its own
+chapter:
+
+- **Visual (frames).** Sampled frames feed image models (@sec-image-processing) to yield per-frame and
+  clip-level visual embeddings plus interpretable creative features (color, faces, brand/logo presence,
+  shot pacing).
+- **Audio.** The soundtrack splits, as in @sec-audio-voice, into *what is said* (automatic speech recognition
+  producing a transcript) and *how it is said plus what is heard* (prosody, music tempo and valence,
+  ambient sound), captured by acoustic embeddings.
+- **Text.** Three textual sources arise: the ASR transcript of the speech, the on-screen text and
+  captions (read by optical character recognition), and the platform metadata (post caption, hashtags,
+  title), all fed to the text apparatus of @sec-text-as-data.
+
+### Fusion strategies
+
+Combining the streams is the modeling crux, and the choice of *when* to combine carries assumptions:
+
+- **Late (decision-level) fusion** trains a separate model per modality and combines their predictions
+  (averaging, stacking). It is robust and modular, tolerates missing modalities, and is the safe default,
+  but it cannot represent cross-modal *interactions* (the music-swell-at-the-product-reveal effect).
+- **Early (feature-level) fusion** concatenates per-modality embeddings into one vector before modeling.
+  It can capture interactions but is sensitive to scaling and to one modality's dimensionality swamping
+  another.
+- **Hybrid and cross-attention fusion** lets modalities attend to one another, learning, for instance,
+  which spoken words align with which on-screen moments. This is the architecture of modern multimodal
+  transformers and the natural home for modeling *synchrony*, at a substantial data and compute cost.
+
+The flagship demonstration in marketing is @yang2024engagement, who extract video, audio, and text
+features from short-form influencer ads on TikTok and fuse them to predict product sales, finding that
+the fused representation, mediated through engagement, carries genuine predictive content for revenue.
+Wen and colleagues extend the logic to livestream commerce, decomposing a host's on-screen
+effectiveness into visual, vocal, and verbal components with multimodal machine learning and attributing
+sales to each via explainable-AI methods.<!-- CITE-NEEDED: Wen, Xu, Huang & Liao, Journal of Interactive Marketing (2026), DOI 10.1177/10949968261464927 (Crossref-verified) --> Both studies exemplify the central design principle: model the
+streams jointly, and let the data reveal which modality, and which cross-modal alignment, drives the
+outcome.
+
+The conceptual block below sketches a fusion pipeline, again as labeled pseudocode rather than runnable
+code, to make the architecture explicit without pretending to execute three deep backbones locally.
+
+```{r video-fusion-conceptual, eval=FALSE}
+# CONCEPTUAL ONLY (not evaluated): multimodal fusion for a marketing video.
+
+frames <- decode_video("ad.mp4", fps = 8)
+audio  <- extract_audio("ad.mp4")
+
+# --- Per-modality embeddings ---
+visual_emb <- video_backbone(frames)                 # frames -> [d_v]
+transcript <- asr(audio)                              # speech -> text
+prosody    <- acoustic_features(audio)               # pitch/energy/tempo -> [d_a]
+captions   <- ocr(frames)                             # on-screen text
+meta_text  <- c(transcript, captions, "post caption + hashtags")
+text_emb   <- text_encoder(meta_text)                # text -> [d_t]
+
+# --- Fusion (choose one) ---
+late  <- average(predict(m_v, visual_emb),
+                 predict(m_a, prosody),
+                 predict(m_t, text_emb))              # decision-level
+early <- model(c(visual_emb, prosody, text_emb))     # feature-level
+cross <- cross_attention_transformer(                # synchrony-aware
+           visual_emb, prosody, text_emb)
+
+# --- Outcome model ---
+# engagement / sales ~ fused features (+ interpretable creative controls),
+# with the generated-regressor caveat applied to EVERY feature.
+```
+
+The econometric warning that runs through the unstructured-data part reaches its peak here. A video
+pipeline stacks a frame sampler, an image backbone, an ASR system, an OCR system, an acoustic model, a
+text encoder, and a fusion network, each a fitted model with its own error. When the fused features enter
+a downstream regression of sales or engagement on creative content, those features are *generated
+regressors* and their errors may correlate with the outcome (a model that recognizes "product reveal"
+better in successful ads will manufacture a spurious reveal-to-sales association). The remedies are the
+familiar ones, validation against human-coded ground truth, holding out an independent sample for the
+second stage, and, where possible, experimental variation in the creative, and they are *more* essential
+for video because the error sources are more numerous.
+
+## Engagement and Creative Analytics {#video-engagement}
+
+The applied destination of video-as-data is usually a model relating extracted creative features to a
+behavioral outcome: watch time, completion rate, like/share/comment engagement, click-through, or
+conversion. This section organizes the work into the features that go in and the outcomes that come out.
+
+### Creative-feature extraction
+
+Marketing analysts extract a recurring vocabulary of creative features, some interpretable, some learned:
+
+- **Pacing and structure.** Shots per minute, mean and variance of shot duration, time-to-first-cut, and
+  the position of the "hook" (how quickly the opening establishes interest). These come directly from the
+  shot-segmentation signal demonstrated above.
+- **Visual content.** Color palette and brightness trajectory, presence and screen-time of faces, presence
+  and timing of the brand or logo (brand *prominence* and time-to-first-brand-appearance), scene variety.
+- **Audio content.** Music presence, tempo, and valence; speech rate and vocal energy; loudness dynamics
+  and their synchrony with cuts.
+- **Linguistic content.** Topics and sentiment of the transcript and captions, calls-to-action and their
+  timing, and the alignment of spoken claims with on-screen demonstration.
+- **Temporal arcs.** Rather than collapsing a feature to its clip average, the *trajectory* of arousal,
+  emotion, or brand presence over the clip is itself a feature: a rising emotional arc, an early brand
+  reveal, a late call-to-action.
+
+### Engagement prediction and its pitfalls
+
+These features feed predictive models of engagement and conversion. The empirical lessons from the
+marketing literature are consistent: pacing and the opening seconds matter disproportionately for
+short-form retention; brand prominence trades off against likeability (too-early or too-heavy branding can
+depress engagement even as it aids recall); and *fused* multimodal features outperform any single stream,
+as in @yang2024engagement. Three pitfalls deserve emphasis:
+
+1. **Engagement is not sales.** Platform engagement (views, likes) is an intermediate outcome that the
+   distribution algorithm partly manufactures; @yang2024engagement treat engagement as a *mediator* on the
+   path to sales rather than as the endpoint, which is the correct posture.
+2. **Selection on the platform.** Observed videos are those a recommender chose to show, so the sample of
+   "video and its engagement" is endogenously selected by an algorithm that consumed the very features
+   under study, biasing naive content-to-engagement estimates.
+3. **Generated-feature error.** As stressed above, every creative feature is a model output; validation and
+   second-stage discipline are prerequisites, not niceties.
+
+## Industry and Production Practice {#video-industry}
+
+How video is analyzed in production differs from the research idealization in ways the analyst should
+understand, because the data a firm can obtain is shaped by the platforms that host the video.
+
+**Platform-side analysis at scale.** The large video platforms run video understanding as core
+infrastructure, not as analysis after the fact. Uploaded video is automatically transcribed (ASR),
+captioned, scanned for objects, scenes, and policy violations, and embedded into the same representation
+space the recommender uses to match clips to viewers. The recommender is itself a video-multimodal model:
+it consumes frame, audio, and text features along with behavioral signals to predict watch time and
+engagement, which means the platform's *distribution* decision and the *creative features* of the video are
+produced by one coupled system. For the outside analyst this is the central structural fact: observed
+reach and engagement are jointly determined with content by a model the analyst cannot see.
+
+**Brand- and agency-side analysis.** Advertisers and their agencies analyze video creative through three
+broad routes. The first is *managed cloud services*, Google Cloud Video Intelligence, Amazon Rekognition
+Video, Microsoft Azure Video Indexer, that return shot boundaries, labels, on-screen text, transcripts, and
+face/celebrity detection as an API call, giving non-specialist teams a feature pipeline without training
+models. The second is *creative analytics vendors* that specialize in linking extracted creative features to
+ad performance across large libraries of past campaigns, effectively industrializing the
+features-to-engagement regression of the previous section. The third is *in-house pipelines* at the largest
+advertisers, built on the open-source stack (`ffmpeg`/`OpenCV` for decoding, pretrained image and video
+backbones, ASR such as Whisper) for proprietary control and integration with first-party outcome data.
+
+**Production constraints.** Three realities discipline the work. Video is *expensive* to process (decoding
+and deep inference at frame rate over large libraries is compute-intensive), which is why frame *sampling*
+and shot-based keyframing are not academic niceties but production necessities. Outcome data is *fragmented*
+across walled platforms, so cross-platform creative-to-sales linkage is a data-integration problem before it
+is a modeling problem. And the legal and ethical surface is large: scraping platform video runs into terms
+of service, and the modality carries faces, voices, and other biometric-adjacent signals whose extraction
+raises privacy obligations that the analyst must respect.
+
+## Frontier and Expansion {#video-frontier}
+
+Three developments are reshaping video-as-data marketing and define the near-term agenda.
+
+**Video-native foundation models.** The trajectory that ran from per-frame CNNs to video transformers<!-- CITE-NEEDED: Khan et al., "Transformers in Vision: A Survey," ACM Computing Surveys 54(10s), 2022, DOI 10.1145/3505244 (Crossref-verified) -->
+is converging on large *multimodal* models that ingest video, audio, and text jointly
+and emit natural-language descriptions, structured tags, or answers to questions about a clip. For the
+analyst this collapses much of the bespoke pipeline into a prompt: rather than training a brand detector, one
+can ask a video-language model whether and when a brand appears, recovering interpretable creative features
+through instruction rather than supervised training, and extending to video the vision-language approach that
+Witte and colleagues demonstrate for marketing images.<!-- CITE-NEEDED: Witte, Heitmann & Hartmann, "Language of Images: Classifying Marketing Images with Transformers and Vision Language Models," International Journal of Research in Marketing (forthcoming 2026), DOI 10.1016/j.ijresmar.2026.01.001 (verify volume/issue/pages at wiring) --> The same caution applies in amplified form: a
+foundation model's extracted feature is still a generated regressor, now produced by an opaque model whose
+error structure is unknown and whose outputs require validation against human coding before they enter an
+inference.
+
+**Generative video and the synthetic-creative frontier.** Text-to-video generation makes the creative itself
+a model output, enabling at-scale creative experimentation (generate many variants, measure response) but
+also raising disclosure, authenticity, and brand-safety questions, and complicating the very notion of a
+"natural" creative sample. The measurement opportunity is large: synthetic variation can supply the
+experimental creative manipulation that observational video analysis lacks.
+
+**Live, real-time, and causal video analytics.** Livestream commerce pushes analysis<!-- CITE-NEEDED: Wen et al., Journal of Interactive Marketing (2026), DOI 10.1177/10949968261464927 (Crossref-verified) -->
+toward *real-time* multimodal modeling, where features are extracted and related to contemporaneous purchases
+as the stream unfolds, and where the host adapts to the audience, making the identification problem genuinely
+dynamic. The broader frontier for the field, as for all of unstructured-data marketing surveyed by
+Ma and Sun, is to move from *predicting* engagement from creative features to *causally* estimating which<!-- CITE-NEEDED: Ma & Sun, "Machine Learning and AI in Marketing: Connecting Computing Power to Human Insights," International Journal of Research in Marketing 37(3), 2020, 481-504, DOI 10.1016/j.ijresmar.2020.04.005 (Crossref-verified) -->
+creative choices drive outcomes, which will require pairing the rich feature pipelines of this chapter with
+the experimental and quasi-experimental machinery of the methodology part. Video is where the multimodal,
+temporal, and causal challenges of marketing measurement meet most acutely, and where the payoff to getting
+the measurement right is largest.
