@@ -52,10 +52,21 @@ customer's voice tightened with frustration, whether the agent's pace and warmth
 tracked or diverged from the customer's, where in the call the emotional tenor
 turned. Vocal-tone analytics on this channel promises to predict churn,
 satisfaction, conversion, and agent effectiveness from signals a transcript cannot
-see. It is worth stating plainly, as the research underlying this chapter flags,
-that a clean top-tier marketing study analyzing raw call-center acoustic features
-at scale with a verifiable identification strategy is still scarce; the channel is
-a first-class opportunity precisely because it is comparatively young.
+see. This is the channel the unstructured-data program was built to exploit
+[@balducci2018unstructured], and it is the explicit subject of @balducci2025audio,
+whose guide to understanding customer–firm conversations walks through the full
+path from raw call audio to validated measures—segmentation, transcription, speaker
+diarization, acoustic-prosodic feature extraction, and the joint modeling of the
+lexical and paralinguistic channels—and is the natural methodological anchor for
+this chapter. Even so, a clean top-tier marketing study analyzing raw call-center
+acoustic features at scale with a verifiable identification strategy remains
+comparatively rare, which is precisely why the channel is a first-class
+opportunity. That voice carries economically consequential signal is already
+established outside marketing: @mayew2012power show that vocal markers of
+managerial affect on earnings calls predict future firm performance, and
+@hobson2012analyzing detect financial misreporting from acoustic cues of cognitive
+dissonance in executive speech—evidence that the paralinguistic channel encodes
+information markets pay to recover.
 
 A second stream is *voice-assistant and voice-commerce* interaction. Smart
 speakers and phone assistants (Alexa, Siri, Google Assistant) turn shopping,
@@ -70,7 +81,19 @@ Flavián, Akdim, and Casaló (2023, *Psychology & Marketing*,
 doi:10.1002/mar.21765) show experimentally that voice-based recommendations from a
 virtual assistant can move consumer behavior more than text-based online reviews,
 with credibility and usefulness mediating the effect. Voice commerce makes the
-acoustic properties of a machine's voice a marketing-mix variable.
+acoustic properties of a machine's voice a marketing-mix variable. Adoption of
+in-home assistants is governed by perceived usefulness, enjoyment, and social
+presence [@mclean2019heyalexa], and sustained use feeds back into brand engagement
+[@mclean2021alexa]; the services-marketing agenda these devices open—from the
+convenience calculus of voice shopping to the design of an assistant's persona—is
+mapped by @klaus2020aivoicebots and @klaus2022aidm. The frontier is affective and
+strategic: @mari2024empathic find that prosodically empathic assistants lift
+consumer responses in voice commerce, while @mari2025aiassisted document an
+efficiency–autonomy trade-off when consumers delegate shopping to a voice agent.
+And because the recommendation now issues from a machine, the "word-of-machine"
+effect applies directly: consumers weight human versus algorithmic recommenders
+differently for utilitarian versus hedonic goals [@longoni2022wordofmachine], a
+contingency every voice-commerce deployment inherits.
 
 A third stream is *advertising and branded audio*: radio and television ad audio,
 podcast host-read and programmatic insertions, and the music and sound design of
@@ -160,7 +183,52 @@ These features are interpretable, cheap, and defensible, the audio analogue of t
 hand-engineered color and composition features of @sec-image-processing. They were
 designed by acoustic phoneticians with explicit perceptual motivation, and they
 remain the right tool when the construct is well understood, the sample is modest,
-or interpretability is paramount.
+or interpretability is paramount. @tbl-audio-features maps each family of acoustic
+features to the marketing construct it most directly measures and to a representative
+study, so the demonstration that follows can be read as instrumenting constructs,
+not merely transforming a signal.
+
+```{r}
+#| label: tbl-audio-features
+#| tbl-cap: "Classic acoustic feature families, the perceptual and marketing constructs they carry, and representative work. The features are the audio analogue of hand-engineered visual features."
+#| message: false
+#| warning: false
+library(knitr)
+af <- data.frame(
+  `Feature family` = c("Fundamental frequency (f0)", "MFCCs (spectral envelope)",
+                       "Spectral shape (centroid, rolloff)", "Energy & rhythm (loudness, rate, pauses)",
+                       "Voice quality (jitter, shimmer, HNR)"),
+  `Perceptual correlate` = c("Pitch, intonation", "Timbre, vowel/voice identity",
+                             "Brightness", "Arousal, emphasis, pacing", "Roughness, breathiness, strain"),
+  `Marketing construct` = c("Emotion, persuasion, gender", "Speaker/emotion ID",
+                            "Persuasiveness, affect", "Engagement, conversational dynamics",
+                            "Stress, sincerity, emotion"),
+  check.names = FALSE
+)
+kable(af)
+```
+
+The move from these hand-engineered descriptors to a reproducible measurement
+*workflow* is the subject of a small methods literature aimed squarely at business
+and marketing researchers. @hildebrand2020voice lay the conceptual foundations of
+voice analytics for business research—what the acoustic channel can and cannot
+measure, which features to extract, and how to validate them—and @busquet2024voice
+stress-test that pipeline "in the wild," showing that the validity and predictive
+accuracy of common acoustic features depend materially on the recording device, a
+direct caution for any study that mixes telephone, smart-speaker, and studio audio.
+Crucially, this line ships usable tooling rather than prescriptions alone.
+
+::: {.callout-tip}
+## Replication resources: voice analytics
+
+The acoustic-feature pipeline of @hildebrand2020voice and @busquet2024voice is
+released as the open R package **voiceR** [@busquet2023voicer], available on CRAN,
+which automates batch extraction, normalization, and summary of the features in
+@tbl-audio-features and is a turnkey way to reproduce the kind of analysis the demonstration
+below builds by hand. For raw signal processing the maintained R packages `tuneR`
+and `seewave` (used below) and the Python `librosa`, `pyAudioAnalysis`, and the
+standardized `openSMILE` feature sets remain the reference toolchain.
+:::
 
 ### A Runnable Demonstration: From Waveform to Features {#sec-audio-demo}
 
@@ -335,7 +403,13 @@ representations that have made review text and social-media text so productive. 
 corpus of sales-call transcripts can be mined for the objections that precede a
 lost deal, the language that precedes a renewal, or the product features customers
 actually ask about, exactly as a corpus of reviews is mined for product
-attributes. But transcription alone discards the paralinguistic channel, and that
+attributes. And the *style* of the transcribed words, not only their content,
+carries outcome-relevant signal: @packard2021concrete show that the concreteness of
+frontline-employee language raises customer satisfaction and purchase, recovered
+from the lexical channel of service interactions, while @melumad2019selectively show
+that the device a message is composed on systematically shifts its emotionality, a
+reminder that the transcript's linguistic features are themselves shaped by the
+capture context. But transcription alone discards the paralinguistic channel, and that
 channel is where audio earns its place as a distinct modality.
 
 ## Vocal Emotion and Prosody: How It Is Said {#sec-audio-prosody}

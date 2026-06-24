@@ -2,14 +2,133 @@
 
 Most of the data marketing now generates is **unstructured**: the words customers write, the
 images brands post, the audio of a sales call, the video of a livestream, the trace of a
-cursor across a page. None of it arrives as a tidy rectangle of numbers, and each modality
-demands its own representation before any of the methods in the preceding pillar can touch
-it. This part treats those modalities as siblings rather than singling one out.
+cursor across a page, the GPS ping from a phone, the dilation of a pupil in front of an ad.
+None of it arrives as a tidy rectangle of numbers, and each modality demands its own
+representation before any of the methods in the preceding pillar can touch it. By most
+accounts the overwhelming majority of the data organizations hold is unstructured, and the
+share is growing faster than the structured panels marketing science was built on
+[@balducci2018unstructured]. This part treats those modalities as siblings rather than
+singling one out.
 
-It opens with text as data, the most developed of the unstructured modalities, then turns
-to images, audio and voice, video, and the other modalities---geospatial,
-network, clickstream, and the biometric and neural signals of physiological measurement. It
-closes on multimodal fusion: the foundation models that learn joint representations across
-text, image, and audio at once, and what they mean for a field whose richest signals have
-always been more than numbers. The throughline is representation---turn the modality into a
-vector faithfully, and the rest of the book's machinery applies.
+## Unstructured Data as a Research Program
+
+The study of unstructured data in marketing is now coherent enough to be called a research
+program, and @balducci2018unstructured give it its most-cited synthesis. Their review makes
+three moves that organize everything that follows. First, it defines unstructured data by
+what it lacks---a predefined schema---rather than by any one source, and so brings text, audio,
+images, and video under a single conceptual roof. Second, it argues that the value of these
+data is *latent*: a review, a call, or a photograph is rich in information about constructs
+marketers care about---quality, emotion, identity, intent, attention---but that information is
+*encoded* in a form no regression can ingest until it has been deliberately extracted.
+Third, it frames the analyst's task as a pipeline that turns an unstructured artifact into a
+measured construct, and insists that the measurement be *validated* before it is believed.
+
+That framing is the spine of this part. The unifying claim is that, whatever the modality,
+the work proceeds through the same four stages (the figure below): **capture** the
+raw artifact and fix the unit of analysis; **represent** it as a vector or other
+model-ready object; **analyze** that representation to recover a construct; and **validate**
+the recovered construct against human-coded ground truth before any downstream regression is
+run. The modalities differ enormously in how the first two stages are done---a bag-of-words is
+nothing like a convolutional feature map, which is nothing like a mel-spectrogram---but they
+converge at the third and fourth, where the recovered quantities re-enter the structured
+machinery of the rest of the book.
+
+```{mermaid}
+%%| label: fig-unstructured-pipeline
+%%| fig-cap: "The shared pipeline for unstructured data. Modalities diverge most in capture and representation (left) and converge in analysis and validation (right); the recovered construct then re-enters the structured methods of the methodology pillar."
+flowchart LR
+  subgraph CAP[Capture]
+    A1[Text<br/>reviews, posts, calls]
+    A2[Image / Video<br/>logos, photos, frames]
+    A3[Audio / Voice<br/>calls, ads, assistants]
+    A4[Trace<br/>clicks, GPS, networks]
+    A5[Biometric<br/>eye, EEG, GSR]
+  end
+  CAP --> R[Represent<br/>embeddings, feature maps,<br/>spectrograms, graphs]
+  R --> AN[Analyze<br/>topic / classify / measure /<br/>extract / predict]
+  AN --> V{Validate vs.<br/>human ground truth}
+  V -->|adequate| D[Downstream<br/>regression / causal model]
+  V -->|inadequate| R
+```
+
+The throughline is **representation**. Turn the modality into a vector faithfully---one whose
+geometry tracks the construct of interest---and the rest of the book's machinery applies; get
+the representation wrong, and no amount of downstream sophistication recovers the loss. This
+is why the representation step recurs as the most consequential modeling decision in every
+chapter that follows, and why each chapter spends its first pages there.
+
+## Why Modality Matters
+
+It would be convenient if one general-purpose method dissolved all of these problems, and
+the rise of foundation models has revived that hope. But modality is not a cosmetic
+difference in file format; it changes what can be measured and how it can go wrong. Text
+carries explicit propositional content but is blind to tone unless tone is written down;
+voice carries the prosody text discards but is expensive to transcribe and easy to
+misattribute; images carry composition and identity but no negation; behavioral traces
+carry revealed preference but no stated reason; biometrics carry involuntary response but no
+semantics. Each modality is, in the language of measurement, a different *instrument* with
+its own reliability, its own selection problem, and its own validity threats. The promise of
+the multimodal frontier---the capstone chapter on fusion---is precisely that the modalities are
+*complementary*, that fusing them recovers constructs none can measure alone, but realizing
+that promise requires understanding each instrument first.
+
+The chapters are ordered to build this understanding cumulatively. The table below lays out
+the part: the modality, the raw artifact a marketer captures, the representation that makes it
+model-ready, and the marketing constructs it is typically used to recover.
+
+| Chapter | Modality | Raw artifact | Typical representation | Constructs recovered |
+|---|---|---|---|---|
+| Text as Data | Text | Reviews, posts, queries, transcripts | BoW / TF-IDF / embeddings | Sentiment, topics, stance, intent |
+| Figurative Language | Ironic / sarcastic text | Ironic posts and reviews | Context-aware embeddings | True valence under inversion |
+| Images | Image | Logos, product & user photos | CNN / ViT feature maps | Brand presence, aesthetics, content |
+| Audio & Voice | Audio / voice | Calls, ads, voice-assistant logs | Spectrograms, acoustic features | Emotion, persuasion, engagement |
+| Video | Video | Ads, livestreams, short-form clips | Frame + audio + motion features | Attention, engagement, virality |
+| Networks | Network | Social ties, referrals, co-mentions | Graphs, node embeddings | Influence, diffusion, structure |
+| Clickstream | Clickstream | Browsing & app session logs | Sequences, path models | Journey, attention, conversion |
+| Geospatial | Geospatial | GPS pings, store visits | Trajectories, spatial fields | Mobility, targeting, spillovers |
+| Biometric / neural | Biometric | Eye, EEG, fMRI, GSR | Time series, ROI activation | Attention, arousal, preference |
+| Multimodal fusion | Multimodal | All of the above, jointly | Joint / aligned embeddings | Constructs no single modality gives |
+
+: The unstructured & multimodal modalities, the artifacts they begin as, the representations that make them analyzable, and the constructs they recover. {#tbl-modality-map}
+
+## The Cross-Cutting Hazards
+
+Three threats to validity recur in every chapter, because they are properties of unstructured
+data as such rather than of any one modality, and the unstructured-data literature has named
+all three [@balducci2018unstructured; @berger2020uniting; @humphreys2018automated].
+
+**Validation is not optional.** Every quantity recovered from an unstructured artifact---a
+sentiment score, a topic share, a detected object, a vocal-emotion estimate, a predicted
+fixation---is a *measurement* of an unobserved construct, and is worthless until it has been
+compared against human-coded ground truth on a held-out sample with an explicit reliability
+statistic. A pipeline that reports only its internal fit has produced numbers, not
+measurements. This discipline is developed once, in detail, in the text chapter, and assumed
+thereafter.
+
+**Selection is in the data-generating process.** Unstructured data are produced by people who
+chose to write, post, call, click, or be measured, and that choice is rarely independent of
+the outcome. Reviewers skew to the delighted and the furious; posters are not customers; lab
+biometrics come from volunteers. Text measured on a selected sample estimates the construct
+for *writers*, not for the population---and the gap is a bias, not noise.
+
+**Recovered measures are generated regressors.** When a construct extracted from unstructured
+data enters a downstream regression---topic share explaining sales, vocal emotion explaining
+persuasion, a fixation map explaining recall---it is measured with error and often correlated
+with omitted drivers. Treating the estimate as if it were observed understates standard errors
+and can bias coefficients; the measurement model and the outcome model are one system.
+
+## How the Part Reads
+
+It opens with **text as data**, the most developed of the unstructured modalities and the one
+whose pipeline---capture, represent, analyze, validate---is the template for the rest,
+followed by a focused treatment of **figurative language**, where representation choices
+visibly make or break a measure. It then turns to **images**, **audio and voice**, and
+**video**---the perceptual modalities that carry the affective and identity signals text
+omits. From there it covers the modalities of behavior and structure: **networks**,
+**clickstream**, and **geospatial** traces, where the artifact is what people *did* rather
+than what they *said*. It treats the **biometric and neural** signals of physiological
+measurement, the most involuntary and the most controlled of the modalities. And it closes on
+**multimodal fusion**: the foundation models that learn joint representations across text,
+image, and audio at once, and what they mean for a field whose richest signals have always
+been more than numbers. The throughline never changes---turn the modality into a faithful
+representation, validate what you recover, and the rest of the book's machinery applies.

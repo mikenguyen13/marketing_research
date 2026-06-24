@@ -72,7 +72,7 @@ the same sentence ("Love waiting on hold for an hour") is sincere or sarcastic
 depending on world knowledge the reader supplies. Second, it is **incongruity-based**:
 sarcasm typically juxtaposes a positive surface against a negative situation (or
 vice versa), so its signature is an *internal contradiction* rather than any
-particular vocabulary <!-- CITE-NEEDED: incongruity / context-incongruity theory of verbal irony -->.
+particular vocabulary [@riloff2013sarcasm; @joshi2015incongruity].
 Both properties defeat bag-of-words methods, which discard exactly the contextual
 and structural information sarcasm encodes.
 
@@ -82,17 +82,17 @@ How common is sarcasm in the corpora marketers actually analyze? The honest answ
 is that prevalence is *unknown with precision* and *heterogeneous across platforms*,
 and any single number should be treated with suspicion. Reported rates vary by an
 order of magnitude depending on the platform, the labeling protocol, and—crucially—
-how sarcasm is operationalized <!-- CITE-NEEDED: prevalence estimates of sarcasm/irony in social media and review corpora -->.
+how sarcasm is operationalized [@joshi2017sarcasm].
 
 A few regularities are robust enough to state, with the appropriate hedges. Sarcasm
 is **more frequent on social platforms than in product reviews**: short, public,
 performative text (microblog posts, comments) rewards wit, whereas a review written
 to inform a purchase decision is, on average, more literal
-<!-- CITE-NEEDED: platform differences in figurative-language rates -->. Within
+[@joshi2017sarcasm]. Within
 reviews, sarcasm concentrates in the **tails of the rating distribution** and
 especially in **negative** experiences, where irony is a common rhetorical strategy
 for expressing disappointment
-<!-- CITE-NEEDED: association between sarcasm and negative review valence -->. And
+[@riloff2013sarcasm]. And
 sarcasm is **bursty**: it clusters around product failures, service breakdowns, and
 brand controversies, the same events that drive firestorms of negative word of mouth
 [@herhausen2022]. This last point is the one most consequential for marketing: the
@@ -106,7 +106,7 @@ moderately on whether an isolated text is sarcastic, so the "ground truth" is it
 noisy (see @sec-annotation). (ii) *Selection in labeled corpora*: many benchmark
 datasets are built by harvesting self-labeled sarcasm (e.g., posts tagged
 `#sarcasm`), which over-represents *signaled* sarcasm and under-represents the
-deadpan variety that actually fools classifiers <!-- CITE-NEEDED: self-labeled (#sarcasm) corpus construction and its biases -->.
+deadpan variety that actually fools classifiers [@joshi2017sarcasm].
 (iii) *Definition drift*: studies fold irony, sarcasm, and rhetorical questions
 together or apart inconsistently. Reported prevalence is therefore a property of the
 measurement procedure as much as of the population.
@@ -139,7 +139,13 @@ $$ {#eq-inversion}
 @eq-inversion is the crux: under sarcasm the *most informative* surface feature
 points the wrong way. A literal classifier that achieves accuracy $1-\epsilon$ on
 non-sarcastic text and naïvely trusts surface polarity will *systematically
-misclassify* sarcastic documents, not merely err at random on them.
+misclassify* sarcastic documents, not merely err at random on them. This is exactly
+the regime where the choice of sentiment method matters most: benchmarking across
+methods and datasets shows that transformer-based classifiers substantially outperform
+lexicons on hard, context-dependent text, but that *no* method is immune to figurative
+inversion [@hartmann2023feeling], and that much consumer sentiment is *implicit*—carried
+by discourse and stance rather than polar words—so it eludes surface scoring entirely
+[@villarroelordenes2017stars].
 
 ### The bias this induces
 
@@ -245,7 +251,7 @@ The earliest and most interpretable approach engineers features that proxy for t
 internal contradiction sarcasm encodes: a positive sentiment phrase adjacent to a
 negative situation phrase, intensifiers, scare quotes, ellipses, exclamation
 patterns, and emoji that clash with the surrounding text
-<!-- CITE-NEEDED: feature-engineering / incongruity features for sarcasm detection -->.
+[@joshi2015incongruity; @riloff2013sarcasm].
 The estimator is a standard supervised classifier (logistic regression, SVM, or
 gradient boosting) on these features; the assumption that breaks identification is
 **stationarity of cues**—sarcasm markers drift across communities and time, so a
@@ -310,10 +316,10 @@ incongruous phrase) and on context beyond the sentence, the modern literature mo
 to sequence models—recurrent networks and, dominantly, attention-based transformers
 that read the whole utterance and, where available, its surrounding thread, the
 author's history, and the conversational target
-<!-- CITE-NEEDED: neural / transformer / attention models for sarcasm detection -->.
+[@tay2018sarcasm].
 These models can represent the positive-surface/negative-context incongruity that
 defines sarcasm, and they consistently outperform feature-engineered baselines on
-benchmark corpora <!-- CITE-NEEDED: benchmark performance of neural sarcasm detectors -->.
+benchmark corpora [@tay2018sarcasm; @joshi2017sarcasm].
 Marketing has embraced deep text and image models for adjacent tasks—recovering
 brand perceptions from consumer images [@liu2020] and structuring unstructured
 review text [@buschken2016sentence; @netzer2008hidden]—so the tooling is familiar.
@@ -345,11 +351,17 @@ marginal rates over label categories $k$ [@Cohen_1960]. $\kappa = 1$ is perfect
 agreement, $0$ is chance; conventional (and contested) thresholds read $0.41$–$0.60$
 as "moderate" and $0.61$–$0.80$ as "substantial" [@Landis_1977]. Sarcasm annotation
 on isolated short texts routinely lands in the low-to-moderate band, and rises only
-when annotators are given conversational context
-<!-- CITE-NEEDED: inter-annotator agreement levels for sarcasm/irony annotation -->.
+when annotators are given conversational context [@wallace2014context].
 The implication is structural: a detector cannot be more reliable than its labels, so
 a benchmark "accuracy" of 0.85 against ground truth that itself carries $\kappa
-\approx 0.6$ is reporting agreement with a noisy oracle, not with the truth.
+\approx 0.6$ is reporting agreement with a noisy oracle, not with the truth. This
+human-validation step is not specific to sarcasm; it is the discipline the entire
+text-as-data and unstructured-data program insists on before any model output is treated
+as a measurement [@humphreys2018automated; @berger2020uniting; @balducci2018unstructured].
+When the construct can be captured by a validated dictionary—as @rocklage2018evaluative do
+for emotionality, extremity, and valence with the Evaluative Lexicon—the measure inherits
+that instrument's reliability; figurative inversion is precisely the case where no fixed
+dictionary suffices and human-coded context becomes indispensable.
 
 ```{r}
 #| label: kappa-demo

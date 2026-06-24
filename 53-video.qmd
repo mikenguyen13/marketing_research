@@ -65,10 +65,12 @@ distribution analysis are entangled.
 in real time to a chat-interacting audience, fuses video, continuous speech, and a
 real-time text stream (the chat) with an immediate transactional outcome (purchases during
 the stream). It is the most explicitly multimodal commercial video format, and it has begun
-to attract rigorous measurement. Wen and colleagues analyze livestreaming e-commerce with
+to attract rigorous measurement. @wen2026livestream analyze livestreaming e-commerce with
 multimodal machine learning, decomposing a salesperson's on-screen effectiveness into
 visual, vocal, and verbal components and using explainable-AI methods to attribute sales to
-them.<!-- CITE-NEEDED: Wen, Xu, Huang & Liao, "Salesperson Attractiveness Beyond Looks in Livestreaming E-commerce: Mixed Method of Multimodal Machine Learning and Explainable AI," Journal of Interactive Marketing (2026), DOI 10.1177/10949968261464927 (Crossref-verified) --> Live commerce is distinctive because the outcome is contemporaneous with the content,
+them; @xu2024multimodal and @xu2024memf build multimodal fusion frameworks that combine the
+host's audio, visual, and textual signals (and, in the latter, multiple on-screen entities)
+to predict product sales during a stream. Live commerce is distinctive because the outcome is contemporaneous with the content,
 which sharpens both the opportunity (within-stream dynamics map directly onto within-stream
 sales) and the identification challenge (the host adapts in real time to the chat).
 
@@ -79,7 +81,7 @@ scale. Unboxing and haul videos are a genre unto themselves with measurable enga
 consequences. For the firm, user-generated video is both a listening channel (what do
 consumers actually do with the product, and how do they feel) and a demand signal (review
 video volume and sentiment predict sales), extending the online word-of-mouth tradition of
-review-to-sales research from text to the screen.<!-- CITE-NEEDED: Chevalier & Mayzlin, "The Effect of Word of Mouth on Sales: Online Book Reviews," Journal of Marketing Research 43(3), 2006, 345-354, DOI 10.1509/jmkr.43.3.345 (Crossref-verified) -->
+review-to-sales research from text to the screen [@chevalier2006effect].
 
 The common thread is that the marketing question is almost always about *content and its
 dynamics*: which creative choices, appearing *when* in the clip, drive attention, engagement,
@@ -111,7 +113,11 @@ modeling choice with consequences:
   trading reproducibility for information density.
 
 In tools, frame extraction is typically delegated to `ffmpeg` or `OpenCV`, which decode the
-container and emit images at the chosen cadence. For the conceptual and pedagogical purposes of
+container and emit images at the chosen cadence. A marketing-specific recipe for the whole
+frame-to-features workflow is given by @schwenzow2021videos, whose "understanding videos at
+scale" pipeline shows how to sample frames, extract interpretable visual, audio, and textual
+features, and aggregate them for business research—an accessible blueprint for the substrate this
+section builds. For the conceptual and pedagogical purposes of
 this chapter, we work with the maintained `magick` R package, which wraps ImageMagick and gives
 us honest, runnable image manipulation. We will not pretend to run a deep video model locally;
 instead we demonstrate the frame-level substrate, simulating a short clip, extracting interpretable
@@ -276,9 +282,9 @@ construct is unchanged.
 Beyond *where* the cuts are lies *what is happening* between them. Action recognition assigns labels
 to motion (a person pouring, applying, unboxing, dancing), and it is the canonical task that forced
 the field to model time rather than frames. The reference benchmark is **Kinetics**, introduced
-alongside the inflated-3D-convolution (I3D) model by Carreira and Zisserman, which established that
+alongside the inflated-3D-convolution (I3D) model by @carreira2017kinetics, which established that
 large-scale video pretraining transfers to downstream action tasks much as ImageNet pretraining
-transfers for images.<!-- CITE-NEEDED: Carreira & Zisserman, "Quo Vadis, Action Recognition? A New Model and the Kinetics Dataset," CVPR 2017, DOI 10.1109/cvpr.2017.502 (Crossref-verified) --> For marketing, action recognition is what lets a pipeline detect *product use*
+transfers for images. For marketing, action recognition is what lets a pipeline detect *product use*
 (the demonstration moment in a review or a livestream) as opposed to mere product *presence*, a
 distinction that still-frame analysis cannot make.
 
@@ -289,16 +295,16 @@ cost:
 
 - **3D convolutional networks** extend the 2D convolution of an image CNN to a third, temporal axis,
   so a single learned filter spans several frames and captures short-range motion. I3D
-  is the canonical instance, inflating a pretrained 2D image network into 3D.<!-- CITE-NEEDED: Carreira & Zisserman, "Quo Vadis, Action Recognition?" CVPR 2017, DOI 10.1109/cvpr.2017.502 (Crossref-verified) -->
+  is the canonical instance, inflating a pretrained 2D image network into 3D [@carreira2017kinetics].
 - **Two-stream and multi-rate designs** process appearance and motion on separate pathways. The
   **SlowFast** network of Feichtenhofer and colleagues runs a slow, high-resolution pathway to capture
   semantics (what is in the scene) alongside a fast, low-resolution pathway to capture rapid motion
   (how it moves), then fuses them, an architecture that maps cleanly onto the marketing intuition that
-  *content* and *pacing* are distinct creative dimensions.<!-- CITE-NEEDED: Feichtenhofer, Fan, Malik & He, "SlowFast Networks for Video Recognition," ICCV 2019, DOI 10.1109/iccv.2019.00630 (Crossref-verified) -->
+  *content* and *pacing* are distinct creative dimensions [@feichtenhofer2019slowfast].
 - **Video transformers** apply self-attention across both space and time, treating a clip as a sequence
   of spatiotemporal patches. They are the video analogue of the vision transformer surveyed by
-  Khan and colleagues, and they currently dominate large-scale video benchmarks at the cost of large
-  data and compute requirements.<!-- CITE-NEEDED: Khan, Naseer, Hayat, Zamir, Khan & Shah, "Transformers in Vision: A Survey," ACM Computing Surveys 54(10s), 2022, DOI 10.1145/3505244 (Crossref-verified) -->
+  @khan2022transformers, and they currently dominate large-scale video benchmarks at the cost of large
+  data and compute requirements.
 
 The following conceptual block sketches a temporal pipeline. It is deliberately written as *labeled
 pseudocode in R syntax*, not as runnable analysis: a faithful version requires `ffmpeg`, a deep-learning
@@ -375,9 +381,9 @@ Combining the streams is the modeling crux, and the choice of *when* to combine 
 The flagship demonstration in marketing is @yang2024engagement, who extract video, audio, and text
 features from short-form influencer ads on TikTok and fuse them to predict product sales, finding that
 the fused representation, mediated through engagement, carries genuine predictive content for revenue.
-Wen and colleagues extend the logic to livestream commerce, decomposing a host's on-screen
+@wen2026livestream extend the logic to livestream commerce, decomposing a host's on-screen
 effectiveness into visual, vocal, and verbal components with multimodal machine learning and attributing
-sales to each via explainable-AI methods.<!-- CITE-NEEDED: Wen, Xu, Huang & Liao, Journal of Interactive Marketing (2026), DOI 10.1177/10949968261464927 (Crossref-verified) --> Both studies exemplify the central design principle: model the
+sales to each via explainable-AI methods. Both studies exemplify the central design principle: model the
 streams jointly, and let the data reveal which modality, and which cross-modal alignment, drives the
 outcome.
 
@@ -447,10 +453,18 @@ Marketing analysts extract a recurring vocabulary of creative features, some int
 ### Engagement prediction and its pitfalls
 
 These features feed predictive models of engagement and conversion. The empirical lessons from the
-marketing literature are consistent: pacing and the opening seconds matter disproportionately for
-short-form retention; brand prominence trades off against likeability (too-early or too-heavy branding can
-depress engagement even as it aids recall); and *fused* multimodal features outperform any single stream,
-as in @yang2024engagement. Three pitfalls deserve emphasis:
+marketing literature are consistent. The affective trajectory of a video ad drives engagement:
+@teixeira2012emotionengagement use eye-tracking and automated facial-expression coding to show that
+induced emotion (joy, surprise) raises attention and suppresses zapping, and @teixeira2014 establish,
+via a web-based facial-tracking field study, *why, when, and how much* to entertain—the timing of
+affect within the clip is itself a lever. @tellis2019 decompose what makes online video
+content shared, isolating the roles of information, emotion, and brand prominence; brand prominence
+in particular trades off against likeability, since too-early or too-heavy branding can depress
+engagement even as it aids recall. For short-form specifically, @zhang2025audiovisual link the
+audiovisual features of TikTok ads to engagement behaviors, and @leung2022 situate such creative
+effects within the broader system of influencer-marketing effectiveness. The throughline is that
+*fused* multimodal features outperform any single stream, as in @yang2024engagement. Three pitfalls
+deserve emphasis:
 
 1. **Engagement is not sales.** Platform engagement (views, likes) is an intermediate outcome that the
    distribution algorithm partly manufactures; @yang2024engagement treat engagement as a *mediator* on the
@@ -476,7 +490,23 @@ produced by one coupled system. For the outside analyst this is the central stru
 reach and engagement are jointly determined with content by a model the analyst cannot see.
 
 **Brand- and agency-side analysis.** Advertisers and their agencies analyze video creative through three
-broad routes. The first is *managed cloud services*, Google Cloud Video Intelligence, Amazon Rekognition
+broad routes.
+
+::: {.callout-tip}
+## Replication resources: video feature pipelines
+
+The frame-level demonstration in this chapter runs on the maintained R package `magick`; a fuller
+open R/Python workflow for marketing video combines `ffmpeg`/`OpenCV` (decoding), pretrained image
+backbones such as ResNet (the official implementation accompanies @he2016resnet at
+`github.com/KaimingHe/deep-residual-networks`), Whisper (ASR), and the action/temporal models of
+@carreira2017kinetics and @feichtenhofer2019slowfast (whose authors release reference code). For a
+marketing-tailored end-to-end recipe see @schwenzow2021videos. Code and data availability for the
+empirical marketing studies cited here (e.g., @yang2024engagement, @wen2026livestream) vary—check the
+journal's supplementary materials, since several rely on proprietary platform data that cannot be
+redistributed.
+:::
+
+The first is *managed cloud services*, Google Cloud Video Intelligence, Amazon Rekognition
 Video, Microsoft Azure Video Indexer, that return shot boundaries, labels, on-screen text, transcripts, and
 face/celebrity detection as an API call, giving non-specialist teams a feature pipeline without training
 models. The second is *creative analytics vendors* that specialize in linking extracted creative features to
@@ -497,13 +527,15 @@ raises privacy obligations that the analyst must respect.
 
 Three developments are reshaping video-as-data marketing and define the near-term agenda.
 
-**Video-native foundation models.** The trajectory that ran from per-frame CNNs to video transformers<!-- CITE-NEEDED: Khan et al., "Transformers in Vision: A Survey," ACM Computing Surveys 54(10s), 2022, DOI 10.1145/3505244 (Crossref-verified) -->
-is converging on large *multimodal* models that ingest video, audio, and text jointly
+**Video-native foundation models.** The trajectory that ran from per-frame CNNs to video transformers
+[@khan2022transformers] is converging on large *multimodal* models that ingest video, audio, and text jointly
 and emit natural-language descriptions, structured tags, or answers to questions about a clip. For the
 analyst this collapses much of the bespoke pipeline into a prompt: rather than training a brand detector, one
 can ask a video-language model whether and when a brand appears, recovering interpretable creative features
 through instruction rather than supervised training, and extending to video the vision-language approach that
-Witte and colleagues demonstrate for marketing images.<!-- CITE-NEEDED: Witte, Heitmann & Hartmann, "Language of Images: Classifying Marketing Images with Transformers and Vision Language Models," International Journal of Research in Marketing (forthcoming 2026), DOI 10.1016/j.ijresmar.2026.01.001 (verify volume/issue/pages at wiring) --> The same caution applies in amplified form: a
+@witte2026language demonstrate for marketing images. Generative video models, in turn, make the creative
+itself a model output: @hartmann2025generative ask whether generative AI can reach human-level visual
+marketing content, a question that becomes sharper still in motion. The same caution applies in amplified form: a
 foundation model's extracted feature is still a generated regressor, now produced by an opaque model whose
 error structure is unknown and whose outputs require validation against human coding before they enter an
 inference.
@@ -514,12 +546,13 @@ also raising disclosure, authenticity, and brand-safety questions, and complicat
 "natural" creative sample. The measurement opportunity is large: synthetic variation can supply the
 experimental creative manipulation that observational video analysis lacks.
 
-**Live, real-time, and causal video analytics.** Livestream commerce pushes analysis<!-- CITE-NEEDED: Wen et al., Journal of Interactive Marketing (2026), DOI 10.1177/10949968261464927 (Crossref-verified) -->
+**Live, real-time, and causal video analytics.** Livestream commerce pushes analysis [@wen2026livestream]
 toward *real-time* multimodal modeling, where features are extracted and related to contemporaneous purchases
 as the stream unfolds, and where the host adapts to the audience, making the identification problem genuinely
 dynamic. The broader frontier for the field, as for all of unstructured-data marketing surveyed by
-Ma and Sun, is to move from *predicting* engagement from creative features to *causally* estimating which<!-- CITE-NEEDED: Ma & Sun, "Machine Learning and AI in Marketing: Connecting Computing Power to Human Insights," International Journal of Research in Marketing 37(3), 2020, 481-504, DOI 10.1016/j.ijresmar.2020.04.005 (Crossref-verified) -->
+@ma2020machine, is to move from *predicting* engagement from creative features to *causally* estimating which
 creative choices drive outcomes, which will require pairing the rich feature pipelines of this chapter with
-the experimental and quasi-experimental machinery of the methodology part. Video is where the multimodal,
+the experimental and quasi-experimental machinery of the methodology part, a transition the
+unstructured-data program has called for since @balducci2018unstructured. Video is where the multimodal,
 temporal, and causal challenges of marketing measurement meet most acutely, and where the payoff to getting
 the measurement right is largest.

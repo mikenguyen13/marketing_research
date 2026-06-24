@@ -206,7 +206,7 @@ window—building tolerance to small shifts and shrinking the spatial resolution
 while the channel dimension grows. Stacking these operations yields a
 representational hierarchy that has been verified empirically: early layers
 respond to oriented edges and color blobs, middle layers to textures and motifs,
-and late layers to object parts and whole objects. <!-- CITE-NEEDED: empirical visualization of CNN feature hierarchy (edges to textures to objects) --> @fig-cnn-pipeline
+and late layers to object parts and whole objects [@zeiler2014visualizing]. @fig-cnn-pipeline
 sketches the pipeline from raw pixels to a task head.
 
 ```{mermaid}
@@ -267,7 +267,10 @@ parameters in a modern CNN from scratch. The field instead relies on **transfer
 learning**: take a backbone network pre-trained on a massive general-purpose
 corpus (canonically ImageNet, with roughly a million labeled images across a
 thousand object categories), discard its task head, and reuse its learned
-representation. Two modes are common. In **feature extraction**, the backbone is
+representation. The canonical backbones trace the field's progress—the deep CNN that
+launched it [@krizhevsky2017imagenet], the deeper inception architecture
+[@szegedy2015googlenet], and the residual networks [@he2016resnet] that remain a default
+image encoder—and any of them can be downloaded pre-trained and reused. Two modes are common. In **feature extraction**, the backbone is
 *frozen* and the penultimate-layer activations $\mathbf{z} =
 h_{\boldsymbol{\theta}}(\mathbf{X}) \in \mathbb{R}^{d}$—the **embedding**—are
 treated as a fixed, off-the-shelf feature vector fed to a simple downstream model
@@ -359,13 +362,23 @@ increasingly *incidental*, embedded in content the firm does not control, so
 counting hashtags understates true exposure while logo detection captures it. The
 notion of **prominence**—the conspicuousness of a brand's mark—carries
 status-signaling consequences developed in @sec-branding, and image data let it be
-measured at scale rather than coded by hand.
+measured at scale rather than coded by hand. The *design* of the mark itself is
+consequential: @luffarelli2019logo show that descriptive logos (those that visually
+signal what the brand does) raise brand equity, and @mahmood2019logo find that complex
+visual logo cues shape equity-crowdfunding outcomes---logo features that computer vision
+can now extract at scale. How consumers depict brands in their own photos is itself a
+measurable typology: @hartmann2021brandselfies use computer vision to distinguish
+"brand selfies" (the consumer in frame with the product) from "packshots" and show the
+two drive engagement differently.
 
 The second, deeper question is whether an image conveys a brand's *perceptual
 identity*. @liu2020 answer it directly: their BrandImageNet trains a multi-label
 CNN to detect abstract perceptual attributes (e.g., "glamorous," "rugged,"
 "fun") in ordinary consumer-created images, and the machine-derived portrait of a
-brand's image tracks survey-based perceptions in near real time. This is a
+brand's image tracks survey-based perceptions in near real time. Complementary approaches
+elicit brand perception by having consumers select images rather than rate scales
+[@dzyabura2021visual] and mine brand attributes from the social-network structure around a
+brand [@culotta2016]. This is a
 conceptual advance over logo counting—it measures what a brand *means* visually,
 not merely whether it is shown—and it links image data to the brand-meaning
 construct of @batra2019, who locate visual cues (advertising, packaging) among the
@@ -389,10 +402,16 @@ than mere ranking.
 
 Aesthetics is not decoration. In advertising, the visual *pleasure* of an ad is a
 proximate driver of attention and attitude, mediated by the complexity mechanism of
-@pieters2010 and by the gaze patterns of @pieters2007. In social commerce,
-image quality is a documented driver of demand: professionally composed product
-and listing photos lift engagement and conversion, a regularity exploited across
-the marketplace and social-media literatures. <!-- CITE-NEEDED: effect of professional/high-quality photos on online listing demand and engagement --> The
+@pieters2010 and by the gaze patterns of @pieters2007, and the rhetorical *figuration*
+of an image—visual metaphor, pun, and other tropes—shapes persuasion in ways parallel to
+verbal rhetoric [@mcquarrie1999visualrhetoric]. Specific perceptual choices carry meaning:
+color hue and saturation move brand personality and downstream response [@labrecque2012red;
+@labrecque2013palette], and aesthetic styling trades off against perceived functionality
+rather than improving evaluation monotonically [@hagtvedt2014overstyling]. In social
+commerce, image quality is a documented driver of demand: professionally composed product
+and listing photos lift engagement and conversion, and @zhang2022goodimage show, using
+interpretable deep-learning image features on Airbnb listings, *which* properties of a
+photo (composition, brightness, depth) actually raise demand. The
 aesthetic score is therefore a feature with a theory behind it, not a black box to
 be regressed on outcomes for its own sake.
 
@@ -550,8 +569,9 @@ exposure** is captured by logo detection and the share-of-visual-voice it yields
 revealing brand presence that text-only listening (@sec-online-environments)
 misses entirely. **Image-driven engagement** is studied by relating content and
 aesthetic features—people versus products, warmth, professionalism, complexity—to
-likes, shares, and comments; @hartmann2021power and @hartmann2023more, for
-instance, develop image-mining pipelines for brand-relevant social-media content
+likes, shares, and comments; @Li_2019 show empirically which image-content features
+raise social-media engagement, and @hartmann2021power and @hartmann2023more
+develop image-mining pipelines for brand-relevant social-media content
 and relate visual elements to engagement. **Influencer aesthetics** connect a
 creator's visual style to follower growth and sponsorship value
 (@sec-influencer-marketing), with content features quantifying the self-presentation
@@ -568,7 +588,12 @@ the same space, so a post can be represented by a single vector capturing both. 
 lets the analyst ask whether the image and caption are *congruent*—and incongruence
 is itself a measurable, theory-relevant feature—and connects images-as-data to the
 text methods of @sec-text-as-data and the broader machine-learning toolkit of
-@sec-ai-ml. <!-- CITE-NEEDED: multimodal image-text models (e.g., contrastive vision-language) in marketing applications -->
+@sec-ai-ml. @witte2026language show that transformer-based vision-language models can
+classify marketing images directly from natural-language prompts, often without
+task-specific training, and the same model class can now *generate* marketing visuals,
+raising the question of whether it reaches human-level creative quality
+[@hartmann2025generative]. The fusion of image with text and other modalities is the
+subject of @sec-multimodal-fusion.
 :::
 
 ## Pitfalls and Identification
@@ -606,7 +631,24 @@ fix the representation before looking at outcomes, validate the features against
 ground truth, prefer designs that randomize the image over those that merely
 observe it, and report the bias that remains. An image feature is a *measurement*,
 and like every measurement in @sec-measurement-scales it must be shown to be
-reliable and valid before its coefficient can be believed.
+reliable and valid before its coefficient can be believed. Images are one branch of
+the broader unstructured-data program [@balducci2018unstructured]; for a survey
+focused on the visual channel and its methods, see @dzyabura2021imageanalytics.
+
+::: {.callout-tip}
+## Replication resources: image analytics
+
+The hand-engineered color/complexity features and the frozen-embedding transfer-learning
+demonstration in this chapter run on open R/Python tooling (`magick`/`imager` in R; Pillow,
+OpenCV, and pretrained `torchvision`/`timm` backbones in Python). The canonical backbones
+ship reference implementations—ResNet at `github.com/KaimingHe/deep-residual-networks`
+[@he2016resnet]; ImageNet-pretrained AlexNet/Inception weights [@krizhevsky2017imagenet;
+@szegedy2015googlenet] are bundled in every deep-learning framework—and SIFT
+[@lowe2004sift] is in OpenCV. The empirical marketing studies cited here
+(e.g., @liu2020, @hartmann2021brandselfies, @zhang2022goodimage) generally rely on
+proprietary image corpora; confirm any code/data release on the article page rather than
+assuming one.
+:::
 
 ## Key Takeaways
 

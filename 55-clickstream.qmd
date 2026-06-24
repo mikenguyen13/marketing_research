@@ -61,7 +61,12 @@ itself is a modelable behavior, not merely a precursor to purchase: the depth an
 dynamics of online search vary systematically across users and over the course of a
 visit [@johnson2004depth], and a site visit can be represented as a probabilistic
 walk whose transitions reveal goal-directed versus exploratory navigation
-[@bucklin2003].
+[@bucklin2003]. The conversion decision within and across visits is itself dynamic—the
+probability of buying evolves with accumulated visits and within-session behavior
+[@moe2004dynamic; @sismeiro2004modeling]—and browsing spans competing sites, so a
+single-site log is a censored view of a cross-site process [@park2004modeling]. At the
+fine grain of product search, clickstream reveals how consumers actually explore a
+category before choosing [@bronnenberg2016zooming].
 
 *Path-to-purchase analysis* asks how users move through the funnel: which sequences of
 pages and channels precede conversion, where they stall, and how the path differs
@@ -669,14 +674,21 @@ The *data-driven* alternatives infer credit from the structure of observed paths
 Markov removal-effect model of @sec-click-removal is the leading example: by defining a
 channel's value as the conversion lost when its paths are diverted, it credits channels
 by their causal role *within the observed path structure* rather than by their position
-[Anderl et al. 2016, DOI `10.1016/j.ijresmar.2016.03.001`]. A complementary tradition
-builds explicit measurement models of the multichannel journey: Li and Kannan [2014,
-*Journal of Marketing Research* 51(1), 40-56, DOI `10.1509/jmr.13.0050`] model a
+[@anderl2016mapping]. A complementary tradition
+builds explicit measurement models of the multichannel journey: @li2014 model a
 customer's consideration of channels, visits through them over time, and subsequent
 purchase, and crucially validate the model against a field experiment, and Abhishek,
 Fader, and Hosanagar ("The Long Road to Online Conversion," SSRN working paper 2012, DOI
 `10.2139/ssrn.2158421`) model the path from media exposure to conversion with a
-hidden-Markov structure over latent journey stages. The broader digital-marketing
+hidden-Markov structure over latent journey stages. Closely related work disentangles how
+channels interact along the path: @dehaan2016effectiveness compare the conversion impact
+of different online ad forms within a multichannel attribution framework, and
+@kireyev2016display show that display advertising *dynamically* raises later search
+activity, so crediting search alone double-undercounts display. Individual-level exposure
+data let @zantedeschi2017 measure multichannel advertising response jointly across mail and
+email. The same path logic extends to paid search itself, where keyword-level
+clickstream supports both reduced-form [@ghose2009empirical] and dynamic structural
+[@yao2011dynamic] models of sponsored-search performance. The broader digital-marketing
 framework that situates attribution among the firm's measurement problems is reviewed by
 @kannan2017.
 
@@ -734,6 +746,20 @@ retained at all: cookie deprecation, consent-gated tracking, and on-device measu
 shrink the observable event log, which feeds directly back into the measurement-boundary
 caution of @sec-click-attribution. The clickstream a model sees is not the behavior that
 occurred; it is the behavior that was instrumented, permitted, and retained.
+
+::: {.callout-tip}
+## Replication resources: clickstream analysis
+
+The sessionization, transition-matrix estimation, Markov removal-effect attribution, and
+sequence-clustering demonstrations in this chapter run on open R packages—base R,
+`data.table`/`dplyr`, the `markovchain`/`ChannelAttribution` family for path attribution,
+and `TraMineR` for sequence analysis—which constitute a fully reproducible clickstream
+toolchain. The empirical studies cited here (e.g., @montgomery2004modeling, @li2014,
+@bronnenberg2016zooming) rest on proprietary firm clickstream that cannot be
+redistributed, so public replication packages are rare; the methods, not the data, are
+the transferable artifact, consistent with the unstructured-data program's emphasis on
+validated, reproducible measurement [@balducci2018unstructured].
+:::
 
 ## Frontier and Extensions {#sec-click-frontier}
 
