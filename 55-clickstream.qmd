@@ -222,8 +222,9 @@ events <- bind_rows(out) |>
 head(events, 10)
 ```
 
-The log now has the actor-action-time structure of @eq-click-event: a `user_id`, a
-`page` (the action), and a `ts` timestamp, with one row per event. Its scale is modest
+As @tbl-click-loghead shows, the log now has the actor-action-time structure of
+@eq-click-event: a `user_id`, a `page` (the action), and a `ts` timestamp, with one row
+per event. Its scale is modest
 but its shape is realistic, with users contributing a variable number of sessions and
 sessions of variable length governed by the funnel process.
 
@@ -325,8 +326,8 @@ funnel_tbl <- tibble(stage = funnel_stages) |>
 funnel_tbl
 ```
 
-The `reach` column is the share of sessions touching each stage; `step_retention` is
-the conditional probability of advancing from the previous stage. The sharpest drop-offs
+In @tbl-click-funnel, the `reach` column is the share of sessions touching each stage;
+`step_retention` is the conditional probability of advancing from the previous stage. The sharpest drop-offs
 in `step_retention` are the points a conversion-rate optimization program would target.
 Note that this funnel counts whether a stage was *ever* reached in a session, not
 whether stages occurred in strict order; an order-sensitive funnel, which only credits a
@@ -483,9 +484,10 @@ removal |>
   arrange(desc(removal_effect))
 ```
 
-The `removal_effect` column quantifies how much each page contributes to conversion: a
-page with a large removal effect is one the conversion paths depend on, so diverting its
-traffic to the null outcome sharply lowers the chance of reaching checkout. The
+In @tbl-click-removal, the `removal_effect` column quantifies how much each page
+contributes to conversion: a page with a large removal effect is one the conversion
+paths depend on, so diverting its traffic to the null outcome sharply lowers the chance
+of reaching checkout. The
 `attribution` column normalizes these effects into shares that sum to one, the
 quantities a budget-allocation exercise would use. The same machinery, applied to a
 chain whose *states are marketing channels* rather than pages, is exactly the
@@ -548,9 +550,9 @@ print(click_seq[1:5, ])
 ### State Distributions and Clustering {#sec-click-traminer-cluster}
 
 A first, population-level view is the *state-distribution plot*: at each sequence
-position, the share of sessions occupying each state. It shows how the population flows
-through the funnel over event positions, with users draining into `exit` as positions
-advance.
+position, the share of sessions occupying each state. @fig-click-statedist shows how the
+population flows through the funnel over event positions, with users draining into `exit`
+as positions advance.
 
 ```{r click-traminer-state}
 #| label: fig-click-statedist
@@ -566,7 +568,7 @@ To move from description to typology, we cluster sequences by *dissimilarity*.
 cost of insertions, deletions, and substitutions needed to transform one into the other.
 Clustering the resulting distance matrix groups sessions into behavioral archetypes,
 short bouncers, deep browsers, converters, that a population of raw logs would otherwise
-hide.
+hide; @tbl-click-clusters reports the sizes of the four clusters so recovered.
 
 ```{r click-traminer-om}
 #| label: tbl-click-clusters
@@ -594,9 +596,9 @@ seqdplot(click_seq, group = factor(cl4), border = NA,
          with.legend = "right")
 ```
 
-The four panels are interpretable behavioral types: clusters that exit almost
-immediately, clusters that linger in `search` and `product`, and clusters that reach
-`cart` and `checkout`. This is the payoff of treating sequences holistically. Rather
+The four panels of @fig-click-clusterplot are interpretable behavioral types: clusters
+that exit almost immediately, clusters that linger in `search` and `product`, and clusters
+that reach `cart` and `checkout`. This is the payoff of treating sequences holistically. Rather
 than a single average transition matrix, sequence clustering surfaces a *heterogeneous
 population* of navigation styles, which is the empirical reality of behavioral data and
 the starting point for segmentation, targeting, and personalized intervention.

@@ -753,7 +753,7 @@ y_{it} = \max\!\left(0,\; y_{it}^{*}\right),
 \alpha_{it}(k) = \Big[\textstyle\sum_{j} \alpha_{i,t-1}(j)\,q_{jk}\Big]\,
 f\!\left(y_{it}\mid S_{it}=k\right),
 \tag{A.4}\]</span></span></p>
-<p>where <span class="math inline">\(f(\cdot\mid S_{it}=k)\)</span> is the censored-normal density implied by <a href="#eq-citability-latent" class="quarto-xref">Equation&nbsp;<span>A.2</span></a> and <a href="#eq-citability-tobit" class="quarto-xref">Equation&nbsp;<span>A.3</span></a>, and the article-level likelihood is <span class="math inline">\(\sum_k \alpha_{iT}(k)\)</span>. Identification of the two regimes rests on three assumptions that the analyst must defend: the Markov order (one lag of the state carries all dynamics), the conditional independence of citation counts given the state path, and sufficient separation of the state-specific parameters <span class="math inline">\((\boldsymbol{\beta}_k,\sigma_k)\)</span> for the states to be empirically distinguishable rather than label-switched artifacts. The substantive payoff is that influence is shown to be dynamic: the same paper can move between regimes, and the overt drivers have <em>regime-specific</em> effects, a structure that static citation-count regressions cannot represent.</p>
+<p>where <span class="math inline">\(f(\cdot\mid S_{it}=k)\)</span> is the censored-normal density implied by <a href="#eq-citability-latent" class="quarto-xref">Equation&nbsp;<span>A.2</span></a> and <a href="#eq-citability-tobit" class="quarto-xref">Equation&nbsp;<span>A.3</span></a>, and the article-level likelihood is <span class="math inline">\(\sum_k \alpha_{iT}(k)\)</span>. Identification of the two regimes rests on three assumptions that the analyst must defend: the Markov order (one lag of the state carries all dynamics), the conditional independence of citation counts given the state path, and sufficient separation of the state-specific parameters <span class="math inline">\((\boldsymbol{\beta}_k,\sigma_k)\)</span> for the states to be empirically distinguishable rather than label-switched artifacts. The substantive payoff is that influence is shown to be dynamic: the same paper can move between regimes, and the overt drivers have <em>regime-specific</em> effects, a structure that static citation-count regressions cannot represent. <a href="#fig-citability-hmm" class="quarto-xref">Figure&nbsp;<span>A.1</span></a> assembles these pieces into a single schematic, from the latent two-state chain through the censoring that yields the observed count.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-citability-hmm" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -786,7 +786,7 @@ Figure&nbsp;A.1: The hidden-Markov citability model. An unobserved two-state cha
 <span class="header-section-number">A.2.1</span> Three Channels of Bias</h3>
 <p>The first channel is <strong>outcome fragmentation</strong>, which produces classical <em>attenuation</em>. When one person’s two devices are counted as two identities, the total purchase outcome is unchanged but is now spread across an artificially inflated number of observations. The measured per-identity outcome is therefore a shrunken version of the truth, and any regression of outcome on exposure inherits the shrinkage. The disquieting implication is that this bias disappears only when the true effect is itself zero: for any genuine advertising effect, outcome fragmentation guarantees that the estimate is biased toward null.</p>
 <p>The second channel is <strong>exposure fragmentation</strong>, which behaves like <em>omitted variable bias</em>. The estimand of interest is the effect of a consumer’s <em>total</em> cross-device exposure, but the fragmented data condition only on within-device exposure, omitting the consumer’s exposures on her other devices. The omitted cross-device exposure is correlated with both the included exposure and the outcome, so the coefficient is biased. This bias vanishes only under the implausible exclusion restriction that exposure on one device never influences purchase on another—a condition that the entire premise of cross-channel advertising denies.</p>
-<p>The third channel is <strong>spurious covariance</strong>, which arises from <em>device-level activity bias</em>: consumers systematically use different devices for different stages of the funnel—browsing on one, buying on another—so device usage is correlated with purchase propensity for reasons unrelated to advertising. Differential exposure levels and cross-device substitution then induce covariance between measured exposure and outcome that is not causal. <span class="citation" data-cites="lin2022">Lin and Misra (<a href="#ref-lin2022" role="doc-biblioref">2022</a>)</span> notes that estimating a <em>separate</em> model for each device type can purge the device-level activity-bias component of this channel, because within a device type the differential-usage confound is held fixed.</p>
+<p>The third channel is <strong>spurious covariance</strong>, which arises from <em>device-level activity bias</em>: consumers systematically use different devices for different stages of the funnel—browsing on one, buying on another—so device usage is correlated with purchase propensity for reasons unrelated to advertising. Differential exposure levels and cross-device substitution then induce covariance between measured exposure and outcome that is not causal. <span class="citation" data-cites="lin2022">Lin and Misra (<a href="#ref-lin2022" role="doc-biblioref">2022</a>)</span> notes that estimating a <em>separate</em> model for each device type can purge the device-level activity-bias component of this channel, because within a device type the differential-usage confound is held fixed. <a href="#tbl-fragmentation" class="quarto-xref">Table&nbsp;<span>A.1</span></a> summarizes the three channels, the statistical analogue of each, and the condition under which each bias vanishes.</p>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">frag</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span></span>
 <span>  Channel <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Outcome fragmentation"</span>,</span>
@@ -882,7 +882,7 @@ Figure&nbsp;A.2: Identity fragmentation attenuates the estimated advertising eff
 </div>
 </div>
 </div>
-<p>The estimate degrades monotonically as multi-device prevalence rises, exactly as the attenuation argument predicts.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> The lesson generalizes: any pipeline that treats device-identities as exchangeable for persons will under-report advertising effectiveness, and the under-reporting is worst in precisely the mobile-heavy, multi-screen segments that advertisers most want to reach.</p>
+<p>As <a href="#fig-fragmentation-attenuation" class="quarto-xref">Figure&nbsp;<span>A.2</span></a> shows, the estimate degrades monotonically as multi-device prevalence rises, exactly as the attenuation argument predicts.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> The lesson generalizes: any pipeline that treats device-identities as exchangeable for persons will under-report advertising effectiveness, and the under-reporting is worst in precisely the mobile-heavy, multi-screen segments that advertisers most want to reach.</p>
 </section><section id="remedies-and-their-failure-modes" class="level3" data-number="A.2.3"><h3 data-number="A.2.3" class="anchored" data-anchor-id="remedies-and-their-failure-modes">
 <span class="header-section-number">A.2.3</span> Remedies and Their Failure Modes</h3>
 <p>Three remedies are available, each buying identification at a price. <em>Identity linking</em>—stitching device identities back into persons—is the first-best in principle but treacherous in practice: <em>partially</em> linked data can be worse than unlinked data, because a linkage that resolves some persons but not others introduces a new, selection-driven heterogeneity that can dominate the original bias. <em>Experiment-based adjustment</em> follows <span class="citation" data-cites="coey2016">Coey and Bailey (<a href="#ref-coey2016" role="doc-biblioref">2016</a>)</span>, who recover the true effect from an experiment under the <strong>symmetric and independent exposures</strong> (SIE) assumption—that a consumer’s device-level exposures are exchangeable and independent. The estimator is clean when SIE holds, but <span class="citation" data-cites="lin2022">Lin and Misra (<a href="#ref-lin2022" role="doc-biblioref">2022</a>)</span> shows it remains biased whenever cross-device <em>activity</em> variation is present, because SIE is silent about differential device usage. <em>Stratified aggregation</em> offers a more robust, if coarser, route: first group consumers by geography, then bin each geographic group by combinations of demographic characteristics (e.g., age, gender, education), and estimate effects within bins where the fragmentation-inducing heterogeneity is approximately constant. The choice among the three is a bias–variance trade-off, and <span class="citation" data-cites="lin2022">Lin and Misra (<a href="#ref-lin2022" role="doc-biblioref">2022</a>)</span> is best read as a map of where each method’s identifying assumption breaks.</p>
@@ -892,7 +892,7 @@ Figure&nbsp;A.2: Identity fragmentation attenuates the estimated advertising eff
 <section id="the-power-of-the-marketing-department" class="level3" data-number="A.3.1"><h3 data-number="A.3.1" class="anchored" data-anchor-id="the-power-of-the-marketing-department">
 <span class="header-section-number">A.3.1</span> The Power of the Marketing Department</h3>
 <p><span class="citation" data-cites="feng2015marketing">Feng, Morgan, and Rego (<a href="#ref-feng2015marketing" role="doc-biblioref">2015</a>)</span> track the <strong>power of the marketing department</strong>—its influence relative to other functions—across a cross-industry panel of 612 public U.S. firms from 1993 to 2008, using an objective metric rather than survey perceptions. Two findings stand out. First, marketing-department power rose materially over the period, against a prevailing narrative of marketing’s organizational decline. Second, and more consequentially, greater power predicts superior <em>long-run</em> total shareholder return more strongly than it predicts short-run return on assets (ROA)—the value of marketing influence accrues over horizons longer than a single fiscal year.</p>
-<p>The mechanism is a <strong>mediation</strong> argument built on market-based assets. Power operates through two capability channels: long-run <em>market-based-asset building</em> and short-run <em>market-based-asset leveraging</em>. These capabilities <em>partially</em> mediate the effect of power on long-term shareholder value and <em>fully</em> mediate its effect on short-term ROA. The distinction matters for inference. Under the standard mediation logic, a fully mediated effect implies that, conditional on the capability channel, the direct path from power to ROA is statistically indistinguishable from zero—so the entire short-run benefit of marketing power runs through asset leveraging. A partially mediated effect leaves a residual direct path, indicating that long-run value creation has sources the measured capabilities do not capture. Identifying mediation credibly requires the usual assumptions—no unmeasured confounding of the power–mediator and mediator–outcome links, and correct temporal ordering—which panel structure helps but does not guarantee.</p>
+<p>The mechanism is a <strong>mediation</strong> argument built on market-based assets. Power operates through two capability channels: long-run <em>market-based-asset building</em> and short-run <em>market-based-asset leveraging</em>. These capabilities <em>partially</em> mediate the effect of power on long-term shareholder value and <em>fully</em> mediate its effect on short-term ROA. The distinction matters for inference. Under the standard mediation logic, a fully mediated effect implies that, conditional on the capability channel, the direct path from power to ROA is statistically indistinguishable from zero—so the entire short-run benefit of marketing power runs through asset leveraging. A partially mediated effect leaves a residual direct path, indicating that long-run value creation has sources the measured capabilities do not capture. Identifying mediation credibly requires the usual assumptions—no unmeasured confounding of the power–mediator and mediator–outcome links, and correct temporal ordering—which panel structure helps but does not guarantee. <a href="#fig-mktpower-mediation" class="quarto-xref">Figure&nbsp;<span>A.3</span></a> traces these two capability channels and the differing degrees to which each mediates the short-run and long-run performance paths.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-mktpower-mediation" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -1587,420 +1587,424 @@ Slotegraaf, Rebecca J, Christine Moorman, and J Jeffrey Inman. 2003. <span>“Th
 <span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>rather than label-switched artifacts. The substantive payoff is that influence is</span>
 <span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>shown to be dynamic: the same paper can move between regimes, and the overt drivers</span>
 <span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>have *regime-specific* effects, a structure that static citation-count regressions</span>
-<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>cannot represent.</span>
-<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>%%| label: fig-citability-hmm</span>
-<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The hidden-Markov citability model. An unobserved two-state chain (high vs. low citability) evolves via the transition matrix Q; conditional on the current state, overt drivers generate a latent citation propensity that is censored at zero to yield the observed annual citation count.</span><span class="ot">"</span></span>
-<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>    S1((High\ncitability)) -- q11 --&gt; S1</span>
-<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>    S1 -- q12 --&gt; S2((Low\ncitability))</span>
-<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>    S2 -- q21 --&gt; S1</span>
-<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>    S2 -- q22 --&gt; S2</span>
-<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>    S1 -. <span class="kw">state</span>-dependent .-&gt; Y[<span class="ot">"</span><span class="st">Latent propensity</span><span class="ch">\n</span><span class="st">y* = x'β_S + ε</span><span class="ot">"</span>]</span>
-<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>    S2 -. <span class="kw">state</span>-dependent .-&gt; Y</span>
-<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>    Y -- <span class="ot">"</span><span class="st">max(0, y*)</span><span class="ot">"</span> --&gt; C[<span class="ot">"</span><span class="st">Observed</span><span class="ch">\n</span><span class="st">citations y</span><span class="ot">"</span>]</span>
-<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a><span class="fu">### From Influence to Relevance</span></span>
-<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>Citability concerns influence *within* the academic field. A distinct and equally</span>
-<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>strategic question is whether marketing scholarship is relevant *outside* it—to</span>
-<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a>practice. @jedidi2021 operationalize this with an index of **relevance to</span>
-<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>marketing**, R2M, that scores publications on their relevance to practitioners</span>
-<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>along two dimensions, the *topic* addressed and the *time* horizon over which it</span>
-<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>matters. Read together, the two constructs partition the value of a marketing</span>
-<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>paper into an internal coordinate (influence on other scholars, captured by</span>
-<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>citability) and an external one (usefulness to managers, captured by R2M). The</span>
-<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>pairing is a useful reminder that "impact" is not a scalar: a paper can score high</span>
-<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>on one axis and low on the other, and the field's incentive structure determines</span>
-<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>which axis researchers optimize.</span>
-<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a><span class="fu">## Measurement Under Identity Fragmentation</span></span>
-<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a>Causal measurement in marketing presumes that the analyst can match a treatment</span>
-<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>(an ad exposure) to an outcome (a purchase) at the level of a single decision</span>
-<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>maker. Modern digital reality violates that premise. A consumer browses on a</span>
-<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>phone, researches on a laptop, and buys on a tablet, and absent perfect</span>
-<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>cross-device linkage the analyst observes three *identities* where there is one</span>
-<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>person. @lin2022 shows that this **identity fragmentation** is not a nuisance to be</span>
-<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a>waved away but a structured source of bias that contaminates the very</span>
-<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>advertising-effect estimates marketing most cares about. The contribution is to</span>
-<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>decompose the bias into three mechanically distinct channels and to state, for</span>
-<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a>each, the exact condition under which it vanishes.</span>
-<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a><span class="fu">### Three Channels of Bias</span></span>
-<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a>The first channel is **outcome fragmentation**, which produces classical</span>
-<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>*attenuation*. When one person's two devices are counted as two identities, the</span>
-<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a>total purchase outcome is unchanged but is now spread across an artificially</span>
-<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>inflated number of observations. The measured per-identity outcome is therefore a</span>
-<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a>shrunken version of the truth, and any regression of outcome on exposure inherits</span>
-<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>the shrinkage. The disquieting implication is that this bias disappears only when</span>
-<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>the true effect is itself zero: for any genuine advertising effect, outcome</span>
-<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a>fragmentation guarantees that the estimate is biased toward null.</span>
-<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>The second channel is **exposure fragmentation**, which behaves like *omitted</span>
-<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>variable bias*. The estimand of interest is the effect of a consumer's *total*</span>
-<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>cross-device exposure, but the fragmented data condition only on within-device</span>
-<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a>exposure, omitting the consumer's exposures on her other devices. The omitted</span>
-<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>cross-device exposure is correlated with both the included exposure and the</span>
-<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>outcome, so the coefficient is biased. This bias vanishes only under the implausible</span>
-<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>exclusion restriction that exposure on one device never influences purchase on</span>
-<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>another—a condition that the entire premise of cross-channel advertising denies.</span>
-<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a>The third channel is **spurious covariance**, which arises from *device-level</span>
-<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a>activity bias*: consumers systematically use different devices for different stages</span>
-<span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a>of the funnel—browsing on one, buying on another—so device usage is correlated with</span>
-<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a>purchase propensity for reasons unrelated to advertising. Differential exposure</span>
-<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a>levels and cross-device substitution then induce covariance between measured</span>
-<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>exposure and outcome that is not causal. @lin2022 notes that estimating a</span>
-<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>*separate* model for each device type can purge the device-level activity-bias</span>
-<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>component of this channel, because within a device type the differential-usage</span>
-<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>confound is held fixed.</span>
-<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tbl-fragmentation</span></span>
-<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a><span class="co">#| tbl-cap: "The three biases from identity fragmentation, their statistical analogue, and the condition under which each vanishes (after Lin and Misra 2022)."</span></span>
-<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
-<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>frag <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a>  <span class="at">Channel =</span> <span class="fu">c</span>(<span class="st">"Outcome fragmentation"</span>,</span>
-<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Exposure fragmentation"</span>,</span>
-<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Spurious covariance"</span>),</span>
-<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Statistical analogue</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Attenuation (measurement error)"</span>,</span>
-<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"Omitted-variable bias"</span>,</span>
-<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"Confounding via device-activity bias"</span>),</span>
-<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Vanishes only if</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"True effect equals zero"</span>,</span>
-<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"No cross-device exposure spillover"</span>,</span>
-<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Per-device models (removes activity bias)"</span>),</span>
-<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a>  <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(frag)</span>
-<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Worked Illustration of Attenuation</span></span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>cannot represent. @fig-citability-hmm assembles these pieces into a single schematic,</span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>from the latent two-state chain through the censoring that yields the observed count.</span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>%%| label: fig-citability-hmm</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The hidden-Markov citability model. An unobserved two-state chain (high vs. low citability) evolves via the transition matrix Q; conditional on the current state, overt drivers generate a latent citation propensity that is censored at zero to yield the observed annual citation count.</span><span class="ot">"</span></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>    S1((High\ncitability)) -- q11 --&gt; S1</span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>    S1 -- q12 --&gt; S2((Low\ncitability))</span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>    S2 -- q21 --&gt; S1</span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>    S2 -- q22 --&gt; S2</span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>    S1 -. <span class="kw">state</span>-dependent .-&gt; Y[<span class="ot">"</span><span class="st">Latent propensity</span><span class="ch">\n</span><span class="st">y* = x'β_S + ε</span><span class="ot">"</span>]</span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>    S2 -. <span class="kw">state</span>-dependent .-&gt; Y</span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>    Y -- <span class="ot">"</span><span class="st">max(0, y*)</span><span class="ot">"</span> --&gt; C[<span class="ot">"</span><span class="st">Observed</span><span class="ch">\n</span><span class="st">citations y</span><span class="ot">"</span>]</span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a><span class="fu">### From Influence to Relevance</span></span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>Citability concerns influence *within* the academic field. A distinct and equally</span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a>strategic question is whether marketing scholarship is relevant *outside* it—to</span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>practice. @jedidi2021 operationalize this with an index of **relevance to</span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>marketing**, R2M, that scores publications on their relevance to practitioners</span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>along two dimensions, the *topic* addressed and the *time* horizon over which it</span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>matters. Read together, the two constructs partition the value of a marketing</span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>paper into an internal coordinate (influence on other scholars, captured by</span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>citability) and an external one (usefulness to managers, captured by R2M). The</span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>pairing is a useful reminder that "impact" is not a scalar: a paper can score high</span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>on one axis and low on the other, and the field's incentive structure determines</span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>which axis researchers optimize.</span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a><span class="fu">## Measurement Under Identity Fragmentation</span></span>
+<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>Causal measurement in marketing presumes that the analyst can match a treatment</span>
+<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>(an ad exposure) to an outcome (a purchase) at the level of a single decision</span>
+<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>maker. Modern digital reality violates that premise. A consumer browses on a</span>
+<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>phone, researches on a laptop, and buys on a tablet, and absent perfect</span>
+<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>cross-device linkage the analyst observes three *identities* where there is one</span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a>person. @lin2022 shows that this **identity fragmentation** is not a nuisance to be</span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>waved away but a structured source of bias that contaminates the very</span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>advertising-effect estimates marketing most cares about. The contribution is to</span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a>decompose the bias into three mechanically distinct channels and to state, for</span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a>each, the exact condition under which it vanishes.</span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a><span class="fu">### Three Channels of Bias</span></span>
+<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>The first channel is **outcome fragmentation**, which produces classical</span>
+<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a>*attenuation*. When one person's two devices are counted as two identities, the</span>
+<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>total purchase outcome is unchanged but is now spread across an artificially</span>
+<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a>inflated number of observations. The measured per-identity outcome is therefore a</span>
+<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>shrunken version of the truth, and any regression of outcome on exposure inherits</span>
+<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>the shrinkage. The disquieting implication is that this bias disappears only when</span>
+<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a>the true effect is itself zero: for any genuine advertising effect, outcome</span>
+<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a>fragmentation guarantees that the estimate is biased toward null.</span>
+<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>The second channel is **exposure fragmentation**, which behaves like *omitted</span>
+<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>variable bias*. The estimand of interest is the effect of a consumer's *total*</span>
+<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a>cross-device exposure, but the fragmented data condition only on within-device</span>
+<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>exposure, omitting the consumer's exposures on her other devices. The omitted</span>
+<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>cross-device exposure is correlated with both the included exposure and the</span>
+<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>outcome, so the coefficient is biased. This bias vanishes only under the implausible</span>
+<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>exclusion restriction that exposure on one device never influences purchase on</span>
+<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a>another—a condition that the entire premise of cross-channel advertising denies.</span>
+<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a>The third channel is **spurious covariance**, which arises from *device-level</span>
+<span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a>activity bias*: consumers systematically use different devices for different stages</span>
+<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a>of the funnel—browsing on one, buying on another—so device usage is correlated with</span>
+<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a>purchase propensity for reasons unrelated to advertising. Differential exposure</span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>levels and cross-device substitution then induce covariance between measured</span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>exposure and outcome that is not causal. @lin2022 notes that estimating a</span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>*separate* model for each device type can purge the device-level activity-bias</span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>component of this channel, because within a device type the differential-usage</span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a>confound is held fixed. @tbl-fragmentation summarizes the three channels, the</span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a>statistical analogue of each, and the condition under which each bias vanishes.</span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tbl-fragmentation</span></span>
+<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a><span class="co">#| tbl-cap: "The three biases from identity fragmentation, their statistical analogue, and the condition under which each vanishes (after Lin and Misra 2022)."</span></span>
+<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a>frag <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>  <span class="at">Channel =</span> <span class="fu">c</span>(<span class="st">"Outcome fragmentation"</span>,</span>
+<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Exposure fragmentation"</span>,</span>
+<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Spurious covariance"</span>),</span>
+<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Statistical analogue</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Attenuation (measurement error)"</span>,</span>
+<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"Omitted-variable bias"</span>,</span>
+<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"Confounding via device-activity bias"</span>),</span>
+<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Vanishes only if</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"True effect equals zero"</span>,</span>
+<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"No cross-device exposure spillover"</span>,</span>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Per-device models (removes activity bias)"</span>),</span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a>  <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(frag)</span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a>The attenuation channel is sharp enough to demonstrate with a small simulation.</span>
-<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a>Suppose advertising has a genuine positive effect on purchase. We generate person-</span>
-<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>level data, then *fragment* each person into two device-identities that split the</span>
-<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a>person's exposure and outcome, and compare the naive per-identity regression slope</span>
-<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a>to the truth.</span>
-<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-fragmentation-attenuation</span></span>
-<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Identity fragmentation attenuates the estimated advertising effect. The fragmented per-identity slope (red) lies below the true person-level slope (blue); the gap widens with the share of consumers using multiple devices."</span></span>
-<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
-<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>simulate_attenuation <span class="ot">&lt;-</span> <span class="cf">function</span>(frac_multi, <span class="at">n =</span> <span class="dv">5000</span>, <span class="at">beta_true =</span> <span class="fl">1.0</span>) {</span>
-<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>  exposure <span class="ot">&lt;-</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">4</span>)</span>
-<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a>  purchase <span class="ot">&lt;-</span> beta_true <span class="sc">*</span> exposure <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="dv">2</span>)</span>
-<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>  multi    <span class="ot">&lt;-</span> <span class="fu">runif</span>(n) <span class="sc">&lt;</span> frac_multi          <span class="co"># which people use two devices</span></span>
-<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each multi-device person is split into two identities sharing the totals.</span></span>
-<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>  id_exposure <span class="ot">&lt;-</span> <span class="fu">c</span>(exposure[<span class="sc">!</span>multi],</span>
-<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>                   exposure[multi] <span class="sc">/</span> <span class="dv">2</span>, exposure[multi] <span class="sc">/</span> <span class="dv">2</span>)</span>
-<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a>  id_purchase <span class="ot">&lt;-</span> <span class="fu">c</span>(purchase[<span class="sc">!</span>multi],</span>
-<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a>                   purchase[multi] <span class="sc">/</span> <span class="dv">2</span>, purchase[multi] <span class="sc">/</span> <span class="dv">2</span>)</span>
-<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coef</span>(<span class="fu">lm</span>(id_purchase <span class="sc">~</span> id_exposure))[[<span class="st">"id_exposure"</span>]]</span>
-<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a>fracs  <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="fl">0.9</span>, <span class="at">by =</span> <span class="fl">0.1</span>)</span>
-<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a>slopes <span class="ot">&lt;-</span> <span class="fu">vapply</span>(fracs, simulate_attenuation, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
-<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fracs, slopes, <span class="at">type =</span> <span class="st">"o"</span>, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">col =</span> <span class="st">"red"</span>,</span>
-<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.1</span>), <span class="at">xlab =</span> <span class="st">"Fraction of consumers using multiple devices"</span>,</span>
-<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">"Estimated advertising effect"</span>,</span>
-<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Attenuation under identity fragmentation"</span>)</span>
-<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fl">1.0</span>, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span>
-<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"bottomleft"</span>, <span class="at">bty =</span> <span class="st">"n"</span>,</span>
-<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a>       <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"Fragmented estimate"</span>, <span class="st">"True effect = 1.0"</span>),</span>
-<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a>       <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"red"</span>, <span class="st">"blue"</span>), <span class="at">pch =</span> <span class="fu">c</span>(<span class="dv">19</span>, <span class="cn">NA</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
-<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a>The estimate degrades monotonically as multi-device prevalence rises, exactly as</span>
-<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a>the attenuation argument predicts.<span class="ot">[^split]</span> The lesson generalizes: any pipeline</span>
-<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a>that treats device-identities as exchangeable for persons will under-report</span>
-<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a>advertising effectiveness, and the under-reporting is worst in precisely the</span>
-<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a>mobile-heavy, multi-screen segments that advertisers most want to reach.</span>
-<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a><span class="ot">[^split]: </span>The simulation splits each multi-device person's exposure and outcome</span>
-<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a>evenly across her two identities. Uneven splits, or splits correlated with the</span>
-<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a>outcome, additionally activate the spurious-covariance channel; the even split</span>
-<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a>isolates the pure attenuation effect.</span>
-<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a><span class="fu">### Remedies and Their Failure Modes</span></span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Worked Illustration of Attenuation</span></span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>The attenuation channel is sharp enough to demonstrate with a small simulation.</span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a>Suppose advertising has a genuine positive effect on purchase. We generate person-</span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a>level data, then *fragment* each person into two device-identities that split the</span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a>person's exposure and outcome, and compare the naive per-identity regression slope</span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a>to the truth.</span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-fragmentation-attenuation</span></span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Identity fragmentation attenuates the estimated advertising effect. The fragmented per-identity slope (red) lies below the true person-level slope (blue); the gap widens with the share of consumers using multiple devices."</span></span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a>simulate_attenuation <span class="ot">&lt;-</span> <span class="cf">function</span>(frac_multi, <span class="at">n =</span> <span class="dv">5000</span>, <span class="at">beta_true =</span> <span class="fl">1.0</span>) {</span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>  exposure <span class="ot">&lt;-</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">4</span>)</span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>  purchase <span class="ot">&lt;-</span> beta_true <span class="sc">*</span> exposure <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="dv">2</span>)</span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>  multi    <span class="ot">&lt;-</span> <span class="fu">runif</span>(n) <span class="sc">&lt;</span> frac_multi          <span class="co"># which people use two devices</span></span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each multi-device person is split into two identities sharing the totals.</span></span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a>  id_exposure <span class="ot">&lt;-</span> <span class="fu">c</span>(exposure[<span class="sc">!</span>multi],</span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a>                   exposure[multi] <span class="sc">/</span> <span class="dv">2</span>, exposure[multi] <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a>  id_purchase <span class="ot">&lt;-</span> <span class="fu">c</span>(purchase[<span class="sc">!</span>multi],</span>
+<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a>                   purchase[multi] <span class="sc">/</span> <span class="dv">2</span>, purchase[multi] <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coef</span>(<span class="fu">lm</span>(id_purchase <span class="sc">~</span> id_exposure))[[<span class="st">"id_exposure"</span>]]</span>
+<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a>fracs  <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="fl">0.9</span>, <span class="at">by =</span> <span class="fl">0.1</span>)</span>
+<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a>slopes <span class="ot">&lt;-</span> <span class="fu">vapply</span>(fracs, simulate_attenuation, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
+<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fracs, slopes, <span class="at">type =</span> <span class="st">"o"</span>, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">col =</span> <span class="st">"red"</span>,</span>
+<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.1</span>), <span class="at">xlab =</span> <span class="st">"Fraction of consumers using multiple devices"</span>,</span>
+<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">"Estimated advertising effect"</span>,</span>
+<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Attenuation under identity fragmentation"</span>)</span>
+<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fl">1.0</span>, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span>
+<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"bottomleft"</span>, <span class="at">bty =</span> <span class="st">"n"</span>,</span>
+<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a>       <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"Fragmented estimate"</span>, <span class="st">"True effect = 1.0"</span>),</span>
+<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a>       <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"red"</span>, <span class="st">"blue"</span>), <span class="at">pch =</span> <span class="fu">c</span>(<span class="dv">19</span>, <span class="cn">NA</span>), <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a>As @fig-fragmentation-attenuation shows, the estimate degrades monotonically as</span>
+<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a>multi-device prevalence rises, exactly as the attenuation argument predicts.<span class="ot">[^split]</span> The lesson generalizes: any pipeline</span>
+<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a>that treats device-identities as exchangeable for persons will under-report</span>
+<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a>advertising effectiveness, and the under-reporting is worst in precisely the</span>
+<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a>mobile-heavy, multi-screen segments that advertisers most want to reach.</span>
+<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a><span class="ot">[^split]: </span>The simulation splits each multi-device person's exposure and outcome</span>
+<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a>evenly across her two identities. Uneven splits, or splits correlated with the</span>
+<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a>outcome, additionally activate the spurious-covariance channel; the even split</span>
+<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a>isolates the pure attenuation effect.</span>
 <span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a>Three remedies are available, each buying identification at a price.</span>
-<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a>*Identity linking*—stitching device identities back into persons—is the</span>
-<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>first-best in principle but treacherous in practice: *partially* linked data can be</span>
-<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a>worse than unlinked data, because a linkage that resolves some persons but not</span>
-<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a>others introduces a new, selection-driven heterogeneity that can dominate the</span>
-<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>original bias. *Experiment-based adjustment* follows @coey2016, who recover the</span>
-<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a>true effect from an experiment under the **symmetric and independent exposures**</span>
-<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a>(SIE) assumption—that a consumer's device-level exposures are exchangeable and</span>
-<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a>independent. The estimator is clean when SIE holds, but @lin2022 shows it remains</span>
-<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>biased whenever cross-device *activity* variation is present, because SIE is silent</span>
-<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a>about differential device usage. *Stratified aggregation* offers a more robust, if</span>
-<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a>coarser, route: first group consumers by geography, then bin each geographic group</span>
-<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a>by combinations of demographic characteristics (e.g., age, gender, education), and</span>
-<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a>estimate effects within bins where the fragmentation-inducing heterogeneity is</span>
-<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a>approximately constant. The choice among the three is a bias–variance trade-off,</span>
-<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a>and @lin2022 is best read as a map of where each method's identifying assumption</span>
-<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a>breaks.</span>
-<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a><span class="fu">## Marketing in the Firm: Power, Capabilities, and Performance</span></span>
+<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a><span class="fu">### Remedies and Their Failure Modes</span></span>
+<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>Three remedies are available, each buying identification at a price.</span>
+<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a>*Identity linking*—stitching device identities back into persons—is the</span>
+<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a>first-best in principle but treacherous in practice: *partially* linked data can be</span>
+<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>worse than unlinked data, because a linkage that resolves some persons but not</span>
+<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a>others introduces a new, selection-driven heterogeneity that can dominate the</span>
+<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a>original bias. *Experiment-based adjustment* follows @coey2016, who recover the</span>
+<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a>true effect from an experiment under the **symmetric and independent exposures**</span>
+<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>(SIE) assumption—that a consumer's device-level exposures are exchangeable and</span>
+<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a>independent. The estimator is clean when SIE holds, but @lin2022 shows it remains</span>
+<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a>biased whenever cross-device *activity* variation is present, because SIE is silent</span>
+<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a>about differential device usage. *Stratified aggregation* offers a more robust, if</span>
+<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a>coarser, route: first group consumers by geography, then bin each geographic group</span>
+<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a>by combinations of demographic characteristics (e.g., age, gender, education), and</span>
+<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a>estimate effects within bins where the fragmentation-inducing heterogeneity is</span>
+<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a>approximately constant. The choice among the three is a bias–variance trade-off,</span>
+<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a>and @lin2022 is best read as a map of where each method's identifying assumption</span>
+<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a>breaks.</span>
 <span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a>A second cluster of work asks how the marketing function fares *inside* the</span>
-<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a>organization and whether its standing translates into firm value. The constructs</span>
-<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a>are organizational—departmental power, firm-level capabilities, cross-functional</span>
-<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a>relationships—but the empirical strategy is the financial-economics one of linking</span>
-<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a>a marketing variable to long-run performance while ruling out confounds.</span>
-<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Power of the Marketing Department</span></span>
+<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a><span class="fu">## Marketing in the Firm: Power, Capabilities, and Performance</span></span>
+<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a>A second cluster of work asks how the marketing function fares *inside* the</span>
+<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a>organization and whether its standing translates into firm value. The constructs</span>
+<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a>are organizational—departmental power, firm-level capabilities, cross-functional</span>
+<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a>relationships—but the empirical strategy is the financial-economics one of linking</span>
+<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a>a marketing variable to long-run performance while ruling out confounds.</span>
 <span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a>@feng2015marketing track the **power of the marketing department**—its influence</span>
-<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a>relative to other functions—across a cross-industry panel of 612 public U.S. firms</span>
-<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a>from 1993 to 2008, using an objective metric rather than survey perceptions. Two</span>
-<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a>findings stand out. First, marketing-department power rose materially over the</span>
-<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a>period, against a prevailing narrative of marketing's organizational decline.</span>
-<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a>Second, and more consequentially, greater power predicts superior *long-run* total</span>
-<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a>shareholder return more strongly than it predicts short-run return on assets</span>
-<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a>(ROA)—the value of marketing influence accrues over horizons longer than a single</span>
-<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a>fiscal year.</span>
-<span id="cb3-306"><a href="#cb3-306" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-307"><a href="#cb3-307" aria-hidden="true" tabindex="-1"></a>The mechanism is a **mediation** argument built on market-based assets. Power</span>
-<span id="cb3-308"><a href="#cb3-308" aria-hidden="true" tabindex="-1"></a>operates through two capability channels: long-run *market-based-asset building*</span>
-<span id="cb3-309"><a href="#cb3-309" aria-hidden="true" tabindex="-1"></a>and short-run *market-based-asset leveraging*. These capabilities *partially*</span>
-<span id="cb3-310"><a href="#cb3-310" aria-hidden="true" tabindex="-1"></a>mediate the effect of power on long-term shareholder value and *fully* mediate its</span>
-<span id="cb3-311"><a href="#cb3-311" aria-hidden="true" tabindex="-1"></a>effect on short-term ROA. The distinction matters for inference. Under the standard</span>
-<span id="cb3-312"><a href="#cb3-312" aria-hidden="true" tabindex="-1"></a>mediation logic, a fully mediated effect implies that, conditional on the</span>
-<span id="cb3-313"><a href="#cb3-313" aria-hidden="true" tabindex="-1"></a>capability channel, the direct path from power to ROA is statistically</span>
-<span id="cb3-314"><a href="#cb3-314" aria-hidden="true" tabindex="-1"></a>indistinguishable from zero—so the entire short-run benefit of marketing power runs</span>
-<span id="cb3-315"><a href="#cb3-315" aria-hidden="true" tabindex="-1"></a>through asset leveraging. A partially mediated effect leaves a residual direct path,</span>
-<span id="cb3-316"><a href="#cb3-316" aria-hidden="true" tabindex="-1"></a>indicating that long-run value creation has sources the measured capabilities do</span>
-<span id="cb3-317"><a href="#cb3-317" aria-hidden="true" tabindex="-1"></a>not capture. Identifying mediation credibly requires the usual assumptions—no</span>
-<span id="cb3-318"><a href="#cb3-318" aria-hidden="true" tabindex="-1"></a>unmeasured confounding of the power–mediator and mediator–outcome links, and</span>
-<span id="cb3-319"><a href="#cb3-319" aria-hidden="true" tabindex="-1"></a>correct temporal ordering—which panel structure helps but does not guarantee.</span>
-<span id="cb3-320"><a href="#cb3-320" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-323"><a href="#cb3-323" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb3-324"><a href="#cb3-324" aria-hidden="true" tabindex="-1"></a>%%| label: fig-mktpower-mediation</span>
-<span id="cb3-325"><a href="#cb3-325" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Marketing-department power and firm performance. Power operates through two market-based-asset capabilities: building (long-run) and leveraging (short-run). The capabilities fully mediate the effect on short-run ROA and partially mediate the effect on long-run shareholder value.</span><span class="ot">"</span></span>
-<span id="cb3-326"><a href="#cb3-326" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb3-327"><a href="#cb3-327" aria-hidden="true" tabindex="-1"></a>    P[<span class="ot">"</span><span class="st">Marketing-department</span><span class="ch">\n</span><span class="st">power</span><span class="ot">"</span>] --&gt; B[<span class="ot">"</span><span class="st">Market-based-asset</span><span class="ch">\n</span><span class="st">building (long-run)</span><span class="ot">"</span>]</span>
-<span id="cb3-328"><a href="#cb3-328" aria-hidden="true" tabindex="-1"></a>    P --&gt; L[<span class="ot">"</span><span class="st">Market-based-asset</span><span class="ch">\n</span><span class="st">leveraging (short-run)</span><span class="ot">"</span>]</span>
-<span id="cb3-329"><a href="#cb3-329" aria-hidden="true" tabindex="-1"></a>    B --&gt;|partial mediation| SV[<span class="ot">"</span><span class="st">Long-run</span><span class="ch">\n</span><span class="st">shareholder value</span><span class="ot">"</span>]</span>
-<span id="cb3-330"><a href="#cb3-330" aria-hidden="true" tabindex="-1"></a>    L --&gt;|full mediation| ROA[<span class="ot">"</span><span class="st">Short-run</span><span class="ch">\n</span><span class="st">ROA</span><span class="ot">"</span>]</span>
-<span id="cb3-331"><a href="#cb3-331" aria-hidden="true" tabindex="-1"></a>    P -. residual direct path .-&gt; SV</span>
-<span id="cb3-332"><a href="#cb3-332" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-333"><a href="#cb3-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-334"><a href="#cb3-334" aria-hidden="true" tabindex="-1"></a><span class="fu">### Capabilities and Growth as a Contingency</span></span>
-<span id="cb3-335"><a href="#cb3-335" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-336"><a href="#cb3-336" aria-hidden="true" tabindex="-1"></a>If power is one organizational asset, *capabilities* are another, and their returns</span>
-<span id="cb3-337"><a href="#cb3-337" aria-hidden="true" tabindex="-1"></a>are not additive. @feng2017firm study how three firm capabilities—**marketing**,</span>
-<span id="cb3-338"><a href="#cb3-338" aria-hidden="true" tabindex="-1"></a>**research and development (R&amp;D)**, and **operations**—interact to drive revenue and</span>
-<span id="cb3-339"><a href="#cb3-339" aria-hidden="true" tabindex="-1"></a>profit growth, using panel data on 612 public U.S. firms observed over 16 years</span>
-<span id="cb3-340"><a href="#cb3-340" aria-hidden="true" tabindex="-1"></a>across 60 industries, and framed by **contingency theory**: the value of a</span>
-<span id="cb3-341"><a href="#cb3-341" aria-hidden="true" tabindex="-1"></a>capability depends on its complements and on the environment.</span>
-<span id="cb3-342"><a href="#cb3-342" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-343"><a href="#cb3-343" aria-hidden="true" tabindex="-1"></a>The interaction structure is the substance. R&amp;D capability *amplifies* the growth</span>
-<span id="cb3-344"><a href="#cb3-344" aria-hidden="true" tabindex="-1"></a>effect of marketing capability—innovation gives marketing something worth</span>
-<span id="cb3-345"><a href="#cb3-345" aria-hidden="true" tabindex="-1"></a>selling—whereas operations capability *attenuates* it, plausibly because an</span>
-<span id="cb3-346"><a href="#cb3-346" aria-hidden="true" tabindex="-1"></a>operations orientation tuned for efficiency sits in tension with the</span>
-<span id="cb3-347"><a href="#cb3-347" aria-hidden="true" tabindex="-1"></a>demand-expanding thrust of marketing. Crucially, these interaction signs are not</span>
-<span id="cb3-348"><a href="#cb3-348" aria-hidden="true" tabindex="-1"></a>fixed constants but vary with two **boundary conditions**: market *munificence*</span>
-<span id="cb3-349"><a href="#cb3-349" aria-hidden="true" tabindex="-1"></a>(the abundance of growth opportunities) and competitive *dynamism* (the volatility</span>
-<span id="cb3-350"><a href="#cb3-350" aria-hidden="true" tabindex="-1"></a>of the competitive environment). A formalism makes the contingency explicit. Let</span>
-<span id="cb3-351"><a href="#cb3-351" aria-hidden="true" tabindex="-1"></a>growth $g_i$ for firm $i$ depend on marketing ($M$), R&amp;D ($R$), and operations</span>
-<span id="cb3-352"><a href="#cb3-352" aria-hidden="true" tabindex="-1"></a>($O$) capabilities through</span>
-<span id="cb3-353"><a href="#cb3-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-354"><a href="#cb3-354" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-355"><a href="#cb3-355" aria-hidden="true" tabindex="-1"></a>g_i = \beta_M M_i + \beta_R R_i + \beta_O O_i</span>
-<span id="cb3-356"><a href="#cb3-356" aria-hidden="true" tabindex="-1"></a><span class="ss">      + </span>\gamma_{MR}\,(M_i R_i) + \gamma_{MO}\,(M_i O_i) + \mathbf{z}_i^{\top}\boldsymbol{\delta} + u_i,</span>
-<span id="cb3-357"><a href="#cb3-357" aria-hidden="true" tabindex="-1"></a>$$ {#eq-capability-interaction}</span>
-<span id="cb3-358"><a href="#cb3-358" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-359"><a href="#cb3-359" aria-hidden="true" tabindex="-1"></a>where @feng2017firm find $\gamma_{MR}&gt;0$ and $\gamma_{MO}&lt;0$, and where the</span>
-<span id="cb3-360"><a href="#cb3-360" aria-hidden="true" tabindex="-1"></a>interaction coefficients are themselves modeled as functions of munificence and</span>
-<span id="cb3-361"><a href="#cb3-361" aria-hidden="true" tabindex="-1"></a>dynamism, $\gamma_{MR}=\gamma_{MR}(\text{munificence},\text{dynamism})$. The</span>
-<span id="cb3-362"><a href="#cb3-362" aria-hidden="true" tabindex="-1"></a>managerial reading is direct: the optimal capability portfolio is</span>
-<span id="cb3-363"><a href="#cb3-363" aria-hidden="true" tabindex="-1"></a>environment-specific, and a firm that pairs marketing with R&amp;D in a munificent</span>
-<span id="cb3-364"><a href="#cb3-364" aria-hidden="true" tabindex="-1"></a>market is exploiting a different complementarity than one defending share in a</span>
-<span id="cb3-365"><a href="#cb3-365" aria-hidden="true" tabindex="-1"></a>dynamic one. Identification here rests on the exogeneity of the interacted</span>
-<span id="cb3-366"><a href="#cb3-366" aria-hidden="true" tabindex="-1"></a>capabilities to the growth shock $u_i$—a strong assumption that the panel's</span>
-<span id="cb3-367"><a href="#cb3-367" aria-hidden="true" tabindex="-1"></a>within-firm variation only partly relaxes.</span>
-<span id="cb3-368"><a href="#cb3-368" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-369"><a href="#cb3-369" aria-hidden="true" tabindex="-1"></a><span class="fu">### Cross-Functional Coopetition</span></span>
-<span id="cb3-370"><a href="#cb3-370" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-371"><a href="#cb3-371" aria-hidden="true" tabindex="-1"></a>The capability story treats functions as inputs to be combined; @luo2006cross asks</span>
-<span id="cb3-372"><a href="#cb3-372" aria-hidden="true" tabindex="-1"></a>how the *relationships* among them should be configured. Marketing's interfaces</span>
-<span id="cb3-373"><a href="#cb3-373" aria-hidden="true" tabindex="-1"></a>with other departments are conventionally cast as either cooperative or</span>
-<span id="cb3-374"><a href="#cb3-374" aria-hidden="true" tabindex="-1"></a>competitive. @luo2006cross breaks that dichotomy with **coopetition**: the</span>
-<span id="cb3-375"><a href="#cb3-375" aria-hidden="true" tabindex="-1"></a>simultaneous presence of cooperation *and* competition between functions. Drawing on</span>
-<span id="cb3-376"><a href="#cb3-376" aria-hidden="true" tabindex="-1"></a>data from mid-level managers and senior executives, the study finds that</span>
-<span id="cb3-377"><a href="#cb3-377" aria-hidden="true" tabindex="-1"></a>cross-functional coopetition *raises* both customer and financial outcomes—a result</span>
-<span id="cb3-378"><a href="#cb3-378" aria-hidden="true" tabindex="-1"></a>that runs against the intuition that internal competition is purely destructive.</span>
-<span id="cb3-379"><a href="#cb3-379" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-380"><a href="#cb3-380" aria-hidden="true" tabindex="-1"></a>The effect is not direct. It is channeled through **market learning**: coopetition</span>
-<span id="cb3-381"><a href="#cb3-381" aria-hidden="true" tabindex="-1"></a>generates the friction and information exchange that surface market intelligence,</span>
-<span id="cb3-382"><a href="#cb3-382" aria-hidden="true" tabindex="-1"></a>and that learning is what improves outcomes. Mediation through learning is the</span>
-<span id="cb3-383"><a href="#cb3-383" aria-hidden="true" tabindex="-1"></a>identifying claim, and it reframes internal competition as a knowledge-generating</span>
-<span id="cb3-384"><a href="#cb3-384" aria-hidden="true" tabindex="-1"></a>mechanism rather than a coordination failure—provided the competitive element</span>
-<span id="cb3-385"><a href="#cb3-385" aria-hidden="true" tabindex="-1"></a>remains coupled to a cooperative one rather than degenerating into pure rivalry.</span>
-<span id="cb3-386"><a href="#cb3-386" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-387"><a href="#cb3-387" aria-hidden="true" tabindex="-1"></a><span class="fu">## Market Share, Customers, and Shareholder Value</span></span>
-<span id="cb3-388"><a href="#cb3-388" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-389"><a href="#cb3-389" aria-hidden="true" tabindex="-1"></a>A third cluster connects classic strategic levers—market share, customer</span>
-<span id="cb3-390"><a href="#cb3-390" aria-hidden="true" tabindex="-1"></a>portfolios—to profit and to the stock market's assessment of the firm.</span>
-<span id="cb3-391"><a href="#cb3-391" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-392"><a href="#cb3-392" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why and When Market Share Drives Profit</span></span>
-<span id="cb3-393"><a href="#cb3-393" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-394"><a href="#cb3-394" aria-hidden="true" tabindex="-1"></a>Firms routinely set market share as an objective and treat it as a scorecard, on</span>
-<span id="cb3-395"><a href="#cb3-395" aria-hidden="true" tabindex="-1"></a>the presumption that share causes profit. @bhattacharya2022examining interrogate</span>
-<span id="cb3-396"><a href="#cb3-396" aria-hidden="true" tabindex="-1"></a>that presumption by estimating, *simultaneously*, the three theoretical mechanisms</span>
-<span id="cb3-397"><a href="#cb3-397" aria-hidden="true" tabindex="-1"></a>that the literature offers for the share–profit link: **market power** (large share</span>
-<span id="cb3-398"><a href="#cb3-398" aria-hidden="true" tabindex="-1"></a>confers pricing latitude), **quality signaling** (share is read by buyers as a</span>
-<span id="cb3-399"><a href="#cb3-399" aria-hidden="true" tabindex="-1"></a>proxy for quality), and **operating efficiency** (scale lowers unit cost). The</span>
-<span id="cb3-400"><a href="#cb3-400" aria-hidden="true" tabindex="-1"></a>simultaneity is the methodological point—prior work tends to examine one mechanism</span>
-<span id="cb3-401"><a href="#cb3-401" aria-hidden="true" tabindex="-1"></a>in isolation, which cannot apportion the total effect.</span>
-<span id="cb3-402"><a href="#cb3-402" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-403"><a href="#cb3-403" aria-hidden="true" tabindex="-1"></a>The result is that market power and quality signaling jointly explain most of the</span>
-<span id="cb3-404"><a href="#cb3-404" aria-hidden="true" tabindex="-1"></a>positive share-to-profit variance, while operating efficiency contributes little.</span>
-<span id="cb3-405"><a href="#cb3-405" aria-hidden="true" tabindex="-1"></a>Strikingly, the same two mechanisms dominate even in the cases where share and</span>
-<span id="cb3-406"><a href="#cb3-406" aria-hidden="true" tabindex="-1"></a>profit are *negatively* related—niche firms, and firms that "buy" share through</span>
-<span id="cb3-407"><a href="#cb3-407" aria-hidden="true" tabindex="-1"></a>unprofitable promotion—indicating that the mechanisms are structural features of</span>
-<span id="cb3-408"><a href="#cb3-408" aria-hidden="true" tabindex="-1"></a>the relationship rather than artifacts of the average case. The practical</span>
-<span id="cb3-409"><a href="#cb3-409" aria-hidden="true" tabindex="-1"></a>corollary is that a share-building strategy pays off to the extent it strengthens</span>
-<span id="cb3-410"><a href="#cb3-410" aria-hidden="true" tabindex="-1"></a>pricing power or quality perceptions, and not merely because it adds volume.</span>
-<span id="cb3-411"><a href="#cb3-411" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-412"><a href="#cb3-412" aria-hidden="true" tabindex="-1"></a><span class="fu">### When Firing Customers Destroys (or Preserves) Value</span></span>
-<span id="cb3-413"><a href="#cb3-413" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-414"><a href="#cb3-414" aria-hidden="true" tabindex="-1"></a>Not all customers are profitable, and firms sometimes manage the unprofitable ones</span>
-<span id="cb3-415"><a href="#cb3-415" aria-hidden="true" tabindex="-1"></a>out. @feng2020impact ask what the stock market makes of **unprofitable customer</span>
-<span id="cb3-416"><a href="#cb3-416" aria-hidden="true" tabindex="-1"></a>management** (UCM) and use an **event study** to find out: they measure the</span>
-<span id="cb3-417"><a href="#cb3-417" aria-hidden="true" tabindex="-1"></a>abnormal stock return in a short window around announcements of UCM strategic</span>
-<span id="cb3-418"><a href="#cb3-418" aria-hidden="true" tabindex="-1"></a>decisions. On average the market reacts *negatively*, with a short-run abnormal</span>
-<span id="cb3-419"><a href="#cb3-419" aria-hidden="true" tabindex="-1"></a>return of about $-0.53\%$—investors do not, by default, applaud the firing of</span>
-<span id="cb3-420"><a href="#cb3-420" aria-hidden="true" tabindex="-1"></a>customers.</span>
-<span id="cb3-421"><a href="#cb3-421" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-422"><a href="#cb3-422" aria-hidden="true" tabindex="-1"></a>The interpretation runs through **signaling theory**, decomposing the announcement</span>
-<span id="cb3-423"><a href="#cb3-423" aria-hidden="true" tabindex="-1"></a>into properties of the *signal* (the UCM strategy itself), the *signaler* (the</span>
-<span id="cb3-424"><a href="#cb3-424" aria-hidden="true" tabindex="-1"></a>firm), and the signaling *environment*. *Indirect* UCM strategies—raising fees,</span>
-<span id="cb3-425"><a href="#cb3-425" aria-hidden="true" tabindex="-1"></a>reducing service, nudging unprofitable customers to leave—are received more</span>
-<span id="cb3-426"><a href="#cb3-426" aria-hidden="true" tabindex="-1"></a>favorably than *direct* divestment, in which the firm overtly terminates customer</span>
-<span id="cb3-427"><a href="#cb3-427" aria-hidden="true" tabindex="-1"></a>relationships. Moreover, specific indirect strategies, executed with clear strategic</span>
-<span id="cb3-428"><a href="#cb3-428" aria-hidden="true" tabindex="-1"></a>intent and backed by strong marketing capabilities and positive media coverage, can</span>
-<span id="cb3-429"><a href="#cb3-429" aria-hidden="true" tabindex="-1"></a>*offset* the average negative reaction entirely. The event-study logic is the same</span>
-<span id="cb3-430"><a href="#cb3-430" aria-hidden="true" tabindex="-1"></a>one developed for brand-asset transactions in @sec-branding: the abnormal return</span>
-<span id="cb3-431"><a href="#cb3-431" aria-hidden="true" tabindex="-1"></a>$\mathrm{AR}_{it}=R_{it}-\mathbb{E}[R_{it}\mid\text{market model}]$ is cumulated</span>
-<span id="cb3-432"><a href="#cb3-432" aria-hidden="true" tabindex="-1"></a>over the event window and regressed on signal, signaler, and environment</span>
-<span id="cb3-433"><a href="#cb3-433" aria-hidden="true" tabindex="-1"></a>characteristics, after screening the window for confounding announcements. Its</span>
-<span id="cb3-434"><a href="#cb3-434" aria-hidden="true" tabindex="-1"></a>validity rests on market efficiency over the window and on the absence of</span>
-<span id="cb3-435"><a href="#cb3-435" aria-hidden="true" tabindex="-1"></a>contemporaneous confounds.</span>
-<span id="cb3-436"><a href="#cb3-436" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-437"><a href="#cb3-437" aria-hidden="true" tabindex="-1"></a><span class="fu">## Resources, Deployment, and the Returns to Marketing Action</span></span>
-<span id="cb3-438"><a href="#cb3-438" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-439"><a href="#cb3-439" aria-hidden="true" tabindex="-1"></a>The final cluster takes up the resource-based view (RBV) of the firm and asks a</span>
-<span id="cb3-440"><a href="#cb3-440" aria-hidden="true" tabindex="-1"></a>question the preceding clusters presuppose: *given* a firm's resources, what</span>
-<span id="cb3-441"><a href="#cb3-441" aria-hidden="true" tabindex="-1"></a>determines whether its marketing actions actually pay off?</span>
+<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Power of the Marketing Department</span></span>
+<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a>@feng2015marketing track the **power of the marketing department**—its influence</span>
+<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a>relative to other functions—across a cross-industry panel of 612 public U.S. firms</span>
+<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a>from 1993 to 2008, using an objective metric rather than survey perceptions. Two</span>
+<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a>findings stand out. First, marketing-department power rose materially over the</span>
+<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a>period, against a prevailing narrative of marketing's organizational decline.</span>
+<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a>Second, and more consequentially, greater power predicts superior *long-run* total</span>
+<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a>shareholder return more strongly than it predicts short-run return on assets</span>
+<span id="cb3-306"><a href="#cb3-306" aria-hidden="true" tabindex="-1"></a>(ROA)—the value of marketing influence accrues over horizons longer than a single</span>
+<span id="cb3-307"><a href="#cb3-307" aria-hidden="true" tabindex="-1"></a>fiscal year.</span>
+<span id="cb3-308"><a href="#cb3-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-309"><a href="#cb3-309" aria-hidden="true" tabindex="-1"></a>The mechanism is a **mediation** argument built on market-based assets. Power</span>
+<span id="cb3-310"><a href="#cb3-310" aria-hidden="true" tabindex="-1"></a>operates through two capability channels: long-run *market-based-asset building*</span>
+<span id="cb3-311"><a href="#cb3-311" aria-hidden="true" tabindex="-1"></a>and short-run *market-based-asset leveraging*. These capabilities *partially*</span>
+<span id="cb3-312"><a href="#cb3-312" aria-hidden="true" tabindex="-1"></a>mediate the effect of power on long-term shareholder value and *fully* mediate its</span>
+<span id="cb3-313"><a href="#cb3-313" aria-hidden="true" tabindex="-1"></a>effect on short-term ROA. The distinction matters for inference. Under the standard</span>
+<span id="cb3-314"><a href="#cb3-314" aria-hidden="true" tabindex="-1"></a>mediation logic, a fully mediated effect implies that, conditional on the</span>
+<span id="cb3-315"><a href="#cb3-315" aria-hidden="true" tabindex="-1"></a>capability channel, the direct path from power to ROA is statistically</span>
+<span id="cb3-316"><a href="#cb3-316" aria-hidden="true" tabindex="-1"></a>indistinguishable from zero—so the entire short-run benefit of marketing power runs</span>
+<span id="cb3-317"><a href="#cb3-317" aria-hidden="true" tabindex="-1"></a>through asset leveraging. A partially mediated effect leaves a residual direct path,</span>
+<span id="cb3-318"><a href="#cb3-318" aria-hidden="true" tabindex="-1"></a>indicating that long-run value creation has sources the measured capabilities do</span>
+<span id="cb3-319"><a href="#cb3-319" aria-hidden="true" tabindex="-1"></a>not capture. Identifying mediation credibly requires the usual assumptions—no</span>
+<span id="cb3-320"><a href="#cb3-320" aria-hidden="true" tabindex="-1"></a>unmeasured confounding of the power–mediator and mediator–outcome links, and</span>
+<span id="cb3-321"><a href="#cb3-321" aria-hidden="true" tabindex="-1"></a>correct temporal ordering—which panel structure helps but does not guarantee.</span>
+<span id="cb3-322"><a href="#cb3-322" aria-hidden="true" tabindex="-1"></a>@fig-mktpower-mediation traces these two capability channels and the differing</span>
+<span id="cb3-323"><a href="#cb3-323" aria-hidden="true" tabindex="-1"></a>degrees to which each mediates the short-run and long-run performance paths.</span>
+<span id="cb3-324"><a href="#cb3-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-327"><a href="#cb3-327" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb3-328"><a href="#cb3-328" aria-hidden="true" tabindex="-1"></a>%%| label: fig-mktpower-mediation</span>
+<span id="cb3-329"><a href="#cb3-329" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Marketing-department power and firm performance. Power operates through two market-based-asset capabilities: building (long-run) and leveraging (short-run). The capabilities fully mediate the effect on short-run ROA and partially mediate the effect on long-run shareholder value.</span><span class="ot">"</span></span>
+<span id="cb3-330"><a href="#cb3-330" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb3-331"><a href="#cb3-331" aria-hidden="true" tabindex="-1"></a>    P[<span class="ot">"</span><span class="st">Marketing-department</span><span class="ch">\n</span><span class="st">power</span><span class="ot">"</span>] --&gt; B[<span class="ot">"</span><span class="st">Market-based-asset</span><span class="ch">\n</span><span class="st">building (long-run)</span><span class="ot">"</span>]</span>
+<span id="cb3-332"><a href="#cb3-332" aria-hidden="true" tabindex="-1"></a>    P --&gt; L[<span class="ot">"</span><span class="st">Market-based-asset</span><span class="ch">\n</span><span class="st">leveraging (short-run)</span><span class="ot">"</span>]</span>
+<span id="cb3-333"><a href="#cb3-333" aria-hidden="true" tabindex="-1"></a>    B --&gt;|partial mediation| SV[<span class="ot">"</span><span class="st">Long-run</span><span class="ch">\n</span><span class="st">shareholder value</span><span class="ot">"</span>]</span>
+<span id="cb3-334"><a href="#cb3-334" aria-hidden="true" tabindex="-1"></a>    L --&gt;|full mediation| ROA[<span class="ot">"</span><span class="st">Short-run</span><span class="ch">\n</span><span class="st">ROA</span><span class="ot">"</span>]</span>
+<span id="cb3-335"><a href="#cb3-335" aria-hidden="true" tabindex="-1"></a>    P -. residual direct path .-&gt; SV</span>
+<span id="cb3-336"><a href="#cb3-336" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-337"><a href="#cb3-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-338"><a href="#cb3-338" aria-hidden="true" tabindex="-1"></a><span class="fu">### Capabilities and Growth as a Contingency</span></span>
+<span id="cb3-339"><a href="#cb3-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-340"><a href="#cb3-340" aria-hidden="true" tabindex="-1"></a>If power is one organizational asset, *capabilities* are another, and their returns</span>
+<span id="cb3-341"><a href="#cb3-341" aria-hidden="true" tabindex="-1"></a>are not additive. @feng2017firm study how three firm capabilities—**marketing**,</span>
+<span id="cb3-342"><a href="#cb3-342" aria-hidden="true" tabindex="-1"></a>**research and development (R&amp;D)**, and **operations**—interact to drive revenue and</span>
+<span id="cb3-343"><a href="#cb3-343" aria-hidden="true" tabindex="-1"></a>profit growth, using panel data on 612 public U.S. firms observed over 16 years</span>
+<span id="cb3-344"><a href="#cb3-344" aria-hidden="true" tabindex="-1"></a>across 60 industries, and framed by **contingency theory**: the value of a</span>
+<span id="cb3-345"><a href="#cb3-345" aria-hidden="true" tabindex="-1"></a>capability depends on its complements and on the environment.</span>
+<span id="cb3-346"><a href="#cb3-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-347"><a href="#cb3-347" aria-hidden="true" tabindex="-1"></a>The interaction structure is the substance. R&amp;D capability *amplifies* the growth</span>
+<span id="cb3-348"><a href="#cb3-348" aria-hidden="true" tabindex="-1"></a>effect of marketing capability—innovation gives marketing something worth</span>
+<span id="cb3-349"><a href="#cb3-349" aria-hidden="true" tabindex="-1"></a>selling—whereas operations capability *attenuates* it, plausibly because an</span>
+<span id="cb3-350"><a href="#cb3-350" aria-hidden="true" tabindex="-1"></a>operations orientation tuned for efficiency sits in tension with the</span>
+<span id="cb3-351"><a href="#cb3-351" aria-hidden="true" tabindex="-1"></a>demand-expanding thrust of marketing. Crucially, these interaction signs are not</span>
+<span id="cb3-352"><a href="#cb3-352" aria-hidden="true" tabindex="-1"></a>fixed constants but vary with two **boundary conditions**: market *munificence*</span>
+<span id="cb3-353"><a href="#cb3-353" aria-hidden="true" tabindex="-1"></a>(the abundance of growth opportunities) and competitive *dynamism* (the volatility</span>
+<span id="cb3-354"><a href="#cb3-354" aria-hidden="true" tabindex="-1"></a>of the competitive environment). A formalism makes the contingency explicit. Let</span>
+<span id="cb3-355"><a href="#cb3-355" aria-hidden="true" tabindex="-1"></a>growth $g_i$ for firm $i$ depend on marketing ($M$), R&amp;D ($R$), and operations</span>
+<span id="cb3-356"><a href="#cb3-356" aria-hidden="true" tabindex="-1"></a>($O$) capabilities through</span>
+<span id="cb3-357"><a href="#cb3-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-358"><a href="#cb3-358" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-359"><a href="#cb3-359" aria-hidden="true" tabindex="-1"></a>g_i = \beta_M M_i + \beta_R R_i + \beta_O O_i</span>
+<span id="cb3-360"><a href="#cb3-360" aria-hidden="true" tabindex="-1"></a><span class="ss">      + </span>\gamma_{MR}\,(M_i R_i) + \gamma_{MO}\,(M_i O_i) + \mathbf{z}_i^{\top}\boldsymbol{\delta} + u_i,</span>
+<span id="cb3-361"><a href="#cb3-361" aria-hidden="true" tabindex="-1"></a>$$ {#eq-capability-interaction}</span>
+<span id="cb3-362"><a href="#cb3-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-363"><a href="#cb3-363" aria-hidden="true" tabindex="-1"></a>where @feng2017firm find $\gamma_{MR}&gt;0$ and $\gamma_{MO}&lt;0$, and where the</span>
+<span id="cb3-364"><a href="#cb3-364" aria-hidden="true" tabindex="-1"></a>interaction coefficients are themselves modeled as functions of munificence and</span>
+<span id="cb3-365"><a href="#cb3-365" aria-hidden="true" tabindex="-1"></a>dynamism, $\gamma_{MR}=\gamma_{MR}(\text{munificence},\text{dynamism})$. The</span>
+<span id="cb3-366"><a href="#cb3-366" aria-hidden="true" tabindex="-1"></a>managerial reading is direct: the optimal capability portfolio is</span>
+<span id="cb3-367"><a href="#cb3-367" aria-hidden="true" tabindex="-1"></a>environment-specific, and a firm that pairs marketing with R&amp;D in a munificent</span>
+<span id="cb3-368"><a href="#cb3-368" aria-hidden="true" tabindex="-1"></a>market is exploiting a different complementarity than one defending share in a</span>
+<span id="cb3-369"><a href="#cb3-369" aria-hidden="true" tabindex="-1"></a>dynamic one. Identification here rests on the exogeneity of the interacted</span>
+<span id="cb3-370"><a href="#cb3-370" aria-hidden="true" tabindex="-1"></a>capabilities to the growth shock $u_i$—a strong assumption that the panel's</span>
+<span id="cb3-371"><a href="#cb3-371" aria-hidden="true" tabindex="-1"></a>within-firm variation only partly relaxes.</span>
+<span id="cb3-372"><a href="#cb3-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-373"><a href="#cb3-373" aria-hidden="true" tabindex="-1"></a><span class="fu">### Cross-Functional Coopetition</span></span>
+<span id="cb3-374"><a href="#cb3-374" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-375"><a href="#cb3-375" aria-hidden="true" tabindex="-1"></a>The capability story treats functions as inputs to be combined; @luo2006cross asks</span>
+<span id="cb3-376"><a href="#cb3-376" aria-hidden="true" tabindex="-1"></a>how the *relationships* among them should be configured. Marketing's interfaces</span>
+<span id="cb3-377"><a href="#cb3-377" aria-hidden="true" tabindex="-1"></a>with other departments are conventionally cast as either cooperative or</span>
+<span id="cb3-378"><a href="#cb3-378" aria-hidden="true" tabindex="-1"></a>competitive. @luo2006cross breaks that dichotomy with **coopetition**: the</span>
+<span id="cb3-379"><a href="#cb3-379" aria-hidden="true" tabindex="-1"></a>simultaneous presence of cooperation *and* competition between functions. Drawing on</span>
+<span id="cb3-380"><a href="#cb3-380" aria-hidden="true" tabindex="-1"></a>data from mid-level managers and senior executives, the study finds that</span>
+<span id="cb3-381"><a href="#cb3-381" aria-hidden="true" tabindex="-1"></a>cross-functional coopetition *raises* both customer and financial outcomes—a result</span>
+<span id="cb3-382"><a href="#cb3-382" aria-hidden="true" tabindex="-1"></a>that runs against the intuition that internal competition is purely destructive.</span>
+<span id="cb3-383"><a href="#cb3-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-384"><a href="#cb3-384" aria-hidden="true" tabindex="-1"></a>The effect is not direct. It is channeled through **market learning**: coopetition</span>
+<span id="cb3-385"><a href="#cb3-385" aria-hidden="true" tabindex="-1"></a>generates the friction and information exchange that surface market intelligence,</span>
+<span id="cb3-386"><a href="#cb3-386" aria-hidden="true" tabindex="-1"></a>and that learning is what improves outcomes. Mediation through learning is the</span>
+<span id="cb3-387"><a href="#cb3-387" aria-hidden="true" tabindex="-1"></a>identifying claim, and it reframes internal competition as a knowledge-generating</span>
+<span id="cb3-388"><a href="#cb3-388" aria-hidden="true" tabindex="-1"></a>mechanism rather than a coordination failure—provided the competitive element</span>
+<span id="cb3-389"><a href="#cb3-389" aria-hidden="true" tabindex="-1"></a>remains coupled to a cooperative one rather than degenerating into pure rivalry.</span>
+<span id="cb3-390"><a href="#cb3-390" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-391"><a href="#cb3-391" aria-hidden="true" tabindex="-1"></a><span class="fu">## Market Share, Customers, and Shareholder Value</span></span>
+<span id="cb3-392"><a href="#cb3-392" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-393"><a href="#cb3-393" aria-hidden="true" tabindex="-1"></a>A third cluster connects classic strategic levers—market share, customer</span>
+<span id="cb3-394"><a href="#cb3-394" aria-hidden="true" tabindex="-1"></a>portfolios—to profit and to the stock market's assessment of the firm.</span>
+<span id="cb3-395"><a href="#cb3-395" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-396"><a href="#cb3-396" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why and When Market Share Drives Profit</span></span>
+<span id="cb3-397"><a href="#cb3-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-398"><a href="#cb3-398" aria-hidden="true" tabindex="-1"></a>Firms routinely set market share as an objective and treat it as a scorecard, on</span>
+<span id="cb3-399"><a href="#cb3-399" aria-hidden="true" tabindex="-1"></a>the presumption that share causes profit. @bhattacharya2022examining interrogate</span>
+<span id="cb3-400"><a href="#cb3-400" aria-hidden="true" tabindex="-1"></a>that presumption by estimating, *simultaneously*, the three theoretical mechanisms</span>
+<span id="cb3-401"><a href="#cb3-401" aria-hidden="true" tabindex="-1"></a>that the literature offers for the share–profit link: **market power** (large share</span>
+<span id="cb3-402"><a href="#cb3-402" aria-hidden="true" tabindex="-1"></a>confers pricing latitude), **quality signaling** (share is read by buyers as a</span>
+<span id="cb3-403"><a href="#cb3-403" aria-hidden="true" tabindex="-1"></a>proxy for quality), and **operating efficiency** (scale lowers unit cost). The</span>
+<span id="cb3-404"><a href="#cb3-404" aria-hidden="true" tabindex="-1"></a>simultaneity is the methodological point—prior work tends to examine one mechanism</span>
+<span id="cb3-405"><a href="#cb3-405" aria-hidden="true" tabindex="-1"></a>in isolation, which cannot apportion the total effect.</span>
+<span id="cb3-406"><a href="#cb3-406" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-407"><a href="#cb3-407" aria-hidden="true" tabindex="-1"></a>The result is that market power and quality signaling jointly explain most of the</span>
+<span id="cb3-408"><a href="#cb3-408" aria-hidden="true" tabindex="-1"></a>positive share-to-profit variance, while operating efficiency contributes little.</span>
+<span id="cb3-409"><a href="#cb3-409" aria-hidden="true" tabindex="-1"></a>Strikingly, the same two mechanisms dominate even in the cases where share and</span>
+<span id="cb3-410"><a href="#cb3-410" aria-hidden="true" tabindex="-1"></a>profit are *negatively* related—niche firms, and firms that "buy" share through</span>
+<span id="cb3-411"><a href="#cb3-411" aria-hidden="true" tabindex="-1"></a>unprofitable promotion—indicating that the mechanisms are structural features of</span>
+<span id="cb3-412"><a href="#cb3-412" aria-hidden="true" tabindex="-1"></a>the relationship rather than artifacts of the average case. The practical</span>
+<span id="cb3-413"><a href="#cb3-413" aria-hidden="true" tabindex="-1"></a>corollary is that a share-building strategy pays off to the extent it strengthens</span>
+<span id="cb3-414"><a href="#cb3-414" aria-hidden="true" tabindex="-1"></a>pricing power or quality perceptions, and not merely because it adds volume.</span>
+<span id="cb3-415"><a href="#cb3-415" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-416"><a href="#cb3-416" aria-hidden="true" tabindex="-1"></a><span class="fu">### When Firing Customers Destroys (or Preserves) Value</span></span>
+<span id="cb3-417"><a href="#cb3-417" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-418"><a href="#cb3-418" aria-hidden="true" tabindex="-1"></a>Not all customers are profitable, and firms sometimes manage the unprofitable ones</span>
+<span id="cb3-419"><a href="#cb3-419" aria-hidden="true" tabindex="-1"></a>out. @feng2020impact ask what the stock market makes of **unprofitable customer</span>
+<span id="cb3-420"><a href="#cb3-420" aria-hidden="true" tabindex="-1"></a>management** (UCM) and use an **event study** to find out: they measure the</span>
+<span id="cb3-421"><a href="#cb3-421" aria-hidden="true" tabindex="-1"></a>abnormal stock return in a short window around announcements of UCM strategic</span>
+<span id="cb3-422"><a href="#cb3-422" aria-hidden="true" tabindex="-1"></a>decisions. On average the market reacts *negatively*, with a short-run abnormal</span>
+<span id="cb3-423"><a href="#cb3-423" aria-hidden="true" tabindex="-1"></a>return of about $-0.53\%$—investors do not, by default, applaud the firing of</span>
+<span id="cb3-424"><a href="#cb3-424" aria-hidden="true" tabindex="-1"></a>customers.</span>
+<span id="cb3-425"><a href="#cb3-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-426"><a href="#cb3-426" aria-hidden="true" tabindex="-1"></a>The interpretation runs through **signaling theory**, decomposing the announcement</span>
+<span id="cb3-427"><a href="#cb3-427" aria-hidden="true" tabindex="-1"></a>into properties of the *signal* (the UCM strategy itself), the *signaler* (the</span>
+<span id="cb3-428"><a href="#cb3-428" aria-hidden="true" tabindex="-1"></a>firm), and the signaling *environment*. *Indirect* UCM strategies—raising fees,</span>
+<span id="cb3-429"><a href="#cb3-429" aria-hidden="true" tabindex="-1"></a>reducing service, nudging unprofitable customers to leave—are received more</span>
+<span id="cb3-430"><a href="#cb3-430" aria-hidden="true" tabindex="-1"></a>favorably than *direct* divestment, in which the firm overtly terminates customer</span>
+<span id="cb3-431"><a href="#cb3-431" aria-hidden="true" tabindex="-1"></a>relationships. Moreover, specific indirect strategies, executed with clear strategic</span>
+<span id="cb3-432"><a href="#cb3-432" aria-hidden="true" tabindex="-1"></a>intent and backed by strong marketing capabilities and positive media coverage, can</span>
+<span id="cb3-433"><a href="#cb3-433" aria-hidden="true" tabindex="-1"></a>*offset* the average negative reaction entirely. The event-study logic is the same</span>
+<span id="cb3-434"><a href="#cb3-434" aria-hidden="true" tabindex="-1"></a>one developed for brand-asset transactions in @sec-branding: the abnormal return</span>
+<span id="cb3-435"><a href="#cb3-435" aria-hidden="true" tabindex="-1"></a>$\mathrm{AR}_{it}=R_{it}-\mathbb{E}[R_{it}\mid\text{market model}]$ is cumulated</span>
+<span id="cb3-436"><a href="#cb3-436" aria-hidden="true" tabindex="-1"></a>over the event window and regressed on signal, signaler, and environment</span>
+<span id="cb3-437"><a href="#cb3-437" aria-hidden="true" tabindex="-1"></a>characteristics, after screening the window for confounding announcements. Its</span>
+<span id="cb3-438"><a href="#cb3-438" aria-hidden="true" tabindex="-1"></a>validity rests on market efficiency over the window and on the absence of</span>
+<span id="cb3-439"><a href="#cb3-439" aria-hidden="true" tabindex="-1"></a>contemporaneous confounds.</span>
+<span id="cb3-440"><a href="#cb3-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-441"><a href="#cb3-441" aria-hidden="true" tabindex="-1"></a><span class="fu">## Resources, Deployment, and the Returns to Marketing Action</span></span>
 <span id="cb3-442"><a href="#cb3-442" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-443"><a href="#cb3-443" aria-hidden="true" tabindex="-1"></a><span class="fu">### Planning Capability and a Productive Paradox</span></span>
-<span id="cb3-444"><a href="#cb3-444" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-445"><a href="#cb3-445" aria-hidden="true" tabindex="-1"></a>Strategy scholars have long debated whether *formal planning* helps or hinders, and</span>
-<span id="cb3-446"><a href="#cb3-446" aria-hidden="true" tabindex="-1"></a>the evidence is genuinely mixed. @slotegraaf2004paradox resolve part of the tension</span>
-<span id="cb3-447"><a href="#cb3-447" aria-hidden="true" tabindex="-1"></a>by viewing marketing-planning capability through the RBV and uncovering a</span>
-<span id="cb3-448"><a href="#cb3-448" aria-hidden="true" tabindex="-1"></a>**paradox**: a strong planning capability has two opposing consequences that can</span>
-<span id="cb3-449"><a href="#cb3-449" aria-hidden="true" tabindex="-1"></a>*both* improve performance. On one hand, good planning *reduces* the need for</span>
-<span id="cb3-450"><a href="#cb3-450" aria-hidden="true" tabindex="-1"></a>post-plan improvisation—execution follows the plan, and the firm avoids costly</span>
-<span id="cb3-451"><a href="#cb3-451" aria-hidden="true" tabindex="-1"></a>mid-course scrambling. On the other hand, it introduces process *rigidity*—a</span>
-<span id="cb3-452"><a href="#cb3-452" aria-hidden="true" tabindex="-1"></a>well-planned firm is less able to deviate when conditions change. The paradox is</span>
-<span id="cb3-453"><a href="#cb3-453" aria-hidden="true" tabindex="-1"></a>that each effect can be performance-enhancing in its own right: reduced</span>
-<span id="cb3-454"><a href="#cb3-454" aria-hidden="true" tabindex="-1"></a>improvisation lowers execution cost, while rigidity can protect a coherent strategy</span>
-<span id="cb3-455"><a href="#cb3-455" aria-hidden="true" tabindex="-1"></a>from value-destroying ad hoc revision. The net effect is therefore not signed a</span>
-<span id="cb3-456"><a href="#cb3-456" aria-hidden="true" tabindex="-1"></a>priori, which explains why the planning-performance literature reaches conflicting</span>
-<span id="cb3-457"><a href="#cb3-457" aria-hidden="true" tabindex="-1"></a>conclusions—it has been estimating a composite of two channels with opposite</span>
-<span id="cb3-458"><a href="#cb3-458" aria-hidden="true" tabindex="-1"></a>behavioral content.</span>
-<span id="cb3-459"><a href="#cb3-459" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-460"><a href="#cb3-460" aria-hidden="true" tabindex="-1"></a><span class="fu">### Resources Condition the Returns to Deployment</span></span>
-<span id="cb3-461"><a href="#cb3-461" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-462"><a href="#cb3-462" aria-hidden="true" tabindex="-1"></a>@slotegraaf2003role sharpen the central RBV question. Marketing research has tended</span>
-<span id="cb3-463"><a href="#cb3-463" aria-hidden="true" tabindex="-1"></a>to study *either* a firm's resources *or* its strategic and tactical actions, but</span>
-<span id="cb3-464"><a href="#cb3-464" aria-hidden="true" tabindex="-1"></a>neither alone explains competitive advantage. The authors introduce **market</span>
-<span id="cb3-465"><a href="#cb3-465" aria-hidden="true" tabindex="-1"></a>deployment**—the specific marketing actions a firm takes (distribution pushes,</span>
-<span id="cb3-466"><a href="#cb3-466" aria-hidden="true" tabindex="-1"></a>couponing, and the like)—and ask how a firm's *resource base* governs the *return*</span>
-<span id="cb3-467"><a href="#cb3-467" aria-hidden="true" tabindex="-1"></a>to deployment. The estimand is therefore an interaction: the marginal effect of an</span>
-<span id="cb3-468"><a href="#cb3-468" aria-hidden="true" tabindex="-1"></a>action on outcomes, as a function of the resources the firm brings to it.</span>
-<span id="cb3-469"><a href="#cb3-469" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-470"><a href="#cb3-470" aria-hidden="true" tabindex="-1"></a>Using a secondary-data design and a sequence of hierarchical regressions, they find</span>
-<span id="cb3-471"><a href="#cb3-471" aria-hidden="true" tabindex="-1"></a>that resources directly shape deployment returns, and that the sign depends on the</span>
-<span id="cb3-472"><a href="#cb3-472" aria-hidden="true" tabindex="-1"></a>*type* of resource. High levels of intangible *marketing* resources and</span>
-<span id="cb3-473"><a href="#cb3-473" aria-hidden="true" tabindex="-1"></a>*technological* resources *enhance* the success of deployment activities such as</span>
-<span id="cb3-474"><a href="#cb3-474" aria-hidden="true" tabindex="-1"></a>distribution and couponing. Higher levels of *financial* resources, by contrast,</span>
-<span id="cb3-475"><a href="#cb3-475" aria-hidden="true" tabindex="-1"></a>*reduce* the efficiency of those same activities—plausibly because financial slack</span>
-<span id="cb3-476"><a href="#cb3-476" aria-hidden="true" tabindex="-1"></a>dulls the discipline that makes deployment effective. A compact representation makes</span>
-<span id="cb3-477"><a href="#cb3-477" aria-hidden="true" tabindex="-1"></a>the interaction explicit. Let $y_i$ be the outcome of a deployment action $D_i$ for</span>
-<span id="cb3-478"><a href="#cb3-478" aria-hidden="true" tabindex="-1"></a>firm $i$ holding a resource bundle $\mathbf{r}_i$:</span>
-<span id="cb3-479"><a href="#cb3-479" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-480"><a href="#cb3-480" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-481"><a href="#cb3-481" aria-hidden="true" tabindex="-1"></a>y_i = \beta_0 + \beta_D D_i + \boldsymbol{\theta}^{\top}(\mathbf{r}_i \odot D_i)</span>
-<span id="cb3-482"><a href="#cb3-482" aria-hidden="true" tabindex="-1"></a><span class="ss">      + </span>\mathbf{r}_i^{\top}\boldsymbol{\phi} + \varepsilon_i,</span>
-<span id="cb3-483"><a href="#cb3-483" aria-hidden="true" tabindex="-1"></a>$$ {#eq-deployment-interaction}</span>
-<span id="cb3-484"><a href="#cb3-484" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-485"><a href="#cb3-485" aria-hidden="true" tabindex="-1"></a>where $\odot$ denotes the element-wise product of the resource vector with the</span>
-<span id="cb3-486"><a href="#cb3-486" aria-hidden="true" tabindex="-1"></a>deployment intensity, and the interaction vector $\boldsymbol{\theta}$ carries the</span>
-<span id="cb3-487"><a href="#cb3-487" aria-hidden="true" tabindex="-1"></a>result: positive entries for intangible marketing and technological resources,</span>
-<span id="cb3-488"><a href="#cb3-488" aria-hidden="true" tabindex="-1"></a>negative for financial resources. The managerial implication is that the</span>
-<span id="cb3-489"><a href="#cb3-489" aria-hidden="true" tabindex="-1"></a>*same* marketing action is not equally productive across firms—its return is</span>
-<span id="cb3-490"><a href="#cb3-490" aria-hidden="true" tabindex="-1"></a>contingent on the resource base—and that resource abundance is not uniformly good,</span>
-<span id="cb3-491"><a href="#cb3-491" aria-hidden="true" tabindex="-1"></a>since financial slack can erode the efficiency of execution.</span>
-<span id="cb3-492"><a href="#cb3-492" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-493"><a href="#cb3-493" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sustainability as a Brand-Level Action</span></span>
-<span id="cb3-494"><a href="#cb3-494" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-495"><a href="#cb3-495" aria-hidden="true" tabindex="-1"></a>A final, more focused result connects the resource-and-action theme to a salient</span>
-<span id="cb3-496"><a href="#cb3-496" aria-hidden="true" tabindex="-1"></a>contemporary lever. @olsen2014green study the brand-level consequences of</span>
-<span id="cb3-497"><a href="#cb3-497" aria-hidden="true" tabindex="-1"></a>introducing environmentally sustainable ("green") new products—an increasingly</span>
-<span id="cb3-498"><a href="#cb3-498" aria-hidden="true" tabindex="-1"></a>common, resource-intensive marketing action—integrating **social identity** and</span>
-<span id="cb3-499"><a href="#cb3-499" aria-hidden="true" tabindex="-1"></a>**framing** theories. Estimating a **three-stage least squares** (3SLS) system over</span>
-<span id="cb3-500"><a href="#cb3-500" aria-hidden="true" tabindex="-1"></a>green product introductions from 75 brands during 2009–2012, they find that green</span>
-<span id="cb3-501"><a href="#cb3-501" aria-hidden="true" tabindex="-1"></a>launches *can* improve brand attitude, but that the magnitude is conditional. The</span>
-<span id="cb3-502"><a href="#cb3-502" aria-hidden="true" tabindex="-1"></a>volume of green-centric messaging, the product's typology, and the *credibility of</span>
-<span id="cb3-503"><a href="#cb3-503" aria-hidden="true" tabindex="-1"></a>the information source* jointly determine how much attitude moves, and a brand's</span>
-<span id="cb3-504"><a href="#cb3-504" aria-hidden="true" tabindex="-1"></a>strategic positioning together with its product category governs whether a green</span>
-<span id="cb3-505"><a href="#cb3-505" aria-hidden="true" tabindex="-1"></a>launch is undertaken at all. The 3SLS specification is the methodologically</span>
-<span id="cb3-506"><a href="#cb3-506" aria-hidden="true" tabindex="-1"></a>load-bearing choice: because the decision to *introduce* a green product and its</span>
-<span id="cb3-507"><a href="#cb3-507" aria-hidden="true" tabindex="-1"></a>*effect* on brand attitude are jointly determined, single-equation estimation would</span>
-<span id="cb3-508"><a href="#cb3-508" aria-hidden="true" tabindex="-1"></a>confound selection with effect, and the simultaneous-equations system is what</span>
-<span id="cb3-509"><a href="#cb3-509" aria-hidden="true" tabindex="-1"></a>restores identification of the attitude effect net of the selection into green</span>
-<span id="cb3-510"><a href="#cb3-510" aria-hidden="true" tabindex="-1"></a>launches.</span>
-<span id="cb3-511"><a href="#cb3-511" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-512"><a href="#cb3-512" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
-<span id="cb3-513"><a href="#cb3-513" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-514"><a href="#cb3-514" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Latent dynamics need latent-state models.** Article influence is a time-varying</span>
-<span id="cb3-515"><a href="#cb3-515" aria-hidden="true" tabindex="-1"></a>  hidden state; a hidden-Markov Tobit (@eq-citability-transition–@eq-citability-tobit)</span>
-<span id="cb3-516"><a href="#cb3-516" aria-hidden="true" tabindex="-1"></a>  represents both the dynamics and the uncitedness that count regressions miss</span>
-<span id="cb3-517"><a href="#cb3-517" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@li2015explaining</span><span class="co">]</span>. Impact is two-dimensional once external relevance (R2M) is</span>
-<span id="cb3-518"><a href="#cb3-518" aria-hidden="true" tabindex="-1"></a>  added <span class="co">[</span><span class="ot">@jedidi2021</span><span class="co">]</span>.</span>
-<span id="cb3-519"><a href="#cb3-519" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Identity fragmentation is structured bias, not noise.** Its three channels—</span>
-<span id="cb3-520"><a href="#cb3-520" aria-hidden="true" tabindex="-1"></a>  attenuation, omitted cross-device exposure, and device-activity confounding—each</span>
-<span id="cb3-521"><a href="#cb3-521" aria-hidden="true" tabindex="-1"></a>  vanish only under a specific, often implausible, condition, and partial identity</span>
-<span id="cb3-522"><a href="#cb3-522" aria-hidden="true" tabindex="-1"></a>  linking can make matters worse <span class="co">[</span><span class="ot">@lin2022; @coey2016</span><span class="co">]</span>.</span>
-<span id="cb3-523"><a href="#cb3-523" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Marketing's organizational standing is priced.** Department power predicts</span>
-<span id="cb3-524"><a href="#cb3-524" aria-hidden="true" tabindex="-1"></a>  long-run shareholder value through market-based-asset capabilities <span class="co">[</span><span class="ot">@feng2015marketing</span><span class="co">]</span>;</span>
-<span id="cb3-525"><a href="#cb3-525" aria-hidden="true" tabindex="-1"></a>  capability returns are contingent and interactive <span class="co">[</span><span class="ot">@feng2017firm</span><span class="co">]</span>; and</span>
-<span id="cb3-526"><a href="#cb3-526" aria-hidden="true" tabindex="-1"></a>  cross-functional coopetition pays off *through* market learning <span class="co">[</span><span class="ot">@luo2006cross</span><span class="co">]</span>.</span>
-<span id="cb3-527"><a href="#cb3-527" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Share and customer decisions reach the stock market through mechanisms.** Market</span>
-<span id="cb3-528"><a href="#cb3-528" aria-hidden="true" tabindex="-1"></a>  power and quality signaling—not efficiency—carry the share–profit link</span>
-<span id="cb3-529"><a href="#cb3-529" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@bhattacharya2022examining</span><span class="co">]</span>, and unprofitable-customer management is read by</span>
-<span id="cb3-530"><a href="#cb3-530" aria-hidden="true" tabindex="-1"></a>  investors as a signal whose reception depends on its form <span class="co">[</span><span class="ot">@feng2020impact</span><span class="co">]</span>.</span>
-<span id="cb3-531"><a href="#cb3-531" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Resources condition the returns to action.** Planning capability cuts both ways</span>
-<span id="cb3-532"><a href="#cb3-532" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@slotegraaf2004paradox</span><span class="co">]</span>; intangible and technological resources lift deployment</span>
-<span id="cb3-533"><a href="#cb3-533" aria-hidden="true" tabindex="-1"></a>  returns while financial slack erodes them <span class="co">[</span><span class="ot">@slotegraaf2003role</span><span class="co">]</span>; and green-product</span>
-<span id="cb3-534"><a href="#cb3-534" aria-hidden="true" tabindex="-1"></a>  effects are identified only once selection into launching is modeled jointly</span>
-<span id="cb3-535"><a href="#cb3-535" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@olsen2014green</span><span class="co">]</span>.</span>
+<span id="cb3-443"><a href="#cb3-443" aria-hidden="true" tabindex="-1"></a>The final cluster takes up the resource-based view (RBV) of the firm and asks a</span>
+<span id="cb3-444"><a href="#cb3-444" aria-hidden="true" tabindex="-1"></a>question the preceding clusters presuppose: *given* a firm's resources, what</span>
+<span id="cb3-445"><a href="#cb3-445" aria-hidden="true" tabindex="-1"></a>determines whether its marketing actions actually pay off?</span>
+<span id="cb3-446"><a href="#cb3-446" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-447"><a href="#cb3-447" aria-hidden="true" tabindex="-1"></a><span class="fu">### Planning Capability and a Productive Paradox</span></span>
+<span id="cb3-448"><a href="#cb3-448" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-449"><a href="#cb3-449" aria-hidden="true" tabindex="-1"></a>Strategy scholars have long debated whether *formal planning* helps or hinders, and</span>
+<span id="cb3-450"><a href="#cb3-450" aria-hidden="true" tabindex="-1"></a>the evidence is genuinely mixed. @slotegraaf2004paradox resolve part of the tension</span>
+<span id="cb3-451"><a href="#cb3-451" aria-hidden="true" tabindex="-1"></a>by viewing marketing-planning capability through the RBV and uncovering a</span>
+<span id="cb3-452"><a href="#cb3-452" aria-hidden="true" tabindex="-1"></a>**paradox**: a strong planning capability has two opposing consequences that can</span>
+<span id="cb3-453"><a href="#cb3-453" aria-hidden="true" tabindex="-1"></a>*both* improve performance. On one hand, good planning *reduces* the need for</span>
+<span id="cb3-454"><a href="#cb3-454" aria-hidden="true" tabindex="-1"></a>post-plan improvisation—execution follows the plan, and the firm avoids costly</span>
+<span id="cb3-455"><a href="#cb3-455" aria-hidden="true" tabindex="-1"></a>mid-course scrambling. On the other hand, it introduces process *rigidity*—a</span>
+<span id="cb3-456"><a href="#cb3-456" aria-hidden="true" tabindex="-1"></a>well-planned firm is less able to deviate when conditions change. The paradox is</span>
+<span id="cb3-457"><a href="#cb3-457" aria-hidden="true" tabindex="-1"></a>that each effect can be performance-enhancing in its own right: reduced</span>
+<span id="cb3-458"><a href="#cb3-458" aria-hidden="true" tabindex="-1"></a>improvisation lowers execution cost, while rigidity can protect a coherent strategy</span>
+<span id="cb3-459"><a href="#cb3-459" aria-hidden="true" tabindex="-1"></a>from value-destroying ad hoc revision. The net effect is therefore not signed a</span>
+<span id="cb3-460"><a href="#cb3-460" aria-hidden="true" tabindex="-1"></a>priori, which explains why the planning-performance literature reaches conflicting</span>
+<span id="cb3-461"><a href="#cb3-461" aria-hidden="true" tabindex="-1"></a>conclusions—it has been estimating a composite of two channels with opposite</span>
+<span id="cb3-462"><a href="#cb3-462" aria-hidden="true" tabindex="-1"></a>behavioral content.</span>
+<span id="cb3-463"><a href="#cb3-463" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-464"><a href="#cb3-464" aria-hidden="true" tabindex="-1"></a><span class="fu">### Resources Condition the Returns to Deployment</span></span>
+<span id="cb3-465"><a href="#cb3-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-466"><a href="#cb3-466" aria-hidden="true" tabindex="-1"></a>@slotegraaf2003role sharpen the central RBV question. Marketing research has tended</span>
+<span id="cb3-467"><a href="#cb3-467" aria-hidden="true" tabindex="-1"></a>to study *either* a firm's resources *or* its strategic and tactical actions, but</span>
+<span id="cb3-468"><a href="#cb3-468" aria-hidden="true" tabindex="-1"></a>neither alone explains competitive advantage. The authors introduce **market</span>
+<span id="cb3-469"><a href="#cb3-469" aria-hidden="true" tabindex="-1"></a>deployment**—the specific marketing actions a firm takes (distribution pushes,</span>
+<span id="cb3-470"><a href="#cb3-470" aria-hidden="true" tabindex="-1"></a>couponing, and the like)—and ask how a firm's *resource base* governs the *return*</span>
+<span id="cb3-471"><a href="#cb3-471" aria-hidden="true" tabindex="-1"></a>to deployment. The estimand is therefore an interaction: the marginal effect of an</span>
+<span id="cb3-472"><a href="#cb3-472" aria-hidden="true" tabindex="-1"></a>action on outcomes, as a function of the resources the firm brings to it.</span>
+<span id="cb3-473"><a href="#cb3-473" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-474"><a href="#cb3-474" aria-hidden="true" tabindex="-1"></a>Using a secondary-data design and a sequence of hierarchical regressions, they find</span>
+<span id="cb3-475"><a href="#cb3-475" aria-hidden="true" tabindex="-1"></a>that resources directly shape deployment returns, and that the sign depends on the</span>
+<span id="cb3-476"><a href="#cb3-476" aria-hidden="true" tabindex="-1"></a>*type* of resource. High levels of intangible *marketing* resources and</span>
+<span id="cb3-477"><a href="#cb3-477" aria-hidden="true" tabindex="-1"></a>*technological* resources *enhance* the success of deployment activities such as</span>
+<span id="cb3-478"><a href="#cb3-478" aria-hidden="true" tabindex="-1"></a>distribution and couponing. Higher levels of *financial* resources, by contrast,</span>
+<span id="cb3-479"><a href="#cb3-479" aria-hidden="true" tabindex="-1"></a>*reduce* the efficiency of those same activities—plausibly because financial slack</span>
+<span id="cb3-480"><a href="#cb3-480" aria-hidden="true" tabindex="-1"></a>dulls the discipline that makes deployment effective. A compact representation makes</span>
+<span id="cb3-481"><a href="#cb3-481" aria-hidden="true" tabindex="-1"></a>the interaction explicit. Let $y_i$ be the outcome of a deployment action $D_i$ for</span>
+<span id="cb3-482"><a href="#cb3-482" aria-hidden="true" tabindex="-1"></a>firm $i$ holding a resource bundle $\mathbf{r}_i$:</span>
+<span id="cb3-483"><a href="#cb3-483" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-484"><a href="#cb3-484" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-485"><a href="#cb3-485" aria-hidden="true" tabindex="-1"></a>y_i = \beta_0 + \beta_D D_i + \boldsymbol{\theta}^{\top}(\mathbf{r}_i \odot D_i)</span>
+<span id="cb3-486"><a href="#cb3-486" aria-hidden="true" tabindex="-1"></a><span class="ss">      + </span>\mathbf{r}_i^{\top}\boldsymbol{\phi} + \varepsilon_i,</span>
+<span id="cb3-487"><a href="#cb3-487" aria-hidden="true" tabindex="-1"></a>$$ {#eq-deployment-interaction}</span>
+<span id="cb3-488"><a href="#cb3-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-489"><a href="#cb3-489" aria-hidden="true" tabindex="-1"></a>where $\odot$ denotes the element-wise product of the resource vector with the</span>
+<span id="cb3-490"><a href="#cb3-490" aria-hidden="true" tabindex="-1"></a>deployment intensity, and the interaction vector $\boldsymbol{\theta}$ carries the</span>
+<span id="cb3-491"><a href="#cb3-491" aria-hidden="true" tabindex="-1"></a>result: positive entries for intangible marketing and technological resources,</span>
+<span id="cb3-492"><a href="#cb3-492" aria-hidden="true" tabindex="-1"></a>negative for financial resources. The managerial implication is that the</span>
+<span id="cb3-493"><a href="#cb3-493" aria-hidden="true" tabindex="-1"></a>*same* marketing action is not equally productive across firms—its return is</span>
+<span id="cb3-494"><a href="#cb3-494" aria-hidden="true" tabindex="-1"></a>contingent on the resource base—and that resource abundance is not uniformly good,</span>
+<span id="cb3-495"><a href="#cb3-495" aria-hidden="true" tabindex="-1"></a>since financial slack can erode the efficiency of execution.</span>
+<span id="cb3-496"><a href="#cb3-496" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-497"><a href="#cb3-497" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sustainability as a Brand-Level Action</span></span>
+<span id="cb3-498"><a href="#cb3-498" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-499"><a href="#cb3-499" aria-hidden="true" tabindex="-1"></a>A final, more focused result connects the resource-and-action theme to a salient</span>
+<span id="cb3-500"><a href="#cb3-500" aria-hidden="true" tabindex="-1"></a>contemporary lever. @olsen2014green study the brand-level consequences of</span>
+<span id="cb3-501"><a href="#cb3-501" aria-hidden="true" tabindex="-1"></a>introducing environmentally sustainable ("green") new products—an increasingly</span>
+<span id="cb3-502"><a href="#cb3-502" aria-hidden="true" tabindex="-1"></a>common, resource-intensive marketing action—integrating **social identity** and</span>
+<span id="cb3-503"><a href="#cb3-503" aria-hidden="true" tabindex="-1"></a>**framing** theories. Estimating a **three-stage least squares** (3SLS) system over</span>
+<span id="cb3-504"><a href="#cb3-504" aria-hidden="true" tabindex="-1"></a>green product introductions from 75 brands during 2009–2012, they find that green</span>
+<span id="cb3-505"><a href="#cb3-505" aria-hidden="true" tabindex="-1"></a>launches *can* improve brand attitude, but that the magnitude is conditional. The</span>
+<span id="cb3-506"><a href="#cb3-506" aria-hidden="true" tabindex="-1"></a>volume of green-centric messaging, the product's typology, and the *credibility of</span>
+<span id="cb3-507"><a href="#cb3-507" aria-hidden="true" tabindex="-1"></a>the information source* jointly determine how much attitude moves, and a brand's</span>
+<span id="cb3-508"><a href="#cb3-508" aria-hidden="true" tabindex="-1"></a>strategic positioning together with its product category governs whether a green</span>
+<span id="cb3-509"><a href="#cb3-509" aria-hidden="true" tabindex="-1"></a>launch is undertaken at all. The 3SLS specification is the methodologically</span>
+<span id="cb3-510"><a href="#cb3-510" aria-hidden="true" tabindex="-1"></a>load-bearing choice: because the decision to *introduce* a green product and its</span>
+<span id="cb3-511"><a href="#cb3-511" aria-hidden="true" tabindex="-1"></a>*effect* on brand attitude are jointly determined, single-equation estimation would</span>
+<span id="cb3-512"><a href="#cb3-512" aria-hidden="true" tabindex="-1"></a>confound selection with effect, and the simultaneous-equations system is what</span>
+<span id="cb3-513"><a href="#cb3-513" aria-hidden="true" tabindex="-1"></a>restores identification of the attitude effect net of the selection into green</span>
+<span id="cb3-514"><a href="#cb3-514" aria-hidden="true" tabindex="-1"></a>launches.</span>
+<span id="cb3-515"><a href="#cb3-515" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-516"><a href="#cb3-516" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb3-517"><a href="#cb3-517" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-518"><a href="#cb3-518" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Latent dynamics need latent-state models.** Article influence is a time-varying</span>
+<span id="cb3-519"><a href="#cb3-519" aria-hidden="true" tabindex="-1"></a>  hidden state; a hidden-Markov Tobit (@eq-citability-transition–@eq-citability-tobit)</span>
+<span id="cb3-520"><a href="#cb3-520" aria-hidden="true" tabindex="-1"></a>  represents both the dynamics and the uncitedness that count regressions miss</span>
+<span id="cb3-521"><a href="#cb3-521" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@li2015explaining</span><span class="co">]</span>. Impact is two-dimensional once external relevance (R2M) is</span>
+<span id="cb3-522"><a href="#cb3-522" aria-hidden="true" tabindex="-1"></a>  added <span class="co">[</span><span class="ot">@jedidi2021</span><span class="co">]</span>.</span>
+<span id="cb3-523"><a href="#cb3-523" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Identity fragmentation is structured bias, not noise.** Its three channels—</span>
+<span id="cb3-524"><a href="#cb3-524" aria-hidden="true" tabindex="-1"></a>  attenuation, omitted cross-device exposure, and device-activity confounding—each</span>
+<span id="cb3-525"><a href="#cb3-525" aria-hidden="true" tabindex="-1"></a>  vanish only under a specific, often implausible, condition, and partial identity</span>
+<span id="cb3-526"><a href="#cb3-526" aria-hidden="true" tabindex="-1"></a>  linking can make matters worse <span class="co">[</span><span class="ot">@lin2022; @coey2016</span><span class="co">]</span>.</span>
+<span id="cb3-527"><a href="#cb3-527" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Marketing's organizational standing is priced.** Department power predicts</span>
+<span id="cb3-528"><a href="#cb3-528" aria-hidden="true" tabindex="-1"></a>  long-run shareholder value through market-based-asset capabilities <span class="co">[</span><span class="ot">@feng2015marketing</span><span class="co">]</span>;</span>
+<span id="cb3-529"><a href="#cb3-529" aria-hidden="true" tabindex="-1"></a>  capability returns are contingent and interactive <span class="co">[</span><span class="ot">@feng2017firm</span><span class="co">]</span>; and</span>
+<span id="cb3-530"><a href="#cb3-530" aria-hidden="true" tabindex="-1"></a>  cross-functional coopetition pays off *through* market learning <span class="co">[</span><span class="ot">@luo2006cross</span><span class="co">]</span>.</span>
+<span id="cb3-531"><a href="#cb3-531" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Share and customer decisions reach the stock market through mechanisms.** Market</span>
+<span id="cb3-532"><a href="#cb3-532" aria-hidden="true" tabindex="-1"></a>  power and quality signaling—not efficiency—carry the share–profit link</span>
+<span id="cb3-533"><a href="#cb3-533" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@bhattacharya2022examining</span><span class="co">]</span>, and unprofitable-customer management is read by</span>
+<span id="cb3-534"><a href="#cb3-534" aria-hidden="true" tabindex="-1"></a>  investors as a signal whose reception depends on its form <span class="co">[</span><span class="ot">@feng2020impact</span><span class="co">]</span>.</span>
+<span id="cb3-535"><a href="#cb3-535" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Resources condition the returns to action.** Planning capability cuts both ways</span>
+<span id="cb3-536"><a href="#cb3-536" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@slotegraaf2004paradox</span><span class="co">]</span>; intangible and technological resources lift deployment</span>
+<span id="cb3-537"><a href="#cb3-537" aria-hidden="true" tabindex="-1"></a>  returns while financial slack erodes them <span class="co">[</span><span class="ot">@slotegraaf2003role</span><span class="co">]</span>; and green-product</span>
+<span id="cb3-538"><a href="#cb3-538" aria-hidden="true" tabindex="-1"></a>  effects are identified only once selection into launching is modeled jointly</span>
+<span id="cb3-539"><a href="#cb3-539" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@olsen2014green</span><span class="co">]</span>.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

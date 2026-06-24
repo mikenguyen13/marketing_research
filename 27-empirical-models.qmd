@@ -51,6 +51,8 @@ industry default, systematically over-credits lower-funnel channels (branded sea
 retargeting) that harvest demand other channels created. The two model-based
 alternatives developed below—the Shapley value and the Markov removal effect—replace
 positional heuristics with a principled notion of marginal contribution.
+@fig-attribution-taxonomy organizes these two families, contrasting the positional
+heuristics with the model-based rules that estimate marginal contribution.
 
 ```{mermaid}
 %%| label: fig-attribution-taxonomy
@@ -1235,9 +1237,9 @@ sf_probs <- df_customers %>%
     )
 ```
 
-The journey visualization overlays every customer's path on the funnel and annotates
-each stage with its cumulative conversion probability, so that the width of the
-leakage at each step is immediately visible.
+The journey visualization in @fig-funnel-journeys overlays every customer's path on the
+funnel and annotates each stage with its cumulative conversion probability, so that the
+width of the leakage at each step is immediately visible.
 
 ```{r}
 #| label: fig-funnel-journeys
@@ -1358,7 +1360,8 @@ to the number of customers present, with conversion rates annotated between stag
 The data combine *content* nodes (pages mapped to AIDA stages) with *customer*
 lifecycle nodes (new, engaged, loyal), and the plotting code constructs the
 symmetric trapezoidal silhouette by adding white "dummy" segments that center each
-bar.
+bar. @fig-funnel-chart presents the result, with stage widths proportional to customer
+counts and the step conversion rates annotated between stages.
 
 ```{r}
 #| label: fig-funnel-chart
@@ -1612,15 +1615,21 @@ rfm_result
 
 ### Visualizing RFM {#sec-rfm-viz}
 
-A battery of standard diagnostics interrogates the scored data. The heatmap displays
-average monetary value across the recency–frequency grid, revealing whether high-value
-customers cluster in the recent-and-frequent corner as the premise predicts.
+A battery of standard diagnostics interrogates the scored data. The heatmap in
+@fig-rfm-heatmap displays average monetary value across the recency–frequency grid,
+revealing whether high-value customers cluster in the recent-and-frequent corner as the
+premise predicts.
 
 ```{r}
 #| label: fig-rfm-heatmap
 #| fig-cap: "Average monetary value across the recency-by-frequency grid. Concentration in the high-recency, high-frequency corner confirms the RFM premise that recent frequent buyers are the most valuable."
 rfm_heatmap(rfm_result)
 ```
+
+Three further marginal views complement the heatmap: @fig-rfm-bar shows the distribution
+of customers across recency scores within frequency bins, @fig-rfm-hist gives the
+marginal histograms of the three measures, and @fig-rfm-orders reports the distribution
+of customers by order count.
 
 ```{r}
 #| label: fig-rfm-bar
@@ -1640,9 +1649,9 @@ rfm_histograms(rfm_result)
 rfm_order_dist(rfm_result)
 ```
 
-The bivariate scatter plots—recency against monetary, frequency against monetary, and
-recency against frequency—expose the pairwise dependence structure that the composite
-score collapses.
+The bivariate scatter plots in @fig-rfm-scatter, recency against monetary, frequency
+against monetary, and recency against frequency, expose the pairwise dependence structure
+that the composite score collapses.
 
 ```{r}
 #| label: fig-rfm-scatter
@@ -1833,9 +1842,10 @@ ggplot(orders, aes(x = recency)) +
     ggtitle("Distribution by recency")
 ```
 
-The continuous frequency and recency are bucketed into ordered bands, and the band
-factors are ordered so the grid reads from most-recent-and-frequent to
-least, with a last-cart feature capturing which products the customer last bought.
+@fig-lcg-explore plots the marginal distributions of purchase frequency and recency in
+the simulated log. The continuous frequency and recency are then bucketed into ordered
+bands, and the band factors are ordered so the grid reads from most-recent-and-frequent
+to least, with a last-cart feature capturing which products the customer last bought.
 
 ```{r}
 orders.segm <- orders %>%
@@ -1891,9 +1901,9 @@ orders.segm$segm.rec <-
     )
 ```
 
-Faceting customer counts by the two band factors produces the grid itself: each panel
-is one recency–frequency cell, and its height encodes how many customers presently
-occupy it.
+Faceting customer counts by the two band factors produces the grid itself, shown in
+@fig-lcg-basic: each panel is one recency–frequency cell, and its height encodes how many
+customers presently occupy it.
 
 ```{r}
 #| label: fig-lcg-basic
@@ -1920,7 +1930,7 @@ ggplot(lcg, aes(x = client, y = quantity, fill = quantity)) +
 
 Coarsening the grid into recent/not-recent and frequent/infrequent quadrants, and
 splitting by gender and last cart, turns the grid into a strategic map of where value
-concentrates and which sub-populations occupy each region.
+concentrates and which sub-populations occupy each region, as @fig-lcg-advanced displays.
 
 ```{r}
 #| label: fig-lcg-advanced
@@ -1997,7 +2007,8 @@ Customer counts alone do not reveal whether a segment is *profitable*. Overlayin
 which cells return their acquisition investment. A cell where average CLV exceeds
 average CAC is profitable; a cell where it does not is a candidate for reduced
 acquisition spend. We attach simulated per-client CAC and product gross margins,
-recompute the grid, and plot CLV against CAC both in aggregate and per client.
+recompute the grid, and plot CLV against CAC both in aggregate and per client in
+@fig-lcg-clv-cac.
 
 ```{r}
 #| label: fig-lcg-clv-cac
@@ -2508,9 +2519,9 @@ ggplot(lcg.coh, aes(x = cohort, fill = cohort)) +
 
 Reindexing the same machinery by *acquisition campaign* rather than first-purchase
 month answers a different question: which campaigns recruited customers whose realized
-value justifies their acquisition cost, and at what purchasing pace. The plots below
-report, by campaign, the CLV-minus-CAC gap, total realized-plus-potential value
-against CAC, and the average gap between purchases.
+value justifies their acquisition cost, and at what purchasing pace. The plots in
+@fig-campaign-cohorts report, by campaign, the CLV-minus-CAC gap, total
+realized-plus-potential value against CAC, and the average gap between purchases.
 
 ```{r}
 #| label: fig-campaign-cohorts
@@ -2601,7 +2612,7 @@ interval. For cohort $c$ with $N_{c,0}$ members at acquisition and $N_{c,\tau}$ 
 at lifetime $\tau$, the retention rate is $N_{c,\tau}/N_{c,0}$, and the
 period-over-period rate is $N_{c,\tau}/N_{c,\tau-1}$. Plotting retention as a cycle
 plot, with seasonality (a simulated Black Friday bump) baked into the data, separates
-genuine cohort-quality differences from calendar effects.
+genuine cohort-quality differences from calendar effects, as @fig-retention-cycle shows.
 
 ```{r}
 #| label: fig-retention-cycle
@@ -2925,9 +2936,10 @@ ggplot(df_plot,
 
 The canonical **retention triangle** arranges cohorts in rows and lifetime months in
 columns, so that each diagonal corresponds to a calendar period and each row traces a
-cohort's decay. Normalizing every row by its first-month count converts raw counts to
-retention ratios; the dynamics, second-month, and cycle-plot views then interrogate
-the triangle from complementary angles.
+cohort's decay. @fig-retention-triangle assembles these views. Normalizing every row by
+its first-month count converts raw counts to retention ratios; the dynamics,
+second-month, and cycle-plot views then interrogate the triangle from complementary
+angles.
 
 ```{r}
 #| label: fig-retention-triangle
@@ -3275,9 +3287,9 @@ prod.matrix <- df %>%
 head(prod.matrix)
 ```
 
-Splitting single-product from multi-product carts sets up the layered geometry: the
-inner ring is reserved for one-product carts and successive outer rings encode the
-presence of each additional product.
+Splitting single-product from multi-product carts sets up the layered geometry of
+@fig-basket-pie: the inner ring is reserved for one-product carts and successive outer
+rings encode the presence of each additional product.
 
 ```{r}
 # calculating total number of orders/carts
@@ -3391,7 +3403,8 @@ A **Sankey diagram** visualizes flows: here, how customers move from one order's
 composition to the next across successive purchases, with band width proportional to
 the number of customers following each transition. Carts are simulated, concatenated
 into per-order strings, pivoted so each customer's successive orders sit in adjacent
-columns, and the transitions between consecutive orders are tallied as flow weights.
+columns, and the transitions between consecutive orders are tallied as flow weights and
+rendered in @fig-basket-sankey.
 
 ```{r}
 #| label: fig-basket-sankey
@@ -3590,7 +3603,7 @@ rm(orders, df, df.cache, i, ids, max.date, av.dur)
 
 A Sankey diagram of the first few carts per customer gives a flow view of how cart
 composition evolves, with no-purchase states propagated forward once a customer
-lapses.
+lapses; @fig-sequence-sankey traces these flows across the first four orders.
 
 ```{r}
 #| label: fig-sequence-sankey
@@ -3639,9 +3652,10 @@ rm(df.sankey, df.sankey.cache, df.sankey.plot, i)
 ```
 
 Recasting the spells into `TraMineR`'s state-sequence format unlocks a battery of
-descriptive tools: state-distribution plots over time (overall and by gender),
-frequency tables of the most common sequences, mean time spent in each state, and a
-per-sequence **entropy** that quantifies how varied a customer's state history is.
+descriptive tools, collected in @fig-sequence-analysis: state-distribution plots over
+time (overall and by gender), frequency tables of the most common sequences, mean time
+spent in each state, and a per-sequence **entropy** that quantifies how varied a
+customer's state history is.
 Entropy is the information-theoretic dispersion of the states a customer visits; a
 low-entropy customer stays in one or two states, while a high-entropy customer churns
 through many, and comparing its distribution by gender exposes behavioral
@@ -3741,7 +3755,7 @@ newspaper readership by OAC supergroup and then maps the classification onto Liv
 
 The first step expresses each supergroup's broadsheet readership as a percentage
 deviation from the national average, the natural scale for spotting over- and
-under-indexing audiences.
+under-indexing audiences, plotted in @fig-geo-broadsheets.
 
 ```{r}
 #| label: fig-geo-broadsheets
@@ -3804,8 +3818,9 @@ ggplot(oac_broadsheets, aes(oac_names, broadsheets)) +
     scale_x_discrete("OAC SuperGroups")
 ```
 
-Repeating the exercise for tabloid readership yields a complementary profile, so the
-two newspaper types can be contrasted across the same supergroups.
+Repeating the exercise for tabloid readership yields the complementary profile in
+@fig-geo-tabloids, so the two newspaper types can be contrasted across the same
+supergroups.
 
 ```{r}
 #| label: fig-geo-tabloids
@@ -3893,8 +3908,9 @@ liverpool %>%
     head()
 ```
 
-Coloring each output area by its supergroup produces a choropleth map that turns the
-abstract classification into a spatial portrait of the city's neighborhoods.
+Coloring each output area by its supergroup produces the choropleth map in
+@fig-geo-map, turning the abstract classification into a spatial portrait of the city's
+neighborhoods.
 
 ```{r}
 #| label: fig-geo-map

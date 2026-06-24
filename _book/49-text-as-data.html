@@ -718,7 +718,7 @@ window.Quarto = {
 <p>This chapter develops the pipeline in the order a working researcher confronts it. It begins with <strong>representation</strong>—how to turn a document into a vector, from the bag-of-words and its term-weighting refinements through dense neural embeddings. It then covers <strong>unsupervised discovery</strong> via topic models, the marketing workhorse being latent Dirichlet allocation and its supervised and structural descendants. From there it turns to <strong>measurement of attitudes</strong>—sentiment, emotion, and the harder problem of <em>stance</em>—and to <strong>supervised text classification</strong>, where a labeled sample trains a map from text to category. It closes with <strong>large-language-model (LLM) extraction</strong>, the current frontier, in which a general-purpose model is prompted to read documents and emit structured fields, and with the validation and identification problems that recur across all of these methods. Throughout, the marketing applications are concrete: mining reviews for quality and demand signals, listening to social media for brand health, and extracting structure from sales and service calls.</p>
 <section id="sec-tad-pipeline" class="level2" data-number="37.1"><h2 data-number="37.1" class="anchored" data-anchor-id="sec-tad-pipeline">
 <span class="header-section-number">37.1</span> The Text-as-Data Pipeline</h2>
-<p>Before any method, it helps to fix the shape of the problem. A <em>corpus</em> is a collection of <span class="math inline">\(N\)</span> documents <span class="math inline">\(\{d_1,\dots,d_N\}\)</span>; a <em>document</em> is a sequence of tokens drawn from a <em>vocabulary</em> <span class="math inline">\(V\)</span> of size <span class="math inline">\(|V|\)</span>. The analyst’s job is to map each document to a representation <span class="math inline">\(\mathbf{x}_i \in \mathbb{R}^p\)</span> and then to a target—a topic distribution, a sentiment score, a category label, or an extracted field. The generic pipeline runs in four stages, and most of the consequential modeling choices are made in the first two, not the last.</p>
+<p>Before any method, it helps to fix the shape of the problem. A <em>corpus</em> is a collection of <span class="math inline">\(N\)</span> documents <span class="math inline">\(\{d_1,\dots,d_N\}\)</span>; a <em>document</em> is a sequence of tokens drawn from a <em>vocabulary</em> <span class="math inline">\(V\)</span> of size <span class="math inline">\(|V|\)</span>. The analyst’s job is to map each document to a representation <span class="math inline">\(\mathbf{x}_i \in \mathbb{R}^p\)</span> and then to a target—a topic distribution, a sentiment score, a category label, or an extracted field. The generic pipeline runs in four stages (<a href="#fig-tad-pipeline" class="quarto-xref">Figure&nbsp;<span>37.1</span></a>), and most of the consequential modeling choices are made in the first two, not the last.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-tad-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -1003,7 +1003,7 @@ p(y = c \mid d_i) \;\propto\; p(c) \prod_{j=1}^{|V|} p(\text{term}_j \mid c)^{\,
 <p>Accuracy of 0.945 looks excellent yet conceals that the model misses a third of the fakes—exactly the diagnosis precision, recall, and F1 are designed to surface and that raw accuracy hides. A worked application of human-coded annotation as the ground truth for such a classifier is developed in <a href="07-sarcasm.html#sec-annotation" class="quarto-xref"><span>Section 38.5</span></a>.</p>
 </section></section><section id="sec-llm-extraction" class="level2" data-number="37.6"><h2 data-number="37.6" class="anchored" data-anchor-id="sec-llm-extraction">
 <span class="header-section-number">37.6</span> LLM-Based Extraction</h2>
-<p>The newest tool collapses much of the pipeline. A <em>large language model</em> (LLM) is a transformer trained on web-scale text to predict the next token; the surprising consequence is that, suitably <em>prompted</em>, it performs many text tasks—classification, sentiment, summarization, entity and attribute extraction—with little or no task-specific training data <span class="citation" data-cites="hartmann2023more">(<a href="#ref-hartmann2023more" role="doc-biblioref">Hartmann et al. 2023</a>)</span>. The marketing use that matters most is <em>structured extraction</em>: prompting the model to read an unstructured document (a review, a call transcript, a complaint) and emit a structured record—attributes mentioned, their sentiment, the customer’s stated intent, whether a competitor was named—directly usable in a downstream model. Where supervised classification needs a labeled training set per task, an LLM can often produce a usable first pass <em>zero-shot</em> (from instructions alone) or <em>few-shot</em> (from a handful of in-context examples), which is transforming the cost structure of coding large corpora.</p>
+<p>The newest tool collapses much of the pipeline. A <em>large language model</em> (LLM) is a transformer trained on web-scale text to predict the next token; the surprising consequence is that, suitably <em>prompted</em>, it performs many text tasks—classification, sentiment, summarization, entity and attribute extraction—with little or no task-specific training data <span class="citation" data-cites="hartmann2023more">(<a href="#ref-hartmann2023more" role="doc-biblioref">Hartmann et al. 2023</a>)</span>. The marketing use that matters most is <em>structured extraction</em>: prompting the model to read an unstructured document (a review, a call transcript, a complaint) and emit a structured record—attributes mentioned, their sentiment, the customer’s stated intent, whether a competitor was named—directly usable in a downstream model. Where supervised classification needs a labeled training set per task, an LLM can often produce a usable first pass <em>zero-shot</em> (from instructions alone) or <em>few-shot</em> (from a handful of in-context examples), which is transforming the cost structure of coding large corpora. <a href="#fig-llm-extraction" class="quarto-xref">Figure&nbsp;<span>37.2</span></a> sketches this schema-bearing prompt-to-record workflow.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-llm-extraction" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -1625,8 +1625,8 @@ Weaver, Warren, Claude E Shannon, et al. 1963. <em>The Mathematical Theory of Co
 <span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>drawn from a *vocabulary* $V$ of size $|V|$. The analyst's job is to map each</span>
 <span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>document to a representation $\mathbf{x}_i \in \mathbb{R}^p$ and then to a target—a</span>
 <span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>topic distribution, a sentiment score, a category label, or an extracted field. The</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>generic pipeline runs in four stages, and most of the consequential modeling choices</span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>are made in the first two, not the last.</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>generic pipeline runs in four stages (@fig-tad-pipeline), and most of the</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>consequential modeling choices are made in the first two, not the last.</span>
 <span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
 <span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>%%| label: fig-tad-pipeline</span>
@@ -2107,140 +2107,141 @@ Weaver, Warren, Claude E Shannon, et al. 1963. <em>The Mathematical Theory of Co
 <span id="cb5-531"><a href="#cb5-531" aria-hidden="true" tabindex="-1"></a>in a downstream model. Where supervised classification needs a labeled training set per</span>
 <span id="cb5-532"><a href="#cb5-532" aria-hidden="true" tabindex="-1"></a>task, an LLM can often produce a usable first pass *zero-shot* (from instructions alone)</span>
 <span id="cb5-533"><a href="#cb5-533" aria-hidden="true" tabindex="-1"></a>or *few-shot* (from a handful of in-context examples), which is transforming the cost</span>
-<span id="cb5-534"><a href="#cb5-534" aria-hidden="true" tabindex="-1"></a>structure of coding large corpora.</span>
-<span id="cb5-535"><a href="#cb5-535" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-538"><a href="#cb5-538" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb5-539"><a href="#cb5-539" aria-hidden="true" tabindex="-1"></a>%%| label: fig-llm-extraction</span>
-<span id="cb5-540"><a href="#cb5-540" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">LLM-based structured extraction: an unstructured document plus a schema-bearing prompt yields a structured record, which still requires validation against human labels before use.</span><span class="ot">"</span></span>
-<span id="cb5-541"><a href="#cb5-541" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb5-542"><a href="#cb5-542" aria-hidden="true" tabindex="-1"></a>  A[Unstructured doc&lt;br/&gt;review / call / post] --&gt; C[LLM]</span>
-<span id="cb5-543"><a href="#cb5-543" aria-hidden="true" tabindex="-1"></a>  B[Prompt:&lt;br/&gt;schema + instructions&lt;br/&gt;+ few-shot examples] --&gt; C</span>
-<span id="cb5-544"><a href="#cb5-544" aria-hidden="true" tabindex="-1"></a>  C --&gt; D[Structured record&lt;br/&gt;aspect, sentiment,&lt;br/&gt;intent, entities]</span>
-<span id="cb5-545"><a href="#cb5-545" aria-hidden="true" tabindex="-1"></a>  D --&gt; E{Validate vs.&lt;br/&gt;human labels}</span>
-<span id="cb5-546"><a href="#cb5-546" aria-hidden="true" tabindex="-1"></a>  E --&gt;|adequate| F[Downstream&lt;br/&gt;analysis]</span>
-<span id="cb5-547"><a href="#cb5-547" aria-hidden="true" tabindex="-1"></a>  E --&gt;|inadequate| B</span>
-<span id="cb5-548"><a href="#cb5-548" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-549"><a href="#cb5-549" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-550"><a href="#cb5-550" aria-hidden="true" tabindex="-1"></a>The capability is real, but treating LLM output as data demands more discipline, not</span>
-<span id="cb5-551"><a href="#cb5-551" aria-hidden="true" tabindex="-1"></a>less, because the failure modes are different and less visible than a misfit</span>
-<span id="cb5-552"><a href="#cb5-552" aria-hidden="true" tabindex="-1"></a>regression. Four cautions are first-order. (i) *Hallucination*: an LLM can emit</span>
-<span id="cb5-553"><a href="#cb5-553" aria-hidden="true" tabindex="-1"></a>confident, well-formed fields that are not supported by the document; extracted values</span>
-<span id="cb5-554"><a href="#cb5-554" aria-hidden="true" tabindex="-1"></a>must be checked against the source, not trusted because they parse. (ii)</span>
-<span id="cb5-555"><a href="#cb5-555" aria-hidden="true" tabindex="-1"></a>*Non-determinism and prompt sensitivity*: the same document under a slightly different</span>
-<span id="cb5-556"><a href="#cb5-556" aria-hidden="true" tabindex="-1"></a>prompt, or the same prompt on a different day, can yield different output, so the prompt</span>
-<span id="cb5-557"><a href="#cb5-557" aria-hidden="true" tabindex="-1"></a>and model version are part of the measurement instrument and must be fixed and reported.</span>
-<span id="cb5-558"><a href="#cb5-558" aria-hidden="true" tabindex="-1"></a>(iii) *Train–test contamination and circularity*: if the construct being measured is</span>
-<span id="cb5-559"><a href="#cb5-559" aria-hidden="true" tabindex="-1"></a>itself derived from the kind of text the model was trained on, the "measurement" may be</span>
-<span id="cb5-560"><a href="#cb5-560" aria-hidden="true" tabindex="-1"></a>recovering the model's priors rather than the document's content. (iv) *Validation</span>
-<span id="cb5-561"><a href="#cb5-561" aria-hidden="true" tabindex="-1"></a>remains mandatory*: an LLM extractor is an unvalidated classifier until its output has</span>
-<span id="cb5-562"><a href="#cb5-562" aria-hidden="true" tabindex="-1"></a>been compared, on a held-out human-labeled sample, against the ground truth—the same</span>
-<span id="cb5-563"><a href="#cb5-563" aria-hidden="true" tabindex="-1"></a>precision/recall/F1 discipline of @sec-classification-validity applies unchanged.</span>
-<span id="cb5-564"><a href="#cb5-564" aria-hidden="true" tabindex="-1"></a>Marketing research using LLMs and machine learning on consumer text is accelerating</span>
-<span id="cb5-565"><a href="#cb5-565" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@hartmann2023more; @ananthakrishnan2025book; @gao2024big</span><span class="co">]</span>, and the methodological</span>
-<span id="cb5-566"><a href="#cb5-566" aria-hidden="true" tabindex="-1"></a>center of gravity is precisely this: the model is a powerful, cheap annotator whose</span>
-<span id="cb5-567"><a href="#cb5-567" aria-hidden="true" tabindex="-1"></a>output must still earn its place in a regression by being validated like any other</span>
-<span id="cb5-568"><a href="#cb5-568" aria-hidden="true" tabindex="-1"></a>measure. (For the LLM/API specifics—model selection, prompting, and structured-output</span>
-<span id="cb5-569"><a href="#cb5-569" aria-hidden="true" tabindex="-1"></a>mechanics—the appropriate provider documentation should be consulted; this chapter</span>
-<span id="cb5-570"><a href="#cb5-570" aria-hidden="true" tabindex="-1"></a>treats LLMs as measurement instruments, not as an engineering topic.)</span>
-<span id="cb5-571"><a href="#cb5-571" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- CITE-NEEDED: foundational LLM / transformer references (e.g., attention, BERT, GPT) are CS-venue papers not in the marketing allowlist --&gt;</span></span>
-<span id="cb5-572"><a href="#cb5-572" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-573"><a href="#cb5-573" aria-hidden="true" tabindex="-1"></a><span class="fu">## Marketing Applications {#sec-tad-applications}</span></span>
-<span id="cb5-574"><a href="#cb5-574" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-575"><a href="#cb5-575" aria-hidden="true" tabindex="-1"></a>The methods above are general; their value is in what they let a marketer measure.</span>
-<span id="cb5-576"><a href="#cb5-576" aria-hidden="true" tabindex="-1"></a>Three settings dominate.</span>
-<span id="cb5-577"><a href="#cb5-577" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-578"><a href="#cb5-578" aria-hidden="true" tabindex="-1"></a>**Online reviews** are the most-mined consumer text, because they pair language with a</span>
-<span id="cb5-579"><a href="#cb5-579" aria-hidden="true" tabindex="-1"></a>star rating and often with sales. Review *volume* and *valence* track product quality</span>
-<span id="cb5-580"><a href="#cb5-580" aria-hidden="true" tabindex="-1"></a>and demand and move firm value, with negative content the most diagnostic</span>
-<span id="cb5-581"><a href="#cb5-581" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@tirunillai2012; @chevalier2003measuring; @godes2004</span><span class="co">]</span>. Aspect-based sentiment turns the</span>
-<span id="cb5-582"><a href="#cb5-582" aria-hidden="true" tabindex="-1"></a>review corpus into an attribute-level scorecard that tells the firm which feature to fix</span>
-<span id="cb5-583"><a href="#cb5-583" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@buschken2016sentence</span><span class="co">]</span>, and topic models recover the dimensions of brand perception</span>
-<span id="cb5-584"><a href="#cb5-584" aria-hidden="true" tabindex="-1"></a>consumers actually discuss <span class="co">[</span><span class="ot">@tirunillai2014a</span><span class="co">]</span>. Reviews also raise their own measurement</span>
-<span id="cb5-585"><a href="#cb5-585" aria-hidden="true" tabindex="-1"></a>hazards: figurative language biases naive sentiment (@sec-sarcasm), and the threat of</span>
-<span id="cb5-586"><a href="#cb5-586" aria-hidden="true" tabindex="-1"></a>*fake* reviews makes the classification machinery of @sec-classification a quality-</span>
-<span id="cb5-587"><a href="#cb5-587" aria-hidden="true" tabindex="-1"></a>control necessity rather than an academic exercise.</span>
-<span id="cb5-588"><a href="#cb5-588" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-589"><a href="#cb5-589" aria-hidden="true" tabindex="-1"></a>**Social media** supplies a continuous, unsolicited signal of brand health that firms</span>
-<span id="cb5-590"><a href="#cb5-590" aria-hidden="true" tabindex="-1"></a>mine for "social listening" <span class="co">[</span><span class="ot">@schweidel2014listening</span><span class="co">]</span>. The text is short, noisy, and</span>
-<span id="cb5-591"><a href="#cb5-591" aria-hidden="true" tabindex="-1"></a>laden with slang, sarcasm, and emoji, which strains lexicon methods and rewards</span>
-<span id="cb5-592"><a href="#cb5-592" aria-hidden="true" tabindex="-1"></a>context-aware representations. The constructs of interest go beyond valence to *emotion*</span>
-<span id="cb5-593"><a href="#cb5-593" aria-hidden="true" tabindex="-1"></a>and *stance*—how aroused, how powerful, how aligned the writer is toward the brand</span>
-<span id="cb5-594"><a href="#cb5-594" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@hartmann2021power</span><span class="co">]</span>—and to network-mediated diffusion, where *what* and *how* something</span>
-<span id="cb5-595"><a href="#cb5-595" aria-hidden="true" tabindex="-1"></a>is said shapes whether it spreads (@sec-virality; @packard2016). Social text also feeds</span>
-<span id="cb5-596"><a href="#cb5-596" aria-hidden="true" tabindex="-1"></a>back into measurement of constructs treated elsewhere: blog and post text predict and</span>
-<span id="cb5-597"><a href="#cb5-597" aria-hidden="true" tabindex="-1"></a>explain marketing outcomes <span class="co">[</span><span class="ot">@gopinath2013blogs; @gopinath2014investigating</span><span class="co">]</span>, and</span>
-<span id="cb5-598"><a href="#cb5-598" aria-hidden="true" tabindex="-1"></a>user-generated images extend text measurement into the visual channel <span class="co">[</span><span class="ot">@liu2020</span><span class="co">]</span>.</span>
-<span id="cb5-599"><a href="#cb5-599" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-600"><a href="#cb5-600" aria-hidden="true" tabindex="-1"></a>**Calls and conversations**—sales calls, service interactions, support chats—are the</span>
-<span id="cb5-601"><a href="#cb5-601" aria-hidden="true" tabindex="-1"></a>frontier, because they are long, dyadic, and rich in the dynamics of persuasion and</span>
-<span id="cb5-602"><a href="#cb5-602" aria-hidden="true" tabindex="-1"></a>emotion that static reviews lack. Transcribed and analyzed at scale, they let a firm</span>
-<span id="cb5-603"><a href="#cb5-603" aria-hidden="true" tabindex="-1"></a>measure how a frontline agent's language drives outcomes, where in a conversation</span>
-<span id="cb5-604"><a href="#cb5-604" aria-hidden="true" tabindex="-1"></a>sentiment turns, and which conversational moves resolve a complaint—linking directly to</span>
-<span id="cb5-605"><a href="#cb5-605" aria-hidden="true" tabindex="-1"></a>the frontline-service and salesperson-value constructs of @sec-service and @sec-sales.</span>
-<span id="cb5-606"><a href="#cb5-606" aria-hidden="true" tabindex="-1"></a>This is the natural home of LLM extraction (@sec-llm-extraction): a transcript is exactly</span>
-<span id="cb5-607"><a href="#cb5-607" aria-hidden="true" tabindex="-1"></a>the kind of long, unstructured document from which a prompted model can pull a structured</span>
-<span id="cb5-608"><a href="#cb5-608" aria-hidden="true" tabindex="-1"></a>record—intent, objections raised, resolution, sentiment trajectory—that no fixed lexicon</span>
-<span id="cb5-609"><a href="#cb5-609" aria-hidden="true" tabindex="-1"></a>or bag-of-words could recover.</span>
-<span id="cb5-610"><a href="#cb5-610" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-611"><a href="#cb5-611" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification {#sec-tad-pitfalls}</span></span>
-<span id="cb5-612"><a href="#cb5-612" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-613"><a href="#cb5-613" aria-hidden="true" tabindex="-1"></a>Text-as-data inherits every threat to validity that afflicts measurement, plus several</span>
-<span id="cb5-614"><a href="#cb5-614" aria-hidden="true" tabindex="-1"></a>of its own. Naming them is the precondition for credible inference.</span>
-<span id="cb5-615"><a href="#cb5-615" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-616"><a href="#cb5-616" aria-hidden="true" tabindex="-1"></a>The deepest is that **the representation is an identifying assumption**. A bag-of-words</span>
-<span id="cb5-617"><a href="#cb5-617" aria-hidden="true" tabindex="-1"></a>*cannot* represent negation or sarcasm, so any inference from it about valence is</span>
-<span id="cb5-618"><a href="#cb5-618" aria-hidden="true" tabindex="-1"></a>conditional on those phenomena being rare or randomly distributed—an assumption that is</span>
-<span id="cb5-619"><a href="#cb5-619" aria-hidden="true" tabindex="-1"></a>often false and rarely tested (@sec-sarcasm). The choice of representation is therefore</span>
-<span id="cb5-620"><a href="#cb5-620" aria-hidden="true" tabindex="-1"></a>not a tuning detail but a substantive claim about what the text means.</span>
-<span id="cb5-621"><a href="#cb5-621" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-622"><a href="#cb5-622" aria-hidden="true" tabindex="-1"></a>A second hazard is **selection in who writes**. The corpus is generated by people who</span>
-<span id="cb5-623"><a href="#cb5-623" aria-hidden="true" tabindex="-1"></a>chose to review, post, or call, and that selection is correlated with the outcome:</span>
-<span id="cb5-624"><a href="#cb5-624" aria-hidden="true" tabindex="-1"></a>reviewers are disproportionately the delighted and the furious, producing the well-known</span>
-<span id="cb5-625"><a href="#cb5-625" aria-hidden="true" tabindex="-1"></a>J-shaped ratings distribution, and social-media posters are not a random sample of</span>
-<span id="cb5-626"><a href="#cb5-626" aria-hidden="true" tabindex="-1"></a>customers. Text measured on a selected sample estimates the sentiment of *writers*, not</span>
-<span id="cb5-627"><a href="#cb5-627" aria-hidden="true" tabindex="-1"></a>of *customers*, and the gap is a bias, not noise. Methods that debias the poster</span>
-<span id="cb5-628"><a href="#cb5-628" aria-hidden="true" tabindex="-1"></a>population are the appropriate response, not a larger but equally selected corpus.</span>
-<span id="cb5-629"><a href="#cb5-629" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-630"><a href="#cb5-630" aria-hidden="true" tabindex="-1"></a>A third is **endogeneity in downstream regressions**. When a text-derived measure—topic</span>
-<span id="cb5-631"><a href="#cb5-631" aria-hidden="true" tabindex="-1"></a>share, sentiment, an LLM-extracted field—is used as a regressor explaining sales or firm</span>
-<span id="cb5-632"><a href="#cb5-632" aria-hidden="true" tabindex="-1"></a>value, it is a *generated regressor* measured with error and often correlated with</span>
-<span id="cb5-633"><a href="#cb5-633" aria-hidden="true" tabindex="-1"></a>omitted drivers. Plugging $\hat{s}_i$ into a regression as if it were observed</span>
-<span id="cb5-634"><a href="#cb5-634" aria-hidden="true" tabindex="-1"></a>understates standard errors and can bias coefficients; the measurement model and the</span>
-<span id="cb5-635"><a href="#cb5-635" aria-hidden="true" tabindex="-1"></a>outcome model should be treated as one system, and the error in the text measure</span>
-<span id="cb5-636"><a href="#cb5-636" aria-hidden="true" tabindex="-1"></a>propagated. The marketing-finance and metrics chapters (@sec-marketing-finance,</span>
-<span id="cb5-637"><a href="#cb5-637" aria-hidden="true" tabindex="-1"></a>@sec-metrics) develop the downstream inference that text measures feed.</span>
-<span id="cb5-638"><a href="#cb5-638" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-639"><a href="#cb5-639" aria-hidden="true" tabindex="-1"></a>Finally, **validation is not optional and is not a formality**. Every text measure—</span>
-<span id="cb5-640"><a href="#cb5-640" aria-hidden="true" tabindex="-1"></a>lexicon score, topic label, classifier output, LLM extraction—is a claim about an</span>
-<span id="cb5-641"><a href="#cb5-641" aria-hidden="true" tabindex="-1"></a>unobserved construct and must be validated against human-coded ground truth on a sample,</span>
-<span id="cb5-642"><a href="#cb5-642" aria-hidden="true" tabindex="-1"></a>with an explicit reliability statistic, before it enters an analysis (@sec-annotation).</span>
-<span id="cb5-643"><a href="#cb5-643" aria-hidden="true" tabindex="-1"></a>A pipeline that reports its accuracy on the data it was tuned on, or that never compares</span>
-<span id="cb5-644"><a href="#cb5-644" aria-hidden="true" tabindex="-1"></a>its output to human judgment at all, has produced numbers, not measurements. The</span>
-<span id="cb5-645"><a href="#cb5-645" aria-hidden="true" tabindex="-1"></a>discipline that distinguishes text-as-data from text mining is precisely this insistence</span>
-<span id="cb5-646"><a href="#cb5-646" aria-hidden="true" tabindex="-1"></a>that a column of model output earn the status of data.</span>
-<span id="cb5-647"><a href="#cb5-647" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-648"><a href="#cb5-648" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways {#sec-tad-takeaways}</span></span>
-<span id="cb5-649"><a href="#cb5-649" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-650"><a href="#cb5-650" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Representation is the first and most consequential choice.** Bag-of-words and TF-IDF</span>
-<span id="cb5-651"><a href="#cb5-651" aria-hidden="true" tabindex="-1"></a>  are transparent but order- and context-blind (@eq-bow, @eq-tfidf); embeddings capture</span>
-<span id="cb5-652"><a href="#cb5-652" aria-hidden="true" tabindex="-1"></a>  context at the cost of interpretability (@sec-embeddings). Match the representation to</span>
-<span id="cb5-653"><a href="#cb5-653" aria-hidden="true" tabindex="-1"></a>  the construct, not to fashion.</span>
-<span id="cb5-654"><a href="#cb5-654" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Topic models discover structure but do not name it.** LDA's outputs are</span>
-<span id="cb5-655"><a href="#cb5-655" aria-hidden="true" tabindex="-1"></a>  distributions an analyst must interpret and validate; $K$ and the priors are</span>
-<span id="cb5-656"><a href="#cb5-656" aria-hidden="true" tabindex="-1"></a>  researcher choices, not data, and the solution is sensitive to them (@sec-lda).</span>
-<span id="cb5-657"><a href="#cb5-657" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sentiment, emotion, and stance are distinct constructs.** Lexicons are auditable but</span>
-<span id="cb5-658"><a href="#cb5-658" aria-hidden="true" tabindex="-1"></a>  cannot represent negation or sarcasm, biasing estimates in a *signed* way</span>
-<span id="cb5-659"><a href="#cb5-659" aria-hidden="true" tabindex="-1"></a>  (@sec-lexicon, @sec-sarcasm); decide which construct, at which level, validated how,</span>
-<span id="cb5-660"><a href="#cb5-660" aria-hidden="true" tabindex="-1"></a>  before scoring.</span>
-<span id="cb5-661"><a href="#cb5-661" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Supervised classification lives or dies by honest evaluation.** Under class</span>
-<span id="cb5-662"><a href="#cb5-662" aria-hidden="true" tabindex="-1"></a>  imbalance, report precision, recall, and F1, guard against leakage, and validate</span>
-<span id="cb5-663"><a href="#cb5-663" aria-hidden="true" tabindex="-1"></a>  out-of-distribution (@sec-classification-validity).</span>
-<span id="cb5-664"><a href="#cb5-664" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**LLMs are powerful, cheap annotators—and unvalidated classifiers until proven</span>
-<span id="cb5-665"><a href="#cb5-665" aria-hidden="true" tabindex="-1"></a>  otherwise.** Hallucination, prompt sensitivity, and contamination make validation</span>
-<span id="cb5-666"><a href="#cb5-666" aria-hidden="true" tabindex="-1"></a>  *more* necessary, not less (@sec-llm-extraction).</span>
-<span id="cb5-667"><a href="#cb5-667" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Selection, generated-regressor error, and validation against ground truth** are the</span>
-<span id="cb5-668"><a href="#cb5-668" aria-hidden="true" tabindex="-1"></a>  identification frontier; text measured on who chose to write estimates writers, not</span>
-<span id="cb5-669"><a href="#cb5-669" aria-hidden="true" tabindex="-1"></a>  customers (@sec-tad-pitfalls).</span>
+<span id="cb5-534"><a href="#cb5-534" aria-hidden="true" tabindex="-1"></a>structure of coding large corpora. @fig-llm-extraction sketches this schema-bearing</span>
+<span id="cb5-535"><a href="#cb5-535" aria-hidden="true" tabindex="-1"></a>prompt-to-record workflow.</span>
+<span id="cb5-536"><a href="#cb5-536" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-539"><a href="#cb5-539" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb5-540"><a href="#cb5-540" aria-hidden="true" tabindex="-1"></a>%%| label: fig-llm-extraction</span>
+<span id="cb5-541"><a href="#cb5-541" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">LLM-based structured extraction: an unstructured document plus a schema-bearing prompt yields a structured record, which still requires validation against human labels before use.</span><span class="ot">"</span></span>
+<span id="cb5-542"><a href="#cb5-542" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb5-543"><a href="#cb5-543" aria-hidden="true" tabindex="-1"></a>  A[Unstructured doc&lt;br/&gt;review / call / post] --&gt; C[LLM]</span>
+<span id="cb5-544"><a href="#cb5-544" aria-hidden="true" tabindex="-1"></a>  B[Prompt:&lt;br/&gt;schema + instructions&lt;br/&gt;+ few-shot examples] --&gt; C</span>
+<span id="cb5-545"><a href="#cb5-545" aria-hidden="true" tabindex="-1"></a>  C --&gt; D[Structured record&lt;br/&gt;aspect, sentiment,&lt;br/&gt;intent, entities]</span>
+<span id="cb5-546"><a href="#cb5-546" aria-hidden="true" tabindex="-1"></a>  D --&gt; E{Validate vs.&lt;br/&gt;human labels}</span>
+<span id="cb5-547"><a href="#cb5-547" aria-hidden="true" tabindex="-1"></a>  E --&gt;|adequate| F[Downstream&lt;br/&gt;analysis]</span>
+<span id="cb5-548"><a href="#cb5-548" aria-hidden="true" tabindex="-1"></a>  E --&gt;|inadequate| B</span>
+<span id="cb5-549"><a href="#cb5-549" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-550"><a href="#cb5-550" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-551"><a href="#cb5-551" aria-hidden="true" tabindex="-1"></a>The capability is real, but treating LLM output as data demands more discipline, not</span>
+<span id="cb5-552"><a href="#cb5-552" aria-hidden="true" tabindex="-1"></a>less, because the failure modes are different and less visible than a misfit</span>
+<span id="cb5-553"><a href="#cb5-553" aria-hidden="true" tabindex="-1"></a>regression. Four cautions are first-order. (i) *Hallucination*: an LLM can emit</span>
+<span id="cb5-554"><a href="#cb5-554" aria-hidden="true" tabindex="-1"></a>confident, well-formed fields that are not supported by the document; extracted values</span>
+<span id="cb5-555"><a href="#cb5-555" aria-hidden="true" tabindex="-1"></a>must be checked against the source, not trusted because they parse. (ii)</span>
+<span id="cb5-556"><a href="#cb5-556" aria-hidden="true" tabindex="-1"></a>*Non-determinism and prompt sensitivity*: the same document under a slightly different</span>
+<span id="cb5-557"><a href="#cb5-557" aria-hidden="true" tabindex="-1"></a>prompt, or the same prompt on a different day, can yield different output, so the prompt</span>
+<span id="cb5-558"><a href="#cb5-558" aria-hidden="true" tabindex="-1"></a>and model version are part of the measurement instrument and must be fixed and reported.</span>
+<span id="cb5-559"><a href="#cb5-559" aria-hidden="true" tabindex="-1"></a>(iii) *Train–test contamination and circularity*: if the construct being measured is</span>
+<span id="cb5-560"><a href="#cb5-560" aria-hidden="true" tabindex="-1"></a>itself derived from the kind of text the model was trained on, the "measurement" may be</span>
+<span id="cb5-561"><a href="#cb5-561" aria-hidden="true" tabindex="-1"></a>recovering the model's priors rather than the document's content. (iv) *Validation</span>
+<span id="cb5-562"><a href="#cb5-562" aria-hidden="true" tabindex="-1"></a>remains mandatory*: an LLM extractor is an unvalidated classifier until its output has</span>
+<span id="cb5-563"><a href="#cb5-563" aria-hidden="true" tabindex="-1"></a>been compared, on a held-out human-labeled sample, against the ground truth—the same</span>
+<span id="cb5-564"><a href="#cb5-564" aria-hidden="true" tabindex="-1"></a>precision/recall/F1 discipline of @sec-classification-validity applies unchanged.</span>
+<span id="cb5-565"><a href="#cb5-565" aria-hidden="true" tabindex="-1"></a>Marketing research using LLMs and machine learning on consumer text is accelerating</span>
+<span id="cb5-566"><a href="#cb5-566" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@hartmann2023more; @ananthakrishnan2025book; @gao2024big</span><span class="co">]</span>, and the methodological</span>
+<span id="cb5-567"><a href="#cb5-567" aria-hidden="true" tabindex="-1"></a>center of gravity is precisely this: the model is a powerful, cheap annotator whose</span>
+<span id="cb5-568"><a href="#cb5-568" aria-hidden="true" tabindex="-1"></a>output must still earn its place in a regression by being validated like any other</span>
+<span id="cb5-569"><a href="#cb5-569" aria-hidden="true" tabindex="-1"></a>measure. (For the LLM/API specifics—model selection, prompting, and structured-output</span>
+<span id="cb5-570"><a href="#cb5-570" aria-hidden="true" tabindex="-1"></a>mechanics—the appropriate provider documentation should be consulted; this chapter</span>
+<span id="cb5-571"><a href="#cb5-571" aria-hidden="true" tabindex="-1"></a>treats LLMs as measurement instruments, not as an engineering topic.)</span>
+<span id="cb5-572"><a href="#cb5-572" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- CITE-NEEDED: foundational LLM / transformer references (e.g., attention, BERT, GPT) are CS-venue papers not in the marketing allowlist --&gt;</span></span>
+<span id="cb5-573"><a href="#cb5-573" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-574"><a href="#cb5-574" aria-hidden="true" tabindex="-1"></a><span class="fu">## Marketing Applications {#sec-tad-applications}</span></span>
+<span id="cb5-575"><a href="#cb5-575" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-576"><a href="#cb5-576" aria-hidden="true" tabindex="-1"></a>The methods above are general; their value is in what they let a marketer measure.</span>
+<span id="cb5-577"><a href="#cb5-577" aria-hidden="true" tabindex="-1"></a>Three settings dominate.</span>
+<span id="cb5-578"><a href="#cb5-578" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-579"><a href="#cb5-579" aria-hidden="true" tabindex="-1"></a>**Online reviews** are the most-mined consumer text, because they pair language with a</span>
+<span id="cb5-580"><a href="#cb5-580" aria-hidden="true" tabindex="-1"></a>star rating and often with sales. Review *volume* and *valence* track product quality</span>
+<span id="cb5-581"><a href="#cb5-581" aria-hidden="true" tabindex="-1"></a>and demand and move firm value, with negative content the most diagnostic</span>
+<span id="cb5-582"><a href="#cb5-582" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@tirunillai2012; @chevalier2003measuring; @godes2004</span><span class="co">]</span>. Aspect-based sentiment turns the</span>
+<span id="cb5-583"><a href="#cb5-583" aria-hidden="true" tabindex="-1"></a>review corpus into an attribute-level scorecard that tells the firm which feature to fix</span>
+<span id="cb5-584"><a href="#cb5-584" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@buschken2016sentence</span><span class="co">]</span>, and topic models recover the dimensions of brand perception</span>
+<span id="cb5-585"><a href="#cb5-585" aria-hidden="true" tabindex="-1"></a>consumers actually discuss <span class="co">[</span><span class="ot">@tirunillai2014a</span><span class="co">]</span>. Reviews also raise their own measurement</span>
+<span id="cb5-586"><a href="#cb5-586" aria-hidden="true" tabindex="-1"></a>hazards: figurative language biases naive sentiment (@sec-sarcasm), and the threat of</span>
+<span id="cb5-587"><a href="#cb5-587" aria-hidden="true" tabindex="-1"></a>*fake* reviews makes the classification machinery of @sec-classification a quality-</span>
+<span id="cb5-588"><a href="#cb5-588" aria-hidden="true" tabindex="-1"></a>control necessity rather than an academic exercise.</span>
+<span id="cb5-589"><a href="#cb5-589" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-590"><a href="#cb5-590" aria-hidden="true" tabindex="-1"></a>**Social media** supplies a continuous, unsolicited signal of brand health that firms</span>
+<span id="cb5-591"><a href="#cb5-591" aria-hidden="true" tabindex="-1"></a>mine for "social listening" <span class="co">[</span><span class="ot">@schweidel2014listening</span><span class="co">]</span>. The text is short, noisy, and</span>
+<span id="cb5-592"><a href="#cb5-592" aria-hidden="true" tabindex="-1"></a>laden with slang, sarcasm, and emoji, which strains lexicon methods and rewards</span>
+<span id="cb5-593"><a href="#cb5-593" aria-hidden="true" tabindex="-1"></a>context-aware representations. The constructs of interest go beyond valence to *emotion*</span>
+<span id="cb5-594"><a href="#cb5-594" aria-hidden="true" tabindex="-1"></a>and *stance*—how aroused, how powerful, how aligned the writer is toward the brand</span>
+<span id="cb5-595"><a href="#cb5-595" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@hartmann2021power</span><span class="co">]</span>—and to network-mediated diffusion, where *what* and *how* something</span>
+<span id="cb5-596"><a href="#cb5-596" aria-hidden="true" tabindex="-1"></a>is said shapes whether it spreads (@sec-virality; @packard2016). Social text also feeds</span>
+<span id="cb5-597"><a href="#cb5-597" aria-hidden="true" tabindex="-1"></a>back into measurement of constructs treated elsewhere: blog and post text predict and</span>
+<span id="cb5-598"><a href="#cb5-598" aria-hidden="true" tabindex="-1"></a>explain marketing outcomes <span class="co">[</span><span class="ot">@gopinath2013blogs; @gopinath2014investigating</span><span class="co">]</span>, and</span>
+<span id="cb5-599"><a href="#cb5-599" aria-hidden="true" tabindex="-1"></a>user-generated images extend text measurement into the visual channel <span class="co">[</span><span class="ot">@liu2020</span><span class="co">]</span>.</span>
+<span id="cb5-600"><a href="#cb5-600" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-601"><a href="#cb5-601" aria-hidden="true" tabindex="-1"></a>**Calls and conversations**—sales calls, service interactions, support chats—are the</span>
+<span id="cb5-602"><a href="#cb5-602" aria-hidden="true" tabindex="-1"></a>frontier, because they are long, dyadic, and rich in the dynamics of persuasion and</span>
+<span id="cb5-603"><a href="#cb5-603" aria-hidden="true" tabindex="-1"></a>emotion that static reviews lack. Transcribed and analyzed at scale, they let a firm</span>
+<span id="cb5-604"><a href="#cb5-604" aria-hidden="true" tabindex="-1"></a>measure how a frontline agent's language drives outcomes, where in a conversation</span>
+<span id="cb5-605"><a href="#cb5-605" aria-hidden="true" tabindex="-1"></a>sentiment turns, and which conversational moves resolve a complaint—linking directly to</span>
+<span id="cb5-606"><a href="#cb5-606" aria-hidden="true" tabindex="-1"></a>the frontline-service and salesperson-value constructs of @sec-service and @sec-sales.</span>
+<span id="cb5-607"><a href="#cb5-607" aria-hidden="true" tabindex="-1"></a>This is the natural home of LLM extraction (@sec-llm-extraction): a transcript is exactly</span>
+<span id="cb5-608"><a href="#cb5-608" aria-hidden="true" tabindex="-1"></a>the kind of long, unstructured document from which a prompted model can pull a structured</span>
+<span id="cb5-609"><a href="#cb5-609" aria-hidden="true" tabindex="-1"></a>record—intent, objections raised, resolution, sentiment trajectory—that no fixed lexicon</span>
+<span id="cb5-610"><a href="#cb5-610" aria-hidden="true" tabindex="-1"></a>or bag-of-words could recover.</span>
+<span id="cb5-611"><a href="#cb5-611" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-612"><a href="#cb5-612" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification {#sec-tad-pitfalls}</span></span>
+<span id="cb5-613"><a href="#cb5-613" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-614"><a href="#cb5-614" aria-hidden="true" tabindex="-1"></a>Text-as-data inherits every threat to validity that afflicts measurement, plus several</span>
+<span id="cb5-615"><a href="#cb5-615" aria-hidden="true" tabindex="-1"></a>of its own. Naming them is the precondition for credible inference.</span>
+<span id="cb5-616"><a href="#cb5-616" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-617"><a href="#cb5-617" aria-hidden="true" tabindex="-1"></a>The deepest is that **the representation is an identifying assumption**. A bag-of-words</span>
+<span id="cb5-618"><a href="#cb5-618" aria-hidden="true" tabindex="-1"></a>*cannot* represent negation or sarcasm, so any inference from it about valence is</span>
+<span id="cb5-619"><a href="#cb5-619" aria-hidden="true" tabindex="-1"></a>conditional on those phenomena being rare or randomly distributed—an assumption that is</span>
+<span id="cb5-620"><a href="#cb5-620" aria-hidden="true" tabindex="-1"></a>often false and rarely tested (@sec-sarcasm). The choice of representation is therefore</span>
+<span id="cb5-621"><a href="#cb5-621" aria-hidden="true" tabindex="-1"></a>not a tuning detail but a substantive claim about what the text means.</span>
+<span id="cb5-622"><a href="#cb5-622" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-623"><a href="#cb5-623" aria-hidden="true" tabindex="-1"></a>A second hazard is **selection in who writes**. The corpus is generated by people who</span>
+<span id="cb5-624"><a href="#cb5-624" aria-hidden="true" tabindex="-1"></a>chose to review, post, or call, and that selection is correlated with the outcome:</span>
+<span id="cb5-625"><a href="#cb5-625" aria-hidden="true" tabindex="-1"></a>reviewers are disproportionately the delighted and the furious, producing the well-known</span>
+<span id="cb5-626"><a href="#cb5-626" aria-hidden="true" tabindex="-1"></a>J-shaped ratings distribution, and social-media posters are not a random sample of</span>
+<span id="cb5-627"><a href="#cb5-627" aria-hidden="true" tabindex="-1"></a>customers. Text measured on a selected sample estimates the sentiment of *writers*, not</span>
+<span id="cb5-628"><a href="#cb5-628" aria-hidden="true" tabindex="-1"></a>of *customers*, and the gap is a bias, not noise. Methods that debias the poster</span>
+<span id="cb5-629"><a href="#cb5-629" aria-hidden="true" tabindex="-1"></a>population are the appropriate response, not a larger but equally selected corpus.</span>
+<span id="cb5-630"><a href="#cb5-630" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-631"><a href="#cb5-631" aria-hidden="true" tabindex="-1"></a>A third is **endogeneity in downstream regressions**. When a text-derived measure—topic</span>
+<span id="cb5-632"><a href="#cb5-632" aria-hidden="true" tabindex="-1"></a>share, sentiment, an LLM-extracted field—is used as a regressor explaining sales or firm</span>
+<span id="cb5-633"><a href="#cb5-633" aria-hidden="true" tabindex="-1"></a>value, it is a *generated regressor* measured with error and often correlated with</span>
+<span id="cb5-634"><a href="#cb5-634" aria-hidden="true" tabindex="-1"></a>omitted drivers. Plugging $\hat{s}_i$ into a regression as if it were observed</span>
+<span id="cb5-635"><a href="#cb5-635" aria-hidden="true" tabindex="-1"></a>understates standard errors and can bias coefficients; the measurement model and the</span>
+<span id="cb5-636"><a href="#cb5-636" aria-hidden="true" tabindex="-1"></a>outcome model should be treated as one system, and the error in the text measure</span>
+<span id="cb5-637"><a href="#cb5-637" aria-hidden="true" tabindex="-1"></a>propagated. The marketing-finance and metrics chapters (@sec-marketing-finance,</span>
+<span id="cb5-638"><a href="#cb5-638" aria-hidden="true" tabindex="-1"></a>@sec-metrics) develop the downstream inference that text measures feed.</span>
+<span id="cb5-639"><a href="#cb5-639" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-640"><a href="#cb5-640" aria-hidden="true" tabindex="-1"></a>Finally, **validation is not optional and is not a formality**. Every text measure—</span>
+<span id="cb5-641"><a href="#cb5-641" aria-hidden="true" tabindex="-1"></a>lexicon score, topic label, classifier output, LLM extraction—is a claim about an</span>
+<span id="cb5-642"><a href="#cb5-642" aria-hidden="true" tabindex="-1"></a>unobserved construct and must be validated against human-coded ground truth on a sample,</span>
+<span id="cb5-643"><a href="#cb5-643" aria-hidden="true" tabindex="-1"></a>with an explicit reliability statistic, before it enters an analysis (@sec-annotation).</span>
+<span id="cb5-644"><a href="#cb5-644" aria-hidden="true" tabindex="-1"></a>A pipeline that reports its accuracy on the data it was tuned on, or that never compares</span>
+<span id="cb5-645"><a href="#cb5-645" aria-hidden="true" tabindex="-1"></a>its output to human judgment at all, has produced numbers, not measurements. The</span>
+<span id="cb5-646"><a href="#cb5-646" aria-hidden="true" tabindex="-1"></a>discipline that distinguishes text-as-data from text mining is precisely this insistence</span>
+<span id="cb5-647"><a href="#cb5-647" aria-hidden="true" tabindex="-1"></a>that a column of model output earn the status of data.</span>
+<span id="cb5-648"><a href="#cb5-648" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-649"><a href="#cb5-649" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways {#sec-tad-takeaways}</span></span>
+<span id="cb5-650"><a href="#cb5-650" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-651"><a href="#cb5-651" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Representation is the first and most consequential choice.** Bag-of-words and TF-IDF</span>
+<span id="cb5-652"><a href="#cb5-652" aria-hidden="true" tabindex="-1"></a>  are transparent but order- and context-blind (@eq-bow, @eq-tfidf); embeddings capture</span>
+<span id="cb5-653"><a href="#cb5-653" aria-hidden="true" tabindex="-1"></a>  context at the cost of interpretability (@sec-embeddings). Match the representation to</span>
+<span id="cb5-654"><a href="#cb5-654" aria-hidden="true" tabindex="-1"></a>  the construct, not to fashion.</span>
+<span id="cb5-655"><a href="#cb5-655" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Topic models discover structure but do not name it.** LDA's outputs are</span>
+<span id="cb5-656"><a href="#cb5-656" aria-hidden="true" tabindex="-1"></a>  distributions an analyst must interpret and validate; $K$ and the priors are</span>
+<span id="cb5-657"><a href="#cb5-657" aria-hidden="true" tabindex="-1"></a>  researcher choices, not data, and the solution is sensitive to them (@sec-lda).</span>
+<span id="cb5-658"><a href="#cb5-658" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sentiment, emotion, and stance are distinct constructs.** Lexicons are auditable but</span>
+<span id="cb5-659"><a href="#cb5-659" aria-hidden="true" tabindex="-1"></a>  cannot represent negation or sarcasm, biasing estimates in a *signed* way</span>
+<span id="cb5-660"><a href="#cb5-660" aria-hidden="true" tabindex="-1"></a>  (@sec-lexicon, @sec-sarcasm); decide which construct, at which level, validated how,</span>
+<span id="cb5-661"><a href="#cb5-661" aria-hidden="true" tabindex="-1"></a>  before scoring.</span>
+<span id="cb5-662"><a href="#cb5-662" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Supervised classification lives or dies by honest evaluation.** Under class</span>
+<span id="cb5-663"><a href="#cb5-663" aria-hidden="true" tabindex="-1"></a>  imbalance, report precision, recall, and F1, guard against leakage, and validate</span>
+<span id="cb5-664"><a href="#cb5-664" aria-hidden="true" tabindex="-1"></a>  out-of-distribution (@sec-classification-validity).</span>
+<span id="cb5-665"><a href="#cb5-665" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**LLMs are powerful, cheap annotators—and unvalidated classifiers until proven</span>
+<span id="cb5-666"><a href="#cb5-666" aria-hidden="true" tabindex="-1"></a>  otherwise.** Hallucination, prompt sensitivity, and contamination make validation</span>
+<span id="cb5-667"><a href="#cb5-667" aria-hidden="true" tabindex="-1"></a>  *more* necessary, not less (@sec-llm-extraction).</span>
+<span id="cb5-668"><a href="#cb5-668" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Selection, generated-regressor error, and validation against ground truth** are the</span>
+<span id="cb5-669"><a href="#cb5-669" aria-hidden="true" tabindex="-1"></a>  identification frontier; text measured on who chose to write estimates writers, not</span>
+<span id="cb5-670"><a href="#cb5-670" aria-hidden="true" tabindex="-1"></a>  customers (@sec-tad-pitfalls).</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

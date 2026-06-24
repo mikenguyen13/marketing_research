@@ -944,7 +944,7 @@ Figure&nbsp;54.2: The introduction funnel. Each band narrows from the world’s 
 \text{Fog} \;=\; 0.4\left(\frac{W}{S} \;+\; 100\,\frac{C}{W}\right),
 \tag{54.3}\]</span></span></p>
 <p>a weighted sum of average sentence length and the percentage of complex words. The two terms encode the two main sources of difficulty—long sentences and unfamiliar words—and the constant scales the result to a U.S. grade level, so a fog score of 12 corresponds roughly to the reading level of a high-school senior. Academic prose runs higher, but a methods section with a fog score in the high teens is usually not “rigorous”; it is merely overlong in the sentence and overloaded in the noun phrase. Textual-complexity measures of exactly this family are now standard tools in the marketing and finance literatures for analyzing corporate disclosures and other documents at scale <span class="citation" data-cites="loughran2020 loughran2020a">(<a href="#ref-loughran2020" role="doc-biblioref">Loughran and McDonald 2020a</a>, <a href="#ref-loughran2020a" role="doc-biblioref">2020b</a>)</span>, which is a useful reminder that the readability of <em>your</em> prose is itself a measurable, and therefore improvable, quantity.</p>
-<p>The estimator in <a href="#eq-sw-fog" class="quarto-xref">Equation&nbsp;<span>54.3</span></a> is a heuristic, not a model, and its assumptions are worth stating because they tell you when it misleads. It assumes that syllable count proxies word difficulty (false for short technical jargon like “prior” or “yield”, which are hard despite being monosyllabic) and that sentence length proxies syntactic load (false for a long but perfectly parallel list). It is best read as a <em>smoke detector</em>: a high score reliably indicates a problem somewhere, but a low score does not certify clarity. The following chunk implements it and a companion length diagnostic so the measure is reproducible rather than mystical.</p>
+<p>The estimator in <a href="#eq-sw-fog" class="quarto-xref">Equation&nbsp;<span>54.3</span></a> is a heuristic, not a model, and its assumptions are worth stating because they tell you when it misleads. It assumes that syllable count proxies word difficulty (false for short technical jargon like “prior” or “yield”, which are hard despite being monosyllabic) and that sentence length proxies syntactic load (false for a long but perfectly parallel list). It is best read as a <em>smoke detector</em>: a high score reliably indicates a problem somewhere, but a low score does not certify clarity. The following chunk implements it and a companion length diagnostic so the measure is reproducible rather than mystical; <a href="#fig-sw-fog" class="quarto-xref">Figure&nbsp;<span>54.3</span></a> shows the score falling as the same sentence is progressively tightened.</p>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">41</span><span class="op">)</span></span>
 <span></span>
@@ -1909,116 +1909,117 @@ Loughran, Tim, and Bill McDonald. 2020a. <span>“Measuring Firm Complexity.”<
 <span id="cb2-419"><a href="#cb2-419" aria-hidden="true" tabindex="-1"></a>proxies syntactic load (false for a long but perfectly parallel list). It is best</span>
 <span id="cb2-420"><a href="#cb2-420" aria-hidden="true" tabindex="-1"></a>read as a *smoke detector*: a high score reliably indicates a problem somewhere,</span>
 <span id="cb2-421"><a href="#cb2-421" aria-hidden="true" tabindex="-1"></a>but a low score does not certify clarity. The following chunk implements it and a</span>
-<span id="cb2-422"><a href="#cb2-422" aria-hidden="true" tabindex="-1"></a>companion length diagnostic so the measure is reproducible rather than mystical.</span>
-<span id="cb2-423"><a href="#cb2-423" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-426"><a href="#cb2-426" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb2-427"><a href="#cb2-427" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-sw-fog</span></span>
-<span id="cb2-428"><a href="#cb2-428" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Gunning fog scores for three versions of the same sentence—a bloated original, a moderate edit, and a lean rewrite—showing how shortening sentences and replacing complex words lowers the estimated reading grade. The dashed line marks a fog score of 12 (high-school senior)."</span></span>
-<span id="cb2-429"><a href="#cb2-429" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
-<span id="cb2-430"><a href="#cb2-430" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb2-431"><a href="#cb2-431" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb2-432"><a href="#cb2-432" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">41</span>)</span>
-<span id="cb2-433"><a href="#cb2-433" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-434"><a href="#cb2-434" aria-hidden="true" tabindex="-1"></a><span class="co"># A deliberately rough syllable counter: count vowel groups per word.</span></span>
-<span id="cb2-435"><a href="#cb2-435" aria-hidden="true" tabindex="-1"></a><span class="co"># Heuristic, not linguistic ground truth -- adequate for a relative diagnostic.</span></span>
-<span id="cb2-436"><a href="#cb2-436" aria-hidden="true" tabindex="-1"></a>count_syllables <span class="ot">&lt;-</span> <span class="cf">function</span>(word) {</span>
-<span id="cb2-437"><a href="#cb2-437" aria-hidden="true" tabindex="-1"></a>  word <span class="ot">&lt;-</span> <span class="fu">tolower</span>(<span class="fu">gsub</span>(<span class="st">"[^a-z]"</span>, <span class="st">""</span>, word))</span>
-<span id="cb2-438"><a href="#cb2-438" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nchar</span>(word) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="dv">0</span>L)</span>
-<span id="cb2-439"><a href="#cb2-439" aria-hidden="true" tabindex="-1"></a>  groups <span class="ot">&lt;-</span> <span class="fu">gregexpr</span>(<span class="st">"[aeiouy]+"</span>, word)[[<span class="dv">1</span>]]</span>
-<span id="cb2-440"><a href="#cb2-440" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="cf">if</span> (groups[<span class="dv">1</span>] <span class="sc">==</span> <span class="sc">-</span><span class="dv">1</span>L) <span class="dv">1</span>L <span class="cf">else</span> <span class="fu">length</span>(groups)</span>
-<span id="cb2-441"><a href="#cb2-441" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">"e$"</span>, word) <span class="sc">&amp;&amp;</span> n <span class="sc">&gt;</span> <span class="dv">1</span>L) n <span class="ot">&lt;-</span> n <span class="sc">-</span> <span class="dv">1</span>L   <span class="co"># silent terminal 'e'</span></span>
-<span id="cb2-442"><a href="#cb2-442" aria-hidden="true" tabindex="-1"></a>  <span class="fu">max</span>(n, <span class="dv">1</span>L)</span>
-<span id="cb2-443"><a href="#cb2-443" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-444"><a href="#cb2-444" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-445"><a href="#cb2-445" aria-hidden="true" tabindex="-1"></a>gunning_fog <span class="ot">&lt;-</span> <span class="cf">function</span>(text) {</span>
-<span id="cb2-446"><a href="#cb2-446" aria-hidden="true" tabindex="-1"></a>  sentences <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">strsplit</span>(text, <span class="st">"(?&lt;=[.!?])</span><span class="sc">\\</span><span class="st">s+"</span>, <span class="at">perl =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb2-447"><a href="#cb2-447" aria-hidden="true" tabindex="-1"></a>  sentences <span class="ot">&lt;-</span> sentences[<span class="fu">nzchar</span>(<span class="fu">trimws</span>(sentences))]</span>
-<span id="cb2-448"><a href="#cb2-448" aria-hidden="true" tabindex="-1"></a>  words <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">strsplit</span>(text, <span class="st">"</span><span class="sc">\\</span><span class="st">s+"</span>))</span>
-<span id="cb2-449"><a href="#cb2-449" aria-hidden="true" tabindex="-1"></a>  words <span class="ot">&lt;-</span> words[<span class="fu">nzchar</span>(words)]</span>
-<span id="cb2-450"><a href="#cb2-450" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> <span class="fu">length</span>(words); S <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">length</span>(sentences), <span class="dv">1</span>L)</span>
-<span id="cb2-451"><a href="#cb2-451" aria-hidden="true" tabindex="-1"></a>  syl <span class="ot">&lt;-</span> <span class="fu">vapply</span>(words, count_syllables, <span class="fu">integer</span>(<span class="dv">1</span>))</span>
-<span id="cb2-452"><a href="#cb2-452" aria-hidden="true" tabindex="-1"></a>  C <span class="ot">&lt;-</span> <span class="fu">sum</span>(syl <span class="sc">&gt;=</span> <span class="dv">3</span>L)                              <span class="co"># "complex" words</span></span>
-<span id="cb2-453"><a href="#cb2-453" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.4</span> <span class="sc">*</span> (W <span class="sc">/</span> S <span class="sc">+</span> <span class="dv">100</span> <span class="sc">*</span> C <span class="sc">/</span> W)</span>
-<span id="cb2-454"><a href="#cb2-454" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-455"><a href="#cb2-455" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-456"><a href="#cb2-456" aria-hidden="true" tabindex="-1"></a>versions <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb2-457"><a href="#cb2-457" aria-hidden="true" tabindex="-1"></a>  <span class="at">bloated  =</span> <span class="fu">paste</span>(<span class="st">"The utilization of an excessively elaborate and"</span>,</span>
-<span id="cb2-458"><a href="#cb2-458" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"circumlocutory prose style, characterized by the"</span>,</span>
-<span id="cb2-459"><a href="#cb2-459" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"accumulation of subordinate clauses, demonstrably"</span>,</span>
-<span id="cb2-460"><a href="#cb2-460" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"attenuates comprehensibility for the readership."</span>),</span>
-<span id="cb2-461"><a href="#cb2-461" aria-hidden="true" tabindex="-1"></a>  <span class="at">moderate =</span> <span class="fu">paste</span>(<span class="st">"Using an elaborate, indirect prose style with many"</span>,</span>
-<span id="cb2-462"><a href="#cb2-462" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"subordinate clauses reduces how well readers understand"</span>,</span>
-<span id="cb2-463"><a href="#cb2-463" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"the argument."</span>),</span>
-<span id="cb2-464"><a href="#cb2-464" aria-hidden="true" tabindex="-1"></a>  <span class="at">lean     =</span> <span class="st">"Dense prose is hard to read."</span></span>
-<span id="cb2-465"><a href="#cb2-465" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-466"><a href="#cb2-466" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-467"><a href="#cb2-467" aria-hidden="true" tabindex="-1"></a>fog <span class="ot">&lt;-</span> <span class="fu">vapply</span>(versions, gunning_fog, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
-<span id="cb2-468"><a href="#cb2-468" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(fog, <span class="dv">1</span>))</span>
-<span id="cb2-469"><a href="#cb2-469" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-470"><a href="#cb2-470" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(fog, <span class="at">col =</span> <span class="st">"grey80"</span>, <span class="at">border =</span> <span class="cn">NA</span>, <span class="at">ylab =</span> <span class="st">"Gunning fog (grade level)"</span>,</span>
-<span id="cb2-471"><a href="#cb2-471" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Readability across three drafts of one claim"</span>,</span>
-<span id="cb2-472"><a href="#cb2-472" aria-hidden="true" tabindex="-1"></a>        <span class="at">names.arg =</span> <span class="fu">names</span>(versions))</span>
-<span id="cb2-473"><a href="#cb2-473" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">12</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span>
-<span id="cb2-474"><a href="#cb2-474" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-475"><a href="#cb2-475" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-476"><a href="#cb2-476" aria-hidden="true" tabindex="-1"></a><span class="fu">### Revision as a process</span></span>
-<span id="cb2-477"><a href="#cb2-477" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-478"><a href="#cb2-478" aria-hidden="true" tabindex="-1"></a>First drafts are for the writer; revision is for the reader. The empirical</span>
-<span id="cb2-479"><a href="#cb2-479" aria-hidden="true" tabindex="-1"></a>regularity behind all writing advice is that meaning is discovered, not transcribed:</span>
-<span id="cb2-480"><a href="#cb2-480" aria-hidden="true" tabindex="-1"></a>the act of writing reveals which arrows in @eq-sw-chain are actually weak, and the</span>
-<span id="cb2-481"><a href="#cb2-481" aria-hidden="true" tabindex="-1"></a>first draft's value is largely diagnostic. Productive revision proceeds top-down—</span>
-<span id="cb2-482"><a href="#cb2-482" aria-hidden="true" tabindex="-1"></a>structure before paragraph, paragraph before sentence, sentence before word—because</span>
-<span id="cb2-483"><a href="#cb2-483" aria-hidden="true" tabindex="-1"></a>fixing a comma in a paragraph that will be deleted is wasted effort. A useful</span>
-<span id="cb2-484"><a href="#cb2-484" aria-hidden="true" tabindex="-1"></a>sequence is to first verify that the contribution sentence is present and true,</span>
-<span id="cb2-485"><a href="#cb2-485" aria-hidden="true" tabindex="-1"></a>then that each section answers its one question, then that each paragraph has a</span>
-<span id="cb2-486"><a href="#cb2-486" aria-hidden="true" tabindex="-1"></a>single point announced in its first sentence, and only then to polish prose. The</span>
-<span id="cb2-487"><a href="#cb2-487" aria-hidden="true" tabindex="-1"></a>"reverse outline"—reading the draft and writing in the margin the single claim each</span>
-<span id="cb2-488"><a href="#cb2-488" aria-hidden="true" tabindex="-1"></a>paragraph makes—exposes structural defects (two paragraphs making the same point, a</span>
-<span id="cb2-489"><a href="#cb2-489" aria-hidden="true" tabindex="-1"></a>claim with no supporting paragraph, a paragraph with no claim) that are invisible at</span>
-<span id="cb2-490"><a href="#cb2-490" aria-hidden="true" tabindex="-1"></a>the sentence level.</span>
-<span id="cb2-491"><a href="#cb2-491" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-492"><a href="#cb2-492" aria-hidden="true" tabindex="-1"></a>A final discipline is distance. Prose that seems clear the night it is written is</span>
-<span id="cb2-493"><a href="#cb2-493" aria-hidden="true" tabindex="-1"></a>frequently opaque a week later, when the author has forgotten the unstated</span>
-<span id="cb2-494"><a href="#cb2-494" aria-hidden="true" tabindex="-1"></a>assumptions that made it cohere—and a week-later author is a closer proxy for the</span>
-<span id="cb2-495"><a href="#cb2-495" aria-hidden="true" tabindex="-1"></a>real reader than the night-of author ever is. Where time does not permit distance,</span>
-<span id="cb2-496"><a href="#cb2-496" aria-hidden="true" tabindex="-1"></a>a co-author or colleague reading cold is the next best instrument, and the most</span>
-<span id="cb2-497"><a href="#cb2-497" aria-hidden="true" tabindex="-1"></a>valuable feedback is not "I disagree" but "I got lost here", because confusion</span>
-<span id="cb2-498"><a href="#cb2-498" aria-hidden="true" tabindex="-1"></a>localizes a broken arrow that the author can no longer see.</span>
-<span id="cb2-499"><a href="#cb2-499" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-500"><a href="#cb2-500" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
-<span id="cb2-501"><a href="#cb2-501" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-502"><a href="#cb2-502" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A paper is a **reconstructed argument**, not a lab diary: the order of exposition</span>
-<span id="cb2-503"><a href="#cb2-503" aria-hidden="true" tabindex="-1"></a>  is engineered for the reader, and each section answers exactly one question with</span>
-<span id="cb2-504"><a href="#cb2-504" aria-hidden="true" tabindex="-1"></a>  its own default verb tense (@tbl-sw-sections).</span>
-<span id="cb2-505"><a href="#cb2-505" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The argument is a chain of claims the reader may refuse to grant</span>
-<span id="cb2-506"><a href="#cb2-506" aria-hidden="true" tabindex="-1"></a>  (@eq-sw-chain); a paper fails at its **weakest arrow**, and most "low</span>
-<span id="cb2-507"><a href="#cb2-507" aria-hidden="true" tabindex="-1"></a>  contribution" rejections are in fact broken arrows—a filled gap or a design that</span>
-<span id="cb2-508"><a href="#cb2-508" aria-hidden="true" tabindex="-1"></a>  cannot license the conclusion.</span>
-<span id="cb2-509"><a href="#cb2-509" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A contribution is the warranted increment to knowledge $\Delta\mathcal{K}$</span>
-<span id="cb2-510"><a href="#cb2-510" aria-hidden="true" tabindex="-1"></a>  (@eq-sw-contribution); it must be **novel, valid, and important**, and the</span>
-<span id="cb2-511"><a href="#cb2-511" aria-hidden="true" tabindex="-1"></a>  top-4 bar that rises is importance. State the most general claim the evidence</span>
-<span id="cb2-512"><a href="#cb2-512" aria-hidden="true" tabindex="-1"></a>  licenses, and not one inch more.</span>
-<span id="cb2-513"><a href="#cb2-513" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The **front end** carries the promise; the discussion must redeem exactly that</span>
-<span id="cb2-514"><a href="#cb2-514" aria-hidden="true" tabindex="-1"></a>  promise. Make the "in this paper, we..." pivot early and state contributions as</span>
-<span id="cb2-515"><a href="#cb2-515" aria-hidden="true" tabindex="-1"></a>  claims, not activities (@fig-sw-funnel).</span>
-<span id="cb2-516"><a href="#cb2-516" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Robustness is rhetoric**: writing the reviewer's objections into the paper</span>
-<span id="cb2-517"><a href="#cb2-517" aria-hidden="true" tabindex="-1"></a>  before submission is the highest-return revision activity, and the R&amp;R response is</span>
-<span id="cb2-518"><a href="#cb2-518" aria-hidden="true" tabindex="-1"></a>  a craft document whose job is to make the editor's decision easy to defend.</span>
-<span id="cb2-519"><a href="#cb2-519" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Clarity is a property of the reader**: measure it (@eq-sw-fog), revise</span>
-<span id="cb2-520"><a href="#cb2-520" aria-hidden="true" tabindex="-1"></a>  top-down from structure to sentence, and use distance or a cold reader to localize</span>
-<span id="cb2-521"><a href="#cb2-521" aria-hidden="true" tabindex="-1"></a>  the arrows you can no longer see are broken.</span>
-<span id="cb2-522"><a href="#cb2-522" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-523"><a href="#cb2-523" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further Reading</span></span>
-<span id="cb2-524"><a href="#cb2-524" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-525"><a href="#cb2-525" aria-hidden="true" tabindex="-1"></a>For the structure of scientific argument and the discipline of revision, the</span>
-<span id="cb2-526"><a href="#cb2-526" aria-hidden="true" tabindex="-1"></a>classic writing-craft literature is the natural starting point; for the specific</span>
-<span id="cb2-527"><a href="#cb2-527" aria-hidden="true" tabindex="-1"></a>norms of the marketing top-4, the editorials and "from the editor" notes of JM,</span>
-<span id="cb2-528"><a href="#cb2-528" aria-hidden="true" tabindex="-1"></a>JMR, *Marketing Science*, and JCR are the authoritative—and frequently updated—</span>
-<span id="cb2-529"><a href="#cb2-529" aria-hidden="true" tabindex="-1"></a>statements of what each venue rewards. <span class="co">&lt;!-- CITE-NEEDED: editorial/from-the-editor pieces on contribution standards in JM, JMR, Marketing Science, JCR --&gt;</span> The</span>
-<span id="cb2-530"><a href="#cb2-530" aria-hidden="true" tabindex="-1"></a>textual-analysis methods that let us measure the readability of our own and others'</span>
-<span id="cb2-531"><a href="#cb2-531" aria-hidden="true" tabindex="-1"></a>prose are developed in the disclosure literature <span class="co">[</span><span class="ot">@loughran2020; @loughran2020a</span><span class="co">]</span></span>
-<span id="cb2-532"><a href="#cb2-532" aria-hidden="true" tabindex="-1"></a>and connect this chapter to the broader treatment of text as data elsewhere in the</span>
-<span id="cb2-533"><a href="#cb2-533" aria-hidden="true" tabindex="-1"></a>book.</span>
+<span id="cb2-422"><a href="#cb2-422" aria-hidden="true" tabindex="-1"></a>companion length diagnostic so the measure is reproducible rather than mystical;</span>
+<span id="cb2-423"><a href="#cb2-423" aria-hidden="true" tabindex="-1"></a>@fig-sw-fog shows the score falling as the same sentence is progressively tightened.</span>
+<span id="cb2-424"><a href="#cb2-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-427"><a href="#cb2-427" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb2-428"><a href="#cb2-428" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-sw-fog</span></span>
+<span id="cb2-429"><a href="#cb2-429" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Gunning fog scores for three versions of the same sentence—a bloated original, a moderate edit, and a lean rewrite—showing how shortening sentences and replacing complex words lowers the estimated reading grade. The dashed line marks a fog score of 12 (high-school senior)."</span></span>
+<span id="cb2-430"><a href="#cb2-430" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: true</span></span>
+<span id="cb2-431"><a href="#cb2-431" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb2-432"><a href="#cb2-432" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb2-433"><a href="#cb2-433" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">41</span>)</span>
+<span id="cb2-434"><a href="#cb2-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-435"><a href="#cb2-435" aria-hidden="true" tabindex="-1"></a><span class="co"># A deliberately rough syllable counter: count vowel groups per word.</span></span>
+<span id="cb2-436"><a href="#cb2-436" aria-hidden="true" tabindex="-1"></a><span class="co"># Heuristic, not linguistic ground truth -- adequate for a relative diagnostic.</span></span>
+<span id="cb2-437"><a href="#cb2-437" aria-hidden="true" tabindex="-1"></a>count_syllables <span class="ot">&lt;-</span> <span class="cf">function</span>(word) {</span>
+<span id="cb2-438"><a href="#cb2-438" aria-hidden="true" tabindex="-1"></a>  word <span class="ot">&lt;-</span> <span class="fu">tolower</span>(<span class="fu">gsub</span>(<span class="st">"[^a-z]"</span>, <span class="st">""</span>, word))</span>
+<span id="cb2-439"><a href="#cb2-439" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nchar</span>(word) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="dv">0</span>L)</span>
+<span id="cb2-440"><a href="#cb2-440" aria-hidden="true" tabindex="-1"></a>  groups <span class="ot">&lt;-</span> <span class="fu">gregexpr</span>(<span class="st">"[aeiouy]+"</span>, word)[[<span class="dv">1</span>]]</span>
+<span id="cb2-441"><a href="#cb2-441" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="cf">if</span> (groups[<span class="dv">1</span>] <span class="sc">==</span> <span class="sc">-</span><span class="dv">1</span>L) <span class="dv">1</span>L <span class="cf">else</span> <span class="fu">length</span>(groups)</span>
+<span id="cb2-442"><a href="#cb2-442" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">"e$"</span>, word) <span class="sc">&amp;&amp;</span> n <span class="sc">&gt;</span> <span class="dv">1</span>L) n <span class="ot">&lt;-</span> n <span class="sc">-</span> <span class="dv">1</span>L   <span class="co"># silent terminal 'e'</span></span>
+<span id="cb2-443"><a href="#cb2-443" aria-hidden="true" tabindex="-1"></a>  <span class="fu">max</span>(n, <span class="dv">1</span>L)</span>
+<span id="cb2-444"><a href="#cb2-444" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-445"><a href="#cb2-445" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-446"><a href="#cb2-446" aria-hidden="true" tabindex="-1"></a>gunning_fog <span class="ot">&lt;-</span> <span class="cf">function</span>(text) {</span>
+<span id="cb2-447"><a href="#cb2-447" aria-hidden="true" tabindex="-1"></a>  sentences <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">strsplit</span>(text, <span class="st">"(?&lt;=[.!?])</span><span class="sc">\\</span><span class="st">s+"</span>, <span class="at">perl =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb2-448"><a href="#cb2-448" aria-hidden="true" tabindex="-1"></a>  sentences <span class="ot">&lt;-</span> sentences[<span class="fu">nzchar</span>(<span class="fu">trimws</span>(sentences))]</span>
+<span id="cb2-449"><a href="#cb2-449" aria-hidden="true" tabindex="-1"></a>  words <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">strsplit</span>(text, <span class="st">"</span><span class="sc">\\</span><span class="st">s+"</span>))</span>
+<span id="cb2-450"><a href="#cb2-450" aria-hidden="true" tabindex="-1"></a>  words <span class="ot">&lt;-</span> words[<span class="fu">nzchar</span>(words)]</span>
+<span id="cb2-451"><a href="#cb2-451" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> <span class="fu">length</span>(words); S <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">length</span>(sentences), <span class="dv">1</span>L)</span>
+<span id="cb2-452"><a href="#cb2-452" aria-hidden="true" tabindex="-1"></a>  syl <span class="ot">&lt;-</span> <span class="fu">vapply</span>(words, count_syllables, <span class="fu">integer</span>(<span class="dv">1</span>))</span>
+<span id="cb2-453"><a href="#cb2-453" aria-hidden="true" tabindex="-1"></a>  C <span class="ot">&lt;-</span> <span class="fu">sum</span>(syl <span class="sc">&gt;=</span> <span class="dv">3</span>L)                              <span class="co"># "complex" words</span></span>
+<span id="cb2-454"><a href="#cb2-454" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.4</span> <span class="sc">*</span> (W <span class="sc">/</span> S <span class="sc">+</span> <span class="dv">100</span> <span class="sc">*</span> C <span class="sc">/</span> W)</span>
+<span id="cb2-455"><a href="#cb2-455" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-456"><a href="#cb2-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-457"><a href="#cb2-457" aria-hidden="true" tabindex="-1"></a>versions <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb2-458"><a href="#cb2-458" aria-hidden="true" tabindex="-1"></a>  <span class="at">bloated  =</span> <span class="fu">paste</span>(<span class="st">"The utilization of an excessively elaborate and"</span>,</span>
+<span id="cb2-459"><a href="#cb2-459" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"circumlocutory prose style, characterized by the"</span>,</span>
+<span id="cb2-460"><a href="#cb2-460" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"accumulation of subordinate clauses, demonstrably"</span>,</span>
+<span id="cb2-461"><a href="#cb2-461" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"attenuates comprehensibility for the readership."</span>),</span>
+<span id="cb2-462"><a href="#cb2-462" aria-hidden="true" tabindex="-1"></a>  <span class="at">moderate =</span> <span class="fu">paste</span>(<span class="st">"Using an elaborate, indirect prose style with many"</span>,</span>
+<span id="cb2-463"><a href="#cb2-463" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"subordinate clauses reduces how well readers understand"</span>,</span>
+<span id="cb2-464"><a href="#cb2-464" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"the argument."</span>),</span>
+<span id="cb2-465"><a href="#cb2-465" aria-hidden="true" tabindex="-1"></a>  <span class="at">lean     =</span> <span class="st">"Dense prose is hard to read."</span></span>
+<span id="cb2-466"><a href="#cb2-466" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-467"><a href="#cb2-467" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-468"><a href="#cb2-468" aria-hidden="true" tabindex="-1"></a>fog <span class="ot">&lt;-</span> <span class="fu">vapply</span>(versions, gunning_fog, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
+<span id="cb2-469"><a href="#cb2-469" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(fog, <span class="dv">1</span>))</span>
+<span id="cb2-470"><a href="#cb2-470" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-471"><a href="#cb2-471" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(fog, <span class="at">col =</span> <span class="st">"grey80"</span>, <span class="at">border =</span> <span class="cn">NA</span>, <span class="at">ylab =</span> <span class="st">"Gunning fog (grade level)"</span>,</span>
+<span id="cb2-472"><a href="#cb2-472" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Readability across three drafts of one claim"</span>,</span>
+<span id="cb2-473"><a href="#cb2-473" aria-hidden="true" tabindex="-1"></a>        <span class="at">names.arg =</span> <span class="fu">names</span>(versions))</span>
+<span id="cb2-474"><a href="#cb2-474" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">12</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span>
+<span id="cb2-475"><a href="#cb2-475" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-476"><a href="#cb2-476" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-477"><a href="#cb2-477" aria-hidden="true" tabindex="-1"></a><span class="fu">### Revision as a process</span></span>
+<span id="cb2-478"><a href="#cb2-478" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-479"><a href="#cb2-479" aria-hidden="true" tabindex="-1"></a>First drafts are for the writer; revision is for the reader. The empirical</span>
+<span id="cb2-480"><a href="#cb2-480" aria-hidden="true" tabindex="-1"></a>regularity behind all writing advice is that meaning is discovered, not transcribed:</span>
+<span id="cb2-481"><a href="#cb2-481" aria-hidden="true" tabindex="-1"></a>the act of writing reveals which arrows in @eq-sw-chain are actually weak, and the</span>
+<span id="cb2-482"><a href="#cb2-482" aria-hidden="true" tabindex="-1"></a>first draft's value is largely diagnostic. Productive revision proceeds top-down—</span>
+<span id="cb2-483"><a href="#cb2-483" aria-hidden="true" tabindex="-1"></a>structure before paragraph, paragraph before sentence, sentence before word—because</span>
+<span id="cb2-484"><a href="#cb2-484" aria-hidden="true" tabindex="-1"></a>fixing a comma in a paragraph that will be deleted is wasted effort. A useful</span>
+<span id="cb2-485"><a href="#cb2-485" aria-hidden="true" tabindex="-1"></a>sequence is to first verify that the contribution sentence is present and true,</span>
+<span id="cb2-486"><a href="#cb2-486" aria-hidden="true" tabindex="-1"></a>then that each section answers its one question, then that each paragraph has a</span>
+<span id="cb2-487"><a href="#cb2-487" aria-hidden="true" tabindex="-1"></a>single point announced in its first sentence, and only then to polish prose. The</span>
+<span id="cb2-488"><a href="#cb2-488" aria-hidden="true" tabindex="-1"></a>"reverse outline"—reading the draft and writing in the margin the single claim each</span>
+<span id="cb2-489"><a href="#cb2-489" aria-hidden="true" tabindex="-1"></a>paragraph makes—exposes structural defects (two paragraphs making the same point, a</span>
+<span id="cb2-490"><a href="#cb2-490" aria-hidden="true" tabindex="-1"></a>claim with no supporting paragraph, a paragraph with no claim) that are invisible at</span>
+<span id="cb2-491"><a href="#cb2-491" aria-hidden="true" tabindex="-1"></a>the sentence level.</span>
+<span id="cb2-492"><a href="#cb2-492" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-493"><a href="#cb2-493" aria-hidden="true" tabindex="-1"></a>A final discipline is distance. Prose that seems clear the night it is written is</span>
+<span id="cb2-494"><a href="#cb2-494" aria-hidden="true" tabindex="-1"></a>frequently opaque a week later, when the author has forgotten the unstated</span>
+<span id="cb2-495"><a href="#cb2-495" aria-hidden="true" tabindex="-1"></a>assumptions that made it cohere—and a week-later author is a closer proxy for the</span>
+<span id="cb2-496"><a href="#cb2-496" aria-hidden="true" tabindex="-1"></a>real reader than the night-of author ever is. Where time does not permit distance,</span>
+<span id="cb2-497"><a href="#cb2-497" aria-hidden="true" tabindex="-1"></a>a co-author or colleague reading cold is the next best instrument, and the most</span>
+<span id="cb2-498"><a href="#cb2-498" aria-hidden="true" tabindex="-1"></a>valuable feedback is not "I disagree" but "I got lost here", because confusion</span>
+<span id="cb2-499"><a href="#cb2-499" aria-hidden="true" tabindex="-1"></a>localizes a broken arrow that the author can no longer see.</span>
+<span id="cb2-500"><a href="#cb2-500" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-501"><a href="#cb2-501" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb2-502"><a href="#cb2-502" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-503"><a href="#cb2-503" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A paper is a **reconstructed argument**, not a lab diary: the order of exposition</span>
+<span id="cb2-504"><a href="#cb2-504" aria-hidden="true" tabindex="-1"></a>  is engineered for the reader, and each section answers exactly one question with</span>
+<span id="cb2-505"><a href="#cb2-505" aria-hidden="true" tabindex="-1"></a>  its own default verb tense (@tbl-sw-sections).</span>
+<span id="cb2-506"><a href="#cb2-506" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The argument is a chain of claims the reader may refuse to grant</span>
+<span id="cb2-507"><a href="#cb2-507" aria-hidden="true" tabindex="-1"></a>  (@eq-sw-chain); a paper fails at its **weakest arrow**, and most "low</span>
+<span id="cb2-508"><a href="#cb2-508" aria-hidden="true" tabindex="-1"></a>  contribution" rejections are in fact broken arrows—a filled gap or a design that</span>
+<span id="cb2-509"><a href="#cb2-509" aria-hidden="true" tabindex="-1"></a>  cannot license the conclusion.</span>
+<span id="cb2-510"><a href="#cb2-510" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A contribution is the warranted increment to knowledge $\Delta\mathcal{K}$</span>
+<span id="cb2-511"><a href="#cb2-511" aria-hidden="true" tabindex="-1"></a>  (@eq-sw-contribution); it must be **novel, valid, and important**, and the</span>
+<span id="cb2-512"><a href="#cb2-512" aria-hidden="true" tabindex="-1"></a>  top-4 bar that rises is importance. State the most general claim the evidence</span>
+<span id="cb2-513"><a href="#cb2-513" aria-hidden="true" tabindex="-1"></a>  licenses, and not one inch more.</span>
+<span id="cb2-514"><a href="#cb2-514" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The **front end** carries the promise; the discussion must redeem exactly that</span>
+<span id="cb2-515"><a href="#cb2-515" aria-hidden="true" tabindex="-1"></a>  promise. Make the "in this paper, we..." pivot early and state contributions as</span>
+<span id="cb2-516"><a href="#cb2-516" aria-hidden="true" tabindex="-1"></a>  claims, not activities (@fig-sw-funnel).</span>
+<span id="cb2-517"><a href="#cb2-517" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Robustness is rhetoric**: writing the reviewer's objections into the paper</span>
+<span id="cb2-518"><a href="#cb2-518" aria-hidden="true" tabindex="-1"></a>  before submission is the highest-return revision activity, and the R&amp;R response is</span>
+<span id="cb2-519"><a href="#cb2-519" aria-hidden="true" tabindex="-1"></a>  a craft document whose job is to make the editor's decision easy to defend.</span>
+<span id="cb2-520"><a href="#cb2-520" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Clarity is a property of the reader**: measure it (@eq-sw-fog), revise</span>
+<span id="cb2-521"><a href="#cb2-521" aria-hidden="true" tabindex="-1"></a>  top-down from structure to sentence, and use distance or a cold reader to localize</span>
+<span id="cb2-522"><a href="#cb2-522" aria-hidden="true" tabindex="-1"></a>  the arrows you can no longer see are broken.</span>
+<span id="cb2-523"><a href="#cb2-523" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-524"><a href="#cb2-524" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further Reading</span></span>
+<span id="cb2-525"><a href="#cb2-525" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-526"><a href="#cb2-526" aria-hidden="true" tabindex="-1"></a>For the structure of scientific argument and the discipline of revision, the</span>
+<span id="cb2-527"><a href="#cb2-527" aria-hidden="true" tabindex="-1"></a>classic writing-craft literature is the natural starting point; for the specific</span>
+<span id="cb2-528"><a href="#cb2-528" aria-hidden="true" tabindex="-1"></a>norms of the marketing top-4, the editorials and "from the editor" notes of JM,</span>
+<span id="cb2-529"><a href="#cb2-529" aria-hidden="true" tabindex="-1"></a>JMR, *Marketing Science*, and JCR are the authoritative—and frequently updated—</span>
+<span id="cb2-530"><a href="#cb2-530" aria-hidden="true" tabindex="-1"></a>statements of what each venue rewards. <span class="co">&lt;!-- CITE-NEEDED: editorial/from-the-editor pieces on contribution standards in JM, JMR, Marketing Science, JCR --&gt;</span> The</span>
+<span id="cb2-531"><a href="#cb2-531" aria-hidden="true" tabindex="-1"></a>textual-analysis methods that let us measure the readability of our own and others'</span>
+<span id="cb2-532"><a href="#cb2-532" aria-hidden="true" tabindex="-1"></a>prose are developed in the disclosure literature <span class="co">[</span><span class="ot">@loughran2020; @loughran2020a</span><span class="co">]</span></span>
+<span id="cb2-533"><a href="#cb2-533" aria-hidden="true" tabindex="-1"></a>and connect this chapter to the broader treatment of text as data elsewhere in the</span>
+<span id="cb2-534"><a href="#cb2-534" aria-hidden="true" tabindex="-1"></a>book.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

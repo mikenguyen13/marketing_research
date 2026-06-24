@@ -1346,7 +1346,7 @@ R_{i,t} - R_{f,t} = \alpha_i + \beta_{i,MKT}(R_{MKT,t} - R_{f,t}) + \beta_{i,SMB
 \tag{48.46}\]</span></span> Controls include analysts’ forecasts (IBES), television advertising (TNS), media citations (LexisNexis above 60% relevance and Factiva), and new-product announcements (LexisNexis and Factiva, following <span class="citation" data-cites="sood2009">Sood, James, and Tellis (<a href="#ref-sood2009" role="doc-biblioref">2009</a>)</span>). The dynamic analysis uses a <strong>vector autoregression</strong>, chosen over event studies because it handles <em>continuous</em> events, captures immediate and lagged effects, recovers carryover via the generalized impulse response function, and controls for trends, seasonality, nonstationarity, serial correlation, and reverse causality <span class="citation" data-cites="luo2009quantifying">(<a href="#ref-luo2009quantifying" role="doc-biblioref">Luo 2009</a>)</span>. The procedure tests stationarity (augmented Dickey–Fuller and KPSS) and cointegration (Johansen’s procedure <span class="citation" data-cites="johansen1992determination">(<a href="#ref-johansen1992determination" role="doc-biblioref">Johansen et al. 1992</a>)</span>), tests Granger causality, estimates carryover via impulse responses (insensitive to the variables’ causal ordering), and apportions explained variance via forecast-error variance decomposition. The findings: chatter <em>volume</em> raises abnormal returns and trading volume (by Granger tests); positive UGC moves neither returns nor idiosyncratic risk; negative UGC lowers returns with a short wear-in and long wear-out and raises idiosyncratic risk; the volume–negativity interaction raises trading volume; and offline advertising raises chatter volume while reducing negative chatter.</p>
 </section><section id="sec-sdm-event-code" class="level3" data-number="48.5.5"><h3 data-number="48.5.5" class="anchored" data-anchor-id="sec-sdm-event-code">
 <span class="header-section-number">48.5.5</span> A Worked Event Study</h3>
-<p>To make the machinery concrete and reproducible, the following simulation generates returns for a treated firm and a market index, estimates the market model (<a href="#eq-market-model" class="quarto-xref">Equation&nbsp;<span>48.43</span></a>) over a pre-event window, and computes the cumulative abnormal return (CAR) around a simulated marketing event with a true one-day impact.</p>
+<p>To make the machinery concrete and reproducible, the following simulation generates returns for a treated firm and a market index, estimates the market model (<a href="#eq-market-model" class="quarto-xref">Equation&nbsp;<span>48.43</span></a>) over a pre-event window, and computes the cumulative abnormal return (CAR) around a simulated marketing event with a true one-day impact. <a href="#fig-event-study" class="quarto-xref">Figure&nbsp;<span>48.4</span></a> plots the abnormal returns and the accumulating CAR around the event.</p>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">37</span><span class="op">)</span></span>
 <span></span>
@@ -3518,256 +3518,257 @@ Zhang, Mengxia, and Lan Luo. 2016. <span>“Can User Generated Content Predict R
 <span id="cb2-1208"><a href="#cb2-1208" aria-hidden="true" tabindex="-1"></a>To make the machinery concrete and reproducible, the following simulation generates</span>
 <span id="cb2-1209"><a href="#cb2-1209" aria-hidden="true" tabindex="-1"></a>returns for a treated firm and a market index, estimates the market model</span>
 <span id="cb2-1210"><a href="#cb2-1210" aria-hidden="true" tabindex="-1"></a>(@eq-market-model) over a pre-event window, and computes the cumulative abnormal return</span>
-<span id="cb2-1211"><a href="#cb2-1211" aria-hidden="true" tabindex="-1"></a>(CAR) around a simulated marketing event with a true one-day impact.</span>
-<span id="cb2-1212"><a href="#cb2-1212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1215"><a href="#cb2-1215" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb2-1216"><a href="#cb2-1216" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-event-study</span></span>
-<span id="cb2-1217"><a href="#cb2-1217" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Simulated event study. Top: daily abnormal returns around the event (day 0), with the true positive shock visible. Bottom: cumulative abnormal return (CAR) over the event window."</span></span>
-<span id="cb2-1218"><a href="#cb2-1218" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb2-1219"><a href="#cb2-1219" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb2-1220"><a href="#cb2-1220" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">37</span>)</span>
-<span id="cb2-1221"><a href="#cb2-1221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1222"><a href="#cb2-1222" aria-hidden="true" tabindex="-1"></a>n_est   <span class="ot">&lt;-</span> <span class="dv">250</span>            <span class="co"># estimation-window length (days)</span></span>
-<span id="cb2-1223"><a href="#cb2-1223" aria-hidden="true" tabindex="-1"></a>n_event <span class="ot">&lt;-</span> <span class="dv">21</span>             <span class="co"># event window: -10 .. +10</span></span>
-<span id="cb2-1224"><a href="#cb2-1224" aria-hidden="true" tabindex="-1"></a>alpha_t <span class="ot">&lt;-</span> <span class="fl">0.0002</span>         <span class="co"># true firm alpha</span></span>
-<span id="cb2-1225"><a href="#cb2-1225" aria-hidden="true" tabindex="-1"></a>beta_t  <span class="ot">&lt;-</span> <span class="fl">1.1</span>            <span class="co"># true firm beta</span></span>
-<span id="cb2-1226"><a href="#cb2-1226" aria-hidden="true" tabindex="-1"></a>shock   <span class="ot">&lt;-</span> <span class="fl">0.03</span>           <span class="co"># true abnormal return on event day (day 0)</span></span>
-<span id="cb2-1227"><a href="#cb2-1227" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1228"><a href="#cb2-1228" aria-hidden="true" tabindex="-1"></a><span class="co"># Market returns: white noise around a small drift (random-walk prices)</span></span>
-<span id="cb2-1229"><a href="#cb2-1229" aria-hidden="true" tabindex="-1"></a>r_mkt <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_est <span class="sc">+</span> n_event, <span class="at">mean =</span> <span class="fl">0.0003</span>, <span class="at">sd =</span> <span class="fl">0.010</span>)</span>
-<span id="cb2-1230"><a href="#cb2-1230" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1231"><a href="#cb2-1231" aria-hidden="true" tabindex="-1"></a><span class="co"># Firm returns generated by the market model plus idiosyncratic noise</span></span>
-<span id="cb2-1232"><a href="#cb2-1232" aria-hidden="true" tabindex="-1"></a>eps   <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_est <span class="sc">+</span> n_event, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="fl">0.012</span>)</span>
-<span id="cb2-1233"><a href="#cb2-1233" aria-hidden="true" tabindex="-1"></a>r_firm <span class="ot">&lt;-</span> alpha_t <span class="sc">+</span> beta_t <span class="sc">*</span> r_mkt <span class="sc">+</span> eps</span>
-<span id="cb2-1234"><a href="#cb2-1234" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1235"><a href="#cb2-1235" aria-hidden="true" tabindex="-1"></a><span class="co"># Inject the event shock on the event day (last day of the window)</span></span>
-<span id="cb2-1236"><a href="#cb2-1236" aria-hidden="true" tabindex="-1"></a>event_day <span class="ot">&lt;-</span> n_est <span class="sc">+</span> <span class="dv">11</span>          <span class="co"># index of day 0 within the window</span></span>
-<span id="cb2-1237"><a href="#cb2-1237" aria-hidden="true" tabindex="-1"></a>r_firm[event_day] <span class="ot">&lt;-</span> r_firm[event_day] <span class="sc">+</span> shock</span>
-<span id="cb2-1238"><a href="#cb2-1238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1239"><a href="#cb2-1239" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimate the market model on the estimation window only</span></span>
-<span id="cb2-1240"><a href="#cb2-1240" aria-hidden="true" tabindex="-1"></a>est_idx <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(n_est)</span>
-<span id="cb2-1241"><a href="#cb2-1241" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(r_firm[est_idx] <span class="sc">~</span> r_mkt[est_idx])</span>
-<span id="cb2-1242"><a href="#cb2-1242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1243"><a href="#cb2-1243" aria-hidden="true" tabindex="-1"></a><span class="co"># Abnormal returns over the event window</span></span>
-<span id="cb2-1244"><a href="#cb2-1244" aria-hidden="true" tabindex="-1"></a>evt_idx <span class="ot">&lt;-</span> (n_est <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span>(n_est <span class="sc">+</span> n_event)</span>
-<span id="cb2-1245"><a href="#cb2-1245" aria-hidden="true" tabindex="-1"></a>ar <span class="ot">&lt;-</span> r_firm[evt_idx] <span class="sc">-</span> (<span class="fu">coef</span>(fit)[<span class="dv">1</span>] <span class="sc">+</span> <span class="fu">coef</span>(fit)[<span class="dv">2</span>] <span class="sc">*</span> r_mkt[evt_idx])</span>
-<span id="cb2-1246"><a href="#cb2-1246" aria-hidden="true" tabindex="-1"></a>car <span class="ot">&lt;-</span> <span class="fu">cumsum</span>(ar)</span>
-<span id="cb2-1247"><a href="#cb2-1247" aria-hidden="true" tabindex="-1"></a>rel_day <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">10</span><span class="sc">:</span><span class="dv">10</span></span>
-<span id="cb2-1248"><a href="#cb2-1248" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1249"><a href="#cb2-1249" aria-hidden="true" tabindex="-1"></a>op <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
-<span id="cb2-1250"><a href="#cb2-1250" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(rel_day, ar, <span class="at">type =</span> <span class="st">"h"</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
-<span id="cb2-1251"><a href="#cb2-1251" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Event day"</span>, <span class="at">ylab =</span> <span class="st">"Abnormal return"</span>,</span>
-<span id="cb2-1252"><a href="#cb2-1252" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Abnormal returns around the event"</span>)</span>
-<span id="cb2-1253"><a href="#cb2-1253" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"grey60"</span>); <span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
-<span id="cb2-1254"><a href="#cb2-1254" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(rel_day, car, <span class="at">type =</span> <span class="st">"b"</span>, <span class="at">pch =</span> <span class="dv">16</span>,</span>
-<span id="cb2-1255"><a href="#cb2-1255" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Event day"</span>, <span class="at">ylab =</span> <span class="st">"Cumulative abnormal return"</span>,</span>
-<span id="cb2-1256"><a href="#cb2-1256" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"CAR over the event window"</span>)</span>
-<span id="cb2-1257"><a href="#cb2-1257" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"grey60"</span>); <span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
-<span id="cb2-1258"><a href="#cb2-1258" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(op)</span>
-<span id="cb2-1259"><a href="#cb2-1259" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1260"><a href="#cb2-1260" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">c</span>(<span class="at">alpha_hat =</span> <span class="fu">coef</span>(fit)[<span class="dv">1</span>], <span class="at">beta_hat =</span> <span class="fu">coef</span>(fit)[<span class="dv">2</span>],</span>
-<span id="cb2-1261"><a href="#cb2-1261" aria-hidden="true" tabindex="-1"></a>        <span class="at">CAR_event_window =</span> <span class="fu">tail</span>(car, <span class="dv">1</span>)), <span class="dv">4</span>)</span>
-<span id="cb2-1262"><a href="#cb2-1262" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-1263"><a href="#cb2-1263" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1264"><a href="#cb2-1264" aria-hidden="true" tabindex="-1"></a>The estimated $\hat\alpha$ and $\hat\beta$ recover the data-generating values, and the</span>
-<span id="cb2-1265"><a href="#cb2-1265" aria-hidden="true" tabindex="-1"></a>CAR steps up at day 0 by approximately the injected shock—exactly the abnormal return</span>
-<span id="cb2-1266"><a href="#cb2-1266" aria-hidden="true" tabindex="-1"></a>an event study is designed to detect. The design's credibility hinges on the</span>
-<span id="cb2-1267"><a href="#cb2-1267" aria-hidden="true" tabindex="-1"></a>assumptions catalogued above: a clean event date, a confound-free window, and a market</span>
-<span id="cb2-1268"><a href="#cb2-1268" aria-hidden="true" tabindex="-1"></a>model that adequately describes normal returns.</span>
-<span id="cb2-1269"><a href="#cb2-1269" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1270"><a href="#cb2-1270" aria-hidden="true" tabindex="-1"></a><span class="fu">## Creativity and Idea Screening {#sec-sdm-creativity}</span></span>
-<span id="cb2-1271"><a href="#cb2-1271" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1272"><a href="#cb2-1272" aria-hidden="true" tabindex="-1"></a>Social media reshapes the economics of innovation along two axes: it makes the</span>
-<span id="cb2-1273"><a href="#cb2-1273" aria-hidden="true" tabindex="-1"></a>*wisdom of the crowds* available for idea generation and evaluation, and it makes</span>
-<span id="cb2-1274"><a href="#cb2-1274" aria-hidden="true" tabindex="-1"></a>advertising nearly free. Both invite a strategic-dynamic treatment of how ideas are</span>
-<span id="cb2-1275"><a href="#cb2-1275" aria-hidden="true" tabindex="-1"></a>produced, screened, and rewarded over time.</span>
-<span id="cb2-1276"><a href="#cb2-1276" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1277"><a href="#cb2-1277" aria-hidden="true" tabindex="-1"></a>@bayus2013 study crowdsourced ideation over time at Dell's IdeaStorm community and find</span>
-<span id="cb2-1278"><a href="#cb2-1278" aria-hidden="true" tabindex="-1"></a>a striking dynamic: *serial* ideators are more likely than others to produce a single</span>
-<span id="cb2-1279"><a href="#cb2-1279" aria-hidden="true" tabindex="-1"></a>implemented idea, but they do not *repeat* that success. The mechanism is a</span>
-<span id="cb2-1280"><a href="#cb2-1280" aria-hidden="true" tabindex="-1"></a>**fixation effect**—an unconscious reuse of one's own prior ideas, akin to cryptomnesia</span>
-<span id="cb2-1281"><a href="#cb2-1281" aria-hidden="true" tabindex="-1"></a>or unconscious plagiarism <span class="co">[</span><span class="ot">@marsh1995; @marsh1999</span><span class="co">]</span>—whose negative effect on subsequent</span>
-<span id="cb2-1282"><a href="#cb2-1282" aria-hidden="true" tabindex="-1"></a>success is mitigated for ideators with more *diverse* commenting activity. As the first</span>
-<span id="cb2-1283"><a href="#cb2-1283" aria-hidden="true" tabindex="-1"></a>study of idea crowdsourcing over time, with a well-motivated theory and strong</span>
-<span id="cb2-1284"><a href="#cb2-1284" aria-hidden="true" tabindex="-1"></a>descriptive analysis, its principal limitation is a model that does not accommodate</span>
-<span id="cb2-1285"><a href="#cb2-1285" aria-hidden="true" tabindex="-1"></a>rare events.</span>
-<span id="cb2-1286"><a href="#cb2-1286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1287"><a href="#cb2-1287" aria-hidden="true" tabindex="-1"></a>@toubia2017 formalize creativity as a balance between **novelty** and **familiarity**,</span>
-<span id="cb2-1288"><a href="#cb2-1288" aria-hidden="true" tabindex="-1"></a>invoking a "beauty in averageness" effect and building an automated reader to identify</span>
-<span id="cb2-1289"><a href="#cb2-1289" aria-hidden="true" tabindex="-1"></a>promising ideas. Drawing on the Geneplore framework, they define novelty as "the</span>
-<span id="cb2-1290"><a href="#cb2-1290" aria-hidden="true" tabindex="-1"></a>association of word stems that do not appear frequently together in text related to the</span>
-<span id="cb2-1291"><a href="#cb2-1291" aria-hidden="true" tabindex="-1"></a>topic" and familiarity as "the association of word stems that appear frequently</span>
-<span id="cb2-1292"><a href="#cb2-1292" aria-hidden="true" tabindex="-1"></a>together," and measure both with **semantic-network co-word analysis** over word-stem</span>
-<span id="cb2-1293"><a href="#cb2-1293" aria-hidden="true" tabindex="-1"></a>combinations rather than individual words. An idea is "a document made of words that</span>
-<span id="cb2-1294"><a href="#cb2-1294" aria-hidden="true" tabindex="-1"></a>attempts to add value given a particular idea-generation topic." Edge weights use the</span>
-<span id="cb2-1295"><a href="#cb2-1295" aria-hidden="true" tabindex="-1"></a>Jaccard index; a baseline semantic network is built from pre-test ideas and top Google</span>
-<span id="cb2-1296"><a href="#cb2-1296" aria-hidden="true" tabindex="-1"></a>results (the latter possibly biased toward high-quality content); control variables</span>
-<span id="cb2-1297"><a href="#cb2-1297" aria-hidden="true" tabindex="-1"></a>follow @barrat2007 (node frequencies, clustering coefficients, and network-size</span>
-<span id="cb2-1298"><a href="#cb2-1298" aria-hidden="true" tabindex="-1"></a>features). The distance between an idea's edge-weight distribution and a prototypical</span>
-<span id="cb2-1299"><a href="#cb2-1299" aria-hidden="true" tabindex="-1"></a>distribution is measured by the Kolmogorov–Smirnov statistic (or, alternatively,</span>
-<span id="cb2-1300"><a href="#cb2-1300" aria-hidden="true" tabindex="-1"></a>Kullback–Leibler divergence), with an information-retrieval vector-space representation</span>
-<span id="cb2-1301"><a href="#cb2-1301" aria-hidden="true" tabindex="-1"></a>as an alternative to edge-weight distributions. Ideas are evaluated manually on</span>
-<span id="cb2-1302"><a href="#cb2-1302" aria-hidden="true" tabindex="-1"></a>creativity, purchase interest, predicted popularity, and writing quality. The method's</span>
-<span id="cb2-1303"><a href="#cb2-1303" aria-hidden="true" tabindex="-1"></a>strength is measuring a complex, qualitative construct robustly across measures, ideas,</span>
-<span id="cb2-1304"><a href="#cb2-1304" aria-hidden="true" tabindex="-1"></a>evaluators, and baseline networks, with a tight theory–method link; its weakness is</span>
-<span id="cb2-1305"><a href="#cb2-1305" aria-hidden="true" tabindex="-1"></a>sensitivity to the choice of representation—under some representations the results do</span>
-<span id="cb2-1306"><a href="#cb2-1306" aria-hidden="true" tabindex="-1"></a>not hold—and to the specification of the baseline network.</span>
-<span id="cb2-1307"><a href="#cb2-1307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1308"><a href="#cb2-1308" aria-hidden="true" tabindex="-1"></a>@wei2021 bring machine learning to crowdfunding creativity, motivated by combinatorial</span>
-<span id="cb2-1309"><a href="#cb2-1309" aria-hidden="true" tabindex="-1"></a>theory and the need to measure novelty, over- and under-shooting of funding goals, and</span>
-<span id="cb2-1310"><a href="#cb2-1310" aria-hidden="true" tabindex="-1"></a>styles of imitation. Across 98,058 Kickstarter projects (2009–2017, in Film &amp; Video,</span>
-<span id="cb2-1311"><a href="#cb2-1311" aria-hidden="true" tabindex="-1"></a>Music, and Publishing, English only), they measure **semantic similarity** with</span>
-<span id="cb2-1312"><a href="#cb2-1312" aria-hidden="true" tabindex="-1"></a>word2vec at the word level and **Word Mover's Distance** at the document level,</span>
-<span id="cb2-1313"><a href="#cb2-1313" aria-hidden="true" tabindex="-1"></a>constructing a similarity network whose link strength</span>
-<span id="cb2-1314"><a href="#cb2-1314" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-1315"><a href="#cb2-1315" aria-hidden="true" tabindex="-1"></a>w_{ij} = \delta^{|t_i - t_j|} \times L(\gamma_0 - \gamma_1 d_{ij})</span>
-<span id="cb2-1316"><a href="#cb2-1316" aria-hidden="true" tabindex="-1"></a>$$ {#eq-wmd-link}</span>
-<span id="cb2-1317"><a href="#cb2-1317" aria-hidden="true" tabindex="-1"></a>increases with similarity and decreases with the time lag between projects, where</span>
-<span id="cb2-1318"><a href="#cb2-1318" aria-hidden="true" tabindex="-1"></a>$0 &lt; \delta \le 1$ is a decay factor, $d_{ij}$ the Word Mover's Distance, and $L$ the</span>
-<span id="cb2-1319"><a href="#cb2-1319" aria-hidden="true" tabindex="-1"></a>logistic function. Funding performance is modeled with logistic regression (success)</span>
-<span id="cb2-1320"><a href="#cb2-1320" aria-hidden="true" tabindex="-1"></a>and linear regression (amount raised). The network-based metrics include the amount of</span>
-<span id="cb2-1321"><a href="#cb2-1321" aria-hidden="true" tabindex="-1"></a>prior similarity, the prior success rate (a weighted average over similar projects),</span>
-<span id="cb2-1322"><a href="#cb2-1322" aria-hidden="true" tabindex="-1"></a>the prior success residual, goal overshoot (log difference from similar projects'</span>
-<span id="cb2-1323"><a href="#cb2-1323" aria-hidden="true" tabindex="-1"></a>average goal), and atypicality (the proportion of isolated nodes in a project's</span>
-<span id="cb2-1324"><a href="#cb2-1324" aria-hidden="true" tabindex="-1"></a>unweighted subnetwork at a 0.5 cutoff). Information is weighted as</span>
-<span id="cb2-1325"><a href="#cb2-1325" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb2-1326"><a href="#cb2-1326" aria-hidden="true" tabindex="-1"></a>I_i \equiv \log<span class="sc">\!</span>\Big(1 + \sum_{j:\,T_j &lt; t_i} w_{ij}\Big),</span>
-<span id="cb2-1327"><a href="#cb2-1327" aria-hidden="true" tabindex="-1"></a>$$ {#eq-info-weight}</span>
-<span id="cb2-1328"><a href="#cb2-1328" aria-hidden="true" tabindex="-1"></a>a specification chosen because it is zero when no prior similarity exists and embeds a</span>
-<span id="cb2-1329"><a href="#cb2-1329" aria-hidden="true" tabindex="-1"></a>Bayesian diminishing return to additional signals. The findings: the average success</span>
-<span id="cb2-1330"><a href="#cb2-1330" aria-hidden="true" tabindex="-1"></a>of prior similar projects predicts current funding performance; high novelty (low</span>
-<span id="cb2-1331"><a href="#cb2-1331" aria-hidden="true" tabindex="-1"></a>similarity to all priors) helps, but the best projects balance novelty with apparent</span>
-<span id="cb2-1332"><a href="#cb2-1332" aria-hidden="true" tabindex="-1"></a>familiarity; goals should be set close to similar projects' goals (within about</span>
-<span id="cb2-1333"><a href="#cb2-1333" aria-hidden="true" tabindex="-1"></a>$\pm 10\%$); and atypicality (borrowing from another stream) has an inverted-U relation</span>
-<span id="cb2-1334"><a href="#cb2-1334" aria-hidden="true" tabindex="-1"></a>with funding performance. The results are robust to an unweighted network thresholded</span>
-<span id="cb2-1335"><a href="#cb2-1335" aria-hidden="true" tabindex="-1"></a>on similarity.</span>
-<span id="cb2-1336"><a href="#cb2-1336" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1337"><a href="#cb2-1337" aria-hidden="true" tabindex="-1"></a>Whether AI can *do* ideation—screening rather than generating—has been studied with</span>
-<span id="cb2-1338"><a href="#cb2-1338" aria-hidden="true" tabindex="-1"></a>three model families: word colocation, content atypicality, and inspiration</span>
-<span id="cb2-1339"><a href="#cb2-1339" aria-hidden="true" tabindex="-1"></a>redundancy, predicted with LASSO, random forests, and RuleFit. Two component findings</span>
-<span id="cb2-1340"><a href="#cb2-1340" aria-hidden="true" tabindex="-1"></a>anchor this work: @berger2018 show that ideas score better when they are atypical</span>
-<span id="cb2-1341"><a href="#cb2-1341" aria-hidden="true" tabindex="-1"></a>relative to others in the same contest, and @stephen2016 show that ideators with more</span>
-<span id="cb2-1342"><a href="#cb2-1342" aria-hidden="true" tabindex="-1"></a>diverse network backgrounds generate less redundant, better ideas.</span>
-<span id="cb2-1343"><a href="#cb2-1343" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1344"><a href="#cb2-1344" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quality {#sec-sdm-quality}</span></span>
-<span id="cb2-1345"><a href="#cb2-1345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1346"><a href="#cb2-1346" aria-hidden="true" tabindex="-1"></a>Quality is a fundamental construct across policy, economics, consumer behavior, and</span>
-<span id="cb2-1347"><a href="#cb2-1347" aria-hidden="true" tabindex="-1"></a>marketing strategy. The classic definition is an attribute on which all (or most)</span>
-<span id="cb2-1348"><a href="#cb2-1348" aria-hidden="true" tabindex="-1"></a>consumers prefer more to less—speed, reliability, durability, power <span class="co">[</span><span class="ot">@tellis1987</span><span class="co">]</span>—and</span>
-<span id="cb2-1349"><a href="#cb2-1349" aria-hidden="true" tabindex="-1"></a>the existence of a *market for quality* <span class="co">[</span><span class="ot">@klein1981</span><span class="co">]</span> explains why quality commands a</span>
-<span id="cb2-1350"><a href="#cb2-1350" aria-hidden="true" tabindex="-1"></a>premium. The measurement problem is that quality is multidimensional, so any composite</span>
-<span id="cb2-1351"><a href="#cb2-1351" aria-hidden="true" tabindex="-1"></a>depends on the choice of dimensions and weights.</span>
-<span id="cb2-1352"><a href="#cb2-1352" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1353"><a href="#cb2-1353" aria-hidden="true" tabindex="-1"></a>Historically, objective quality was measured by *Consumer Reports* (from 1935 until</span>
-<span id="cb2-1354"><a href="#cb2-1354" aria-hidden="true" tabindex="-1"></a>about 2010): blind experiments evaluated by experts. The weighting problem is real but</span>
-<span id="cb2-1355"><a href="#cb2-1355" aria-hidden="true" tabindex="-1"></a>tractable. @kopalle1992 show that ranking products on quality is not too noisy even</span>
-<span id="cb2-1356"><a href="#cb2-1356" aria-hidden="true" tabindex="-1"></a>when the weights are uncorrelated, provided the quality attributes are positively</span>
-<span id="cb2-1357"><a href="#cb2-1357" aria-hidden="true" tabindex="-1"></a>correlated; @tellis2007 show that published expert quality ratings are good indicators</span>
-<span id="cb2-1358"><a href="#cb2-1358" aria-hidden="true" tabindex="-1"></a>of quality; and @tirunillai2014a show that the wisdom of crowds, mined from reviews,</span>
-<span id="cb2-1359"><a href="#cb2-1359" aria-hidden="true" tabindex="-1"></a>recovers quality as well.</span>
-<span id="cb2-1360"><a href="#cb2-1360" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1361"><a href="#cb2-1361" aria-hidden="true" tabindex="-1"></a>@tellis2009 study network effects and quality in high technology and find evidence for</span>
-<span id="cb2-1362"><a href="#cb2-1362" aria-hidden="true" tabindex="-1"></a>**market efficiency**, defined as the best-quality brand holding the largest market</span>
-<span id="cb2-1363"><a href="#cb2-1363" aria-hidden="true" tabindex="-1"></a>share. Both quality and network effects drive market-share flows—network effects more</span>
-<span id="cb2-1364"><a href="#cb2-1364" aria-hidden="true" tabindex="-1"></a>than quality—where a network effect is "the increase in a consumer's utility from a</span>
-<span id="cb2-1365"><a href="#cb2-1365" aria-hidden="true" tabindex="-1"></a>product when the number of other users of that product increases," and quality is "a</span>
-<span id="cb2-1366"><a href="#cb2-1366" aria-hidden="true" tabindex="-1"></a>composite of a brand's attributes, on each of which all consumers prefer more to less"</span>
-<span id="cb2-1367"><a href="#cb2-1367" aria-hidden="true" tabindex="-1"></a>(reliability, performance, convenience). Quality appears to be the market's driving</span>
-<span id="cb2-1368"><a href="#cb2-1368" aria-hidden="true" tabindex="-1"></a>force across market share, return on investment, price premia, advertising, perceived</span>
-<span id="cb2-1369"><a href="#cb2-1369" aria-hidden="true" tabindex="-1"></a>quality, and stock-market return, in the personal-computer category using International</span>
-<span id="cb2-1370"><a href="#cb2-1370" aria-hidden="true" tabindex="-1"></a>Data Corporation and Dataquest data.</span>
-<span id="cb2-1371"><a href="#cb2-1371" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1372"><a href="#cb2-1372" aria-hidden="true" tabindex="-1"></a>@golder2012 provide an integrative framework that decomposes quality into three</span>
-<span id="cb2-1373"><a href="#cb2-1373" aria-hidden="true" tabindex="-1"></a>**processes**. The **quality-production process** focuses on firms—attribute design,</span>
-<span id="cb2-1374"><a href="#cb2-1374" aria-hidden="true" tabindex="-1"></a>process design, resource inputs, and production control. The **quality-experience</span>
-<span id="cb2-1375"><a href="#cb2-1375" aria-hidden="true" tabindex="-1"></a>process** focuses on customers, recognizing that what a firm delivers and what a</span>
-<span id="cb2-1376"><a href="#cb2-1376" aria-hidden="true" tabindex="-1"></a>customer perceives (relative to expectation) can differ, mediated by the customer's</span>
-<span id="cb2-1377"><a href="#cb2-1377" aria-hidden="true" tabindex="-1"></a>measurement knowledge, motivation, and emotions, so that *experienced* attribute</span>
-<span id="cb2-1378"><a href="#cb2-1378" aria-hidden="true" tabindex="-1"></a>quality diverges from *delivered* attribute quality. The **quality-evaluation</span>
-<span id="cb2-1379"><a href="#cb2-1379" aria-hidden="true" tabindex="-1"></a>process** converts perceived attributes into an aggregated judgment based on</span>
-<span id="cb2-1380"><a href="#cb2-1380" aria-hidden="true" tabindex="-1"></a>transactional and global assessments, shaped by customer expertise and by three kinds</span>
-<span id="cb2-1381"><a href="#cb2-1381" aria-hidden="true" tabindex="-1"></a>of expectation: "will," "ideal," and "should." Quality is defined as "a set of three</span>
-<span id="cb2-1382"><a href="#cb2-1382" aria-hidden="true" tabindex="-1"></a>distinct states of an offering's attributes' relative performance generated while</span>
-<span id="cb2-1383"><a href="#cb2-1383" aria-hidden="true" tabindex="-1"></a>producing, experiencing, and evaluating the offering." @tbl-attribute-types gives the</span>
-<span id="cb2-1384"><a href="#cb2-1384" aria-hidden="true" tabindex="-1"></a>accompanying typology of attributes along customer-preference homogeneity and</span>
-<span id="cb2-1385"><a href="#cb2-1385" aria-hidden="true" tabindex="-1"></a>measurement ambiguity.</span>
-<span id="cb2-1386"><a href="#cb2-1386" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1387"><a href="#cb2-1387" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span> Customer preference: homogeneous <span class="pp">|</span> Customer preference: heterogeneous <span class="pp">|</span></span>
-<span id="cb2-1388"><a href="#cb2-1388" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
-<span id="cb2-1389"><a href="#cb2-1389" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Measure** <span class="pp">|</span> Unambiguous <span class="pp">|</span> Universal attributes (flight delay) <span class="pp">|</span> Preference attributes (cuisine, cabin temperature) <span class="pp">|</span></span>
-<span id="cb2-1390"><a href="#cb2-1390" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **ambiguity** <span class="pp">|</span> Ambiguous <span class="pp">|</span> — <span class="pp">|</span> Idiosyncratic attributes (art, beauty) <span class="pp">|</span></span>
-<span id="cb2-1391"><a href="#cb2-1391" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1392"><a href="#cb2-1392" aria-hidden="true" tabindex="-1"></a>: Typology of attribute types in the quality framework of @golder2012. {#tbl-attribute-types}</span>
-<span id="cb2-1393"><a href="#cb2-1393" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1394"><a href="#cb2-1394" aria-hidden="true" tabindex="-1"></a>@tirunillai2014a mine quality from consumer reviews with **unsupervised latent</span>
-<span id="cb2-1395"><a href="#cb2-1395" aria-hidden="true" tabindex="-1"></a>Dirichlet allocation** over 350,000 reviews from @tirunillai2012, recovering quality</span>
-<span id="cb2-1396"><a href="#cb2-1396" aria-hidden="true" tabindex="-1"></a>dimensions that allow marketers to track value over time and to map competitive brand</span>
-<span id="cb2-1397"><a href="#cb2-1397" aria-hidden="true" tabindex="-1"></a>positions dynamically. The structure of those dimensions differs by market type, as</span>
-<span id="cb2-1398"><a href="#cb2-1398" aria-hidden="true" tabindex="-1"></a>@tbl-quality-dims summarizes.</span>
-<span id="cb2-1399"><a href="#cb2-1399" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1400"><a href="#cb2-1400" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Market <span class="pp">|</span> Dominant dimensions <span class="pp">|</span> Across markets <span class="pp">|</span> Heterogeneity <span class="pp">|</span> Stability <span class="pp">|</span></span>
-<span id="cb2-1401"><a href="#cb2-1401" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|---|</span></span>
-<span id="cb2-1402"><a href="#cb2-1402" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Vertically differentiated (computers) <span class="pp">|</span> Objective <span class="pp">|</span> Similar <span class="pp">|</span> Low across dimensions <span class="pp">|</span> High over time <span class="pp">|</span></span>
-<span id="cb2-1403"><a href="#cb2-1403" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Horizontally differentiated (shoes, toys) <span class="pp">|</span> Subjective <span class="pp">|</span> Varies <span class="pp">|</span> High across dimensions <span class="pp">|</span> Low over time <span class="pp">|</span></span>
-<span id="cb2-1404"><a href="#cb2-1404" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1405"><a href="#cb2-1405" aria-hidden="true" tabindex="-1"></a>: Quality dimensions by market type <span class="co">[</span><span class="ot">@tirunillai2014a</span><span class="co">]</span>. {#tbl-quality-dims}</span>
-<span id="cb2-1406"><a href="#cb2-1406" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1407"><a href="#cb2-1407" aria-hidden="true" tabindex="-1"></a>Finally, quality and reputation spill across brands. @borah2016 study **spillover</span>
-<span id="cb2-1408"><a href="#cb2-1408" aria-hidden="true" tabindex="-1"></a>effects in social media**, documenting a *perverse halo*—negative spillover in which</span>
-<span id="cb2-1409"><a href="#cb2-1409" aria-hidden="true" tabindex="-1"></a>negative chatter about one nameplate raises negative chatter about another, affecting</span>
-<span id="cb2-1410"><a href="#cb2-1410" aria-hidden="true" tabindex="-1"></a>both sales and stock performance. The effect depends on similarity in market share</span>
-<span id="cb2-1411"><a href="#cb2-1411" aria-hidden="true" tabindex="-1"></a>(a dominant brand's spillover is stronger) and on shared country of origin (similar</span>
-<span id="cb2-1412"><a href="#cb2-1412" aria-hidden="true" tabindex="-1"></a>origins suffer more), and apology advertising harms both the recalled brand and its</span>
-<span id="cb2-1413"><a href="#cb2-1413" aria-hidden="true" tabindex="-1"></a>rivals; online chatter amplifies the negative sales effect of recalls roughly 4.5-fold.</span>
-<span id="cb2-1414"><a href="#cb2-1414" aria-hidden="true" tabindex="-1"></a>The mechanism is accessibility–diagnosticity <span class="co">[</span><span class="ot">@feldman1988</span><span class="co">]</span>: one brand's perceptions</span>
-<span id="cb2-1415"><a href="#cb2-1415" aria-hidden="true" tabindex="-1"></a>inform inferences about a similar brand. In the automobile context (January 2009–April</span>
-<span id="cb2-1416"><a href="#cb2-1416" aria-hidden="true" tabindex="-1"></a>2010, covering Toyota's acceleration crisis), the endogenous variables include negative</span>
-<span id="cb2-1417"><a href="#cb2-1417" aria-hidden="true" tabindex="-1"></a>online chatter, media citations (LexisNexis at 60% relevance, as in @tirunillai2012),</span>
-<span id="cb2-1418"><a href="#cb2-1418" aria-hidden="true" tabindex="-1"></a>ABC News coverage, negative-event indicators, advertising types (including apology</span>
-<span id="cb2-1419"><a href="#cb2-1419" aria-hidden="true" tabindex="-1"></a>ads), and key developments from Capital IQ; the exogenous variables include recall</span>
-<span id="cb2-1420"><a href="#cb2-1420" aria-hidden="true" tabindex="-1"></a>units and new-product introductions, both shown by Granger tests to be plausibly</span>
-<span id="cb2-1421"><a href="#cb2-1421" aria-hidden="true" tabindex="-1"></a>exogenous. A **VARX** model estimates Granger causality and long-run effects via</span>
-<span id="cb2-1422"><a href="#cb2-1422" aria-hidden="true" tabindex="-1"></a>impulse response functions—robust to nonstationarity, spurious causality, endogeneity,</span>
-<span id="cb2-1423"><a href="#cb2-1423" aria-hidden="true" tabindex="-1"></a>serial correlation, and reverse causality. The perverse halo is confirmed: stronger</span>
-<span id="cb2-1424"><a href="#cb2-1424" aria-hidden="true" tabindex="-1"></a>across same-country and from dominant to less-dominant brands, with a one-day wear-in</span>
-<span id="cb2-1425"><a href="#cb2-1425" aria-hidden="true" tabindex="-1"></a>and six-day wear-out; apology ads increase concern; concern about a nameplate</span>
-<span id="cb2-1426"><a href="#cb2-1426" aria-hidden="true" tabindex="-1"></a>significantly depresses both its own and its rival's sales (explaining more of the</span>
-<span id="cb2-1427"><a href="#cb2-1427" aria-hidden="true" tabindex="-1"></a>focal nameplate's sales variance, by forecast-error variance decomposition); and</span>
-<span id="cb2-1428"><a href="#cb2-1428" aria-hidden="true" tabindex="-1"></a>rising concern depresses Toyota's stock performance to a trough on the fourth day,</span>
-<span id="cb2-1429"><a href="#cb2-1429" aria-hidden="true" tabindex="-1"></a>with mixed effects on rivals owing to country-of-origin moderation.</span>
-<span id="cb2-1430"><a href="#cb2-1430" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1431"><a href="#cb2-1431" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways {#sec-sdm-takeaways}</span></span>
-<span id="cb2-1432"><a href="#cb2-1432" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1433"><a href="#cb2-1433" aria-hidden="true" tabindex="-1"></a>Three threads run through this chapter. First, the **object of inference is a</span>
-<span id="cb2-1434"><a href="#cb2-1434" aria-hidden="true" tabindex="-1"></a>trajectory**, not a point: diffusion curves, advertising decay, and abnormal-return</span>
-<span id="cb2-1435"><a href="#cb2-1435" aria-hidden="true" tabindex="-1"></a>paths are all dynamic, and the models that fit them—Bass and its generalizations,</span>
-<span id="cb2-1436"><a href="#cb2-1436" aria-hidden="true" tabindex="-1"></a>Koyck and the ADL/VAR family, hazard models, and event studies—are organized by the</span>
-<span id="cb2-1437"><a href="#cb2-1437" aria-hidden="true" tabindex="-1"></a>*nature of the series* rather than by topic. Second, **identification is the binding</span>
-<span id="cb2-1438"><a href="#cb2-1438" aria-hidden="true" tabindex="-1"></a>constraint**: the Bass model is fragile before its turning points, proportional-hazards</span>
-<span id="cb2-1439"><a href="#cb2-1439" aria-hidden="true" tabindex="-1"></a>estimates rest on a testable proportionality assumption, distributed-lag models suffer</span>
-<span id="cb2-1440"><a href="#cb2-1440" aria-hidden="true" tabindex="-1"></a>aggregation bias that the unit-exposure-time result of @tellis2006 resolves, and</span>
-<span id="cb2-1441"><a href="#cb2-1441" aria-hidden="true" tabindex="-1"></a>event-study causality lives or dies by the cleanliness of the event window and the</span>
-<span id="cb2-1442"><a href="#cb2-1442" aria-hidden="true" tabindex="-1"></a>counterfactual. Third, the **strategic payoff** is real: knowing whether a product will</span>
-<span id="cb2-1443"><a href="#cb2-1443" aria-hidden="true" tabindex="-1"></a>take off, whether a new technology cannibalizes or coexists, how long advertising</span>
-<span id="cb2-1444"><a href="#cb2-1444" aria-hidden="true" tabindex="-1"></a>lasts, and what a marketing event is worth to shareholders are precisely the questions</span>
-<span id="cb2-1445"><a href="#cb2-1445" aria-hidden="true" tabindex="-1"></a>on which entry, investment, and budgeting decisions turn. The empirical record</span>
-<span id="cb2-1446"><a href="#cb2-1446" aria-hidden="true" tabindex="-1"></a>repeatedly corrects naive intuition—pioneers mostly fail, larger firms have become the</span>
-<span id="cb2-1447"><a href="#cb2-1447" aria-hidden="true" tabindex="-1"></a>radical innovators, emotion beats information in advertising, and negative chatter</span>
-<span id="cb2-1448"><a href="#cb2-1448" aria-hidden="true" tabindex="-1"></a>moves markets while positive chatter does not—and each correction is only as credible</span>
-<span id="cb2-1449"><a href="#cb2-1449" aria-hidden="true" tabindex="-1"></a>as the design that produced it.</span>
-<span id="cb2-1450"><a href="#cb2-1450" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1451"><a href="#cb2-1451" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further Reading {#sec-sdm-further}</span></span>
-<span id="cb2-1452"><a href="#cb2-1452" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-1453"><a href="#cb2-1453" aria-hidden="true" tabindex="-1"></a>For the foundations of diffusion modeling, @Bass_1969 and the comprehensive review of</span>
-<span id="cb2-1454"><a href="#cb2-1454" aria-hidden="true" tabindex="-1"></a>@chandrasekaran2007 are the indispensable starting points, with @golder1997 and</span>
-<span id="cb2-1455"><a href="#cb2-1455" aria-hidden="true" tabindex="-1"></a>@tellis2003 for the turning-point literature. For advertising dynamics, @koyck1954distributed,</span>
-<span id="cb2-1456"><a href="#cb2-1456" aria-hidden="true" tabindex="-1"></a>@clarke1976, and the optimal-interval result of @tellis2006 form a natural sequence,</span>
-<span id="cb2-1457"><a href="#cb2-1457" aria-hidden="true" tabindex="-1"></a>complemented by the meta-analytic benchmarks of @sethuraman2011. For the</span>
-<span id="cb2-1458"><a href="#cb2-1458" aria-hidden="true" tabindex="-1"></a>marketing–finance interface, @srinivasan2009 surveys the modeling landscape, and</span>
-<span id="cb2-1459"><a href="#cb2-1459" aria-hidden="true" tabindex="-1"></a>@tirunillai2012 and @borah2016 illustrate the vector-autoregressive treatment of online</span>
-<span id="cb2-1460"><a href="#cb2-1460" aria-hidden="true" tabindex="-1"></a>chatter and firm value. The market-entry and innovation strategy literatures are</span>
-<span id="cb2-1461"><a href="#cb2-1461" aria-hidden="true" tabindex="-1"></a>reviewed in @hauser2006, with @golder1993 and @chandy2000 as the seminal empirical</span>
-<span id="cb2-1462"><a href="#cb2-1462" aria-hidden="true" tabindex="-1"></a>correctives to received wisdom.</span>
+<span id="cb2-1211"><a href="#cb2-1211" aria-hidden="true" tabindex="-1"></a>(CAR) around a simulated marketing event with a true one-day impact. @fig-event-study</span>
+<span id="cb2-1212"><a href="#cb2-1212" aria-hidden="true" tabindex="-1"></a>plots the abnormal returns and the accumulating CAR around the event.</span>
+<span id="cb2-1213"><a href="#cb2-1213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1216"><a href="#cb2-1216" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb2-1217"><a href="#cb2-1217" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-event-study</span></span>
+<span id="cb2-1218"><a href="#cb2-1218" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Simulated event study. Top: daily abnormal returns around the event (day 0), with the true positive shock visible. Bottom: cumulative abnormal return (CAR) over the event window."</span></span>
+<span id="cb2-1219"><a href="#cb2-1219" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb2-1220"><a href="#cb2-1220" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb2-1221"><a href="#cb2-1221" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">37</span>)</span>
+<span id="cb2-1222"><a href="#cb2-1222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1223"><a href="#cb2-1223" aria-hidden="true" tabindex="-1"></a>n_est   <span class="ot">&lt;-</span> <span class="dv">250</span>            <span class="co"># estimation-window length (days)</span></span>
+<span id="cb2-1224"><a href="#cb2-1224" aria-hidden="true" tabindex="-1"></a>n_event <span class="ot">&lt;-</span> <span class="dv">21</span>             <span class="co"># event window: -10 .. +10</span></span>
+<span id="cb2-1225"><a href="#cb2-1225" aria-hidden="true" tabindex="-1"></a>alpha_t <span class="ot">&lt;-</span> <span class="fl">0.0002</span>         <span class="co"># true firm alpha</span></span>
+<span id="cb2-1226"><a href="#cb2-1226" aria-hidden="true" tabindex="-1"></a>beta_t  <span class="ot">&lt;-</span> <span class="fl">1.1</span>            <span class="co"># true firm beta</span></span>
+<span id="cb2-1227"><a href="#cb2-1227" aria-hidden="true" tabindex="-1"></a>shock   <span class="ot">&lt;-</span> <span class="fl">0.03</span>           <span class="co"># true abnormal return on event day (day 0)</span></span>
+<span id="cb2-1228"><a href="#cb2-1228" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1229"><a href="#cb2-1229" aria-hidden="true" tabindex="-1"></a><span class="co"># Market returns: white noise around a small drift (random-walk prices)</span></span>
+<span id="cb2-1230"><a href="#cb2-1230" aria-hidden="true" tabindex="-1"></a>r_mkt <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_est <span class="sc">+</span> n_event, <span class="at">mean =</span> <span class="fl">0.0003</span>, <span class="at">sd =</span> <span class="fl">0.010</span>)</span>
+<span id="cb2-1231"><a href="#cb2-1231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1232"><a href="#cb2-1232" aria-hidden="true" tabindex="-1"></a><span class="co"># Firm returns generated by the market model plus idiosyncratic noise</span></span>
+<span id="cb2-1233"><a href="#cb2-1233" aria-hidden="true" tabindex="-1"></a>eps   <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_est <span class="sc">+</span> n_event, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="fl">0.012</span>)</span>
+<span id="cb2-1234"><a href="#cb2-1234" aria-hidden="true" tabindex="-1"></a>r_firm <span class="ot">&lt;-</span> alpha_t <span class="sc">+</span> beta_t <span class="sc">*</span> r_mkt <span class="sc">+</span> eps</span>
+<span id="cb2-1235"><a href="#cb2-1235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1236"><a href="#cb2-1236" aria-hidden="true" tabindex="-1"></a><span class="co"># Inject the event shock on the event day (last day of the window)</span></span>
+<span id="cb2-1237"><a href="#cb2-1237" aria-hidden="true" tabindex="-1"></a>event_day <span class="ot">&lt;-</span> n_est <span class="sc">+</span> <span class="dv">11</span>          <span class="co"># index of day 0 within the window</span></span>
+<span id="cb2-1238"><a href="#cb2-1238" aria-hidden="true" tabindex="-1"></a>r_firm[event_day] <span class="ot">&lt;-</span> r_firm[event_day] <span class="sc">+</span> shock</span>
+<span id="cb2-1239"><a href="#cb2-1239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1240"><a href="#cb2-1240" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimate the market model on the estimation window only</span></span>
+<span id="cb2-1241"><a href="#cb2-1241" aria-hidden="true" tabindex="-1"></a>est_idx <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(n_est)</span>
+<span id="cb2-1242"><a href="#cb2-1242" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(r_firm[est_idx] <span class="sc">~</span> r_mkt[est_idx])</span>
+<span id="cb2-1243"><a href="#cb2-1243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1244"><a href="#cb2-1244" aria-hidden="true" tabindex="-1"></a><span class="co"># Abnormal returns over the event window</span></span>
+<span id="cb2-1245"><a href="#cb2-1245" aria-hidden="true" tabindex="-1"></a>evt_idx <span class="ot">&lt;-</span> (n_est <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span>(n_est <span class="sc">+</span> n_event)</span>
+<span id="cb2-1246"><a href="#cb2-1246" aria-hidden="true" tabindex="-1"></a>ar <span class="ot">&lt;-</span> r_firm[evt_idx] <span class="sc">-</span> (<span class="fu">coef</span>(fit)[<span class="dv">1</span>] <span class="sc">+</span> <span class="fu">coef</span>(fit)[<span class="dv">2</span>] <span class="sc">*</span> r_mkt[evt_idx])</span>
+<span id="cb2-1247"><a href="#cb2-1247" aria-hidden="true" tabindex="-1"></a>car <span class="ot">&lt;-</span> <span class="fu">cumsum</span>(ar)</span>
+<span id="cb2-1248"><a href="#cb2-1248" aria-hidden="true" tabindex="-1"></a>rel_day <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">10</span><span class="sc">:</span><span class="dv">10</span></span>
+<span id="cb2-1249"><a href="#cb2-1249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1250"><a href="#cb2-1250" aria-hidden="true" tabindex="-1"></a>op <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb2-1251"><a href="#cb2-1251" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(rel_day, ar, <span class="at">type =</span> <span class="st">"h"</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb2-1252"><a href="#cb2-1252" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Event day"</span>, <span class="at">ylab =</span> <span class="st">"Abnormal return"</span>,</span>
+<span id="cb2-1253"><a href="#cb2-1253" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Abnormal returns around the event"</span>)</span>
+<span id="cb2-1254"><a href="#cb2-1254" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"grey60"</span>); <span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
+<span id="cb2-1255"><a href="#cb2-1255" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(rel_day, car, <span class="at">type =</span> <span class="st">"b"</span>, <span class="at">pch =</span> <span class="dv">16</span>,</span>
+<span id="cb2-1256"><a href="#cb2-1256" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Event day"</span>, <span class="at">ylab =</span> <span class="st">"Cumulative abnormal return"</span>,</span>
+<span id="cb2-1257"><a href="#cb2-1257" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"CAR over the event window"</span>)</span>
+<span id="cb2-1258"><a href="#cb2-1258" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"grey60"</span>); <span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
+<span id="cb2-1259"><a href="#cb2-1259" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(op)</span>
+<span id="cb2-1260"><a href="#cb2-1260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1261"><a href="#cb2-1261" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">c</span>(<span class="at">alpha_hat =</span> <span class="fu">coef</span>(fit)[<span class="dv">1</span>], <span class="at">beta_hat =</span> <span class="fu">coef</span>(fit)[<span class="dv">2</span>],</span>
+<span id="cb2-1262"><a href="#cb2-1262" aria-hidden="true" tabindex="-1"></a>        <span class="at">CAR_event_window =</span> <span class="fu">tail</span>(car, <span class="dv">1</span>)), <span class="dv">4</span>)</span>
+<span id="cb2-1263"><a href="#cb2-1263" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-1264"><a href="#cb2-1264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1265"><a href="#cb2-1265" aria-hidden="true" tabindex="-1"></a>The estimated $\hat\alpha$ and $\hat\beta$ recover the data-generating values, and the</span>
+<span id="cb2-1266"><a href="#cb2-1266" aria-hidden="true" tabindex="-1"></a>CAR steps up at day 0 by approximately the injected shock—exactly the abnormal return</span>
+<span id="cb2-1267"><a href="#cb2-1267" aria-hidden="true" tabindex="-1"></a>an event study is designed to detect. The design's credibility hinges on the</span>
+<span id="cb2-1268"><a href="#cb2-1268" aria-hidden="true" tabindex="-1"></a>assumptions catalogued above: a clean event date, a confound-free window, and a market</span>
+<span id="cb2-1269"><a href="#cb2-1269" aria-hidden="true" tabindex="-1"></a>model that adequately describes normal returns.</span>
+<span id="cb2-1270"><a href="#cb2-1270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1271"><a href="#cb2-1271" aria-hidden="true" tabindex="-1"></a><span class="fu">## Creativity and Idea Screening {#sec-sdm-creativity}</span></span>
+<span id="cb2-1272"><a href="#cb2-1272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1273"><a href="#cb2-1273" aria-hidden="true" tabindex="-1"></a>Social media reshapes the economics of innovation along two axes: it makes the</span>
+<span id="cb2-1274"><a href="#cb2-1274" aria-hidden="true" tabindex="-1"></a>*wisdom of the crowds* available for idea generation and evaluation, and it makes</span>
+<span id="cb2-1275"><a href="#cb2-1275" aria-hidden="true" tabindex="-1"></a>advertising nearly free. Both invite a strategic-dynamic treatment of how ideas are</span>
+<span id="cb2-1276"><a href="#cb2-1276" aria-hidden="true" tabindex="-1"></a>produced, screened, and rewarded over time.</span>
+<span id="cb2-1277"><a href="#cb2-1277" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1278"><a href="#cb2-1278" aria-hidden="true" tabindex="-1"></a>@bayus2013 study crowdsourced ideation over time at Dell's IdeaStorm community and find</span>
+<span id="cb2-1279"><a href="#cb2-1279" aria-hidden="true" tabindex="-1"></a>a striking dynamic: *serial* ideators are more likely than others to produce a single</span>
+<span id="cb2-1280"><a href="#cb2-1280" aria-hidden="true" tabindex="-1"></a>implemented idea, but they do not *repeat* that success. The mechanism is a</span>
+<span id="cb2-1281"><a href="#cb2-1281" aria-hidden="true" tabindex="-1"></a>**fixation effect**—an unconscious reuse of one's own prior ideas, akin to cryptomnesia</span>
+<span id="cb2-1282"><a href="#cb2-1282" aria-hidden="true" tabindex="-1"></a>or unconscious plagiarism <span class="co">[</span><span class="ot">@marsh1995; @marsh1999</span><span class="co">]</span>—whose negative effect on subsequent</span>
+<span id="cb2-1283"><a href="#cb2-1283" aria-hidden="true" tabindex="-1"></a>success is mitigated for ideators with more *diverse* commenting activity. As the first</span>
+<span id="cb2-1284"><a href="#cb2-1284" aria-hidden="true" tabindex="-1"></a>study of idea crowdsourcing over time, with a well-motivated theory and strong</span>
+<span id="cb2-1285"><a href="#cb2-1285" aria-hidden="true" tabindex="-1"></a>descriptive analysis, its principal limitation is a model that does not accommodate</span>
+<span id="cb2-1286"><a href="#cb2-1286" aria-hidden="true" tabindex="-1"></a>rare events.</span>
+<span id="cb2-1287"><a href="#cb2-1287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1288"><a href="#cb2-1288" aria-hidden="true" tabindex="-1"></a>@toubia2017 formalize creativity as a balance between **novelty** and **familiarity**,</span>
+<span id="cb2-1289"><a href="#cb2-1289" aria-hidden="true" tabindex="-1"></a>invoking a "beauty in averageness" effect and building an automated reader to identify</span>
+<span id="cb2-1290"><a href="#cb2-1290" aria-hidden="true" tabindex="-1"></a>promising ideas. Drawing on the Geneplore framework, they define novelty as "the</span>
+<span id="cb2-1291"><a href="#cb2-1291" aria-hidden="true" tabindex="-1"></a>association of word stems that do not appear frequently together in text related to the</span>
+<span id="cb2-1292"><a href="#cb2-1292" aria-hidden="true" tabindex="-1"></a>topic" and familiarity as "the association of word stems that appear frequently</span>
+<span id="cb2-1293"><a href="#cb2-1293" aria-hidden="true" tabindex="-1"></a>together," and measure both with **semantic-network co-word analysis** over word-stem</span>
+<span id="cb2-1294"><a href="#cb2-1294" aria-hidden="true" tabindex="-1"></a>combinations rather than individual words. An idea is "a document made of words that</span>
+<span id="cb2-1295"><a href="#cb2-1295" aria-hidden="true" tabindex="-1"></a>attempts to add value given a particular idea-generation topic." Edge weights use the</span>
+<span id="cb2-1296"><a href="#cb2-1296" aria-hidden="true" tabindex="-1"></a>Jaccard index; a baseline semantic network is built from pre-test ideas and top Google</span>
+<span id="cb2-1297"><a href="#cb2-1297" aria-hidden="true" tabindex="-1"></a>results (the latter possibly biased toward high-quality content); control variables</span>
+<span id="cb2-1298"><a href="#cb2-1298" aria-hidden="true" tabindex="-1"></a>follow @barrat2007 (node frequencies, clustering coefficients, and network-size</span>
+<span id="cb2-1299"><a href="#cb2-1299" aria-hidden="true" tabindex="-1"></a>features). The distance between an idea's edge-weight distribution and a prototypical</span>
+<span id="cb2-1300"><a href="#cb2-1300" aria-hidden="true" tabindex="-1"></a>distribution is measured by the Kolmogorov–Smirnov statistic (or, alternatively,</span>
+<span id="cb2-1301"><a href="#cb2-1301" aria-hidden="true" tabindex="-1"></a>Kullback–Leibler divergence), with an information-retrieval vector-space representation</span>
+<span id="cb2-1302"><a href="#cb2-1302" aria-hidden="true" tabindex="-1"></a>as an alternative to edge-weight distributions. Ideas are evaluated manually on</span>
+<span id="cb2-1303"><a href="#cb2-1303" aria-hidden="true" tabindex="-1"></a>creativity, purchase interest, predicted popularity, and writing quality. The method's</span>
+<span id="cb2-1304"><a href="#cb2-1304" aria-hidden="true" tabindex="-1"></a>strength is measuring a complex, qualitative construct robustly across measures, ideas,</span>
+<span id="cb2-1305"><a href="#cb2-1305" aria-hidden="true" tabindex="-1"></a>evaluators, and baseline networks, with a tight theory–method link; its weakness is</span>
+<span id="cb2-1306"><a href="#cb2-1306" aria-hidden="true" tabindex="-1"></a>sensitivity to the choice of representation—under some representations the results do</span>
+<span id="cb2-1307"><a href="#cb2-1307" aria-hidden="true" tabindex="-1"></a>not hold—and to the specification of the baseline network.</span>
+<span id="cb2-1308"><a href="#cb2-1308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1309"><a href="#cb2-1309" aria-hidden="true" tabindex="-1"></a>@wei2021 bring machine learning to crowdfunding creativity, motivated by combinatorial</span>
+<span id="cb2-1310"><a href="#cb2-1310" aria-hidden="true" tabindex="-1"></a>theory and the need to measure novelty, over- and under-shooting of funding goals, and</span>
+<span id="cb2-1311"><a href="#cb2-1311" aria-hidden="true" tabindex="-1"></a>styles of imitation. Across 98,058 Kickstarter projects (2009–2017, in Film &amp; Video,</span>
+<span id="cb2-1312"><a href="#cb2-1312" aria-hidden="true" tabindex="-1"></a>Music, and Publishing, English only), they measure **semantic similarity** with</span>
+<span id="cb2-1313"><a href="#cb2-1313" aria-hidden="true" tabindex="-1"></a>word2vec at the word level and **Word Mover's Distance** at the document level,</span>
+<span id="cb2-1314"><a href="#cb2-1314" aria-hidden="true" tabindex="-1"></a>constructing a similarity network whose link strength</span>
+<span id="cb2-1315"><a href="#cb2-1315" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-1316"><a href="#cb2-1316" aria-hidden="true" tabindex="-1"></a>w_{ij} = \delta^{|t_i - t_j|} \times L(\gamma_0 - \gamma_1 d_{ij})</span>
+<span id="cb2-1317"><a href="#cb2-1317" aria-hidden="true" tabindex="-1"></a>$$ {#eq-wmd-link}</span>
+<span id="cb2-1318"><a href="#cb2-1318" aria-hidden="true" tabindex="-1"></a>increases with similarity and decreases with the time lag between projects, where</span>
+<span id="cb2-1319"><a href="#cb2-1319" aria-hidden="true" tabindex="-1"></a>$0 &lt; \delta \le 1$ is a decay factor, $d_{ij}$ the Word Mover's Distance, and $L$ the</span>
+<span id="cb2-1320"><a href="#cb2-1320" aria-hidden="true" tabindex="-1"></a>logistic function. Funding performance is modeled with logistic regression (success)</span>
+<span id="cb2-1321"><a href="#cb2-1321" aria-hidden="true" tabindex="-1"></a>and linear regression (amount raised). The network-based metrics include the amount of</span>
+<span id="cb2-1322"><a href="#cb2-1322" aria-hidden="true" tabindex="-1"></a>prior similarity, the prior success rate (a weighted average over similar projects),</span>
+<span id="cb2-1323"><a href="#cb2-1323" aria-hidden="true" tabindex="-1"></a>the prior success residual, goal overshoot (log difference from similar projects'</span>
+<span id="cb2-1324"><a href="#cb2-1324" aria-hidden="true" tabindex="-1"></a>average goal), and atypicality (the proportion of isolated nodes in a project's</span>
+<span id="cb2-1325"><a href="#cb2-1325" aria-hidden="true" tabindex="-1"></a>unweighted subnetwork at a 0.5 cutoff). Information is weighted as</span>
+<span id="cb2-1326"><a href="#cb2-1326" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-1327"><a href="#cb2-1327" aria-hidden="true" tabindex="-1"></a>I_i \equiv \log<span class="sc">\!</span>\Big(1 + \sum_{j:\,T_j &lt; t_i} w_{ij}\Big),</span>
+<span id="cb2-1328"><a href="#cb2-1328" aria-hidden="true" tabindex="-1"></a>$$ {#eq-info-weight}</span>
+<span id="cb2-1329"><a href="#cb2-1329" aria-hidden="true" tabindex="-1"></a>a specification chosen because it is zero when no prior similarity exists and embeds a</span>
+<span id="cb2-1330"><a href="#cb2-1330" aria-hidden="true" tabindex="-1"></a>Bayesian diminishing return to additional signals. The findings: the average success</span>
+<span id="cb2-1331"><a href="#cb2-1331" aria-hidden="true" tabindex="-1"></a>of prior similar projects predicts current funding performance; high novelty (low</span>
+<span id="cb2-1332"><a href="#cb2-1332" aria-hidden="true" tabindex="-1"></a>similarity to all priors) helps, but the best projects balance novelty with apparent</span>
+<span id="cb2-1333"><a href="#cb2-1333" aria-hidden="true" tabindex="-1"></a>familiarity; goals should be set close to similar projects' goals (within about</span>
+<span id="cb2-1334"><a href="#cb2-1334" aria-hidden="true" tabindex="-1"></a>$\pm 10\%$); and atypicality (borrowing from another stream) has an inverted-U relation</span>
+<span id="cb2-1335"><a href="#cb2-1335" aria-hidden="true" tabindex="-1"></a>with funding performance. The results are robust to an unweighted network thresholded</span>
+<span id="cb2-1336"><a href="#cb2-1336" aria-hidden="true" tabindex="-1"></a>on similarity.</span>
+<span id="cb2-1337"><a href="#cb2-1337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1338"><a href="#cb2-1338" aria-hidden="true" tabindex="-1"></a>Whether AI can *do* ideation—screening rather than generating—has been studied with</span>
+<span id="cb2-1339"><a href="#cb2-1339" aria-hidden="true" tabindex="-1"></a>three model families: word colocation, content atypicality, and inspiration</span>
+<span id="cb2-1340"><a href="#cb2-1340" aria-hidden="true" tabindex="-1"></a>redundancy, predicted with LASSO, random forests, and RuleFit. Two component findings</span>
+<span id="cb2-1341"><a href="#cb2-1341" aria-hidden="true" tabindex="-1"></a>anchor this work: @berger2018 show that ideas score better when they are atypical</span>
+<span id="cb2-1342"><a href="#cb2-1342" aria-hidden="true" tabindex="-1"></a>relative to others in the same contest, and @stephen2016 show that ideators with more</span>
+<span id="cb2-1343"><a href="#cb2-1343" aria-hidden="true" tabindex="-1"></a>diverse network backgrounds generate less redundant, better ideas.</span>
+<span id="cb2-1344"><a href="#cb2-1344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1345"><a href="#cb2-1345" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quality {#sec-sdm-quality}</span></span>
+<span id="cb2-1346"><a href="#cb2-1346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1347"><a href="#cb2-1347" aria-hidden="true" tabindex="-1"></a>Quality is a fundamental construct across policy, economics, consumer behavior, and</span>
+<span id="cb2-1348"><a href="#cb2-1348" aria-hidden="true" tabindex="-1"></a>marketing strategy. The classic definition is an attribute on which all (or most)</span>
+<span id="cb2-1349"><a href="#cb2-1349" aria-hidden="true" tabindex="-1"></a>consumers prefer more to less—speed, reliability, durability, power <span class="co">[</span><span class="ot">@tellis1987</span><span class="co">]</span>—and</span>
+<span id="cb2-1350"><a href="#cb2-1350" aria-hidden="true" tabindex="-1"></a>the existence of a *market for quality* <span class="co">[</span><span class="ot">@klein1981</span><span class="co">]</span> explains why quality commands a</span>
+<span id="cb2-1351"><a href="#cb2-1351" aria-hidden="true" tabindex="-1"></a>premium. The measurement problem is that quality is multidimensional, so any composite</span>
+<span id="cb2-1352"><a href="#cb2-1352" aria-hidden="true" tabindex="-1"></a>depends on the choice of dimensions and weights.</span>
+<span id="cb2-1353"><a href="#cb2-1353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1354"><a href="#cb2-1354" aria-hidden="true" tabindex="-1"></a>Historically, objective quality was measured by *Consumer Reports* (from 1935 until</span>
+<span id="cb2-1355"><a href="#cb2-1355" aria-hidden="true" tabindex="-1"></a>about 2010): blind experiments evaluated by experts. The weighting problem is real but</span>
+<span id="cb2-1356"><a href="#cb2-1356" aria-hidden="true" tabindex="-1"></a>tractable. @kopalle1992 show that ranking products on quality is not too noisy even</span>
+<span id="cb2-1357"><a href="#cb2-1357" aria-hidden="true" tabindex="-1"></a>when the weights are uncorrelated, provided the quality attributes are positively</span>
+<span id="cb2-1358"><a href="#cb2-1358" aria-hidden="true" tabindex="-1"></a>correlated; @tellis2007 show that published expert quality ratings are good indicators</span>
+<span id="cb2-1359"><a href="#cb2-1359" aria-hidden="true" tabindex="-1"></a>of quality; and @tirunillai2014a show that the wisdom of crowds, mined from reviews,</span>
+<span id="cb2-1360"><a href="#cb2-1360" aria-hidden="true" tabindex="-1"></a>recovers quality as well.</span>
+<span id="cb2-1361"><a href="#cb2-1361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1362"><a href="#cb2-1362" aria-hidden="true" tabindex="-1"></a>@tellis2009 study network effects and quality in high technology and find evidence for</span>
+<span id="cb2-1363"><a href="#cb2-1363" aria-hidden="true" tabindex="-1"></a>**market efficiency**, defined as the best-quality brand holding the largest market</span>
+<span id="cb2-1364"><a href="#cb2-1364" aria-hidden="true" tabindex="-1"></a>share. Both quality and network effects drive market-share flows—network effects more</span>
+<span id="cb2-1365"><a href="#cb2-1365" aria-hidden="true" tabindex="-1"></a>than quality—where a network effect is "the increase in a consumer's utility from a</span>
+<span id="cb2-1366"><a href="#cb2-1366" aria-hidden="true" tabindex="-1"></a>product when the number of other users of that product increases," and quality is "a</span>
+<span id="cb2-1367"><a href="#cb2-1367" aria-hidden="true" tabindex="-1"></a>composite of a brand's attributes, on each of which all consumers prefer more to less"</span>
+<span id="cb2-1368"><a href="#cb2-1368" aria-hidden="true" tabindex="-1"></a>(reliability, performance, convenience). Quality appears to be the market's driving</span>
+<span id="cb2-1369"><a href="#cb2-1369" aria-hidden="true" tabindex="-1"></a>force across market share, return on investment, price premia, advertising, perceived</span>
+<span id="cb2-1370"><a href="#cb2-1370" aria-hidden="true" tabindex="-1"></a>quality, and stock-market return, in the personal-computer category using International</span>
+<span id="cb2-1371"><a href="#cb2-1371" aria-hidden="true" tabindex="-1"></a>Data Corporation and Dataquest data.</span>
+<span id="cb2-1372"><a href="#cb2-1372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1373"><a href="#cb2-1373" aria-hidden="true" tabindex="-1"></a>@golder2012 provide an integrative framework that decomposes quality into three</span>
+<span id="cb2-1374"><a href="#cb2-1374" aria-hidden="true" tabindex="-1"></a>**processes**. The **quality-production process** focuses on firms—attribute design,</span>
+<span id="cb2-1375"><a href="#cb2-1375" aria-hidden="true" tabindex="-1"></a>process design, resource inputs, and production control. The **quality-experience</span>
+<span id="cb2-1376"><a href="#cb2-1376" aria-hidden="true" tabindex="-1"></a>process** focuses on customers, recognizing that what a firm delivers and what a</span>
+<span id="cb2-1377"><a href="#cb2-1377" aria-hidden="true" tabindex="-1"></a>customer perceives (relative to expectation) can differ, mediated by the customer's</span>
+<span id="cb2-1378"><a href="#cb2-1378" aria-hidden="true" tabindex="-1"></a>measurement knowledge, motivation, and emotions, so that *experienced* attribute</span>
+<span id="cb2-1379"><a href="#cb2-1379" aria-hidden="true" tabindex="-1"></a>quality diverges from *delivered* attribute quality. The **quality-evaluation</span>
+<span id="cb2-1380"><a href="#cb2-1380" aria-hidden="true" tabindex="-1"></a>process** converts perceived attributes into an aggregated judgment based on</span>
+<span id="cb2-1381"><a href="#cb2-1381" aria-hidden="true" tabindex="-1"></a>transactional and global assessments, shaped by customer expertise and by three kinds</span>
+<span id="cb2-1382"><a href="#cb2-1382" aria-hidden="true" tabindex="-1"></a>of expectation: "will," "ideal," and "should." Quality is defined as "a set of three</span>
+<span id="cb2-1383"><a href="#cb2-1383" aria-hidden="true" tabindex="-1"></a>distinct states of an offering's attributes' relative performance generated while</span>
+<span id="cb2-1384"><a href="#cb2-1384" aria-hidden="true" tabindex="-1"></a>producing, experiencing, and evaluating the offering." @tbl-attribute-types gives the</span>
+<span id="cb2-1385"><a href="#cb2-1385" aria-hidden="true" tabindex="-1"></a>accompanying typology of attributes along customer-preference homogeneity and</span>
+<span id="cb2-1386"><a href="#cb2-1386" aria-hidden="true" tabindex="-1"></a>measurement ambiguity.</span>
+<span id="cb2-1387"><a href="#cb2-1387" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1388"><a href="#cb2-1388" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span> Customer preference: homogeneous <span class="pp">|</span> Customer preference: heterogeneous <span class="pp">|</span></span>
+<span id="cb2-1389"><a href="#cb2-1389" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb2-1390"><a href="#cb2-1390" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Measure** <span class="pp">|</span> Unambiguous <span class="pp">|</span> Universal attributes (flight delay) <span class="pp">|</span> Preference attributes (cuisine, cabin temperature) <span class="pp">|</span></span>
+<span id="cb2-1391"><a href="#cb2-1391" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **ambiguity** <span class="pp">|</span> Ambiguous <span class="pp">|</span> — <span class="pp">|</span> Idiosyncratic attributes (art, beauty) <span class="pp">|</span></span>
+<span id="cb2-1392"><a href="#cb2-1392" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1393"><a href="#cb2-1393" aria-hidden="true" tabindex="-1"></a>: Typology of attribute types in the quality framework of @golder2012. {#tbl-attribute-types}</span>
+<span id="cb2-1394"><a href="#cb2-1394" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1395"><a href="#cb2-1395" aria-hidden="true" tabindex="-1"></a>@tirunillai2014a mine quality from consumer reviews with **unsupervised latent</span>
+<span id="cb2-1396"><a href="#cb2-1396" aria-hidden="true" tabindex="-1"></a>Dirichlet allocation** over 350,000 reviews from @tirunillai2012, recovering quality</span>
+<span id="cb2-1397"><a href="#cb2-1397" aria-hidden="true" tabindex="-1"></a>dimensions that allow marketers to track value over time and to map competitive brand</span>
+<span id="cb2-1398"><a href="#cb2-1398" aria-hidden="true" tabindex="-1"></a>positions dynamically. The structure of those dimensions differs by market type, as</span>
+<span id="cb2-1399"><a href="#cb2-1399" aria-hidden="true" tabindex="-1"></a>@tbl-quality-dims summarizes.</span>
+<span id="cb2-1400"><a href="#cb2-1400" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1401"><a href="#cb2-1401" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Market <span class="pp">|</span> Dominant dimensions <span class="pp">|</span> Across markets <span class="pp">|</span> Heterogeneity <span class="pp">|</span> Stability <span class="pp">|</span></span>
+<span id="cb2-1402"><a href="#cb2-1402" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|---|</span></span>
+<span id="cb2-1403"><a href="#cb2-1403" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Vertically differentiated (computers) <span class="pp">|</span> Objective <span class="pp">|</span> Similar <span class="pp">|</span> Low across dimensions <span class="pp">|</span> High over time <span class="pp">|</span></span>
+<span id="cb2-1404"><a href="#cb2-1404" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Horizontally differentiated (shoes, toys) <span class="pp">|</span> Subjective <span class="pp">|</span> Varies <span class="pp">|</span> High across dimensions <span class="pp">|</span> Low over time <span class="pp">|</span></span>
+<span id="cb2-1405"><a href="#cb2-1405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1406"><a href="#cb2-1406" aria-hidden="true" tabindex="-1"></a>: Quality dimensions by market type <span class="co">[</span><span class="ot">@tirunillai2014a</span><span class="co">]</span>. {#tbl-quality-dims}</span>
+<span id="cb2-1407"><a href="#cb2-1407" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1408"><a href="#cb2-1408" aria-hidden="true" tabindex="-1"></a>Finally, quality and reputation spill across brands. @borah2016 study **spillover</span>
+<span id="cb2-1409"><a href="#cb2-1409" aria-hidden="true" tabindex="-1"></a>effects in social media**, documenting a *perverse halo*—negative spillover in which</span>
+<span id="cb2-1410"><a href="#cb2-1410" aria-hidden="true" tabindex="-1"></a>negative chatter about one nameplate raises negative chatter about another, affecting</span>
+<span id="cb2-1411"><a href="#cb2-1411" aria-hidden="true" tabindex="-1"></a>both sales and stock performance. The effect depends on similarity in market share</span>
+<span id="cb2-1412"><a href="#cb2-1412" aria-hidden="true" tabindex="-1"></a>(a dominant brand's spillover is stronger) and on shared country of origin (similar</span>
+<span id="cb2-1413"><a href="#cb2-1413" aria-hidden="true" tabindex="-1"></a>origins suffer more), and apology advertising harms both the recalled brand and its</span>
+<span id="cb2-1414"><a href="#cb2-1414" aria-hidden="true" tabindex="-1"></a>rivals; online chatter amplifies the negative sales effect of recalls roughly 4.5-fold.</span>
+<span id="cb2-1415"><a href="#cb2-1415" aria-hidden="true" tabindex="-1"></a>The mechanism is accessibility–diagnosticity <span class="co">[</span><span class="ot">@feldman1988</span><span class="co">]</span>: one brand's perceptions</span>
+<span id="cb2-1416"><a href="#cb2-1416" aria-hidden="true" tabindex="-1"></a>inform inferences about a similar brand. In the automobile context (January 2009–April</span>
+<span id="cb2-1417"><a href="#cb2-1417" aria-hidden="true" tabindex="-1"></a>2010, covering Toyota's acceleration crisis), the endogenous variables include negative</span>
+<span id="cb2-1418"><a href="#cb2-1418" aria-hidden="true" tabindex="-1"></a>online chatter, media citations (LexisNexis at 60% relevance, as in @tirunillai2012),</span>
+<span id="cb2-1419"><a href="#cb2-1419" aria-hidden="true" tabindex="-1"></a>ABC News coverage, negative-event indicators, advertising types (including apology</span>
+<span id="cb2-1420"><a href="#cb2-1420" aria-hidden="true" tabindex="-1"></a>ads), and key developments from Capital IQ; the exogenous variables include recall</span>
+<span id="cb2-1421"><a href="#cb2-1421" aria-hidden="true" tabindex="-1"></a>units and new-product introductions, both shown by Granger tests to be plausibly</span>
+<span id="cb2-1422"><a href="#cb2-1422" aria-hidden="true" tabindex="-1"></a>exogenous. A **VARX** model estimates Granger causality and long-run effects via</span>
+<span id="cb2-1423"><a href="#cb2-1423" aria-hidden="true" tabindex="-1"></a>impulse response functions—robust to nonstationarity, spurious causality, endogeneity,</span>
+<span id="cb2-1424"><a href="#cb2-1424" aria-hidden="true" tabindex="-1"></a>serial correlation, and reverse causality. The perverse halo is confirmed: stronger</span>
+<span id="cb2-1425"><a href="#cb2-1425" aria-hidden="true" tabindex="-1"></a>across same-country and from dominant to less-dominant brands, with a one-day wear-in</span>
+<span id="cb2-1426"><a href="#cb2-1426" aria-hidden="true" tabindex="-1"></a>and six-day wear-out; apology ads increase concern; concern about a nameplate</span>
+<span id="cb2-1427"><a href="#cb2-1427" aria-hidden="true" tabindex="-1"></a>significantly depresses both its own and its rival's sales (explaining more of the</span>
+<span id="cb2-1428"><a href="#cb2-1428" aria-hidden="true" tabindex="-1"></a>focal nameplate's sales variance, by forecast-error variance decomposition); and</span>
+<span id="cb2-1429"><a href="#cb2-1429" aria-hidden="true" tabindex="-1"></a>rising concern depresses Toyota's stock performance to a trough on the fourth day,</span>
+<span id="cb2-1430"><a href="#cb2-1430" aria-hidden="true" tabindex="-1"></a>with mixed effects on rivals owing to country-of-origin moderation.</span>
+<span id="cb2-1431"><a href="#cb2-1431" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1432"><a href="#cb2-1432" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways {#sec-sdm-takeaways}</span></span>
+<span id="cb2-1433"><a href="#cb2-1433" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1434"><a href="#cb2-1434" aria-hidden="true" tabindex="-1"></a>Three threads run through this chapter. First, the **object of inference is a</span>
+<span id="cb2-1435"><a href="#cb2-1435" aria-hidden="true" tabindex="-1"></a>trajectory**, not a point: diffusion curves, advertising decay, and abnormal-return</span>
+<span id="cb2-1436"><a href="#cb2-1436" aria-hidden="true" tabindex="-1"></a>paths are all dynamic, and the models that fit them—Bass and its generalizations,</span>
+<span id="cb2-1437"><a href="#cb2-1437" aria-hidden="true" tabindex="-1"></a>Koyck and the ADL/VAR family, hazard models, and event studies—are organized by the</span>
+<span id="cb2-1438"><a href="#cb2-1438" aria-hidden="true" tabindex="-1"></a>*nature of the series* rather than by topic. Second, **identification is the binding</span>
+<span id="cb2-1439"><a href="#cb2-1439" aria-hidden="true" tabindex="-1"></a>constraint**: the Bass model is fragile before its turning points, proportional-hazards</span>
+<span id="cb2-1440"><a href="#cb2-1440" aria-hidden="true" tabindex="-1"></a>estimates rest on a testable proportionality assumption, distributed-lag models suffer</span>
+<span id="cb2-1441"><a href="#cb2-1441" aria-hidden="true" tabindex="-1"></a>aggregation bias that the unit-exposure-time result of @tellis2006 resolves, and</span>
+<span id="cb2-1442"><a href="#cb2-1442" aria-hidden="true" tabindex="-1"></a>event-study causality lives or dies by the cleanliness of the event window and the</span>
+<span id="cb2-1443"><a href="#cb2-1443" aria-hidden="true" tabindex="-1"></a>counterfactual. Third, the **strategic payoff** is real: knowing whether a product will</span>
+<span id="cb2-1444"><a href="#cb2-1444" aria-hidden="true" tabindex="-1"></a>take off, whether a new technology cannibalizes or coexists, how long advertising</span>
+<span id="cb2-1445"><a href="#cb2-1445" aria-hidden="true" tabindex="-1"></a>lasts, and what a marketing event is worth to shareholders are precisely the questions</span>
+<span id="cb2-1446"><a href="#cb2-1446" aria-hidden="true" tabindex="-1"></a>on which entry, investment, and budgeting decisions turn. The empirical record</span>
+<span id="cb2-1447"><a href="#cb2-1447" aria-hidden="true" tabindex="-1"></a>repeatedly corrects naive intuition—pioneers mostly fail, larger firms have become the</span>
+<span id="cb2-1448"><a href="#cb2-1448" aria-hidden="true" tabindex="-1"></a>radical innovators, emotion beats information in advertising, and negative chatter</span>
+<span id="cb2-1449"><a href="#cb2-1449" aria-hidden="true" tabindex="-1"></a>moves markets while positive chatter does not—and each correction is only as credible</span>
+<span id="cb2-1450"><a href="#cb2-1450" aria-hidden="true" tabindex="-1"></a>as the design that produced it.</span>
+<span id="cb2-1451"><a href="#cb2-1451" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1452"><a href="#cb2-1452" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further Reading {#sec-sdm-further}</span></span>
+<span id="cb2-1453"><a href="#cb2-1453" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-1454"><a href="#cb2-1454" aria-hidden="true" tabindex="-1"></a>For the foundations of diffusion modeling, @Bass_1969 and the comprehensive review of</span>
+<span id="cb2-1455"><a href="#cb2-1455" aria-hidden="true" tabindex="-1"></a>@chandrasekaran2007 are the indispensable starting points, with @golder1997 and</span>
+<span id="cb2-1456"><a href="#cb2-1456" aria-hidden="true" tabindex="-1"></a>@tellis2003 for the turning-point literature. For advertising dynamics, @koyck1954distributed,</span>
+<span id="cb2-1457"><a href="#cb2-1457" aria-hidden="true" tabindex="-1"></a>@clarke1976, and the optimal-interval result of @tellis2006 form a natural sequence,</span>
+<span id="cb2-1458"><a href="#cb2-1458" aria-hidden="true" tabindex="-1"></a>complemented by the meta-analytic benchmarks of @sethuraman2011. For the</span>
+<span id="cb2-1459"><a href="#cb2-1459" aria-hidden="true" tabindex="-1"></a>marketing–finance interface, @srinivasan2009 surveys the modeling landscape, and</span>
+<span id="cb2-1460"><a href="#cb2-1460" aria-hidden="true" tabindex="-1"></a>@tirunillai2012 and @borah2016 illustrate the vector-autoregressive treatment of online</span>
+<span id="cb2-1461"><a href="#cb2-1461" aria-hidden="true" tabindex="-1"></a>chatter and firm value. The market-entry and innovation strategy literatures are</span>
+<span id="cb2-1462"><a href="#cb2-1462" aria-hidden="true" tabindex="-1"></a>reviewed in @hauser2006, with @golder1993 and @chandy2000 as the seminal empirical</span>
+<span id="cb2-1463"><a href="#cb2-1463" aria-hidden="true" tabindex="-1"></a>correctives to received wisdom.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

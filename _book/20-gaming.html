@@ -802,7 +802,7 @@ Table&nbsp;16.1: A taxonomy of in-game purchases by object sold and externality.
 m_t = \alpha\, m_{t-1} + (1-\alpha)\, r_t, \qquad 0 &lt; \alpha &lt; 1,
 \tag{16.3}\]</span></span></p>
 <p>where <span class="math inline">\(\alpha\)</span> is the persistence of motivation. Under a <em>fixed</em> reward (<span class="math inline">\(r_t = \mu\)</span> deterministically) the state converges monotonically and the player habituates: the reward becomes predictable and <span class="math inline">\(m_t\)</span> drifts toward a constant the designer cannot push above <span class="math inline">\(\bar m\)</span> without raising <span class="math inline">\(\mu\)</span> (costly). Under a <em>variable</em> reward with the same mean <span class="math inline">\(\mu\)</span> but variance <span class="math inline">\(\sigma^2 &gt; 0\)</span>, occasional large draws repeatedly spike <span class="math inline">\(m_t\)</span> and reset the approach to the threshold, sustaining play at <em>no additional expected reward cost</em>. The designer’s lever is therefore <span class="math inline">\(\sigma^2\)</span>, not <span class="math inline">\(\mu\)</span>: variance is free engagement. This is the formal statement of why randomized rewards dominate, and why they are simultaneously the most effective and the most hazardous mechanic. The same logic explains why <strong>streaks</strong> and <strong>daily login bonuses</strong> work—they convert the quit decision into a recurring loss frame, so that not playing forfeits accumulated progress.</p>
-<p>The following simulation makes the contrast concrete, comparing session length under fixed versus variable rewards with identical means.</p>
+<p>The following simulation makes the contrast concrete, comparing session length under fixed versus variable rewards with identical means; <a href="#fig-reward-schedule" class="quarto-xref">Figure&nbsp;<span>16.1</span></a> plots the resulting drop-out paths.</p>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">20</span><span class="op">)</span></span>
 <span></span>
@@ -995,7 +995,7 @@ Table&nbsp;16.3: Three identification strategies for a usage-restriction law and
 </div>
 </section><section id="a-reproducible-difference-in-differences" class="level3" data-number="16.4.4"><h3 data-number="16.4.4" class="anchored" data-anchor-id="a-reproducible-difference-in-differences">
 <span class="header-section-number">16.4.4</span> A Reproducible Difference-in-Differences</h3>
-<p>The following simulation reproduces the <em>structure</em> of the usage-restriction evaluation—not the Korean data—to make the DiD estimator and its heterogeneity concrete. We generate treated (minor) and control players with a treatment effect that varies by baseline intensity, mirroring the central finding of <span class="citation" data-cites="jo2020protecting">Jo et al. (<a href="#ref-jo2020protecting" role="doc-biblioref">2020</a>)</span> that restriction binds on average players but not the heaviest.</p>
+<p>The following simulation reproduces the <em>structure</em> of the usage-restriction evaluation—not the Korean data—to make the DiD estimator and its heterogeneity concrete. We generate treated (minor) and control players with a treatment effect that varies by baseline intensity, mirroring the central finding of <span class="citation" data-cites="jo2020protecting">Jo et al. (<a href="#ref-jo2020protecting" role="doc-biblioref">2020</a>)</span> that restriction binds on average players but not the heaviest. <a href="#tbl-did-results" class="quarto-xref">Table&nbsp;<span>16.4</span></a> reports the estimates overall and by baseline-intensity tercile.</p>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">20</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span></span>
@@ -1779,362 +1779,364 @@ Tonietto, Gabriela N., and Alixandra Barasch. 2020. <span>“Generating Content 
 <span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a>not playing forfeits accumulated progress.</span>
 <span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a>The following simulation makes the contrast concrete, comparing session length</span>
-<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>under fixed versus variable rewards with identical means.</span>
-<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a><span class="in">```{r reward-schedule-sim}</span></span>
-<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-reward-schedule</span></span>
-<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Simulated player drop-out under fixed versus variable reward schedules</span></span>
-<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a><span class="co">#|   with identical mean reward. Variable rewards sustain motivation above the quit</span></span>
-<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a><span class="co">#|   threshold for longer by repeatedly spiking the motivation state."</span></span>
-<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20</span>)</span>
-<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a>simulate_play <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">n =</span> <span class="dv">200</span>, <span class="at">mu =</span> <span class="dv">1</span>, <span class="at">sigma =</span> <span class="dv">0</span>, <span class="at">alpha =</span> <span class="fl">0.8</span>,</span>
-<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a>                          <span class="at">quit =</span> <span class="fl">0.6</span>, <span class="at">m0 =</span> <span class="dv">1</span>) {</span>
-<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> m0</span>
-<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
-<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> <span class="cf">if</span> (sigma <span class="sc">==</span> <span class="dv">0</span>) mu <span class="cf">else</span> <span class="fu">rgamma</span>(<span class="dv">1</span>, <span class="at">shape =</span> mu<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> sigma<span class="sc">^</span><span class="dv">2</span>,</span>
-<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">scale =</span> sigma<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> mu)</span>
-<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>    m <span class="ot">&lt;-</span> alpha <span class="sc">*</span> m <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> alpha) <span class="sc">*</span> r</span>
-<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (m <span class="sc">&lt;</span> quit) <span class="fu">return</span>(t)          <span class="co"># player quits this session</span></span>
-<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a>  n</span>
-<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a>reps <span class="ot">&lt;-</span> <span class="dv">2000</span></span>
-<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a>fixed_len    <span class="ot">&lt;-</span> <span class="fu">replicate</span>(reps, <span class="fu">simulate_play</span>(<span class="at">sigma =</span> <span class="dv">0</span>))</span>
-<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a>variable_len <span class="ot">&lt;-</span> <span class="fu">replicate</span>(reps, <span class="fu">simulate_play</span>(<span class="at">sigma =</span> <span class="fl">1.5</span>))</span>
-<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Median session length (fixed reward):   "</span>, <span class="fu">median</span>(fixed_len), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Median session length (variable reward):"</span>, <span class="fu">median</span>(variable_len), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(variable_len, <span class="at">breaks =</span> <span class="dv">30</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.4</span>),</span>
-<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Session length (actions before quit)"</span>, <span class="at">main =</span> <span class="st">""</span>,</span>
-<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">range</span>(<span class="fu">c</span>(fixed_len, variable_len)))</span>
-<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(fixed_len, <span class="at">breaks =</span> <span class="dv">30</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.4</span>), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"Variable reward"</span>, <span class="st">"Fixed reward"</span>),</span>
-<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="fu">c</span>(<span class="fu">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.4</span>), <span class="fu">rgb</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.4</span>)), <span class="at">bty =</span> <span class="st">"n"</span>)</span>
-<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Engagement-to-Revenue Loop</span></span>
-<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a>Engagement mechanics, monetization, and acquisition form a closed loop, shown in</span>
-<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a>@fig-engagement-loop. Acquisition delivers players into a *core loop* of action</span>
-<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a>and reward governed by @eq-motivation; sustained engagement produces the behavioral</span>
-<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>investment that both converts to in-game purchases (@eq-f2p-revenue) and, through</span>
-<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a>social and streaming visibility, feeds acquisition of new players. Live streaming</span>
-<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a>is an empirically important arm of this loop: @huang2025promotional, using</span>
-<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>high-frequency Twitch data and within-day variation in top streamers' broadcast</span>
-<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>hours for identification, estimate a positive but modest and short-lived elasticity</span>
-<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a>of concurrent players to live-stream viewership (about $0.027$), with the strongest</span>
-<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>effects for lesser-known titles where streams resolve quality uncertainty.</span>
-<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>Influencer content cuts both ways, however: @li2024opposing, studying YouTube</span>
-<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>influencers in the video-game industry, document *opposing* purchase and usage</span>
-<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>effects—exposure can raise purchase intent while substituting for the consumer's</span>
-<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>own play time—so the net effect on the engagement loop is not signed a priori.</span>
-<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a>%%| label: fig-engagement-loop</span>
-<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The engagement-to-revenue loop in a free-to-play game. The core</span></span>
-<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a><span class="st">%%|   action-reward loop sustains engagement, which both monetizes through in-game</span></span>
-<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a><span class="st">%%|   purchases and feeds acquisition through social and streaming visibility.</span><span class="ot">"</span></span>
-<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a>    A[Acquisition&lt;br/&gt;free admission] --&gt; B[Core loop&lt;br/&gt;action <span class="ot">and</span> reward]</span>
-<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a>    B --&gt; C{Motivation&lt;br/&gt;<span class="kw">state</span> m_t}</span>
-<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a>    C --&gt;|above threshold| B</span>
-<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a>    C --&gt;|sustained| D[Engagement&lt;br/&gt;behavioral investment]</span>
-<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[In-game purchases&lt;br/&gt;monetization]</span>
-<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a>    D --&gt; F[Social <span class="ot">and</span>&lt;br/&gt;streaming visibility]</span>
-<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a>    F --&gt; A</span>
-<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a>    E --&gt; G[Revenue]</span>
-<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a>    C --&gt;|below threshold| H[Churn]</span>
-<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a><span class="fu">## Gamification in Marketing</span></span>
-<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a>**Gamification** is the application of game-design elements—points, levels,</span>
-<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a>badges, leaderboards, challenges, streaks, and randomized rewards—to contexts</span>
-<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a>whose primary purpose is not play. In marketing the canonical applications are</span>
-<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a>loyalty programs (status tiers, points, progress bars), mobile engagement apps</span>
-<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a>(streaks, daily goals), referral programs (unlockable rewards), and internal</span>
-<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a>sales-force or service incentives (leaderboards, badges). The premise is that the</span>
-<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a>engagement machinery of @eq-motivation can be ported to serve a marketing</span>
-<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a>objective—repeat purchase, app usage, word of mouth—without the underlying activity</span>
-<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a>being a game.</span>
-<span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a>The mechanism that gamification exploits is the conversion of an instrumental task</span>
-<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a>into one with intrinsic and social reward structure. Three behavioral levers</span>
-<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>recur. First, **goal gradient and endowed progress**: progress toward a salient</span>
-<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a>goal accelerates effort as the goal nears, and artificially endowing early</span>
-<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a>progress (e.g., a loyalty card pre-stamped twice) increases completion.<span class="co">&lt;!-- CITE-NEEDED: goal-gradient / endowed-progress effect in loyalty programs --&gt;</span></span>
-<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>Second, **operational transparency and effort visibility**: making the effort or</span>
-<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a>progress visible increases valuation and persistence. Third, **social comparison**:</span>
-<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a>leaderboards and visible status convert a private task into a positional one. The</span>
-<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a>emotional facet matters here—the satisfaction of completing a streak or holding a</span>
-<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>status tier is an affective reward, and the literature on how time and activity are</span>
-<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a>experienced as fun or productive bears directly on gamified design [@etkin2015;</span>
-<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a>@tonietto2020].</span>
-<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a>Gamification, however, inherits the ethical hazard of its source. The same</span>
-<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a>mechanics that increase desirable engagement can manufacture compulsion, and</span>
-<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a>several documented effects warn against naive deployment. Public, social</span>
-<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a>gamification can backfire through *slacktivist* dynamics, in which a token public</span>
-<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a>act of engagement *reduces* subsequent substantive effort—an effect of</span>
-<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a>"private versus public" token support that managers of badge- and share-based</span>
-<span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a>programs should anticipate <span class="co">[</span><span class="ot">@kristofferson2013</span><span class="co">]</span>. And because gamified metrics are</span>
-<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a>visible and incentivized, they invite gaming-of-the-metric: participants optimize</span>
-<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a>the tracked behavior rather than the underlying objective, a generic failure of</span>
-<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a>incentive design.<span class="co">&lt;!-- CITE-NEEDED: gaming-the-metric / Goodhart's law in incentive design --&gt;</span></span>
-<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a>The design question is therefore whether a gamified mechanic *aligns* the tracked</span>
-<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a>behavior with genuine value (a well-designed loyalty tier rewarding real repeat</span>
-<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a>custom) or merely *manufactures* a behavior that looks like value (a streak that</span>
-<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a>compels logins of no benefit to the consumer). @tbl-gamification contrasts</span>
-<span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a>value-creating with value-extracting gamification along this axis.</span>
-<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Dimension <span class="pp">|</span> Value-creating gamification <span class="pp">|</span> Value-extracting gamification <span class="pp">|</span></span>
-<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Objective alignment <span class="pp">|</span> Tracked behavior $\approx$ genuine value <span class="pp">|</span> Tracked behavior decoupled from value <span class="pp">|</span></span>
-<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Consumer welfare <span class="pp">|</span> Consumer surplus rises <span class="pp">|</span> Surplus transferred to firm or destroyed <span class="pp">|</span></span>
-<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Reward structure <span class="pp">|</span> Predictable, earned <span class="pp">|</span> Variable-ratio, engineered for compulsion <span class="pp">|</span></span>
-<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Transparency <span class="pp">|</span> Odds and rules disclosed <span class="pp">|</span> Odds opaque (e.g., undisclosed drop rates) <span class="pp">|</span></span>
-<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Exit <span class="pp">|</span> Low switching/quit cost <span class="pp">|</span> High sunk-cost lock-in <span class="pp">|</span></span>
-<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-306"><a href="#cb3-306" aria-hidden="true" tabindex="-1"></a>: Value-creating versus value-extracting gamification. The same mechanics serve</span>
-<span id="cb3-307"><a href="#cb3-307" aria-hidden="true" tabindex="-1"></a>either end; the distinction is whether the tracked behavior is aligned with</span>
-<span id="cb3-308"><a href="#cb3-308" aria-hidden="true" tabindex="-1"></a>consumer value and whether the design preserves the consumer's capacity to exit.</span>
-<span id="cb3-309"><a href="#cb3-309" aria-hidden="true" tabindex="-1"></a>{#tbl-gamification}</span>
-<span id="cb3-310"><a href="#cb3-310" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-311"><a href="#cb3-311" aria-hidden="true" tabindex="-1"></a><span class="fu">## Regulation of Gaming and Welfare {#sec-regulation}</span></span>
-<span id="cb3-312"><a href="#cb3-312" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-313"><a href="#cb3-313" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why Regulate</span></span>
-<span id="cb3-314"><a href="#cb3-314" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-315"><a href="#cb3-315" aria-hidden="true" tabindex="-1"></a>The welfare case for regulating games rests on the gap between the engagement</span>
-<span id="cb3-316"><a href="#cb3-316" aria-hidden="true" tabindex="-1"></a>mechanics of @eq-motivation and consumer sovereignty. When a variable-reward</span>
-<span id="cb3-317"><a href="#cb3-317" aria-hidden="true" tabindex="-1"></a>schedule sustains play and spending past the point a fully-informed, self-controlled</span>
-<span id="cb3-318"><a href="#cb3-318" aria-hidden="true" tabindex="-1"></a>consumer would choose, the consumer's revealed behavior no longer reveals</span>
-<span id="cb3-319"><a href="#cb3-319" aria-hidden="true" tabindex="-1"></a>preference; the standard welfare theorems fail. Three regulatory concerns follow,</span>
-<span id="cb3-320"><a href="#cb3-320" aria-hidden="true" tabindex="-1"></a>in rough order of consensus. The first is **minors and spending**: in-game</span>
-<span id="cb3-321"><a href="#cb3-321" aria-hidden="true" tabindex="-1"></a>purchases by children, who lack both the means and the judgment to consent to</span>
-<span id="cb3-322"><a href="#cb3-322" aria-hidden="true" tabindex="-1"></a>financial commitments, made through frictionless payment. The second is **gambling</span>
-<span id="cb3-323"><a href="#cb3-323" aria-hidden="true" tabindex="-1"></a>mechanics**: loot boxes (@eq-lootbox) replicate the structure of gambling, and</span>
-<span id="cb3-324"><a href="#cb3-324" aria-hidden="true" tabindex="-1"></a>several jurisdictions have moved to classify them as such, with consequences for</span>
-<span id="cb3-325"><a href="#cb3-325" aria-hidden="true" tabindex="-1"></a>age-gating and disclosure. The third is **time use and overconsumption**: excessive</span>
-<span id="cb3-326"><a href="#cb3-326" aria-hidden="true" tabindex="-1"></a>play time, particularly among adolescents, framed as a public-health concern. These</span>
-<span id="cb3-327"><a href="#cb3-327" aria-hidden="true" tabindex="-1"></a>motivate three corresponding instruments—spending caps and parental controls,</span>
-<span id="cb3-328"><a href="#cb3-328" aria-hidden="true" tabindex="-1"></a>loot-box disclosure or prohibition, and **usage-restriction laws** that cap or</span>
-<span id="cb3-329"><a href="#cb3-329" aria-hidden="true" tabindex="-1"></a>curfew play time. The remainder of this section develops the evaluation of the</span>
-<span id="cb3-330"><a href="#cb3-330" aria-hidden="true" tabindex="-1"></a>third, which has produced the cleanest natural experiment.</span>
-<span id="cb3-331"><a href="#cb3-331" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-332"><a href="#cb3-332" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Natural Experiment: Usage-Restriction Laws</span></span>
-<span id="cb3-333"><a href="#cb3-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-334"><a href="#cb3-334" aria-hidden="true" tabindex="-1"></a>The sharpest evidence on usage restriction comes from South Korea's *Shutdown Law*</span>
-<span id="cb3-335"><a href="#cb3-335" aria-hidden="true" tabindex="-1"></a>(the "Cinderella law"), which barred players under 16 from accessing online games</span>
-<span id="cb3-336"><a href="#cb3-336" aria-hidden="true" tabindex="-1"></a>between midnight and 6 a.m. @jo2020protecting evaluate this policy on</span>
-<span id="cb3-337"><a href="#cb3-337" aria-hidden="true" tabindex="-1"></a>individual-level usage and spending data and reach a set of conclusions that should</span>
-<span id="cb3-338"><a href="#cb3-338" aria-hidden="true" tabindex="-1"></a>temper enthusiasm for blunt restriction. Regulation reduced overall game usage, but</span>
-<span id="cb3-339"><a href="#cb3-339" aria-hidden="true" tabindex="-1"></a>the effect was sharply heterogeneous in *past behavior*: it bound on average</span>
-<span id="cb3-340"><a href="#cb3-340" aria-hidden="true" tabindex="-1"></a>players, had a smaller effect on heavy players, and ran in the *opposite* direction</span>
-<span id="cb3-341"><a href="#cb3-341" aria-hidden="true" tabindex="-1"></a>for the very heaviest—the consumers the law was most meant to protect. And the</span>
-<span id="cb3-342"><a href="#cb3-342" aria-hidden="true" tabindex="-1"></a>revenue impact was negligible: restricted players reallocated rather than reduced</span>
-<span id="cb3-343"><a href="#cb3-343" aria-hidden="true" tabindex="-1"></a>spending. The policy lesson is that a curfew deters light, marginal players while</span>
-<span id="cb3-344"><a href="#cb3-344" aria-hidden="true" tabindex="-1"></a>the heaviest—plausibly the at-risk population—are unmoved or even intensify, so a</span>
-<span id="cb3-345"><a href="#cb3-345" aria-hidden="true" tabindex="-1"></a>blunt usage cap is poorly targeted at the welfare problem it names.</span>
-<span id="cb3-346"><a href="#cb3-346" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-347"><a href="#cb3-347" aria-hidden="true" tabindex="-1"></a><span class="fu">### Identifying the Effect of a Usage Restriction</span></span>
-<span id="cb3-348"><a href="#cb3-348" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-349"><a href="#cb3-349" aria-hidden="true" tabindex="-1"></a>The Korean setting is valuable precisely because it permits credible identification,</span>
-<span id="cb3-350"><a href="#cb3-350" aria-hidden="true" tabindex="-1"></a>and @jo2020protecting combine three complementary designs. We state each as an</span>
-<span id="cb3-351"><a href="#cb3-351" aria-hidden="true" tabindex="-1"></a>estimator with its identifying assumption and what breaks it, because the</span>
-<span id="cb3-352"><a href="#cb3-352" aria-hidden="true" tabindex="-1"></a>combination—not any single design—is what makes the conclusion robust. The cross-cutting</span>
-<span id="cb3-353"><a href="#cb3-353" aria-hidden="true" tabindex="-1"></a>machinery here connects to the broader treatment of causal inference in</span>
-<span id="cb3-354"><a href="#cb3-354" aria-hidden="true" tabindex="-1"></a>@sec-causal-inference.</span>
-<span id="cb3-355"><a href="#cb3-355" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-356"><a href="#cb3-356" aria-hidden="true" tabindex="-1"></a>**Difference-in-differences (DiD).** With an age-based cutoff defining treated</span>
-<span id="cb3-357"><a href="#cb3-357" aria-hidden="true" tabindex="-1"></a>(under-16) and control (just over the cutoff) players observed before and after the</span>
-<span id="cb3-358"><a href="#cb3-358" aria-hidden="true" tabindex="-1"></a>law, the canonical two-way fixed-effects estimator for outcome $y_{it}$ (usage or</span>
-<span id="cb3-359"><a href="#cb3-359" aria-hidden="true" tabindex="-1"></a>spending) is</span>
-<span id="cb3-360"><a href="#cb3-360" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-361"><a href="#cb3-361" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-362"><a href="#cb3-362" aria-hidden="true" tabindex="-1"></a>y_{it} = \alpha_i + \gamma_t + \tau\, D_{it} + \varepsilon_{it},</span>
-<span id="cb3-363"><a href="#cb3-363" aria-hidden="true" tabindex="-1"></a>$$ {#eq-20-did}</span>
-<span id="cb3-364"><a href="#cb3-364" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-365"><a href="#cb3-365" aria-hidden="true" tabindex="-1"></a>where $\alpha_i$ and $\gamma_t$ are individual and time fixed effects, $D_{it}=1$</span>
-<span id="cb3-366"><a href="#cb3-366" aria-hidden="true" tabindex="-1"></a>for treated players in the post-period, and $\tau$ is the average treatment effect.</span>
-<span id="cb3-367"><a href="#cb3-367" aria-hidden="true" tabindex="-1"></a>Identification requires the **parallel-trends** assumption: absent the law, treated</span>
-<span id="cb3-368"><a href="#cb3-368" aria-hidden="true" tabindex="-1"></a>and control outcomes would have moved in parallel,</span>
-<span id="cb3-369"><a href="#cb3-369" aria-hidden="true" tabindex="-1"></a>$\mathbb{E}<span class="co">[</span><span class="ot">y_{it}(0) - y_{i,t-1}(0)\mid D</span><span class="co">]</span>$ is independent of treatment status.</span>
-<span id="cb3-370"><a href="#cb3-370" aria-hidden="true" tabindex="-1"></a>This breaks if under-16 and over-16 players were already on diverging usage</span>
-<span id="cb3-371"><a href="#cb3-371" aria-hidden="true" tabindex="-1"></a>trajectories (developmental differences in gaming intensity by age make this a live</span>
-<span id="cb3-372"><a href="#cb3-372" aria-hidden="true" tabindex="-1"></a>threat), or if the law triggered compositional change—e.g., minors migrating to</span>
-<span id="cb3-373"><a href="#cb3-373" aria-hidden="true" tabindex="-1"></a>unregulated platforms or borrowing adult credentials, which contaminates both the</span>
-<span id="cb3-374"><a href="#cb3-374" aria-hidden="true" tabindex="-1"></a>treated outcome and the control group.</span>
-<span id="cb3-375"><a href="#cb3-375" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-376"><a href="#cb3-376" aria-hidden="true" tabindex="-1"></a>**Regression discontinuity (RD).** The age threshold furnishes a sharp</span>
-<span id="cb3-377"><a href="#cb3-377" aria-hidden="true" tabindex="-1"></a>discontinuity: a player just under 16 is restricted, one just over is not. Comparing</span>
-<span id="cb3-378"><a href="#cb3-378" aria-hidden="true" tabindex="-1"></a>outcomes in a narrow bandwidth $h$ around the cutoff $a_0 = 16$,</span>
-<span id="cb3-379"><a href="#cb3-379" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-380"><a href="#cb3-380" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-381"><a href="#cb3-381" aria-hidden="true" tabindex="-1"></a>\tau_{\text{RD}} = \lim_{a \downarrow a_0} \mathbb{E}<span class="co">[</span><span class="ot">y \mid a</span><span class="co">]</span> -</span>
-<span id="cb3-382"><a href="#cb3-382" aria-hidden="true" tabindex="-1"></a>                   \lim_{a \uparrow a_0} \mathbb{E}<span class="co">[</span><span class="ot">y \mid a</span><span class="co">]</span>,</span>
-<span id="cb3-383"><a href="#cb3-383" aria-hidden="true" tabindex="-1"></a>$$ {#eq-20-rd}</span>
-<span id="cb3-384"><a href="#cb3-384" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-385"><a href="#cb3-385" aria-hidden="true" tabindex="-1"></a>identifies the *local* effect at the cutoff under the assumption that all other</span>
-<span id="cb3-386"><a href="#cb3-386" aria-hidden="true" tabindex="-1"></a>determinants of $y$ are continuous in age at $a_0$—players cannot precisely</span>
-<span id="cb3-387"><a href="#cb3-387" aria-hidden="true" tabindex="-1"></a>manipulate their recorded age, and nothing else changes discontinuously at exactly</span>
-<span id="cb3-388"><a href="#cb3-388" aria-hidden="true" tabindex="-1"></a><span class="ss">16. </span>Manipulation (misreported birthdates to evade the curfew) is the canonical</span>
-<span id="cb3-389"><a href="#cb3-389" aria-hidden="true" tabindex="-1"></a>threat and would show as a density discontinuity in the running variable; the</span>
-<span id="cb3-390"><a href="#cb3-390" aria-hidden="true" tabindex="-1"></a>estimate is also only local to age 16 and need not generalize to younger children.</span>
-<span id="cb3-391"><a href="#cb3-391" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-392"><a href="#cb3-392" aria-hidden="true" tabindex="-1"></a>**Propensity-score matching (PSM).** To compare restricted and unrestricted players</span>
-<span id="cb3-393"><a href="#cb3-393" aria-hidden="true" tabindex="-1"></a>who are otherwise observationally similar, each treated player $i$ is matched to</span>
-<span id="cb3-394"><a href="#cb3-394" aria-hidden="true" tabindex="-1"></a>controls with a similar propensity score $e(\mathbf{x}_i) = \Pr(D_i = 1 \mid</span>
-<span id="cb3-395"><a href="#cb3-395" aria-hidden="true" tabindex="-1"></a>\mathbf{x}_i)$ estimated from pre-treatment covariates $\mathbf{x}_i$ (past usage,</span>
-<span id="cb3-396"><a href="#cb3-396" aria-hidden="true" tabindex="-1"></a>spending, tenure). The matched estimator is</span>
-<span id="cb3-397"><a href="#cb3-397" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-398"><a href="#cb3-398" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-399"><a href="#cb3-399" aria-hidden="true" tabindex="-1"></a>\hat\tau_{\text{PSM}} = \frac{1}{N_1}\sum_{i:\,D_i=1}</span>
-<span id="cb3-400"><a href="#cb3-400" aria-hidden="true" tabindex="-1"></a>   \Big( y_i - \textstyle\sum_{j} w_{ij}\, y_j \Big),</span>
-<span id="cb3-401"><a href="#cb3-401" aria-hidden="true" tabindex="-1"></a>$$ {#eq-psm}</span>
-<span id="cb3-402"><a href="#cb3-402" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-403"><a href="#cb3-403" aria-hidden="true" tabindex="-1"></a>where $w_{ij}$ weights controls $j$ by closeness in $e(\cdot)$. PSM identifies the</span>
-<span id="cb3-404"><a href="#cb3-404" aria-hidden="true" tabindex="-1"></a>effect on the treated under **selection on observables** (conditional</span>
-<span id="cb3-405"><a href="#cb3-405" aria-hidden="true" tabindex="-1"></a>unconfoundedness): treatment is as-good-as-random given $\mathbf{x}$, and there is</span>
-<span id="cb3-406"><a href="#cb3-406" aria-hidden="true" tabindex="-1"></a>common support. It breaks under selection on *unobservables*—if an unmeasured trait</span>
-<span id="cb3-407"><a href="#cb3-407" aria-hidden="true" tabindex="-1"></a>(say, a player's underlying self-control or propensity to seek out gaming) drives</span>
-<span id="cb3-408"><a href="#cb3-408" aria-hidden="true" tabindex="-1"></a>both treatment-relevant behavior and outcomes, matching on observed covariates</span>
-<span id="cb3-409"><a href="#cb3-409" aria-hidden="true" tabindex="-1"></a>leaves bias. PSM cannot, by construction, fix this; it is why @jo2020protecting</span>
-<span id="cb3-410"><a href="#cb3-410" aria-hidden="true" tabindex="-1"></a>triangulate with RD, whose identification does not lean on observables.</span>
-<span id="cb3-411"><a href="#cb3-411" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-412"><a href="#cb3-412" aria-hidden="true" tabindex="-1"></a>The discipline of the design is that the three estimators lean on *different*</span>
-<span id="cb3-413"><a href="#cb3-413" aria-hidden="true" tabindex="-1"></a>assumptions—parallel trends, continuity at the cutoff, selection on observables—so</span>
-<span id="cb3-414"><a href="#cb3-414" aria-hidden="true" tabindex="-1"></a>their agreement is more convincing than any one alone. Where they would disagree</span>
-<span id="cb3-415"><a href="#cb3-415" aria-hidden="true" tabindex="-1"></a>tells the analyst which assumption is binding. @tbl-identification summarizes the</span>
-<span id="cb3-416"><a href="#cb3-416" aria-hidden="true" tabindex="-1"></a>comparison.</span>
-<span id="cb3-417"><a href="#cb3-417" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-418"><a href="#cb3-418" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Design <span class="pp">|</span> Estimand <span class="pp">|</span> Key assumption <span class="pp">|</span> What breaks it <span class="pp">|</span></span>
-<span id="cb3-419"><a href="#cb3-419" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
-<span id="cb3-420"><a href="#cb3-420" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> DiD (@eq-20-did) <span class="pp">|</span> ATT, average over time <span class="pp">|</span> Parallel trends <span class="pp">|</span> Diverging age trends; migration to unregulated play <span class="pp">|</span></span>
-<span id="cb3-421"><a href="#cb3-421" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> RD (@eq-20-rd) <span class="pp">|</span> Local effect at age 16 <span class="pp">|</span> Continuity at cutoff <span class="pp">|</span> Age manipulation; non-generalizable locally <span class="pp">|</span></span>
-<span id="cb3-422"><a href="#cb3-422" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> PSM (@eq-psm) <span class="pp">|</span> ATT on matched sample <span class="pp">|</span> Selection on observables <span class="pp">|</span> Selection on unobservables (e.g., self-control) <span class="pp">|</span></span>
-<span id="cb3-423"><a href="#cb3-423" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-424"><a href="#cb3-424" aria-hidden="true" tabindex="-1"></a>: Three identification strategies for a usage-restriction law and the assumption</span>
-<span id="cb3-425"><a href="#cb3-425" aria-hidden="true" tabindex="-1"></a>each rests on. Their combination is robust because the assumptions are</span>
-<span id="cb3-426"><a href="#cb3-426" aria-hidden="true" tabindex="-1"></a>non-overlapping. {#tbl-identification}</span>
-<span id="cb3-427"><a href="#cb3-427" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-428"><a href="#cb3-428" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Reproducible Difference-in-Differences</span></span>
-<span id="cb3-429"><a href="#cb3-429" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-430"><a href="#cb3-430" aria-hidden="true" tabindex="-1"></a>The following simulation reproduces the *structure* of the usage-restriction</span>
-<span id="cb3-431"><a href="#cb3-431" aria-hidden="true" tabindex="-1"></a>evaluation—not the Korean data—to make the DiD estimator and its heterogeneity</span>
-<span id="cb3-432"><a href="#cb3-432" aria-hidden="true" tabindex="-1"></a>concrete. We generate treated (minor) and control players with a treatment effect</span>
-<span id="cb3-433"><a href="#cb3-433" aria-hidden="true" tabindex="-1"></a>that varies by baseline intensity, mirroring the central finding of</span>
-<span id="cb3-434"><a href="#cb3-434" aria-hidden="true" tabindex="-1"></a>@jo2020protecting that restriction binds on average players but not the heaviest.</span>
-<span id="cb3-435"><a href="#cb3-435" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-436"><a href="#cb3-436" aria-hidden="true" tabindex="-1"></a><span class="in">```{r did-simulation}</span></span>
-<span id="cb3-437"><a href="#cb3-437" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tbl-did-results</span></span>
-<span id="cb3-438"><a href="#cb3-438" aria-hidden="true" tabindex="-1"></a><span class="co">#| tbl-cap: "Difference-in-differences estimates of a simulated usage-restriction</span></span>
-<span id="cb3-439"><a href="#cb3-439" aria-hidden="true" tabindex="-1"></a><span class="co">#|   law, overall and by baseline-intensity tercile. The overall effect masks</span></span>
-<span id="cb3-440"><a href="#cb3-440" aria-hidden="true" tabindex="-1"></a><span class="co">#|   heterogeneity: the restriction reduces usage for light and average players but</span></span>
-<span id="cb3-441"><a href="#cb3-441" aria-hidden="true" tabindex="-1"></a><span class="co">#|   not for the heaviest, mirroring the qualitative finding of Jo et al. (2020)."</span></span>
-<span id="cb3-442"><a href="#cb3-442" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb3-443"><a href="#cb3-443" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb3-444"><a href="#cb3-444" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20</span>)</span>
-<span id="cb3-445"><a href="#cb3-445" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb3-446"><a href="#cb3-446" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-447"><a href="#cb3-447" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">4000</span></span>
-<span id="cb3-448"><a href="#cb3-448" aria-hidden="true" tabindex="-1"></a>players <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb3-449"><a href="#cb3-449" aria-hidden="true" tabindex="-1"></a>  <span class="at">id        =</span> <span class="dv">1</span><span class="sc">:</span>n,</span>
-<span id="cb3-450"><a href="#cb3-450" aria-hidden="true" tabindex="-1"></a>  <span class="at">treated   =</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.5</span>),                 <span class="co"># under-16 (restricted) vs. control</span></span>
-<span id="cb3-451"><a href="#cb3-451" aria-hidden="true" tabindex="-1"></a>  <span class="at">baseline  =</span> <span class="fu">rgamma</span>(n, <span class="at">shape =</span> <span class="dv">2</span>, <span class="at">scale =</span> <span class="dv">5</span>)    <span class="co"># pre-period usage (hours/week)</span></span>
-<span id="cb3-452"><a href="#cb3-452" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb3-453"><a href="#cb3-453" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">intensity =</span> <span class="fu">ntile</span>(baseline, <span class="dv">3</span>))         <span class="co"># 1 = light, 3 = heaviest</span></span>
-<span id="cb3-454"><a href="#cb3-454" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-455"><a href="#cb3-455" aria-hidden="true" tabindex="-1"></a><span class="co"># Treatment effect: -30% for light, -15% for average, ~0 for heaviest players.</span></span>
-<span id="cb3-456"><a href="#cb3-456" aria-hidden="true" tabindex="-1"></a>te <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="ot">=</span> <span class="sc">-</span><span class="fl">0.30</span>, <span class="st">`</span><span class="at">2</span><span class="st">`</span> <span class="ot">=</span> <span class="sc">-</span><span class="fl">0.15</span>, <span class="st">`</span><span class="at">3</span><span class="st">`</span> <span class="ot">=</span> <span class="fl">0.02</span>)</span>
-<span id="cb3-457"><a href="#cb3-457" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-458"><a href="#cb3-458" aria-hidden="true" tabindex="-1"></a>panel <span class="ot">&lt;-</span> players <span class="sc">|&gt;</span></span>
-<span id="cb3-459"><a href="#cb3-459" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">expand_grid</span>(<span class="at">post =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb3-460"><a href="#cb3-460" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb3-461"><a href="#cb3-461" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect =</span> treated <span class="sc">*</span> post <span class="sc">*</span> te[<span class="fu">as.character</span>(intensity)],</span>
-<span id="cb3-462"><a href="#cb3-462" aria-hidden="true" tabindex="-1"></a>    <span class="at">usage  =</span> baseline <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> effect) <span class="sc">+</span></span>
-<span id="cb3-463"><a href="#cb3-463" aria-hidden="true" tabindex="-1"></a>             <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="dv">1</span>) <span class="sc">+</span>                   <span class="co"># noise</span></span>
-<span id="cb3-464"><a href="#cb3-464" aria-hidden="true" tabindex="-1"></a>             post <span class="sc">*</span> <span class="fl">0.5</span>,                          <span class="co"># common time trend (seasonality)</span></span>
-<span id="cb3-465"><a href="#cb3-465" aria-hidden="true" tabindex="-1"></a>    <span class="at">D      =</span> treated <span class="sc">*</span> post</span>
-<span id="cb3-466"><a href="#cb3-466" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb3-467"><a href="#cb3-467" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-468"><a href="#cb3-468" aria-hidden="true" tabindex="-1"></a><span class="co"># Two-way fixed-effects DiD via the interaction term.</span></span>
-<span id="cb3-469"><a href="#cb3-469" aria-hidden="true" tabindex="-1"></a>did_overall <span class="ot">&lt;-</span> <span class="fu">lm</span>(usage <span class="sc">~</span> treated <span class="sc">+</span> post <span class="sc">+</span> D, <span class="at">data =</span> panel)</span>
-<span id="cb3-470"><a href="#cb3-470" aria-hidden="true" tabindex="-1"></a>overall_tau <span class="ot">&lt;-</span> <span class="fu">coef</span>(did_overall)[<span class="st">"D"</span>]</span>
-<span id="cb3-471"><a href="#cb3-471" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-472"><a href="#cb3-472" aria-hidden="true" tabindex="-1"></a><span class="co"># Heterogeneity: estimate tau within each baseline-intensity tercile.</span></span>
-<span id="cb3-473"><a href="#cb3-473" aria-hidden="true" tabindex="-1"></a>by_tercile <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
-<span id="cb3-474"><a href="#cb3-474" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(intensity) <span class="sc">|&gt;</span></span>
-<span id="cb3-475"><a href="#cb3-475" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_modify</span>(<span class="sc">~</span> broom<span class="sc">::</span><span class="fu">tidy</span>(<span class="fu">lm</span>(usage <span class="sc">~</span> treated <span class="sc">+</span> post <span class="sc">+</span> D, <span class="at">data =</span> .x))) <span class="sc">|&gt;</span></span>
-<span id="cb3-476"><a href="#cb3-476" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"D"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb3-477"><a href="#cb3-477" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(intensity, <span class="at">tau =</span> estimate, <span class="at">se =</span> std.error)</span>
-<span id="cb3-478"><a href="#cb3-478" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-479"><a href="#cb3-479" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb3-480"><a href="#cb3-480" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb3-481"><a href="#cb3-481" aria-hidden="true" tabindex="-1"></a>    by_tercile,</span>
-<span id="cb3-482"><a href="#cb3-482" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">intensity =</span> <span class="cn">NA</span>, <span class="at">tau =</span> overall_tau,</span>
-<span id="cb3-483"><a href="#cb3-483" aria-hidden="true" tabindex="-1"></a>           <span class="at">se =</span> <span class="fu">summary</span>(did_overall)<span class="sc">$</span>coefficients[<span class="st">"D"</span>, <span class="st">"Std. Error"</span>])</span>
-<span id="cb3-484"><a href="#cb3-484" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb3-485"><a href="#cb3-485" aria-hidden="true" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">3</span>,</span>
-<span id="cb3-486"><a href="#cb3-486" aria-hidden="true" tabindex="-1"></a>  <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Intensity tercile"</span>, <span class="st">"DiD estimate (hours/week)"</span>, <span class="st">"Std. error"</span>),</span>
-<span id="cb3-487"><a href="#cb3-487" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="cn">NULL</span></span>
-<span id="cb3-488"><a href="#cb3-488" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-489"><a href="#cb3-489" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-490"><a href="#cb3-490" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-491"><a href="#cb3-491" aria-hidden="true" tabindex="-1"></a>The estimated $\hat\tau$ is sharply negative for the lightest tercile, attenuated</span>
-<span id="cb3-492"><a href="#cb3-492" aria-hidden="true" tabindex="-1"></a>for the middle, and indistinguishable from zero for the heaviest—the pattern that</span>
-<span id="cb3-493"><a href="#cb3-493" aria-hidden="true" tabindex="-1"></a>makes a blunt curfew a poorly targeted instrument. A regulator reading only the</span>
-<span id="cb3-494"><a href="#cb3-494" aria-hidden="true" tabindex="-1"></a>pooled coefficient would conclude the law "works"; the heterogeneity reveals that it</span>
-<span id="cb3-495"><a href="#cb3-495" aria-hidden="true" tabindex="-1"></a>works on exactly the players who were not the problem.</span>
-<span id="cb3-496"><a href="#cb3-496" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-497"><a href="#cb3-497" aria-hidden="true" tabindex="-1"></a><span class="fu">### Loot Boxes, Disclosure, and the Limits of Restriction</span></span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>under fixed versus variable rewards with identical means; @fig-reward-schedule plots</span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>the resulting drop-out paths.</span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a><span class="in">```{r reward-schedule-sim}</span></span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-reward-schedule</span></span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Simulated player drop-out under fixed versus variable reward schedules</span></span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a><span class="co">#|   with identical mean reward. Variable rewards sustain motivation above the quit</span></span>
+<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a><span class="co">#|   threshold for longer by repeatedly spiking the motivation state."</span></span>
+<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20</span>)</span>
+<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a>simulate_play <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">n =</span> <span class="dv">200</span>, <span class="at">mu =</span> <span class="dv">1</span>, <span class="at">sigma =</span> <span class="dv">0</span>, <span class="at">alpha =</span> <span class="fl">0.8</span>,</span>
+<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>                          <span class="at">quit =</span> <span class="fl">0.6</span>, <span class="at">m0 =</span> <span class="dv">1</span>) {</span>
+<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> m0</span>
+<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> <span class="cf">if</span> (sigma <span class="sc">==</span> <span class="dv">0</span>) mu <span class="cf">else</span> <span class="fu">rgamma</span>(<span class="dv">1</span>, <span class="at">shape =</span> mu<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> sigma<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">scale =</span> sigma<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> mu)</span>
+<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>    m <span class="ot">&lt;-</span> alpha <span class="sc">*</span> m <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> alpha) <span class="sc">*</span> r</span>
+<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (m <span class="sc">&lt;</span> quit) <span class="fu">return</span>(t)          <span class="co"># player quits this session</span></span>
+<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a>  n</span>
+<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a>reps <span class="ot">&lt;-</span> <span class="dv">2000</span></span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a>fixed_len    <span class="ot">&lt;-</span> <span class="fu">replicate</span>(reps, <span class="fu">simulate_play</span>(<span class="at">sigma =</span> <span class="dv">0</span>))</span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a>variable_len <span class="ot">&lt;-</span> <span class="fu">replicate</span>(reps, <span class="fu">simulate_play</span>(<span class="at">sigma =</span> <span class="fl">1.5</span>))</span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Median session length (fixed reward):   "</span>, <span class="fu">median</span>(fixed_len), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Median session length (variable reward):"</span>, <span class="fu">median</span>(variable_len), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(variable_len, <span class="at">breaks =</span> <span class="dv">30</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.4</span>),</span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Session length (actions before quit)"</span>, <span class="at">main =</span> <span class="st">""</span>,</span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">range</span>(<span class="fu">c</span>(fixed_len, variable_len)))</span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(fixed_len, <span class="at">breaks =</span> <span class="dv">30</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.4</span>), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"Variable reward"</span>, <span class="st">"Fixed reward"</span>),</span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="fu">c</span>(<span class="fu">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.4</span>), <span class="fu">rgb</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.4</span>)), <span class="at">bty =</span> <span class="st">"n"</span>)</span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Engagement-to-Revenue Loop</span></span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a>Engagement mechanics, monetization, and acquisition form a closed loop, shown in</span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a>@fig-engagement-loop. Acquisition delivers players into a *core loop* of action</span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>and reward governed by @eq-motivation; sustained engagement produces the behavioral</span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a>investment that both converts to in-game purchases (@eq-f2p-revenue) and, through</span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a>social and streaming visibility, feeds acquisition of new players. Live streaming</span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>is an empirically important arm of this loop: @huang2025promotional, using</span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>high-frequency Twitch data and within-day variation in top streamers' broadcast</span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a>hours for identification, estimate a positive but modest and short-lived elasticity</span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>of concurrent players to live-stream viewership (about $0.027$), with the strongest</span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>effects for lesser-known titles where streams resolve quality uncertainty.</span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>Influencer content cuts both ways, however: @li2024opposing, studying YouTube</span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>influencers in the video-game industry, document *opposing* purchase and usage</span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>effects—exposure can raise purchase intent while substituting for the consumer's</span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a>own play time—so the net effect on the engagement loop is not signed a priori.</span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a>%%| label: fig-engagement-loop</span>
+<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The engagement-to-revenue loop in a free-to-play game. The core</span></span>
+<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a><span class="st">%%|   action-reward loop sustains engagement, which both monetizes through in-game</span></span>
+<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a><span class="st">%%|   purchases and feeds acquisition through social and streaming visibility.</span><span class="ot">"</span></span>
+<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a>    A[Acquisition&lt;br/&gt;free admission] --&gt; B[Core loop&lt;br/&gt;action <span class="ot">and</span> reward]</span>
+<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a>    B --&gt; C{Motivation&lt;br/&gt;<span class="kw">state</span> m_t}</span>
+<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a>    C --&gt;|above threshold| B</span>
+<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a>    C --&gt;|sustained| D[Engagement&lt;br/&gt;behavioral investment]</span>
+<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[In-game purchases&lt;br/&gt;monetization]</span>
+<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a>    D --&gt; F[Social <span class="ot">and</span>&lt;br/&gt;streaming visibility]</span>
+<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a>    F --&gt; A</span>
+<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a>    E --&gt; G[Revenue]</span>
+<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a>    C --&gt;|below threshold| H[Churn]</span>
+<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a><span class="fu">## Gamification in Marketing</span></span>
+<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a>**Gamification** is the application of game-design elements—points, levels,</span>
+<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a>badges, leaderboards, challenges, streaks, and randomized rewards—to contexts</span>
+<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a>whose primary purpose is not play. In marketing the canonical applications are</span>
+<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a>loyalty programs (status tiers, points, progress bars), mobile engagement apps</span>
+<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a>(streaks, daily goals), referral programs (unlockable rewards), and internal</span>
+<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a>sales-force or service incentives (leaderboards, badges). The premise is that the</span>
+<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a>engagement machinery of @eq-motivation can be ported to serve a marketing</span>
+<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a>objective—repeat purchase, app usage, word of mouth—without the underlying activity</span>
+<span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a>being a game.</span>
+<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a>The mechanism that gamification exploits is the conversion of an instrumental task</span>
+<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>into one with intrinsic and social reward structure. Three behavioral levers</span>
+<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a>recur. First, **goal gradient and endowed progress**: progress toward a salient</span>
+<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a>goal accelerates effort as the goal nears, and artificially endowing early</span>
+<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>progress (e.g., a loyalty card pre-stamped twice) increases completion.<span class="co">&lt;!-- CITE-NEEDED: goal-gradient / endowed-progress effect in loyalty programs --&gt;</span></span>
+<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a>Second, **operational transparency and effort visibility**: making the effort or</span>
+<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a>progress visible increases valuation and persistence. Third, **social comparison**:</span>
+<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a>leaderboards and visible status convert a private task into a positional one. The</span>
+<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>emotional facet matters here—the satisfaction of completing a streak or holding a</span>
+<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a>status tier is an affective reward, and the literature on how time and activity are</span>
+<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a>experienced as fun or productive bears directly on gamified design [@etkin2015;</span>
+<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a>@tonietto2020].</span>
+<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a>Gamification, however, inherits the ethical hazard of its source. The same</span>
+<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a>mechanics that increase desirable engagement can manufacture compulsion, and</span>
+<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a>several documented effects warn against naive deployment. Public, social</span>
+<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a>gamification can backfire through *slacktivist* dynamics, in which a token public</span>
+<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a>act of engagement *reduces* subsequent substantive effort—an effect of</span>
+<span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a>"private versus public" token support that managers of badge- and share-based</span>
+<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a>programs should anticipate <span class="co">[</span><span class="ot">@kristofferson2013</span><span class="co">]</span>. And because gamified metrics are</span>
+<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a>visible and incentivized, they invite gaming-of-the-metric: participants optimize</span>
+<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a>the tracked behavior rather than the underlying objective, a generic failure of</span>
+<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a>incentive design.<span class="co">&lt;!-- CITE-NEEDED: gaming-the-metric / Goodhart's law in incentive design --&gt;</span></span>
+<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a>The design question is therefore whether a gamified mechanic *aligns* the tracked</span>
+<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a>behavior with genuine value (a well-designed loyalty tier rewarding real repeat</span>
+<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a>custom) or merely *manufactures* a behavior that looks like value (a streak that</span>
+<span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a>compels logins of no benefit to the consumer). @tbl-gamification contrasts</span>
+<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a>value-creating with value-extracting gamification along this axis.</span>
+<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Dimension <span class="pp">|</span> Value-creating gamification <span class="pp">|</span> Value-extracting gamification <span class="pp">|</span></span>
+<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Objective alignment <span class="pp">|</span> Tracked behavior $\approx$ genuine value <span class="pp">|</span> Tracked behavior decoupled from value <span class="pp">|</span></span>
+<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Consumer welfare <span class="pp">|</span> Consumer surplus rises <span class="pp">|</span> Surplus transferred to firm or destroyed <span class="pp">|</span></span>
+<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Reward structure <span class="pp">|</span> Predictable, earned <span class="pp">|</span> Variable-ratio, engineered for compulsion <span class="pp">|</span></span>
+<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Transparency <span class="pp">|</span> Odds and rules disclosed <span class="pp">|</span> Odds opaque (e.g., undisclosed drop rates) <span class="pp">|</span></span>
+<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Exit <span class="pp">|</span> Low switching/quit cost <span class="pp">|</span> High sunk-cost lock-in <span class="pp">|</span></span>
+<span id="cb3-306"><a href="#cb3-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-307"><a href="#cb3-307" aria-hidden="true" tabindex="-1"></a>: Value-creating versus value-extracting gamification. The same mechanics serve</span>
+<span id="cb3-308"><a href="#cb3-308" aria-hidden="true" tabindex="-1"></a>either end; the distinction is whether the tracked behavior is aligned with</span>
+<span id="cb3-309"><a href="#cb3-309" aria-hidden="true" tabindex="-1"></a>consumer value and whether the design preserves the consumer's capacity to exit.</span>
+<span id="cb3-310"><a href="#cb3-310" aria-hidden="true" tabindex="-1"></a>{#tbl-gamification}</span>
+<span id="cb3-311"><a href="#cb3-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-312"><a href="#cb3-312" aria-hidden="true" tabindex="-1"></a><span class="fu">## Regulation of Gaming and Welfare {#sec-regulation}</span></span>
+<span id="cb3-313"><a href="#cb3-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-314"><a href="#cb3-314" aria-hidden="true" tabindex="-1"></a><span class="fu">### Why Regulate</span></span>
+<span id="cb3-315"><a href="#cb3-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-316"><a href="#cb3-316" aria-hidden="true" tabindex="-1"></a>The welfare case for regulating games rests on the gap between the engagement</span>
+<span id="cb3-317"><a href="#cb3-317" aria-hidden="true" tabindex="-1"></a>mechanics of @eq-motivation and consumer sovereignty. When a variable-reward</span>
+<span id="cb3-318"><a href="#cb3-318" aria-hidden="true" tabindex="-1"></a>schedule sustains play and spending past the point a fully-informed, self-controlled</span>
+<span id="cb3-319"><a href="#cb3-319" aria-hidden="true" tabindex="-1"></a>consumer would choose, the consumer's revealed behavior no longer reveals</span>
+<span id="cb3-320"><a href="#cb3-320" aria-hidden="true" tabindex="-1"></a>preference; the standard welfare theorems fail. Three regulatory concerns follow,</span>
+<span id="cb3-321"><a href="#cb3-321" aria-hidden="true" tabindex="-1"></a>in rough order of consensus. The first is **minors and spending**: in-game</span>
+<span id="cb3-322"><a href="#cb3-322" aria-hidden="true" tabindex="-1"></a>purchases by children, who lack both the means and the judgment to consent to</span>
+<span id="cb3-323"><a href="#cb3-323" aria-hidden="true" tabindex="-1"></a>financial commitments, made through frictionless payment. The second is **gambling</span>
+<span id="cb3-324"><a href="#cb3-324" aria-hidden="true" tabindex="-1"></a>mechanics**: loot boxes (@eq-lootbox) replicate the structure of gambling, and</span>
+<span id="cb3-325"><a href="#cb3-325" aria-hidden="true" tabindex="-1"></a>several jurisdictions have moved to classify them as such, with consequences for</span>
+<span id="cb3-326"><a href="#cb3-326" aria-hidden="true" tabindex="-1"></a>age-gating and disclosure. The third is **time use and overconsumption**: excessive</span>
+<span id="cb3-327"><a href="#cb3-327" aria-hidden="true" tabindex="-1"></a>play time, particularly among adolescents, framed as a public-health concern. These</span>
+<span id="cb3-328"><a href="#cb3-328" aria-hidden="true" tabindex="-1"></a>motivate three corresponding instruments—spending caps and parental controls,</span>
+<span id="cb3-329"><a href="#cb3-329" aria-hidden="true" tabindex="-1"></a>loot-box disclosure or prohibition, and **usage-restriction laws** that cap or</span>
+<span id="cb3-330"><a href="#cb3-330" aria-hidden="true" tabindex="-1"></a>curfew play time. The remainder of this section develops the evaluation of the</span>
+<span id="cb3-331"><a href="#cb3-331" aria-hidden="true" tabindex="-1"></a>third, which has produced the cleanest natural experiment.</span>
+<span id="cb3-332"><a href="#cb3-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-333"><a href="#cb3-333" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Natural Experiment: Usage-Restriction Laws</span></span>
+<span id="cb3-334"><a href="#cb3-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-335"><a href="#cb3-335" aria-hidden="true" tabindex="-1"></a>The sharpest evidence on usage restriction comes from South Korea's *Shutdown Law*</span>
+<span id="cb3-336"><a href="#cb3-336" aria-hidden="true" tabindex="-1"></a>(the "Cinderella law"), which barred players under 16 from accessing online games</span>
+<span id="cb3-337"><a href="#cb3-337" aria-hidden="true" tabindex="-1"></a>between midnight and 6 a.m. @jo2020protecting evaluate this policy on</span>
+<span id="cb3-338"><a href="#cb3-338" aria-hidden="true" tabindex="-1"></a>individual-level usage and spending data and reach a set of conclusions that should</span>
+<span id="cb3-339"><a href="#cb3-339" aria-hidden="true" tabindex="-1"></a>temper enthusiasm for blunt restriction. Regulation reduced overall game usage, but</span>
+<span id="cb3-340"><a href="#cb3-340" aria-hidden="true" tabindex="-1"></a>the effect was sharply heterogeneous in *past behavior*: it bound on average</span>
+<span id="cb3-341"><a href="#cb3-341" aria-hidden="true" tabindex="-1"></a>players, had a smaller effect on heavy players, and ran in the *opposite* direction</span>
+<span id="cb3-342"><a href="#cb3-342" aria-hidden="true" tabindex="-1"></a>for the very heaviest—the consumers the law was most meant to protect. And the</span>
+<span id="cb3-343"><a href="#cb3-343" aria-hidden="true" tabindex="-1"></a>revenue impact was negligible: restricted players reallocated rather than reduced</span>
+<span id="cb3-344"><a href="#cb3-344" aria-hidden="true" tabindex="-1"></a>spending. The policy lesson is that a curfew deters light, marginal players while</span>
+<span id="cb3-345"><a href="#cb3-345" aria-hidden="true" tabindex="-1"></a>the heaviest—plausibly the at-risk population—are unmoved or even intensify, so a</span>
+<span id="cb3-346"><a href="#cb3-346" aria-hidden="true" tabindex="-1"></a>blunt usage cap is poorly targeted at the welfare problem it names.</span>
+<span id="cb3-347"><a href="#cb3-347" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-348"><a href="#cb3-348" aria-hidden="true" tabindex="-1"></a><span class="fu">### Identifying the Effect of a Usage Restriction</span></span>
+<span id="cb3-349"><a href="#cb3-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-350"><a href="#cb3-350" aria-hidden="true" tabindex="-1"></a>The Korean setting is valuable precisely because it permits credible identification,</span>
+<span id="cb3-351"><a href="#cb3-351" aria-hidden="true" tabindex="-1"></a>and @jo2020protecting combine three complementary designs. We state each as an</span>
+<span id="cb3-352"><a href="#cb3-352" aria-hidden="true" tabindex="-1"></a>estimator with its identifying assumption and what breaks it, because the</span>
+<span id="cb3-353"><a href="#cb3-353" aria-hidden="true" tabindex="-1"></a>combination—not any single design—is what makes the conclusion robust. The cross-cutting</span>
+<span id="cb3-354"><a href="#cb3-354" aria-hidden="true" tabindex="-1"></a>machinery here connects to the broader treatment of causal inference in</span>
+<span id="cb3-355"><a href="#cb3-355" aria-hidden="true" tabindex="-1"></a>@sec-causal-inference.</span>
+<span id="cb3-356"><a href="#cb3-356" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-357"><a href="#cb3-357" aria-hidden="true" tabindex="-1"></a>**Difference-in-differences (DiD).** With an age-based cutoff defining treated</span>
+<span id="cb3-358"><a href="#cb3-358" aria-hidden="true" tabindex="-1"></a>(under-16) and control (just over the cutoff) players observed before and after the</span>
+<span id="cb3-359"><a href="#cb3-359" aria-hidden="true" tabindex="-1"></a>law, the canonical two-way fixed-effects estimator for outcome $y_{it}$ (usage or</span>
+<span id="cb3-360"><a href="#cb3-360" aria-hidden="true" tabindex="-1"></a>spending) is</span>
+<span id="cb3-361"><a href="#cb3-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-362"><a href="#cb3-362" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-363"><a href="#cb3-363" aria-hidden="true" tabindex="-1"></a>y_{it} = \alpha_i + \gamma_t + \tau\, D_{it} + \varepsilon_{it},</span>
+<span id="cb3-364"><a href="#cb3-364" aria-hidden="true" tabindex="-1"></a>$$ {#eq-20-did}</span>
+<span id="cb3-365"><a href="#cb3-365" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-366"><a href="#cb3-366" aria-hidden="true" tabindex="-1"></a>where $\alpha_i$ and $\gamma_t$ are individual and time fixed effects, $D_{it}=1$</span>
+<span id="cb3-367"><a href="#cb3-367" aria-hidden="true" tabindex="-1"></a>for treated players in the post-period, and $\tau$ is the average treatment effect.</span>
+<span id="cb3-368"><a href="#cb3-368" aria-hidden="true" tabindex="-1"></a>Identification requires the **parallel-trends** assumption: absent the law, treated</span>
+<span id="cb3-369"><a href="#cb3-369" aria-hidden="true" tabindex="-1"></a>and control outcomes would have moved in parallel,</span>
+<span id="cb3-370"><a href="#cb3-370" aria-hidden="true" tabindex="-1"></a>$\mathbb{E}<span class="co">[</span><span class="ot">y_{it}(0) - y_{i,t-1}(0)\mid D</span><span class="co">]</span>$ is independent of treatment status.</span>
+<span id="cb3-371"><a href="#cb3-371" aria-hidden="true" tabindex="-1"></a>This breaks if under-16 and over-16 players were already on diverging usage</span>
+<span id="cb3-372"><a href="#cb3-372" aria-hidden="true" tabindex="-1"></a>trajectories (developmental differences in gaming intensity by age make this a live</span>
+<span id="cb3-373"><a href="#cb3-373" aria-hidden="true" tabindex="-1"></a>threat), or if the law triggered compositional change—e.g., minors migrating to</span>
+<span id="cb3-374"><a href="#cb3-374" aria-hidden="true" tabindex="-1"></a>unregulated platforms or borrowing adult credentials, which contaminates both the</span>
+<span id="cb3-375"><a href="#cb3-375" aria-hidden="true" tabindex="-1"></a>treated outcome and the control group.</span>
+<span id="cb3-376"><a href="#cb3-376" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-377"><a href="#cb3-377" aria-hidden="true" tabindex="-1"></a>**Regression discontinuity (RD).** The age threshold furnishes a sharp</span>
+<span id="cb3-378"><a href="#cb3-378" aria-hidden="true" tabindex="-1"></a>discontinuity: a player just under 16 is restricted, one just over is not. Comparing</span>
+<span id="cb3-379"><a href="#cb3-379" aria-hidden="true" tabindex="-1"></a>outcomes in a narrow bandwidth $h$ around the cutoff $a_0 = 16$,</span>
+<span id="cb3-380"><a href="#cb3-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-381"><a href="#cb3-381" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-382"><a href="#cb3-382" aria-hidden="true" tabindex="-1"></a>\tau_{\text{RD}} = \lim_{a \downarrow a_0} \mathbb{E}<span class="co">[</span><span class="ot">y \mid a</span><span class="co">]</span> -</span>
+<span id="cb3-383"><a href="#cb3-383" aria-hidden="true" tabindex="-1"></a>                   \lim_{a \uparrow a_0} \mathbb{E}<span class="co">[</span><span class="ot">y \mid a</span><span class="co">]</span>,</span>
+<span id="cb3-384"><a href="#cb3-384" aria-hidden="true" tabindex="-1"></a>$$ {#eq-20-rd}</span>
+<span id="cb3-385"><a href="#cb3-385" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-386"><a href="#cb3-386" aria-hidden="true" tabindex="-1"></a>identifies the *local* effect at the cutoff under the assumption that all other</span>
+<span id="cb3-387"><a href="#cb3-387" aria-hidden="true" tabindex="-1"></a>determinants of $y$ are continuous in age at $a_0$—players cannot precisely</span>
+<span id="cb3-388"><a href="#cb3-388" aria-hidden="true" tabindex="-1"></a>manipulate their recorded age, and nothing else changes discontinuously at exactly</span>
+<span id="cb3-389"><a href="#cb3-389" aria-hidden="true" tabindex="-1"></a><span class="ss">16. </span>Manipulation (misreported birthdates to evade the curfew) is the canonical</span>
+<span id="cb3-390"><a href="#cb3-390" aria-hidden="true" tabindex="-1"></a>threat and would show as a density discontinuity in the running variable; the</span>
+<span id="cb3-391"><a href="#cb3-391" aria-hidden="true" tabindex="-1"></a>estimate is also only local to age 16 and need not generalize to younger children.</span>
+<span id="cb3-392"><a href="#cb3-392" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-393"><a href="#cb3-393" aria-hidden="true" tabindex="-1"></a>**Propensity-score matching (PSM).** To compare restricted and unrestricted players</span>
+<span id="cb3-394"><a href="#cb3-394" aria-hidden="true" tabindex="-1"></a>who are otherwise observationally similar, each treated player $i$ is matched to</span>
+<span id="cb3-395"><a href="#cb3-395" aria-hidden="true" tabindex="-1"></a>controls with a similar propensity score $e(\mathbf{x}_i) = \Pr(D_i = 1 \mid</span>
+<span id="cb3-396"><a href="#cb3-396" aria-hidden="true" tabindex="-1"></a>\mathbf{x}_i)$ estimated from pre-treatment covariates $\mathbf{x}_i$ (past usage,</span>
+<span id="cb3-397"><a href="#cb3-397" aria-hidden="true" tabindex="-1"></a>spending, tenure). The matched estimator is</span>
+<span id="cb3-398"><a href="#cb3-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-399"><a href="#cb3-399" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb3-400"><a href="#cb3-400" aria-hidden="true" tabindex="-1"></a>\hat\tau_{\text{PSM}} = \frac{1}{N_1}\sum_{i:\,D_i=1}</span>
+<span id="cb3-401"><a href="#cb3-401" aria-hidden="true" tabindex="-1"></a>   \Big( y_i - \textstyle\sum_{j} w_{ij}\, y_j \Big),</span>
+<span id="cb3-402"><a href="#cb3-402" aria-hidden="true" tabindex="-1"></a>$$ {#eq-psm}</span>
+<span id="cb3-403"><a href="#cb3-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-404"><a href="#cb3-404" aria-hidden="true" tabindex="-1"></a>where $w_{ij}$ weights controls $j$ by closeness in $e(\cdot)$. PSM identifies the</span>
+<span id="cb3-405"><a href="#cb3-405" aria-hidden="true" tabindex="-1"></a>effect on the treated under **selection on observables** (conditional</span>
+<span id="cb3-406"><a href="#cb3-406" aria-hidden="true" tabindex="-1"></a>unconfoundedness): treatment is as-good-as-random given $\mathbf{x}$, and there is</span>
+<span id="cb3-407"><a href="#cb3-407" aria-hidden="true" tabindex="-1"></a>common support. It breaks under selection on *unobservables*—if an unmeasured trait</span>
+<span id="cb3-408"><a href="#cb3-408" aria-hidden="true" tabindex="-1"></a>(say, a player's underlying self-control or propensity to seek out gaming) drives</span>
+<span id="cb3-409"><a href="#cb3-409" aria-hidden="true" tabindex="-1"></a>both treatment-relevant behavior and outcomes, matching on observed covariates</span>
+<span id="cb3-410"><a href="#cb3-410" aria-hidden="true" tabindex="-1"></a>leaves bias. PSM cannot, by construction, fix this; it is why @jo2020protecting</span>
+<span id="cb3-411"><a href="#cb3-411" aria-hidden="true" tabindex="-1"></a>triangulate with RD, whose identification does not lean on observables.</span>
+<span id="cb3-412"><a href="#cb3-412" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-413"><a href="#cb3-413" aria-hidden="true" tabindex="-1"></a>The discipline of the design is that the three estimators lean on *different*</span>
+<span id="cb3-414"><a href="#cb3-414" aria-hidden="true" tabindex="-1"></a>assumptions—parallel trends, continuity at the cutoff, selection on observables—so</span>
+<span id="cb3-415"><a href="#cb3-415" aria-hidden="true" tabindex="-1"></a>their agreement is more convincing than any one alone. Where they would disagree</span>
+<span id="cb3-416"><a href="#cb3-416" aria-hidden="true" tabindex="-1"></a>tells the analyst which assumption is binding. @tbl-identification summarizes the</span>
+<span id="cb3-417"><a href="#cb3-417" aria-hidden="true" tabindex="-1"></a>comparison.</span>
+<span id="cb3-418"><a href="#cb3-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-419"><a href="#cb3-419" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Design <span class="pp">|</span> Estimand <span class="pp">|</span> Key assumption <span class="pp">|</span> What breaks it <span class="pp">|</span></span>
+<span id="cb3-420"><a href="#cb3-420" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb3-421"><a href="#cb3-421" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> DiD (@eq-20-did) <span class="pp">|</span> ATT, average over time <span class="pp">|</span> Parallel trends <span class="pp">|</span> Diverging age trends; migration to unregulated play <span class="pp">|</span></span>
+<span id="cb3-422"><a href="#cb3-422" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> RD (@eq-20-rd) <span class="pp">|</span> Local effect at age 16 <span class="pp">|</span> Continuity at cutoff <span class="pp">|</span> Age manipulation; non-generalizable locally <span class="pp">|</span></span>
+<span id="cb3-423"><a href="#cb3-423" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> PSM (@eq-psm) <span class="pp">|</span> ATT on matched sample <span class="pp">|</span> Selection on observables <span class="pp">|</span> Selection on unobservables (e.g., self-control) <span class="pp">|</span></span>
+<span id="cb3-424"><a href="#cb3-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-425"><a href="#cb3-425" aria-hidden="true" tabindex="-1"></a>: Three identification strategies for a usage-restriction law and the assumption</span>
+<span id="cb3-426"><a href="#cb3-426" aria-hidden="true" tabindex="-1"></a>each rests on. Their combination is robust because the assumptions are</span>
+<span id="cb3-427"><a href="#cb3-427" aria-hidden="true" tabindex="-1"></a>non-overlapping. {#tbl-identification}</span>
+<span id="cb3-428"><a href="#cb3-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-429"><a href="#cb3-429" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Reproducible Difference-in-Differences</span></span>
+<span id="cb3-430"><a href="#cb3-430" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-431"><a href="#cb3-431" aria-hidden="true" tabindex="-1"></a>The following simulation reproduces the *structure* of the usage-restriction</span>
+<span id="cb3-432"><a href="#cb3-432" aria-hidden="true" tabindex="-1"></a>evaluation—not the Korean data—to make the DiD estimator and its heterogeneity</span>
+<span id="cb3-433"><a href="#cb3-433" aria-hidden="true" tabindex="-1"></a>concrete. We generate treated (minor) and control players with a treatment effect</span>
+<span id="cb3-434"><a href="#cb3-434" aria-hidden="true" tabindex="-1"></a>that varies by baseline intensity, mirroring the central finding of</span>
+<span id="cb3-435"><a href="#cb3-435" aria-hidden="true" tabindex="-1"></a>@jo2020protecting that restriction binds on average players but not the heaviest.</span>
+<span id="cb3-436"><a href="#cb3-436" aria-hidden="true" tabindex="-1"></a>@tbl-did-results reports the estimates overall and by baseline-intensity tercile.</span>
+<span id="cb3-437"><a href="#cb3-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-438"><a href="#cb3-438" aria-hidden="true" tabindex="-1"></a><span class="in">```{r did-simulation}</span></span>
+<span id="cb3-439"><a href="#cb3-439" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tbl-did-results</span></span>
+<span id="cb3-440"><a href="#cb3-440" aria-hidden="true" tabindex="-1"></a><span class="co">#| tbl-cap: "Difference-in-differences estimates of a simulated usage-restriction</span></span>
+<span id="cb3-441"><a href="#cb3-441" aria-hidden="true" tabindex="-1"></a><span class="co">#|   law, overall and by baseline-intensity tercile. The overall effect masks</span></span>
+<span id="cb3-442"><a href="#cb3-442" aria-hidden="true" tabindex="-1"></a><span class="co">#|   heterogeneity: the restriction reduces usage for light and average players but</span></span>
+<span id="cb3-443"><a href="#cb3-443" aria-hidden="true" tabindex="-1"></a><span class="co">#|   not for the heaviest, mirroring the qualitative finding of Jo et al. (2020)."</span></span>
+<span id="cb3-444"><a href="#cb3-444" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb3-445"><a href="#cb3-445" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb3-446"><a href="#cb3-446" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20</span>)</span>
+<span id="cb3-447"><a href="#cb3-447" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-448"><a href="#cb3-448" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-449"><a href="#cb3-449" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">4000</span></span>
+<span id="cb3-450"><a href="#cb3-450" aria-hidden="true" tabindex="-1"></a>players <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb3-451"><a href="#cb3-451" aria-hidden="true" tabindex="-1"></a>  <span class="at">id        =</span> <span class="dv">1</span><span class="sc">:</span>n,</span>
+<span id="cb3-452"><a href="#cb3-452" aria-hidden="true" tabindex="-1"></a>  <span class="at">treated   =</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.5</span>),                 <span class="co"># under-16 (restricted) vs. control</span></span>
+<span id="cb3-453"><a href="#cb3-453" aria-hidden="true" tabindex="-1"></a>  <span class="at">baseline  =</span> <span class="fu">rgamma</span>(n, <span class="at">shape =</span> <span class="dv">2</span>, <span class="at">scale =</span> <span class="dv">5</span>)    <span class="co"># pre-period usage (hours/week)</span></span>
+<span id="cb3-454"><a href="#cb3-454" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb3-455"><a href="#cb3-455" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">intensity =</span> <span class="fu">ntile</span>(baseline, <span class="dv">3</span>))         <span class="co"># 1 = light, 3 = heaviest</span></span>
+<span id="cb3-456"><a href="#cb3-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-457"><a href="#cb3-457" aria-hidden="true" tabindex="-1"></a><span class="co"># Treatment effect: -30% for light, -15% for average, ~0 for heaviest players.</span></span>
+<span id="cb3-458"><a href="#cb3-458" aria-hidden="true" tabindex="-1"></a>te <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="ot">=</span> <span class="sc">-</span><span class="fl">0.30</span>, <span class="st">`</span><span class="at">2</span><span class="st">`</span> <span class="ot">=</span> <span class="sc">-</span><span class="fl">0.15</span>, <span class="st">`</span><span class="at">3</span><span class="st">`</span> <span class="ot">=</span> <span class="fl">0.02</span>)</span>
+<span id="cb3-459"><a href="#cb3-459" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-460"><a href="#cb3-460" aria-hidden="true" tabindex="-1"></a>panel <span class="ot">&lt;-</span> players <span class="sc">|&gt;</span></span>
+<span id="cb3-461"><a href="#cb3-461" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">expand_grid</span>(<span class="at">post =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb3-462"><a href="#cb3-462" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-463"><a href="#cb3-463" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect =</span> treated <span class="sc">*</span> post <span class="sc">*</span> te[<span class="fu">as.character</span>(intensity)],</span>
+<span id="cb3-464"><a href="#cb3-464" aria-hidden="true" tabindex="-1"></a>    <span class="at">usage  =</span> baseline <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> effect) <span class="sc">+</span></span>
+<span id="cb3-465"><a href="#cb3-465" aria-hidden="true" tabindex="-1"></a>             <span class="fu">rnorm</span>(<span class="fu">n</span>(), <span class="dv">0</span>, <span class="dv">1</span>) <span class="sc">+</span>                   <span class="co"># noise</span></span>
+<span id="cb3-466"><a href="#cb3-466" aria-hidden="true" tabindex="-1"></a>             post <span class="sc">*</span> <span class="fl">0.5</span>,                          <span class="co"># common time trend (seasonality)</span></span>
+<span id="cb3-467"><a href="#cb3-467" aria-hidden="true" tabindex="-1"></a>    <span class="at">D      =</span> treated <span class="sc">*</span> post</span>
+<span id="cb3-468"><a href="#cb3-468" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-469"><a href="#cb3-469" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-470"><a href="#cb3-470" aria-hidden="true" tabindex="-1"></a><span class="co"># Two-way fixed-effects DiD via the interaction term.</span></span>
+<span id="cb3-471"><a href="#cb3-471" aria-hidden="true" tabindex="-1"></a>did_overall <span class="ot">&lt;-</span> <span class="fu">lm</span>(usage <span class="sc">~</span> treated <span class="sc">+</span> post <span class="sc">+</span> D, <span class="at">data =</span> panel)</span>
+<span id="cb3-472"><a href="#cb3-472" aria-hidden="true" tabindex="-1"></a>overall_tau <span class="ot">&lt;-</span> <span class="fu">coef</span>(did_overall)[<span class="st">"D"</span>]</span>
+<span id="cb3-473"><a href="#cb3-473" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-474"><a href="#cb3-474" aria-hidden="true" tabindex="-1"></a><span class="co"># Heterogeneity: estimate tau within each baseline-intensity tercile.</span></span>
+<span id="cb3-475"><a href="#cb3-475" aria-hidden="true" tabindex="-1"></a>by_tercile <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
+<span id="cb3-476"><a href="#cb3-476" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(intensity) <span class="sc">|&gt;</span></span>
+<span id="cb3-477"><a href="#cb3-477" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_modify</span>(<span class="sc">~</span> broom<span class="sc">::</span><span class="fu">tidy</span>(<span class="fu">lm</span>(usage <span class="sc">~</span> treated <span class="sc">+</span> post <span class="sc">+</span> D, <span class="at">data =</span> .x))) <span class="sc">|&gt;</span></span>
+<span id="cb3-478"><a href="#cb3-478" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"D"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-479"><a href="#cb3-479" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(intensity, <span class="at">tau =</span> estimate, <span class="at">se =</span> std.error)</span>
+<span id="cb3-480"><a href="#cb3-480" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-481"><a href="#cb3-481" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb3-482"><a href="#cb3-482" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb3-483"><a href="#cb3-483" aria-hidden="true" tabindex="-1"></a>    by_tercile,</span>
+<span id="cb3-484"><a href="#cb3-484" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">intensity =</span> <span class="cn">NA</span>, <span class="at">tau =</span> overall_tau,</span>
+<span id="cb3-485"><a href="#cb3-485" aria-hidden="true" tabindex="-1"></a>           <span class="at">se =</span> <span class="fu">summary</span>(did_overall)<span class="sc">$</span>coefficients[<span class="st">"D"</span>, <span class="st">"Std. Error"</span>])</span>
+<span id="cb3-486"><a href="#cb3-486" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb3-487"><a href="#cb3-487" aria-hidden="true" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">3</span>,</span>
+<span id="cb3-488"><a href="#cb3-488" aria-hidden="true" tabindex="-1"></a>  <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Intensity tercile"</span>, <span class="st">"DiD estimate (hours/week)"</span>, <span class="st">"Std. error"</span>),</span>
+<span id="cb3-489"><a href="#cb3-489" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="cn">NULL</span></span>
+<span id="cb3-490"><a href="#cb3-490" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-491"><a href="#cb3-491" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-492"><a href="#cb3-492" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-493"><a href="#cb3-493" aria-hidden="true" tabindex="-1"></a>The estimated $\hat\tau$ is sharply negative for the lightest tercile, attenuated</span>
+<span id="cb3-494"><a href="#cb3-494" aria-hidden="true" tabindex="-1"></a>for the middle, and indistinguishable from zero for the heaviest—the pattern that</span>
+<span id="cb3-495"><a href="#cb3-495" aria-hidden="true" tabindex="-1"></a>makes a blunt curfew a poorly targeted instrument. A regulator reading only the</span>
+<span id="cb3-496"><a href="#cb3-496" aria-hidden="true" tabindex="-1"></a>pooled coefficient would conclude the law "works"; the heterogeneity reveals that it</span>
+<span id="cb3-497"><a href="#cb3-497" aria-hidden="true" tabindex="-1"></a>works on exactly the players who were not the problem.</span>
 <span id="cb3-498"><a href="#cb3-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-499"><a href="#cb3-499" aria-hidden="true" tabindex="-1"></a>The loot-box debate sharpens the regulatory dilemma. Because @eq-lootbox makes a</span>
-<span id="cb3-500"><a href="#cb3-500" aria-hidden="true" tabindex="-1"></a>loot box a lottery, the live policy options are (i) **prohibition**, classifying</span>
-<span id="cb3-501"><a href="#cb3-501" aria-hidden="true" tabindex="-1"></a>loot boxes as gambling and banning their sale to minors (the route taken in some</span>
-<span id="cb3-502"><a href="#cb3-502" aria-hidden="true" tabindex="-1"></a>jurisdictions); (ii) **disclosure**, mandating publication of the drop</span>
-<span id="cb3-503"><a href="#cb3-503" aria-hidden="true" tabindex="-1"></a>probabilities $<span class="sc">\{</span>\pi_j<span class="sc">\}</span>$ so that @eq-lootbox is at least computable by the</span>
-<span id="cb3-504"><a href="#cb3-504" aria-hidden="true" tabindex="-1"></a>consumer; and (iii) **spending caps and friction**, limiting the rate at which a</span>
-<span id="cb3-505"><a href="#cb3-505" aria-hidden="true" tabindex="-1"></a>player can purchase. Disclosure is the lightest-touch instrument and the most</span>
-<span id="cb3-506"><a href="#cb3-506" aria-hidden="true" tabindex="-1"></a>defensible on consumer-sovereignty grounds—it restores the information the variance</span>
-<span id="cb3-507"><a href="#cb3-507" aria-hidden="true" tabindex="-1"></a>lever of @eq-motivation conceals—but it does not address the behavioral force,</span>
-<span id="cb3-508"><a href="#cb3-508" aria-hidden="true" tabindex="-1"></a>since the appeal of randomized rewards survives full knowledge of the odds.</span>
-<span id="cb3-509"><a href="#cb3-509" aria-hidden="true" tabindex="-1"></a>Prohibition addresses the mechanic directly but at the cost of the surplus</span>
-<span id="cb3-510"><a href="#cb3-510" aria-hidden="true" tabindex="-1"></a>legitimate players derive from cosmetic randomization, and invites substitution</span>
-<span id="cb3-511"><a href="#cb3-511" aria-hidden="true" tabindex="-1"></a>toward unregulated grey-market trading. The general lesson of @jo2020protecting—that</span>
-<span id="cb3-512"><a href="#cb3-512" aria-hidden="true" tabindex="-1"></a>restrictions bind on marginal, not at-risk, consumers and induce reallocation</span>
-<span id="cb3-513"><a href="#cb3-513" aria-hidden="true" tabindex="-1"></a>rather than reduction—travels to loot boxes and counsels against assuming any single</span>
-<span id="cb3-514"><a href="#cb3-514" aria-hidden="true" tabindex="-1"></a>instrument is sufficient.<span class="co">&lt;!-- CITE-NEEDED: empirical evaluation of loot-box disclosure mandates and gambling reclassification --&gt;</span></span>
-<span id="cb3-515"><a href="#cb3-515" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-516"><a href="#cb3-516" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb3-499"><a href="#cb3-499" aria-hidden="true" tabindex="-1"></a><span class="fu">### Loot Boxes, Disclosure, and the Limits of Restriction</span></span>
+<span id="cb3-500"><a href="#cb3-500" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-501"><a href="#cb3-501" aria-hidden="true" tabindex="-1"></a>The loot-box debate sharpens the regulatory dilemma. Because @eq-lootbox makes a</span>
+<span id="cb3-502"><a href="#cb3-502" aria-hidden="true" tabindex="-1"></a>loot box a lottery, the live policy options are (i) **prohibition**, classifying</span>
+<span id="cb3-503"><a href="#cb3-503" aria-hidden="true" tabindex="-1"></a>loot boxes as gambling and banning their sale to minors (the route taken in some</span>
+<span id="cb3-504"><a href="#cb3-504" aria-hidden="true" tabindex="-1"></a>jurisdictions); (ii) **disclosure**, mandating publication of the drop</span>
+<span id="cb3-505"><a href="#cb3-505" aria-hidden="true" tabindex="-1"></a>probabilities $<span class="sc">\{</span>\pi_j<span class="sc">\}</span>$ so that @eq-lootbox is at least computable by the</span>
+<span id="cb3-506"><a href="#cb3-506" aria-hidden="true" tabindex="-1"></a>consumer; and (iii) **spending caps and friction**, limiting the rate at which a</span>
+<span id="cb3-507"><a href="#cb3-507" aria-hidden="true" tabindex="-1"></a>player can purchase. Disclosure is the lightest-touch instrument and the most</span>
+<span id="cb3-508"><a href="#cb3-508" aria-hidden="true" tabindex="-1"></a>defensible on consumer-sovereignty grounds—it restores the information the variance</span>
+<span id="cb3-509"><a href="#cb3-509" aria-hidden="true" tabindex="-1"></a>lever of @eq-motivation conceals—but it does not address the behavioral force,</span>
+<span id="cb3-510"><a href="#cb3-510" aria-hidden="true" tabindex="-1"></a>since the appeal of randomized rewards survives full knowledge of the odds.</span>
+<span id="cb3-511"><a href="#cb3-511" aria-hidden="true" tabindex="-1"></a>Prohibition addresses the mechanic directly but at the cost of the surplus</span>
+<span id="cb3-512"><a href="#cb3-512" aria-hidden="true" tabindex="-1"></a>legitimate players derive from cosmetic randomization, and invites substitution</span>
+<span id="cb3-513"><a href="#cb3-513" aria-hidden="true" tabindex="-1"></a>toward unregulated grey-market trading. The general lesson of @jo2020protecting—that</span>
+<span id="cb3-514"><a href="#cb3-514" aria-hidden="true" tabindex="-1"></a>restrictions bind on marginal, not at-risk, consumers and induce reallocation</span>
+<span id="cb3-515"><a href="#cb3-515" aria-hidden="true" tabindex="-1"></a>rather than reduction—travels to loot boxes and counsels against assuming any single</span>
+<span id="cb3-516"><a href="#cb3-516" aria-hidden="true" tabindex="-1"></a>instrument is sufficient.<span class="co">&lt;!-- CITE-NEEDED: empirical evaluation of loot-box disclosure mandates and gambling reclassification --&gt;</span></span>
 <span id="cb3-517"><a href="#cb3-517" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-518"><a href="#cb3-518" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The dominant **free-to-play** model is a price-discrimination scheme</span>
-<span id="cb3-519"><a href="#cb3-519" aria-hidden="true" tabindex="-1"></a>  (@eq-f2p-revenue): free admission maximizes the base, and a menu of in-game</span>
-<span id="cb3-520"><a href="#cb3-520" aria-hidden="true" tabindex="-1"></a>  purchases extracts surplus from a right-skewed willingness-to-pay distribution</span>
-<span id="cb3-521"><a href="#cb3-521" aria-hidden="true" tabindex="-1"></a>  dominated by its upper tail. The managerial object is a *conversion policy*, not</span>
-<span id="cb3-522"><a href="#cb3-522" aria-hidden="true" tabindex="-1"></a>  a price <span class="co">[</span><span class="ot">@cao2023free</span><span class="co">]</span>.</span>
-<span id="cb3-523"><a href="#cb3-523" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Engagement** is the construct that mediates admission and monetization</span>
-<span id="cb3-524"><a href="#cb3-524" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@hollebeek2011; @harmeling2016; @lemon2016</span><span class="co">]</span>; its engineering core is the</span>
-<span id="cb3-525"><a href="#cb3-525" aria-hidden="true" tabindex="-1"></a>  **reward schedule**, and the decisive design lever is reward *variance*, not mean</span>
-<span id="cb3-526"><a href="#cb3-526" aria-hidden="true" tabindex="-1"></a>  (@eq-motivation)—variance is free engagement, which is why randomized rewards are</span>
-<span id="cb3-527"><a href="#cb3-527" aria-hidden="true" tabindex="-1"></a>  both the most effective and the most hazardous mechanic.</span>
-<span id="cb3-528"><a href="#cb3-528" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Loot boxes** are structurally lotteries (@eq-lootbox); their behavioral force</span>
-<span id="cb3-529"><a href="#cb3-529" aria-hidden="true" tabindex="-1"></a>  is the variable-ratio schedule, not the expected value, which is why disclosure of</span>
-<span id="cb3-530"><a href="#cb3-530" aria-hidden="true" tabindex="-1"></a>  odds is necessary but not sufficient.</span>
-<span id="cb3-531"><a href="#cb3-531" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Gamification** ports game mechanics into marketing and inherits both their power</span>
-<span id="cb3-532"><a href="#cb3-532" aria-hidden="true" tabindex="-1"></a>  and their ethical hazard; the test is whether the tracked behavior is *aligned*</span>
-<span id="cb3-533"><a href="#cb3-533" aria-hidden="true" tabindex="-1"></a>  with consumer value or merely *manufactured* (@tbl-gamification), and social</span>
-<span id="cb3-534"><a href="#cb3-534" aria-hidden="true" tabindex="-1"></a>  gamification can backfire <span class="co">[</span><span class="ot">@kristofferson2013</span><span class="co">]</span>.</span>
-<span id="cb3-535"><a href="#cb3-535" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Usage-restriction laws** are evaluable as a natural experiment, and the cleanest</span>
-<span id="cb3-536"><a href="#cb3-536" aria-hidden="true" tabindex="-1"></a>  evidence triangulates DiD, RD, and PSM on non-overlapping assumptions</span>
-<span id="cb3-537"><a href="#cb3-537" aria-hidden="true" tabindex="-1"></a>  (@tbl-identification). The central finding <span class="co">[</span><span class="ot">@jo2020protecting</span><span class="co">]</span> is that restriction</span>
-<span id="cb3-538"><a href="#cb3-538" aria-hidden="true" tabindex="-1"></a>  binds on light and average players but not the heaviest, with negligible revenue</span>
-<span id="cb3-539"><a href="#cb3-539" aria-hidden="true" tabindex="-1"></a>  effect—so blunt restriction is poorly targeted at the overconsumption it names</span>
-<span id="cb3-540"><a href="#cb3-540" aria-hidden="true" tabindex="-1"></a>  (@sec-causal-inference).</span>
+<span id="cb3-518"><a href="#cb3-518" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb3-519"><a href="#cb3-519" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-520"><a href="#cb3-520" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The dominant **free-to-play** model is a price-discrimination scheme</span>
+<span id="cb3-521"><a href="#cb3-521" aria-hidden="true" tabindex="-1"></a>  (@eq-f2p-revenue): free admission maximizes the base, and a menu of in-game</span>
+<span id="cb3-522"><a href="#cb3-522" aria-hidden="true" tabindex="-1"></a>  purchases extracts surplus from a right-skewed willingness-to-pay distribution</span>
+<span id="cb3-523"><a href="#cb3-523" aria-hidden="true" tabindex="-1"></a>  dominated by its upper tail. The managerial object is a *conversion policy*, not</span>
+<span id="cb3-524"><a href="#cb3-524" aria-hidden="true" tabindex="-1"></a>  a price <span class="co">[</span><span class="ot">@cao2023free</span><span class="co">]</span>.</span>
+<span id="cb3-525"><a href="#cb3-525" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Engagement** is the construct that mediates admission and monetization</span>
+<span id="cb3-526"><a href="#cb3-526" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@hollebeek2011; @harmeling2016; @lemon2016</span><span class="co">]</span>; its engineering core is the</span>
+<span id="cb3-527"><a href="#cb3-527" aria-hidden="true" tabindex="-1"></a>  **reward schedule**, and the decisive design lever is reward *variance*, not mean</span>
+<span id="cb3-528"><a href="#cb3-528" aria-hidden="true" tabindex="-1"></a>  (@eq-motivation)—variance is free engagement, which is why randomized rewards are</span>
+<span id="cb3-529"><a href="#cb3-529" aria-hidden="true" tabindex="-1"></a>  both the most effective and the most hazardous mechanic.</span>
+<span id="cb3-530"><a href="#cb3-530" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Loot boxes** are structurally lotteries (@eq-lootbox); their behavioral force</span>
+<span id="cb3-531"><a href="#cb3-531" aria-hidden="true" tabindex="-1"></a>  is the variable-ratio schedule, not the expected value, which is why disclosure of</span>
+<span id="cb3-532"><a href="#cb3-532" aria-hidden="true" tabindex="-1"></a>  odds is necessary but not sufficient.</span>
+<span id="cb3-533"><a href="#cb3-533" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Gamification** ports game mechanics into marketing and inherits both their power</span>
+<span id="cb3-534"><a href="#cb3-534" aria-hidden="true" tabindex="-1"></a>  and their ethical hazard; the test is whether the tracked behavior is *aligned*</span>
+<span id="cb3-535"><a href="#cb3-535" aria-hidden="true" tabindex="-1"></a>  with consumer value or merely *manufactured* (@tbl-gamification), and social</span>
+<span id="cb3-536"><a href="#cb3-536" aria-hidden="true" tabindex="-1"></a>  gamification can backfire <span class="co">[</span><span class="ot">@kristofferson2013</span><span class="co">]</span>.</span>
+<span id="cb3-537"><a href="#cb3-537" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Usage-restriction laws** are evaluable as a natural experiment, and the cleanest</span>
+<span id="cb3-538"><a href="#cb3-538" aria-hidden="true" tabindex="-1"></a>  evidence triangulates DiD, RD, and PSM on non-overlapping assumptions</span>
+<span id="cb3-539"><a href="#cb3-539" aria-hidden="true" tabindex="-1"></a>  (@tbl-identification). The central finding <span class="co">[</span><span class="ot">@jo2020protecting</span><span class="co">]</span> is that restriction</span>
+<span id="cb3-540"><a href="#cb3-540" aria-hidden="true" tabindex="-1"></a>  binds on light and average players but not the heaviest, with negligible revenue</span>
+<span id="cb3-541"><a href="#cb3-541" aria-hidden="true" tabindex="-1"></a>  effect—so blunt restriction is poorly targeted at the overconsumption it names</span>
+<span id="cb3-542"><a href="#cb3-542" aria-hidden="true" tabindex="-1"></a>  (@sec-causal-inference).</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
