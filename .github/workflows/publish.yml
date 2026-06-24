@@ -42,8 +42,12 @@ jobs:
             any::downlit
             any::xml2
 
-      - name: Render book (all formats)
-        run: quarto render
+      # HTML only: every R-code chapter ships a committed _freeze/ cache, so this
+      # render reuses it (no chapter R packages needed) and just rebuilds HTML +
+      # Mermaid. The published artifact Posit serves is the HTML _book/; PDF/EPUB
+      # re-execute uncached chapters on the fresh runner and are not the deploy path.
+      - name: Render book (HTML; uses committed _freeze)
+        run: quarto render --to html
 
       - name: Publish to Posit Connect
         env:
@@ -54,4 +58,4 @@ jobs:
             echo "::warning::CONNECT_SERVER / CONNECT_API_KEY not set — skipping Posit Connect deploy."
             exit 0
           fi
-          quarto publish connect "$CONNECT_SERVER" --no-prompt --no-browser
+          quarto publish connect "$CONNECT_SERVER" --no-prompt --no-browser --no-render
