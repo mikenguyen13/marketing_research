@@ -1,11 +1,14 @@
 name: Build book
 
-# Verifies the Quarto book renders to HTML, PDF, and EPUB.
-# Does NOT publish — deployment to Posit Connect is a separate, gated step.
+# Verifies the Quarto book renders to HTML on a clean runner, reusing the
+# committed _freeze/ caches (so no per-chapter R packages are needed), and
+# uploads the rendered _book/ as an artifact. Manual only: Posit serves the
+# committed _book/ from master, so this is a convenience build/verify step, not
+# the deploy path. PDF/EPUB are intentionally not built here -- they re-execute
+# uncached chapters that need the full local R/LaTeX toolchain; render those
+# locally if needed.
 on:
-  workflow_dispatch:   # manual only — Posit serves the committed _book/, so this fresh-runner
-                       # build (which lacks local R packages) is not the deploy path and just
-                       # emailed failures on every push. Render/publish happens locally instead.
+  workflow_dispatch:   # manual only
 
 jobs:
   build:
@@ -18,10 +21,8 @@ jobs:
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
-        with:
-          tinytex: true
 
-      - name: Install Chromium for Mermaid (PDF/EPUB diagrams)
+      - name: Install Chromium for Mermaid diagrams
         run: quarto install chromium --no-prompt || true
 
       - name: Set up R
@@ -29,28 +30,17 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install R packages (resilient — tolerates archived/unavailable)
-        run: |
-          Rscript -e '
-            pkgs <- c("knitr","rmarkdown","downlit","xml2","tidyverse","ggplot2",
-              "dplyr","tidyr","purrr","purrrlyr","tibble","stringr","lubridate",
-              "scales","kableExtra","broom","plm","MASS","zoo","reshape","reshape2",
-              "plyr","plotly","ggrepel","ggthemes","gridExtra","RColorBrewer",
-              "markovchain","topicmodels","conjoint","irr","DescTools","jsonlite",
-              "rio","plotrix","expm","philentropy","visNetwork","rfm","gbm",
-              "TraMineR","sfaR","frontier","GameTheory","ChannelAttribution","anchors");
-            options(repos = "https://cloud.r-project.org");
-            for (p in pkgs) try(if (!requireNamespace(p, quietly = TRUE)) install.packages(p))
-          '
+      - name: Set up R dependencies (lightweight; freeze supplies chapter outputs)
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::knitr
+            any::rmarkdown
+            any::downlit
+            any::xml2
 
-      - name: Render HTML
+      - name: Render HTML (uses committed _freeze)
         run: quarto render --to html
-
-      - name: Render PDF
-        run: quarto render --to pdf
-
-      - name: Render EPUB
-        run: quarto render --to epub
 
       - name: Upload rendered book
         if: always()
