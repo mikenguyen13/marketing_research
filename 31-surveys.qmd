@@ -19,8 +19,9 @@ intentions can *create* the intentions it claims to observe. Recognizing such
 feedback is the first step toward using either instrument credibly. By the end of the
 chapter the reader should be able to state the total-survey-error decomposition,
 build an unbiased estimator from a known sampling design, correct cross-respondent
-incomparability with anchoring vignettes, and lay out an experiment whose causal
-claim survives scrutiny.
+incomparability with anchoring vignettes, design an experiment whose causal claim
+survives scrutiny, calculate a defensible sample size, and apply the open-science
+toolkit that guards against false discovery.
 
 ## Surveys as Measurement
 
@@ -228,6 +229,204 @@ thus locates the modern survey's hardest problem precisely: representation error
 migrates from a *design* quantity the analyst controls to a *behavioral* quantity the
 analyst must model [@Groves_2010].
 
+## Online Panels and Data Quality {#sec-online-panels}
+
+The practical home of modern marketing surveys is the online panel. Understanding
+platform quality is therefore a prerequisite, not an afterthought: the choice of
+panel determines which errors from @eq-tse-decomp dominate and can render even
+technically sound analyses uninterpretable.
+
+### The Platform Hierarchy
+
+A now-extensive empirical literature benchmarks the major platforms. The headline
+finding is unambiguous: **Prolific and CloudResearch substantially outperform Amazon
+Mechanical Turk (MTurk) on virtually every quality metric** [@douglas2023;
+@peer2022]. In the largest direct comparison, @douglas2023 recruited $n = 2{,}729$
+respondents across five platforms and embedded objective quality tests—video-recall
+accuracy, attention checks, unique device fingerprints, completion time, and
+meaningful open-ended responses. The results are striking. On a composite criterion
+requiring all quality tests to pass, **Prolific achieved 67.9% high-quality
+participants and CloudResearch 61.9%, versus only 26.4% for MTurk**. Video recall
+accuracy told the same story: 83.5% on Prolific and 81.8% on CloudResearch, compared
+to 52.2% on MTurk. @peer2022 corroborate this using a different design, finding that
+CloudResearch's Approved participant pool produced implausible open-ended responses at
+3.0%, versus 18.8% for a standard MTurk sample.
+
+The source of MTurk's decline is largely documented by @kennedy2021, who analyzed 38
+studies ($n = 24{,}930$ total, 2013–2018) and traced the quality crisis to a sharp
+rise in fraudulent respondents—non-US workers using virtual private servers (VPS) or
+VPN connections to circumvent US-only restrictions—from roughly 15% in 2015 to over
+20% by late 2018, with individual studies hitting 26.9%. The quality damage is
+concentrated: legitimate respondents fail quality checks at 2.8%, whereas VPS users
+fail at 23.9% and verified non-US respondents at 32.0%. Critically, the traditional
+MTurk quality filter—requiring a 95% HIT acceptance rate and 100+ prior HITs
+completed—no longer provides meaningful protection, because fraudulent workers are
+experienced enough to satisfy these criteria.
+
+The practical implication for researchers is direct: **MTurk should not be the
+default for behavioral and attitudinal studies** unless the researcher can verify
+participant authenticity through additional screening. Prolific, which pays at or
+above minimum wage and requires verified participant identities, or CloudResearch's
+Approved pool, which screens out blocked participants, are the current recommended
+alternatives. For studies requiring nationally representative samples, Lucid and
+similar router-based panels offer quota matching but introduce their own quality
+heterogeneity and require careful vendor-specific screening.
+
+### Attention Checks and Quality Filters
+
+Even on high-quality platforms, a fraction of respondents engages carelessly.
+**Attention checks**—items designed to detect inattentive responding—are the most
+common data-quality tool. Three types are in wide use:
+
+1. **Instructed response items.** The question instructs the respondent to select a
+   specific answer (e.g., "For quality control, please select 'Strongly agree'
+   below"). Failure rates on legitimate platforms are typically low (2–10%) but
+   higher on MTurk.
+2. **Reading comprehension checks.** A paragraph of text is followed by questions
+   whose correct answers appear verbatim in the passage. Inattentive respondents
+   cannot answer correctly without reading.
+3. **Screener traps / infrequency items.** Items with no plausible true-positive
+   response (e.g., "I have visited the moon") flag extreme agreement as careless
+   or dishonest.
+
+A key design question is whether to warn respondents of attention checks in advance.
+Forewarning increases *apparent* pass rates but may induce strategic compliance
+rather than genuine engagement; researchers who forewarned found effects shrank
+relative to un-forewarned conditions in some paradigms. Current practice favors
+embedding checks unobtrusively without forewarning, placing them early and late in
+the survey to capture fatigue, and using multiple check types to reduce the chance
+that any single type creates a systematic artifact.
+
+Two additional quality filters have become standard:
+
+- **Completion time.** Respondents who complete a survey far below the median time
+  (e.g., less than one-third of median completion) are unlikely to have read all
+  items. A conservative cutoff is removing the fastest 5–10% of completions after
+  verifying the distribution is not bimodal (which would indicate a speeder mode
+  distinct from the main distribution).
+- **Duplicate detection.** IP-address deduplication catches the same person
+  completing multiple times; browser fingerprinting and geolocation checks catch
+  coordinate fraud (many responses from the same physical location).
+
+### Survey Satisficing and Careless Responding
+
+Beneath outright fraud lies a subtler quality threat: **satisficing**—the tendency
+to provide "good enough" rather than accurate answers [@krosnick1991]. Satisficing
+arises when the cognitive cost of careful responding exceeds the respondent's
+motivation. It manifests in several behavioral signatures:
+
+- **Straight-lining.** Giving the same response to every item in a matrix question,
+  ignoring item content. Detectable by computing the within-respondent standard
+  deviation across a battery: a zero or near-zero value is diagnostic.
+- **Non-differentiation.** Using only a narrow range of scale points (e.g.,
+  responding 4 or 5 exclusively on a 1–7 scale) in a way that does not reflect
+  genuine construct-level agreement.
+- **Acquiescence bias.** The tendency to agree with statements regardless of their
+  content—sometimes called *yea-saying*. Acquiescence is partly a trait (stable
+  across items) and partly a function of item wording and survey length. It can be
+  diagnosed by including matched pairs of items worded in opposite directions: if the
+  respondent agrees with both the item and its negation, they are acquiescing.
+- **Midpoint endorsement / don't-know overuse.** Disproportionate use of the scale
+  midpoint or neutral category, often as a low-effort response rather than a genuine
+  expression of ambivalence.
+
+Recommended detection pipeline: flag respondents with (a) a within-row SD of zero
+on any matrix battery longer than four items; (b) total survey completion below a
+reasonable minimum; and (c) an implausible open-ended response (e.g., a single
+character, gibberish, or a copied prompt). Each flag alone may be innocuous; two or
+more together strongly suggest careless responding. The analyst should report the
+number of flagged observations and sensitivity-check key results with and without
+them.
+
+```{r satisficing-flags, message=FALSE, warning=FALSE}
+library(tidyverse)
+set.seed(42)
+
+n_resp <- 500
+n_items <- 8
+
+# Simulate a matrix battery with some careless respondents
+# Careful respondents: random responses around their true position
+# Straight-liners: same value repeated (within-row SD = 0)
+careful  <- matrix(sample(1:7, (n_resp - 50) * n_items, replace = TRUE),
+                   nrow = n_resp - 50)
+careless <- matrix(rep(sample(1:7, 50, replace = TRUE), each = n_items),
+                   nrow = 50, byrow = TRUE)
+battery  <- rbind(careful, careless)
+colnames(battery) <- paste0("q", seq_len(n_items))
+
+df <- as_tibble(battery) %>%
+  mutate(respondent = row_number(),
+         row_sd     = apply(battery, 1, sd),
+         straightline = row_sd == 0)
+
+cat("Straight-line flags detected:", sum(df$straightline),
+    "of", n_resp, "respondents\n")
+cat("Expected (planted):", 50, "\n")
+```
+
+## Response Styles and Systematic Measurement Biases
+
+Beyond careless responding, **response styles** are systematic tendencies that
+distort scores even when respondents are fully engaged. They contribute to measurement
+error (@eq-tse-decomp) because they introduce variance that is *not* attributable to
+the construct of interest.
+
+### Social Desirability
+
+**Social desirability bias** is the tendency to give answers that present oneself
+favorably to others, regardless of one's true attitudes or behaviors. It is
+especially consequential for sensitive constructs—health behavior, financial
+decisions, ethical attitudes, political views—where the socially approved answer
+diverges from the true answer. Two components are distinguished in the psychometric
+literature: *impression management* (conscious self-presentation) and *self-deception
+enhancement* (a genuine but inflated self-image). The **Marlowe–Crowne Social
+Desirability Scale** [@crowne1960] and its abbreviated versions are the most widely
+used instruments for measuring and controlling social desirability as a covariate.
+
+Design-based defenses are generally more effective than post-hoc statistical
+partialling. The **bogus pipeline** technique convinced respondents that a
+physiological device could detect dishonest answers, which substantially reduced
+social desirability in early studies but is now rarely used due to ethical concerns
+and the ease of disbelief. More practical alternatives include:
+
+- **Anonymity assurances** communicated prominently before sensitive questions.
+- **Third-person phrasing** ("Some people find that they... Do you?"), which
+  reduces the normative force of the question.
+- **Randomized response technique (RRT)**, where a random device (e.g., a coin flip
+  unobserved by the researcher) determines whether the respondent answers the
+  sensitive question or an innocuous one. The researcher can recover population
+  prevalence estimates without knowing any individual's true answer.
+- **Indirect questioning** through projective measures or implicit attitude tests,
+  though the psychometric properties of many implicit measures remain debated.
+
+### Acquiescence Bias
+
+As noted above, acquiescence systematically inflates agreement with positively worded
+items and deflates agreement with negatively worded items, creating a spurious
+construct mean and attenuating structural relationships. The standard remedy is
+**balanced item wording**: including an equal number of items worded in each
+direction and reverse-scoring the negatively worded items before averaging. Balanced
+scales do not eliminate acquiescence entirely—a persistent acquiescer will agree with
+both poles—but they ensure that the scale *mean* is acquiescence-neutral. A clean
+diagnostic is the **polychoric correlation** between matched positive–negative item
+pairs: strongly negative correlations confirm that the items are tapping the same
+underlying construct; near-zero correlations suggest the items are measuring
+unrelated things or that acquiescence is negligible.
+
+### Extreme Response Style
+
+**Extreme response style (ERS)** is the tendency to endorse the scale endpoints (1
+or 7 on a 7-point scale) regardless of item content. It is most pronounced in
+cross-cultural research, where ERS varies substantially across countries and can
+create spurious cross-national differences. Mitigation strategies include:
+
+- Using **forced-choice** or **best–worst scaling** formats that eliminate the
+  option to cluster at extreme points.
+- **Response style corrections** that model ERS as a latent nuisance factor alongside
+  the substantive construct, analogous to the common-method factor in @sec-measurement-scales.
+- **Ranking formats** that force differentiation across items.
+
 ## Anchoring Vignettes
 
 The measurement branch has a subtler pathology than noisy answers: respondents may
@@ -236,9 +435,7 @@ satisfaction "on a 1–5 scale" and a lenient respondent's 4 may encode the same
 underlying experience as a demanding respondent's 2. This **interpersonal
 incomparability**—formally, **differential item functioning** (DIF)—means that
 differences across respondents partly reflect differences in how they map a latent
-state onto categories, not differences in the latent state itself. Agreement on the
-exact meaning of an abstract scale point is, in practice, nearly impossible to
-secure, and the problem is acute for constructs that can only be conveyed by example.
+state onto categories, not differences in the latent state itself.
 
 **Anchoring vignettes** solve this by adding, alongside the self-assessment, a small
 set of fixed hypothetical scenarios that every respondent rates on the same scale
@@ -246,54 +443,40 @@ set of fixed hypothetical scenarios that every respondent rates on the same scal
 vignettes, so their true level is **fixed across respondents by construction**. Any
 variation in how respondents rate the *same* vignette is therefore pure DIF—a direct
 reading of each respondent's idiosyncratic scale use—which can then be netted out of
-the self-assessment. The logic is to *measure as usual, then subtract the
-incomparable portion*, using each respondent's own vignette ratings to recalibrate
-that same respondent's self-rating.
+the self-assessment.
 
 Two assumptions identify the correction [@king2004]:
 
 - **Response consistency.** Each respondent applies the *same* mapping from latent
   state to response category when rating the vignettes as when rating themselves.
-  Without this, the vignette ratings carry no information about the respondent's
-  self-rating scale.
 - **Vignette equivalence.** The latent level a given vignette describes is perceived
-  identically by all respondents; only its *translation* into a category varies. This
-  is what makes cross-respondent differences in vignette ratings attributable to DIF
-  rather than to genuine disagreement about the scenario.
+  identically by all respondents; only its *translation* into a category varies.
 
 ### Nonparametric Correction
 
 The nonparametric estimator requires no distributional assumptions. For each
 respondent, the analyst recodes the self-assessment $y_i$ relative to where it falls
 among that respondent's *ordered* vignette ratings $z_{i1} \le z_{i2} \le \dots \le
-z_{iJ}$. The rescaled outcome $C_i$ records the self-rating's rank position within the
-respondent's own vignette thresholds—how good the respondent is relative to anchors
-whose true level is known—so it is comparable across respondents by construction.
-Order **inconsistencies**, where a respondent's vignette ratings are non-monotone in
-the vignettes' known true order, are absorbed as **ties** (interval-valued
-categories). The recoded $C_i$ is then modeled, for example with an ordered probit,
-purged of the respondent-specific scale shifts.
+z_{iJ}$. The rescaled outcome $C_i$ records the self-rating's rank position within
+the respondent's own vignette thresholds—how good the respondent is relative to
+anchors whose true level is known—so it is comparable across respondents by
+construction. Order **inconsistencies**, where a respondent's vignette ratings are
+non-monotone in the vignettes' known true order, are absorbed as **ties**.
 
 ### Parametric Correction
 
 The parametric estimator embeds the same idea in a likelihood. Self-assessment and
 vignettes are jointly modeled with an **ordered probit** in which the *cut points*
-(category thresholds) are allowed to vary across respondents as functions of
-covariates, with a respondent **random effect** capturing residual scale
-heterogeneity. Identification improves as the number of vignettes $J$ grows—more
-anchors pin down each respondent's thresholds more tightly—but there is a bias–variance
-trade-off: each additional vignette is itself measured with error, so adding vignettes
-trades sharper threshold identification against more measurement noise [@hopkins2010].
-The `anchors` package that implemented these estimators was archived from CRAN, but the
-nonparametric recoding is simple to reproduce directly. The illustration below takes three
-respondents with *identical* true ability who differ only in how harshly they rate, and
-shows that anchoring collapses their incomparable raw self-ratings to the same position.
+vary across respondents as functions of covariates, with a respondent **random
+effect** capturing residual scale heterogeneity. Identification improves as the
+number of vignettes $J$ grows, but there is a bias–variance trade-off: each
+additional vignette is measured with error, so adding vignettes trades sharper
+threshold identification against more measurement noise [@hopkins2010].
 
 ```{r anchors-demo, message=FALSE, warning=FALSE}
 library(tidyverse)
 
-# Each respondent rates three vignettes of known increasing quality (v1 < v2 < v3) plus
-# themselves, on a 1-5 scale. They share the same true level but differ in strictness.
+# Three respondents with identical true ability differ only in rating strictness.
 demo <- tribble(
   ~respondent, ~self, ~v1, ~v2, ~v3,
   "lenient",      5L,   3L,  4L,  5L,
@@ -301,8 +484,6 @@ demo <- tribble(
   "harsh",        3L,   1L,  2L,  3L
 )
 
-# Nonparametric anchoring ("C"): locate each self-rating relative to the respondent's
-# OWN vignette ratings (ties -> interval categories); the personal scale shift cancels.
 anchor_pos <- function(self, v) {
   v <- sort(v)
   paste0(sum(self > v), " above, ", sum(self == v), " tied")
@@ -316,8 +497,8 @@ demo %>%
 ```
 
 The raw self-ratings (5, 4, 3) look different, but every respondent rates themselves
-"2 above, 1 tied" relative to their own vignettes—anchoring reveals the apparent gap was
-pure rating strictness, exactly what the parametric ordered-probit version corrects for.
+"2 above, 1 tied" relative to their own vignettes—anchoring reveals the apparent gap
+was pure rating strictness.
 
 ## Experiments
 
@@ -327,7 +508,8 @@ randomly assigning the treatment, the analyst makes the treatment statistically
 independent of every confounder, observed or not, so the difference in mean outcomes
 estimates the average treatment effect rather than a confounded association. The cost
 is that the analyst must defend four distinct kinds of **validity**, manage the
-heterogeneity that averages conceal, and respect the ethics of intervening on people.
+heterogeneity that averages conceal, choose a design appropriate to the research
+question, and respect the ethics of intervening on people.
 
 ### Four Validities
 
@@ -345,23 +527,288 @@ ordered roughly from "is there an effect at all" to "does it mean what we claim"
 : The four validities an experiment must defend, in roughly increasing order of generality. {#tbl-validity}
 
 The four trade off against one another. Tight laboratory control buys internal
-validity at the expense of external validity (realism), while a field experiment buys
-realism at the expense of control. The same tension recurs in the practical design
-levers—**cost, control, realism, and ethics**—that no single design optimizes
-simultaneously.
+validity at the expense of external validity (realism), while a field experiment
+buys realism at the expense of control. The same tension recurs in the practical
+design levers—**cost, control, realism, and ethics**—that no single design
+optimizes simultaneously.
+
+### Lab, Field, and Survey Experiments
+
+Three broad settings host experimental research in marketing, each occupying a
+distinct position in the internal-vs.-external-validity trade-off.
+
+**Laboratory experiments** (including online survey experiments) offer maximum
+control. The researcher assigns stimuli, controls timing, eliminates distractors, and
+can probe mechanism directly with manipulation checks and mediator measures. The
+price is reduced realism: stimuli are often hypothetical, settings unfamiliar, and
+participant pools (student samples, crowdsourcing panels) may not represent the
+population of interest. Most published causal claims in marketing rest on lab or
+online experiments, which makes their external validity an ongoing empirical question
+rather than an assumption.
+
+**Field experiments** embed the treatment in an actual market. A/B tests on email
+campaigns, retail price promotions deployed to random zip codes, and randomized
+product launches are field experiments. Internal validity is preserved by
+randomization; external validity is substantially stronger because the setting, the
+stakes, and the population are real. The drawbacks are cost, limited measurement
+(typically only behavioral outcomes, not psychological processes), ethical exposure
+(firm and consumer stakes are real), and the difficulty of isolating mechanisms. The
+complementarity of lab and field is explicit: lab experiments establish that an
+effect *can* exist and identify the mechanism; field experiments establish that it
+*does* exist in the target environment [@gerber2012].
+
+**Survey experiments** embed random assignment within an otherwise-standard survey
+questionnaire, assigning respondents to see different question wordings, orderings,
+or vignette descriptions. They are cheap and fast but inherit the survey's
+weaknesses: the outcome is self-reported, respondents may recognize the experimental
+structure (demand effects), and stakes are hypothetical. Factorial survey experiments
+(*vignette studies*) present each respondent with a profile constructed by randomly
+varying several attributes simultaneously, allowing estimation of all main effects
+and interactions within a single study.
+
+### Demand Effects and Deception
+
+**Experimenter demand effects** arise when participants infer the researcher's
+hypothesis and adjust their responses accordingly—either cooperating (out of
+helpfulness) or doing the opposite (reactance). Demand effects constitute a construct
+validity threat: the observed treatment effect partly reflects participants responding
+to *perceived* social expectations rather than to the construct the treatment was
+designed to manipulate.
+
+Diagnosing demand effects requires measuring participants' awareness of the
+hypothesis. The **Awareness Questionnaire** approach (often called the *funnel
+debriefing*) asks participants, at the end of the study and in progressively more
+explicit terms, (a) what they thought the study was about, (b) what they thought the
+researcher's hypothesis was, and (c) whether that suspicion influenced their
+responses. Effect-size estimates from participants who report hypothesis awareness can
+then be compared to those who do not; a large discrepancy is evidence of demand.
+
+Three design strategies reduce demand effects:
+
+1. **Cover stories.** Present the study under a plausible but innocuous description
+   that conceals the hypothesis. The cover story must be convincing enough not to
+   trigger suspicion, and debriefing is required afterward if the cover constitutes
+   deception.
+2. **Between-subjects designs.** Participants who see only one level of the
+   independent variable cannot infer what the manipulation is comparing, making
+   hypothesis detection harder. This advantage comes at a power cost (see
+   @sec-power).
+3. **Behavioral outcomes.** Demand effects are primarily a self-report pathology:
+   participants cannot as easily adjust their actual behavior (how many M&Ms they
+   take from a bowl, how much they bid at auction) as they can their stated opinions.
+   When a behavioral outcome is available, it is preferable.
+
+**Deception** is the deliberate use of false information—a cover story, a
+confederate, a fictitious scenario—to suppress demand or achieve experimental realism
+that cannot otherwise be manufactured. Deception is ethically permissible under
+standard IRB/ethics-review frameworks when (a) the research question cannot be
+answered by non-deceptive means, (b) the deception causes no lasting harm, and (c)
+participants are **debriefed** promptly and fully after data collection. The
+debriefing must not merely reveal the deception passively: it should explain why the
+deception was necessary, allow participants to withdraw their data with no penalty,
+and verify that they understand and are not disturbed. Some ethics frameworks
+(especially in Europe under GDPR-adjacent guidance) prohibit certain forms of
+deception outright regardless of debriefing.
+
+### Within-Person versus Between-Person Designs
+
+The most fundamental structural decision in an experiment is whether each participant
+sees *one* condition (**between-subjects** or **independent-groups** design) or
+*multiple* conditions (**within-subjects** or **repeated-measures** design).
+
+**Between-subjects** designs assign each participant to exactly one treatment cell.
+They are clean, immune to carryover, and eliminate demand effects that arise from
+participants contrasting conditions. Their weakness is statistical: to detect the
+same effect size, they require substantially more participants, because each person's
+response is used exactly once. Variance between people (individual differences) is
+not isolated and becomes part of the error term.
+
+**Within-subjects** designs have each participant experience multiple conditions (in
+counterbalanced or randomized order). By measuring the *same person* under each
+condition, the analyst can difference out individual-level constants, isolating the
+within-person treatment effect from stable individual differences. The statistical
+gain is large: within-person designs can detect the same effect with far fewer
+participants because the person serves as their own control. The costs are:
+
+- **Carryover effects.** Exposure to condition A may affect responses to condition B
+  (e.g., fatigue, sensitization, contrast effects). Counterbalancing across
+  participants controls for first-order carryover but not interactions.
+- **Demand effects.** Participants who experience multiple conditions can deduce the
+  comparison, increasing hypothesis awareness.
+- **Practice and fatigue.** Performance may change systematically across trials
+  regardless of the treatment.
+
+The trade-off dictates: use within-subjects designs when the effect is expected to be
+small (power is paramount) and carryover is unlikely; use between-subjects when
+carryover or demand is a plausible confound.
+
+**Experience sampling methods (ESM)**, also called ecological momentary assessment
+(EMA), extend within-person measurement to the natural environment. Participants
+complete brief surveys multiple times per day, often triggered by a smartphone
+prompt, capturing states (mood, hunger, context) and behaviors as they occur. ESM is
+ideal for constructs that are highly state-dependent or that would be biased by
+retrospective recall (e.g., in-the-moment affect, impulse purchase triggers, media
+consumption). The design produces a multilevel data structure—many observations
+nested within each participant—requiring mixed-effects models that partition variance
+into within-person and between-person components and are analyzed in @sec-modeling.
+
+### Conjoint and Discrete-Choice Experiments {#sec-conjoint}
+
+When the research question concerns how multiple product attributes jointly determine
+consumer preference, the workhorse tool is the **conjoint experiment**. Respondents
+are shown a set of product profiles described by combinations of attributes (brand,
+price, warranty, green certification, etc.) and either rate each profile or choose
+among them. Because the attribute combinations are researcher-designed and
+orthogonally or near-orthogonally varied, the analyst can recover each attribute's
+**part-worth utility**—its marginal contribution to overall preference—as if running
+a separate experiment on each attribute while holding others constant.
+
+Two formulations dominate:
+
+1. **Rating-based conjoint (traditional full-profile conjoint).** Each profile is
+   rated on a preference scale. Part-worths are recovered by regressing ratings on
+   attribute dummies. Simple to implement but subject to rating-scale
+   inconsistencies and demand effects if the attribute structure is transparent.
+
+2. **Choice-based conjoint (CBC).** Respondents choose their preferred option from a
+   set of competing profiles, including an "opt-out" option. Choice is more realistic
+   than rating—it mirrors actual purchase decisions—and the opt-out preserves
+   revealed-preference logic. Part-worths are estimated by conditional logit or
+   mixed logit, which allows heterogeneous preferences across respondents. The market
+   simulation step maps part-worths to market-share predictions under alternative
+   product configurations, making CBC the standard tool for new-product development
+   and pricing research.
+
+A critical design decision in any conjoint study is **orthogonality**: the attribute
+levels shown to any respondent should be uncorrelated across profiles, so that
+part-worths are identified without confounding. Fractional factorial designs achieve
+near-orthogonality with far fewer profiles than full-factorial enumeration would
+require, trading off some high-order interaction estimation for feasibility.
+
+**Best–worst scaling (BWS)**, or MaxDiff, is a simpler cousin: respondents choose
+the *best* and *worst* item from a set, producing a pair of anchored choices that is
+more discriminating than ratings and avoids the extreme response style biases of
+Likert-type scales. BWS produces individual-level utility scores and is increasingly
+preferred in applied research because it forces genuine differentiation.
 
 ### Heterogeneity and Mechanisms
 
 A single number—the **average treatment effect** (ATE)—can be an artifact. If the
 effect is positive for one segment and negative for another, the average may be near
-zero, near either extreme, or anywhere between, depending only on segment mix. Writing
-the conditional average treatment effect as $\tau(x) = \mathbb{E}[Y(1) - Y(0)\mid X=x]$,
-the reported ATE is the mix-weighted average $\int \tau(x)\,dF(x)$, which is silent
-about the sign and size of $\tau(x)$ for any particular $x$. The same caution that
-motivated segmentation in forecasting (@sec-surveys) applies to experiments:
-heterogeneous effects demand that the analyst report the distribution of $\tau(x)$,
-not only its mean, and that any claimed **mechanism**—the causal pathway through which
-the treatment acts—be argued rather than assumed.
+zero, near either extreme, or anywhere between, depending only on segment mix.
+Writing the conditional average treatment effect as $\tau(x) = \mathbb{E}[Y(1) -
+Y(0)\mid X=x]$, the reported ATE is the mix-weighted average $\int \tau(x)\,dF(x)$,
+which is silent about the sign and size of $\tau(x)$ for any particular $x$. The
+same caution that motivated segmentation in forecasting (@sec-surveys) applies to
+experiments: heterogeneous effects demand that the analyst report the distribution of
+$\tau(x)$, not only its mean, and that any claimed **mechanism**—the causal pathway
+through which the treatment acts—be argued rather than assumed.
+
+Mediation analyses are the standard vehicle for mechanistic claims, but they carry
+assumptions of their own. A significant indirect effect ($a \times b$ in the
+Baron–Kenny path notation) identifies the mechanism only if (a) there is no
+unmeasured common cause of the mediator and the outcome, and (b) the mediator is not
+on a back-door path from treatment to outcome. These assumptions are untestable from
+observational data on mediators and outcomes and motivate the use of **sequential
+experimental designs** that manipulate both the treatment and the putative mediator
+in separate studies to establish causal-chain evidence.
+
+### Power Analysis {#sec-power}
+
+Every experiment must answer the question: *how many participants are needed to detect
+the effect of interest if it exists?* Underpowered studies waste resources and
+expose participants to risk without a realistic chance of a conclusive result—a
+direct violation of the Reduce principle from the 3Rs framework (see below). They
+also produce inflated effect-size estimates when they do yield significant results
+(the "winner's curse"), because only the largest noise-amplified estimates clear the
+significance threshold.
+
+**Conventional power analysis** requires three inputs and produces a sample size:
+
+- $\delta$: the effect size, usually Cohen's $d$ for means or $f^2$ for regression,
+- $\alpha$: the Type I error rate (usually 0.05), and
+- $1-\beta$: the desired power (usually 0.80 or 0.90).
+
+The mechanical calculation is available in R (`pwr` package) but is only as good as
+its inputs. The critical debate is about $\delta$: what effect size should power
+calculations assume?
+
+The **smallest effect size of interest (SESOI)** approach [@lakens2018] replaces
+"what effect size will I find?" with "what is the smallest effect that would be
+theoretically or practically meaningful?" The SESOI is set on substantive grounds
+before data collection—for example, a standardized mean difference smaller than $d =
+0.2$ may be too small to justify the cost of a marketing intervention—and the study
+is powered to detect *that* threshold. This framing avoids the common error of
+powering studies on prior literature effect sizes that are themselves upward-biased
+by publication selection.
+
+**Simulation-based power analysis** is more flexible than analytic formulas when the
+design is complex (multilevel, repeated-measures, multiple endpoints, or non-normal
+outcomes). The simulation encodes the assumed data-generating process, applies the
+planned analysis, and counts the fraction of simulated studies that return $p < \alpha$.
+
+```{r power-simulation, message=FALSE, warning=FALSE}
+set.seed(2024)
+
+# Simulation-based power for a between-subjects t-test
+# SESOI: d = 0.30 (small but practically meaningful)
+
+sim_power <- function(n_per_group, d, alpha = 0.05, nsim = 2000) {
+  sig <- replicate(nsim, {
+    group0 <- rnorm(n_per_group, mean = 0,   sd = 1)
+    group1 <- rnorm(n_per_group, mean = d,   sd = 1)
+    t.test(group1, group0, var.equal = TRUE)$p.value < alpha
+  })
+  mean(sig)
+}
+
+# Sweep over sample sizes
+ns    <- c(50, 100, 150, 200, 300)
+pows  <- sapply(ns, sim_power, d = 0.30)
+
+results <- data.frame(n_per_group = ns, power = round(pows, 3))
+print(results)
+cat("\nTarget: 80% power for d = 0.30 requires ~", ns[which(pows >= 0.80)[1]],
+    "per group\n")
+```
+
+The simulation makes the researcher's assumptions explicit and auditable. Standard
+practice is to pre-register the power analysis alongside the hypotheses, so the
+sample-size decision is on record before any data are seen. Reporting power analysis
+in published work has increased substantially in recent years—from roughly 9.5% of
+empirical psychology articles in 2015–2016 to 30% by 2020–2021 across 24 APA-listed
+journals [@adamkovicova2024].
+
+### Sequential Testing {#sec-sequential}
+
+A limitation of the conventional null-hypothesis testing framework is that the $\alpha$
+level is calibrated for a *fixed* sample: collecting data until significance is
+reached, then stopping, inflates the true Type I error rate far above $\alpha$.
+**Sequential testing** addresses this by specifying in advance when interim analyses
+will be conducted and how much $\alpha$ each interim analysis "spends."
+
+Two approaches are in common use:
+
+1. **Group sequential designs** with formal **$\alpha$-spending functions** (e.g.,
+   O'Brien–Fleming, Pocock bounds). The analyst specifies the number of interim
+   looks and a monotone spending function that allocates cumulative $\alpha$ across
+   looks; the critical value at each look is adjusted upward so that the overall Type
+   I error remains at $\alpha$. These designs are standard in clinical trials and
+   increasingly used in A/B testing platforms.
+
+2. **Sequential probability ratio tests (SPRT)** and **anytime-valid inference**.
+   The SPRT computes a likelihood ratio at every new observation and crosses a
+   pre-specified boundary when evidence is sufficiently strong for either hypothesis.
+   Recent extensions provide **e-values** and **anytime-valid $p$-values** that
+   remain valid under optional stopping without adjustment, enabling "keep collecting
+   data until we decide" designs with formal error control [@ramdas2023].
+
+For marketing A/B testing with continuous data collection, the practical alternative
+is the **always-valid inference** framework, implemented in commercial platforms
+(e.g., Optimizely's Stats Engine) and available in R. The analyst sets a minimum
+detectable effect and a maximum sample size, and the platform signals when the
+boundary is crossed in either direction or when the maximum is reached without
+crossing.
 
 ### Ethics: The 3Rs
 
@@ -372,36 +819,178 @@ harm and distress; and *Reduce* the number of participants to the minimum consis
 with a valid answer. The Reduce principle has a statistical edge: the minimum sample
 is set by the power calculation, so an underpowered study is not only wasteful but
 also *unethical*, exposing participants to risk without a credible chance of a
-conclusive result.
+conclusive result. The 3Rs underlie modern institutional review board (IRB) and
+research ethics committee requirements; any study involving human participants must
+secure approval before data collection and adhere to the approved protocol.
 
 [^threers]: Russell, W. M. S. and Burch, R. L. (1959), *The Principles of Humane
 Experimental Technique*. The 3Rs framework predates and underlies most modern
 research-ethics review.
 
-### Pre-Registration and the Replication Crisis
+## Open Science {#sec-open-science}
 
-The credibility of an experimental finding depends not only on its design but on
-whether the analysis was specified *before* the data were seen. **Pre-registration**
-time-stamps the hypotheses, design, and analysis plan in advance, so a reviewer can
-distinguish a confirmatory test from a hypothesis read off the data after the
-fact—the practice that inflates false-positive rates and fuels the replication crisis
-in the behavioral sciences. Public registries such as AsPredicted provide the
-time-stamp; open-data and open-materials platforms such as the Open Science Framework
-and ResearchBox let others re-run the analysis.
+The reproducibility crisis of the 2010s—in which a substantial fraction of landmark
+behavioral science findings failed to replicate in independent studies—forced a
+reckoning with the research practices that inflated false-positive rates. The result
+was an open-science infrastructure that is now the expected standard for credible
+empirical work.
 
-A complementary forensic tool is the **$p$-curve**: the distribution of statistically
-significant $p$-values across a body of studies. Under a true effect, that
-distribution is *right-skewed* (many very small $p$-values); under no effect but
-selective reporting ($p$-hacking), it is *left-skewed* (a pile-up just below 0.05).
-Inspecting the curve thus diagnoses whether a literature reflects real effects or
-selective analysis.[^pcurve] A final design caution: testing for **interaction**
-effects requires controlling for the *interactions* of the covariates, not merely
-their main effects—controlling only for main effects leaves the interaction estimate
-confounded.
+### Pre-Registration
 
-[^pcurve]: The $p$-curve was developed and popularized through the Data Colada
-research collective; the underlying logic is that selective reporting leaves a
-detectable signature in the shape of the significant-$p$ distribution.
+**Pre-registration** time-stamps the hypotheses, design, and analysis plan *before*
+data collection begins, in a public registry (AsPredicted, OSF Registries). By
+separating the confirmatory analysis from the exploratory analysis, pre-registration
+prevents the two most damaging forms of analytical flexibility:
+
+- **Hypothesis-after-results (HARKing)**: presenting an exploratory finding as if it
+  were a pre-specified hypothesis, inflating the apparent prior probability that any
+  given test was of theoretical interest.
+- **Outcome switching**: testing multiple outcomes and reporting only those that
+  reached significance.
+
+Pre-registration does not make studies immune to problems: it cannot ensure that
+the theory is correct, the manipulation is valid, or the measure is reliable.
+As @simmons2021 argue—with an analogy to random assignment—pre-registration is
+"a game changer" precisely because it is narrow: like random assignment, which
+controls confounds but cannot guarantee external validity, pre-registration controls
+analytical flexibility but cannot substitute for good measurement and adequate power.
+Non-pre-registered studies conducted transparently can still be credible; pre-registered
+studies with flawed designs are not credible because of the time-stamp.
+
+The pre-registration should specify at minimum: the primary hypothesis and its
+directionality, the key measures and their operationalizations, the sample size and
+how it was determined, the statistical test and any covariates included, and the
+exclusion criteria applied before analysis. Deviations from the plan in the
+published paper should be disclosed and justified.
+
+### The $p$-Curve
+
+The **$p$-curve** is the distribution of statistically significant $p$-values across
+a set of studies testing the same effect [@simonsohn2014]. Under a true effect, that
+distribution is *right-skewed*—many very small $p$-values, because a true effect
+makes extreme test statistics likely. Under no effect but selective reporting
+($p$-hacking), it is *flat or left-skewed*—a pile-up just below 0.05, because
+researchers publish only the highest values that clear the threshold. Inspecting the
+curve thus diagnoses whether a literature reflects real effects or selective analysis.
+
+> A right-skewed $p$-curve is the signature of a true effect; a flat or left-skewed
+> curve is the signature of $p$-hacking. The latter does not mean no individual
+> study is valid—it means the *literature as collected* cannot be trusted at face
+> value.
+
+The $p$-curve also supports **effect-size estimation**: the underlying effect can be
+estimated from the distribution of significant $p$-values alone, without access to
+unpublished studies (the file drawer). The estimate is biased upward because it
+conditions on significance, but the bias is lower than the naive published-studies
+mean.
+
+### Specification Curve Analysis
+
+Pre-registration disciplines a single analysis. **Specification curve analysis (SCA)**
+asks what happens across *all* defensible analyses [@simonsohn2020]. The researcher
+enumerates every combination of analysis choices that could reasonably be defended—
+different covariate sets, outcome transformations, sample exclusions, model
+families—and estimates the effect for each specification. The output is a graphical
+"specification curve" that plots every estimate in decreasing order, annotated with
+the choices that produced it.
+
+SCA has two inferential uses. Descriptively, it reveals whether the focal result is
+robust—if the effect is consistently in the same direction and significant across the
+full curve, robustness is strong—or fragile, concentrated in a narrow slice of
+specifications. Inferentially, a permutation test under the null shuffles treatment
+assignment, recomputes the curve, and assesses whether the observed median estimate
+exceeds the permutation distribution; this tests whether the pattern of results is
+consistent with a null effect across the universe of reasonable analyses.
+
+SCA is implemented in R (the `specr` package) and Stata and is increasingly expected
+for papers where specification choices are numerous or contentious. It is the
+multivariate generalization of a sensitivity analysis: instead of varying one choice
+at a time, it varies all choices simultaneously and characterizes the full
+consequence space.
+
+### Equivalence Testing
+
+Standard null-hypothesis tests answer "is there *any* effect?" Equivalence testing
+answers "is the effect smaller than a meaningful threshold?" The **two one-sided
+tests (TOST)** procedure [@lakens2017] tests the null hypothesis that the effect is
+*at least* as large as the SESOI in absolute value. Both one-sided tests must reject
+at $\alpha$ for the analyst to conclude equivalence to zero within the equivalence
+bounds. Formally, for effect size $\hat\delta$ and equivalence bounds $[-\Delta,
++\Delta]$:
+
+$$
+H_{0,1}: \delta \le -\Delta \qquad H_{0,2}: \delta \ge +\Delta.
+$$
+
+Rejecting both $H_{0,1}$ and $H_{0,2}$ establishes that the true effect falls within
+$(-\Delta, +\Delta)$—practically equivalent to zero by the researcher's pre-specified
+standard. TOST is the appropriate analysis when a researcher wants to claim that a
+proposed replication failed or that an intervention has no practically meaningful
+effect. It is *not* the same as "failing to reject the null": a non-significant
+standard $t$-test is uninformative about whether the effect is small; TOST is
+informative precisely because it has power against the specific alternative that the
+effect exceeds $\Delta$.
+
+```{r tost-example, message=FALSE, warning=FALSE}
+# TOST equivalence test for a between-subjects comparison
+# H0: effect >= delta (either side)
+# Equivalence bound: d = 0.20 (effect below this is "practically zero")
+set.seed(99)
+
+n     <- 200
+group0 <- rnorm(n, mean = 0.00, sd = 1)
+group1 <- rnorm(n, mean = 0.05, sd = 1)   # true d ≈ 0.05, near zero
+
+delta  <- 0.20   # equivalence bound in raw units (same SD = 1)
+
+# Two one-sided t-tests
+t_lower <- t.test(group1 - group0, mu = -delta, alternative = "greater")
+t_upper <- t.test(group1 - group0, mu =  delta, alternative = "less")
+
+cat("TOST lower bound p-value:", round(t_lower$p.value, 4), "\n")
+cat("TOST upper bound p-value:", round(t_upper$p.value, 4), "\n")
+cat("Equivalence established (both p < .05):",
+    t_lower$p.value < 0.05 & t_upper$p.value < 0.05, "\n")
+```
+
+### Registered Reports
+
+The most radical open-science reform is the **registered report** format, now offered
+by over 300 journals. In a registered report, the introduction, literature review,
+and methods are peer-reviewed *before* data collection; acceptance is provisional on
+the approved methodology. After data collection, the results and discussion are added
+and the paper is published regardless of whether the outcome is significant, null, or
+mixed—provided the registered methods were followed.
+
+Registered reports eliminate publication bias at the source by decoupling acceptance
+from results. They also incentivize well-powered designs with valid measures, because
+reviewers evaluate only the pre-data sections. Meta-analytic evidence comparing
+registered versus non-registered studies in the same journals finds that registered
+reports show substantially smaller effect sizes on average, consistent with the
+hypothesis that the larger effects in the conventional literature are upward-biased
+by selective publication. For marketing researchers, a growing number of journals in
+the field (including the *Journal of Marketing Research* and *Journal of Consumer
+Research*) now accept registered reports.
+
+### Open Data, Materials, and Code
+
+Pre-registration governs what was planned; open data, materials, and code govern what
+was done. The **FAIR principles** (Findable, Accessible, Interoperable, Reusable)
+provide an operational standard for data sharing. Platforms include:
+
+- **Open Science Framework (OSF)**: the dominant repository for behavioral science,
+  supporting pre-registration, data hosting, and materials sharing under versioned
+  DOIs.
+- **ResearchBox**: a packaging system that bundles data, analysis code, and
+  materials in a single citable artifact, making exact replication straightforward.
+- **AsPredicted**: focused specifically on pre-registration with a minimal interface.
+
+Open materials mean that a reviewer or reader can audit whether the stimuli,
+measures, and procedures match the paper's description. Open analysis code means that
+every reported number traces to a reproducible computation. Together, these practices
+address the "computational reproducibility" dimension of the crisis: the finding
+that a substantial fraction of published statistical results cannot be reproduced from
+the reported data even without any scientific dispute about the methods.
 
 ## Key Takeaways
 
@@ -417,9 +1006,51 @@ detectable signature in the shape of the significant-$p$ distribution.
 - Probability designs license design-based inference through the
   **Horvitz–Thompson** estimator (@eq-ht); non-probability and non-response designs
   shift the burden from *design* to *modeling* the inclusion mechanism.
+- **Online panels are not interchangeable**: Prolific and CloudResearch substantially
+  outperform MTurk on composite quality metrics (67.9%/61.9% vs. 26.4% high-quality
+  participants), and traditional MTurk filters—95% HIT acceptance, 100+ HITs—no
+  longer recover historical quality [@douglas2023; @peer2022; @kennedy2021].
+- **Satisficing** (straight-lining, acquiescence, speeding) degrades measurement
+  quality even on high-quality platforms; a multi-indicator quality pipeline (SD
+  flags, time filters, open-ended checks) should be applied before analysis.
+- **Response styles**—social desirability, acquiescence bias, extreme response
+  tendency—introduce systematic variance unrelated to the construct; balanced item
+  wording and design-based remedies (anonymity, RRT, behavioral outcomes) are
+  preferred over post-hoc statistical corrections.
 - **Anchoring vignettes** purge interpersonal incomparability by netting out
   differential item functioning, identified by response consistency and vignette
   equivalence [@king2004].
-- Causal claims from experiments rest on four validities, demand attention to
-  effect **heterogeneity** beyond the average, and gain credibility from
-  **pre-registration** and open science.
+- Causal claims rest on four validities; demand effects threaten construct validity
+  and are mitigated by cover stories, between-subjects designs, and behavioral
+  outcomes.
+- **Conjoint experiments** (especially choice-based CBC) recover attribute
+  part-worths under realistic competitive choice contexts; best–worst scaling avoids
+  extreme response biases in preference measurement.
+- **Within-subjects designs** dramatically increase power by removing individual
+  differences from the error term; experience sampling extends within-person
+  measurement to naturalistic settings via repeated smartphone surveys.
+- Power analysis should target the **smallest effect size of interest (SESOI)**,
+  not the expected effect; simulation-based power makes distributional assumptions
+  explicit [@lakens2018].
+- **Sequential testing** with $\alpha$-spending functions or anytime-valid
+  inference allows data collection to stop early when evidence is sufficient,
+  without inflating Type I error.
+- **Pre-registration** eliminates HARKing and outcome switching; **specification
+  curve analysis** characterizes robustness across all defensible specifications
+  [@simonsohn2020]; **TOST** establishes practical equivalence to zero [@lakens2017];
+  and **registered reports** eliminate publication bias at the acceptance stage.
+
+## Further Reading
+
+For total survey error the canonical reference is @Groves_2010; @krosnick1991 is the
+foundational treatment of satisficing and cognitive aspects of survey response.
+@peer2022 and @douglas2023 are the current benchmarks for online panel quality
+comparisons; @kennedy2021 documents the MTurk fraud timeline. For experiment design,
+@gerber2012 is the definitive treatment of field experiments; @shadish2002 covers the
+four-validity framework in depth. The open-science toolkit is developed in
+@simonsohn2014 ($p$-curve), @simonsohn2020 (specification curve), @lakens2017 and
+@lakens2018 (equivalence testing and SESOI), and @simmons2021 (pre-registration as
+game changer). Conjoint methods are treated comprehensively in @orme2020 and in the
+academic review of @green1990. For within-person and ESM designs, @bolger2013
+provides the multilevel framework. The measurement scales literature that underlies
+survey item development is treated in @sec-measurement-scales.
