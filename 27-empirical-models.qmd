@@ -870,14 +870,18 @@ nodes <- data_frame(id = c( c(trans_matrix_prob$channel_from), c(trans_matrix_pr
         )
 
 
-visNetwork(nodes,
-           edges,
-           height = "2000px",
-           width = "100%",
-           main = "Generic Probabilistic model's Transition Matrix") %>%
-        visIgraphLayout(randomSeed = 123) %>%
-        visNodes(size = 5) %>%
-        visOptions(highlightNearest = TRUE)
+# Interactive htmlwidget: HTML output only. In PDF/EPUB, webshot2 cannot rasterize
+# a percentage-width widget, so render it only when the output format is HTML.
+if (knitr::pandoc_to("html")) {
+  visNetwork(nodes,
+             edges,
+             height = "2000px",
+             width = "100%",
+             main = "Generic Probabilistic model's Transition Matrix") %>%
+          visIgraphLayout(randomSeed = 123) %>%
+          visNodes(size = 5) %>%
+          visOptions(highlightNearest = TRUE)
+}
 ```
 
 The transition matrix can also be raised to successive powers to *simulate forward*
@@ -2193,6 +2197,9 @@ library(networkD3)
 # networkD3 produces a self-contained htmlwidget; googleVis's gvisSankey only opens a
 # browser window and cannot embed in the rendered book, so we replace it here.
 make_sankey <- function(links, from = "from", to = "to", weight = "n", font = 11) {
+  # htmlwidget: HTML output only. PDF/EPUB cannot rasterize the percentage-width
+  # widget via webshot2, so skip rendering it for non-HTML formats.
+  if (!knitr::pandoc_to("html")) return(invisible(NULL))
   nodes <- data.frame(name = unique(c(links[[from]], links[[to]])), stringsAsFactors = FALSE)
   links$.src <- match(links[[from]], nodes$name) - 1L
   links$.tgt <- match(links[[to]],   nodes$name) - 1L
