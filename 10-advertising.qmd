@@ -492,6 +492,176 @@ search for effects on outcomes other than immediate own-brand sales—word of mo
 website traffic, firm value—where advertising's influence may be larger or more
 reliably detected.
 
+### Carryover and the Optimal Data Interval {#sec-data-interval}
+
+Every elasticity in the previous section presumes an answer to a prior question: *over
+what horizon* does advertising act? Advertising's effect is not contemporaneous. An
+exposure today raises sales today and—through memory, deferred purchase, and word of
+mouth—raises them tomorrow, next week, and progressively less thereafter. The canonical
+representation of this decay is the **geometric distributed lag**, in which a single
+immediate coefficient $\beta$ governs the impact of current advertising $a_t$ and a
+single carryover parameter $\lambda \in [0,1)$ geometrically discounts all past exposures,
+
+$$
+s_t = \mu + \beta \sum_{k=0}^{\infty} \lambda^{k} a_{t-k} + \varepsilon_t .
+$$ {#eq-geometric-lag}
+
+The infinite sum in @eq-geometric-lag is not directly estimable, but the **Koyck
+transformation**—subtracting $\lambda s_{t-1}$ from $s_t$—collapses it into a finite
+autoregressive form,
+
+$$
+s_t = \mu(1-\lambda) + \lambda\, s_{t-1} + \beta\, a_t + \underbrace{\varepsilon_t - \lambda \varepsilon_{t-1}}_{\text{MA(1) error}} .
+$$ {#eq-koyck}
+
+@eq-koyck is the workhorse of advertising dynamics: a regression of sales on its own
+lag and current advertising recovers the carryover $\lambda$ as the coefficient on
+$s_{t-1}$ and the immediate effect $\beta$ as the coefficient on $a_t$, and the
+**long-run multiplier**—the total cumulative effect of a permanent one-unit increase in
+advertising—is $\beta/(1-\lambda)$. The price of the transformation is the moving-average
+error it induces, which makes ordinary least squares biased in finite samples and is the
+reason instrumental-variables or maximum-likelihood corrections appear throughout this
+literature.
+
+A subtler and more consequential problem precedes estimation, however: *at what data
+interval should @eq-koyck be fit?* Scanner systems deliver sales and advertising at
+intervals from seconds to months, and the carryover estimate is not invariant to the
+choice. @tellis2006 confront the conventional wisdom directly. It had been "long known
+in marketing and econometrics that temporally aggregated data biases estimates of the
+duration of advertising's effect" [@clarke1976; @leone1995], and the received remedy,
+seeded by @clarke1976 and hardened into an axiom over the following decades, held three
+things: (i) the optimal interval is the *interpurchase time*, (ii) data *more*
+disaggregate than this causes a "disaggregation bias," and (iii) recovering the true
+parameters requires assuming a model of the underlying advertising process.
+@tellis2006 overturn all three. The optimal interval is instead what they call the
+**unit exposure time**—"the largest calendar period in the time frame under study such
+that advertising exposure occurs *at most* once in that period, and if it occurs, it does
+so at the same time in that period." Data *more* disaggregate than the unit exposure time
+carries *no* disaggregation bias (it merely costs more to store and process); and recovery
+of the true microparameters requires only data at the unit exposure time together with the
+correctly *adjusted* model—no assumption about the advertising process itself. The result
+holds for any linear dynamic model linking sales to current and past advertising.
+
+The unit exposure time is governed by the advertising *schedule*, not the purchase cycle.
+If a brand runs one television flight a week, the largest period containing at most one
+exposure is the week, so the unit exposure time is one week; if it advertises on fixed
+days, the unit exposure time is a day; for monthly magazine insertions it is a month. The
+mechanism that makes this the right interval is *misattribution under aggregation*: a data
+interval coarser than the unit exposure time lumps several exposures into one bucket,
+assigns them all to a single arbitrary point, and attributes the blended decay of all of
+them as if it were one average effect—"inappropriate attribution [that] exaggerates the
+duration interval." A data interval at or finer than the unit exposure time keeps
+successive exposures in separate buckets and so is free of this misattribution.
+
+Crucially, recovering the true microparameters from data at the unit exposure time
+requires the *adjusted* model, not the naïve one. Aggregating @eq-koyck over $K$
+microperiods (with the single pulse occurring at position $i$ within each period) yields an
+**extended Koyck model** carrying an *additional* lagged-advertising term,
+
+$$
+S_T = \lambda^{K} S_{T-1} + \beta_1 A_T + \beta_2 A_{T-1} + \varepsilon_T - \lambda^{K}\varepsilon_{T-1},
+\qquad
+\beta_1 = \beta\!\!\sum_{k=0}^{K-i}\!\lambda^{k},\;\;
+\beta_2 = \beta\!\!\sum_{k=K-i+1}^{K-1}\!\lambda^{k},
+$$ {#eq-koyck-extended}
+
+from which the true microparameters are recovered as $\lambda = \widehat{\lambda^{K}}^{\,1/K}$
+and $\beta = (\beta_1+\beta_2)(1-\lambda)/(1-\lambda^{K})$. Fitting the *original* Koyck
+@eq-koyck—the same model used on the microdata—to aggregated data omits the $A_{T-1}$ term
+and is exactly the misspecification that produces the classic data-interval bias. The
+following replication of @tellis2006's DGP1 makes both the bias and its repair concrete. A
+daily Koyck process is simulated with a true current effect $\beta = 1$ and a true daily
+carryover $\lambda = 0.9$ (long-run multiplier $\beta/(1-\lambda)=10$), with a single
+advertising pulse each week (every Thursday)—so the unit exposure time is **one week**. The
+series is then estimated three ways: the original Koyck on the daily microdata; the *same*
+(wrong) Koyck on the weekly data; the *extended* Koyck @eq-koyck-extended on the weekly data
+(the unit exposure time); and the original Koyck on monthly data (coarser than the unit
+exposure time).
+
+```{r adv-data-interval, message=FALSE, warning=FALSE}
+library(tidyverse)
+set.seed(1)
+
+# --- True DAILY data-generating process: DGP1 of Tellis & Franses (2006) ---
+beta <- 1; lambda <- 0.9                          # current effect; daily carryover
+daily <- expand.grid(
+  day  = c("mon", "tue", "wed", "thu", "fri", "sat", "sun"),
+  week = 1:4, month = 1:12, year = 1:30
+) |>
+  tibble::rowid_to_column("t") |>
+  mutate(
+    ad    = if_else(day == "thu", runif(n()), 0),  # ONE pulse per week (Thursday)
+    e     = rnorm(n(), 0, 0.1),
+    sales = 0
+  )
+for (t in 2:nrow(daily)) {                         # generate the Koyck dynamics
+  daily$sales[t] <- lambda * daily$sales[t - 1] + beta * daily$ad[t] +
+                    daily$e[t] - lambda * daily$e[t - 1]
+}
+daily <- slice(daily, -1)                          # drop the seeded first row
+
+# Aggregate to weekly and monthly buckets, in true time order
+weekly  <- daily |> group_by(year, month, week) |>
+  summarise(sales = sum(sales), ad = sum(ad), .groups = "drop") |>
+  arrange(year, month, week)
+monthly <- daily |> group_by(year, month) |>
+  summarise(sales = sum(sales), ad = sum(ad), .groups = "drop") |>
+  arrange(year, month)
+
+# (a) ORIGINAL Koyck: sales_t = lambda*sales_{t-1} + beta*ad_t
+koyck <- function(d) {
+  s <- summary(lm(sales ~ lag(sales) + ad - 1, data = d))$coefficients
+  c(lambda_hat = s[1, 1], beta_hat = s[2, 1])
+}
+# (b) EXTENDED Koyck at the unit exposure time (K microperiods per UET):
+#     S_T = lambda^K S_{T-1} + b1 A_T + b2 A_{T-1}, then recover
+#     lambda = phi^(1/K) and beta = (b1 + b2)(1 - lambda) / (1 - phi).
+koyck_ext <- function(d, K) {
+  s   <- summary(lm(sales ~ lag(sales) + ad + lag(ad) - 1, data = d))$coefficients
+  phi <- s[1, 1]; b1 <- s[2, 1]; b2 <- s[3, 1]
+  lam <- phi^(1 / K); bet <- (b1 + b2) * (1 - lam) / (1 - phi)
+  c(lambda_hat = lam, beta_hat = bet)
+}
+
+results <- bind_rows(
+  c(interval = "daily  (microdata, orig. Koyck)",    koyck(daily)),
+  c(interval = "weekly (orig. Koyck = wrong model)", koyck(weekly)),
+  c(interval = "weekly (extended Koyck = UET)",      koyck_ext(weekly, 7)),
+  c(interval = "monthly (orig. Koyck, > UET)",       koyck(monthly))
+) |>
+  mutate(
+    across(c(lambda_hat, beta_hat), \(x) round(as.numeric(x), 3)),
+    long_run_hat  = round(beta_hat / (1 - lambda_hat), 2),
+    lambda_true   = lambda, beta_true = beta, long_run_true = beta / (1 - lambda)
+  )
+
+results
+```
+
+The pattern reproduces @tellis2006's Table 1. On the daily microdata the original Koyck
+returns the truth ($\hat\lambda \approx 0.89$, $\hat\beta \approx 1.0$). Fitting that *same*
+model to the weekly data is badly biased—$\hat\lambda$ collapses toward zero (to $\approx
+0.66$) and $\hat\beta$ inflates several-fold (to $\approx 3.4$)—which is precisely the
+"data-interval bias" that @clarke1976 documented and that the older literature wrongly
+blamed on choosing too fine an interval. The repair is *not* finer data but the *right model*
+at the unit exposure time: the extended Koyck @eq-koyck-extended fitted to the *same weekly*
+data recovers the true microparameters ($\hat\lambda \approx 0.90$, $\hat\beta \approx 1.0$).
+This is @tellis2006's central result—the week, not some interpurchase cycle, is the optimal
+interval, and one need not assume anything about the advertising process to get there. Daily
+data would also recover the truth (with no disaggregation bias), but the week is *optimal*
+because it is the largest, and therefore the cheapest to collect, interval that still admits
+unbiased recovery. Aggregating *beyond* the unit exposure time, however, is fatal: a month
+holds four Thursday pulses, so even the extended single-lag model cannot disentangle them,
+and the monthly original Koyck is severely biased ($\hat\beta \approx 7$). One quantity is
+notably robust—the long-run multiplier $\beta/(1-\lambda)$ stays near its true value of
+$10$ at every interval, because the cumulative effect is conserved even as its split into a
+quick hit and a slow decay is scrambled. The managerial lesson is sharp: a firm that fits a
+naïve carryover model to monthly data will conclude that advertising has almost no memory
+and a large instantaneous punch—precisely backwards—and will flight its budget wrongly, even
+though its estimate of advertising's *total* return is roughly right. The fix is to collect
+at the unit exposure time and adjust the model, not to chase ever-finer data or to default to
+the purchase cycle.
+
 ### Advertising's Effects on Word of Mouth, Traffic, and Firm Value
 
 A productive response to small sales elasticities is to widen the dependent variable.
@@ -676,6 +846,13 @@ not the sophistication of the regression, is what makes the estimate believable.
 - Credibly identified advertising effects are **small, heterogeneous, and often
   unprofitable** at the margin; naïve regressions overstate them because firms target
   favorable conditions [@shapiro2021tv; @Gordon_2017; @Lewis_2015].
+- Advertising's effect is **dynamic**: the geometric distributed lag and its Koyck form
+  (@eq-koyck) split it into a current effect and a carryover, and the **optimal data
+  interval** for recovering that split is the *unit exposure time*—the largest period
+  holding at most one ad pulse—not the interpurchase time; at that interval the *adjusted*
+  (extended) Koyck model (@eq-koyck-extended) recovers the true microparameters, finer data
+  adds cost but no bias, and aggregating beyond it biases the carryover while roughly
+  preserving the long-run multiplier [@tellis2006; @clarke1976].
 - Widening the dependent variable—to word of mouth, traffic, firm value, even public
   health—and respecting **spillover** and **attribution** often reveals effects that
   immediate own-brand sales elasticities miss [@hewett2016; @fossen2021impact; @ghosh2023societal].
