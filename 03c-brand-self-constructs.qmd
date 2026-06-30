@@ -1,0 +1,289 @@
+# Brand Equity, Attachment, and the Self {#sec-brand-self}
+
+The constructs of the previous two chapters describe how consumers evaluate
+offerings (@sec-evaluative) and bond with sellers (@sec-relational). This chapter
+turns to the construct that is, for many firms, the single most valuable intangible
+they own: the **brand**, as it lives in the consumer's mind. We treat the brand not
+as the firm-side financial asset—that is the subject of @sec-branding, which develops
+brand valuation, signaling, and the market's pricing of brands—but as a *consumer
+psychological construct*: the network of awareness, associations, personality, and
+emotional bonds that a brand name activates, and that causes a consumer to respond to
+the branded offering differently from how they would respond to an identical unbranded
+one. That differential response *is* the construct, and it is the thread connecting
+everything below.
+
+The chapter builds from the most cognitive of these constructs to the most affective
+and identity-laden. We begin with **customer-based brand equity** (CBBE), the
+knowledge-based foundation; add **brand personality**, the brand-as-person layer of
+associations; then the affective bonds of **brand attachment** and **brand love**; and
+finally the identity constructs—**self–brand connection** and **consumer–company
+identification**—where the brand becomes a resource the consumer uses to construct and
+signal the self. A unifying concern is discriminant validity (@sec-construct-vs-variable):
+this is the most crowded construct neighborhood in marketing, and brand attitude,
+attachment, love, identification, and self-connection overlap enough that distinguishing
+them empirically is a genuine and recurring challenge rather than a formality.
+
+## Customer-Based Brand Equity {#sec-bse-cbbe}
+
+The foundational construct is **customer-based brand equity**, defined by @keller1993 as
+the *differential effect of brand knowledge on consumer response to the marketing of the
+brand*. The definition is operational and causal: brand equity exists to the extent that
+consumers respond more favorably to a marketing action (a product, a price, an ad) when it
+is attributed to the brand than when the same action is attributed to an unnamed or
+fictitiously named version. The construct's content is **brand knowledge**, which @keller1993
+decomposes into two dimensions:
+
+- **Brand awareness:** the strength of the brand node in memory, comprising *recognition*
+  (can the consumer identify the brand when cued?) and *recall* (does the brand come to
+  mind in a purchase situation?).
+- **Brand image:** the set of **brand associations** held in memory, evaluated on their
+  *strength* (how reliably they activate), *favorability* (how positively valued), and
+  *uniqueness* (how distinct from competitors). Associations span attributes, benefits, and
+  attitudes.
+
+@yoo2001 operationalize a multidimensional CBBE scale, recovering perceived quality, brand
+loyalty, and brand awareness/associations as measurable facets. Whether brand equity is best
+modeled as a **reflective** construct (a latent equity causing its indicators) or a
+**formative** index (built from distinct dimensions) is a live and unsettled dispute, exactly
+the reflective/formative decision of @tbl-reflective-formative—and the stakes are real, since
+the wrong specification invalidates the reliability and validity diagnostics one then applies
+[@kellerlehmann2006]. The branding chapter (@sec-branding) returns to this in the context of
+brand *valuation*.
+
+### Operationalizing the differential-response definition {#sec-bse-cbbe-sim}
+
+Keller's definition is directly simulable, and doing so clarifies what "brand equity" *is*
+as a measured quantity. Consider an identical marketing action—say, a modest price
+premium—presented to two matched groups of consumers, one seeing the action under a known
+brand and one under an unbranded control. Brand equity is the *difference in response*
+between the two, and it manifests statistically as a **brand × action interaction**: the
+slope of response on the marketing variable differs by branding condition. The chunk below
+simulates this and recovers brand equity as that interaction, the cleanest operational
+statement of @keller1993.
+
+```{r}
+#| message: false
+#| warning: false
+#| label: bse-cbbe-differential
+set.seed(1993)
+n <- 2000
+
+branded <- rbinom(n, 1, 0.5)              # 1 = known brand, 0 = unbranded control
+price_premium <- runif(n, 0, 1)           # the identical marketing action
+
+# Unbranded buyers punish a premium; branded buyers tolerate it.
+# Brand equity = the *differential* response = the interaction coefficient.
+intent <- 3.0 - 1.6 * price_premium +                    # base premium aversion
+          1.4 * branded * price_premium +                # equity: premium tolerated
+          0.3 * branded +                                # baseline brand lift
+          rnorm(n, sd = 0.8)
+
+fit <- lm(intent ~ price_premium * branded)
+co  <- summary(fit)$coefficients
+cat("Differential-response (brand equity) = interaction term:\n")
+print(round(co["price_premium:branded", ], 3))
+cat(sprintf("\nPremium slope, unbranded: %.2f\nPremium slope, branded  : %.2f\n",
+            co["price_premium", 1],
+            co["price_premium", 1] + co["price_premium:branded", 1]))
+```
+
+The interaction is brand equity made numeric: under the brand, the same price premium
+destroys far less purchase intent. A firm that measured only the *level* of intent (the
+main effect of `branded`) would understate the asset, because the most valuable thing the
+brand buys is not a constant lift but a *flatter response to adverse marketing actions*—
+price tolerance, defense against competitor moves, resilience to a misstep. That resilience
+is also why strong brands are double-edged (the dark-side finding of @sec-relational): the
+same equity that buffers small failures raises the expectation a large failure violates
+[@aaker2004].
+
+## Brand Personality {#sec-bse-personality}
+
+Among the associations that compose brand image is a distinctive set: the **human
+personality traits** consumers ascribe to a brand. @aaker1997 establishes **brand
+personality** as a construct with a replicable five-factor structure—**sincerity,
+excitement, competence, sophistication, and ruggedness**—paralleling but not identical to
+the human Big Five. The construct matters because personality associations are
+*self-expressive*: a consumer chooses a "rugged" or "sophisticated" brand partly to express
+or claim those traits, which is the bridge to the self-connection constructs below. Brand
+personality is measured reflectively, each factor by multiple trait items, and its factor
+structure is a standard application of the confirmatory-factor machinery of
+@sec-construct-vs-variable. The chunk recovers the five-factor structure from simulated
+trait ratings, illustrating both the measurement model and the discriminant question of
+whether the factors are genuinely distinct.
+
+```{r}
+#| message: false
+#| warning: false
+#| label: bse-personality-efa
+set.seed(1997)
+n <- 600
+# Five latent personality factors, each with 3 trait indicators.
+facs <- c("sincerity", "excitement", "competence", "sophistication", "ruggedness")
+F <- matrix(rnorm(n * 5), n, 5); colnames(F) <- facs
+lam <- c(0.82, 0.78, 0.72)
+blocks <- lapply(1:5, function(k)
+  sapply(lam, function(l) l * F[, k] + rnorm(n, sd = sqrt(1 - l^2))))
+dat <- as.data.frame(do.call(cbind, blocks))
+names(dat) <- paste0(rep(substr(facs, 1, 4), each = 3), 1:3)
+
+fa <- factanal(dat, factors = 5, rotation = "varimax")
+cat("Proportion of variance explained by the 5 factors:\n")
+print(round(colSums(fa$loadings^2) / ncol(dat), 3))
+cat(sprintf("\nLikelihood-ratio test that 5 factors suffice: p = %.3f\n", fa$PVAL))
+```
+
+When five factors fit, brand personality is defensible as a five-dimensional construct;
+the recurring critique—that the dimensions are unstable across cultures and product
+categories, and that some "factors" are category artifacts—is a discriminant- and
+generalizability-validity concern, not a refutation of the construct's usefulness.
+
+## Brand Attachment {#sec-bse-attachment}
+
+Cognition and personality describe what a consumer *knows* about a brand; **brand
+attachment** describes the *emotional bond*. @thomson2005ties define it as the strength of
+the affective tie connecting the consumer to the brand and develop a scale with three
+facets—**affection, passion, and connection**—the "ties that bind." Attachment is
+theoretically distinct from a favorable attitude: one can evaluate a brand positively
+(strong attitude) without feeling bonded to it, and the distinction is not academic.
+@park2010attachment demonstrate **conceptual and empirical differentiation** of brand
+attachment from brand-attitude strength, showing that attachment predicts behaviors—actual
+purchase, brand-supportive effort, willingness to sacrifice—*beyond* what attitude strength
+predicts, and that attachment uniquely involves **separation distress** and the inclusion of
+the brand in the self. The managerial implication is that a brand can have many
+favorably-disposed customers and few *attached* ones, and the attached minority carries
+disproportionate behavioral value.
+
+### Attachment's incremental prediction {#sec-bse-attach-incremental}
+
+The @park2010attachment result—attachment predicts behavior beyond attitude—is an
+incremental-validity claim, testable as a hierarchical regression in which attachment is
+entered after attitude and must add explained variance. The chunk simulates correlated
+attachment and attitude (they overlap, as the construct-crowding worry predicts) and shows
+attachment's incremental $R^2$ for a behavioral outcome.
+
+```{r}
+#| message: false
+#| warning: false
+#| label: bse-attach-incremental
+set.seed(2010)
+n <- 1500
+
+# Attitude and attachment are correlated (rho ~ 0.6) but distinct.
+L  <- chol(matrix(c(1, 0.6, 0.6, 1), 2))
+Z  <- matrix(rnorm(n * 2), n, 2) %*% L
+attitude   <- Z[, 1]
+attachment <- Z[, 2]
+
+# Behavior (e.g., willingness to sacrifice) depends MORE on attachment.
+behavior <- 0.20 * attitude + 0.55 * attachment + rnorm(n, sd = 0.8)
+
+r2_att   <- summary(lm(behavior ~ attitude))$r.squared
+r2_both  <- summary(lm(behavior ~ attitude + attachment))$r.squared
+cat(sprintf("R^2 with attitude only        : %.3f\n", r2_att))
+cat(sprintf("R^2 adding brand attachment   : %.3f\n", r2_both))
+cat(sprintf("Incremental R^2 of attachment : %.3f\n", r2_both - r2_att))
+```
+
+Attachment adds substantial explained variance over attitude, the incremental-validity
+signature that justifies treating it as a separate construct rather than a relabeling of a
+strong attitude—provided, always, that the discriminant-validity battery of
+@sec-construct-vs-variable confirms the two are empirically separable in the data at hand.
+
+## Brand Love {#sec-bse-love}
+
+Stronger and more elaborated than attachment is **brand love**. @batra2012 develop it not as
+a single emotion but as a **higher-order prototype**—a constellation of cognitions, emotions,
+and behaviors that consumers themselves classify as love. Its elements include
+self–brand integration, passion-driven behaviors, positive emotional connection, a long-term
+relationship orientation, anticipated separation distress, and overall attitude valence and
+strength. @carroll2006love establish the construct's nomological network: brand love is fed by
+**hedonic** and **self-expressive** brand qualities and drives **brand loyalty** and
+**positive word of mouth**, linking it forward to the engagement and advocacy constructs and
+backward to the loyalty of @sec-relational. The prototype structure has a measurement
+consequence: because love is defined as a *constellation* whose elements need not be
+interchangeable, it sits closer to the formative pole of @tbl-reflective-formative than a
+unidimensional reflective scale, and forcing it into a single coefficient-$\alpha$ logic
+(@eq-02-alpha) discards exactly the multidimensionality that distinguishes love from mere
+liking.
+
+## The Self: Connection and Identification {#sec-bse-self}
+
+The deepest brand constructs locate the brand *inside the consumer's identity*. @escalas2005self
+show that consumers form **self–brand connections** by using brands to construct and
+communicate the self—drawing brand meaning from **reference groups** (a brand used by an
+aspirational in-group acquires self-expressive value) in a way moderated by the consumer's
+**self-construal**. The brand becomes, in Escalas and Bettman's later phrase, part of "me":
+a resource for self-definition rather than merely an object of evaluation [@edsonescalas].
+
+@bhattacharya2003 generalize the identity link from brands to *companies* with
+**consumer–company identification**, grounding it in **social-identity theory**: consumers
+identify with a company when doing so satisfies self-definitional needs—when the company's
+identity is attractive, distinctive, and overlaps the consumer's own self-concept—and that
+identification, not mere satisfaction, drives deep, resilient, advocacy-rich relationships.
+The identity constructs reframe the entire construct map of this part: where satisfaction
+(@sec-satisfaction) and the relational constructs (@sec-relational) treat the consumer as an
+evaluator and relationship partner, the self constructs treat the consumer as someone *using*
+brands to answer the question "who am I?"—which is why these bonds are the hardest for
+competitors to break and the most damaging to betray.
+
+## The Construct Thicket {#sec-bse-thicket}
+
+The progression from CBBE through personality, attachment, love, self-connection, and
+identification is a progression of *increasing overlap*, and it creates the chapter's central
+measurement hazard. Brand attitude, attachment, love, self–brand connection, and
+identification are all positively affective, all measured by similar self-report batteries on
+the same survey, and all correlated—the textbook conditions for both **common-method variance**
+and **discriminant-validity failure** (@sec-construct-vs-variable). @tbl-bse-constructs
+distinguishes them conceptually, but conceptual distinction is necessary, not sufficient: the
+empirical burden is to show, via the Fornell–Larcker or HTMT criteria (@eq-02-ave), that each
+construct's AVE exceeds its shared variance with the others. A literature that proliferates
+near-synonymous brand constructs without clearing that bar is, in the language of @sec-construct-vs-variable,
+relabeling one construct as several.
+
+| Construct | Core content | Distinguishing feature | Key source |
+|---|---|---|---|
+| Brand equity (CBBE) | Brand knowledge (awareness + image) | *Differential* response to marketing | @keller1993 |
+| Brand personality | Human traits ascribed to the brand | Five-factor association structure | @aaker1997 |
+| Brand attitude | Overall favorable evaluation | Valence/strength, no emotional bond | @park2010attachment |
+| Brand attachment | Emotional bond (affection, passion, connection) | Separation distress; predicts behavior beyond attitude | @thomson2005ties; @park2010attachment |
+| Brand love | Prototype constellation | Self-integration + long-term orientation | @batra2012; @carroll2006love |
+| Self–brand connection | Brand used to construct the self | Reference-group/self-construal driven | @escalas2005self |
+| Consumer–company identification | Identity overlap with the firm | Social-identity grounding | @bhattacharya2003 |
+
+: The brand-and-self construct family. Conceptual distinctions are clear; the empirical burden is to demonstrate discriminant validity among them (@sec-construct-vs-variable). {#tbl-bse-constructs}
+
+## Key Takeaways {#sec-bse-takeaways}
+
+- **Customer-based brand equity** is the *differential effect of brand knowledge on response
+  to marketing* [@keller1993]: brand knowledge = awareness + image (associations' strength,
+  favorability, uniqueness), and equity manifests as a brand × action interaction
+  (@sec-bse-cbbe-sim), buying price tolerance and resilience, not just a level lift. Whether
+  it is reflective or formative is unsettled [@yoo2001; @kellerlehmann2006].
+- **Brand personality** has a replicable five-factor structure—sincerity, excitement,
+  competence, sophistication, ruggedness [@aaker1997]—and is self-expressive, bridging to the
+  identity constructs.
+- **Brand attachment** is an emotional bond (affection, passion, connection) [@thomson2005ties]
+  empirically distinct from attitude strength and predicting behavior *beyond* it
+  [@park2010attachment] (@sec-bse-attach-incremental).
+- **Brand love** is a higher-order *prototype* constellation [@batra2012], fed by hedonic and
+  self-expressive qualities and driving loyalty and WOM [@carroll2006love]; its multidimensionality
+  pushes it toward the formative pole (@tbl-reflective-formative).
+- The **self constructs**—self–brand connection [@escalas2005self; @edsonescalas] and
+  consumer–company identification [@bhattacharya2003]—locate the brand inside identity via
+  reference groups and social-identity theory; these bonds are the most resilient and the most
+  damaging to betray.
+- The family is a **construct thicket** (@tbl-bse-constructs): high overlap makes
+  discriminant validity and common-method-variance control (@sec-construct-vs-variable) a
+  precondition, not a formality, for any model that uses several of these constructs together.
+
+## Further Reading {#sec-bse-further}
+
+The CBBE foundation is @keller1993, with measurement in @yoo2001 and the research-priorities
+overview in @kellerlehmann2006; the firm-side and financial treatment is @sec-branding.
+Brand personality is @aaker1997. On the affective bonds, read @thomson2005ties for attachment
+measurement and @park2010attachment for its differentiation from attitude, then @batra2012 and
+@carroll2006love for brand love. The identity constructs are developed in @escalas2005self and
+@edsonescalas (self–brand connection) and @bhattacharya2003 (consumer–company identification);
+the consumer–brand-relationship lineage runs through @fournier1998 and the dark-side evidence
+of @aaker2004. The discriminant-validity discipline the whole family requires is the apparatus
+of @sec-construct-vs-variable.

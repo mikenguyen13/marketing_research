@@ -1,0 +1,279 @@
+# Engagement, Involvement, and Word of Mouth {#sec-engagement}
+
+The constructs so far have described the consumer as an evaluator (@sec-evaluative),
+a relationship partner (@sec-relational), and a brand-identifier (@sec-brand-self).
+This chapter turns to the consumer as a *participant*—someone whose contribution to a
+firm extends past the purchase to include attention, effort, advocacy, content, and
+referrals. Three constructs organize this participatory turn. **Involvement** is the
+motivational state—the personal relevance of an object that determines how much
+cognitive effort a consumer will expend on it. **Engagement** is the set of behavioral
+and psychological manifestations of an active relationship that go *beyond* transactions.
+And **word of mouth** (WOM) is the social output—the informal communication about
+products and brands that consumers direct at other consumers, and that has become, in
+the digital era, the most consequential and most measurable of the three.
+
+These constructs have moved from the periphery of marketing to its center as firms have
+recognized that a customer's value is not exhausted by what they buy: a customer who
+writes reviews, refers friends, and defends the brand creates value through channels
+that transaction data alone cannot see. We develop involvement first, as the
+motivational antecedent and a moderator that reshapes how all persuasion works; then
+customer engagement, including its decomposition into a total *engagement value*; then
+word of mouth as a construct distinct from the *mechanics* of diffusion treated in
+@sec-virality. As throughout this part, the measurement subtext is discriminant
+validity: engagement, involvement, participation, and WOM-intention are easy to define
+apart and hard to keep apart in data.
+
+## Involvement {#sec-eng-involvement}
+
+**Involvement** is a person's perceived relevance of an object based on inherent needs,
+values, and interests [@zaichkowsky1985]. It is a *motivational* construct: high
+involvement means the object matters to the consumer, which mobilizes attention,
+information search, and elaboration; low involvement means it does not, so decisions are
+made with minimal cognitive effort. @zaichkowsky1985 develops the Personal Involvement
+Inventory to measure it reflectively, and the construct is standardly partitioned along
+two axes—**enduring** involvement (a stable interest in a category) versus **situational**
+involvement (temporarily heightened by a purchase occasion or risk), and by object
+(*product*, *advertising*, and *purchase-decision* involvement).
+
+Involvement's theoretical importance is less as an outcome than as a **moderator** of how
+persuasion operates. The Elaboration Likelihood Model [@petty1983] holds that persuasion
+travels two routes: a **central route**, in which highly involved consumers scrutinize the
+quality of an argument, and a **peripheral route**, in which uninvolved consumers respond
+to surface cues (source attractiveness, number of arguments, music) without evaluating
+substance. Involvement determines which route dominates, so the *same* advertisement
+persuades through different mechanisms depending on the audience's involvement—a result
+that reshapes advertising strategy (@sec-advertising) and that makes involvement a
+prerequisite variable for almost any study of message effects.
+
+### Involvement as a moderator of message effects {#sec-eng-elm}
+
+The ELM's central prediction is an *interaction*: argument quality matters more for
+high-involvement consumers, while peripheral cues matter more for low-involvement
+consumers. The chunk simulates this crossover and recovers the two interactions,
+illustrating why a study that ignores involvement will estimate an average message effect
+that describes no actual consumer.
+
+```{r}
+#| message: false
+#| warning: false
+#| label: eng-elm-moderation
+set.seed(1983)
+n <- 4000
+
+involvement <- rbinom(n, 1, 0.5)            # 1 = high, 0 = low
+arg_quality <- rnorm(n)                     # strength of the message's arguments
+periph_cue  <- rnorm(n)                     # attractiveness/number of cues
+
+# High-involvement: persuasion via argument quality (central route).
+# Low-involvement:  persuasion via peripheral cues.
+attitude <- 0.10 +
+  0.55 * involvement * arg_quality +        # central route (only when involved)
+  0.10 * (1 - involvement) * arg_quality +
+  0.50 * (1 - involvement) * periph_cue +   # peripheral route (only when uninvolved)
+  0.10 * involvement * periph_cue +
+  rnorm(n, sd = 0.8)
+
+fit <- lm(attitude ~ arg_quality * involvement + periph_cue * involvement)
+co  <- round(summary(fit)$coefficients[, c("Estimate", "Pr(>|t|)")], 3)
+# Show the main effects and their involvement interactions (robust to term naming).
+keep <- grepl("arg_quality|periph_cue", rownames(co))
+print(co[keep, ])
+```
+
+The positive `arg_quality:involvement` interaction and the negative
+`periph_cue:involvement` interaction are the ELM crossover: involvement routes persuasion.
+An analyst who omitted involvement and regressed attitude on argument quality alone would
+recover a muddy average, understating the central route for the involved and missing the
+peripheral route for the uninvolved entirely.
+
+## Customer Engagement {#sec-eng-engagement}
+
+**Customer engagement** generalizes the relationship beyond the transaction. @vandoorn2010
+define **customer engagement behaviors** (CEBs) as a customer's behavioral manifestations
+toward a firm, beyond purchase, that result from motivational drivers—writing reviews,
+making recommendations, helping other customers, blogging, and otherwise contributing.
+@brodie2011 give the construct its conceptual domain, framing engagement as an
+**interactive, co-creative** experience with a focal object that comprises cognitive,
+emotional, and behavioral dimensions and that arises within an iterative process of
+relationship development. @hollebeek2011 develops the brand-specific version. The common
+thread is that engagement captures value-creating customer activity that purchase metrics
+miss, which is why it rose to prominence exactly as social media made such activity
+visible and abundant.
+
+@pansari2017 supply the nomological network: engagement is built on a foundation of
+satisfaction *and* emotion (a relationship must be both satisfying and emotionally
+connected to become engaged), and it produces value through **direct** contributions
+(purchases) and **indirect** contributions (referrals, influence, feedback). The
+direct/indirect split is the conceptual bridge to a measurement program that tries to put
+a number on the whole of a customer's value.
+
+### Total customer engagement value {#sec-eng-cev}
+
+@kumar2010cev decompose a customer's total worth into four additive components—the move
+that lets engagement be *valued*, not just described:
+
+- **Customer Lifetime Value (CLV):** the discounted margin from the customer's own
+  purchases (the construct developed in @sec-clv).
+- **Customer Referral Value (CRV):** value from customers acquired through this customer's
+  formal referrals.
+- **Customer Influencer Value (CIV):** value from this customer's influence on other
+  customers and prospects through word of mouth and social spread.
+- **Customer Knowledge Value (CKV):** value from the feedback and ideas the customer
+  contributes to the firm.
+
+A customer who buys little but refers and influences many can be worth more than a heavy
+buyer who does neither, which is the entire point: optimizing CLV alone (@sec-clv)
+*undervalues* engaged customers and can lead a firm to fire its most valuable advocates.
+The decomposition is **formative**—the four components are distinct value sources that are
+summed, not interchangeable reflections of a latent engagement (@tbl-reflective-formative)—so
+the appropriate reliability question is not internal consistency but whether the components
+are correctly weighted and non-overlapping. The chunk simulates a customer base and shows
+how rank-ordering customers by total engagement value reshuffles the priority list relative
+to CLV alone.
+
+```{r}
+#| message: false
+#| warning: false
+#| label: eng-cev-decomp
+set.seed(2010)
+n <- 5000
+
+# Four value components; deliberately NOT perfectly correlated, so that
+# CLV alone mis-ranks customers relative to total engagement value.
+clv <- rgamma(n, shape = 2, scale = 120)                 # own-purchase value
+crv <- rgamma(n, shape = 1.2, scale = 60) * (runif(n) < .5)  # referral value
+civ <- rgamma(n, shape = 1.1, scale = 90) * (runif(n) < .4)  # influencer value
+ckv <- rgamma(n, shape = 1.0, scale = 25) * (runif(n) < .3)  # knowledge value
+
+cev <- clv + crv + civ + ckv                              # total engagement value
+
+top_clv <- order(clv, decreasing = TRUE)[1:500]           # top 500 by CLV
+top_cev <- order(cev, decreasing = TRUE)[1:500]           # top 500 by CEV
+overlap <- length(intersect(top_clv, top_cev))
+
+cat(sprintf("Correlation CLV vs total engagement value: %.2f\n", cor(clv, cev)))
+cat(sprintf("Of the top-500 customers by CLV, only %d are also top-500 by CEV.\n", overlap))
+cat(sprintf("=> %d high-engagement customers are INVISIBLE to a CLV-only ranking.\n",
+            500 - overlap))
+```
+
+A non-trivial share of the most valuable customers by total engagement value are *not* in
+the CLV top tier, so a firm that targets and rewards on CLV alone systematically neglects
+its referral and influence engine. Engagement, made measurable through the CEV
+decomposition, is the construct that corrects that blind spot.
+
+## Word of Mouth {#sec-eng-wom}
+
+The most-studied engagement behavior is **word of mouth**—informal, consumer-to-consumer
+communication about products and brands. It is essential to distinguish WOM-the-*construct*
+from the *diffusion mechanics* of @sec-virality: this chapter treats WOM as a property of
+consumers (their propensity to talk, the valence and volume of what they say, and its
+antecedents), while the virality chapter treats the network dynamics by which messages
+spread. As a construct, WOM is characterized by **valence** (positive vs. negative),
+**volume** (how much), and the gap between **intention** and **behavior**.
+
+Its antecedents are well mapped. @anderson1998wom establishes that the satisfaction–WOM
+relationship is **asymmetric and U-shaped**: both highly satisfied *and* highly
+dissatisfied customers generate more word of mouth than indifferent ones, and the
+dissatisfied generate disproportionately much—the negativity that recurs throughout this
+book (the loss-aversion theme of @sec-satisfaction). @brown2005wom identify the drivers of
+*positive* WOM intentions and behaviors, finding commitment and identification (the
+constructs of @sec-relational and @sec-brand-self) central. @berger2014wom synthesizes the
+psychology of *why* people talk, organizing the drivers into five functions—impression
+management, emotion regulation, information acquisition, social bonding, and persuasion—and
+the meta-analysis of @dematos2008 quantifies the antecedents across studies, confirming
+satisfaction, loyalty, commitment, perceived quality, and trust as robust drivers. WOM is
+thus the social *output* of nearly every other construct in this part.
+
+### The U-shaped satisfaction–WOM relationship {#sec-eng-wom-ushape}
+
+The @anderson1998wom finding is a clean nonlinearity worth making explicit, because a
+linear model would conclude—wrongly—that satisfaction monotonically increases word of
+mouth. The chunk simulates WOM volume as a U-shaped function of satisfaction with a
+steeper negative arm (the dissatisfied talk more), and contrasts the misleading linear fit
+with the correct quadratic one.
+
+```{r}
+#| message: false
+#| warning: false
+#| label: eng-wom-ushape
+#| fig-cap: "Word-of-mouth volume as a U-shaped function of satisfaction (Anderson 1998): the very satisfied and the very dissatisfied talk most, with a steeper dissatisfaction arm. A linear fit (dashed) misses the mechanism entirely."
+set.seed(1998)
+n <- 1500
+sat <- runif(n, 1, 7)                          # satisfaction, 1..7
+center <- 4
+# U-shape with a steeper negative arm; minimum WOM near the middle.
+wom <- 1.2 * (sat - center)^2 +
+       0.9 * pmax(center - sat, 0) +           # extra volume on the dissatisfied side
+       rnorm(n, sd = 1.5)
+wom <- pmax(wom, 0)
+
+lin  <- lm(wom ~ sat)
+quad <- lm(wom ~ poly(sat, 2))
+cat(sprintf("Linear fit R^2    : %.3f\n", summary(lin)$r.squared))
+cat(sprintf("Quadratic fit R^2 : %.3f\n", summary(quad)$r.squared))
+
+plot(sat, wom, pch = 19, cex = 0.3, col = "grey60",
+     xlab = "Satisfaction", ylab = "WOM volume", main = "Satisfaction and word of mouth")
+ord <- order(sat)
+abline(lin, lty = 2, lwd = 2)
+lines(sat[ord], predict(quad)[ord], col = "firebrick", lwd = 2)
+legend("top", c("Linear (misleading)", "Quadratic (correct)"),
+       lty = c(2, 1), col = c("black", "firebrick"), lwd = 2, bty = "n")
+```
+
+The quadratic fit captures the U-shape the linear model flattens into near-nothing: word
+of mouth is generated at *both* tails of satisfaction, and the dissatisfied tail is louder.
+A firm reading a near-zero linear coefficient would wrongly conclude satisfaction does not
+drive WOM, when in fact it drives it nonlinearly and asymmetrically—the same lesson, in a
+new construct, that the satisfaction chapter drew about asymmetric market pricing.
+
+## Measurement and the Construct Boundary {#sec-eng-measurement}
+
+Engagement is the construct most at risk of conceptual inflation. Because it is defined
+expansively—any value-creating activity beyond purchase—it threatens to absorb involvement
+(its motivational antecedent), participation, co-creation, loyalty (@sec-relational), and
+word of mouth (one of its behaviors) into an undifferentiated whole. Two disciplines keep
+the boundary sharp. First, distinguishing the **psychological state** of engagement (a
+motivational, cognitive-affective disposition) from **engagement behaviors** (the observable
+CEBs), and measuring each with its own indicators rather than conflating cause and
+manifestation. Second, recognizing that *engagement value* (CEV) is **formative** while the
+*engagement state* is **reflective**—applying internal-consistency reliability to the former
+or summative weighting to the latter is the model-misspecification error of
+@sec-construct-vs-variable. Word of mouth, similarly, must keep **intention** and **behavior**
+separate (the gap is large and predictable) and **valence** explicit (positive and negative
+WOM have different antecedents and opposite effects), or its measures collapse distinctions the
+theory depends on.
+
+## Key Takeaways {#sec-eng-takeaways}
+
+- **Involvement** is perceived personal relevance [@zaichkowsky1985]—enduring vs.
+  situational, by object—and matters chiefly as a **moderator**: it routes persuasion
+  between the central and peripheral paths of the ELM [@petty1983], so message effects are
+  involvement-conditional (@sec-eng-elm).
+- **Customer engagement** captures value-creating activity beyond purchase—engagement
+  *behaviors* [@vandoorn2010] and an interactive, co-creative *state* [@brodie2011;
+  @hollebeek2011]—built on satisfaction plus emotion and producing direct and indirect value
+  [@pansari2017].
+- **Total customer engagement value** decomposes a customer into CLV + referral + influencer
+  + knowledge value [@kumar2010cev]; it is **formative**, and CLV-only targeting (@sec-clv)
+  systematically undervalues engaged advocates (@sec-eng-cev).
+- **Word of mouth** is a construct of valence, volume, and intention-vs-behavior, distinct
+  from the diffusion mechanics of @sec-virality; the satisfaction–WOM link is **U-shaped and
+  asymmetric** [@anderson1998wom] (@sec-eng-wom-ushape), positive WOM is driven by commitment
+  and identification [@brown2005wom], and the psychology of talking spans five functions
+  [@berger2014wom], with robust meta-analytic antecedents [@dematos2008].
+- The family's measurement discipline is to separate **state from behavior** and **reflective
+  from formative**, and to keep WOM **intention/behavior** and **valence** explicit, on pain
+  of the misspecification errors of @sec-construct-vs-variable.
+
+## Further Reading {#sec-eng-further}
+
+Involvement begins with @zaichkowsky1985 and its moderating role with the ELM of @petty1983.
+For customer engagement, read @vandoorn2010 for the behavioral foundation, @brodie2011 for
+the conceptual domain, and @pansari2017 for the antecedents-and-consequences synthesis, with
+@kumar2010cev for the engagement-value decomposition (and @sec-clv for CLV proper). On word
+of mouth, @anderson1998wom establishes the U-shape, @brown2005wom the positive-WOM
+antecedents, @berger2014wom the psychology of transmission, and @dematos2008 the meta-analytic
+evidence; the diffusion side is @sec-virality. The discriminant- and specification-validity
+cautions are, as ever, the apparatus of @sec-construct-vs-variable.
