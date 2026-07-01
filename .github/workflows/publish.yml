@@ -11,6 +11,10 @@ on:
   push:
     branches: [master, main]
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -57,3 +61,11 @@ jobs:
             exit 0
           fi
           quarto publish connect "$CONNECT_SERVER" --no-prompt --no-browser --no-render
+
+      # build.yml (the "Build book" badge) is workflow_dispatch-only so it never
+      # runs on its own, which leaves its badge stuck on whatever it last showed
+      # -- keep it live by re-dispatching it here on every push.
+      - name: Re-run Build book workflow to refresh its status badge
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run build.yml --ref ${{ github.ref_name }}
