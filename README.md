@@ -3,6 +3,11 @@
 [![Build book](https://github.com/mikenguyen13/marketing_research/actions/workflows/build.yml/badge.svg)](https://github.com/mikenguyen13/marketing_research/actions/workflows/build.yml)
 [![Publish to Posit Connect](https://github.com/mikenguyen13/marketing_research/actions/workflows/publish.yml/badge.svg)](https://github.com/mikenguyen13/marketing_research/actions/workflows/publish.yml)
 [![Rendered with Quarto](https://img.shields.io/badge/rendered%20with-Quarto-blue?logo=quarto)](https://quarto.org)
+[![Latest release](https://img.shields.io/github/v/release/mikenguyen13/marketing_research?include_prereleases)](https://github.com/mikenguyen13/marketing_research/releases)
+[![Last commit](https://img.shields.io/github/last-commit/mikenguyen13/marketing_research)](https://github.com/mikenguyen13/marketing_research/commits/master)
+[![Open issues](https://img.shields.io/github/issues/mikenguyen13/marketing_research)](https://github.com/mikenguyen13/marketing_research/issues)
+[![Repo size](https://img.shields.io/github/repo-size/mikenguyen13/marketing_research)](https://github.com/mikenguyen13/marketing_research)
+[![Stars](https://img.shields.io/github/stars/mikenguyen13/marketing_research?style=social)](https://github.com/mikenguyen13/marketing_research/stargazers)
 
 A technical and academic treatment of marketing research: constructs, substantive domains, and the methods that connect them, with reproducible R code throughout.
 
