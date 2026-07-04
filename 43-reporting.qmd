@@ -165,10 +165,13 @@ m2 <- lm(log_sales ~ price + loyalty + promo, data = dat)
 
 ```{r table-render, message=FALSE, warning=FALSE}
 fmt <- function(model, label) {
+  # Keep cells plain text: the book renders to HTML, PDF, and EPUB from one
+  # execution, so HTML-only markup (e.g., <br>) would leak into LaTeX.
+  # "(Intercept)" is renamed because booktabs' \midrule treats a row that
+  # begins with a literal "(" as a malformed trim spec, breaking the PDF.
   tidy(model) |>
-    transmute(term,
-              !!label := sprintf("%.3f<br><span style='font-size:80%%'>(%.3f)</span>",
-                                 estimate, std.error))
+    transmute(term = sub("^\\(Intercept\\)$", "Intercept", term),
+              !!label := sprintf("%.3f (%.3f)", estimate, std.error))
 }
 tab <- full_join(fmt(m1, "Sparse"), fmt(m2, "Full"), by = "term")
 gof <- tibble(term = "Adj. R-squared",

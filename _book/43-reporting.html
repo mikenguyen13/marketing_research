@@ -844,10 +844,13 @@ window.Quarto = {
 </div>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="va">fmt</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">model</span>, <span class="va">label</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Keep cells plain text: the book renders to HTML, PDF, and EPUB from one</span></span>
+<span>  <span class="co"># execution, so HTML-only markup (e.g., &lt;br&gt;) would leak into LaTeX.</span></span>
+<span>  <span class="co"># "(Intercept)" is renamed because booktabs' \midrule treats a row that</span></span>
+<span>  <span class="co"># begins with a literal "(" as a malformed trim spec, breaking the PDF.</span></span>
 <span>  <span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html">tidy</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/transmute.html">transmute</a></span><span class="op">(</span><span class="va">term</span>,</span>
-<span>              <span class="op">!</span><span class="op">!</span><span class="va">label</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"%.3f&lt;br&gt;&lt;span style='font-size:80%%'&gt;(%.3f)&lt;/span&gt;"</span>,</span>
-<span>                                 <span class="va">estimate</span>, <span class="va">std.error</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/transmute.html">transmute</a></span><span class="op">(</span>term <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html">sub</a></span><span class="op">(</span><span class="st">"^\\(Intercept\\)$"</span>, <span class="st">"Intercept"</span>, <span class="va">term</span><span class="op">)</span>,</span>
+<span>              <span class="op">!</span><span class="op">!</span><span class="va">label</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"%.3f (%.3f)"</span>, <span class="va">estimate</span>, <span class="va">std.error</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">full_join</a></span><span class="op">(</span><span class="fu">fmt</span><span class="op">(</span><span class="va">m1</span>, <span class="st">"Sparse"</span><span class="op">)</span>, <span class="fu">fmt</span><span class="op">(</span><span class="va">m2</span>, <span class="st">"Full"</span><span class="op">)</span>, by <span class="op">=</span> <span class="st">"term"</span><span class="op">)</span></span>
 <span><span class="va">gof</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>term <span class="op">=</span> <span class="st">"Adj. R-squared"</span>,</span>
@@ -867,24 +870,24 @@ window.Quarto = {
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">(Intercept)</td>
-<td style="text-align: right;">5.073&lt;br&gt;&lt;span style='font-size:80%'&gt;(0.270)&lt;/span&gt;</td>
-<td style="text-align: right;">5.878&lt;br&gt;&lt;span style='font-size:80%'&gt;(0.163)&lt;/span&gt;</td>
+<td style="text-align: left;">Intercept</td>
+<td style="text-align: right;">5.073 (0.270)</td>
+<td style="text-align: right;">5.878 (0.163)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">price</td>
-<td style="text-align: right;">-0.852&lt;br&gt;&lt;span style='font-size:80%'&gt;(0.083)&lt;/span&gt;</td>
-<td style="text-align: right;">-1.164&lt;br&gt;&lt;span style='font-size:80%'&gt;(0.054)&lt;/span&gt;</td>
+<td style="text-align: right;">-0.852 (0.083)</td>
+<td style="text-align: right;">-1.164 (0.054)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">loyalty</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">0.774&lt;br&gt;&lt;span style='font-size:80%'&gt;(0.021)&lt;/span&gt;</td>
+<td style="text-align: right;">0.774 (0.021)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">promo1</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">0.485&lt;br&gt;&lt;span style='font-size:80%'&gt;(0.051)&lt;/span&gt;</td>
+<td style="text-align: right;">0.485 (0.051)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Adj. R-squared</td>
@@ -1842,409 +1845,412 @@ Wedel, Michel, and P.K. Kannan. 2016. <span>“Marketing Analytics for Data-Rich
 <span id="cb6-165"><a href="#cb6-165" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-166"><a href="#cb6-166" aria-hidden="true" tabindex="-1"></a><span class="in">```{r table-render, message=FALSE, warning=FALSE}</span></span>
 <span id="cb6-167"><a href="#cb6-167" aria-hidden="true" tabindex="-1"></a>fmt <span class="ot">&lt;-</span> <span class="cf">function</span>(model, label) {</span>
-<span id="cb6-168"><a href="#cb6-168" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tidy</span>(model) <span class="sc">|&gt;</span></span>
-<span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a>    <span class="fu">transmute</span>(term,</span>
-<span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a>              <span class="sc">!!</span><span class="at">label :=</span> <span class="fu">sprintf</span>(<span class="st">"%.3f&lt;br&gt;&lt;span style='font-size:80%%'&gt;(%.3f)&lt;/span&gt;"</span>,</span>
-<span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a>                                 estimate, std.error))</span>
-<span id="cb6-172"><a href="#cb6-172" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-173"><a href="#cb6-173" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> <span class="fu">full_join</span>(<span class="fu">fmt</span>(m1, <span class="st">"Sparse"</span>), <span class="fu">fmt</span>(m2, <span class="st">"Full"</span>), <span class="at">by =</span> <span class="st">"term"</span>)</span>
-<span id="cb6-174"><a href="#cb6-174" aria-hidden="true" tabindex="-1"></a>gof <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">term =</span> <span class="st">"Adj. R-squared"</span>,</span>
-<span id="cb6-175"><a href="#cb6-175" aria-hidden="true" tabindex="-1"></a>              <span class="at">Sparse =</span> <span class="fu">sprintf</span>(<span class="st">"%.3f"</span>, <span class="fu">summary</span>(m1)<span class="sc">$</span>adj.r.squared),</span>
-<span id="cb6-176"><a href="#cb6-176" aria-hidden="true" tabindex="-1"></a>              <span class="at">Full   =</span> <span class="fu">sprintf</span>(<span class="st">"%.3f"</span>, <span class="fu">summary</span>(m2)<span class="sc">$</span>adj.r.squared))</span>
-<span id="cb6-177"><a href="#cb6-177" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(tab, gof) <span class="sc">|&gt;</span></span>
-<span id="cb6-178"><a href="#cb6-178" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">escape =</span> <span class="cn">FALSE</span>, <span class="at">align =</span> <span class="st">"lrr"</span>,</span>
-<span id="cb6-179"><a href="#cb6-179" aria-hidden="true" tabindex="-1"></a>        <span class="at">caption =</span> <span class="st">"Log-sales regressions. Standard errors in parentheses. Adding the loyalty cue and promotion control shifts the price coefficient, the first thing a careful reader checks."</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-180"><a href="#cb6-180" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-181"><a href="#cb6-181" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-182"><a href="#cb6-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-183"><a href="#cb6-183" aria-hidden="true" tabindex="-1"></a>Notice what the two-column layout buys: the price coefficient is visible</span>
-<span id="cb6-184"><a href="#cb6-184" aria-hidden="true" tabindex="-1"></a>*before and after* controls enter, and its stability (or movement) is the</span>
-<span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a>report's most honest robustness signal—far more informative than any single</span>
-<span id="cb6-186"><a href="#cb6-186" aria-hidden="true" tabindex="-1"></a>starred number.</span>
-<span id="cb6-187"><a href="#cb6-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-188"><a href="#cb6-188" aria-hidden="true" tabindex="-1"></a><span class="fu">### When a Figure</span></span>
-<span id="cb6-189"><a href="#cb6-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-190"><a href="#cb6-190" aria-hidden="true" tabindex="-1"></a>A figure is the right instrument when the message is a *relationship*: a trend over</span>
-<span id="cb6-191"><a href="#cb6-191" aria-hidden="true" tabindex="-1"></a>time, a dose–response curve, an interaction, a distribution, an uncertainty band.</span>
-<span id="cb6-192"><a href="#cb6-192" aria-hidden="true" tabindex="-1"></a>The reason is perceptual. Position along a common scale is the visual encoding</span>
-<span id="cb6-193"><a href="#cb6-193" aria-hidden="true" tabindex="-1"></a>humans judge most accurately; length and angle are next; area, color saturation,</span>
-<span id="cb6-194"><a href="#cb6-194" aria-hidden="true" tabindex="-1"></a>and hue are progressively less accurate.<span class="ot">[^cleveland]</span> A figure that encodes its key</span>
-<span id="cb6-195"><a href="#cb6-195" aria-hidden="true" tabindex="-1"></a>comparison as position on a shared axis lets the reader perceive the result;</span>
-<span id="cb6-196"><a href="#cb6-196" aria-hidden="true" tabindex="-1"></a>one that encodes it as color or area forces them to estimate, badly. The design</span>
-<span id="cb6-197"><a href="#cb6-197" aria-hidden="true" tabindex="-1"></a>corollary is that **the variable carrying the result should be encoded by</span>
-<span id="cb6-198"><a href="#cb6-198" aria-hidden="true" tabindex="-1"></a>position**, and decoration that competes for that channel should be removed.</span>
-<span id="cb6-199"><a href="#cb6-199" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-200"><a href="#cb6-200" aria-hidden="true" tabindex="-1"></a><span class="ot">[^cleveland]: </span>This ordering of *elementary perceptual tasks* by accuracy is the</span>
-<span id="cb6-201"><a href="#cb6-201" aria-hidden="true" tabindex="-1"></a>empirical foundation of statistical graphics: encode the most important</span>
-<span id="cb6-202"><a href="#cb6-202" aria-hidden="true" tabindex="-1"></a>comparison in the most accurately perceived channel.</span>
-<span id="cb6-203"><a href="#cb6-203" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- CITE-NEEDED: Cleveland &amp; McGill (1984, JASA) graphical perception ranking of elementary perceptual tasks --&gt;</span> A</span>
-<span id="cb6-204"><a href="#cb6-204" aria-hidden="true" tabindex="-1"></a>practical consequence is the suspicion of pie charts and 3-D bars: they encode</span>
-<span id="cb6-205"><a href="#cb6-205" aria-hidden="true" tabindex="-1"></a>quantity as angle, area, or foreshortened length—exactly the channels the eye</span>
-<span id="cb6-206"><a href="#cb6-206" aria-hidden="true" tabindex="-1"></a>reads worst.</span>
-<span id="cb6-207"><a href="#cb6-207" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-208"><a href="#cb6-208" aria-hidden="true" tabindex="-1"></a>Three failure modes recur and each has a name and a fix. A **truncated axis**—</span>
-<span id="cb6-209"><a href="#cb6-209" aria-hidden="true" tabindex="-1"></a>starting a bar chart's value axis above zero—exaggerates differences by mapping a</span>
-<span id="cb6-210"><a href="#cb6-210" aria-hidden="true" tabindex="-1"></a>small ratio onto a large length; bars must baseline at zero because their meaning</span>
-<span id="cb6-211"><a href="#cb6-211" aria-hidden="true" tabindex="-1"></a>is length. **Overplotting**—thousands of points collapsing into an ink blob—hides</span>
-<span id="cb6-212"><a href="#cb6-212" aria-hidden="true" tabindex="-1"></a>the distribution it purports to show; the fix is transparency, binning, or a</span>
-<span id="cb6-213"><a href="#cb6-213" aria-hidden="true" tabindex="-1"></a>density encoding. **Uncertainty erasure**—drawing a point estimate as a clean line</span>
-<span id="cb6-214"><a href="#cb6-214" aria-hidden="true" tabindex="-1"></a>with no band—is the graphical analogue of reporting $\hat\theta$ without</span>
-<span id="cb6-215"><a href="#cb6-215" aria-hidden="true" tabindex="-1"></a>$\widehat{\operatorname{se}}(\hat\theta)$, and is arguably the most common</span>
-<span id="cb6-216"><a href="#cb6-216" aria-hidden="true" tabindex="-1"></a>dishonesty in applied figures, because a clean line *feels* certain. The honest</span>
-<span id="cb6-217"><a href="#cb6-217" aria-hidden="true" tabindex="-1"></a>default is to draw the interval, not just the estimate.</span>
-<span id="cb6-218"><a href="#cb6-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-219"><a href="#cb6-219" aria-hidden="true" tabindex="-1"></a>The figure below makes the last point operational. It plots the model-implied</span>
-<span id="cb6-220"><a href="#cb6-220" aria-hidden="true" tabindex="-1"></a>relationship between price and log-sales together with a 95% confidence band, so</span>
-<span id="cb6-221"><a href="#cb6-221" aria-hidden="true" tabindex="-1"></a>the reader sees both the estimated slope and how well-pinned it is.</span>
-<span id="cb6-222"><a href="#cb6-222" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-223"><a href="#cb6-223" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fig-uncertainty, message=FALSE, warning=FALSE}</span></span>
-<span id="cb6-224"><a href="#cb6-224" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Model-implied price response with a 95% confidence band. The band, not the line, is the honest object: it shows the reader how precisely the slope is identified."</span></span>
-<span id="cb6-225"><a href="#cb6-225" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 6</span></span>
-<span id="cb6-226"><a href="#cb6-226" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4</span></span>
-<span id="cb6-227"><a href="#cb6-227" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb6-228"><a href="#cb6-228" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">price =</span> <span class="fu">seq</span>(<span class="fu">min</span>(dat<span class="sc">$</span>price), <span class="fu">max</span>(dat<span class="sc">$</span>price), <span class="at">length.out =</span> <span class="dv">100</span>),</span>
-<span id="cb6-229"><a href="#cb6-229" aria-hidden="true" tabindex="-1"></a>                   <span class="at">loyalty =</span> <span class="dv">0</span>, <span class="at">promo =</span> <span class="fu">factor</span>(<span class="dv">0</span>, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)))</span>
-<span id="cb6-230"><a href="#cb6-230" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(m2, <span class="at">newdata =</span> grid, <span class="at">interval =</span> <span class="st">"confidence"</span>)</span>
-<span id="cb6-231"><a href="#cb6-231" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">cbind</span>(grid, pred)</span>
-<span id="cb6-232"><a href="#cb6-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-233"><a href="#cb6-233" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(grid, <span class="fu">aes</span>(price, fit)) <span class="sc">+</span></span>
-<span id="cb6-234"><a href="#cb6-234" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> lwr, <span class="at">ymax =</span> upr), <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb6-235"><a href="#cb6-235" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb6-236"><a href="#cb6-236" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> dat, <span class="fu">aes</span>(price, log_sales), <span class="at">alpha =</span> <span class="fl">0.15</span>, <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
-<span id="cb6-237"><a href="#cb6-237" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Price"</span>, <span class="at">y =</span> <span class="st">"Log-sales (predicted)"</span>) <span class="sc">+</span></span>
-<span id="cb6-238"><a href="#cb6-238" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb6-239"><a href="#cb6-239" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-240"><a href="#cb6-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-241"><a href="#cb6-241" aria-hidden="true" tabindex="-1"></a><span class="fu">### Choosing Between Them</span></span>
-<span id="cb6-242"><a href="#cb6-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-243"><a href="#cb6-243" aria-hidden="true" tabindex="-1"></a>The choice is not stylistic but functional, and it can be stated as a short</span>
-<span id="cb6-244"><a href="#cb6-244" aria-hidden="true" tabindex="-1"></a>decision rule. The table below contrasts the two instruments on the dimensions</span>
-<span id="cb6-245"><a href="#cb6-245" aria-hidden="true" tabindex="-1"></a>that actually decide the call.</span>
-<span id="cb6-246"><a href="#cb6-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-247"><a href="#cb6-247" aria-hidden="true" tabindex="-1"></a><span class="in">```{r tbl-table-vs-figure, echo=FALSE, message=FALSE, warning=FALSE}</span></span>
-<span id="cb6-248"><a href="#cb6-248" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr); <span class="fu">library</span>(kableExtra)</span>
-<span id="cb6-249"><a href="#cb6-249" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
-<span id="cb6-250"><a href="#cb6-250" aria-hidden="true" tabindex="-1"></a>  <span class="at">Dimension =</span> <span class="fu">c</span>(<span class="st">"Reader's task"</span>, <span class="st">"Encodes"</span>, <span class="st">"Best when"</span>, <span class="st">"Exact values"</span>,</span>
-<span id="cb6-251"><a href="#cb6-251" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Patterns/interactions"</span>, <span class="st">"Failure mode"</span>),</span>
-<span id="cb6-252"><a href="#cb6-252" aria-hidden="true" tabindex="-1"></a>  <span class="at">Table =</span> <span class="fu">c</span>(<span class="st">"Look up a value"</span>, <span class="st">"Symbols (digits)"</span>, <span class="st">"Few heterogeneous numbers"</span>,</span>
-<span id="cb6-253"><a href="#cb6-253" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Preserved"</span>, <span class="st">"Reader must compute"</span>, <span class="st">"False precision; hand-typed errors"</span>),</span>
-<span id="cb6-254"><a href="#cb6-254" aria-hidden="true" tabindex="-1"></a>  <span class="at">Figure =</span> <span class="fu">c</span>(<span class="st">"See a relationship"</span>, <span class="st">"Position, length, color"</span>,</span>
-<span id="cb6-255"><a href="#cb6-255" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Many values or a trend"</span>, <span class="st">"Approximate"</span>, <span class="st">"Perceived directly"</span>,</span>
-<span id="cb6-256"><a href="#cb6-256" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Truncated axis; hidden uncertainty"</span>),</span>
-<span id="cb6-257"><a href="#cb6-257" aria-hidden="true" tabindex="-1"></a>  <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb6-258"><a href="#cb6-258" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb6-259"><a href="#cb6-259" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Tables versus figures: the choice follows from what the reader must do with the result."</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-262"><a href="#cb6-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-263"><a href="#cb6-263" aria-hidden="true" tabindex="-1"></a>A useful heuristic: if you find yourself asking the reader to *compare across rows</span>
-<span id="cb6-264"><a href="#cb6-264" aria-hidden="true" tabindex="-1"></a>or columns* of a table, the comparison wants to be a figure; if you find yourself</span>
-<span id="cb6-265"><a href="#cb6-265" aria-hidden="true" tabindex="-1"></a>*annotating a figure with exact numbers* the reader will quote, those numbers want</span>
-<span id="cb6-266"><a href="#cb6-266" aria-hidden="true" tabindex="-1"></a>to be a table. Many reports need both—a figure for the pattern, a table in the</span>
-<span id="cb6-267"><a href="#cb6-267" aria-hidden="true" tabindex="-1"></a>appendix for the values—and that redundancy is a feature, because it serves the</span>
-<span id="cb6-268"><a href="#cb6-268" aria-hidden="true" tabindex="-1"></a>two audiences at once.</span>
-<span id="cb6-269"><a href="#cb6-269" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-270"><a href="#cb6-270" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproducible Reporting</span></span>
-<span id="cb6-271"><a href="#cb6-271" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-272"><a href="#cb6-272" aria-hidden="true" tabindex="-1"></a>The deepest reporting failure is not a bad table or a misleading axis; it is a</span>
-<span id="cb6-273"><a href="#cb6-273" aria-hidden="true" tabindex="-1"></a>result no one can regenerate, including its author six months later. **Reproducible</span>
-<span id="cb6-274"><a href="#cb6-274" aria-hidden="true" tabindex="-1"></a>reporting** is the practice of binding the *narrative* (prose, tables, figures) to</span>
-<span id="cb6-275"><a href="#cb6-275" aria-hidden="true" tabindex="-1"></a>the *computation* (data, code, environment) in a single executable artifact, so</span>
-<span id="cb6-276"><a href="#cb6-276" aria-hidden="true" tabindex="-1"></a>that the reported numbers are produced by running the document rather than pasted</span>
-<span id="cb6-277"><a href="#cb6-277" aria-hidden="true" tabindex="-1"></a>into it. Formally, let a report be a function</span>
-<span id="cb6-278"><a href="#cb6-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-279"><a href="#cb6-279" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb6-280"><a href="#cb6-280" aria-hidden="true" tabindex="-1"></a>R = f(D, C, E),</span>
-<span id="cb6-281"><a href="#cb6-281" aria-hidden="true" tabindex="-1"></a>$$ {#eq-repro}</span>
-<span id="cb6-282"><a href="#cb6-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-283"><a href="#cb6-283" aria-hidden="true" tabindex="-1"></a>where $D$ is the data, $C$ the analysis code, $E$ the computational environment</span>
-<span id="cb6-284"><a href="#cb6-284" aria-hidden="true" tabindex="-1"></a>(language and package versions, seeds), and $f$ the build process. A report is</span>
-<span id="cb6-285"><a href="#cb6-285" aria-hidden="true" tabindex="-1"></a>**reproducible** when re-evaluating $f$ on the same $(D, C, E)$ returns a</span>
-<span id="cb6-286"><a href="#cb6-286" aria-hidden="true" tabindex="-1"></a>byte-identical $R$, and **robust** when small, defensible perturbations to $C$ or</span>
-<span id="cb6-287"><a href="#cb6-287" aria-hidden="true" tabindex="-1"></a>$E$ leave the substantive conclusions intact. The two are distinct: reproducibility</span>
-<span id="cb6-288"><a href="#cb6-288" aria-hidden="true" tabindex="-1"></a>is about the pipeline, robustness about the science. A result can be perfectly</span>
-<span id="cb6-289"><a href="#cb6-289" aria-hidden="true" tabindex="-1"></a>reproducible and entirely fragile.</span>
-<span id="cb6-290"><a href="#cb6-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-291"><a href="#cb6-291" aria-hidden="true" tabindex="-1"></a>This framing dissolves a category of error that copy-and-paste workflows make</span>
-<span id="cb6-292"><a href="#cb6-292" aria-hidden="true" tabindex="-1"></a>nearly inevitable: the **transcription gap**, where the number in the manuscript</span>
-<span id="cb6-293"><a href="#cb6-293" aria-hidden="true" tabindex="-1"></a>no longer matches the number the code produces because the data updated, the</span>
-<span id="cb6-294"><a href="#cb6-294" aria-hidden="true" tabindex="-1"></a>model changed, or a digit was mistyped. In a literate-programming workflow—the</span>
-<span id="cb6-295"><a href="#cb6-295" aria-hidden="true" tabindex="-1"></a>model this book is written in, where prose and <span class="in">`{r}`</span>/<span class="in">`{python}`</span> chunks live in one</span>
-<span id="cb6-296"><a href="#cb6-296" aria-hidden="true" tabindex="-1"></a><span class="in">`.qmd`</span> file and the build executes the code to insert results—the transcription</span>
-<span id="cb6-297"><a href="#cb6-297" aria-hidden="true" tabindex="-1"></a>gap cannot open, because there is no transcription. Marketing's move into</span>
-<span id="cb6-298"><a href="#cb6-298" aria-hidden="true" tabindex="-1"></a>data-rich, code-intensive analysis makes this non-negotiable: when the analysis is</span>
-<span id="cb6-299"><a href="#cb6-299" aria-hidden="true" tabindex="-1"></a>a pipeline of joins, models, and simulations, the only credible report is one the</span>
-<span id="cb6-300"><a href="#cb6-300" aria-hidden="true" tabindex="-1"></a>pipeline emits <span class="co">[</span><span class="ot">@wedel2016</span><span class="co">]</span>.</span>
-<span id="cb6-301"><a href="#cb6-301" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-302"><a href="#cb6-302" aria-hidden="true" tabindex="-1"></a>@fig-repro-pipeline lays out the dependency structure such a pipeline must make</span>
-<span id="cb6-303"><a href="#cb6-303" aria-hidden="true" tabindex="-1"></a>explicit and re-runnable.</span>
+<span id="cb6-168"><a href="#cb6-168" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep cells plain text: the book renders to HTML, PDF, and EPUB from one</span></span>
+<span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a>  <span class="co"># execution, so HTML-only markup (e.g., &lt;br&gt;) would leak into LaTeX.</span></span>
+<span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a>  <span class="co"># "(Intercept)" is renamed because booktabs' \midrule treats a row that</span></span>
+<span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a>  <span class="co"># begins with a literal "(" as a malformed trim spec, breaking the PDF.</span></span>
+<span id="cb6-172"><a href="#cb6-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tidy</span>(model) <span class="sc">|&gt;</span></span>
+<span id="cb6-173"><a href="#cb6-173" aria-hidden="true" tabindex="-1"></a>    <span class="fu">transmute</span>(<span class="at">term =</span> <span class="fu">sub</span>(<span class="st">"^</span><span class="sc">\\</span><span class="st">(Intercept</span><span class="sc">\\</span><span class="st">)$"</span>, <span class="st">"Intercept"</span>, term),</span>
+<span id="cb6-174"><a href="#cb6-174" aria-hidden="true" tabindex="-1"></a>              <span class="sc">!!</span><span class="at">label :=</span> <span class="fu">sprintf</span>(<span class="st">"%.3f (%.3f)"</span>, estimate, std.error))</span>
+<span id="cb6-175"><a href="#cb6-175" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-176"><a href="#cb6-176" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> <span class="fu">full_join</span>(<span class="fu">fmt</span>(m1, <span class="st">"Sparse"</span>), <span class="fu">fmt</span>(m2, <span class="st">"Full"</span>), <span class="at">by =</span> <span class="st">"term"</span>)</span>
+<span id="cb6-177"><a href="#cb6-177" aria-hidden="true" tabindex="-1"></a>gof <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">term =</span> <span class="st">"Adj. R-squared"</span>,</span>
+<span id="cb6-178"><a href="#cb6-178" aria-hidden="true" tabindex="-1"></a>              <span class="at">Sparse =</span> <span class="fu">sprintf</span>(<span class="st">"%.3f"</span>, <span class="fu">summary</span>(m1)<span class="sc">$</span>adj.r.squared),</span>
+<span id="cb6-179"><a href="#cb6-179" aria-hidden="true" tabindex="-1"></a>              <span class="at">Full   =</span> <span class="fu">sprintf</span>(<span class="st">"%.3f"</span>, <span class="fu">summary</span>(m2)<span class="sc">$</span>adj.r.squared))</span>
+<span id="cb6-180"><a href="#cb6-180" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(tab, gof) <span class="sc">|&gt;</span></span>
+<span id="cb6-181"><a href="#cb6-181" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">escape =</span> <span class="cn">FALSE</span>, <span class="at">align =</span> <span class="st">"lrr"</span>,</span>
+<span id="cb6-182"><a href="#cb6-182" aria-hidden="true" tabindex="-1"></a>        <span class="at">caption =</span> <span class="st">"Log-sales regressions. Standard errors in parentheses. Adding the loyalty cue and promotion control shifts the price coefficient, the first thing a careful reader checks."</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-183"><a href="#cb6-183" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-184"><a href="#cb6-184" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-186"><a href="#cb6-186" aria-hidden="true" tabindex="-1"></a>Notice what the two-column layout buys: the price coefficient is visible</span>
+<span id="cb6-187"><a href="#cb6-187" aria-hidden="true" tabindex="-1"></a>*before and after* controls enter, and its stability (or movement) is the</span>
+<span id="cb6-188"><a href="#cb6-188" aria-hidden="true" tabindex="-1"></a>report's most honest robustness signal—far more informative than any single</span>
+<span id="cb6-189"><a href="#cb6-189" aria-hidden="true" tabindex="-1"></a>starred number.</span>
+<span id="cb6-190"><a href="#cb6-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-191"><a href="#cb6-191" aria-hidden="true" tabindex="-1"></a><span class="fu">### When a Figure</span></span>
+<span id="cb6-192"><a href="#cb6-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-193"><a href="#cb6-193" aria-hidden="true" tabindex="-1"></a>A figure is the right instrument when the message is a *relationship*: a trend over</span>
+<span id="cb6-194"><a href="#cb6-194" aria-hidden="true" tabindex="-1"></a>time, a dose–response curve, an interaction, a distribution, an uncertainty band.</span>
+<span id="cb6-195"><a href="#cb6-195" aria-hidden="true" tabindex="-1"></a>The reason is perceptual. Position along a common scale is the visual encoding</span>
+<span id="cb6-196"><a href="#cb6-196" aria-hidden="true" tabindex="-1"></a>humans judge most accurately; length and angle are next; area, color saturation,</span>
+<span id="cb6-197"><a href="#cb6-197" aria-hidden="true" tabindex="-1"></a>and hue are progressively less accurate.<span class="ot">[^cleveland]</span> A figure that encodes its key</span>
+<span id="cb6-198"><a href="#cb6-198" aria-hidden="true" tabindex="-1"></a>comparison as position on a shared axis lets the reader perceive the result;</span>
+<span id="cb6-199"><a href="#cb6-199" aria-hidden="true" tabindex="-1"></a>one that encodes it as color or area forces them to estimate, badly. The design</span>
+<span id="cb6-200"><a href="#cb6-200" aria-hidden="true" tabindex="-1"></a>corollary is that **the variable carrying the result should be encoded by</span>
+<span id="cb6-201"><a href="#cb6-201" aria-hidden="true" tabindex="-1"></a>position**, and decoration that competes for that channel should be removed.</span>
+<span id="cb6-202"><a href="#cb6-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-203"><a href="#cb6-203" aria-hidden="true" tabindex="-1"></a><span class="ot">[^cleveland]: </span>This ordering of *elementary perceptual tasks* by accuracy is the</span>
+<span id="cb6-204"><a href="#cb6-204" aria-hidden="true" tabindex="-1"></a>empirical foundation of statistical graphics: encode the most important</span>
+<span id="cb6-205"><a href="#cb6-205" aria-hidden="true" tabindex="-1"></a>comparison in the most accurately perceived channel.</span>
+<span id="cb6-206"><a href="#cb6-206" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- CITE-NEEDED: Cleveland &amp; McGill (1984, JASA) graphical perception ranking of elementary perceptual tasks --&gt;</span> A</span>
+<span id="cb6-207"><a href="#cb6-207" aria-hidden="true" tabindex="-1"></a>practical consequence is the suspicion of pie charts and 3-D bars: they encode</span>
+<span id="cb6-208"><a href="#cb6-208" aria-hidden="true" tabindex="-1"></a>quantity as angle, area, or foreshortened length—exactly the channels the eye</span>
+<span id="cb6-209"><a href="#cb6-209" aria-hidden="true" tabindex="-1"></a>reads worst.</span>
+<span id="cb6-210"><a href="#cb6-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-211"><a href="#cb6-211" aria-hidden="true" tabindex="-1"></a>Three failure modes recur and each has a name and a fix. A **truncated axis**—</span>
+<span id="cb6-212"><a href="#cb6-212" aria-hidden="true" tabindex="-1"></a>starting a bar chart's value axis above zero—exaggerates differences by mapping a</span>
+<span id="cb6-213"><a href="#cb6-213" aria-hidden="true" tabindex="-1"></a>small ratio onto a large length; bars must baseline at zero because their meaning</span>
+<span id="cb6-214"><a href="#cb6-214" aria-hidden="true" tabindex="-1"></a>is length. **Overplotting**—thousands of points collapsing into an ink blob—hides</span>
+<span id="cb6-215"><a href="#cb6-215" aria-hidden="true" tabindex="-1"></a>the distribution it purports to show; the fix is transparency, binning, or a</span>
+<span id="cb6-216"><a href="#cb6-216" aria-hidden="true" tabindex="-1"></a>density encoding. **Uncertainty erasure**—drawing a point estimate as a clean line</span>
+<span id="cb6-217"><a href="#cb6-217" aria-hidden="true" tabindex="-1"></a>with no band—is the graphical analogue of reporting $\hat\theta$ without</span>
+<span id="cb6-218"><a href="#cb6-218" aria-hidden="true" tabindex="-1"></a>$\widehat{\operatorname{se}}(\hat\theta)$, and is arguably the most common</span>
+<span id="cb6-219"><a href="#cb6-219" aria-hidden="true" tabindex="-1"></a>dishonesty in applied figures, because a clean line *feels* certain. The honest</span>
+<span id="cb6-220"><a href="#cb6-220" aria-hidden="true" tabindex="-1"></a>default is to draw the interval, not just the estimate.</span>
+<span id="cb6-221"><a href="#cb6-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-222"><a href="#cb6-222" aria-hidden="true" tabindex="-1"></a>The figure below makes the last point operational. It plots the model-implied</span>
+<span id="cb6-223"><a href="#cb6-223" aria-hidden="true" tabindex="-1"></a>relationship between price and log-sales together with a 95% confidence band, so</span>
+<span id="cb6-224"><a href="#cb6-224" aria-hidden="true" tabindex="-1"></a>the reader sees both the estimated slope and how well-pinned it is.</span>
+<span id="cb6-225"><a href="#cb6-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-226"><a href="#cb6-226" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fig-uncertainty, message=FALSE, warning=FALSE}</span></span>
+<span id="cb6-227"><a href="#cb6-227" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Model-implied price response with a 95% confidence band. The band, not the line, is the honest object: it shows the reader how precisely the slope is identified."</span></span>
+<span id="cb6-228"><a href="#cb6-228" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 6</span></span>
+<span id="cb6-229"><a href="#cb6-229" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4</span></span>
+<span id="cb6-230"><a href="#cb6-230" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb6-231"><a href="#cb6-231" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">price =</span> <span class="fu">seq</span>(<span class="fu">min</span>(dat<span class="sc">$</span>price), <span class="fu">max</span>(dat<span class="sc">$</span>price), <span class="at">length.out =</span> <span class="dv">100</span>),</span>
+<span id="cb6-232"><a href="#cb6-232" aria-hidden="true" tabindex="-1"></a>                   <span class="at">loyalty =</span> <span class="dv">0</span>, <span class="at">promo =</span> <span class="fu">factor</span>(<span class="dv">0</span>, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)))</span>
+<span id="cb6-233"><a href="#cb6-233" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(m2, <span class="at">newdata =</span> grid, <span class="at">interval =</span> <span class="st">"confidence"</span>)</span>
+<span id="cb6-234"><a href="#cb6-234" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">cbind</span>(grid, pred)</span>
+<span id="cb6-235"><a href="#cb6-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-236"><a href="#cb6-236" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(grid, <span class="fu">aes</span>(price, fit)) <span class="sc">+</span></span>
+<span id="cb6-237"><a href="#cb6-237" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> lwr, <span class="at">ymax =</span> upr), <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb6-238"><a href="#cb6-238" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb6-239"><a href="#cb6-239" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> dat, <span class="fu">aes</span>(price, log_sales), <span class="at">alpha =</span> <span class="fl">0.15</span>, <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb6-240"><a href="#cb6-240" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Price"</span>, <span class="at">y =</span> <span class="st">"Log-sales (predicted)"</span>) <span class="sc">+</span></span>
+<span id="cb6-241"><a href="#cb6-241" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb6-242"><a href="#cb6-242" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-243"><a href="#cb6-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-244"><a href="#cb6-244" aria-hidden="true" tabindex="-1"></a><span class="fu">### Choosing Between Them</span></span>
+<span id="cb6-245"><a href="#cb6-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-246"><a href="#cb6-246" aria-hidden="true" tabindex="-1"></a>The choice is not stylistic but functional, and it can be stated as a short</span>
+<span id="cb6-247"><a href="#cb6-247" aria-hidden="true" tabindex="-1"></a>decision rule. The table below contrasts the two instruments on the dimensions</span>
+<span id="cb6-248"><a href="#cb6-248" aria-hidden="true" tabindex="-1"></a>that actually decide the call.</span>
+<span id="cb6-249"><a href="#cb6-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-250"><a href="#cb6-250" aria-hidden="true" tabindex="-1"></a><span class="in">```{r tbl-table-vs-figure, echo=FALSE, message=FALSE, warning=FALSE}</span></span>
+<span id="cb6-251"><a href="#cb6-251" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr); <span class="fu">library</span>(kableExtra)</span>
+<span id="cb6-252"><a href="#cb6-252" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb6-253"><a href="#cb6-253" aria-hidden="true" tabindex="-1"></a>  <span class="at">Dimension =</span> <span class="fu">c</span>(<span class="st">"Reader's task"</span>, <span class="st">"Encodes"</span>, <span class="st">"Best when"</span>, <span class="st">"Exact values"</span>,</span>
+<span id="cb6-254"><a href="#cb6-254" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Patterns/interactions"</span>, <span class="st">"Failure mode"</span>),</span>
+<span id="cb6-255"><a href="#cb6-255" aria-hidden="true" tabindex="-1"></a>  <span class="at">Table =</span> <span class="fu">c</span>(<span class="st">"Look up a value"</span>, <span class="st">"Symbols (digits)"</span>, <span class="st">"Few heterogeneous numbers"</span>,</span>
+<span id="cb6-256"><a href="#cb6-256" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Preserved"</span>, <span class="st">"Reader must compute"</span>, <span class="st">"False precision; hand-typed errors"</span>),</span>
+<span id="cb6-257"><a href="#cb6-257" aria-hidden="true" tabindex="-1"></a>  <span class="at">Figure =</span> <span class="fu">c</span>(<span class="st">"See a relationship"</span>, <span class="st">"Position, length, color"</span>,</span>
+<span id="cb6-258"><a href="#cb6-258" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Many values or a trend"</span>, <span class="st">"Approximate"</span>, <span class="st">"Perceived directly"</span>,</span>
+<span id="cb6-259"><a href="#cb6-259" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Truncated axis; hidden uncertainty"</span>),</span>
+<span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a>  <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb6-262"><a href="#cb6-262" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Tables versus figures: the choice follows from what the reader must do with the result."</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-263"><a href="#cb6-263" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-264"><a href="#cb6-264" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-265"><a href="#cb6-265" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-266"><a href="#cb6-266" aria-hidden="true" tabindex="-1"></a>A useful heuristic: if you find yourself asking the reader to *compare across rows</span>
+<span id="cb6-267"><a href="#cb6-267" aria-hidden="true" tabindex="-1"></a>or columns* of a table, the comparison wants to be a figure; if you find yourself</span>
+<span id="cb6-268"><a href="#cb6-268" aria-hidden="true" tabindex="-1"></a>*annotating a figure with exact numbers* the reader will quote, those numbers want</span>
+<span id="cb6-269"><a href="#cb6-269" aria-hidden="true" tabindex="-1"></a>to be a table. Many reports need both—a figure for the pattern, a table in the</span>
+<span id="cb6-270"><a href="#cb6-270" aria-hidden="true" tabindex="-1"></a>appendix for the values—and that redundancy is a feature, because it serves the</span>
+<span id="cb6-271"><a href="#cb6-271" aria-hidden="true" tabindex="-1"></a>two audiences at once.</span>
+<span id="cb6-272"><a href="#cb6-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-273"><a href="#cb6-273" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproducible Reporting</span></span>
+<span id="cb6-274"><a href="#cb6-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-275"><a href="#cb6-275" aria-hidden="true" tabindex="-1"></a>The deepest reporting failure is not a bad table or a misleading axis; it is a</span>
+<span id="cb6-276"><a href="#cb6-276" aria-hidden="true" tabindex="-1"></a>result no one can regenerate, including its author six months later. **Reproducible</span>
+<span id="cb6-277"><a href="#cb6-277" aria-hidden="true" tabindex="-1"></a>reporting** is the practice of binding the *narrative* (prose, tables, figures) to</span>
+<span id="cb6-278"><a href="#cb6-278" aria-hidden="true" tabindex="-1"></a>the *computation* (data, code, environment) in a single executable artifact, so</span>
+<span id="cb6-279"><a href="#cb6-279" aria-hidden="true" tabindex="-1"></a>that the reported numbers are produced by running the document rather than pasted</span>
+<span id="cb6-280"><a href="#cb6-280" aria-hidden="true" tabindex="-1"></a>into it. Formally, let a report be a function</span>
+<span id="cb6-281"><a href="#cb6-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-282"><a href="#cb6-282" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb6-283"><a href="#cb6-283" aria-hidden="true" tabindex="-1"></a>R = f(D, C, E),</span>
+<span id="cb6-284"><a href="#cb6-284" aria-hidden="true" tabindex="-1"></a>$$ {#eq-repro}</span>
+<span id="cb6-285"><a href="#cb6-285" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-286"><a href="#cb6-286" aria-hidden="true" tabindex="-1"></a>where $D$ is the data, $C$ the analysis code, $E$ the computational environment</span>
+<span id="cb6-287"><a href="#cb6-287" aria-hidden="true" tabindex="-1"></a>(language and package versions, seeds), and $f$ the build process. A report is</span>
+<span id="cb6-288"><a href="#cb6-288" aria-hidden="true" tabindex="-1"></a>**reproducible** when re-evaluating $f$ on the same $(D, C, E)$ returns a</span>
+<span id="cb6-289"><a href="#cb6-289" aria-hidden="true" tabindex="-1"></a>byte-identical $R$, and **robust** when small, defensible perturbations to $C$ or</span>
+<span id="cb6-290"><a href="#cb6-290" aria-hidden="true" tabindex="-1"></a>$E$ leave the substantive conclusions intact. The two are distinct: reproducibility</span>
+<span id="cb6-291"><a href="#cb6-291" aria-hidden="true" tabindex="-1"></a>is about the pipeline, robustness about the science. A result can be perfectly</span>
+<span id="cb6-292"><a href="#cb6-292" aria-hidden="true" tabindex="-1"></a>reproducible and entirely fragile.</span>
+<span id="cb6-293"><a href="#cb6-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-294"><a href="#cb6-294" aria-hidden="true" tabindex="-1"></a>This framing dissolves a category of error that copy-and-paste workflows make</span>
+<span id="cb6-295"><a href="#cb6-295" aria-hidden="true" tabindex="-1"></a>nearly inevitable: the **transcription gap**, where the number in the manuscript</span>
+<span id="cb6-296"><a href="#cb6-296" aria-hidden="true" tabindex="-1"></a>no longer matches the number the code produces because the data updated, the</span>
+<span id="cb6-297"><a href="#cb6-297" aria-hidden="true" tabindex="-1"></a>model changed, or a digit was mistyped. In a literate-programming workflow—the</span>
+<span id="cb6-298"><a href="#cb6-298" aria-hidden="true" tabindex="-1"></a>model this book is written in, where prose and <span class="in">`{r}`</span>/<span class="in">`{python}`</span> chunks live in one</span>
+<span id="cb6-299"><a href="#cb6-299" aria-hidden="true" tabindex="-1"></a><span class="in">`.qmd`</span> file and the build executes the code to insert results—the transcription</span>
+<span id="cb6-300"><a href="#cb6-300" aria-hidden="true" tabindex="-1"></a>gap cannot open, because there is no transcription. Marketing's move into</span>
+<span id="cb6-301"><a href="#cb6-301" aria-hidden="true" tabindex="-1"></a>data-rich, code-intensive analysis makes this non-negotiable: when the analysis is</span>
+<span id="cb6-302"><a href="#cb6-302" aria-hidden="true" tabindex="-1"></a>a pipeline of joins, models, and simulations, the only credible report is one the</span>
+<span id="cb6-303"><a href="#cb6-303" aria-hidden="true" tabindex="-1"></a>pipeline emits <span class="co">[</span><span class="ot">@wedel2016</span><span class="co">]</span>.</span>
 <span id="cb6-304"><a href="#cb6-304" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-307"><a href="#cb6-307" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb6-308"><a href="#cb6-308" aria-hidden="true" tabindex="-1"></a>%%| label: fig-repro-pipeline</span>
-<span id="cb6-309"><a href="#cb6-309" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">A reproducible reporting pipeline. Each artifact depends only on declared inputs; re-running from raw data regenerates every downstream table and figure, closing the transcription gap.</span><span class="ot">"</span></span>
-<span id="cb6-310"><a href="#cb6-310" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb6-311"><a href="#cb6-311" aria-hidden="true" tabindex="-1"></a>  A[<span class="ot">"</span><span class="st">Raw data&lt;br/&gt;(immutable)</span><span class="ot">"</span>] --&gt; B[<span class="ot">"</span><span class="st">Cleaning / joins&lt;br/&gt;(scripted)</span><span class="ot">"</span>]</span>
-<span id="cb6-312"><a href="#cb6-312" aria-hidden="true" tabindex="-1"></a>  B --&gt; C[<span class="ot">"</span><span class="st">Analysis dataset&lt;br/&gt;(versioned)</span><span class="ot">"</span>]</span>
-<span id="cb6-313"><a href="#cb6-313" aria-hidden="true" tabindex="-1"></a>  C --&gt; D[<span class="ot">"</span><span class="st">Models &amp; estimates&lt;br/&gt;(seeded)</span><span class="ot">"</span>]</span>
-<span id="cb6-314"><a href="#cb6-314" aria-hidden="true" tabindex="-1"></a>  D --&gt; E[<span class="ot">"</span><span class="st">Tables &amp; figures&lt;br/&gt;(code-generated)</span><span class="ot">"</span>]</span>
-<span id="cb6-315"><a href="#cb6-315" aria-hidden="true" tabindex="-1"></a>  E --&gt; F[<span class="ot">"</span><span class="st">Rendered report&lt;br/&gt;(prose + results)</span><span class="ot">"</span>]</span>
-<span id="cb6-316"><a href="#cb6-316" aria-hidden="true" tabindex="-1"></a>  G[<span class="ot">"</span><span class="st">Environment&lt;br/&gt;(versions, seeds)</span><span class="ot">"</span>] -.-&gt; B</span>
-<span id="cb6-317"><a href="#cb6-317" aria-hidden="true" tabindex="-1"></a>  G -.-&gt; D</span>
-<span id="cb6-318"><a href="#cb6-318" aria-hidden="true" tabindex="-1"></a>  style A fill:<span class="co">#e8e8e8,stroke:#333</span></span>
-<span id="cb6-319"><a href="#cb6-319" aria-hidden="true" tabindex="-1"></a>  style F fill:<span class="co">#d8efd8,stroke:#333</span></span>
-<span id="cb6-320"><a href="#cb6-320" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-321"><a href="#cb6-321" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-322"><a href="#cb6-322" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Pillars of Reproducibility</span></span>
-<span id="cb6-323"><a href="#cb6-323" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-324"><a href="#cb6-324" aria-hidden="true" tabindex="-1"></a>Four practices make @eq-repro hold in practice, and each closes a specific leak.</span>
-<span id="cb6-325"><a href="#cb6-325" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-326"><a href="#cb6-326" aria-hidden="true" tabindex="-1"></a>**Determinism.** Every stochastic step is seeded (<span class="in">`set.seed()`</span> in R, an explicit</span>
-<span id="cb6-327"><a href="#cb6-327" aria-hidden="true" tabindex="-1"></a>RNG seed elsewhere), so that simulations, bootstraps, cross-validation splits, and</span>
-<span id="cb6-328"><a href="#cb6-328" aria-hidden="true" tabindex="-1"></a>posterior draws return the same values on re-run. Without seeding, $f$ is not a</span>
-<span id="cb6-329"><a href="#cb6-329" aria-hidden="true" tabindex="-1"></a>function and reproducibility is impossible by definition. Every stochastic example</span>
-<span id="cb6-330"><a href="#cb6-330" aria-hidden="true" tabindex="-1"></a>in this book is seeded for exactly this reason.</span>
-<span id="cb6-331"><a href="#cb6-331" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-332"><a href="#cb6-332" aria-hidden="true" tabindex="-1"></a>**Immutable raw data and scripted transformation.** Raw data is never edited in</span>
-<span id="cb6-333"><a href="#cb6-333" aria-hidden="true" tabindex="-1"></a>place; all cleaning is code that reads raw inputs and writes derived outputs, so</span>
-<span id="cb6-334"><a href="#cb6-334" aria-hidden="true" tabindex="-1"></a>the path from source to analysis dataset is auditable and re-runnable. The</span>
-<span id="cb6-335"><a href="#cb6-335" aria-hidden="true" tabindex="-1"></a>analysis dataset becomes a *computed artifact*, not a hand-curated one.</span>
-<span id="cb6-336"><a href="#cb6-336" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-337"><a href="#cb6-337" aria-hidden="true" tabindex="-1"></a>**Environment capture.** The language and package versions are recorded (a</span>
-<span id="cb6-338"><a href="#cb6-338" aria-hidden="true" tabindex="-1"></a>lockfile, a container, or at minimum a <span class="in">`sessionInfo()`</span> printed in the appendix),</span>
-<span id="cb6-339"><a href="#cb6-339" aria-hidden="true" tabindex="-1"></a>because the same code can give different numbers under different versions. The</span>
-<span id="cb6-340"><a href="#cb6-340" aria-hidden="true" tabindex="-1"></a>environment $E$ in @eq-repro is part of the report, not background.</span>
-<span id="cb6-341"><a href="#cb6-341" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-342"><a href="#cb6-342" aria-hidden="true" tabindex="-1"></a>**Single-source build.** The document and the computation are one file; rendering</span>
-<span id="cb6-343"><a href="#cb6-343" aria-hidden="true" tabindex="-1"></a>*is* re-running. This is the practice that eliminates the transcription gap</span>
-<span id="cb6-344"><a href="#cb6-344" aria-hidden="true" tabindex="-1"></a>outright rather than merely policing it.</span>
-<span id="cb6-345"><a href="#cb6-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-346"><a href="#cb6-346" aria-hidden="true" tabindex="-1"></a>The minimal, self-contained reproducibility footer below records seed and</span>
-<span id="cb6-347"><a href="#cb6-347" aria-hidden="true" tabindex="-1"></a>environment so a reader can reconstruct $E$. It is deliberately boring; that is the</span>
-<span id="cb6-348"><a href="#cb6-348" aria-hidden="true" tabindex="-1"></a>point.</span>
-<span id="cb6-349"><a href="#cb6-349" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-350"><a href="#cb6-350" aria-hidden="true" tabindex="-1"></a><span class="in">```{r repro-footer}</span></span>
-<span id="cb6-351"><a href="#cb6-351" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">43</span>)            <span class="co"># determinism: re-runs reproduce every stochastic result</span></span>
-<span id="cb6-352"><a href="#cb6-352" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"R version:"</span>, R.version.string, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb6-353"><a href="#cb6-353" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Key packages:</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb6-354"><a href="#cb6-354" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (p <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"dplyr"</span>, <span class="st">"ggplot2"</span>, <span class="st">"broom"</span>)) {</span>
-<span id="cb6-355"><a href="#cb6-355" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">requireNamespace</span>(p, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb6-356"><a href="#cb6-356" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-8s %s</span><span class="sc">\n</span><span class="st">"</span>, p, <span class="fu">as.character</span>(<span class="fu">packageVersion</span>(p))))</span>
-<span id="cb6-357"><a href="#cb6-357" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-358"><a href="#cb6-358" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-359"><a href="#cb6-359" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-360"><a href="#cb6-360" aria-hidden="true" tabindex="-1"></a>A subtle but consequential point: reproducibility is a precondition for, not a</span>
-<span id="cb6-361"><a href="#cb6-361" aria-hidden="true" tabindex="-1"></a>guarantee of, credibility. A reproducible analysis can still be **overfit to</span>
-<span id="cb6-362"><a href="#cb6-362" aria-hidden="true" tabindex="-1"></a>researcher degrees of freedom**—the many defensible choices of sample, controls,</span>
-<span id="cb6-363"><a href="#cb6-363" aria-hidden="true" tabindex="-1"></a>and functional form that, searched over, manufacture significance. The honest</span>
-<span id="cb6-364"><a href="#cb6-364" aria-hidden="true" tabindex="-1"></a>defense is to report the **specification curve** or **multiverse**: the</span>
-<span id="cb6-365"><a href="#cb6-365" aria-hidden="true" tabindex="-1"></a>distribution of the estimate across the reasonable analytic choices, so the reader</span>
-<span id="cb6-366"><a href="#cb6-366" aria-hidden="true" tabindex="-1"></a>sees whether the result is a robust feature of the data or an artifact of one path</span>
-<span id="cb6-367"><a href="#cb6-367" aria-hidden="true" tabindex="-1"></a>through it. Reproducibility makes the multiverse cheap to compute; reporting it is</span>
-<span id="cb6-368"><a href="#cb6-368" aria-hidden="true" tabindex="-1"></a>what turns reproducibility into credibility.</span>
-<span id="cb6-369"><a href="#cb6-369" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-370"><a href="#cb6-370" aria-hidden="true" tabindex="-1"></a><span class="fu">## Academic versus Managerial Reporting</span></span>
-<span id="cb6-371"><a href="#cb6-371" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-372"><a href="#cb6-372" aria-hidden="true" tabindex="-1"></a>The same study, honestly reported, looks different to the two audiences because</span>
-<span id="cb6-373"><a href="#cb6-373" aria-hidden="true" tabindex="-1"></a>they price errors differently (the formalization in @sec-reporting's two-audience</span>
-<span id="cb6-374"><a href="#cb6-374" aria-hidden="true" tabindex="-1"></a>discussion above). The differences are systematic enough to tabulate, and the</span>
-<span id="cb6-375"><a href="#cb6-375" aria-hidden="true" tabindex="-1"></a>tabulation is itself a reporting decision: it tells an author what to foreground.</span>
-<span id="cb6-376"><a href="#cb6-376" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-377"><a href="#cb6-377" aria-hidden="true" tabindex="-1"></a><span class="in">```{r tbl-aud, echo=FALSE, message=FALSE, warning=FALSE}</span></span>
-<span id="cb6-378"><a href="#cb6-378" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr); <span class="fu">library</span>(kableExtra)</span>
-<span id="cb6-379"><a href="#cb6-379" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
-<span id="cb6-380"><a href="#cb6-380" aria-hidden="true" tabindex="-1"></a>  <span class="at">Element =</span> <span class="fu">c</span>(<span class="st">"Primary question"</span>, <span class="st">"What leads"</span>, <span class="st">"Uncertainty"</span>, <span class="st">"Identification"</span>,</span>
-<span id="cb6-381"><a href="#cb6-381" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Effect units"</span>, <span class="st">"Robustness"</span>, <span class="st">"Length"</span>, <span class="st">"Success criterion"</span>),</span>
-<span id="cb6-382"><a href="#cb6-382" aria-hidden="true" tabindex="-1"></a>  <span class="at">Academic =</span> <span class="fu">c</span>(<span class="st">"Is the effect real and why?"</span>, <span class="st">"Theory and contribution"</span>,</span>
-<span id="cb6-383"><a href="#cb6-383" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Intervals, tests, full disclosure"</span>, <span class="st">"Foregrounded and defended"</span>,</span>
-<span id="cb6-384"><a href="#cb6-384" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Standardized / elasticities"</span>, <span class="st">"Extensive, in-text"</span>,</span>
-<span id="cb6-385"><a href="#cb6-385" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Long; appendices expected"</span>, <span class="st">"Survives peer review &amp; replication"</span>),</span>
-<span id="cb6-386"><a href="#cb6-386" aria-hidden="true" tabindex="-1"></a>  <span class="at">Managerial =</span> <span class="fu">c</span>(<span class="st">"What should we do, and what is the payoff?"</span>,</span>
-<span id="cb6-387"><a href="#cb6-387" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"The decision and its $ impact"</span>, <span class="st">"Risk of the recommended action"</span>,</span>
-<span id="cb6-388"><a href="#cb6-388" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"Stated as a caveat, not derived"</span>, <span class="st">"Dollars, share points, conversions"</span>,</span>
-<span id="cb6-389"><a href="#cb6-389" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"Summarized; details on request"</span>, <span class="st">"Short; one-page summary first"</span>,</span>
-<span id="cb6-390"><a href="#cb6-390" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"Changes a decision; ROI realized"</span>),</span>
-<span id="cb6-391"><a href="#cb6-391" aria-hidden="true" tabindex="-1"></a>  <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb6-392"><a href="#cb6-392" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb6-393"><a href="#cb6-393" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Academic and managerial registers differ in foregrounding, not in honesty. The same estimate and its uncertainty feed both reports."</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-394"><a href="#cb6-394" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-395"><a href="#cb6-395" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_spec</span>(<span class="dv">1</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-396"><a href="#cb6-396" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-397"><a href="#cb6-397" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-398"><a href="#cb6-398" aria-hidden="true" tabindex="-1"></a>The managerial register inverts the academic document's structure. An academic</span>
-<span id="cb6-399"><a href="#cb6-399" aria-hidden="true" tabindex="-1"></a>paper builds to its contribution: motivation, theory, data, identification,</span>
-<span id="cb6-400"><a href="#cb6-400" aria-hidden="true" tabindex="-1"></a>results, robustness, then implications. A managerial report **leads with the</span>
-<span id="cb6-401"><a href="#cb6-401" aria-hidden="true" tabindex="-1"></a>answer**—the recommendation and its expected return—and relegates method to an</span>
-<span id="cb6-402"><a href="#cb6-402" aria-hidden="true" tabindex="-1"></a>appendix, following the inverted-pyramid logic that the busiest reader should</span>
-<span id="cb6-403"><a href="#cb6-403" aria-hidden="true" tabindex="-1"></a>extract the decision from the first paragraph. This is not dumbing down; it is</span>
-<span id="cb6-404"><a href="#cb6-404" aria-hidden="true" tabindex="-1"></a>re-sequencing for a different loss function. The discipline of translating an</span>
-<span id="cb6-405"><a href="#cb6-405" aria-hidden="true" tabindex="-1"></a>estimate into a decision with a quantified payoff is exactly what gives marketing</span>
-<span id="cb6-406"><a href="#cb6-406" aria-hidden="true" tabindex="-1"></a>research standing in the firm, and its absence is why analytically sound work so</span>
-<span id="cb6-407"><a href="#cb6-407" aria-hidden="true" tabindex="-1"></a>often fails to move resources <span class="co">[</span><span class="ot">@hanssens2016</span><span class="co">]</span>. The presence of a senior marketing</span>
-<span id="cb6-408"><a href="#cb6-408" aria-hidden="true" tabindex="-1"></a>voice in the firm measurably improves performance, which raises the stakes of</span>
-<span id="cb6-409"><a href="#cb6-409" aria-hidden="true" tabindex="-1"></a>reporting in a register that voice can use <span class="co">[</span><span class="ot">@germann2015</span><span class="co">]</span>.</span>
-<span id="cb6-410"><a href="#cb6-410" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-411"><a href="#cb6-411" aria-hidden="true" tabindex="-1"></a>Three translation errors recur when crossing the academic–managerial boundary, and</span>
-<span id="cb6-412"><a href="#cb6-412" aria-hidden="true" tabindex="-1"></a>each has a discipline-specific antidote.</span>
+<span id="cb6-305"><a href="#cb6-305" aria-hidden="true" tabindex="-1"></a>@fig-repro-pipeline lays out the dependency structure such a pipeline must make</span>
+<span id="cb6-306"><a href="#cb6-306" aria-hidden="true" tabindex="-1"></a>explicit and re-runnable.</span>
+<span id="cb6-307"><a href="#cb6-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-310"><a href="#cb6-310" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb6-311"><a href="#cb6-311" aria-hidden="true" tabindex="-1"></a>%%| label: fig-repro-pipeline</span>
+<span id="cb6-312"><a href="#cb6-312" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">A reproducible reporting pipeline. Each artifact depends only on declared inputs; re-running from raw data regenerates every downstream table and figure, closing the transcription gap.</span><span class="ot">"</span></span>
+<span id="cb6-313"><a href="#cb6-313" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb6-314"><a href="#cb6-314" aria-hidden="true" tabindex="-1"></a>  A[<span class="ot">"</span><span class="st">Raw data&lt;br/&gt;(immutable)</span><span class="ot">"</span>] --&gt; B[<span class="ot">"</span><span class="st">Cleaning / joins&lt;br/&gt;(scripted)</span><span class="ot">"</span>]</span>
+<span id="cb6-315"><a href="#cb6-315" aria-hidden="true" tabindex="-1"></a>  B --&gt; C[<span class="ot">"</span><span class="st">Analysis dataset&lt;br/&gt;(versioned)</span><span class="ot">"</span>]</span>
+<span id="cb6-316"><a href="#cb6-316" aria-hidden="true" tabindex="-1"></a>  C --&gt; D[<span class="ot">"</span><span class="st">Models &amp; estimates&lt;br/&gt;(seeded)</span><span class="ot">"</span>]</span>
+<span id="cb6-317"><a href="#cb6-317" aria-hidden="true" tabindex="-1"></a>  D --&gt; E[<span class="ot">"</span><span class="st">Tables &amp; figures&lt;br/&gt;(code-generated)</span><span class="ot">"</span>]</span>
+<span id="cb6-318"><a href="#cb6-318" aria-hidden="true" tabindex="-1"></a>  E --&gt; F[<span class="ot">"</span><span class="st">Rendered report&lt;br/&gt;(prose + results)</span><span class="ot">"</span>]</span>
+<span id="cb6-319"><a href="#cb6-319" aria-hidden="true" tabindex="-1"></a>  G[<span class="ot">"</span><span class="st">Environment&lt;br/&gt;(versions, seeds)</span><span class="ot">"</span>] -.-&gt; B</span>
+<span id="cb6-320"><a href="#cb6-320" aria-hidden="true" tabindex="-1"></a>  G -.-&gt; D</span>
+<span id="cb6-321"><a href="#cb6-321" aria-hidden="true" tabindex="-1"></a>  style A fill:<span class="co">#e8e8e8,stroke:#333</span></span>
+<span id="cb6-322"><a href="#cb6-322" aria-hidden="true" tabindex="-1"></a>  style F fill:<span class="co">#d8efd8,stroke:#333</span></span>
+<span id="cb6-323"><a href="#cb6-323" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-324"><a href="#cb6-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-325"><a href="#cb6-325" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Pillars of Reproducibility</span></span>
+<span id="cb6-326"><a href="#cb6-326" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-327"><a href="#cb6-327" aria-hidden="true" tabindex="-1"></a>Four practices make @eq-repro hold in practice, and each closes a specific leak.</span>
+<span id="cb6-328"><a href="#cb6-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-329"><a href="#cb6-329" aria-hidden="true" tabindex="-1"></a>**Determinism.** Every stochastic step is seeded (<span class="in">`set.seed()`</span> in R, an explicit</span>
+<span id="cb6-330"><a href="#cb6-330" aria-hidden="true" tabindex="-1"></a>RNG seed elsewhere), so that simulations, bootstraps, cross-validation splits, and</span>
+<span id="cb6-331"><a href="#cb6-331" aria-hidden="true" tabindex="-1"></a>posterior draws return the same values on re-run. Without seeding, $f$ is not a</span>
+<span id="cb6-332"><a href="#cb6-332" aria-hidden="true" tabindex="-1"></a>function and reproducibility is impossible by definition. Every stochastic example</span>
+<span id="cb6-333"><a href="#cb6-333" aria-hidden="true" tabindex="-1"></a>in this book is seeded for exactly this reason.</span>
+<span id="cb6-334"><a href="#cb6-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-335"><a href="#cb6-335" aria-hidden="true" tabindex="-1"></a>**Immutable raw data and scripted transformation.** Raw data is never edited in</span>
+<span id="cb6-336"><a href="#cb6-336" aria-hidden="true" tabindex="-1"></a>place; all cleaning is code that reads raw inputs and writes derived outputs, so</span>
+<span id="cb6-337"><a href="#cb6-337" aria-hidden="true" tabindex="-1"></a>the path from source to analysis dataset is auditable and re-runnable. The</span>
+<span id="cb6-338"><a href="#cb6-338" aria-hidden="true" tabindex="-1"></a>analysis dataset becomes a *computed artifact*, not a hand-curated one.</span>
+<span id="cb6-339"><a href="#cb6-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-340"><a href="#cb6-340" aria-hidden="true" tabindex="-1"></a>**Environment capture.** The language and package versions are recorded (a</span>
+<span id="cb6-341"><a href="#cb6-341" aria-hidden="true" tabindex="-1"></a>lockfile, a container, or at minimum a <span class="in">`sessionInfo()`</span> printed in the appendix),</span>
+<span id="cb6-342"><a href="#cb6-342" aria-hidden="true" tabindex="-1"></a>because the same code can give different numbers under different versions. The</span>
+<span id="cb6-343"><a href="#cb6-343" aria-hidden="true" tabindex="-1"></a>environment $E$ in @eq-repro is part of the report, not background.</span>
+<span id="cb6-344"><a href="#cb6-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-345"><a href="#cb6-345" aria-hidden="true" tabindex="-1"></a>**Single-source build.** The document and the computation are one file; rendering</span>
+<span id="cb6-346"><a href="#cb6-346" aria-hidden="true" tabindex="-1"></a>*is* re-running. This is the practice that eliminates the transcription gap</span>
+<span id="cb6-347"><a href="#cb6-347" aria-hidden="true" tabindex="-1"></a>outright rather than merely policing it.</span>
+<span id="cb6-348"><a href="#cb6-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-349"><a href="#cb6-349" aria-hidden="true" tabindex="-1"></a>The minimal, self-contained reproducibility footer below records seed and</span>
+<span id="cb6-350"><a href="#cb6-350" aria-hidden="true" tabindex="-1"></a>environment so a reader can reconstruct $E$. It is deliberately boring; that is the</span>
+<span id="cb6-351"><a href="#cb6-351" aria-hidden="true" tabindex="-1"></a>point.</span>
+<span id="cb6-352"><a href="#cb6-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-353"><a href="#cb6-353" aria-hidden="true" tabindex="-1"></a><span class="in">```{r repro-footer}</span></span>
+<span id="cb6-354"><a href="#cb6-354" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">43</span>)            <span class="co"># determinism: re-runs reproduce every stochastic result</span></span>
+<span id="cb6-355"><a href="#cb6-355" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"R version:"</span>, R.version.string, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-356"><a href="#cb6-356" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Key packages:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-357"><a href="#cb6-357" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (p <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"dplyr"</span>, <span class="st">"ggplot2"</span>, <span class="st">"broom"</span>)) {</span>
+<span id="cb6-358"><a href="#cb6-358" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">requireNamespace</span>(p, <span class="at">quietly =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb6-359"><a href="#cb6-359" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-8s %s</span><span class="sc">\n</span><span class="st">"</span>, p, <span class="fu">as.character</span>(<span class="fu">packageVersion</span>(p))))</span>
+<span id="cb6-360"><a href="#cb6-360" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-361"><a href="#cb6-361" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-362"><a href="#cb6-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-363"><a href="#cb6-363" aria-hidden="true" tabindex="-1"></a>A subtle but consequential point: reproducibility is a precondition for, not a</span>
+<span id="cb6-364"><a href="#cb6-364" aria-hidden="true" tabindex="-1"></a>guarantee of, credibility. A reproducible analysis can still be **overfit to</span>
+<span id="cb6-365"><a href="#cb6-365" aria-hidden="true" tabindex="-1"></a>researcher degrees of freedom**—the many defensible choices of sample, controls,</span>
+<span id="cb6-366"><a href="#cb6-366" aria-hidden="true" tabindex="-1"></a>and functional form that, searched over, manufacture significance. The honest</span>
+<span id="cb6-367"><a href="#cb6-367" aria-hidden="true" tabindex="-1"></a>defense is to report the **specification curve** or **multiverse**: the</span>
+<span id="cb6-368"><a href="#cb6-368" aria-hidden="true" tabindex="-1"></a>distribution of the estimate across the reasonable analytic choices, so the reader</span>
+<span id="cb6-369"><a href="#cb6-369" aria-hidden="true" tabindex="-1"></a>sees whether the result is a robust feature of the data or an artifact of one path</span>
+<span id="cb6-370"><a href="#cb6-370" aria-hidden="true" tabindex="-1"></a>through it. Reproducibility makes the multiverse cheap to compute; reporting it is</span>
+<span id="cb6-371"><a href="#cb6-371" aria-hidden="true" tabindex="-1"></a>what turns reproducibility into credibility.</span>
+<span id="cb6-372"><a href="#cb6-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-373"><a href="#cb6-373" aria-hidden="true" tabindex="-1"></a><span class="fu">## Academic versus Managerial Reporting</span></span>
+<span id="cb6-374"><a href="#cb6-374" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-375"><a href="#cb6-375" aria-hidden="true" tabindex="-1"></a>The same study, honestly reported, looks different to the two audiences because</span>
+<span id="cb6-376"><a href="#cb6-376" aria-hidden="true" tabindex="-1"></a>they price errors differently (the formalization in @sec-reporting's two-audience</span>
+<span id="cb6-377"><a href="#cb6-377" aria-hidden="true" tabindex="-1"></a>discussion above). The differences are systematic enough to tabulate, and the</span>
+<span id="cb6-378"><a href="#cb6-378" aria-hidden="true" tabindex="-1"></a>tabulation is itself a reporting decision: it tells an author what to foreground.</span>
+<span id="cb6-379"><a href="#cb6-379" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-380"><a href="#cb6-380" aria-hidden="true" tabindex="-1"></a><span class="in">```{r tbl-aud, echo=FALSE, message=FALSE, warning=FALSE}</span></span>
+<span id="cb6-381"><a href="#cb6-381" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr); <span class="fu">library</span>(kableExtra)</span>
+<span id="cb6-382"><a href="#cb6-382" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb6-383"><a href="#cb6-383" aria-hidden="true" tabindex="-1"></a>  <span class="at">Element =</span> <span class="fu">c</span>(<span class="st">"Primary question"</span>, <span class="st">"What leads"</span>, <span class="st">"Uncertainty"</span>, <span class="st">"Identification"</span>,</span>
+<span id="cb6-384"><a href="#cb6-384" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Effect units"</span>, <span class="st">"Robustness"</span>, <span class="st">"Length"</span>, <span class="st">"Success criterion"</span>),</span>
+<span id="cb6-385"><a href="#cb6-385" aria-hidden="true" tabindex="-1"></a>  <span class="at">Academic =</span> <span class="fu">c</span>(<span class="st">"Is the effect real and why?"</span>, <span class="st">"Theory and contribution"</span>,</span>
+<span id="cb6-386"><a href="#cb6-386" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Intervals, tests, full disclosure"</span>, <span class="st">"Foregrounded and defended"</span>,</span>
+<span id="cb6-387"><a href="#cb6-387" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Standardized / elasticities"</span>, <span class="st">"Extensive, in-text"</span>,</span>
+<span id="cb6-388"><a href="#cb6-388" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Long; appendices expected"</span>, <span class="st">"Survives peer review &amp; replication"</span>),</span>
+<span id="cb6-389"><a href="#cb6-389" aria-hidden="true" tabindex="-1"></a>  <span class="at">Managerial =</span> <span class="fu">c</span>(<span class="st">"What should we do, and what is the payoff?"</span>,</span>
+<span id="cb6-390"><a href="#cb6-390" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"The decision and its $ impact"</span>, <span class="st">"Risk of the recommended action"</span>,</span>
+<span id="cb6-391"><a href="#cb6-391" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"Stated as a caveat, not derived"</span>, <span class="st">"Dollars, share points, conversions"</span>,</span>
+<span id="cb6-392"><a href="#cb6-392" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"Summarized; details on request"</span>, <span class="st">"Short; one-page summary first"</span>,</span>
+<span id="cb6-393"><a href="#cb6-393" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"Changes a decision; ROI realized"</span>),</span>
+<span id="cb6-394"><a href="#cb6-394" aria-hidden="true" tabindex="-1"></a>  <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb6-395"><a href="#cb6-395" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb6-396"><a href="#cb6-396" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Academic and managerial registers differ in foregrounding, not in honesty. The same estimate and its uncertainty feed both reports."</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-397"><a href="#cb6-397" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-398"><a href="#cb6-398" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_spec</span>(<span class="dv">1</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-399"><a href="#cb6-399" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-400"><a href="#cb6-400" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-401"><a href="#cb6-401" aria-hidden="true" tabindex="-1"></a>The managerial register inverts the academic document's structure. An academic</span>
+<span id="cb6-402"><a href="#cb6-402" aria-hidden="true" tabindex="-1"></a>paper builds to its contribution: motivation, theory, data, identification,</span>
+<span id="cb6-403"><a href="#cb6-403" aria-hidden="true" tabindex="-1"></a>results, robustness, then implications. A managerial report **leads with the</span>
+<span id="cb6-404"><a href="#cb6-404" aria-hidden="true" tabindex="-1"></a>answer**—the recommendation and its expected return—and relegates method to an</span>
+<span id="cb6-405"><a href="#cb6-405" aria-hidden="true" tabindex="-1"></a>appendix, following the inverted-pyramid logic that the busiest reader should</span>
+<span id="cb6-406"><a href="#cb6-406" aria-hidden="true" tabindex="-1"></a>extract the decision from the first paragraph. This is not dumbing down; it is</span>
+<span id="cb6-407"><a href="#cb6-407" aria-hidden="true" tabindex="-1"></a>re-sequencing for a different loss function. The discipline of translating an</span>
+<span id="cb6-408"><a href="#cb6-408" aria-hidden="true" tabindex="-1"></a>estimate into a decision with a quantified payoff is exactly what gives marketing</span>
+<span id="cb6-409"><a href="#cb6-409" aria-hidden="true" tabindex="-1"></a>research standing in the firm, and its absence is why analytically sound work so</span>
+<span id="cb6-410"><a href="#cb6-410" aria-hidden="true" tabindex="-1"></a>often fails to move resources <span class="co">[</span><span class="ot">@hanssens2016</span><span class="co">]</span>. The presence of a senior marketing</span>
+<span id="cb6-411"><a href="#cb6-411" aria-hidden="true" tabindex="-1"></a>voice in the firm measurably improves performance, which raises the stakes of</span>
+<span id="cb6-412"><a href="#cb6-412" aria-hidden="true" tabindex="-1"></a>reporting in a register that voice can use <span class="co">[</span><span class="ot">@germann2015</span><span class="co">]</span>.</span>
 <span id="cb6-413"><a href="#cb6-413" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-414"><a href="#cb6-414" aria-hidden="true" tabindex="-1"></a>First, **statistical significance is reported as managerial importance.** A</span>
-<span id="cb6-415"><a href="#cb6-415" aria-hidden="true" tabindex="-1"></a>precisely estimated but tiny elasticity is "significant" and irrelevant; the</span>
-<span id="cb6-416"><a href="#cb6-416" aria-hidden="true" tabindex="-1"></a>managerial report must state the effect in decision units and let the manager judge</span>
-<span id="cb6-417"><a href="#cb6-417" aria-hidden="true" tabindex="-1"></a>materiality. Second, **a metric is reported without its construct validity.** Many</span>
-<span id="cb6-418"><a href="#cb6-418" aria-hidden="true" tabindex="-1"></a>managerial dashboards rest on accounting approximations that do not measure what</span>
-<span id="cb6-419"><a href="#cb6-419" aria-hidden="true" tabindex="-1"></a>they claim—Tobin's $q$ proxies and similar shortcuts can mislead precisely because</span>
-<span id="cb6-420"><a href="#cb6-420" aria-hidden="true" tabindex="-1"></a>they are reported as if they were the construct of interest, when they are noisy,</span>
-<span id="cb6-421"><a href="#cb6-421" aria-hidden="true" tabindex="-1"></a>biased stand-ins for it <span class="co">[</span><span class="ot">@bendle2018; @bendle2018misuse</span><span class="co">]</span>. Reporting the proxy</span>
-<span id="cb6-422"><a href="#cb6-422" aria-hidden="true" tabindex="-1"></a>without flagging the gap transmits a measurement error as a managerial fact. Third,</span>
-<span id="cb6-423"><a href="#cb6-423" aria-hidden="true" tabindex="-1"></a>**correlation is reported as a lever.** A managerial recommendation implicitly</span>
-<span id="cb6-424"><a href="#cb6-424" aria-hidden="true" tabindex="-1"></a>claims that acting on a variable will move the outcome—a causal claim—so a report</span>
-<span id="cb6-425"><a href="#cb6-425" aria-hidden="true" tabindex="-1"></a>that recommends action on the basis of a correlational estimate must say so plainly</span>
-<span id="cb6-426"><a href="#cb6-426" aria-hidden="true" tabindex="-1"></a>and price the risk that the relationship is not causal. The honest managerial</span>
-<span id="cb6-427"><a href="#cb6-427" aria-hidden="true" tabindex="-1"></a>report does not hide the identification problem; it states it as the risk attached</span>
-<span id="cb6-428"><a href="#cb6-428" aria-hidden="true" tabindex="-1"></a>to the recommendation.</span>
-<span id="cb6-429"><a href="#cb6-429" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-430"><a href="#cb6-430" aria-hidden="true" tabindex="-1"></a><span class="fu">## Dashboards</span></span>
-<span id="cb6-431"><a href="#cb6-431" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-432"><a href="#cb6-432" aria-hidden="true" tabindex="-1"></a>A **dashboard** is reporting made continuous and interactive: a live interface that</span>
-<span id="cb6-433"><a href="#cb6-433" aria-hidden="true" tabindex="-1"></a>renders current values of a fixed set of metrics, refreshed as data arrives, and</span>
-<span id="cb6-434"><a href="#cb6-434" aria-hidden="true" tabindex="-1"></a>typically lets the user filter or drill down. Where a static report answers a</span>
-<span id="cb6-435"><a href="#cb6-435" aria-hidden="true" tabindex="-1"></a>question once, a dashboard answers a standing question repeatedly, which changes</span>
-<span id="cb6-436"><a href="#cb6-436" aria-hidden="true" tabindex="-1"></a>both its value and its hazards. Its value is **monitoring**—detecting when a metric</span>
-<span id="cb6-437"><a href="#cb6-437" aria-hidden="true" tabindex="-1"></a>leaves its expected range fast enough to act. Its hazard is **optimization</span>
-<span id="cb6-438"><a href="#cb6-438" aria-hidden="true" tabindex="-1"></a>pressure**: a number shown continuously to people whose performance is judged by it</span>
-<span id="cb6-439"><a href="#cb6-439" aria-hidden="true" tabindex="-1"></a>will be moved, and not always by improving the underlying reality.</span>
-<span id="cb6-440"><a href="#cb6-440" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-441"><a href="#cb6-441" aria-hidden="true" tabindex="-1"></a>The design problem is to choose a small set of metrics that are *decision-relevant*,</span>
-<span id="cb6-442"><a href="#cb6-442" aria-hidden="true" tabindex="-1"></a>*timely*, and *jointly hard to game*, and to present each with enough context that a</span>
-<span id="cb6-443"><a href="#cb6-443" aria-hidden="true" tabindex="-1"></a>value is interpretable on sight. A bare number ("conversion: 3.2%") is nearly</span>
-<span id="cb6-444"><a href="#cb6-444" aria-hidden="true" tabindex="-1"></a>useless; the same number against a target, a trend, and a confidence band is a</span>
-<span id="cb6-445"><a href="#cb6-445" aria-hidden="true" tabindex="-1"></a>decision input. The reporting principle from @eq-report-triple survives the move to</span>
-<span id="cb6-446"><a href="#cb6-446" aria-hidden="true" tabindex="-1"></a>real time: a live point estimate without a sense of its variability invites the user</span>
-<span id="cb6-447"><a href="#cb6-447" aria-hidden="true" tabindex="-1"></a>to chase noise, mistaking the ordinary jitter of a ratio for a signal worth acting</span>
-<span id="cb6-448"><a href="#cb6-448" aria-hidden="true" tabindex="-1"></a>on.</span>
-<span id="cb6-449"><a href="#cb6-449" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-450"><a href="#cb6-450" aria-hidden="true" tabindex="-1"></a>@fig-dashboard-anatomy sketches the layering that distinguishes a dashboard from a</span>
-<span id="cb6-451"><a href="#cb6-451" aria-hidden="true" tabindex="-1"></a>wall of numbers.</span>
+<span id="cb6-414"><a href="#cb6-414" aria-hidden="true" tabindex="-1"></a>Three translation errors recur when crossing the academic–managerial boundary, and</span>
+<span id="cb6-415"><a href="#cb6-415" aria-hidden="true" tabindex="-1"></a>each has a discipline-specific antidote.</span>
+<span id="cb6-416"><a href="#cb6-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-417"><a href="#cb6-417" aria-hidden="true" tabindex="-1"></a>First, **statistical significance is reported as managerial importance.** A</span>
+<span id="cb6-418"><a href="#cb6-418" aria-hidden="true" tabindex="-1"></a>precisely estimated but tiny elasticity is "significant" and irrelevant; the</span>
+<span id="cb6-419"><a href="#cb6-419" aria-hidden="true" tabindex="-1"></a>managerial report must state the effect in decision units and let the manager judge</span>
+<span id="cb6-420"><a href="#cb6-420" aria-hidden="true" tabindex="-1"></a>materiality. Second, **a metric is reported without its construct validity.** Many</span>
+<span id="cb6-421"><a href="#cb6-421" aria-hidden="true" tabindex="-1"></a>managerial dashboards rest on accounting approximations that do not measure what</span>
+<span id="cb6-422"><a href="#cb6-422" aria-hidden="true" tabindex="-1"></a>they claim—Tobin's $q$ proxies and similar shortcuts can mislead precisely because</span>
+<span id="cb6-423"><a href="#cb6-423" aria-hidden="true" tabindex="-1"></a>they are reported as if they were the construct of interest, when they are noisy,</span>
+<span id="cb6-424"><a href="#cb6-424" aria-hidden="true" tabindex="-1"></a>biased stand-ins for it <span class="co">[</span><span class="ot">@bendle2018; @bendle2018misuse</span><span class="co">]</span>. Reporting the proxy</span>
+<span id="cb6-425"><a href="#cb6-425" aria-hidden="true" tabindex="-1"></a>without flagging the gap transmits a measurement error as a managerial fact. Third,</span>
+<span id="cb6-426"><a href="#cb6-426" aria-hidden="true" tabindex="-1"></a>**correlation is reported as a lever.** A managerial recommendation implicitly</span>
+<span id="cb6-427"><a href="#cb6-427" aria-hidden="true" tabindex="-1"></a>claims that acting on a variable will move the outcome—a causal claim—so a report</span>
+<span id="cb6-428"><a href="#cb6-428" aria-hidden="true" tabindex="-1"></a>that recommends action on the basis of a correlational estimate must say so plainly</span>
+<span id="cb6-429"><a href="#cb6-429" aria-hidden="true" tabindex="-1"></a>and price the risk that the relationship is not causal. The honest managerial</span>
+<span id="cb6-430"><a href="#cb6-430" aria-hidden="true" tabindex="-1"></a>report does not hide the identification problem; it states it as the risk attached</span>
+<span id="cb6-431"><a href="#cb6-431" aria-hidden="true" tabindex="-1"></a>to the recommendation.</span>
+<span id="cb6-432"><a href="#cb6-432" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-433"><a href="#cb6-433" aria-hidden="true" tabindex="-1"></a><span class="fu">## Dashboards</span></span>
+<span id="cb6-434"><a href="#cb6-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-435"><a href="#cb6-435" aria-hidden="true" tabindex="-1"></a>A **dashboard** is reporting made continuous and interactive: a live interface that</span>
+<span id="cb6-436"><a href="#cb6-436" aria-hidden="true" tabindex="-1"></a>renders current values of a fixed set of metrics, refreshed as data arrives, and</span>
+<span id="cb6-437"><a href="#cb6-437" aria-hidden="true" tabindex="-1"></a>typically lets the user filter or drill down. Where a static report answers a</span>
+<span id="cb6-438"><a href="#cb6-438" aria-hidden="true" tabindex="-1"></a>question once, a dashboard answers a standing question repeatedly, which changes</span>
+<span id="cb6-439"><a href="#cb6-439" aria-hidden="true" tabindex="-1"></a>both its value and its hazards. Its value is **monitoring**—detecting when a metric</span>
+<span id="cb6-440"><a href="#cb6-440" aria-hidden="true" tabindex="-1"></a>leaves its expected range fast enough to act. Its hazard is **optimization</span>
+<span id="cb6-441"><a href="#cb6-441" aria-hidden="true" tabindex="-1"></a>pressure**: a number shown continuously to people whose performance is judged by it</span>
+<span id="cb6-442"><a href="#cb6-442" aria-hidden="true" tabindex="-1"></a>will be moved, and not always by improving the underlying reality.</span>
+<span id="cb6-443"><a href="#cb6-443" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-444"><a href="#cb6-444" aria-hidden="true" tabindex="-1"></a>The design problem is to choose a small set of metrics that are *decision-relevant*,</span>
+<span id="cb6-445"><a href="#cb6-445" aria-hidden="true" tabindex="-1"></a>*timely*, and *jointly hard to game*, and to present each with enough context that a</span>
+<span id="cb6-446"><a href="#cb6-446" aria-hidden="true" tabindex="-1"></a>value is interpretable on sight. A bare number ("conversion: 3.2%") is nearly</span>
+<span id="cb6-447"><a href="#cb6-447" aria-hidden="true" tabindex="-1"></a>useless; the same number against a target, a trend, and a confidence band is a</span>
+<span id="cb6-448"><a href="#cb6-448" aria-hidden="true" tabindex="-1"></a>decision input. The reporting principle from @eq-report-triple survives the move to</span>
+<span id="cb6-449"><a href="#cb6-449" aria-hidden="true" tabindex="-1"></a>real time: a live point estimate without a sense of its variability invites the user</span>
+<span id="cb6-450"><a href="#cb6-450" aria-hidden="true" tabindex="-1"></a>to chase noise, mistaking the ordinary jitter of a ratio for a signal worth acting</span>
+<span id="cb6-451"><a href="#cb6-451" aria-hidden="true" tabindex="-1"></a>on.</span>
 <span id="cb6-452"><a href="#cb6-452" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-455"><a href="#cb6-455" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb6-456"><a href="#cb6-456" aria-hidden="true" tabindex="-1"></a>%%| label: fig-dashboard-anatomy</span>
-<span id="cb6-457"><a href="#cb6-457" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Anatomy of a decision-oriented dashboard. Each tier narrows attention: from raw streams, to a few governed metrics, to the small set that triggers action when out of range.</span><span class="ot">"</span></span>
-<span id="cb6-458"><a href="#cb6-458" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
-<span id="cb6-459"><a href="#cb6-459" aria-hidden="true" tabindex="-1"></a>  S1[<span class="ot">"</span><span class="st">Data streams&lt;br/&gt;(sales, web, CRM, spend)</span><span class="ot">"</span>] --&gt; M[<span class="ot">"</span><span class="st">Metric layer&lt;br/&gt;(defined, versioned KPIs)</span><span class="ot">"</span>]</span>
-<span id="cb6-460"><a href="#cb6-460" aria-hidden="true" tabindex="-1"></a>  M --&gt; C[<span class="ot">"</span><span class="st">Context layer&lt;br/&gt;(target, trend, uncertainty band)</span><span class="ot">"</span>]</span>
-<span id="cb6-461"><a href="#cb6-461" aria-hidden="true" tabindex="-1"></a>  C --&gt; A[<span class="ot">"</span><span class="st">Alert layer&lt;br/&gt;(out-of-range triggers)</span><span class="ot">"</span>]</span>
-<span id="cb6-462"><a href="#cb6-462" aria-hidden="true" tabindex="-1"></a>  A --&gt; D[<span class="ot">"</span><span class="st">Decision&lt;br/&gt;(act / investigate / ignore)</span><span class="ot">"</span>]</span>
-<span id="cb6-463"><a href="#cb6-463" aria-hidden="true" tabindex="-1"></a>  M -.governance.-&gt; G[<span class="ot">"</span><span class="st">Metric definitions&lt;br/&gt;owned &amp; documented</span><span class="ot">"</span>]</span>
-<span id="cb6-464"><a href="#cb6-464" aria-hidden="true" tabindex="-1"></a>  style D fill:<span class="co">#d8efd8,stroke:#333</span></span>
-<span id="cb6-465"><a href="#cb6-465" aria-hidden="true" tabindex="-1"></a>  style G fill:<span class="co">#fff3cd,stroke:#333</span></span>
-<span id="cb6-466"><a href="#cb6-466" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-467"><a href="#cb6-467" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-468"><a href="#cb6-468" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Metric-Governance Problem</span></span>
-<span id="cb6-469"><a href="#cb6-469" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-470"><a href="#cb6-470" aria-hidden="true" tabindex="-1"></a>The defining risk of dashboards is captured by a regularity old enough to be</span>
-<span id="cb6-471"><a href="#cb6-471" aria-hidden="true" tabindex="-1"></a>folklore and sharp enough to be a design constraint:</span>
+<span id="cb6-453"><a href="#cb6-453" aria-hidden="true" tabindex="-1"></a>@fig-dashboard-anatomy sketches the layering that distinguishes a dashboard from a</span>
+<span id="cb6-454"><a href="#cb6-454" aria-hidden="true" tabindex="-1"></a>wall of numbers.</span>
+<span id="cb6-455"><a href="#cb6-455" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-458"><a href="#cb6-458" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb6-459"><a href="#cb6-459" aria-hidden="true" tabindex="-1"></a>%%| label: fig-dashboard-anatomy</span>
+<span id="cb6-460"><a href="#cb6-460" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Anatomy of a decision-oriented dashboard. Each tier narrows attention: from raw streams, to a few governed metrics, to the small set that triggers action when out of range.</span><span class="ot">"</span></span>
+<span id="cb6-461"><a href="#cb6-461" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
+<span id="cb6-462"><a href="#cb6-462" aria-hidden="true" tabindex="-1"></a>  S1[<span class="ot">"</span><span class="st">Data streams&lt;br/&gt;(sales, web, CRM, spend)</span><span class="ot">"</span>] --&gt; M[<span class="ot">"</span><span class="st">Metric layer&lt;br/&gt;(defined, versioned KPIs)</span><span class="ot">"</span>]</span>
+<span id="cb6-463"><a href="#cb6-463" aria-hidden="true" tabindex="-1"></a>  M --&gt; C[<span class="ot">"</span><span class="st">Context layer&lt;br/&gt;(target, trend, uncertainty band)</span><span class="ot">"</span>]</span>
+<span id="cb6-464"><a href="#cb6-464" aria-hidden="true" tabindex="-1"></a>  C --&gt; A[<span class="ot">"</span><span class="st">Alert layer&lt;br/&gt;(out-of-range triggers)</span><span class="ot">"</span>]</span>
+<span id="cb6-465"><a href="#cb6-465" aria-hidden="true" tabindex="-1"></a>  A --&gt; D[<span class="ot">"</span><span class="st">Decision&lt;br/&gt;(act / investigate / ignore)</span><span class="ot">"</span>]</span>
+<span id="cb6-466"><a href="#cb6-466" aria-hidden="true" tabindex="-1"></a>  M -.governance.-&gt; G[<span class="ot">"</span><span class="st">Metric definitions&lt;br/&gt;owned &amp; documented</span><span class="ot">"</span>]</span>
+<span id="cb6-467"><a href="#cb6-467" aria-hidden="true" tabindex="-1"></a>  style D fill:<span class="co">#d8efd8,stroke:#333</span></span>
+<span id="cb6-468"><a href="#cb6-468" aria-hidden="true" tabindex="-1"></a>  style G fill:<span class="co">#fff3cd,stroke:#333</span></span>
+<span id="cb6-469"><a href="#cb6-469" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-470"><a href="#cb6-470" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-471"><a href="#cb6-471" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Metric-Governance Problem</span></span>
 <span id="cb6-472"><a href="#cb6-472" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-473"><a href="#cb6-473" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; When a measure becomes a target, it ceases to be a good measure.</span></span>
-<span id="cb6-474"><a href="#cb6-474" aria-hidden="true" tabindex="-1"></a><span class="at">&gt;</span></span>
-<span id="cb6-475"><a href="#cb6-475" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; --- Goodhart's law, as commonly stated </span><span class="co">&lt;!-- CITE-NEEDED: Goodhart's law / Strathern (1997) restatement: "When a measure becomes a target, it ceases to be a good measure" --&gt;</span></span>
-<span id="cb6-476"><a href="#cb6-476" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-477"><a href="#cb6-477" aria-hidden="true" tabindex="-1"></a>The mechanism is mundane. A metric is a *proxy* for an unobserved goal; agents</span>
-<span id="cb6-478"><a href="#cb6-478" aria-hidden="true" tabindex="-1"></a>optimize the proxy; the gap between proxy and goal widens exactly where the</span>
-<span id="cb6-479"><a href="#cb6-479" aria-hidden="true" tabindex="-1"></a>incentive bites. A dashboard that surfaces "leads generated" will produce more</span>
-<span id="cb6-480"><a href="#cb6-480" aria-hidden="true" tabindex="-1"></a>leads, of falling quality; one that surfaces "average review rating" will produce</span>
-<span id="cb6-481"><a href="#cb6-481" aria-hidden="true" tabindex="-1"></a>review-solicitation tactics that move the rating without moving satisfaction. The</span>
-<span id="cb6-482"><a href="#cb6-482" aria-hidden="true" tabindex="-1"></a>defense is not to hide metrics but to **govern** them: pair every gameable metric</span>
-<span id="cb6-483"><a href="#cb6-483" aria-hidden="true" tabindex="-1"></a>with a **guardrail metric** that moves in the opposite direction under gaming (leads</span>
-<span id="cb6-484"><a href="#cb6-484" aria-hidden="true" tabindex="-1"></a>*and* lead-to-sale conversion; rating *and* response rate), so that gaming is</span>
-<span id="cb6-485"><a href="#cb6-485" aria-hidden="true" tabindex="-1"></a>visible in the pairing. Reporting metrics in tension, not in isolation, is the</span>
-<span id="cb6-486"><a href="#cb6-486" aria-hidden="true" tabindex="-1"></a>dashboard analogue of reporting an estimate with its uncertainty—both refuse to let</span>
-<span id="cb6-487"><a href="#cb6-487" aria-hidden="true" tabindex="-1"></a>a single number stand unchallenged.</span>
-<span id="cb6-488"><a href="#cb6-488" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-489"><a href="#cb6-489" aria-hidden="true" tabindex="-1"></a>Three further governance practices keep a dashboard honest. **Definitions are owned</span>
-<span id="cb6-490"><a href="#cb6-490" aria-hidden="true" tabindex="-1"></a>and versioned**: every metric has a single documented definition and a person</span>
-<span id="cb6-491"><a href="#cb6-491" aria-hidden="true" tabindex="-1"></a>accountable for it, because the most common dashboard failure is two teams reading</span>
-<span id="cb6-492"><a href="#cb6-492" aria-hidden="true" tabindex="-1"></a>the same label as two different quantities. **Latency is disclosed**: a metric that</span>
-<span id="cb6-493"><a href="#cb6-493" aria-hidden="true" tabindex="-1"></a>is two days stale must say so, or it will be acted on as if current. And **the</span>
-<span id="cb6-494"><a href="#cb6-494" aria-hidden="true" tabindex="-1"></a>metric set is small**: a dashboard that shows everything directs attention to</span>
-<span id="cb6-495"><a href="#cb6-495" aria-hidden="true" tabindex="-1"></a>nothing, defeating the monitoring purpose that justified it. The discipline is the</span>
-<span id="cb6-496"><a href="#cb6-496" aria-hidden="true" tabindex="-1"></a>same one that governs a good table—report what supports a decision and suppress what</span>
-<span id="cb6-497"><a href="#cb6-497" aria-hidden="true" tabindex="-1"></a>merely fills space.</span>
-<span id="cb6-498"><a href="#cb6-498" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-499"><a href="#cb6-499" aria-hidden="true" tabindex="-1"></a>The simulation below makes the guardrail logic concrete. A team is incentivized on a</span>
-<span id="cb6-500"><a href="#cb6-500" aria-hidden="true" tabindex="-1"></a>headline metric; over time they game it, lifting the headline while the guardrail</span>
-<span id="cb6-501"><a href="#cb6-501" aria-hidden="true" tabindex="-1"></a>quietly deteriorates. A dashboard that showed only the headline would report</span>
-<span id="cb6-502"><a href="#cb6-502" aria-hidden="true" tabindex="-1"></a>improvement; one that reports the pair reveals the truth.</span>
-<span id="cb6-503"><a href="#cb6-503" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-504"><a href="#cb6-504" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fig-goodhart, message=FALSE, warning=FALSE}</span></span>
-<span id="cb6-505"><a href="#cb6-505" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Goodhart's law on a dashboard. Under incentive pressure the headline metric (leads) rises while the guardrail (lead-to-sale conversion) falls. Reporting the pair, not the headline alone, exposes the gaming."</span></span>
-<span id="cb6-506"><a href="#cb6-506" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 6.2</span></span>
-<span id="cb6-507"><a href="#cb6-507" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4</span></span>
-<span id="cb6-508"><a href="#cb6-508" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">43</span>)</span>
-<span id="cb6-509"><a href="#cb6-509" aria-hidden="true" tabindex="-1"></a>weeks <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">26</span></span>
-<span id="cb6-510"><a href="#cb6-510" aria-hidden="true" tabindex="-1"></a>gaming <span class="ot">&lt;-</span> <span class="fu">pmin</span>((weeks <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">25</span>, <span class="dv">1</span>)            <span class="co"># incentive pressure ramps in</span></span>
-<span id="cb6-511"><a href="#cb6-511" aria-hidden="true" tabindex="-1"></a>leads  <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">+</span> <span class="dv">60</span> <span class="sc">*</span> gaming <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">26</span>, <span class="dv">0</span>, <span class="dv">4</span>)  <span class="co"># headline climbs as it is gamed</span></span>
-<span id="cb6-512"><a href="#cb6-512" aria-hidden="true" tabindex="-1"></a>conv   <span class="ot">&lt;-</span> <span class="fl">0.22</span> <span class="sc">-</span> <span class="fl">0.12</span> <span class="sc">*</span> gaming <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">26</span>, <span class="dv">0</span>, <span class="fl">0.01</span>)  <span class="co"># quality erodes in step</span></span>
-<span id="cb6-513"><a href="#cb6-513" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-514"><a href="#cb6-514" aria-hidden="true" tabindex="-1"></a>dash <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb6-515"><a href="#cb6-515" aria-hidden="true" tabindex="-1"></a>  <span class="at">week  =</span> <span class="fu">rep</span>(weeks, <span class="dv">2</span>),</span>
-<span id="cb6-516"><a href="#cb6-516" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(leads <span class="sc">/</span> <span class="fu">max</span>(leads), conv <span class="sc">/</span> <span class="fu">max</span>(conv)),  <span class="co"># scaled to a common axis</span></span>
-<span id="cb6-517"><a href="#cb6-517" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"Leads (headline)"</span>, <span class="st">"Conversion (guardrail)"</span>), <span class="at">each =</span> <span class="dv">26</span>)</span>
-<span id="cb6-518"><a href="#cb6-518" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-519"><a href="#cb6-519" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb6-520"><a href="#cb6-520" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dash, <span class="fu">aes</span>(week, value, <span class="at">linetype =</span> metric)) <span class="sc">+</span></span>
-<span id="cb6-521"><a href="#cb6-521" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb6-522"><a href="#cb6-522" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Week"</span>, <span class="at">y =</span> <span class="st">"Scaled value"</span>, <span class="at">linetype =</span> <span class="cn">NULL</span>,</span>
-<span id="cb6-523"><a href="#cb6-523" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"What the headline hides"</span>) <span class="sc">+</span></span>
-<span id="cb6-524"><a href="#cb6-524" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
-<span id="cb6-525"><a href="#cb6-525" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span>
-<span id="cb6-526"><a href="#cb6-526" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-527"><a href="#cb6-527" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-528"><a href="#cb6-528" aria-hidden="true" tabindex="-1"></a><span class="fu">### Static Report or Dashboard?</span></span>
-<span id="cb6-529"><a href="#cb6-529" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-530"><a href="#cb6-530" aria-hidden="true" tabindex="-1"></a>The choice between a one-time report and a standing dashboard is a choice about the</span>
-<span id="cb6-531"><a href="#cb6-531" aria-hidden="true" tabindex="-1"></a>*question's tense*. A question asked once—"did this campaign lift sales?"—wants a</span>
-<span id="cb6-532"><a href="#cb6-532" aria-hidden="true" tabindex="-1"></a>report: it permits depth, identification, and a considered narrative, and it is read</span>
-<span id="cb6-533"><a href="#cb6-533" aria-hidden="true" tabindex="-1"></a>once and archived. A question asked continuously—"is the funnel healthy right now?"</span>
-<span id="cb6-534"><a href="#cb6-534" aria-hidden="true" tabindex="-1"></a>—wants a dashboard: it trades depth for timeliness because its value is in early</span>
-<span id="cb6-535"><a href="#cb6-535" aria-hidden="true" tabindex="-1"></a>detection. Confusing the two is a common and expensive error. A causal question</span>
-<span id="cb6-536"><a href="#cb6-536" aria-hidden="true" tabindex="-1"></a>forced onto a dashboard becomes a wall of correlations that invites spurious action;</span>
-<span id="cb6-537"><a href="#cb6-537" aria-hidden="true" tabindex="-1"></a>a monitoring question forced into a quarterly report arrives too late to matter. The</span>
-<span id="cb6-538"><a href="#cb6-538" aria-hidden="true" tabindex="-1"></a>deeper analyses that justify *changing* what a dashboard monitors—why a metric moved,</span>
-<span id="cb6-539"><a href="#cb6-539" aria-hidden="true" tabindex="-1"></a>whether an intervention worked—remain the province of the static, reproducible report</span>
-<span id="cb6-540"><a href="#cb6-540" aria-hidden="true" tabindex="-1"></a>that this chapter began with, because they require the identification and uncertainty</span>
-<span id="cb6-541"><a href="#cb6-541" aria-hidden="true" tabindex="-1"></a>machinery a glance-able interface cannot carry.</span>
-<span id="cb6-542"><a href="#cb6-542" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-543"><a href="#cb6-543" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
-<span id="cb6-544"><a href="#cb6-544" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-545"><a href="#cb6-545" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The unit of an honest report is an estimate *with its uncertainty and its</span>
-<span id="cb6-546"><a href="#cb6-546" aria-hidden="true" tabindex="-1"></a>  specification* (@eq-report-triple), not a point estimate or a $p$-value alone; the</span>
-<span id="cb6-547"><a href="#cb6-547" aria-hidden="true" tabindex="-1"></a>  governing principle is sufficiency for second-guessing.</span>
-<span id="cb6-548"><a href="#cb6-548" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Tables** serve lookup (exact, heterogeneous values); **figures** serve</span>
-<span id="cb6-549"><a href="#cb6-549" aria-hidden="true" tabindex="-1"></a>  comparison (patterns via position). Encode the result in the most accurately</span>
-<span id="cb6-550"><a href="#cb6-550" aria-hidden="true" tabindex="-1"></a>  perceived channel, baseline bars at zero, and never erase uncertainty.</span>
-<span id="cb6-551"><a href="#cb6-551" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reproducible reporting** binds narrative to computation, $R = f(D, C, E)$</span>
-<span id="cb6-552"><a href="#cb6-552" aria-hidden="true" tabindex="-1"></a>  (@eq-repro), eliminating the transcription gap; determinism, immutable data,</span>
-<span id="cb6-553"><a href="#cb6-553" aria-hidden="true" tabindex="-1"></a>  environment capture, and single-source builds are its pillars. Reproducibility</span>
-<span id="cb6-554"><a href="#cb6-554" aria-hidden="true" tabindex="-1"></a>  enables but does not guarantee credibility—report the multiverse.</span>
-<span id="cb6-555"><a href="#cb6-555" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Academic and managerial** reports differ in foregrounding, not honesty: the same</span>
-<span id="cb6-556"><a href="#cb6-556" aria-hidden="true" tabindex="-1"></a>  uncertainty feeds both, but the managerial report leads with the decision and its</span>
-<span id="cb6-557"><a href="#cb6-557" aria-hidden="true" tabindex="-1"></a>  payoff and translates effects into decision units <span class="co">[</span><span class="ot">@hanssens2016</span><span class="co">]</span>.</span>
-<span id="cb6-558"><a href="#cb6-558" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Dashboards** make reporting continuous; their governing hazard is Goodhart's law.</span>
-<span id="cb6-559"><a href="#cb6-559" aria-hidden="true" tabindex="-1"></a>  Pair gameable metrics with guardrails, govern definitions, disclose latency, and</span>
-<span id="cb6-560"><a href="#cb6-560" aria-hidden="true" tabindex="-1"></a>  keep the set small. Use a dashboard for standing questions, a reproducible report</span>
-<span id="cb6-561"><a href="#cb6-561" aria-hidden="true" tabindex="-1"></a>  for causal ones.</span>
-<span id="cb6-562"><a href="#cb6-562" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-563"><a href="#cb6-563" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further Reading</span></span>
-<span id="cb6-564"><a href="#cb6-564" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-565"><a href="#cb6-565" aria-hidden="true" tabindex="-1"></a>The reproducibility and literate-programming practices in this chapter sit within</span>
-<span id="cb6-566"><a href="#cb6-566" aria-hidden="true" tabindex="-1"></a>the broader move of marketing into data-rich, code-intensive analysis</span>
-<span id="cb6-567"><a href="#cb6-567" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@wedel2016</span><span class="co">]</span> and the long argument over how to demonstrate marketing's value to the</span>
-<span id="cb6-568"><a href="#cb6-568" aria-hidden="true" tabindex="-1"></a>firm in a register management can act on <span class="co">[</span><span class="ot">@hanssens2016; @germann2015</span><span class="co">]</span>. The</span>
-<span id="cb6-569"><a href="#cb6-569" aria-hidden="true" tabindex="-1"></a>measurement-validity cautions that dashboards make urgent connect to the</span>
-<span id="cb6-570"><a href="#cb6-570" aria-hidden="true" tabindex="-1"></a>construct-and-scale material in @sec-measurement-scales and to documented misuses of</span>
-<span id="cb6-571"><a href="#cb6-571" aria-hidden="true" tabindex="-1"></a>accounting-based proxies <span class="co">[</span><span class="ot">@bendle2018; @bendle2018misuse</span><span class="co">]</span>. The graphical-perception</span>
-<span id="cb6-572"><a href="#cb6-572" aria-hidden="true" tabindex="-1"></a>and exploratory-data-analysis traditions that underwrite the figures section, and</span>
-<span id="cb6-573"><a href="#cb6-573" aria-hidden="true" tabindex="-1"></a>the Goodhart/metric-governance literature behind the dashboard section, are flagged</span>
-<span id="cb6-574"><a href="#cb6-574" aria-hidden="true" tabindex="-1"></a>above as citation gaps to be filled before publication.</span>
+<span id="cb6-473"><a href="#cb6-473" aria-hidden="true" tabindex="-1"></a>The defining risk of dashboards is captured by a regularity old enough to be</span>
+<span id="cb6-474"><a href="#cb6-474" aria-hidden="true" tabindex="-1"></a>folklore and sharp enough to be a design constraint:</span>
+<span id="cb6-475"><a href="#cb6-475" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-476"><a href="#cb6-476" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; When a measure becomes a target, it ceases to be a good measure.</span></span>
+<span id="cb6-477"><a href="#cb6-477" aria-hidden="true" tabindex="-1"></a><span class="at">&gt;</span></span>
+<span id="cb6-478"><a href="#cb6-478" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; --- Goodhart's law, as commonly stated </span><span class="co">&lt;!-- CITE-NEEDED: Goodhart's law / Strathern (1997) restatement: "When a measure becomes a target, it ceases to be a good measure" --&gt;</span></span>
+<span id="cb6-479"><a href="#cb6-479" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-480"><a href="#cb6-480" aria-hidden="true" tabindex="-1"></a>The mechanism is mundane. A metric is a *proxy* for an unobserved goal; agents</span>
+<span id="cb6-481"><a href="#cb6-481" aria-hidden="true" tabindex="-1"></a>optimize the proxy; the gap between proxy and goal widens exactly where the</span>
+<span id="cb6-482"><a href="#cb6-482" aria-hidden="true" tabindex="-1"></a>incentive bites. A dashboard that surfaces "leads generated" will produce more</span>
+<span id="cb6-483"><a href="#cb6-483" aria-hidden="true" tabindex="-1"></a>leads, of falling quality; one that surfaces "average review rating" will produce</span>
+<span id="cb6-484"><a href="#cb6-484" aria-hidden="true" tabindex="-1"></a>review-solicitation tactics that move the rating without moving satisfaction. The</span>
+<span id="cb6-485"><a href="#cb6-485" aria-hidden="true" tabindex="-1"></a>defense is not to hide metrics but to **govern** them: pair every gameable metric</span>
+<span id="cb6-486"><a href="#cb6-486" aria-hidden="true" tabindex="-1"></a>with a **guardrail metric** that moves in the opposite direction under gaming (leads</span>
+<span id="cb6-487"><a href="#cb6-487" aria-hidden="true" tabindex="-1"></a>*and* lead-to-sale conversion; rating *and* response rate), so that gaming is</span>
+<span id="cb6-488"><a href="#cb6-488" aria-hidden="true" tabindex="-1"></a>visible in the pairing. Reporting metrics in tension, not in isolation, is the</span>
+<span id="cb6-489"><a href="#cb6-489" aria-hidden="true" tabindex="-1"></a>dashboard analogue of reporting an estimate with its uncertainty—both refuse to let</span>
+<span id="cb6-490"><a href="#cb6-490" aria-hidden="true" tabindex="-1"></a>a single number stand unchallenged.</span>
+<span id="cb6-491"><a href="#cb6-491" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-492"><a href="#cb6-492" aria-hidden="true" tabindex="-1"></a>Three further governance practices keep a dashboard honest. **Definitions are owned</span>
+<span id="cb6-493"><a href="#cb6-493" aria-hidden="true" tabindex="-1"></a>and versioned**: every metric has a single documented definition and a person</span>
+<span id="cb6-494"><a href="#cb6-494" aria-hidden="true" tabindex="-1"></a>accountable for it, because the most common dashboard failure is two teams reading</span>
+<span id="cb6-495"><a href="#cb6-495" aria-hidden="true" tabindex="-1"></a>the same label as two different quantities. **Latency is disclosed**: a metric that</span>
+<span id="cb6-496"><a href="#cb6-496" aria-hidden="true" tabindex="-1"></a>is two days stale must say so, or it will be acted on as if current. And **the</span>
+<span id="cb6-497"><a href="#cb6-497" aria-hidden="true" tabindex="-1"></a>metric set is small**: a dashboard that shows everything directs attention to</span>
+<span id="cb6-498"><a href="#cb6-498" aria-hidden="true" tabindex="-1"></a>nothing, defeating the monitoring purpose that justified it. The discipline is the</span>
+<span id="cb6-499"><a href="#cb6-499" aria-hidden="true" tabindex="-1"></a>same one that governs a good table—report what supports a decision and suppress what</span>
+<span id="cb6-500"><a href="#cb6-500" aria-hidden="true" tabindex="-1"></a>merely fills space.</span>
+<span id="cb6-501"><a href="#cb6-501" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-502"><a href="#cb6-502" aria-hidden="true" tabindex="-1"></a>The simulation below makes the guardrail logic concrete. A team is incentivized on a</span>
+<span id="cb6-503"><a href="#cb6-503" aria-hidden="true" tabindex="-1"></a>headline metric; over time they game it, lifting the headline while the guardrail</span>
+<span id="cb6-504"><a href="#cb6-504" aria-hidden="true" tabindex="-1"></a>quietly deteriorates. A dashboard that showed only the headline would report</span>
+<span id="cb6-505"><a href="#cb6-505" aria-hidden="true" tabindex="-1"></a>improvement; one that reports the pair reveals the truth.</span>
+<span id="cb6-506"><a href="#cb6-506" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-507"><a href="#cb6-507" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fig-goodhart, message=FALSE, warning=FALSE}</span></span>
+<span id="cb6-508"><a href="#cb6-508" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Goodhart's law on a dashboard. Under incentive pressure the headline metric (leads) rises while the guardrail (lead-to-sale conversion) falls. Reporting the pair, not the headline alone, exposes the gaming."</span></span>
+<span id="cb6-509"><a href="#cb6-509" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 6.2</span></span>
+<span id="cb6-510"><a href="#cb6-510" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4</span></span>
+<span id="cb6-511"><a href="#cb6-511" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">43</span>)</span>
+<span id="cb6-512"><a href="#cb6-512" aria-hidden="true" tabindex="-1"></a>weeks <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">26</span></span>
+<span id="cb6-513"><a href="#cb6-513" aria-hidden="true" tabindex="-1"></a>gaming <span class="ot">&lt;-</span> <span class="fu">pmin</span>((weeks <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">25</span>, <span class="dv">1</span>)            <span class="co"># incentive pressure ramps in</span></span>
+<span id="cb6-514"><a href="#cb6-514" aria-hidden="true" tabindex="-1"></a>leads  <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">+</span> <span class="dv">60</span> <span class="sc">*</span> gaming <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">26</span>, <span class="dv">0</span>, <span class="dv">4</span>)  <span class="co"># headline climbs as it is gamed</span></span>
+<span id="cb6-515"><a href="#cb6-515" aria-hidden="true" tabindex="-1"></a>conv   <span class="ot">&lt;-</span> <span class="fl">0.22</span> <span class="sc">-</span> <span class="fl">0.12</span> <span class="sc">*</span> gaming <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">26</span>, <span class="dv">0</span>, <span class="fl">0.01</span>)  <span class="co"># quality erodes in step</span></span>
+<span id="cb6-516"><a href="#cb6-516" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-517"><a href="#cb6-517" aria-hidden="true" tabindex="-1"></a>dash <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb6-518"><a href="#cb6-518" aria-hidden="true" tabindex="-1"></a>  <span class="at">week  =</span> <span class="fu">rep</span>(weeks, <span class="dv">2</span>),</span>
+<span id="cb6-519"><a href="#cb6-519" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(leads <span class="sc">/</span> <span class="fu">max</span>(leads), conv <span class="sc">/</span> <span class="fu">max</span>(conv)),  <span class="co"># scaled to a common axis</span></span>
+<span id="cb6-520"><a href="#cb6-520" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"Leads (headline)"</span>, <span class="st">"Conversion (guardrail)"</span>), <span class="at">each =</span> <span class="dv">26</span>)</span>
+<span id="cb6-521"><a href="#cb6-521" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-522"><a href="#cb6-522" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb6-523"><a href="#cb6-523" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dash, <span class="fu">aes</span>(week, value, <span class="at">linetype =</span> metric)) <span class="sc">+</span></span>
+<span id="cb6-524"><a href="#cb6-524" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb6-525"><a href="#cb6-525" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Week"</span>, <span class="at">y =</span> <span class="st">"Scaled value"</span>, <span class="at">linetype =</span> <span class="cn">NULL</span>,</span>
+<span id="cb6-526"><a href="#cb6-526" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"What the headline hides"</span>) <span class="sc">+</span></span>
+<span id="cb6-527"><a href="#cb6-527" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb6-528"><a href="#cb6-528" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span>
+<span id="cb6-529"><a href="#cb6-529" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-530"><a href="#cb6-530" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-531"><a href="#cb6-531" aria-hidden="true" tabindex="-1"></a><span class="fu">### Static Report or Dashboard?</span></span>
+<span id="cb6-532"><a href="#cb6-532" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-533"><a href="#cb6-533" aria-hidden="true" tabindex="-1"></a>The choice between a one-time report and a standing dashboard is a choice about the</span>
+<span id="cb6-534"><a href="#cb6-534" aria-hidden="true" tabindex="-1"></a>*question's tense*. A question asked once—"did this campaign lift sales?"—wants a</span>
+<span id="cb6-535"><a href="#cb6-535" aria-hidden="true" tabindex="-1"></a>report: it permits depth, identification, and a considered narrative, and it is read</span>
+<span id="cb6-536"><a href="#cb6-536" aria-hidden="true" tabindex="-1"></a>once and archived. A question asked continuously—"is the funnel healthy right now?"</span>
+<span id="cb6-537"><a href="#cb6-537" aria-hidden="true" tabindex="-1"></a>—wants a dashboard: it trades depth for timeliness because its value is in early</span>
+<span id="cb6-538"><a href="#cb6-538" aria-hidden="true" tabindex="-1"></a>detection. Confusing the two is a common and expensive error. A causal question</span>
+<span id="cb6-539"><a href="#cb6-539" aria-hidden="true" tabindex="-1"></a>forced onto a dashboard becomes a wall of correlations that invites spurious action;</span>
+<span id="cb6-540"><a href="#cb6-540" aria-hidden="true" tabindex="-1"></a>a monitoring question forced into a quarterly report arrives too late to matter. The</span>
+<span id="cb6-541"><a href="#cb6-541" aria-hidden="true" tabindex="-1"></a>deeper analyses that justify *changing* what a dashboard monitors—why a metric moved,</span>
+<span id="cb6-542"><a href="#cb6-542" aria-hidden="true" tabindex="-1"></a>whether an intervention worked—remain the province of the static, reproducible report</span>
+<span id="cb6-543"><a href="#cb6-543" aria-hidden="true" tabindex="-1"></a>that this chapter began with, because they require the identification and uncertainty</span>
+<span id="cb6-544"><a href="#cb6-544" aria-hidden="true" tabindex="-1"></a>machinery a glance-able interface cannot carry.</span>
+<span id="cb6-545"><a href="#cb6-545" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-546"><a href="#cb6-546" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb6-547"><a href="#cb6-547" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-548"><a href="#cb6-548" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The unit of an honest report is an estimate *with its uncertainty and its</span>
+<span id="cb6-549"><a href="#cb6-549" aria-hidden="true" tabindex="-1"></a>  specification* (@eq-report-triple), not a point estimate or a $p$-value alone; the</span>
+<span id="cb6-550"><a href="#cb6-550" aria-hidden="true" tabindex="-1"></a>  governing principle is sufficiency for second-guessing.</span>
+<span id="cb6-551"><a href="#cb6-551" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Tables** serve lookup (exact, heterogeneous values); **figures** serve</span>
+<span id="cb6-552"><a href="#cb6-552" aria-hidden="true" tabindex="-1"></a>  comparison (patterns via position). Encode the result in the most accurately</span>
+<span id="cb6-553"><a href="#cb6-553" aria-hidden="true" tabindex="-1"></a>  perceived channel, baseline bars at zero, and never erase uncertainty.</span>
+<span id="cb6-554"><a href="#cb6-554" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reproducible reporting** binds narrative to computation, $R = f(D, C, E)$</span>
+<span id="cb6-555"><a href="#cb6-555" aria-hidden="true" tabindex="-1"></a>  (@eq-repro), eliminating the transcription gap; determinism, immutable data,</span>
+<span id="cb6-556"><a href="#cb6-556" aria-hidden="true" tabindex="-1"></a>  environment capture, and single-source builds are its pillars. Reproducibility</span>
+<span id="cb6-557"><a href="#cb6-557" aria-hidden="true" tabindex="-1"></a>  enables but does not guarantee credibility—report the multiverse.</span>
+<span id="cb6-558"><a href="#cb6-558" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Academic and managerial** reports differ in foregrounding, not honesty: the same</span>
+<span id="cb6-559"><a href="#cb6-559" aria-hidden="true" tabindex="-1"></a>  uncertainty feeds both, but the managerial report leads with the decision and its</span>
+<span id="cb6-560"><a href="#cb6-560" aria-hidden="true" tabindex="-1"></a>  payoff and translates effects into decision units <span class="co">[</span><span class="ot">@hanssens2016</span><span class="co">]</span>.</span>
+<span id="cb6-561"><a href="#cb6-561" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Dashboards** make reporting continuous; their governing hazard is Goodhart's law.</span>
+<span id="cb6-562"><a href="#cb6-562" aria-hidden="true" tabindex="-1"></a>  Pair gameable metrics with guardrails, govern definitions, disclose latency, and</span>
+<span id="cb6-563"><a href="#cb6-563" aria-hidden="true" tabindex="-1"></a>  keep the set small. Use a dashboard for standing questions, a reproducible report</span>
+<span id="cb6-564"><a href="#cb6-564" aria-hidden="true" tabindex="-1"></a>  for causal ones.</span>
+<span id="cb6-565"><a href="#cb6-565" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-566"><a href="#cb6-566" aria-hidden="true" tabindex="-1"></a><span class="fu">## Further Reading</span></span>
+<span id="cb6-567"><a href="#cb6-567" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-568"><a href="#cb6-568" aria-hidden="true" tabindex="-1"></a>The reproducibility and literate-programming practices in this chapter sit within</span>
+<span id="cb6-569"><a href="#cb6-569" aria-hidden="true" tabindex="-1"></a>the broader move of marketing into data-rich, code-intensive analysis</span>
+<span id="cb6-570"><a href="#cb6-570" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@wedel2016</span><span class="co">]</span> and the long argument over how to demonstrate marketing's value to the</span>
+<span id="cb6-571"><a href="#cb6-571" aria-hidden="true" tabindex="-1"></a>firm in a register management can act on <span class="co">[</span><span class="ot">@hanssens2016; @germann2015</span><span class="co">]</span>. The</span>
+<span id="cb6-572"><a href="#cb6-572" aria-hidden="true" tabindex="-1"></a>measurement-validity cautions that dashboards make urgent connect to the</span>
+<span id="cb6-573"><a href="#cb6-573" aria-hidden="true" tabindex="-1"></a>construct-and-scale material in @sec-measurement-scales and to documented misuses of</span>
+<span id="cb6-574"><a href="#cb6-574" aria-hidden="true" tabindex="-1"></a>accounting-based proxies <span class="co">[</span><span class="ot">@bendle2018; @bendle2018misuse</span><span class="co">]</span>. The graphical-perception</span>
+<span id="cb6-575"><a href="#cb6-575" aria-hidden="true" tabindex="-1"></a>and exploratory-data-analysis traditions that underwrite the figures section, and</span>
+<span id="cb6-576"><a href="#cb6-576" aria-hidden="true" tabindex="-1"></a>the Goodhart/metric-governance literature behind the dashboard section, are flagged</span>
+<span id="cb6-577"><a href="#cb6-577" aria-hidden="true" tabindex="-1"></a>above as citation gaps to be filled before publication.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
