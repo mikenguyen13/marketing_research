@@ -126,7 +126,21 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-46EBZ61358', { 'anonymize_ip': true});
-</script><script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
+</script><!-- schema.org structured data for search engines --><script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Book",
+  "name": "Marketing Research",
+  "url": "https://mike-marketing-research.share.connect.posit.cloud/",
+  "inLanguage": "en",
+  "bookFormat": "https://schema.org/EBook",
+  "description": "A technical and academic treatment of marketing research: constructs, substantive domains, and the methods that connect them, with reproducible R code throughout.",
+  "author": { "@type": "Person", "name": "Mike Nguyen" },
+  "publisher": { "@type": "Person", "name": "Mike Nguyen" }
+}
+</script><!-- Search Console verification: paste code and uncomment.
+     https://search.google.com/search-console --><!-- <meta name="google-site-verification" content="PASTE_GOOGLE_CODE"> --><script src="site_libs/quarto-diagram/mermaid.min.js"></script><script src="site_libs/quarto-diagram/mermaid-init.js"></script><link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
 const typesetMath = (el) => {
   if (window.MathJax) {
     // MathJax Typeset
@@ -817,7 +831,28 @@ window.Quarto = {
 <p>Once frames are in hand, each is an image and the entire apparatus of <a href="34-image-processing.html" class="quarto-xref"><span>Chapter 45</span></a> applies: interpretable hand-engineered features (color, brightness, saturation, edge density / complexity) when the construct is simple and interpretability matters, and learned CNN or vision-transformer embeddings when meaning is required. The video-specific move is to treat each per-frame feature as a <em>time series</em>: a clip becomes a matrix whose rows are frames and whose columns are features, and the temporal structure of that matrix (how features rise, fall, and jump) carries the pacing and editing information that distinguishes video from a photo album.</p>
 </section><section id="a-runnable-frame-level-demonstration" class="level3" data-number="47.2.3"><h3 data-number="47.2.3" class="anchored" data-anchor-id="a-runnable-frame-level-demonstration">
 <span class="header-section-number">47.2.3</span> A runnable frame-level demonstration</h3>
-<p>The code below is genuinely executed when the book is rendered. It uses <code>magick</code> to <em>synthesize</em> a short sequence of frames, mimicking a clip with two scene changes (a calm opening, a vivid product shot, a busy closing), then extracts per-frame brightness, colorfulness, and edge-density features, and finally computes a frame-to-frame difference signal whose spikes localize the cuts. This is the foundation, made concrete, on which the conceptual deep pipelines later in the chapter rest.</p>
+<p>The code below is genuinely executed when the book is rendered. It uses <code>magick</code> to <em>synthesize</em> a short sequence of frames, mimicking a clip with two scene changes (a calm opening, a vivid product shot, a busy closing), then extracts per-frame brightness, colorfulness, and edge-density features, and finally computes a frame-to-frame difference signal whose spikes localize the cuts. This is the foundation, made concrete, on which the conceptual deep pipelines later in the chapter rest. <a href="#fig-vid-frames" class="quarto-xref">Figure&nbsp;<span>47.1</span></a> diagrams that foundation, sampling frames, turning each into a feature vector, and differencing consecutive frames to flag cuts, before the code below carries it out.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-vid-frames" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-vid-frames-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-vid-frames">flowchart LR
+  VID["Video clip"] --&gt; SMP["Frame sampling&lt;br/&gt;(uniform, keyframe, adaptive)"]
+  SMP --&gt; FR["Sampled frames"]
+  FR --&gt; PF["Per-frame features&lt;br/&gt;(brightness, colorfulness, edge density)"]
+  PF --&gt; TSR["Feature time series&lt;br/&gt;(frames x features)"]
+  TSR --&gt; DF["Frame-to-frame&lt;br/&gt;difference"]
+  DF --&gt; SC["Threshold flags&lt;br/&gt;shot changes"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vid-frames-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;47.1: The frame-level foundation of video analysis. Frames are sampled from the clip, each becomes a vector of per-frame features, the features are read as a time series, and the frame-to-frame difference is thresholded to flag shot changes.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Frame-level foundation with the maintained `magick` package.</span></span>
 <span><span class="co"># We simulate a short clip as a sequence of synthetic frames, extract</span></span>
@@ -1107,6 +1142,32 @@ window.Quarto = {
 <li>
 <strong>Hybrid and cross-attention fusion</strong> lets modalities attend to one another, learning, for instance, which spoken words align with which on-screen moments. This is the architecture of modern multimodal transformers and the natural home for modeling <em>synchrony</em>, at a substantial data and compute cost.</li>
 </ul>
+<p><a href="#fig-vid-fusion" class="quarto-xref">Figure&nbsp;<span>47.2</span></a> sets out the three streams and the point at which each fusion strategy combines them.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-vid-fusion" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-vid-fusion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-vid-fusion">flowchart LR
+  VDO["Marketing video"] --&gt; VS["Visual stream&lt;br/&gt;(frames)"]
+  VDO --&gt; AS["Audio stream&lt;br/&gt;(speech, prosody, music)"]
+  VDO --&gt; TX["Text stream&lt;br/&gt;(transcript, captions, metadata)"]
+  VS --&gt; VE["Visual features"]
+  AS --&gt; AE["Acoustic features"]
+  TX --&gt; TE["Text features"]
+  VE --&gt; FUS["Fusion&lt;br/&gt;(late, early, or cross-attention)"]
+  AE --&gt; FUS
+  TE --&gt; FUS
+  FUS --&gt; OUT["Outcome model&lt;br/&gt;(engagement, sales)"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vid-fusion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;47.2: Multimodal video as three streams and a fusion choice. Visual, audio, and text streams each yield per-modality features, and late, early, or cross-attention fusion combines them before the outcome model of engagement or sales.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <p>The flagship demonstration in marketing is <span class="citation" data-cites="yang2024engagement">Yang, Zhang, and Zhang (<a href="#ref-yang2024engagement" role="doc-biblioref">2025</a>)</span>, who extract video, audio, and text features from short-form influencer ads on TikTok and fuse them to predict product sales, finding that the fused representation, mediated through engagement, carries genuine predictive content for revenue. <span class="citation" data-cites="wen2026livestream">Wen et al. (<a href="#ref-wen2026livestream" role="doc-biblioref">2026</a>)</span> extend the logic to livestream commerce, decomposing a host’s on-screen effectiveness into visual, vocal, and verbal components with multimodal machine learning and attributing sales to each via explainable-AI methods. Both studies exemplify the central design principle: model the streams jointly, and let the data reveal which modality, and which cross-modal alignment, drives the outcome.</p>
 <p>The conceptual block below sketches a fusion pipeline, again as labeled pseudocode rather than runnable code, to make the architecture explicit without pretending to execute three deep backbones locally.</p>
 <div class="cell" data-layout-align="center">
@@ -1154,7 +1215,35 @@ window.Quarto = {
 <strong>Linguistic content.</strong> Topics and sentiment of the transcript and captions, calls-to-action and their timing, and the alignment of spoken claims with on-screen demonstration.</li>
 <li>
 <strong>Temporal arcs.</strong> Rather than collapsing a feature to its clip average, the <em>trajectory</em> of arousal, emotion, or brand presence over the clip is itself a feature: a rising emotional arc, an early brand reveal, a late call-to-action.</li>
-</ul></section><section id="engagement-prediction-and-its-pitfalls" class="level3" data-number="47.5.2"><h3 data-number="47.5.2" class="anchored" data-anchor-id="engagement-prediction-and-its-pitfalls">
+</ul>
+<p><a href="#fig-vid-features" class="quarto-xref">Figure&nbsp;<span>47.3</span></a> collects this recurring creative vocabulary into the five families the analyst extracts.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-vid-features" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-vid-features-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-vid-features">flowchart TB
+  CF["Creative features"]
+  CF --&gt; PA["Pacing and structure"]
+  CF --&gt; VI["Visual content"]
+  CF --&gt; AU["Audio content"]
+  CF --&gt; LI["Linguistic content"]
+  CF --&gt; TA["Temporal arcs"]
+  PA --&gt; PA1["Shots per minute, shot duration,&lt;br/&gt;time-to-first-cut, hook position"]
+  VI --&gt; VI1["Color and brightness, faces,&lt;br/&gt;brand prominence, scene variety"]
+  AU --&gt; AU1["Music tempo and valence,&lt;br/&gt;speech rate, loudness, cut synchrony"]
+  LI --&gt; LI1["Transcript and caption topics,&lt;br/&gt;sentiment, calls-to-action"]
+  TA --&gt; TA1["Trajectories of arousal,&lt;br/&gt;emotion, brand presence"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vid-features-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;47.3: The recurring vocabulary of video creative features, grouped into five families that feed predictive models of engagement and conversion.
+</figcaption></figure>
+</div>
+</div>
+</div>
+</section><section id="engagement-prediction-and-its-pitfalls" class="level3" data-number="47.5.2"><h3 data-number="47.5.2" class="anchored" data-anchor-id="engagement-prediction-and-its-pitfalls">
 <span class="header-section-number">47.5.2</span> Engagement prediction and its pitfalls</h3>
 <p>These features feed predictive models of engagement and conversion. The empirical lessons from the marketing literature are consistent. The affective trajectory of a video ad drives engagement: <span class="citation" data-cites="teixeira2012emotionengagement">Teixeira, Wedel, and Pieters (<a href="#ref-teixeira2012emotionengagement" role="doc-biblioref">2012</a>)</span> use eye-tracking and automated facial-expression coding to show that induced emotion (joy, surprise) raises attention and suppresses zapping, and <span class="citation" data-cites="teixeira2014">Teixeira, Picard, and el Kaliouby (<a href="#ref-teixeira2014" role="doc-biblioref">2014</a>)</span> establish, via a web-based facial-tracking field study, <em>why, when, and how much</em> to entertain—the timing of affect within the clip is itself a lever. <span class="citation" data-cites="tellis2019">Tellis et al. (<a href="#ref-tellis2019" role="doc-biblioref">2019</a>)</span> decompose what makes online video content shared, isolating the roles of information, emotion, and brand prominence; brand prominence in particular trades off against likeability, since too-early or too-heavy branding can depress engagement even as it aids recall. For short-form specifically, <span class="citation" data-cites="zhang2025audiovisual">Zhang, Qiu, and Ye (<a href="#ref-zhang2025audiovisual" role="doc-biblioref">2025</a>)</span> link the audiovisual features of TikTok ads to engagement behaviors, and <span class="citation" data-cites="leung2022">Leung et al. (<a href="#ref-leung2022" role="doc-biblioref">2022</a>)</span> situate such creative effects within the broader system of influencer-marketing effectiveness. The throughline is that <em>fused</em> multimodal features outperform any single stream, as in <span class="citation" data-cites="yang2024engagement">Yang, Zhang, and Zhang (<a href="#ref-yang2024engagement" role="doc-biblioref">2025</a>)</span>. Three pitfalls deserve emphasis:</p>
 <ol type="1">
@@ -1856,421 +1945,473 @@ Zhang, Zhipeng, Keda Qiu, and Yan Ye. 2025. <span>“Influence of Audiovisual Fe
 <span id="cb6-141"><a href="#cb6-141" aria-hidden="true" tabindex="-1"></a>shot, a busy closing), then extracts per-frame brightness, colorfulness, and edge-density features,</span>
 <span id="cb6-142"><a href="#cb6-142" aria-hidden="true" tabindex="-1"></a>and finally computes a frame-to-frame difference signal whose spikes localize the cuts. This is the</span>
 <span id="cb6-143"><a href="#cb6-143" aria-hidden="true" tabindex="-1"></a>foundation, made concrete, on which the conceptual deep pipelines later in the chapter rest.</span>
-<span id="cb6-144"><a href="#cb6-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-145"><a href="#cb6-145" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-magick-frames, message=FALSE, warning=FALSE}</span></span>
-<span id="cb6-146"><a href="#cb6-146" aria-hidden="true" tabindex="-1"></a><span class="co"># Frame-level foundation with the maintained `magick` package.</span></span>
-<span id="cb6-147"><a href="#cb6-147" aria-hidden="true" tabindex="-1"></a><span class="co"># We simulate a short clip as a sequence of synthetic frames, extract</span></span>
-<span id="cb6-148"><a href="#cb6-148" aria-hidden="true" tabindex="-1"></a><span class="co"># per-frame visual features, and derive a temporal shot-change signal.</span></span>
-<span id="cb6-149"><a href="#cb6-149" aria-hidden="true" tabindex="-1"></a><span class="co"># This is a genuinely runnable demonstration of the substrate that</span></span>
-<span id="cb6-150"><a href="#cb6-150" aria-hidden="true" tabindex="-1"></a><span class="co"># real (deep) video pipelines sit on top of; it is NOT a deep model.</span></span>
-<span id="cb6-151"><a href="#cb6-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-152"><a href="#cb6-152" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magick)</span>
-<span id="cb6-153"><a href="#cb6-153" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">53</span>)</span>
-<span id="cb6-154"><a href="#cb6-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-155"><a href="#cb6-155" aria-hidden="true" tabindex="-1"></a><span class="co"># A helper that draws one synthetic frame as a solid base color with</span></span>
-<span id="cb6-156"><a href="#cb6-156" aria-hidden="true" tabindex="-1"></a><span class="co"># additive noise (a stand-in for "scene content"). Returns a magick image.</span></span>
-<span id="cb6-157"><a href="#cb6-157" aria-hidden="true" tabindex="-1"></a>make_frame <span class="ot">&lt;-</span> <span class="cf">function</span>(r, g, b, <span class="at">noise =</span> <span class="fl">0.04</span>, <span class="at">size =</span> <span class="dv">96</span>) {</span>
-<span id="cb6-158"><a href="#cb6-158" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="dv">0</span>, <span class="at">dim =</span> <span class="fu">c</span>(size, size, <span class="dv">3</span>))</span>
-<span id="cb6-159"><a href="#cb6-159" aria-hidden="true" tabindex="-1"></a>  base[, , <span class="dv">1</span>] <span class="ot">&lt;-</span> r; base[, , <span class="dv">2</span>] <span class="ot">&lt;-</span> g; base[, , <span class="dv">3</span>] <span class="ot">&lt;-</span> b</span>
-<span id="cb6-160"><a href="#cb6-160" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> base <span class="sc">+</span> <span class="fu">array</span>(<span class="fu">rnorm</span>(size <span class="sc">*</span> size <span class="sc">*</span> <span class="dv">3</span>, <span class="dv">0</span>, noise), <span class="at">dim =</span> <span class="fu">dim</span>(base))</span>
-<span id="cb6-161"><a href="#cb6-161" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(base, <span class="dv">0</span>), <span class="dv">1</span>)</span>
-<span id="cb6-162"><a href="#cb6-162" aria-hidden="true" tabindex="-1"></a>  <span class="fu">image_read</span>(base)              <span class="co"># magick reads an [H, W, C] array in [0,1]</span></span>
-<span id="cb6-163"><a href="#cb6-163" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-164"><a href="#cb6-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-165"><a href="#cb6-165" aria-hidden="true" tabindex="-1"></a><span class="co"># Build a 9-frame "clip" with three scenes of three frames each:</span></span>
-<span id="cb6-166"><a href="#cb6-166" aria-hidden="true" tabindex="-1"></a><span class="co">#   frames 1-3  : calm gray opening (low saturation, low complexity)</span></span>
-<span id="cb6-167"><a href="#cb6-167" aria-hidden="true" tabindex="-1"></a><span class="co">#   frames 4-6  : vivid warm product shot (high saturation/colorfulness)</span></span>
-<span id="cb6-168"><a href="#cb6-168" aria-hidden="true" tabindex="-1"></a><span class="co">#   frames 7-9  : busy high-noise closing (high edge density)</span></span>
-<span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a>scene_specs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.02</span>),   <span class="co"># calm</span></span>
-<span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.02</span>),</span>
-<span id="cb6-172"><a href="#cb6-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.02</span>),</span>
-<span id="cb6-173"><a href="#cb6-173" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.85</span>, <span class="fl">0.35</span>, <span class="fl">0.15</span>, <span class="fl">0.04</span>),   <span class="co"># warm</span></span>
-<span id="cb6-174"><a href="#cb6-174" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.85</span>, <span class="fl">0.35</span>, <span class="fl">0.15</span>, <span class="fl">0.04</span>),</span>
-<span id="cb6-175"><a href="#cb6-175" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.85</span>, <span class="fl">0.35</span>, <span class="fl">0.15</span>, <span class="fl">0.04</span>),</span>
-<span id="cb6-176"><a href="#cb6-176" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.22</span>),   <span class="co"># busy</span></span>
-<span id="cb6-177"><a href="#cb6-177" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.22</span>),</span>
-<span id="cb6-178"><a href="#cb6-178" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.22</span>)</span>
-<span id="cb6-179"><a href="#cb6-179" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-180"><a href="#cb6-180" aria-hidden="true" tabindex="-1"></a>frames <span class="ot">&lt;-</span> <span class="fu">lapply</span>(scene_specs, <span class="cf">function</span>(s) <span class="fu">make_frame</span>(s[<span class="dv">1</span>], s[<span class="dv">2</span>], s[<span class="dv">3</span>], s[<span class="dv">4</span>]))</span>
-<span id="cb6-181"><a href="#cb6-181" aria-hidden="true" tabindex="-1"></a>clip   <span class="ot">&lt;-</span> <span class="fu">image_join</span>(frames)   <span class="co"># an image sequence == our simulated video</span></span>
-<span id="cb6-182"><a href="#cb6-182" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(clip)                   <span class="co"># number of frames in the clip</span></span>
-<span id="cb6-183"><a href="#cb6-183" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-184"><a href="#cb6-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a>With the clip in hand, we extract interpretable per-frame features. We pull each frame back into a</span>
-<span id="cb6-186"><a href="#cb6-186" aria-hidden="true" tabindex="-1"></a>numeric array via <span class="in">`magick`</span>, then compute brightness, a colorfulness proxy, and an edge-density</span>
-<span id="cb6-187"><a href="#cb6-187" aria-hidden="true" tabindex="-1"></a>complexity proxy, exactly the constructs introduced for still images, now indexed by frame.</span>
-<span id="cb6-188"><a href="#cb6-188" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-189"><a href="#cb6-189" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-perframe-features, message=FALSE, warning=FALSE}</span></span>
-<span id="cb6-190"><a href="#cb6-190" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert a single magick frame to an [H, W, 3] numeric array in [0,1].</span></span>
-<span id="cb6-191"><a href="#cb6-191" aria-hidden="true" tabindex="-1"></a>frame_to_array <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
-<span id="cb6-192"><a href="#cb6-192" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.numeric</span>(<span class="fu">image_data</span>(im, <span class="at">channels =</span> <span class="st">"rgb"</span>)) <span class="ot">-&gt;</span> v   <span class="co"># raw bytes 0-255</span></span>
-<span id="cb6-193"><a href="#cb6-193" aria-hidden="true" tabindex="-1"></a>  arr <span class="ot">&lt;-</span> <span class="fu">array</span>(v, <span class="at">dim =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="fu">image_info</span>(im)<span class="sc">$</span>width, <span class="fu">image_info</span>(im)<span class="sc">$</span>height))</span>
-<span id="cb6-194"><a href="#cb6-194" aria-hidden="true" tabindex="-1"></a>  arr <span class="ot">&lt;-</span> <span class="fu">aperm</span>(arr, <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">1</span>))                        <span class="co"># -&gt; [H, W, C]</span></span>
-<span id="cb6-195"><a href="#cb6-195" aria-hidden="true" tabindex="-1"></a>  arr <span class="sc">/</span> <span class="dv">255</span></span>
-<span id="cb6-196"><a href="#cb6-196" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-197"><a href="#cb6-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-198"><a href="#cb6-198" aria-hidden="true" tabindex="-1"></a>brightness <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
-<span id="cb6-199"><a href="#cb6-199" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">frame_to_array</span>(im)</span>
-<span id="cb6-200"><a href="#cb6-200" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean</span>(<span class="fl">0.299</span> <span class="sc">*</span> a[, , <span class="dv">1</span>] <span class="sc">+</span> <span class="fl">0.587</span> <span class="sc">*</span> a[, , <span class="dv">2</span>] <span class="sc">+</span> <span class="fl">0.114</span> <span class="sc">*</span> a[, , <span class="dv">3</span>])</span>
-<span id="cb6-201"><a href="#cb6-201" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-202"><a href="#cb6-202" aria-hidden="true" tabindex="-1"></a>colorfulness <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
-<span id="cb6-203"><a href="#cb6-203" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">frame_to_array</span>(im)</span>
-<span id="cb6-204"><a href="#cb6-204" aria-hidden="true" tabindex="-1"></a>  rg <span class="ot">&lt;-</span> a[, , <span class="dv">1</span>] <span class="sc">-</span> a[, , <span class="dv">2</span>]</span>
-<span id="cb6-205"><a href="#cb6-205" aria-hidden="true" tabindex="-1"></a>  yb <span class="ot">&lt;-</span> <span class="fl">0.5</span> <span class="sc">*</span> (a[, , <span class="dv">1</span>] <span class="sc">+</span> a[, , <span class="dv">2</span>]) <span class="sc">-</span> a[, , <span class="dv">3</span>]</span>
-<span id="cb6-206"><a href="#cb6-206" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">sd</span>(rg)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fu">sd</span>(yb)<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> <span class="fl">0.3</span> <span class="sc">*</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>(rg)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fu">mean</span>(yb)<span class="sc">^</span><span class="dv">2</span>)</span>
-<span id="cb6-207"><a href="#cb6-207" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-208"><a href="#cb6-208" aria-hidden="true" tabindex="-1"></a>edge_density <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
-<span id="cb6-209"><a href="#cb6-209" aria-hidden="true" tabindex="-1"></a>  a   <span class="ot">&lt;-</span> <span class="fu">frame_to_array</span>(im)</span>
-<span id="cb6-210"><a href="#cb6-210" aria-hidden="true" tabindex="-1"></a>  lum <span class="ot">&lt;-</span> <span class="fl">0.299</span> <span class="sc">*</span> a[, , <span class="dv">1</span>] <span class="sc">+</span> <span class="fl">0.587</span> <span class="sc">*</span> a[, , <span class="dv">2</span>] <span class="sc">+</span> <span class="fl">0.114</span> <span class="sc">*</span> a[, , <span class="dv">3</span>]</span>
-<span id="cb6-211"><a href="#cb6-211" aria-hidden="true" tabindex="-1"></a>  gx  <span class="ot">&lt;-</span> <span class="fu">abs</span>(lum[<span class="sc">-</span><span class="dv">1</span>, ] <span class="sc">-</span> lum[<span class="sc">-</span><span class="fu">nrow</span>(lum), ])</span>
-<span id="cb6-212"><a href="#cb6-212" aria-hidden="true" tabindex="-1"></a>  gy  <span class="ot">&lt;-</span> <span class="fu">abs</span>(lum[, <span class="sc">-</span><span class="dv">1</span>] <span class="sc">-</span> lum[, <span class="sc">-</span><span class="fu">ncol</span>(lum)])</span>
-<span id="cb6-213"><a href="#cb6-213" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean</span>(gx) <span class="sc">+</span> <span class="fu">mean</span>(gy)</span>
-<span id="cb6-214"><a href="#cb6-214" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-215"><a href="#cb6-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-216"><a href="#cb6-216" aria-hidden="true" tabindex="-1"></a>feat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb6-217"><a href="#cb6-217" aria-hidden="true" tabindex="-1"></a>  <span class="at">frame        =</span> <span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
-<span id="cb6-218"><a href="#cb6-218" aria-hidden="true" tabindex="-1"></a>  <span class="at">brightness   =</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
-<span id="cb6-219"><a href="#cb6-219" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(i) <span class="fu">brightness</span>(clip[i]), <span class="fu">numeric</span>(<span class="dv">1</span>)),</span>
-<span id="cb6-220"><a href="#cb6-220" aria-hidden="true" tabindex="-1"></a>  <span class="at">colorfulness =</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
-<span id="cb6-221"><a href="#cb6-221" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(i) <span class="fu">colorfulness</span>(clip[i]), <span class="fu">numeric</span>(<span class="dv">1</span>)),</span>
-<span id="cb6-222"><a href="#cb6-222" aria-hidden="true" tabindex="-1"></a>  <span class="at">edge_density =</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
-<span id="cb6-223"><a href="#cb6-223" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(i) <span class="fu">edge_density</span>(clip[i]), <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
-<span id="cb6-224"><a href="#cb6-224" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-225"><a href="#cb6-225" aria-hidden="true" tabindex="-1"></a>feat[, <span class="sc">-</span><span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">round</span>(feat[, <span class="sc">-</span><span class="dv">1</span>], <span class="dv">3</span>)</span>
-<span id="cb6-226"><a href="#cb6-226" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(feat,</span>
-<span id="cb6-227"><a href="#cb6-227" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Per-frame interpretable features for the simulated nine-frame clip."</span>)</span>
-<span id="cb6-228"><a href="#cb6-228" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-229"><a href="#cb6-229" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-230"><a href="#cb6-230" aria-hidden="true" tabindex="-1"></a>The feature matrix already exposes the editorial structure: colorfulness jumps when the warm product</span>
-<span id="cb6-231"><a href="#cb6-231" aria-hidden="true" tabindex="-1"></a>scene begins (frame 4) and edge density jumps when the busy closing begins (frame 7). To localize</span>
-<span id="cb6-232"><a href="#cb6-232" aria-hidden="true" tabindex="-1"></a>those transitions automatically, we compute a *temporal-difference* signal, the frame-to-frame change</span>
-<span id="cb6-233"><a href="#cb6-233" aria-hidden="true" tabindex="-1"></a>in the feature vector, which is the elementary form of the shot-change detector developed in the next</span>
-<span id="cb6-234"><a href="#cb6-234" aria-hidden="true" tabindex="-1"></a>section.</span>
-<span id="cb6-235"><a href="#cb6-235" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-236"><a href="#cb6-236" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-shot-change, message=FALSE, warning=FALSE}</span></span>
-<span id="cb6-237"><a href="#cb6-237" aria-hidden="true" tabindex="-1"></a><span class="co"># Frame-to-frame difference in the standardized feature vector.</span></span>
-<span id="cb6-238"><a href="#cb6-238" aria-hidden="true" tabindex="-1"></a><span class="co"># A large difference between frame t and t-1 signals a shot change.</span></span>
-<span id="cb6-239"><a href="#cb6-239" aria-hidden="true" tabindex="-1"></a>F  <span class="ot">&lt;-</span> <span class="fu">scale</span>(<span class="fu">as.matrix</span>(feat[, <span class="fu">c</span>(<span class="st">"brightness"</span>, <span class="st">"colorfulness"</span>, <span class="st">"edge_density"</span>)]))</span>
-<span id="cb6-240"><a href="#cb6-240" aria-hidden="true" tabindex="-1"></a>d  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="fu">sqrt</span>(<span class="fu">rowSums</span>((F[<span class="sc">-</span><span class="dv">1</span>, ] <span class="sc">-</span> F[<span class="sc">-</span><span class="fu">nrow</span>(F), ])<span class="sc">^</span><span class="dv">2</span>)))   <span class="co"># Euclidean step</span></span>
-<span id="cb6-241"><a href="#cb6-241" aria-hidden="true" tabindex="-1"></a>diff_signal <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb6-242"><a href="#cb6-242" aria-hidden="true" tabindex="-1"></a>  <span class="at">transition  =</span> <span class="fu">paste0</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip) <span class="sc">-</span> <span class="dv">1</span>), <span class="st">"-&gt;"</span>, <span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(clip)),</span>
-<span id="cb6-243"><a href="#cb6-243" aria-hidden="true" tabindex="-1"></a>  <span class="at">frame_delta =</span> <span class="fu">round</span>(d[<span class="sc">-</span><span class="dv">1</span>], <span class="dv">3</span>)</span>
-<span id="cb6-244"><a href="#cb6-244" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-245"><a href="#cb6-245" aria-hidden="true" tabindex="-1"></a><span class="co"># Flag transitions whose change exceeds a simple threshold (mean + 1 SD).</span></span>
-<span id="cb6-246"><a href="#cb6-246" aria-hidden="true" tabindex="-1"></a>thr <span class="ot">&lt;-</span> <span class="fu">mean</span>(d[<span class="sc">-</span><span class="dv">1</span>]) <span class="sc">+</span> <span class="fu">sd</span>(d[<span class="sc">-</span><span class="dv">1</span>])</span>
-<span id="cb6-247"><a href="#cb6-247" aria-hidden="true" tabindex="-1"></a>diff_signal<span class="sc">$</span>shot_change <span class="ot">&lt;-</span> diff_signal<span class="sc">$</span>frame_delta <span class="sc">&gt;</span> thr</span>
-<span id="cb6-248"><a href="#cb6-248" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(diff_signal,</span>
-<span id="cb6-249"><a href="#cb6-249" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Temporal-difference signal: large frame-to-frame changes flag the two scene cuts (3-&gt;4 and 6-&gt;7)."</span>)</span>
-<span id="cb6-250"><a href="#cb6-250" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-144"><a href="#cb6-144" aria-hidden="true" tabindex="-1"></a>@fig-vid-frames diagrams that foundation, sampling frames, turning each into a feature vector, and</span>
+<span id="cb6-145"><a href="#cb6-145" aria-hidden="true" tabindex="-1"></a>differencing consecutive frames to flag cuts, before the code below carries it out.</span>
+<span id="cb6-146"><a href="#cb6-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-149"><a href="#cb6-149" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb6-150"><a href="#cb6-150" aria-hidden="true" tabindex="-1"></a>%%| label: fig-vid-frames</span>
+<span id="cb6-151"><a href="#cb6-151" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The frame-level foundation of video analysis. Frames are sampled from the clip, each becomes a vector of per-frame features, the features are read as a time series, and the frame-to-frame difference is thresholded to flag shot changes.</span><span class="ot">"</span></span>
+<span id="cb6-152"><a href="#cb6-152" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb6-153"><a href="#cb6-153" aria-hidden="true" tabindex="-1"></a>  VID[<span class="ot">"</span><span class="st">Video clip</span><span class="ot">"</span>] --&gt; SMP[<span class="ot">"</span><span class="st">Frame sampling&lt;br/&gt;(uniform, keyframe, adaptive)</span><span class="ot">"</span>]</span>
+<span id="cb6-154"><a href="#cb6-154" aria-hidden="true" tabindex="-1"></a>  SMP --&gt; FR[<span class="ot">"</span><span class="st">Sampled frames</span><span class="ot">"</span>]</span>
+<span id="cb6-155"><a href="#cb6-155" aria-hidden="true" tabindex="-1"></a>  FR --&gt; PF[<span class="ot">"</span><span class="st">Per-frame features&lt;br/&gt;(brightness, colorfulness, edge density)</span><span class="ot">"</span>]</span>
+<span id="cb6-156"><a href="#cb6-156" aria-hidden="true" tabindex="-1"></a>  PF --&gt; TSR[<span class="ot">"</span><span class="st">Feature time series&lt;br/&gt;(frames x features)</span><span class="ot">"</span>]</span>
+<span id="cb6-157"><a href="#cb6-157" aria-hidden="true" tabindex="-1"></a>  TSR --&gt; DF[<span class="ot">"</span><span class="st">Frame-to-frame&lt;br/&gt;difference</span><span class="ot">"</span>]</span>
+<span id="cb6-158"><a href="#cb6-158" aria-hidden="true" tabindex="-1"></a>  DF --&gt; SC[<span class="ot">"</span><span class="st">Threshold flags&lt;br/&gt;shot changes</span><span class="ot">"</span>]</span>
+<span id="cb6-159"><a href="#cb6-159" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-160"><a href="#cb6-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-161"><a href="#cb6-161" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-magick-frames, message=FALSE, warning=FALSE}</span></span>
+<span id="cb6-162"><a href="#cb6-162" aria-hidden="true" tabindex="-1"></a><span class="co"># Frame-level foundation with the maintained `magick` package.</span></span>
+<span id="cb6-163"><a href="#cb6-163" aria-hidden="true" tabindex="-1"></a><span class="co"># We simulate a short clip as a sequence of synthetic frames, extract</span></span>
+<span id="cb6-164"><a href="#cb6-164" aria-hidden="true" tabindex="-1"></a><span class="co"># per-frame visual features, and derive a temporal shot-change signal.</span></span>
+<span id="cb6-165"><a href="#cb6-165" aria-hidden="true" tabindex="-1"></a><span class="co"># This is a genuinely runnable demonstration of the substrate that</span></span>
+<span id="cb6-166"><a href="#cb6-166" aria-hidden="true" tabindex="-1"></a><span class="co"># real (deep) video pipelines sit on top of; it is NOT a deep model.</span></span>
+<span id="cb6-167"><a href="#cb6-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-168"><a href="#cb6-168" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magick)</span>
+<span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">53</span>)</span>
+<span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a><span class="co"># A helper that draws one synthetic frame as a solid base color with</span></span>
+<span id="cb6-172"><a href="#cb6-172" aria-hidden="true" tabindex="-1"></a><span class="co"># additive noise (a stand-in for "scene content"). Returns a magick image.</span></span>
+<span id="cb6-173"><a href="#cb6-173" aria-hidden="true" tabindex="-1"></a>make_frame <span class="ot">&lt;-</span> <span class="cf">function</span>(r, g, b, <span class="at">noise =</span> <span class="fl">0.04</span>, <span class="at">size =</span> <span class="dv">96</span>) {</span>
+<span id="cb6-174"><a href="#cb6-174" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="dv">0</span>, <span class="at">dim =</span> <span class="fu">c</span>(size, size, <span class="dv">3</span>))</span>
+<span id="cb6-175"><a href="#cb6-175" aria-hidden="true" tabindex="-1"></a>  base[, , <span class="dv">1</span>] <span class="ot">&lt;-</span> r; base[, , <span class="dv">2</span>] <span class="ot">&lt;-</span> g; base[, , <span class="dv">3</span>] <span class="ot">&lt;-</span> b</span>
+<span id="cb6-176"><a href="#cb6-176" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> base <span class="sc">+</span> <span class="fu">array</span>(<span class="fu">rnorm</span>(size <span class="sc">*</span> size <span class="sc">*</span> <span class="dv">3</span>, <span class="dv">0</span>, noise), <span class="at">dim =</span> <span class="fu">dim</span>(base))</span>
+<span id="cb6-177"><a href="#cb6-177" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(base, <span class="dv">0</span>), <span class="dv">1</span>)</span>
+<span id="cb6-178"><a href="#cb6-178" aria-hidden="true" tabindex="-1"></a>  <span class="fu">image_read</span>(base)              <span class="co"># magick reads an [H, W, C] array in [0,1]</span></span>
+<span id="cb6-179"><a href="#cb6-179" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-180"><a href="#cb6-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-181"><a href="#cb6-181" aria-hidden="true" tabindex="-1"></a><span class="co"># Build a 9-frame "clip" with three scenes of three frames each:</span></span>
+<span id="cb6-182"><a href="#cb6-182" aria-hidden="true" tabindex="-1"></a><span class="co">#   frames 1-3  : calm gray opening (low saturation, low complexity)</span></span>
+<span id="cb6-183"><a href="#cb6-183" aria-hidden="true" tabindex="-1"></a><span class="co">#   frames 4-6  : vivid warm product shot (high saturation/colorfulness)</span></span>
+<span id="cb6-184"><a href="#cb6-184" aria-hidden="true" tabindex="-1"></a><span class="co">#   frames 7-9  : busy high-noise closing (high edge density)</span></span>
+<span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a>scene_specs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb6-186"><a href="#cb6-186" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.02</span>),   <span class="co"># calm</span></span>
+<span id="cb6-187"><a href="#cb6-187" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.02</span>),</span>
+<span id="cb6-188"><a href="#cb6-188" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.55</span>, <span class="fl">0.02</span>),</span>
+<span id="cb6-189"><a href="#cb6-189" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.85</span>, <span class="fl">0.35</span>, <span class="fl">0.15</span>, <span class="fl">0.04</span>),   <span class="co"># warm</span></span>
+<span id="cb6-190"><a href="#cb6-190" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.85</span>, <span class="fl">0.35</span>, <span class="fl">0.15</span>, <span class="fl">0.04</span>),</span>
+<span id="cb6-191"><a href="#cb6-191" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.85</span>, <span class="fl">0.35</span>, <span class="fl">0.15</span>, <span class="fl">0.04</span>),</span>
+<span id="cb6-192"><a href="#cb6-192" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.22</span>),   <span class="co"># busy</span></span>
+<span id="cb6-193"><a href="#cb6-193" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.22</span>),</span>
+<span id="cb6-194"><a href="#cb6-194" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.50</span>, <span class="fl">0.22</span>)</span>
+<span id="cb6-195"><a href="#cb6-195" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-196"><a href="#cb6-196" aria-hidden="true" tabindex="-1"></a>frames <span class="ot">&lt;-</span> <span class="fu">lapply</span>(scene_specs, <span class="cf">function</span>(s) <span class="fu">make_frame</span>(s[<span class="dv">1</span>], s[<span class="dv">2</span>], s[<span class="dv">3</span>], s[<span class="dv">4</span>]))</span>
+<span id="cb6-197"><a href="#cb6-197" aria-hidden="true" tabindex="-1"></a>clip   <span class="ot">&lt;-</span> <span class="fu">image_join</span>(frames)   <span class="co"># an image sequence == our simulated video</span></span>
+<span id="cb6-198"><a href="#cb6-198" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(clip)                   <span class="co"># number of frames in the clip</span></span>
+<span id="cb6-199"><a href="#cb6-199" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-200"><a href="#cb6-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-201"><a href="#cb6-201" aria-hidden="true" tabindex="-1"></a>With the clip in hand, we extract interpretable per-frame features. We pull each frame back into a</span>
+<span id="cb6-202"><a href="#cb6-202" aria-hidden="true" tabindex="-1"></a>numeric array via <span class="in">`magick`</span>, then compute brightness, a colorfulness proxy, and an edge-density</span>
+<span id="cb6-203"><a href="#cb6-203" aria-hidden="true" tabindex="-1"></a>complexity proxy, exactly the constructs introduced for still images, now indexed by frame.</span>
+<span id="cb6-204"><a href="#cb6-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-205"><a href="#cb6-205" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-perframe-features, message=FALSE, warning=FALSE}</span></span>
+<span id="cb6-206"><a href="#cb6-206" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert a single magick frame to an [H, W, 3] numeric array in [0,1].</span></span>
+<span id="cb6-207"><a href="#cb6-207" aria-hidden="true" tabindex="-1"></a>frame_to_array <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
+<span id="cb6-208"><a href="#cb6-208" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.numeric</span>(<span class="fu">image_data</span>(im, <span class="at">channels =</span> <span class="st">"rgb"</span>)) <span class="ot">-&gt;</span> v   <span class="co"># raw bytes 0-255</span></span>
+<span id="cb6-209"><a href="#cb6-209" aria-hidden="true" tabindex="-1"></a>  arr <span class="ot">&lt;-</span> <span class="fu">array</span>(v, <span class="at">dim =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="fu">image_info</span>(im)<span class="sc">$</span>width, <span class="fu">image_info</span>(im)<span class="sc">$</span>height))</span>
+<span id="cb6-210"><a href="#cb6-210" aria-hidden="true" tabindex="-1"></a>  arr <span class="ot">&lt;-</span> <span class="fu">aperm</span>(arr, <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">1</span>))                        <span class="co"># -&gt; [H, W, C]</span></span>
+<span id="cb6-211"><a href="#cb6-211" aria-hidden="true" tabindex="-1"></a>  arr <span class="sc">/</span> <span class="dv">255</span></span>
+<span id="cb6-212"><a href="#cb6-212" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-213"><a href="#cb6-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-214"><a href="#cb6-214" aria-hidden="true" tabindex="-1"></a>brightness <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
+<span id="cb6-215"><a href="#cb6-215" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">frame_to_array</span>(im)</span>
+<span id="cb6-216"><a href="#cb6-216" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean</span>(<span class="fl">0.299</span> <span class="sc">*</span> a[, , <span class="dv">1</span>] <span class="sc">+</span> <span class="fl">0.587</span> <span class="sc">*</span> a[, , <span class="dv">2</span>] <span class="sc">+</span> <span class="fl">0.114</span> <span class="sc">*</span> a[, , <span class="dv">3</span>])</span>
+<span id="cb6-217"><a href="#cb6-217" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-218"><a href="#cb6-218" aria-hidden="true" tabindex="-1"></a>colorfulness <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
+<span id="cb6-219"><a href="#cb6-219" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">frame_to_array</span>(im)</span>
+<span id="cb6-220"><a href="#cb6-220" aria-hidden="true" tabindex="-1"></a>  rg <span class="ot">&lt;-</span> a[, , <span class="dv">1</span>] <span class="sc">-</span> a[, , <span class="dv">2</span>]</span>
+<span id="cb6-221"><a href="#cb6-221" aria-hidden="true" tabindex="-1"></a>  yb <span class="ot">&lt;-</span> <span class="fl">0.5</span> <span class="sc">*</span> (a[, , <span class="dv">1</span>] <span class="sc">+</span> a[, , <span class="dv">2</span>]) <span class="sc">-</span> a[, , <span class="dv">3</span>]</span>
+<span id="cb6-222"><a href="#cb6-222" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">sd</span>(rg)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fu">sd</span>(yb)<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> <span class="fl">0.3</span> <span class="sc">*</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>(rg)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fu">mean</span>(yb)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb6-223"><a href="#cb6-223" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-224"><a href="#cb6-224" aria-hidden="true" tabindex="-1"></a>edge_density <span class="ot">&lt;-</span> <span class="cf">function</span>(im) {</span>
+<span id="cb6-225"><a href="#cb6-225" aria-hidden="true" tabindex="-1"></a>  a   <span class="ot">&lt;-</span> <span class="fu">frame_to_array</span>(im)</span>
+<span id="cb6-226"><a href="#cb6-226" aria-hidden="true" tabindex="-1"></a>  lum <span class="ot">&lt;-</span> <span class="fl">0.299</span> <span class="sc">*</span> a[, , <span class="dv">1</span>] <span class="sc">+</span> <span class="fl">0.587</span> <span class="sc">*</span> a[, , <span class="dv">2</span>] <span class="sc">+</span> <span class="fl">0.114</span> <span class="sc">*</span> a[, , <span class="dv">3</span>]</span>
+<span id="cb6-227"><a href="#cb6-227" aria-hidden="true" tabindex="-1"></a>  gx  <span class="ot">&lt;-</span> <span class="fu">abs</span>(lum[<span class="sc">-</span><span class="dv">1</span>, ] <span class="sc">-</span> lum[<span class="sc">-</span><span class="fu">nrow</span>(lum), ])</span>
+<span id="cb6-228"><a href="#cb6-228" aria-hidden="true" tabindex="-1"></a>  gy  <span class="ot">&lt;-</span> <span class="fu">abs</span>(lum[, <span class="sc">-</span><span class="dv">1</span>] <span class="sc">-</span> lum[, <span class="sc">-</span><span class="fu">ncol</span>(lum)])</span>
+<span id="cb6-229"><a href="#cb6-229" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean</span>(gx) <span class="sc">+</span> <span class="fu">mean</span>(gy)</span>
+<span id="cb6-230"><a href="#cb6-230" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-231"><a href="#cb6-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-232"><a href="#cb6-232" aria-hidden="true" tabindex="-1"></a>feat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb6-233"><a href="#cb6-233" aria-hidden="true" tabindex="-1"></a>  <span class="at">frame        =</span> <span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
+<span id="cb6-234"><a href="#cb6-234" aria-hidden="true" tabindex="-1"></a>  <span class="at">brightness   =</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
+<span id="cb6-235"><a href="#cb6-235" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(i) <span class="fu">brightness</span>(clip[i]), <span class="fu">numeric</span>(<span class="dv">1</span>)),</span>
+<span id="cb6-236"><a href="#cb6-236" aria-hidden="true" tabindex="-1"></a>  <span class="at">colorfulness =</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
+<span id="cb6-237"><a href="#cb6-237" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(i) <span class="fu">colorfulness</span>(clip[i]), <span class="fu">numeric</span>(<span class="dv">1</span>)),</span>
+<span id="cb6-238"><a href="#cb6-238" aria-hidden="true" tabindex="-1"></a>  <span class="at">edge_density =</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip)),</span>
+<span id="cb6-239"><a href="#cb6-239" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(i) <span class="fu">edge_density</span>(clip[i]), <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
+<span id="cb6-240"><a href="#cb6-240" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-241"><a href="#cb6-241" aria-hidden="true" tabindex="-1"></a>feat[, <span class="sc">-</span><span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="fu">round</span>(feat[, <span class="sc">-</span><span class="dv">1</span>], <span class="dv">3</span>)</span>
+<span id="cb6-242"><a href="#cb6-242" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(feat,</span>
+<span id="cb6-243"><a href="#cb6-243" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Per-frame interpretable features for the simulated nine-frame clip."</span>)</span>
+<span id="cb6-244"><a href="#cb6-244" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-245"><a href="#cb6-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-246"><a href="#cb6-246" aria-hidden="true" tabindex="-1"></a>The feature matrix already exposes the editorial structure: colorfulness jumps when the warm product</span>
+<span id="cb6-247"><a href="#cb6-247" aria-hidden="true" tabindex="-1"></a>scene begins (frame 4) and edge density jumps when the busy closing begins (frame 7). To localize</span>
+<span id="cb6-248"><a href="#cb6-248" aria-hidden="true" tabindex="-1"></a>those transitions automatically, we compute a *temporal-difference* signal, the frame-to-frame change</span>
+<span id="cb6-249"><a href="#cb6-249" aria-hidden="true" tabindex="-1"></a>in the feature vector, which is the elementary form of the shot-change detector developed in the next</span>
+<span id="cb6-250"><a href="#cb6-250" aria-hidden="true" tabindex="-1"></a>section.</span>
 <span id="cb6-251"><a href="#cb6-251" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-252"><a href="#cb6-252" aria-hidden="true" tabindex="-1"></a>The two flagged transitions, 3 to 4 and 6 to 7, are exactly the scene boundaries we built into the</span>
-<span id="cb6-253"><a href="#cb6-253" aria-hidden="true" tabindex="-1"></a>simulated clip. This is the entire logic of classical shot detection in miniature: represent each</span>
-<span id="cb6-254"><a href="#cb6-254" aria-hidden="true" tabindex="-1"></a>frame as a feature vector, difference consecutive frames, and threshold the difference. Everything</span>
-<span id="cb6-255"><a href="#cb6-255" aria-hidden="true" tabindex="-1"></a>that follows, learned per-frame embeddings instead of hand-crafted features, learned temporal models</span>
-<span id="cb6-256"><a href="#cb6-256" aria-hidden="true" tabindex="-1"></a>instead of a fixed threshold, is a sophistication of these three steps, not a departure from them. The</span>
-<span id="cb6-257"><a href="#cb6-257" aria-hidden="true" tabindex="-1"></a>honesty of this demonstration matters: the deep pipelines below are the production reality, but they</span>
-<span id="cb6-258"><a href="#cb6-258" aria-hidden="true" tabindex="-1"></a>are not runnable on a laptop without GPUs and large pretrained weights, so we present them as clearly</span>
-<span id="cb6-259"><a href="#cb6-259" aria-hidden="true" tabindex="-1"></a>labeled conceptual code rather than as something this chapter pretends to execute.</span>
-<span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a><span class="fu">## Temporal and Scene Methods {#video-temporal}</span></span>
-<span id="cb6-262"><a href="#cb6-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-263"><a href="#cb6-263" aria-hidden="true" tabindex="-1"></a>The frame-level demonstration treats the clip as a sequence of independent images differenced over</span>
-<span id="cb6-264"><a href="#cb6-264" aria-hidden="true" tabindex="-1"></a>time. Real video understanding models the temporal dimension directly. This section develops the</span>
-<span id="cb6-265"><a href="#cb6-265" aria-hidden="true" tabindex="-1"></a>methods in rough order of how much temporal structure they exploit.</span>
-<span id="cb6-266"><a href="#cb6-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-267"><a href="#cb6-267" aria-hidden="true" tabindex="-1"></a><span class="fu">### Shot and scene segmentation</span></span>
-<span id="cb6-268"><a href="#cb6-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-269"><a href="#cb6-269" aria-hidden="true" tabindex="-1"></a>A **shot** is an unbroken run of frames from a single camera take; a **scene** is a semantically</span>
-<span id="cb6-270"><a href="#cb6-270" aria-hidden="true" tabindex="-1"></a>coherent group of shots. Segmenting a video into shots is the first structural operation in most</span>
-<span id="cb6-271"><a href="#cb6-271" aria-hidden="true" tabindex="-1"></a>pipelines, because shots are the natural unit for keyframe sampling and for measuring *pacing*</span>
-<span id="cb6-272"><a href="#cb6-272" aria-hidden="true" tabindex="-1"></a>(shots per minute, mean shot duration), a creative variable with direct marketing relevance: fast</span>
-<span id="cb6-273"><a href="#cb6-273" aria-hidden="true" tabindex="-1"></a>cutting is a hallmark of high-energy short-form advertising. Classical shot-boundary detection is</span>
-<span id="cb6-274"><a href="#cb6-274" aria-hidden="true" tabindex="-1"></a>exactly the thresholded frame-difference of the demonstration above, typically on color histograms</span>
-<span id="cb6-275"><a href="#cb6-275" aria-hidden="true" tabindex="-1"></a>or edge maps, with refinements to distinguish *hard cuts* (a single large jump) from *gradual</span>
-<span id="cb6-276"><a href="#cb6-276" aria-hidden="true" tabindex="-1"></a>transitions* (fades and dissolves, which spread the change over several frames and require detecting</span>
-<span id="cb6-277"><a href="#cb6-277" aria-hidden="true" tabindex="-1"></a>a sustained ramp rather than a spike). Modern detectors learn the boundary from data, but the</span>
-<span id="cb6-278"><a href="#cb6-278" aria-hidden="true" tabindex="-1"></a>construct is unchanged.</span>
-<span id="cb6-279"><a href="#cb6-279" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-280"><a href="#cb6-280" aria-hidden="true" tabindex="-1"></a><span class="fu">### Action and motion recognition</span></span>
-<span id="cb6-281"><a href="#cb6-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-282"><a href="#cb6-282" aria-hidden="true" tabindex="-1"></a>Beyond *where* the cuts are lies *what is happening* between them. Action recognition assigns labels</span>
-<span id="cb6-283"><a href="#cb6-283" aria-hidden="true" tabindex="-1"></a>to motion (a person pouring, applying, unboxing, dancing), and it is the canonical task that forced</span>
-<span id="cb6-284"><a href="#cb6-284" aria-hidden="true" tabindex="-1"></a>the field to model time rather than frames. The reference benchmark is **Kinetics**, introduced</span>
-<span id="cb6-285"><a href="#cb6-285" aria-hidden="true" tabindex="-1"></a>alongside the inflated-3D-convolution (I3D) model by @carreira2017kinetics, which established that</span>
-<span id="cb6-286"><a href="#cb6-286" aria-hidden="true" tabindex="-1"></a>large-scale video pretraining transfers to downstream action tasks much as ImageNet pretraining</span>
-<span id="cb6-287"><a href="#cb6-287" aria-hidden="true" tabindex="-1"></a>transfers for images. For marketing, action recognition is what lets a pipeline detect *product use*</span>
-<span id="cb6-288"><a href="#cb6-288" aria-hidden="true" tabindex="-1"></a>(the demonstration moment in a review or a livestream) as opposed to mere product *presence*, a</span>
-<span id="cb6-289"><a href="#cb6-289" aria-hidden="true" tabindex="-1"></a>distinction that still-frame analysis cannot make.</span>
-<span id="cb6-290"><a href="#cb6-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-291"><a href="#cb6-291" aria-hidden="true" tabindex="-1"></a><span class="fu">### Temporal architectures</span></span>
-<span id="cb6-292"><a href="#cb6-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-293"><a href="#cb6-293" aria-hidden="true" tabindex="-1"></a>Three families of architecture model video dynamics, and they trade off temporal fidelity against</span>
-<span id="cb6-294"><a href="#cb6-294" aria-hidden="true" tabindex="-1"></a>cost:</span>
+<span id="cb6-252"><a href="#cb6-252" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-shot-change, message=FALSE, warning=FALSE}</span></span>
+<span id="cb6-253"><a href="#cb6-253" aria-hidden="true" tabindex="-1"></a><span class="co"># Frame-to-frame difference in the standardized feature vector.</span></span>
+<span id="cb6-254"><a href="#cb6-254" aria-hidden="true" tabindex="-1"></a><span class="co"># A large difference between frame t and t-1 signals a shot change.</span></span>
+<span id="cb6-255"><a href="#cb6-255" aria-hidden="true" tabindex="-1"></a>F  <span class="ot">&lt;-</span> <span class="fu">scale</span>(<span class="fu">as.matrix</span>(feat[, <span class="fu">c</span>(<span class="st">"brightness"</span>, <span class="st">"colorfulness"</span>, <span class="st">"edge_density"</span>)]))</span>
+<span id="cb6-256"><a href="#cb6-256" aria-hidden="true" tabindex="-1"></a>d  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="fu">sqrt</span>(<span class="fu">rowSums</span>((F[<span class="sc">-</span><span class="dv">1</span>, ] <span class="sc">-</span> F[<span class="sc">-</span><span class="fu">nrow</span>(F), ])<span class="sc">^</span><span class="dv">2</span>)))   <span class="co"># Euclidean step</span></span>
+<span id="cb6-257"><a href="#cb6-257" aria-hidden="true" tabindex="-1"></a>diff_signal <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb6-258"><a href="#cb6-258" aria-hidden="true" tabindex="-1"></a>  <span class="at">transition  =</span> <span class="fu">paste0</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(clip) <span class="sc">-</span> <span class="dv">1</span>), <span class="st">"-&gt;"</span>, <span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(clip)),</span>
+<span id="cb6-259"><a href="#cb6-259" aria-hidden="true" tabindex="-1"></a>  <span class="at">frame_delta =</span> <span class="fu">round</span>(d[<span class="sc">-</span><span class="dv">1</span>], <span class="dv">3</span>)</span>
+<span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a><span class="co"># Flag transitions whose change exceeds a simple threshold (mean + 1 SD).</span></span>
+<span id="cb6-262"><a href="#cb6-262" aria-hidden="true" tabindex="-1"></a>thr <span class="ot">&lt;-</span> <span class="fu">mean</span>(d[<span class="sc">-</span><span class="dv">1</span>]) <span class="sc">+</span> <span class="fu">sd</span>(d[<span class="sc">-</span><span class="dv">1</span>])</span>
+<span id="cb6-263"><a href="#cb6-263" aria-hidden="true" tabindex="-1"></a>diff_signal<span class="sc">$</span>shot_change <span class="ot">&lt;-</span> diff_signal<span class="sc">$</span>frame_delta <span class="sc">&gt;</span> thr</span>
+<span id="cb6-264"><a href="#cb6-264" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(diff_signal,</span>
+<span id="cb6-265"><a href="#cb6-265" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Temporal-difference signal: large frame-to-frame changes flag the two scene cuts (3-&gt;4 and 6-&gt;7)."</span>)</span>
+<span id="cb6-266"><a href="#cb6-266" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-267"><a href="#cb6-267" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-268"><a href="#cb6-268" aria-hidden="true" tabindex="-1"></a>The two flagged transitions, 3 to 4 and 6 to 7, are exactly the scene boundaries we built into the</span>
+<span id="cb6-269"><a href="#cb6-269" aria-hidden="true" tabindex="-1"></a>simulated clip. This is the entire logic of classical shot detection in miniature: represent each</span>
+<span id="cb6-270"><a href="#cb6-270" aria-hidden="true" tabindex="-1"></a>frame as a feature vector, difference consecutive frames, and threshold the difference. Everything</span>
+<span id="cb6-271"><a href="#cb6-271" aria-hidden="true" tabindex="-1"></a>that follows, learned per-frame embeddings instead of hand-crafted features, learned temporal models</span>
+<span id="cb6-272"><a href="#cb6-272" aria-hidden="true" tabindex="-1"></a>instead of a fixed threshold, is a sophistication of these three steps, not a departure from them. The</span>
+<span id="cb6-273"><a href="#cb6-273" aria-hidden="true" tabindex="-1"></a>honesty of this demonstration matters: the deep pipelines below are the production reality, but they</span>
+<span id="cb6-274"><a href="#cb6-274" aria-hidden="true" tabindex="-1"></a>are not runnable on a laptop without GPUs and large pretrained weights, so we present them as clearly</span>
+<span id="cb6-275"><a href="#cb6-275" aria-hidden="true" tabindex="-1"></a>labeled conceptual code rather than as something this chapter pretends to execute.</span>
+<span id="cb6-276"><a href="#cb6-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-277"><a href="#cb6-277" aria-hidden="true" tabindex="-1"></a><span class="fu">## Temporal and Scene Methods {#video-temporal}</span></span>
+<span id="cb6-278"><a href="#cb6-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-279"><a href="#cb6-279" aria-hidden="true" tabindex="-1"></a>The frame-level demonstration treats the clip as a sequence of independent images differenced over</span>
+<span id="cb6-280"><a href="#cb6-280" aria-hidden="true" tabindex="-1"></a>time. Real video understanding models the temporal dimension directly. This section develops the</span>
+<span id="cb6-281"><a href="#cb6-281" aria-hidden="true" tabindex="-1"></a>methods in rough order of how much temporal structure they exploit.</span>
+<span id="cb6-282"><a href="#cb6-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-283"><a href="#cb6-283" aria-hidden="true" tabindex="-1"></a><span class="fu">### Shot and scene segmentation</span></span>
+<span id="cb6-284"><a href="#cb6-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-285"><a href="#cb6-285" aria-hidden="true" tabindex="-1"></a>A **shot** is an unbroken run of frames from a single camera take; a **scene** is a semantically</span>
+<span id="cb6-286"><a href="#cb6-286" aria-hidden="true" tabindex="-1"></a>coherent group of shots. Segmenting a video into shots is the first structural operation in most</span>
+<span id="cb6-287"><a href="#cb6-287" aria-hidden="true" tabindex="-1"></a>pipelines, because shots are the natural unit for keyframe sampling and for measuring *pacing*</span>
+<span id="cb6-288"><a href="#cb6-288" aria-hidden="true" tabindex="-1"></a>(shots per minute, mean shot duration), a creative variable with direct marketing relevance: fast</span>
+<span id="cb6-289"><a href="#cb6-289" aria-hidden="true" tabindex="-1"></a>cutting is a hallmark of high-energy short-form advertising. Classical shot-boundary detection is</span>
+<span id="cb6-290"><a href="#cb6-290" aria-hidden="true" tabindex="-1"></a>exactly the thresholded frame-difference of the demonstration above, typically on color histograms</span>
+<span id="cb6-291"><a href="#cb6-291" aria-hidden="true" tabindex="-1"></a>or edge maps, with refinements to distinguish *hard cuts* (a single large jump) from *gradual</span>
+<span id="cb6-292"><a href="#cb6-292" aria-hidden="true" tabindex="-1"></a>transitions* (fades and dissolves, which spread the change over several frames and require detecting</span>
+<span id="cb6-293"><a href="#cb6-293" aria-hidden="true" tabindex="-1"></a>a sustained ramp rather than a spike). Modern detectors learn the boundary from data, but the</span>
+<span id="cb6-294"><a href="#cb6-294" aria-hidden="true" tabindex="-1"></a>construct is unchanged.</span>
 <span id="cb6-295"><a href="#cb6-295" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-296"><a href="#cb6-296" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**3D convolutional networks** extend the 2D convolution of an image CNN to a third, temporal axis,</span>
-<span id="cb6-297"><a href="#cb6-297" aria-hidden="true" tabindex="-1"></a>  so a single learned filter spans several frames and captures short-range motion. I3D</span>
-<span id="cb6-298"><a href="#cb6-298" aria-hidden="true" tabindex="-1"></a>  is the canonical instance, inflating a pretrained 2D image network into 3D <span class="co">[</span><span class="ot">@carreira2017kinetics</span><span class="co">]</span>.</span>
-<span id="cb6-299"><a href="#cb6-299" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Two-stream and multi-rate designs** process appearance and motion on separate pathways. The</span>
-<span id="cb6-300"><a href="#cb6-300" aria-hidden="true" tabindex="-1"></a>  **SlowFast** network of Feichtenhofer and colleagues runs a slow, high-resolution pathway to capture</span>
-<span id="cb6-301"><a href="#cb6-301" aria-hidden="true" tabindex="-1"></a>  semantics (what is in the scene) alongside a fast, low-resolution pathway to capture rapid motion</span>
-<span id="cb6-302"><a href="#cb6-302" aria-hidden="true" tabindex="-1"></a>  (how it moves), then fuses them, an architecture that maps cleanly onto the marketing intuition that</span>
-<span id="cb6-303"><a href="#cb6-303" aria-hidden="true" tabindex="-1"></a>  *content* and *pacing* are distinct creative dimensions <span class="co">[</span><span class="ot">@feichtenhofer2019slowfast</span><span class="co">]</span>.</span>
-<span id="cb6-304"><a href="#cb6-304" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Video transformers** apply self-attention across both space and time, treating a clip as a sequence</span>
-<span id="cb6-305"><a href="#cb6-305" aria-hidden="true" tabindex="-1"></a>  of spatiotemporal patches. They are the video analogue of the vision transformer surveyed by</span>
-<span id="cb6-306"><a href="#cb6-306" aria-hidden="true" tabindex="-1"></a>  @khan2022transformers, and they currently dominate large-scale video benchmarks at the cost of large</span>
-<span id="cb6-307"><a href="#cb6-307" aria-hidden="true" tabindex="-1"></a>  data and compute requirements.</span>
+<span id="cb6-296"><a href="#cb6-296" aria-hidden="true" tabindex="-1"></a><span class="fu">### Action and motion recognition</span></span>
+<span id="cb6-297"><a href="#cb6-297" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-298"><a href="#cb6-298" aria-hidden="true" tabindex="-1"></a>Beyond *where* the cuts are lies *what is happening* between them. Action recognition assigns labels</span>
+<span id="cb6-299"><a href="#cb6-299" aria-hidden="true" tabindex="-1"></a>to motion (a person pouring, applying, unboxing, dancing), and it is the canonical task that forced</span>
+<span id="cb6-300"><a href="#cb6-300" aria-hidden="true" tabindex="-1"></a>the field to model time rather than frames. The reference benchmark is **Kinetics**, introduced</span>
+<span id="cb6-301"><a href="#cb6-301" aria-hidden="true" tabindex="-1"></a>alongside the inflated-3D-convolution (I3D) model by @carreira2017kinetics, which established that</span>
+<span id="cb6-302"><a href="#cb6-302" aria-hidden="true" tabindex="-1"></a>large-scale video pretraining transfers to downstream action tasks much as ImageNet pretraining</span>
+<span id="cb6-303"><a href="#cb6-303" aria-hidden="true" tabindex="-1"></a>transfers for images. For marketing, action recognition is what lets a pipeline detect *product use*</span>
+<span id="cb6-304"><a href="#cb6-304" aria-hidden="true" tabindex="-1"></a>(the demonstration moment in a review or a livestream) as opposed to mere product *presence*, a</span>
+<span id="cb6-305"><a href="#cb6-305" aria-hidden="true" tabindex="-1"></a>distinction that still-frame analysis cannot make.</span>
+<span id="cb6-306"><a href="#cb6-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-307"><a href="#cb6-307" aria-hidden="true" tabindex="-1"></a><span class="fu">### Temporal architectures</span></span>
 <span id="cb6-308"><a href="#cb6-308" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-309"><a href="#cb6-309" aria-hidden="true" tabindex="-1"></a>The following conceptual block sketches a temporal pipeline. It is deliberately written as *labeled</span>
-<span id="cb6-310"><a href="#cb6-310" aria-hidden="true" tabindex="-1"></a>pseudocode in R syntax*, not as runnable analysis: a faithful version requires <span class="in">`ffmpeg`</span>, a deep-learning</span>
-<span id="cb6-311"><a href="#cb6-311" aria-hidden="true" tabindex="-1"></a>backend, and pretrained weights that this chapter does not assume are installed. The point is to show</span>
-<span id="cb6-312"><a href="#cb6-312" aria-hidden="true" tabindex="-1"></a>the shape of the production pipeline honestly, not to hand-wave it.</span>
-<span id="cb6-313"><a href="#cb6-313" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-314"><a href="#cb6-314" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-temporal-conceptual, eval=FALSE}</span></span>
-<span id="cb6-315"><a href="#cb6-315" aria-hidden="true" tabindex="-1"></a><span class="co"># CONCEPTUAL ONLY (not evaluated): a temporal video pipeline.</span></span>
-<span id="cb6-316"><a href="#cb6-316" aria-hidden="true" tabindex="-1"></a><span class="co"># Requires ffmpeg/OpenCV for decoding and a deep-learning backend</span></span>
-<span id="cb6-317"><a href="#cb6-317" aria-hidden="true" tabindex="-1"></a><span class="co"># (e.g. torch/keras) with pretrained video weights. Shown for shape.</span></span>
-<span id="cb6-318"><a href="#cb6-318" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-319"><a href="#cb6-319" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Decode and sample frames at a fixed cadence (e.g. 8 fps).</span></span>
-<span id="cb6-320"><a href="#cb6-320" aria-hidden="true" tabindex="-1"></a>frames <span class="ot">&lt;-</span> <span class="fu">decode_video</span>(<span class="st">"ad_clip.mp4"</span>, <span class="at">fps =</span> <span class="dv">8</span>)        <span class="co"># ~ tensor [T, H, W, 3]</span></span>
-<span id="cb6-321"><a href="#cb6-321" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-322"><a href="#cb6-322" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Per-frame appearance embeddings from an image backbone (ResNet/ViT).</span></span>
-<span id="cb6-323"><a href="#cb6-323" aria-hidden="true" tabindex="-1"></a>frame_emb <span class="ot">&lt;-</span> <span class="fu">image_backbone</span>(frames)                   <span class="co"># [T, d_frame]</span></span>
+<span id="cb6-309"><a href="#cb6-309" aria-hidden="true" tabindex="-1"></a>Three families of architecture model video dynamics, and they trade off temporal fidelity against</span>
+<span id="cb6-310"><a href="#cb6-310" aria-hidden="true" tabindex="-1"></a>cost:</span>
+<span id="cb6-311"><a href="#cb6-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-312"><a href="#cb6-312" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**3D convolutional networks** extend the 2D convolution of an image CNN to a third, temporal axis,</span>
+<span id="cb6-313"><a href="#cb6-313" aria-hidden="true" tabindex="-1"></a>  so a single learned filter spans several frames and captures short-range motion. I3D</span>
+<span id="cb6-314"><a href="#cb6-314" aria-hidden="true" tabindex="-1"></a>  is the canonical instance, inflating a pretrained 2D image network into 3D <span class="co">[</span><span class="ot">@carreira2017kinetics</span><span class="co">]</span>.</span>
+<span id="cb6-315"><a href="#cb6-315" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Two-stream and multi-rate designs** process appearance and motion on separate pathways. The</span>
+<span id="cb6-316"><a href="#cb6-316" aria-hidden="true" tabindex="-1"></a>  **SlowFast** network of Feichtenhofer and colleagues runs a slow, high-resolution pathway to capture</span>
+<span id="cb6-317"><a href="#cb6-317" aria-hidden="true" tabindex="-1"></a>  semantics (what is in the scene) alongside a fast, low-resolution pathway to capture rapid motion</span>
+<span id="cb6-318"><a href="#cb6-318" aria-hidden="true" tabindex="-1"></a>  (how it moves), then fuses them, an architecture that maps cleanly onto the marketing intuition that</span>
+<span id="cb6-319"><a href="#cb6-319" aria-hidden="true" tabindex="-1"></a>  *content* and *pacing* are distinct creative dimensions <span class="co">[</span><span class="ot">@feichtenhofer2019slowfast</span><span class="co">]</span>.</span>
+<span id="cb6-320"><a href="#cb6-320" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Video transformers** apply self-attention across both space and time, treating a clip as a sequence</span>
+<span id="cb6-321"><a href="#cb6-321" aria-hidden="true" tabindex="-1"></a>  of spatiotemporal patches. They are the video analogue of the vision transformer surveyed by</span>
+<span id="cb6-322"><a href="#cb6-322" aria-hidden="true" tabindex="-1"></a>  @khan2022transformers, and they currently dominate large-scale video benchmarks at the cost of large</span>
+<span id="cb6-323"><a href="#cb6-323" aria-hidden="true" tabindex="-1"></a>  data and compute requirements.</span>
 <span id="cb6-324"><a href="#cb6-324" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-325"><a href="#cb6-325" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Optical flow between consecutive frames -&gt; a motion stream.</span></span>
-<span id="cb6-326"><a href="#cb6-326" aria-hidden="true" tabindex="-1"></a>flow      <span class="ot">&lt;-</span> <span class="fu">optical_flow</span>(frames)                     <span class="co"># [T-1, H, W, 2]</span></span>
-<span id="cb6-327"><a href="#cb6-327" aria-hidden="true" tabindex="-1"></a>motion_emb <span class="ot">&lt;-</span> <span class="fu">motion_backbone</span>(flow)                   <span class="co"># [T-1, d_motion]</span></span>
-<span id="cb6-328"><a href="#cb6-328" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-329"><a href="#cb6-329" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. A temporal model over the per-frame embeddings:</span></span>
-<span id="cb6-330"><a href="#cb6-330" aria-hidden="true" tabindex="-1"></a><span class="co">#    a 3D-CNN / SlowFast / video-transformer that returns a clip embedding.</span></span>
-<span id="cb6-331"><a href="#cb6-331" aria-hidden="true" tabindex="-1"></a>clip_emb  <span class="ot">&lt;-</span> <span class="fu">temporal_model</span>(frame_emb, motion_emb)    <span class="co"># [d_clip]</span></span>
-<span id="cb6-332"><a href="#cb6-332" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-333"><a href="#cb6-333" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Shot boundaries from a learned (or thresholded) frame-difference signal,</span></span>
-<span id="cb6-334"><a href="#cb6-334" aria-hidden="true" tabindex="-1"></a><span class="co">#    yielding pacing features (shots per minute, mean shot length).</span></span>
-<span id="cb6-335"><a href="#cb6-335" aria-hidden="true" tabindex="-1"></a>shots     <span class="ot">&lt;-</span> <span class="fu">detect_shots</span>(frame_emb)                  <span class="co"># list of [start, end]</span></span>
-<span id="cb6-336"><a href="#cb6-336" aria-hidden="true" tabindex="-1"></a>pacing    <span class="ot">&lt;-</span> <span class="fu">shot_pacing_features</span>(shots)              <span class="co"># interpretable controls</span></span>
-<span id="cb6-337"><a href="#cb6-337" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-338"><a href="#cb6-338" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-339"><a href="#cb6-339" aria-hidden="true" tabindex="-1"></a>The deliberate split between the runnable <span class="in">`magick`</span> foundation and this conceptual temporal block is the</span>
-<span id="cb6-340"><a href="#cb6-340" aria-hidden="true" tabindex="-1"></a>methodological honesty the chapter insists on: the analyst should understand the frame-level signal</span>
-<span id="cb6-341"><a href="#cb6-341" aria-hidden="true" tabindex="-1"></a>concretely and treat the deep temporal model as a powerful but heavyweight black box whose outputs are,</span>
-<span id="cb6-342"><a href="#cb6-342" aria-hidden="true" tabindex="-1"></a>once again, generated features.</span>
-<span id="cb6-343"><a href="#cb6-343" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-344"><a href="#cb6-344" aria-hidden="true" tabindex="-1"></a><span class="fu">## Multimodal Video Models {#video-multimodal}</span></span>
-<span id="cb6-345"><a href="#cb6-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-346"><a href="#cb6-346" aria-hidden="true" tabindex="-1"></a>The defining empirical fact about marketing video is that meaning is distributed across modalities and</span>
-<span id="cb6-347"><a href="#cb6-347" aria-hidden="true" tabindex="-1"></a>their *synchrony*. A product named in the script (text), shown on screen (frame), and underscored by a</span>
-<span id="cb6-348"><a href="#cb6-348" aria-hidden="true" tabindex="-1"></a>music swell (audio) at the same instant is more persuasive than any one cue alone, and the persuasion</span>
-<span id="cb6-349"><a href="#cb6-349" aria-hidden="true" tabindex="-1"></a>lives in the alignment. Single-modality analysis systematically misses this, which is why the leading</span>
-<span id="cb6-350"><a href="#cb6-350" aria-hidden="true" tabindex="-1"></a>video-as-data marketing studies fuse modalities.</span>
-<span id="cb6-351"><a href="#cb6-351" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-352"><a href="#cb6-352" aria-hidden="true" tabindex="-1"></a><span class="fu">### The three streams</span></span>
-<span id="cb6-353"><a href="#cb6-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-354"><a href="#cb6-354" aria-hidden="true" tabindex="-1"></a>A marketing video decomposes into three analyzable streams, each handled by the apparatus of its own</span>
-<span id="cb6-355"><a href="#cb6-355" aria-hidden="true" tabindex="-1"></a>chapter:</span>
-<span id="cb6-356"><a href="#cb6-356" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-357"><a href="#cb6-357" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Visual (frames).** Sampled frames feed image models (@sec-image-processing) to yield per-frame and</span>
-<span id="cb6-358"><a href="#cb6-358" aria-hidden="true" tabindex="-1"></a>  clip-level visual embeddings plus interpretable creative features (color, faces, brand/logo presence,</span>
-<span id="cb6-359"><a href="#cb6-359" aria-hidden="true" tabindex="-1"></a>  shot pacing).</span>
-<span id="cb6-360"><a href="#cb6-360" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Audio.** The soundtrack splits, as in @sec-audio-voice, into *what is said* (automatic speech recognition</span>
-<span id="cb6-361"><a href="#cb6-361" aria-hidden="true" tabindex="-1"></a>  producing a transcript) and *how it is said plus what is heard* (prosody, music tempo and valence,</span>
-<span id="cb6-362"><a href="#cb6-362" aria-hidden="true" tabindex="-1"></a>  ambient sound), captured by acoustic embeddings.</span>
-<span id="cb6-363"><a href="#cb6-363" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Text.** Three textual sources arise: the ASR transcript of the speech, the on-screen text and</span>
-<span id="cb6-364"><a href="#cb6-364" aria-hidden="true" tabindex="-1"></a>  captions (read by optical character recognition), and the platform metadata (post caption, hashtags,</span>
-<span id="cb6-365"><a href="#cb6-365" aria-hidden="true" tabindex="-1"></a>  title), all fed to the text apparatus of @sec-text-as-data.</span>
-<span id="cb6-366"><a href="#cb6-366" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-367"><a href="#cb6-367" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fusion strategies</span></span>
-<span id="cb6-368"><a href="#cb6-368" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-369"><a href="#cb6-369" aria-hidden="true" tabindex="-1"></a>Combining the streams is the modeling crux, and the choice of *when* to combine carries assumptions:</span>
-<span id="cb6-370"><a href="#cb6-370" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-371"><a href="#cb6-371" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Late (decision-level) fusion** trains a separate model per modality and combines their predictions</span>
-<span id="cb6-372"><a href="#cb6-372" aria-hidden="true" tabindex="-1"></a>  (averaging, stacking). It is robust and modular, tolerates missing modalities, and is the safe default,</span>
-<span id="cb6-373"><a href="#cb6-373" aria-hidden="true" tabindex="-1"></a>  but it cannot represent cross-modal *interactions* (the music-swell-at-the-product-reveal effect).</span>
-<span id="cb6-374"><a href="#cb6-374" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Early (feature-level) fusion** concatenates per-modality embeddings into one vector before modeling.</span>
-<span id="cb6-375"><a href="#cb6-375" aria-hidden="true" tabindex="-1"></a>  It can capture interactions but is sensitive to scaling and to one modality's dimensionality swamping</span>
-<span id="cb6-376"><a href="#cb6-376" aria-hidden="true" tabindex="-1"></a>  another.</span>
-<span id="cb6-377"><a href="#cb6-377" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Hybrid and cross-attention fusion** lets modalities attend to one another, learning, for instance,</span>
-<span id="cb6-378"><a href="#cb6-378" aria-hidden="true" tabindex="-1"></a>  which spoken words align with which on-screen moments. This is the architecture of modern multimodal</span>
-<span id="cb6-379"><a href="#cb6-379" aria-hidden="true" tabindex="-1"></a>  transformers and the natural home for modeling *synchrony*, at a substantial data and compute cost.</span>
-<span id="cb6-380"><a href="#cb6-380" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-381"><a href="#cb6-381" aria-hidden="true" tabindex="-1"></a>The flagship demonstration in marketing is @yang2024engagement, who extract video, audio, and text</span>
-<span id="cb6-382"><a href="#cb6-382" aria-hidden="true" tabindex="-1"></a>features from short-form influencer ads on TikTok and fuse them to predict product sales, finding that</span>
-<span id="cb6-383"><a href="#cb6-383" aria-hidden="true" tabindex="-1"></a>the fused representation, mediated through engagement, carries genuine predictive content for revenue.</span>
-<span id="cb6-384"><a href="#cb6-384" aria-hidden="true" tabindex="-1"></a>@wen2026livestream extend the logic to livestream commerce, decomposing a host's on-screen</span>
-<span id="cb6-385"><a href="#cb6-385" aria-hidden="true" tabindex="-1"></a>effectiveness into visual, vocal, and verbal components with multimodal machine learning and attributing</span>
-<span id="cb6-386"><a href="#cb6-386" aria-hidden="true" tabindex="-1"></a>sales to each via explainable-AI methods. Both studies exemplify the central design principle: model the</span>
-<span id="cb6-387"><a href="#cb6-387" aria-hidden="true" tabindex="-1"></a>streams jointly, and let the data reveal which modality, and which cross-modal alignment, drives the</span>
-<span id="cb6-388"><a href="#cb6-388" aria-hidden="true" tabindex="-1"></a>outcome.</span>
-<span id="cb6-389"><a href="#cb6-389" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-390"><a href="#cb6-390" aria-hidden="true" tabindex="-1"></a>The conceptual block below sketches a fusion pipeline, again as labeled pseudocode rather than runnable</span>
-<span id="cb6-391"><a href="#cb6-391" aria-hidden="true" tabindex="-1"></a>code, to make the architecture explicit without pretending to execute three deep backbones locally.</span>
-<span id="cb6-392"><a href="#cb6-392" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-393"><a href="#cb6-393" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-fusion-conceptual, eval=FALSE}</span></span>
-<span id="cb6-394"><a href="#cb6-394" aria-hidden="true" tabindex="-1"></a><span class="co"># CONCEPTUAL ONLY (not evaluated): multimodal fusion for a marketing video.</span></span>
-<span id="cb6-395"><a href="#cb6-395" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-396"><a href="#cb6-396" aria-hidden="true" tabindex="-1"></a>frames <span class="ot">&lt;-</span> <span class="fu">decode_video</span>(<span class="st">"ad.mp4"</span>, <span class="at">fps =</span> <span class="dv">8</span>)</span>
-<span id="cb6-397"><a href="#cb6-397" aria-hidden="true" tabindex="-1"></a>audio  <span class="ot">&lt;-</span> <span class="fu">extract_audio</span>(<span class="st">"ad.mp4"</span>)</span>
+<span id="cb6-325"><a href="#cb6-325" aria-hidden="true" tabindex="-1"></a>The following conceptual block sketches a temporal pipeline. It is deliberately written as *labeled</span>
+<span id="cb6-326"><a href="#cb6-326" aria-hidden="true" tabindex="-1"></a>pseudocode in R syntax*, not as runnable analysis: a faithful version requires <span class="in">`ffmpeg`</span>, a deep-learning</span>
+<span id="cb6-327"><a href="#cb6-327" aria-hidden="true" tabindex="-1"></a>backend, and pretrained weights that this chapter does not assume are installed. The point is to show</span>
+<span id="cb6-328"><a href="#cb6-328" aria-hidden="true" tabindex="-1"></a>the shape of the production pipeline honestly, not to hand-wave it.</span>
+<span id="cb6-329"><a href="#cb6-329" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-330"><a href="#cb6-330" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-temporal-conceptual, eval=FALSE}</span></span>
+<span id="cb6-331"><a href="#cb6-331" aria-hidden="true" tabindex="-1"></a><span class="co"># CONCEPTUAL ONLY (not evaluated): a temporal video pipeline.</span></span>
+<span id="cb6-332"><a href="#cb6-332" aria-hidden="true" tabindex="-1"></a><span class="co"># Requires ffmpeg/OpenCV for decoding and a deep-learning backend</span></span>
+<span id="cb6-333"><a href="#cb6-333" aria-hidden="true" tabindex="-1"></a><span class="co"># (e.g. torch/keras) with pretrained video weights. Shown for shape.</span></span>
+<span id="cb6-334"><a href="#cb6-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-335"><a href="#cb6-335" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Decode and sample frames at a fixed cadence (e.g. 8 fps).</span></span>
+<span id="cb6-336"><a href="#cb6-336" aria-hidden="true" tabindex="-1"></a>frames <span class="ot">&lt;-</span> <span class="fu">decode_video</span>(<span class="st">"ad_clip.mp4"</span>, <span class="at">fps =</span> <span class="dv">8</span>)        <span class="co"># ~ tensor [T, H, W, 3]</span></span>
+<span id="cb6-337"><a href="#cb6-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-338"><a href="#cb6-338" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Per-frame appearance embeddings from an image backbone (ResNet/ViT).</span></span>
+<span id="cb6-339"><a href="#cb6-339" aria-hidden="true" tabindex="-1"></a>frame_emb <span class="ot">&lt;-</span> <span class="fu">image_backbone</span>(frames)                   <span class="co"># [T, d_frame]</span></span>
+<span id="cb6-340"><a href="#cb6-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-341"><a href="#cb6-341" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Optical flow between consecutive frames -&gt; a motion stream.</span></span>
+<span id="cb6-342"><a href="#cb6-342" aria-hidden="true" tabindex="-1"></a>flow      <span class="ot">&lt;-</span> <span class="fu">optical_flow</span>(frames)                     <span class="co"># [T-1, H, W, 2]</span></span>
+<span id="cb6-343"><a href="#cb6-343" aria-hidden="true" tabindex="-1"></a>motion_emb <span class="ot">&lt;-</span> <span class="fu">motion_backbone</span>(flow)                   <span class="co"># [T-1, d_motion]</span></span>
+<span id="cb6-344"><a href="#cb6-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-345"><a href="#cb6-345" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. A temporal model over the per-frame embeddings:</span></span>
+<span id="cb6-346"><a href="#cb6-346" aria-hidden="true" tabindex="-1"></a><span class="co">#    a 3D-CNN / SlowFast / video-transformer that returns a clip embedding.</span></span>
+<span id="cb6-347"><a href="#cb6-347" aria-hidden="true" tabindex="-1"></a>clip_emb  <span class="ot">&lt;-</span> <span class="fu">temporal_model</span>(frame_emb, motion_emb)    <span class="co"># [d_clip]</span></span>
+<span id="cb6-348"><a href="#cb6-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-349"><a href="#cb6-349" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Shot boundaries from a learned (or thresholded) frame-difference signal,</span></span>
+<span id="cb6-350"><a href="#cb6-350" aria-hidden="true" tabindex="-1"></a><span class="co">#    yielding pacing features (shots per minute, mean shot length).</span></span>
+<span id="cb6-351"><a href="#cb6-351" aria-hidden="true" tabindex="-1"></a>shots     <span class="ot">&lt;-</span> <span class="fu">detect_shots</span>(frame_emb)                  <span class="co"># list of [start, end]</span></span>
+<span id="cb6-352"><a href="#cb6-352" aria-hidden="true" tabindex="-1"></a>pacing    <span class="ot">&lt;-</span> <span class="fu">shot_pacing_features</span>(shots)              <span class="co"># interpretable controls</span></span>
+<span id="cb6-353"><a href="#cb6-353" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-354"><a href="#cb6-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-355"><a href="#cb6-355" aria-hidden="true" tabindex="-1"></a>The deliberate split between the runnable <span class="in">`magick`</span> foundation and this conceptual temporal block is the</span>
+<span id="cb6-356"><a href="#cb6-356" aria-hidden="true" tabindex="-1"></a>methodological honesty the chapter insists on: the analyst should understand the frame-level signal</span>
+<span id="cb6-357"><a href="#cb6-357" aria-hidden="true" tabindex="-1"></a>concretely and treat the deep temporal model as a powerful but heavyweight black box whose outputs are,</span>
+<span id="cb6-358"><a href="#cb6-358" aria-hidden="true" tabindex="-1"></a>once again, generated features.</span>
+<span id="cb6-359"><a href="#cb6-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-360"><a href="#cb6-360" aria-hidden="true" tabindex="-1"></a><span class="fu">## Multimodal Video Models {#video-multimodal}</span></span>
+<span id="cb6-361"><a href="#cb6-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-362"><a href="#cb6-362" aria-hidden="true" tabindex="-1"></a>The defining empirical fact about marketing video is that meaning is distributed across modalities and</span>
+<span id="cb6-363"><a href="#cb6-363" aria-hidden="true" tabindex="-1"></a>their *synchrony*. A product named in the script (text), shown on screen (frame), and underscored by a</span>
+<span id="cb6-364"><a href="#cb6-364" aria-hidden="true" tabindex="-1"></a>music swell (audio) at the same instant is more persuasive than any one cue alone, and the persuasion</span>
+<span id="cb6-365"><a href="#cb6-365" aria-hidden="true" tabindex="-1"></a>lives in the alignment. Single-modality analysis systematically misses this, which is why the leading</span>
+<span id="cb6-366"><a href="#cb6-366" aria-hidden="true" tabindex="-1"></a>video-as-data marketing studies fuse modalities.</span>
+<span id="cb6-367"><a href="#cb6-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-368"><a href="#cb6-368" aria-hidden="true" tabindex="-1"></a><span class="fu">### The three streams</span></span>
+<span id="cb6-369"><a href="#cb6-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-370"><a href="#cb6-370" aria-hidden="true" tabindex="-1"></a>A marketing video decomposes into three analyzable streams, each handled by the apparatus of its own</span>
+<span id="cb6-371"><a href="#cb6-371" aria-hidden="true" tabindex="-1"></a>chapter:</span>
+<span id="cb6-372"><a href="#cb6-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-373"><a href="#cb6-373" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Visual (frames).** Sampled frames feed image models (@sec-image-processing) to yield per-frame and</span>
+<span id="cb6-374"><a href="#cb6-374" aria-hidden="true" tabindex="-1"></a>  clip-level visual embeddings plus interpretable creative features (color, faces, brand/logo presence,</span>
+<span id="cb6-375"><a href="#cb6-375" aria-hidden="true" tabindex="-1"></a>  shot pacing).</span>
+<span id="cb6-376"><a href="#cb6-376" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Audio.** The soundtrack splits, as in @sec-audio-voice, into *what is said* (automatic speech recognition</span>
+<span id="cb6-377"><a href="#cb6-377" aria-hidden="true" tabindex="-1"></a>  producing a transcript) and *how it is said plus what is heard* (prosody, music tempo and valence,</span>
+<span id="cb6-378"><a href="#cb6-378" aria-hidden="true" tabindex="-1"></a>  ambient sound), captured by acoustic embeddings.</span>
+<span id="cb6-379"><a href="#cb6-379" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Text.** Three textual sources arise: the ASR transcript of the speech, the on-screen text and</span>
+<span id="cb6-380"><a href="#cb6-380" aria-hidden="true" tabindex="-1"></a>  captions (read by optical character recognition), and the platform metadata (post caption, hashtags,</span>
+<span id="cb6-381"><a href="#cb6-381" aria-hidden="true" tabindex="-1"></a>  title), all fed to the text apparatus of @sec-text-as-data.</span>
+<span id="cb6-382"><a href="#cb6-382" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-383"><a href="#cb6-383" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fusion strategies</span></span>
+<span id="cb6-384"><a href="#cb6-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-385"><a href="#cb6-385" aria-hidden="true" tabindex="-1"></a>Combining the streams is the modeling crux, and the choice of *when* to combine carries assumptions:</span>
+<span id="cb6-386"><a href="#cb6-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-387"><a href="#cb6-387" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Late (decision-level) fusion** trains a separate model per modality and combines their predictions</span>
+<span id="cb6-388"><a href="#cb6-388" aria-hidden="true" tabindex="-1"></a>  (averaging, stacking). It is robust and modular, tolerates missing modalities, and is the safe default,</span>
+<span id="cb6-389"><a href="#cb6-389" aria-hidden="true" tabindex="-1"></a>  but it cannot represent cross-modal *interactions* (the music-swell-at-the-product-reveal effect).</span>
+<span id="cb6-390"><a href="#cb6-390" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Early (feature-level) fusion** concatenates per-modality embeddings into one vector before modeling.</span>
+<span id="cb6-391"><a href="#cb6-391" aria-hidden="true" tabindex="-1"></a>  It can capture interactions but is sensitive to scaling and to one modality's dimensionality swamping</span>
+<span id="cb6-392"><a href="#cb6-392" aria-hidden="true" tabindex="-1"></a>  another.</span>
+<span id="cb6-393"><a href="#cb6-393" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Hybrid and cross-attention fusion** lets modalities attend to one another, learning, for instance,</span>
+<span id="cb6-394"><a href="#cb6-394" aria-hidden="true" tabindex="-1"></a>  which spoken words align with which on-screen moments. This is the architecture of modern multimodal</span>
+<span id="cb6-395"><a href="#cb6-395" aria-hidden="true" tabindex="-1"></a>  transformers and the natural home for modeling *synchrony*, at a substantial data and compute cost.</span>
+<span id="cb6-396"><a href="#cb6-396" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-397"><a href="#cb6-397" aria-hidden="true" tabindex="-1"></a>@fig-vid-fusion sets out the three streams and the point at which each fusion strategy combines them.</span>
 <span id="cb6-398"><a href="#cb6-398" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-399"><a href="#cb6-399" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Per-modality embeddings ---</span></span>
-<span id="cb6-400"><a href="#cb6-400" aria-hidden="true" tabindex="-1"></a>visual_emb <span class="ot">&lt;-</span> <span class="fu">video_backbone</span>(frames)                 <span class="co"># frames -&gt; [d_v]</span></span>
-<span id="cb6-401"><a href="#cb6-401" aria-hidden="true" tabindex="-1"></a>transcript <span class="ot">&lt;-</span> <span class="fu">asr</span>(audio)                              <span class="co"># speech -&gt; text</span></span>
-<span id="cb6-402"><a href="#cb6-402" aria-hidden="true" tabindex="-1"></a>prosody    <span class="ot">&lt;-</span> <span class="fu">acoustic_features</span>(audio)               <span class="co"># pitch/energy/tempo -&gt; [d_a]</span></span>
-<span id="cb6-403"><a href="#cb6-403" aria-hidden="true" tabindex="-1"></a>captions   <span class="ot">&lt;-</span> <span class="fu">ocr</span>(frames)                             <span class="co"># on-screen text</span></span>
-<span id="cb6-404"><a href="#cb6-404" aria-hidden="true" tabindex="-1"></a>meta_text  <span class="ot">&lt;-</span> <span class="fu">c</span>(transcript, captions, <span class="st">"post caption + hashtags"</span>)</span>
-<span id="cb6-405"><a href="#cb6-405" aria-hidden="true" tabindex="-1"></a>text_emb   <span class="ot">&lt;-</span> <span class="fu">text_encoder</span>(meta_text)                <span class="co"># text -&gt; [d_t]</span></span>
-<span id="cb6-406"><a href="#cb6-406" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-407"><a href="#cb6-407" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Fusion (choose one) ---</span></span>
-<span id="cb6-408"><a href="#cb6-408" aria-hidden="true" tabindex="-1"></a>late  <span class="ot">&lt;-</span> <span class="fu">average</span>(<span class="fu">predict</span>(m_v, visual_emb),</span>
-<span id="cb6-409"><a href="#cb6-409" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">predict</span>(m_a, prosody),</span>
-<span id="cb6-410"><a href="#cb6-410" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">predict</span>(m_t, text_emb))              <span class="co"># decision-level</span></span>
-<span id="cb6-411"><a href="#cb6-411" aria-hidden="true" tabindex="-1"></a>early <span class="ot">&lt;-</span> <span class="fu">model</span>(<span class="fu">c</span>(visual_emb, prosody, text_emb))     <span class="co"># feature-level</span></span>
-<span id="cb6-412"><a href="#cb6-412" aria-hidden="true" tabindex="-1"></a>cross <span class="ot">&lt;-</span> <span class="fu">cross_attention_transformer</span>(                <span class="co"># synchrony-aware</span></span>
-<span id="cb6-413"><a href="#cb6-413" aria-hidden="true" tabindex="-1"></a>           visual_emb, prosody, text_emb)</span>
-<span id="cb6-414"><a href="#cb6-414" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-415"><a href="#cb6-415" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Outcome model ---</span></span>
-<span id="cb6-416"><a href="#cb6-416" aria-hidden="true" tabindex="-1"></a><span class="co"># engagement / sales ~ fused features (+ interpretable creative controls),</span></span>
-<span id="cb6-417"><a href="#cb6-417" aria-hidden="true" tabindex="-1"></a><span class="co"># with the generated-regressor caveat applied to EVERY feature.</span></span>
-<span id="cb6-418"><a href="#cb6-418" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb6-419"><a href="#cb6-419" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-420"><a href="#cb6-420" aria-hidden="true" tabindex="-1"></a>The econometric warning that runs through the unstructured-data part reaches its peak here. A video</span>
-<span id="cb6-421"><a href="#cb6-421" aria-hidden="true" tabindex="-1"></a>pipeline stacks a frame sampler, an image backbone, an ASR system, an OCR system, an acoustic model, a</span>
-<span id="cb6-422"><a href="#cb6-422" aria-hidden="true" tabindex="-1"></a>text encoder, and a fusion network, each a fitted model with its own error. When the fused features enter</span>
-<span id="cb6-423"><a href="#cb6-423" aria-hidden="true" tabindex="-1"></a>a downstream regression of sales or engagement on creative content, those features are *generated</span>
-<span id="cb6-424"><a href="#cb6-424" aria-hidden="true" tabindex="-1"></a>regressors* and their errors may correlate with the outcome (a model that recognizes "product reveal"</span>
-<span id="cb6-425"><a href="#cb6-425" aria-hidden="true" tabindex="-1"></a>better in successful ads will manufacture a spurious reveal-to-sales association). The remedies are the</span>
-<span id="cb6-426"><a href="#cb6-426" aria-hidden="true" tabindex="-1"></a>familiar ones, validation against human-coded ground truth, holding out an independent sample for the</span>
-<span id="cb6-427"><a href="#cb6-427" aria-hidden="true" tabindex="-1"></a>second stage, and, where possible, experimental variation in the creative, and they are *more* essential</span>
-<span id="cb6-428"><a href="#cb6-428" aria-hidden="true" tabindex="-1"></a>for video because the error sources are more numerous.</span>
-<span id="cb6-429"><a href="#cb6-429" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-430"><a href="#cb6-430" aria-hidden="true" tabindex="-1"></a><span class="fu">## Engagement and Creative Analytics {#video-engagement}</span></span>
+<span id="cb6-401"><a href="#cb6-401" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb6-402"><a href="#cb6-402" aria-hidden="true" tabindex="-1"></a>%%| label: fig-vid-fusion</span>
+<span id="cb6-403"><a href="#cb6-403" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Multimodal video as three streams and a fusion choice. Visual, audio, and text streams each yield per-modality features, and late, early, or cross-attention fusion combines them before the outcome model of engagement or sales.</span><span class="ot">"</span></span>
+<span id="cb6-404"><a href="#cb6-404" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb6-405"><a href="#cb6-405" aria-hidden="true" tabindex="-1"></a>  VDO[<span class="ot">"</span><span class="st">Marketing video</span><span class="ot">"</span>] --&gt; VS[<span class="ot">"</span><span class="st">Visual stream&lt;br/&gt;(frames)</span><span class="ot">"</span>]</span>
+<span id="cb6-406"><a href="#cb6-406" aria-hidden="true" tabindex="-1"></a>  VDO --&gt; AS[<span class="ot">"</span><span class="st">Audio stream&lt;br/&gt;(speech, prosody, music)</span><span class="ot">"</span>]</span>
+<span id="cb6-407"><a href="#cb6-407" aria-hidden="true" tabindex="-1"></a>  VDO --&gt; TX[<span class="ot">"</span><span class="st">Text stream&lt;br/&gt;(transcript, captions, metadata)</span><span class="ot">"</span>]</span>
+<span id="cb6-408"><a href="#cb6-408" aria-hidden="true" tabindex="-1"></a>  VS --&gt; VE[<span class="ot">"</span><span class="st">Visual features</span><span class="ot">"</span>]</span>
+<span id="cb6-409"><a href="#cb6-409" aria-hidden="true" tabindex="-1"></a>  AS --&gt; AE[<span class="ot">"</span><span class="st">Acoustic features</span><span class="ot">"</span>]</span>
+<span id="cb6-410"><a href="#cb6-410" aria-hidden="true" tabindex="-1"></a>  TX --&gt; TE[<span class="ot">"</span><span class="st">Text features</span><span class="ot">"</span>]</span>
+<span id="cb6-411"><a href="#cb6-411" aria-hidden="true" tabindex="-1"></a>  VE --&gt; FUS[<span class="ot">"</span><span class="st">Fusion&lt;br/&gt;(late, early, or cross-attention)</span><span class="ot">"</span>]</span>
+<span id="cb6-412"><a href="#cb6-412" aria-hidden="true" tabindex="-1"></a>  AE --&gt; FUS</span>
+<span id="cb6-413"><a href="#cb6-413" aria-hidden="true" tabindex="-1"></a>  TE --&gt; FUS</span>
+<span id="cb6-414"><a href="#cb6-414" aria-hidden="true" tabindex="-1"></a>  FUS --&gt; OUT[<span class="ot">"</span><span class="st">Outcome model&lt;br/&gt;(engagement, sales)</span><span class="ot">"</span>]</span>
+<span id="cb6-415"><a href="#cb6-415" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-416"><a href="#cb6-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-417"><a href="#cb6-417" aria-hidden="true" tabindex="-1"></a>The flagship demonstration in marketing is @yang2024engagement, who extract video, audio, and text</span>
+<span id="cb6-418"><a href="#cb6-418" aria-hidden="true" tabindex="-1"></a>features from short-form influencer ads on TikTok and fuse them to predict product sales, finding that</span>
+<span id="cb6-419"><a href="#cb6-419" aria-hidden="true" tabindex="-1"></a>the fused representation, mediated through engagement, carries genuine predictive content for revenue.</span>
+<span id="cb6-420"><a href="#cb6-420" aria-hidden="true" tabindex="-1"></a>@wen2026livestream extend the logic to livestream commerce, decomposing a host's on-screen</span>
+<span id="cb6-421"><a href="#cb6-421" aria-hidden="true" tabindex="-1"></a>effectiveness into visual, vocal, and verbal components with multimodal machine learning and attributing</span>
+<span id="cb6-422"><a href="#cb6-422" aria-hidden="true" tabindex="-1"></a>sales to each via explainable-AI methods. Both studies exemplify the central design principle: model the</span>
+<span id="cb6-423"><a href="#cb6-423" aria-hidden="true" tabindex="-1"></a>streams jointly, and let the data reveal which modality, and which cross-modal alignment, drives the</span>
+<span id="cb6-424"><a href="#cb6-424" aria-hidden="true" tabindex="-1"></a>outcome.</span>
+<span id="cb6-425"><a href="#cb6-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-426"><a href="#cb6-426" aria-hidden="true" tabindex="-1"></a>The conceptual block below sketches a fusion pipeline, again as labeled pseudocode rather than runnable</span>
+<span id="cb6-427"><a href="#cb6-427" aria-hidden="true" tabindex="-1"></a>code, to make the architecture explicit without pretending to execute three deep backbones locally.</span>
+<span id="cb6-428"><a href="#cb6-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-429"><a href="#cb6-429" aria-hidden="true" tabindex="-1"></a><span class="in">```{r video-fusion-conceptual, eval=FALSE}</span></span>
+<span id="cb6-430"><a href="#cb6-430" aria-hidden="true" tabindex="-1"></a><span class="co"># CONCEPTUAL ONLY (not evaluated): multimodal fusion for a marketing video.</span></span>
 <span id="cb6-431"><a href="#cb6-431" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-432"><a href="#cb6-432" aria-hidden="true" tabindex="-1"></a>The applied destination of video-as-data is usually a model relating extracted creative features to a</span>
-<span id="cb6-433"><a href="#cb6-433" aria-hidden="true" tabindex="-1"></a>behavioral outcome: watch time, completion rate, like/share/comment engagement, click-through, or</span>
-<span id="cb6-434"><a href="#cb6-434" aria-hidden="true" tabindex="-1"></a>conversion. This section organizes the work into the features that go in and the outcomes that come out.</span>
-<span id="cb6-435"><a href="#cb6-435" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-436"><a href="#cb6-436" aria-hidden="true" tabindex="-1"></a><span class="fu">### Creative-feature extraction</span></span>
-<span id="cb6-437"><a href="#cb6-437" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-438"><a href="#cb6-438" aria-hidden="true" tabindex="-1"></a>Marketing analysts extract a recurring vocabulary of creative features, some interpretable, some learned:</span>
-<span id="cb6-439"><a href="#cb6-439" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-440"><a href="#cb6-440" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Pacing and structure.** Shots per minute, mean and variance of shot duration, time-to-first-cut, and</span>
-<span id="cb6-441"><a href="#cb6-441" aria-hidden="true" tabindex="-1"></a>  the position of the "hook" (how quickly the opening establishes interest). These come directly from the</span>
-<span id="cb6-442"><a href="#cb6-442" aria-hidden="true" tabindex="-1"></a>  shot-segmentation signal demonstrated above.</span>
-<span id="cb6-443"><a href="#cb6-443" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Visual content.** Color palette and brightness trajectory, presence and screen-time of faces, presence</span>
-<span id="cb6-444"><a href="#cb6-444" aria-hidden="true" tabindex="-1"></a>  and timing of the brand or logo (brand *prominence* and time-to-first-brand-appearance), scene variety.</span>
-<span id="cb6-445"><a href="#cb6-445" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Audio content.** Music presence, tempo, and valence; speech rate and vocal energy; loudness dynamics</span>
-<span id="cb6-446"><a href="#cb6-446" aria-hidden="true" tabindex="-1"></a>  and their synchrony with cuts.</span>
-<span id="cb6-447"><a href="#cb6-447" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Linguistic content.** Topics and sentiment of the transcript and captions, calls-to-action and their</span>
-<span id="cb6-448"><a href="#cb6-448" aria-hidden="true" tabindex="-1"></a>  timing, and the alignment of spoken claims with on-screen demonstration.</span>
-<span id="cb6-449"><a href="#cb6-449" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Temporal arcs.** Rather than collapsing a feature to its clip average, the *trajectory* of arousal,</span>
-<span id="cb6-450"><a href="#cb6-450" aria-hidden="true" tabindex="-1"></a>  emotion, or brand presence over the clip is itself a feature: a rising emotional arc, an early brand</span>
-<span id="cb6-451"><a href="#cb6-451" aria-hidden="true" tabindex="-1"></a>  reveal, a late call-to-action.</span>
-<span id="cb6-452"><a href="#cb6-452" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-453"><a href="#cb6-453" aria-hidden="true" tabindex="-1"></a><span class="fu">### Engagement prediction and its pitfalls</span></span>
-<span id="cb6-454"><a href="#cb6-454" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-455"><a href="#cb6-455" aria-hidden="true" tabindex="-1"></a>These features feed predictive models of engagement and conversion. The empirical lessons from the</span>
-<span id="cb6-456"><a href="#cb6-456" aria-hidden="true" tabindex="-1"></a>marketing literature are consistent. The affective trajectory of a video ad drives engagement:</span>
-<span id="cb6-457"><a href="#cb6-457" aria-hidden="true" tabindex="-1"></a>@teixeira2012emotionengagement use eye-tracking and automated facial-expression coding to show that</span>
-<span id="cb6-458"><a href="#cb6-458" aria-hidden="true" tabindex="-1"></a>induced emotion (joy, surprise) raises attention and suppresses zapping, and @teixeira2014 establish,</span>
-<span id="cb6-459"><a href="#cb6-459" aria-hidden="true" tabindex="-1"></a>via a web-based facial-tracking field study, *why, when, and how much* to entertain—the timing of</span>
-<span id="cb6-460"><a href="#cb6-460" aria-hidden="true" tabindex="-1"></a>affect within the clip is itself a lever. @tellis2019 decompose what makes online video</span>
-<span id="cb6-461"><a href="#cb6-461" aria-hidden="true" tabindex="-1"></a>content shared, isolating the roles of information, emotion, and brand prominence; brand prominence</span>
-<span id="cb6-462"><a href="#cb6-462" aria-hidden="true" tabindex="-1"></a>in particular trades off against likeability, since too-early or too-heavy branding can depress</span>
-<span id="cb6-463"><a href="#cb6-463" aria-hidden="true" tabindex="-1"></a>engagement even as it aids recall. For short-form specifically, @zhang2025audiovisual link the</span>
-<span id="cb6-464"><a href="#cb6-464" aria-hidden="true" tabindex="-1"></a>audiovisual features of TikTok ads to engagement behaviors, and @leung2022 situate such creative</span>
-<span id="cb6-465"><a href="#cb6-465" aria-hidden="true" tabindex="-1"></a>effects within the broader system of influencer-marketing effectiveness. The throughline is that</span>
-<span id="cb6-466"><a href="#cb6-466" aria-hidden="true" tabindex="-1"></a>*fused* multimodal features outperform any single stream, as in @yang2024engagement. Three pitfalls</span>
-<span id="cb6-467"><a href="#cb6-467" aria-hidden="true" tabindex="-1"></a>deserve emphasis:</span>
-<span id="cb6-468"><a href="#cb6-468" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-469"><a href="#cb6-469" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Engagement is not sales.** Platform engagement (views, likes) is an intermediate outcome that the</span>
-<span id="cb6-470"><a href="#cb6-470" aria-hidden="true" tabindex="-1"></a>   distribution algorithm partly manufactures; @yang2024engagement treat engagement as a *mediator* on the</span>
-<span id="cb6-471"><a href="#cb6-471" aria-hidden="true" tabindex="-1"></a>   path to sales rather than as the endpoint, which is the correct posture.</span>
-<span id="cb6-472"><a href="#cb6-472" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Selection on the platform.** Observed videos are those a recommender chose to show, so the sample of</span>
-<span id="cb6-473"><a href="#cb6-473" aria-hidden="true" tabindex="-1"></a>   "video and its engagement" is endogenously selected by an algorithm that consumed the very features</span>
-<span id="cb6-474"><a href="#cb6-474" aria-hidden="true" tabindex="-1"></a>   under study, biasing naive content-to-engagement estimates.</span>
-<span id="cb6-475"><a href="#cb6-475" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Generated-feature error.** As stressed above, every creative feature is a model output; validation and</span>
-<span id="cb6-476"><a href="#cb6-476" aria-hidden="true" tabindex="-1"></a>   second-stage discipline are prerequisites, not niceties.</span>
-<span id="cb6-477"><a href="#cb6-477" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-478"><a href="#cb6-478" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#video-industry}</span></span>
-<span id="cb6-479"><a href="#cb6-479" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-480"><a href="#cb6-480" aria-hidden="true" tabindex="-1"></a>How video is analyzed in production differs from the research idealization in ways the analyst should</span>
-<span id="cb6-481"><a href="#cb6-481" aria-hidden="true" tabindex="-1"></a>understand, because the data a firm can obtain is shaped by the platforms that host the video.</span>
-<span id="cb6-482"><a href="#cb6-482" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-483"><a href="#cb6-483" aria-hidden="true" tabindex="-1"></a>**Platform-side analysis at scale.** The large video platforms run video understanding as core</span>
-<span id="cb6-484"><a href="#cb6-484" aria-hidden="true" tabindex="-1"></a>infrastructure, not as analysis after the fact. Uploaded video is automatically transcribed (ASR),</span>
-<span id="cb6-485"><a href="#cb6-485" aria-hidden="true" tabindex="-1"></a>captioned, scanned for objects, scenes, and policy violations, and embedded into the same representation</span>
-<span id="cb6-486"><a href="#cb6-486" aria-hidden="true" tabindex="-1"></a>space the recommender uses to match clips to viewers. The recommender is itself a video-multimodal model:</span>
-<span id="cb6-487"><a href="#cb6-487" aria-hidden="true" tabindex="-1"></a>it consumes frame, audio, and text features along with behavioral signals to predict watch time and</span>
-<span id="cb6-488"><a href="#cb6-488" aria-hidden="true" tabindex="-1"></a>engagement, which means the platform's *distribution* decision and the *creative features* of the video are</span>
-<span id="cb6-489"><a href="#cb6-489" aria-hidden="true" tabindex="-1"></a>produced by one coupled system. For the outside analyst this is the central structural fact: observed</span>
-<span id="cb6-490"><a href="#cb6-490" aria-hidden="true" tabindex="-1"></a>reach and engagement are jointly determined with content by a model the analyst cannot see.</span>
-<span id="cb6-491"><a href="#cb6-491" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-492"><a href="#cb6-492" aria-hidden="true" tabindex="-1"></a>**Brand- and agency-side analysis.** Advertisers and their agencies analyze video creative through three</span>
-<span id="cb6-493"><a href="#cb6-493" aria-hidden="true" tabindex="-1"></a>broad routes.</span>
-<span id="cb6-494"><a href="#cb6-494" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-495"><a href="#cb6-495" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb6-496"><a href="#cb6-496" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: video feature pipelines</span></span>
-<span id="cb6-497"><a href="#cb6-497" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-498"><a href="#cb6-498" aria-hidden="true" tabindex="-1"></a>The frame-level demonstration in this chapter runs on the maintained R package <span class="in">`magick`</span>; a fuller</span>
-<span id="cb6-499"><a href="#cb6-499" aria-hidden="true" tabindex="-1"></a>open R/Python workflow for marketing video combines <span class="in">`ffmpeg`</span>/<span class="in">`OpenCV`</span> (decoding), pretrained image</span>
-<span id="cb6-500"><a href="#cb6-500" aria-hidden="true" tabindex="-1"></a>backbones such as ResNet (the official implementation accompanies @he2016resnet at</span>
-<span id="cb6-501"><a href="#cb6-501" aria-hidden="true" tabindex="-1"></a><span class="in">`github.com/KaimingHe/deep-residual-networks`</span>), Whisper (ASR), and the action/temporal models of</span>
-<span id="cb6-502"><a href="#cb6-502" aria-hidden="true" tabindex="-1"></a>@carreira2017kinetics and @feichtenhofer2019slowfast (whose authors release reference code). For a</span>
-<span id="cb6-503"><a href="#cb6-503" aria-hidden="true" tabindex="-1"></a>marketing-tailored end-to-end recipe see @schwenzow2021videos. Code and data availability for the</span>
-<span id="cb6-504"><a href="#cb6-504" aria-hidden="true" tabindex="-1"></a>empirical marketing studies cited here (e.g., @yang2024engagement, @wen2026livestream) vary—check the</span>
-<span id="cb6-505"><a href="#cb6-505" aria-hidden="true" tabindex="-1"></a>journal's supplementary materials, since several rely on proprietary platform data that cannot be</span>
-<span id="cb6-506"><a href="#cb6-506" aria-hidden="true" tabindex="-1"></a>redistributed.</span>
-<span id="cb6-507"><a href="#cb6-507" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb6-508"><a href="#cb6-508" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-509"><a href="#cb6-509" aria-hidden="true" tabindex="-1"></a>The first is *managed cloud services*, Google Cloud Video Intelligence, Amazon Rekognition</span>
-<span id="cb6-510"><a href="#cb6-510" aria-hidden="true" tabindex="-1"></a>Video, Microsoft Azure Video Indexer, that return shot boundaries, labels, on-screen text, transcripts, and</span>
-<span id="cb6-511"><a href="#cb6-511" aria-hidden="true" tabindex="-1"></a>face/celebrity detection as an API call, giving non-specialist teams a feature pipeline without training</span>
-<span id="cb6-512"><a href="#cb6-512" aria-hidden="true" tabindex="-1"></a>models. The second is *creative analytics vendors* that specialize in linking extracted creative features to</span>
-<span id="cb6-513"><a href="#cb6-513" aria-hidden="true" tabindex="-1"></a>ad performance across large libraries of past campaigns, effectively industrializing the</span>
-<span id="cb6-514"><a href="#cb6-514" aria-hidden="true" tabindex="-1"></a>features-to-engagement regression of the previous section. The third is *in-house pipelines* at the largest</span>
-<span id="cb6-515"><a href="#cb6-515" aria-hidden="true" tabindex="-1"></a>advertisers, built on the open-source stack (<span class="in">`ffmpeg`</span>/<span class="in">`OpenCV`</span> for decoding, pretrained image and video</span>
-<span id="cb6-516"><a href="#cb6-516" aria-hidden="true" tabindex="-1"></a>backbones, ASR such as Whisper) for proprietary control and integration with first-party outcome data.</span>
-<span id="cb6-517"><a href="#cb6-517" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-518"><a href="#cb6-518" aria-hidden="true" tabindex="-1"></a>**Production constraints.** Three realities discipline the work. Video is *expensive* to process (decoding</span>
-<span id="cb6-519"><a href="#cb6-519" aria-hidden="true" tabindex="-1"></a>and deep inference at frame rate over large libraries is compute-intensive), which is why frame *sampling*</span>
-<span id="cb6-520"><a href="#cb6-520" aria-hidden="true" tabindex="-1"></a>and shot-based keyframing are not academic niceties but production necessities. Outcome data is *fragmented*</span>
-<span id="cb6-521"><a href="#cb6-521" aria-hidden="true" tabindex="-1"></a>across walled platforms, so cross-platform creative-to-sales linkage is a data-integration problem before it</span>
-<span id="cb6-522"><a href="#cb6-522" aria-hidden="true" tabindex="-1"></a>is a modeling problem. And the legal and ethical surface is large: scraping platform video runs into terms</span>
-<span id="cb6-523"><a href="#cb6-523" aria-hidden="true" tabindex="-1"></a>of service, and the modality carries faces, voices, and other biometric-adjacent signals whose extraction</span>
-<span id="cb6-524"><a href="#cb6-524" aria-hidden="true" tabindex="-1"></a>raises privacy obligations that the analyst must respect.</span>
+<span id="cb6-432"><a href="#cb6-432" aria-hidden="true" tabindex="-1"></a>frames <span class="ot">&lt;-</span> <span class="fu">decode_video</span>(<span class="st">"ad.mp4"</span>, <span class="at">fps =</span> <span class="dv">8</span>)</span>
+<span id="cb6-433"><a href="#cb6-433" aria-hidden="true" tabindex="-1"></a>audio  <span class="ot">&lt;-</span> <span class="fu">extract_audio</span>(<span class="st">"ad.mp4"</span>)</span>
+<span id="cb6-434"><a href="#cb6-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-435"><a href="#cb6-435" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Per-modality embeddings ---</span></span>
+<span id="cb6-436"><a href="#cb6-436" aria-hidden="true" tabindex="-1"></a>visual_emb <span class="ot">&lt;-</span> <span class="fu">video_backbone</span>(frames)                 <span class="co"># frames -&gt; [d_v]</span></span>
+<span id="cb6-437"><a href="#cb6-437" aria-hidden="true" tabindex="-1"></a>transcript <span class="ot">&lt;-</span> <span class="fu">asr</span>(audio)                              <span class="co"># speech -&gt; text</span></span>
+<span id="cb6-438"><a href="#cb6-438" aria-hidden="true" tabindex="-1"></a>prosody    <span class="ot">&lt;-</span> <span class="fu">acoustic_features</span>(audio)               <span class="co"># pitch/energy/tempo -&gt; [d_a]</span></span>
+<span id="cb6-439"><a href="#cb6-439" aria-hidden="true" tabindex="-1"></a>captions   <span class="ot">&lt;-</span> <span class="fu">ocr</span>(frames)                             <span class="co"># on-screen text</span></span>
+<span id="cb6-440"><a href="#cb6-440" aria-hidden="true" tabindex="-1"></a>meta_text  <span class="ot">&lt;-</span> <span class="fu">c</span>(transcript, captions, <span class="st">"post caption + hashtags"</span>)</span>
+<span id="cb6-441"><a href="#cb6-441" aria-hidden="true" tabindex="-1"></a>text_emb   <span class="ot">&lt;-</span> <span class="fu">text_encoder</span>(meta_text)                <span class="co"># text -&gt; [d_t]</span></span>
+<span id="cb6-442"><a href="#cb6-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-443"><a href="#cb6-443" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Fusion (choose one) ---</span></span>
+<span id="cb6-444"><a href="#cb6-444" aria-hidden="true" tabindex="-1"></a>late  <span class="ot">&lt;-</span> <span class="fu">average</span>(<span class="fu">predict</span>(m_v, visual_emb),</span>
+<span id="cb6-445"><a href="#cb6-445" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">predict</span>(m_a, prosody),</span>
+<span id="cb6-446"><a href="#cb6-446" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">predict</span>(m_t, text_emb))              <span class="co"># decision-level</span></span>
+<span id="cb6-447"><a href="#cb6-447" aria-hidden="true" tabindex="-1"></a>early <span class="ot">&lt;-</span> <span class="fu">model</span>(<span class="fu">c</span>(visual_emb, prosody, text_emb))     <span class="co"># feature-level</span></span>
+<span id="cb6-448"><a href="#cb6-448" aria-hidden="true" tabindex="-1"></a>cross <span class="ot">&lt;-</span> <span class="fu">cross_attention_transformer</span>(                <span class="co"># synchrony-aware</span></span>
+<span id="cb6-449"><a href="#cb6-449" aria-hidden="true" tabindex="-1"></a>           visual_emb, prosody, text_emb)</span>
+<span id="cb6-450"><a href="#cb6-450" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-451"><a href="#cb6-451" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Outcome model ---</span></span>
+<span id="cb6-452"><a href="#cb6-452" aria-hidden="true" tabindex="-1"></a><span class="co"># engagement / sales ~ fused features (+ interpretable creative controls),</span></span>
+<span id="cb6-453"><a href="#cb6-453" aria-hidden="true" tabindex="-1"></a><span class="co"># with the generated-regressor caveat applied to EVERY feature.</span></span>
+<span id="cb6-454"><a href="#cb6-454" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-455"><a href="#cb6-455" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-456"><a href="#cb6-456" aria-hidden="true" tabindex="-1"></a>The econometric warning that runs through the unstructured-data part reaches its peak here. A video</span>
+<span id="cb6-457"><a href="#cb6-457" aria-hidden="true" tabindex="-1"></a>pipeline stacks a frame sampler, an image backbone, an ASR system, an OCR system, an acoustic model, a</span>
+<span id="cb6-458"><a href="#cb6-458" aria-hidden="true" tabindex="-1"></a>text encoder, and a fusion network, each a fitted model with its own error. When the fused features enter</span>
+<span id="cb6-459"><a href="#cb6-459" aria-hidden="true" tabindex="-1"></a>a downstream regression of sales or engagement on creative content, those features are *generated</span>
+<span id="cb6-460"><a href="#cb6-460" aria-hidden="true" tabindex="-1"></a>regressors* and their errors may correlate with the outcome (a model that recognizes "product reveal"</span>
+<span id="cb6-461"><a href="#cb6-461" aria-hidden="true" tabindex="-1"></a>better in successful ads will manufacture a spurious reveal-to-sales association). The remedies are the</span>
+<span id="cb6-462"><a href="#cb6-462" aria-hidden="true" tabindex="-1"></a>familiar ones, validation against human-coded ground truth, holding out an independent sample for the</span>
+<span id="cb6-463"><a href="#cb6-463" aria-hidden="true" tabindex="-1"></a>second stage, and, where possible, experimental variation in the creative, and they are *more* essential</span>
+<span id="cb6-464"><a href="#cb6-464" aria-hidden="true" tabindex="-1"></a>for video because the error sources are more numerous.</span>
+<span id="cb6-465"><a href="#cb6-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-466"><a href="#cb6-466" aria-hidden="true" tabindex="-1"></a><span class="fu">## Engagement and Creative Analytics {#video-engagement}</span></span>
+<span id="cb6-467"><a href="#cb6-467" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-468"><a href="#cb6-468" aria-hidden="true" tabindex="-1"></a>The applied destination of video-as-data is usually a model relating extracted creative features to a</span>
+<span id="cb6-469"><a href="#cb6-469" aria-hidden="true" tabindex="-1"></a>behavioral outcome: watch time, completion rate, like/share/comment engagement, click-through, or</span>
+<span id="cb6-470"><a href="#cb6-470" aria-hidden="true" tabindex="-1"></a>conversion. This section organizes the work into the features that go in and the outcomes that come out.</span>
+<span id="cb6-471"><a href="#cb6-471" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-472"><a href="#cb6-472" aria-hidden="true" tabindex="-1"></a><span class="fu">### Creative-feature extraction</span></span>
+<span id="cb6-473"><a href="#cb6-473" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-474"><a href="#cb6-474" aria-hidden="true" tabindex="-1"></a>Marketing analysts extract a recurring vocabulary of creative features, some interpretable, some learned:</span>
+<span id="cb6-475"><a href="#cb6-475" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-476"><a href="#cb6-476" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Pacing and structure.** Shots per minute, mean and variance of shot duration, time-to-first-cut, and</span>
+<span id="cb6-477"><a href="#cb6-477" aria-hidden="true" tabindex="-1"></a>  the position of the "hook" (how quickly the opening establishes interest). These come directly from the</span>
+<span id="cb6-478"><a href="#cb6-478" aria-hidden="true" tabindex="-1"></a>  shot-segmentation signal demonstrated above.</span>
+<span id="cb6-479"><a href="#cb6-479" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Visual content.** Color palette and brightness trajectory, presence and screen-time of faces, presence</span>
+<span id="cb6-480"><a href="#cb6-480" aria-hidden="true" tabindex="-1"></a>  and timing of the brand or logo (brand *prominence* and time-to-first-brand-appearance), scene variety.</span>
+<span id="cb6-481"><a href="#cb6-481" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Audio content.** Music presence, tempo, and valence; speech rate and vocal energy; loudness dynamics</span>
+<span id="cb6-482"><a href="#cb6-482" aria-hidden="true" tabindex="-1"></a>  and their synchrony with cuts.</span>
+<span id="cb6-483"><a href="#cb6-483" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Linguistic content.** Topics and sentiment of the transcript and captions, calls-to-action and their</span>
+<span id="cb6-484"><a href="#cb6-484" aria-hidden="true" tabindex="-1"></a>  timing, and the alignment of spoken claims with on-screen demonstration.</span>
+<span id="cb6-485"><a href="#cb6-485" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Temporal arcs.** Rather than collapsing a feature to its clip average, the *trajectory* of arousal,</span>
+<span id="cb6-486"><a href="#cb6-486" aria-hidden="true" tabindex="-1"></a>  emotion, or brand presence over the clip is itself a feature: a rising emotional arc, an early brand</span>
+<span id="cb6-487"><a href="#cb6-487" aria-hidden="true" tabindex="-1"></a>  reveal, a late call-to-action.</span>
+<span id="cb6-488"><a href="#cb6-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-489"><a href="#cb6-489" aria-hidden="true" tabindex="-1"></a>@fig-vid-features collects this recurring creative vocabulary into the five families the analyst extracts.</span>
+<span id="cb6-490"><a href="#cb6-490" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-493"><a href="#cb6-493" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb6-494"><a href="#cb6-494" aria-hidden="true" tabindex="-1"></a>%%| label: fig-vid-features</span>
+<span id="cb6-495"><a href="#cb6-495" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The recurring vocabulary of video creative features, grouped into five families that feed predictive models of engagement and conversion.</span><span class="ot">"</span></span>
+<span id="cb6-496"><a href="#cb6-496" aria-hidden="true" tabindex="-1"></a>flowchart TB</span>
+<span id="cb6-497"><a href="#cb6-497" aria-hidden="true" tabindex="-1"></a>  CF[<span class="ot">"</span><span class="st">Creative features</span><span class="ot">"</span>]</span>
+<span id="cb6-498"><a href="#cb6-498" aria-hidden="true" tabindex="-1"></a>  CF --&gt; PA[<span class="ot">"</span><span class="st">Pacing and structure</span><span class="ot">"</span>]</span>
+<span id="cb6-499"><a href="#cb6-499" aria-hidden="true" tabindex="-1"></a>  CF --&gt; VI[<span class="ot">"</span><span class="st">Visual content</span><span class="ot">"</span>]</span>
+<span id="cb6-500"><a href="#cb6-500" aria-hidden="true" tabindex="-1"></a>  CF --&gt; AU[<span class="ot">"</span><span class="st">Audio content</span><span class="ot">"</span>]</span>
+<span id="cb6-501"><a href="#cb6-501" aria-hidden="true" tabindex="-1"></a>  CF --&gt; LI[<span class="ot">"</span><span class="st">Linguistic content</span><span class="ot">"</span>]</span>
+<span id="cb6-502"><a href="#cb6-502" aria-hidden="true" tabindex="-1"></a>  CF --&gt; TA[<span class="ot">"</span><span class="st">Temporal arcs</span><span class="ot">"</span>]</span>
+<span id="cb6-503"><a href="#cb6-503" aria-hidden="true" tabindex="-1"></a>  PA --&gt; PA1[<span class="ot">"</span><span class="st">Shots per minute, shot duration,&lt;br/&gt;time-to-first-cut, hook position</span><span class="ot">"</span>]</span>
+<span id="cb6-504"><a href="#cb6-504" aria-hidden="true" tabindex="-1"></a>  VI --&gt; VI1[<span class="ot">"</span><span class="st">Color and brightness, faces,&lt;br/&gt;brand prominence, scene variety</span><span class="ot">"</span>]</span>
+<span id="cb6-505"><a href="#cb6-505" aria-hidden="true" tabindex="-1"></a>  AU --&gt; AU1[<span class="ot">"</span><span class="st">Music tempo and valence,&lt;br/&gt;speech rate, loudness, cut synchrony</span><span class="ot">"</span>]</span>
+<span id="cb6-506"><a href="#cb6-506" aria-hidden="true" tabindex="-1"></a>  LI --&gt; LI1[<span class="ot">"</span><span class="st">Transcript and caption topics,&lt;br/&gt;sentiment, calls-to-action</span><span class="ot">"</span>]</span>
+<span id="cb6-507"><a href="#cb6-507" aria-hidden="true" tabindex="-1"></a>  TA --&gt; TA1[<span class="ot">"</span><span class="st">Trajectories of arousal,&lt;br/&gt;emotion, brand presence</span><span class="ot">"</span>]</span>
+<span id="cb6-508"><a href="#cb6-508" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-509"><a href="#cb6-509" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-510"><a href="#cb6-510" aria-hidden="true" tabindex="-1"></a><span class="fu">### Engagement prediction and its pitfalls</span></span>
+<span id="cb6-511"><a href="#cb6-511" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-512"><a href="#cb6-512" aria-hidden="true" tabindex="-1"></a>These features feed predictive models of engagement and conversion. The empirical lessons from the</span>
+<span id="cb6-513"><a href="#cb6-513" aria-hidden="true" tabindex="-1"></a>marketing literature are consistent. The affective trajectory of a video ad drives engagement:</span>
+<span id="cb6-514"><a href="#cb6-514" aria-hidden="true" tabindex="-1"></a>@teixeira2012emotionengagement use eye-tracking and automated facial-expression coding to show that</span>
+<span id="cb6-515"><a href="#cb6-515" aria-hidden="true" tabindex="-1"></a>induced emotion (joy, surprise) raises attention and suppresses zapping, and @teixeira2014 establish,</span>
+<span id="cb6-516"><a href="#cb6-516" aria-hidden="true" tabindex="-1"></a>via a web-based facial-tracking field study, *why, when, and how much* to entertain—the timing of</span>
+<span id="cb6-517"><a href="#cb6-517" aria-hidden="true" tabindex="-1"></a>affect within the clip is itself a lever. @tellis2019 decompose what makes online video</span>
+<span id="cb6-518"><a href="#cb6-518" aria-hidden="true" tabindex="-1"></a>content shared, isolating the roles of information, emotion, and brand prominence; brand prominence</span>
+<span id="cb6-519"><a href="#cb6-519" aria-hidden="true" tabindex="-1"></a>in particular trades off against likeability, since too-early or too-heavy branding can depress</span>
+<span id="cb6-520"><a href="#cb6-520" aria-hidden="true" tabindex="-1"></a>engagement even as it aids recall. For short-form specifically, @zhang2025audiovisual link the</span>
+<span id="cb6-521"><a href="#cb6-521" aria-hidden="true" tabindex="-1"></a>audiovisual features of TikTok ads to engagement behaviors, and @leung2022 situate such creative</span>
+<span id="cb6-522"><a href="#cb6-522" aria-hidden="true" tabindex="-1"></a>effects within the broader system of influencer-marketing effectiveness. The throughline is that</span>
+<span id="cb6-523"><a href="#cb6-523" aria-hidden="true" tabindex="-1"></a>*fused* multimodal features outperform any single stream, as in @yang2024engagement. Three pitfalls</span>
+<span id="cb6-524"><a href="#cb6-524" aria-hidden="true" tabindex="-1"></a>deserve emphasis:</span>
 <span id="cb6-525"><a href="#cb6-525" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-526"><a href="#cb6-526" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#video-frontier}</span></span>
-<span id="cb6-527"><a href="#cb6-527" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-528"><a href="#cb6-528" aria-hidden="true" tabindex="-1"></a>Three developments are reshaping video-as-data marketing and define the near-term agenda.</span>
-<span id="cb6-529"><a href="#cb6-529" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-530"><a href="#cb6-530" aria-hidden="true" tabindex="-1"></a>**Video-native foundation models.** The trajectory that ran from per-frame CNNs to video transformers</span>
-<span id="cb6-531"><a href="#cb6-531" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@khan2022transformers</span><span class="co">]</span> is converging on large *multimodal* models that ingest video, audio, and text jointly</span>
-<span id="cb6-532"><a href="#cb6-532" aria-hidden="true" tabindex="-1"></a>and emit natural-language descriptions, structured tags, or answers to questions about a clip. For the</span>
-<span id="cb6-533"><a href="#cb6-533" aria-hidden="true" tabindex="-1"></a>analyst this collapses much of the bespoke pipeline into a prompt: rather than training a brand detector, one</span>
-<span id="cb6-534"><a href="#cb6-534" aria-hidden="true" tabindex="-1"></a>can ask a video-language model whether and when a brand appears, recovering interpretable creative features</span>
-<span id="cb6-535"><a href="#cb6-535" aria-hidden="true" tabindex="-1"></a>through instruction rather than supervised training, and extending to video the vision-language approach that</span>
-<span id="cb6-536"><a href="#cb6-536" aria-hidden="true" tabindex="-1"></a>@witte2026language demonstrate for marketing images. Generative video models, in turn, make the creative</span>
-<span id="cb6-537"><a href="#cb6-537" aria-hidden="true" tabindex="-1"></a>itself a model output: @hartmann2025generative ask whether generative AI can reach human-level visual</span>
-<span id="cb6-538"><a href="#cb6-538" aria-hidden="true" tabindex="-1"></a>marketing content, a question that becomes sharper still in motion. The same caution applies in amplified form: a</span>
-<span id="cb6-539"><a href="#cb6-539" aria-hidden="true" tabindex="-1"></a>foundation model's extracted feature is still a generated regressor, now produced by an opaque model whose</span>
-<span id="cb6-540"><a href="#cb6-540" aria-hidden="true" tabindex="-1"></a>error structure is unknown and whose outputs require validation against human coding before they enter an</span>
-<span id="cb6-541"><a href="#cb6-541" aria-hidden="true" tabindex="-1"></a>inference.</span>
-<span id="cb6-542"><a href="#cb6-542" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-543"><a href="#cb6-543" aria-hidden="true" tabindex="-1"></a>**Generative video and the synthetic-creative frontier.** Text-to-video generation makes the creative itself</span>
-<span id="cb6-544"><a href="#cb6-544" aria-hidden="true" tabindex="-1"></a>a model output, enabling at-scale creative experimentation (generate many variants, measure response) but</span>
-<span id="cb6-545"><a href="#cb6-545" aria-hidden="true" tabindex="-1"></a>also raising disclosure, authenticity, and brand-safety questions, and complicating the very notion of a</span>
-<span id="cb6-546"><a href="#cb6-546" aria-hidden="true" tabindex="-1"></a>"natural" creative sample. The measurement opportunity is large: synthetic variation can supply the</span>
-<span id="cb6-547"><a href="#cb6-547" aria-hidden="true" tabindex="-1"></a>experimental creative manipulation that observational video analysis lacks.</span>
+<span id="cb6-526"><a href="#cb6-526" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Engagement is not sales.** Platform engagement (views, likes) is an intermediate outcome that the</span>
+<span id="cb6-527"><a href="#cb6-527" aria-hidden="true" tabindex="-1"></a>   distribution algorithm partly manufactures; @yang2024engagement treat engagement as a *mediator* on the</span>
+<span id="cb6-528"><a href="#cb6-528" aria-hidden="true" tabindex="-1"></a>   path to sales rather than as the endpoint, which is the correct posture.</span>
+<span id="cb6-529"><a href="#cb6-529" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Selection on the platform.** Observed videos are those a recommender chose to show, so the sample of</span>
+<span id="cb6-530"><a href="#cb6-530" aria-hidden="true" tabindex="-1"></a>   "video and its engagement" is endogenously selected by an algorithm that consumed the very features</span>
+<span id="cb6-531"><a href="#cb6-531" aria-hidden="true" tabindex="-1"></a>   under study, biasing naive content-to-engagement estimates.</span>
+<span id="cb6-532"><a href="#cb6-532" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Generated-feature error.** As stressed above, every creative feature is a model output; validation and</span>
+<span id="cb6-533"><a href="#cb6-533" aria-hidden="true" tabindex="-1"></a>   second-stage discipline are prerequisites, not niceties.</span>
+<span id="cb6-534"><a href="#cb6-534" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-535"><a href="#cb6-535" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#video-industry}</span></span>
+<span id="cb6-536"><a href="#cb6-536" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-537"><a href="#cb6-537" aria-hidden="true" tabindex="-1"></a>How video is analyzed in production differs from the research idealization in ways the analyst should</span>
+<span id="cb6-538"><a href="#cb6-538" aria-hidden="true" tabindex="-1"></a>understand, because the data a firm can obtain is shaped by the platforms that host the video.</span>
+<span id="cb6-539"><a href="#cb6-539" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-540"><a href="#cb6-540" aria-hidden="true" tabindex="-1"></a>**Platform-side analysis at scale.** The large video platforms run video understanding as core</span>
+<span id="cb6-541"><a href="#cb6-541" aria-hidden="true" tabindex="-1"></a>infrastructure, not as analysis after the fact. Uploaded video is automatically transcribed (ASR),</span>
+<span id="cb6-542"><a href="#cb6-542" aria-hidden="true" tabindex="-1"></a>captioned, scanned for objects, scenes, and policy violations, and embedded into the same representation</span>
+<span id="cb6-543"><a href="#cb6-543" aria-hidden="true" tabindex="-1"></a>space the recommender uses to match clips to viewers. The recommender is itself a video-multimodal model:</span>
+<span id="cb6-544"><a href="#cb6-544" aria-hidden="true" tabindex="-1"></a>it consumes frame, audio, and text features along with behavioral signals to predict watch time and</span>
+<span id="cb6-545"><a href="#cb6-545" aria-hidden="true" tabindex="-1"></a>engagement, which means the platform's *distribution* decision and the *creative features* of the video are</span>
+<span id="cb6-546"><a href="#cb6-546" aria-hidden="true" tabindex="-1"></a>produced by one coupled system. For the outside analyst this is the central structural fact: observed</span>
+<span id="cb6-547"><a href="#cb6-547" aria-hidden="true" tabindex="-1"></a>reach and engagement are jointly determined with content by a model the analyst cannot see.</span>
 <span id="cb6-548"><a href="#cb6-548" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-549"><a href="#cb6-549" aria-hidden="true" tabindex="-1"></a>**Live, real-time, and causal video analytics.** Livestream commerce pushes analysis <span class="co">[</span><span class="ot">@wen2026livestream</span><span class="co">]</span></span>
-<span id="cb6-550"><a href="#cb6-550" aria-hidden="true" tabindex="-1"></a>toward *real-time* multimodal modeling, where features are extracted and related to contemporaneous purchases</span>
-<span id="cb6-551"><a href="#cb6-551" aria-hidden="true" tabindex="-1"></a>as the stream unfolds, and where the host adapts to the audience, making the identification problem genuinely</span>
-<span id="cb6-552"><a href="#cb6-552" aria-hidden="true" tabindex="-1"></a>dynamic. The broader frontier for the field, as for all of unstructured-data marketing surveyed by</span>
-<span id="cb6-553"><a href="#cb6-553" aria-hidden="true" tabindex="-1"></a>@ma2020machine, is to move from *predicting* engagement from creative features to *causally* estimating which</span>
-<span id="cb6-554"><a href="#cb6-554" aria-hidden="true" tabindex="-1"></a>creative choices drive outcomes, which will require pairing the rich feature pipelines of this chapter with</span>
-<span id="cb6-555"><a href="#cb6-555" aria-hidden="true" tabindex="-1"></a>the experimental and quasi-experimental machinery of the methodology part, a transition the</span>
-<span id="cb6-556"><a href="#cb6-556" aria-hidden="true" tabindex="-1"></a>unstructured-data program has called for since @balducci2018unstructured. Video is where the multimodal,</span>
-<span id="cb6-557"><a href="#cb6-557" aria-hidden="true" tabindex="-1"></a>temporal, and causal challenges of marketing measurement meet most acutely, and where the payoff to getting</span>
-<span id="cb6-558"><a href="#cb6-558" aria-hidden="true" tabindex="-1"></a>the measurement right is largest.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb6-549"><a href="#cb6-549" aria-hidden="true" tabindex="-1"></a>**Brand- and agency-side analysis.** Advertisers and their agencies analyze video creative through three</span>
+<span id="cb6-550"><a href="#cb6-550" aria-hidden="true" tabindex="-1"></a>broad routes.</span>
+<span id="cb6-551"><a href="#cb6-551" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-552"><a href="#cb6-552" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb6-553"><a href="#cb6-553" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: video feature pipelines</span></span>
+<span id="cb6-554"><a href="#cb6-554" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-555"><a href="#cb6-555" aria-hidden="true" tabindex="-1"></a>The frame-level demonstration in this chapter runs on the maintained R package <span class="in">`magick`</span>; a fuller</span>
+<span id="cb6-556"><a href="#cb6-556" aria-hidden="true" tabindex="-1"></a>open R/Python workflow for marketing video combines <span class="in">`ffmpeg`</span>/<span class="in">`OpenCV`</span> (decoding), pretrained image</span>
+<span id="cb6-557"><a href="#cb6-557" aria-hidden="true" tabindex="-1"></a>backbones such as ResNet (the official implementation accompanies @he2016resnet at</span>
+<span id="cb6-558"><a href="#cb6-558" aria-hidden="true" tabindex="-1"></a><span class="in">`github.com/KaimingHe/deep-residual-networks`</span>), Whisper (ASR), and the action/temporal models of</span>
+<span id="cb6-559"><a href="#cb6-559" aria-hidden="true" tabindex="-1"></a>@carreira2017kinetics and @feichtenhofer2019slowfast (whose authors release reference code). For a</span>
+<span id="cb6-560"><a href="#cb6-560" aria-hidden="true" tabindex="-1"></a>marketing-tailored end-to-end recipe see @schwenzow2021videos. Code and data availability for the</span>
+<span id="cb6-561"><a href="#cb6-561" aria-hidden="true" tabindex="-1"></a>empirical marketing studies cited here (e.g., @yang2024engagement, @wen2026livestream) vary—check the</span>
+<span id="cb6-562"><a href="#cb6-562" aria-hidden="true" tabindex="-1"></a>journal's supplementary materials, since several rely on proprietary platform data that cannot be</span>
+<span id="cb6-563"><a href="#cb6-563" aria-hidden="true" tabindex="-1"></a>redistributed.</span>
+<span id="cb6-564"><a href="#cb6-564" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb6-565"><a href="#cb6-565" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-566"><a href="#cb6-566" aria-hidden="true" tabindex="-1"></a>The first is *managed cloud services*, Google Cloud Video Intelligence, Amazon Rekognition</span>
+<span id="cb6-567"><a href="#cb6-567" aria-hidden="true" tabindex="-1"></a>Video, Microsoft Azure Video Indexer, that return shot boundaries, labels, on-screen text, transcripts, and</span>
+<span id="cb6-568"><a href="#cb6-568" aria-hidden="true" tabindex="-1"></a>face/celebrity detection as an API call, giving non-specialist teams a feature pipeline without training</span>
+<span id="cb6-569"><a href="#cb6-569" aria-hidden="true" tabindex="-1"></a>models. The second is *creative analytics vendors* that specialize in linking extracted creative features to</span>
+<span id="cb6-570"><a href="#cb6-570" aria-hidden="true" tabindex="-1"></a>ad performance across large libraries of past campaigns, effectively industrializing the</span>
+<span id="cb6-571"><a href="#cb6-571" aria-hidden="true" tabindex="-1"></a>features-to-engagement regression of the previous section. The third is *in-house pipelines* at the largest</span>
+<span id="cb6-572"><a href="#cb6-572" aria-hidden="true" tabindex="-1"></a>advertisers, built on the open-source stack (<span class="in">`ffmpeg`</span>/<span class="in">`OpenCV`</span> for decoding, pretrained image and video</span>
+<span id="cb6-573"><a href="#cb6-573" aria-hidden="true" tabindex="-1"></a>backbones, ASR such as Whisper) for proprietary control and integration with first-party outcome data.</span>
+<span id="cb6-574"><a href="#cb6-574" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-575"><a href="#cb6-575" aria-hidden="true" tabindex="-1"></a>**Production constraints.** Three realities discipline the work. Video is *expensive* to process (decoding</span>
+<span id="cb6-576"><a href="#cb6-576" aria-hidden="true" tabindex="-1"></a>and deep inference at frame rate over large libraries is compute-intensive), which is why frame *sampling*</span>
+<span id="cb6-577"><a href="#cb6-577" aria-hidden="true" tabindex="-1"></a>and shot-based keyframing are not academic niceties but production necessities. Outcome data is *fragmented*</span>
+<span id="cb6-578"><a href="#cb6-578" aria-hidden="true" tabindex="-1"></a>across walled platforms, so cross-platform creative-to-sales linkage is a data-integration problem before it</span>
+<span id="cb6-579"><a href="#cb6-579" aria-hidden="true" tabindex="-1"></a>is a modeling problem. And the legal and ethical surface is large: scraping platform video runs into terms</span>
+<span id="cb6-580"><a href="#cb6-580" aria-hidden="true" tabindex="-1"></a>of service, and the modality carries faces, voices, and other biometric-adjacent signals whose extraction</span>
+<span id="cb6-581"><a href="#cb6-581" aria-hidden="true" tabindex="-1"></a>raises privacy obligations that the analyst must respect.</span>
+<span id="cb6-582"><a href="#cb6-582" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-583"><a href="#cb6-583" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#video-frontier}</span></span>
+<span id="cb6-584"><a href="#cb6-584" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-585"><a href="#cb6-585" aria-hidden="true" tabindex="-1"></a>Three developments are reshaping video-as-data marketing and define the near-term agenda.</span>
+<span id="cb6-586"><a href="#cb6-586" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-587"><a href="#cb6-587" aria-hidden="true" tabindex="-1"></a>**Video-native foundation models.** The trajectory that ran from per-frame CNNs to video transformers</span>
+<span id="cb6-588"><a href="#cb6-588" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@khan2022transformers</span><span class="co">]</span> is converging on large *multimodal* models that ingest video, audio, and text jointly</span>
+<span id="cb6-589"><a href="#cb6-589" aria-hidden="true" tabindex="-1"></a>and emit natural-language descriptions, structured tags, or answers to questions about a clip. For the</span>
+<span id="cb6-590"><a href="#cb6-590" aria-hidden="true" tabindex="-1"></a>analyst this collapses much of the bespoke pipeline into a prompt: rather than training a brand detector, one</span>
+<span id="cb6-591"><a href="#cb6-591" aria-hidden="true" tabindex="-1"></a>can ask a video-language model whether and when a brand appears, recovering interpretable creative features</span>
+<span id="cb6-592"><a href="#cb6-592" aria-hidden="true" tabindex="-1"></a>through instruction rather than supervised training, and extending to video the vision-language approach that</span>
+<span id="cb6-593"><a href="#cb6-593" aria-hidden="true" tabindex="-1"></a>@witte2026language demonstrate for marketing images. Generative video models, in turn, make the creative</span>
+<span id="cb6-594"><a href="#cb6-594" aria-hidden="true" tabindex="-1"></a>itself a model output: @hartmann2025generative ask whether generative AI can reach human-level visual</span>
+<span id="cb6-595"><a href="#cb6-595" aria-hidden="true" tabindex="-1"></a>marketing content, a question that becomes sharper still in motion. The same caution applies in amplified form: a</span>
+<span id="cb6-596"><a href="#cb6-596" aria-hidden="true" tabindex="-1"></a>foundation model's extracted feature is still a generated regressor, now produced by an opaque model whose</span>
+<span id="cb6-597"><a href="#cb6-597" aria-hidden="true" tabindex="-1"></a>error structure is unknown and whose outputs require validation against human coding before they enter an</span>
+<span id="cb6-598"><a href="#cb6-598" aria-hidden="true" tabindex="-1"></a>inference.</span>
+<span id="cb6-599"><a href="#cb6-599" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-600"><a href="#cb6-600" aria-hidden="true" tabindex="-1"></a>**Generative video and the synthetic-creative frontier.** Text-to-video generation makes the creative itself</span>
+<span id="cb6-601"><a href="#cb6-601" aria-hidden="true" tabindex="-1"></a>a model output, enabling at-scale creative experimentation (generate many variants, measure response) but</span>
+<span id="cb6-602"><a href="#cb6-602" aria-hidden="true" tabindex="-1"></a>also raising disclosure, authenticity, and brand-safety questions, and complicating the very notion of a</span>
+<span id="cb6-603"><a href="#cb6-603" aria-hidden="true" tabindex="-1"></a>"natural" creative sample. The measurement opportunity is large: synthetic variation can supply the</span>
+<span id="cb6-604"><a href="#cb6-604" aria-hidden="true" tabindex="-1"></a>experimental creative manipulation that observational video analysis lacks.</span>
+<span id="cb6-605"><a href="#cb6-605" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-606"><a href="#cb6-606" aria-hidden="true" tabindex="-1"></a>**Live, real-time, and causal video analytics.** Livestream commerce pushes analysis <span class="co">[</span><span class="ot">@wen2026livestream</span><span class="co">]</span></span>
+<span id="cb6-607"><a href="#cb6-607" aria-hidden="true" tabindex="-1"></a>toward *real-time* multimodal modeling, where features are extracted and related to contemporaneous purchases</span>
+<span id="cb6-608"><a href="#cb6-608" aria-hidden="true" tabindex="-1"></a>as the stream unfolds, and where the host adapts to the audience, making the identification problem genuinely</span>
+<span id="cb6-609"><a href="#cb6-609" aria-hidden="true" tabindex="-1"></a>dynamic. The broader frontier for the field, as for all of unstructured-data marketing surveyed by</span>
+<span id="cb6-610"><a href="#cb6-610" aria-hidden="true" tabindex="-1"></a>@ma2020machine, is to move from *predicting* engagement from creative features to *causally* estimating which</span>
+<span id="cb6-611"><a href="#cb6-611" aria-hidden="true" tabindex="-1"></a>creative choices drive outcomes, which will require pairing the rich feature pipelines of this chapter with</span>
+<span id="cb6-612"><a href="#cb6-612" aria-hidden="true" tabindex="-1"></a>the experimental and quasi-experimental machinery of the methodology part, a transition the</span>
+<span id="cb6-613"><a href="#cb6-613" aria-hidden="true" tabindex="-1"></a>unstructured-data program has called for since @balducci2018unstructured. Video is where the multimodal,</span>
+<span id="cb6-614"><a href="#cb6-614" aria-hidden="true" tabindex="-1"></a>temporal, and causal challenges of marketing measurement meet most acutely, and where the payoff to getting</span>
+<span id="cb6-615"><a href="#cb6-615" aria-hidden="true" tabindex="-1"></a>the measurement right is largest.</span>
+</code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

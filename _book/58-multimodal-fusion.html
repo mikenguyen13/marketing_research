@@ -126,7 +126,21 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-46EBZ61358', { 'anonymize_ip': true});
-</script><script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
+</script><!-- schema.org structured data for search engines --><script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Book",
+  "name": "Marketing Research",
+  "url": "https://mike-marketing-research.share.connect.posit.cloud/",
+  "inLanguage": "en",
+  "bookFormat": "https://schema.org/EBook",
+  "description": "A technical and academic treatment of marketing research: constructs, substantive domains, and the methods that connect them, with reproducible R code throughout.",
+  "author": { "@type": "Person", "name": "Mike Nguyen" },
+  "publisher": { "@type": "Person", "name": "Mike Nguyen" }
+}
+</script><!-- Search Console verification: paste code and uncomment.
+     https://search.google.com/search-console --><!-- <meta name="google-site-verification" content="PASTE_GOOGLE_CODE"> --><script src="site_libs/quarto-diagram/mermaid.min.js"></script><script src="site_libs/quarto-diagram/mermaid-init.js"></script><link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
 const typesetMath = (el) => {
   if (window.MathJax) {
     // MathJax Typeset
@@ -783,7 +797,51 @@ window.Quarto = {
 <p><strong>Early fusion</strong> (feature-level fusion) concatenates the per-modality feature vectors into one long vector and fits a single model on the combined input. If text yields a <span class="math inline">\(d_T\)</span>-dimensional embedding, image a <span class="math inline">\(d_I\)</span>-dimensional embedding, and behavior a <span class="math inline">\(d_B\)</span>-dimensional vector, early fusion forms the <span class="math inline">\((d_T + d_I + d_B)\)</span>-dimensional stack and learns a single predictor over it. Its virtue is that the model can learn arbitrary cross-modal interactions directly: the effect of an image feature is free to depend on a text feature. Its costs are dimensionality (the concatenated vector can be very wide, straining the sample size), sensitivity to differences in scale and noise across modalities, and intolerance of missingness, since a single absent block leaves a hole in every observation’s input.</p>
 <p><strong>Late fusion</strong> (decision-level fusion) fits a separate model per modality and combines their <em>outputs</em>, typically by averaging the predicted scores or by training a small <strong>meta-learner</strong> (a stacking model) on the per-modality predictions. Its virtues mirror early fusion’s vices: each modality model can be tuned to its own structure, modalities of wildly different dimension and scale never have to share a feature space, and a missing modality simply drops one input to the combiner rather than corrupting a shared vector. Its limitation is that cross-modal interactions are captured only insofar as the combiner can recover them from the per-modality scores; rich interactions that require seeing raw features from two modalities together are unavailable, because each base model has already collapsed its modality to a scalar before fusion.</p>
 <p><strong>Joint fusion</strong> (intermediate or embedding-level fusion) sits between the two. Each modality is passed through its own learnable encoder, the resulting intermediate representations are combined (by concatenation, by summation, or by cross-attention between modalities), and the entire stack, encoders and combiner together, is trained end to end against the final objective. Joint fusion is the architecture of essentially all modern deep multimodal systems, because it learns <em>modality-specific</em> representations and their <em>interaction</em> simultaneously, letting gradient signal from the task reshape each encoder. Its cost is that it requires end-to-end differentiable training, large data, and the engineering apparatus of deep learning; it is not, in general, something one fits with a few lines of base R. The contrastive and transformer models of <a href="#sec-mmf-clip" class="quarto-xref"><span>Section 52.3</span></a> and <a href="#sec-mmf-mllm" class="quarto-xref"><span>Section 52.4</span></a> are joint-fusion systems at scale.</p>
-<p>A useful way to hold the three together: early fusion fuses <em>features</em>, late fusion fuses <em>decisions</em>, and joint fusion fuses <em>representations</em>, learning those representations as it goes. The runnable demonstration below contrasts the two that can be built from off-the-shelf, maintained packages: early fusion with a penalized linear model and late fusion with per-modality random forests combined by a stacking meta-learner. Joint fusion is treated conceptually, because its honest demonstration requires a deep-learning stack outside this book’s runnable scope.</p>
+<p>A useful way to hold the three together: early fusion fuses <em>features</em>, late fusion fuses <em>decisions</em>, and joint fusion fuses <em>representations</em>, learning those representations as it goes; <a href="#fig-fus-strategies" class="quarto-xref">Figure&nbsp;<span>52.1</span></a> draws the three architectures side by side. The runnable demonstration below contrasts the two that can be built from off-the-shelf, maintained packages: early fusion with a penalized linear model and late fusion with per-modality random forests combined by a stacking meta-learner. Joint fusion is treated conceptually, because its honest demonstration requires a deep-learning stack outside this book’s runnable scope.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-fus-strategies" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-fus-strategies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-fus-strategies">flowchart LR
+  subgraph EF["Early fusion: fuse features"]
+    direction TB
+    ET["Text&lt;br/&gt;features"] --&gt; EC["Concatenate into&lt;br/&gt;one wide vector"]
+    EI["Image&lt;br/&gt;features"] --&gt; EC
+    EB["Behavior&lt;br/&gt;features"] --&gt; EC
+    EC --&gt; EM["Single model"]
+    EM --&gt; EP["Prediction"]
+  end
+  subgraph LF["Late fusion: fuse decisions"]
+    direction TB
+    LT["Text&lt;br/&gt;features"] --&gt; MT["Text&lt;br/&gt;model"]
+    LI["Image&lt;br/&gt;features"] --&gt; MI["Image&lt;br/&gt;model"]
+    LB["Behavior&lt;br/&gt;features"] --&gt; MB["Behavior&lt;br/&gt;model"]
+    MT --&gt; CB["Combiner: average or&lt;br/&gt;stacked meta-learner"]
+    MI --&gt; CB
+    MB --&gt; CB
+    CB --&gt; LP["Prediction"]
+  end
+  subgraph JF["Joint fusion: fuse representations"]
+    direction TB
+    JT["Text"] --&gt; ENT["Text&lt;br/&gt;encoder"]
+    JI["Image"] --&gt; ENI["Image&lt;br/&gt;encoder"]
+    JB["Behavior"] --&gt; ENB["Behavior&lt;br/&gt;encoder"]
+    ENT --&gt; JC["Combine: concatenation,&lt;br/&gt;summation, cross-attention"]
+    ENI --&gt; JC
+    ENB --&gt; JC
+    JC --&gt; JP["Prediction"]
+    JP -.-&gt;|"end-to-end gradient&lt;br/&gt;reshapes encoders"| ENT
+  end
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-fus-strategies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;52.1: The three canonical fusion strategies. Early fusion concatenates per-modality features into a single wide input; late fusion fits one model per modality and combines their decisions; joint fusion trains modality encoders and their combination end to end, so gradient signal from the task reshapes each encoder.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <section id="sec-mmf-demo" class="level3" data-number="52.2.1"><h3 data-number="52.2.1" class="anchored" data-anchor-id="sec-mmf-demo">
 <span class="header-section-number">52.2.1</span> A Runnable Early-versus-Late Demonstration</h3>
 <p>The demonstration is deliberately synthetic so that the data-generating process is known and the comparison is interpretable. We simulate per-customer features standing in for three modalities. A 20-dimensional <strong>text-embedding block</strong> stands in for, say, a sentence-embedding of a customer’s reviews and messages; a 15-dimensional <strong>image-feature block</strong> stands in for a CNN or vision-transformer embedding of customer-associated images; and an 8-dimensional <strong>behavioral block</strong> stands in for clickstream and transaction summaries. Each block is generated from a single latent driver plus independent noise, so that within a block the features are correlated (as real embeddings are) and across blocks the signal is genuinely complementary: the binary outcome (a conversion, say) depends on all three latents. This construction is exactly the situation fusion is meant for, and it lets us see what each strategy recovers.</p>
@@ -913,7 +971,30 @@ window.Quarto = {
 </section></section><section id="sec-mmf-clip" class="level2" data-number="52.3"><h2 data-number="52.3" class="anchored" data-anchor-id="sec-mmf-clip">
 <span class="header-section-number">52.3</span> Shared Representations and Contrastive Models</h2>
 <p>Early and late fusion as demonstrated above take the per-modality representations as <em>given</em>. The deeper question is where a shared, comparable representation across modalities comes from in the first place. The answer that reorganized the field is <strong>contrastive image-text pretraining</strong>, exemplified by CLIP (Contrastive Language-Image Pre-training), introduced by Radford and colleagues at OpenAI in 2021 (ICML 2021; the foundational paper has no canonical Crossref DOI and is cited here by name and venue). The idea is conceptually simple and is best understood as a learned, <em>joint</em> embedding space.</p>
-<p>CLIP trains two encoders together: an image encoder and a text encoder. It is fed a very large corpus of image-caption pairs scraped from the web. For each batch, it computes an image embedding for every image and a text embedding for every caption, and it optimizes a contrastive objective: the embedding of an image should have high similarity (inner product) to the embedding of <em>its own</em> caption and low similarity to the embeddings of the <em>other</em> captions in the batch, and symmetrically for captions. After training on hundreds of millions of pairs, the two encoders share a single embedding space in which an image of a red sneaker and the text “a red sneaker” land near each other, while unrelated images and texts land far apart.</p>
+<p>CLIP trains two encoders together: an image encoder and a text encoder. It is fed a very large corpus of image-caption pairs scraped from the web. For each batch, it computes an image embedding for every image and a text embedding for every caption, and it optimizes a contrastive objective: the embedding of an image should have high similarity (inner product) to the embedding of <em>its own</em> caption and low similarity to the embeddings of the <em>other</em> captions in the batch, and symmetrically for captions. After training on hundreds of millions of pairs, the two encoders share a single embedding space in which an image of a red sneaker and the text “a red sneaker” land near each other, while unrelated images and texts land far apart. <a href="#fig-fus-clip" class="quarto-xref">Figure&nbsp;<span>52.2</span></a> sketches the training geometry and the shared space it produces.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-fus-clip" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-fus-clip-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-fus-clip">flowchart LR
+  IMG["Image"] --&gt; IE["Image encoder"]
+  CAP["Its caption"] --&gt; TXE["Text encoder"]
+  subgraph SP["Shared embedding space"]
+    VI["Image&lt;br/&gt;embedding"] ---|"contrastive objective:&lt;br/&gt;own caption near,&lt;br/&gt;other captions far"| VT["Text&lt;br/&gt;embedding"]
+  end
+  IE --&gt; VI
+  TXE --&gt; VT
+  SP --&gt; ZS["Zero-shot scoring:&lt;br/&gt;any image against&lt;br/&gt;any text prompt"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-fus-clip-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;52.2: Contrastive image-text pretraining. Two encoders trained on web-scale image-caption pairs place each image near its own caption and far from the others in one shared embedding space, where cross-modal similarity is meaningful and new constructs can be scored zero-shot from a text prompt.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <p>Two properties make this transformative for marketing measurement. The first is <strong>a common space</strong>: because images and text are embedded into the <em>same</em> geometry, the cosine similarity between an image embedding and a text embedding is meaningful. One can score how well a product photo matches the phrase “premium and minimalist,” or rank thousands of ad creatives by their alignment to a brand-attribute phrase, with no labeled training data for that attribute. The second is <strong>zero-shot transfer</strong>: novel categories can be scored by writing them as text prompts rather than by collecting labeled examples, which collapses the cost of building an image classifier for a new marketing construct from a labeling project to a sentence. Successor models in the same family (for example SigLIP, which replaces the contrastive softmax with a sigmoid loss) refine the training objective while preserving the shared-space property.</p>
 <p>For the analyst, the practical consequence is that the per-modality feature blocks of <a href="#sec-mmf-demo" class="quarto-xref"><span>Section 52.2.1</span></a> are increasingly drawn from a <em>single shared encoder family</em> rather than from separate, incommensurable models. When the text embedding and the image embedding already live in a common space, fusion becomes partly a matter of geometry rather than of ad hoc concatenation, and the comparability that contrastive pretraining buys is itself a form of joint fusion performed once, at scale, by the foundation model provider. In marketing, vision-language models of this lineage have been shown to classify marketing images effectively and to bridge the gap from image-only convolutional pipelines to general-purpose foundation models <span class="citation" data-cites="witte2026language">(<a href="#ref-witte2026language" role="doc-biblioref">Witte et al. 2026</a>)</span>.</p>
 </section><section id="sec-mmf-mllm" class="level2" data-number="52.4"><h2 data-number="52.4" class="anchored" data-anchor-id="sec-mmf-mllm">
@@ -949,7 +1030,33 @@ Replication resources: multimodal fusion
 </div>
 </section><section id="sec-mmf-throughline" class="level2" data-number="52.7"><h2 data-number="52.7" class="anchored" data-anchor-id="sec-mmf-throughline">
 <span class="header-section-number">52.7</span> The Representation Throughline</h2>
-<p>It is now possible to state plainly the idea that has run beneath every chapter of this part. <strong>Every modality reduces to a learned representation, and once it is a vector, the book’s downstream methods take over.</strong> Text became embeddings; images became CNN or vision-transformer features; audio became prosodic and spectral features or wav2vec-style embeddings; video became fused frame, audio, and text features; behavior, geography, networks, and sensors each became a feature vector. The encoders differ, the modalities differ, but the output type is the same, and that common output type is the seam along which the unstructured-data part attaches to the rest of the book.</p>
+<p>It is now possible to state plainly the idea that has run beneath every chapter of this part. <strong>Every modality reduces to a learned representation, and once it is a vector, the book’s downstream methods take over.</strong> Text became embeddings; images became CNN or vision-transformer features; audio became prosodic and spectral features or wav2vec-style embeddings; video became fused frame, audio, and text features; behavior, geography, networks, and sensors each became a feature vector. The encoders differ, the modalities differ, but the output type is the same, and that common output type is the seam along which the unstructured-data part attaches to the rest of the book. <a href="#fig-fus-throughline" class="quarto-xref">Figure&nbsp;<span>52.3</span></a> draws the convergence.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-fus-throughline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-fus-throughline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-fus-throughline">flowchart LR
+  TX["Text"] --&gt; TXE["Embeddings"]
+  IM["Images"] --&gt; IME["CNN or vision-&lt;br/&gt;transformer features"]
+  AU["Audio"] --&gt; AUE["Prosodic, spectral,&lt;br/&gt;wav2vec-style features"]
+  VD["Video"] --&gt; VDE["Fused frame, audio,&lt;br/&gt;and text features"]
+  BG["Behavior, geography,&lt;br/&gt;networks, sensors"] --&gt; BGE["Feature vectors"]
+  TXE --&gt; RV["Learned representation:&lt;br/&gt;a vector, estimated&lt;br/&gt;with error"]
+  IME --&gt; RV
+  AUE --&gt; RV
+  VDE --&gt; RV
+  BGE --&gt; RV
+  RV --&gt; DM["Downstream methods:&lt;br/&gt;regression, classification,&lt;br/&gt;choice, causal, Bayesian"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-fus-throughline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;52.3: The representation throughline of the unstructured-data part. Every modality passes through a learned encoder and emerges as a feature vector; the downstream methods consume the vector without regard to its origin, so the generated-regressor caution travels with it.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <p>This is why the part can exist as a coherent unit rather than a list of unrelated techniques. The regression, classification, choice, causal-inference, and Bayesian machinery developed elsewhere in the book does not need to know whether a covariate originated as a pixel, a phoneme, a click, or a word. It needs the covariate to be a number, or a vector of numbers, with a defensible claim to measuring something. Fusion is the operation that combines several such vectors; foundation models are the engines that increasingly produce them; and the generated-regressor caution is the price of admission that every one of them must pay. The representation is the universal interface, and the discipline of the part is to remember, at every step, that the interface is <em>learned</em> and therefore <em>uncertain</em>.</p>
 <p>Stated as a principle: unstructured data of any modality becomes a learned, lossy feature vector, and that vector is a generated regressor whose error may correlate with the outcome. Every modality chapter specialized this caution; this capstone generalizes it. The methods that consume the vector are powerful, but they inherit whatever the encoding got wrong, and no amount of downstream sophistication repairs a representation that does not measure what the analyst believes it measures.</p>
 </section><section id="sec-mmf-frontier" class="level2" data-number="52.8"><h2 data-number="52.8" class="anchored" data-anchor-id="sec-mmf-frontier">
@@ -1594,437 +1701,507 @@ Yang, Jeremy, Juanjuan Zhang, and Yuhan Zhang. 2025. <span>“Engagement That Se
 <span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a>A useful way to hold the three together: early fusion fuses *features*, late fusion</span>
 <span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a>fuses *decisions*, and joint fusion fuses *representations*, learning those</span>
-<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a>representations as it goes. The runnable demonstration below contrasts the two that can</span>
-<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a>be built from off-the-shelf, maintained packages: early fusion with a penalized linear</span>
-<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a>model and late fusion with per-modality random forests combined by a stacking</span>
-<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a>meta-learner. Joint fusion is treated conceptually, because its honest demonstration</span>
-<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a>requires a deep-learning stack outside this book's runnable scope.</span>
-<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Runnable Early-versus-Late Demonstration {#sec-mmf-demo}</span></span>
-<span id="cb5-131"><a href="#cb5-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-132"><a href="#cb5-132" aria-hidden="true" tabindex="-1"></a>The demonstration is deliberately synthetic so that the data-generating process is</span>
-<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a>known and the comparison is interpretable. We simulate per-customer features standing</span>
-<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a>in for three modalities. A 20-dimensional **text-embedding block** stands in for, say,</span>
-<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a>a sentence-embedding of a customer's reviews and messages; a 15-dimensional</span>
-<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a>**image-feature block** stands in for a CNN or vision-transformer embedding of</span>
-<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a>customer-associated images; and an 8-dimensional **behavioral block** stands in for</span>
-<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a>clickstream and transaction summaries. Each block is generated from a single latent</span>
-<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a>driver plus independent noise, so that within a block the features are correlated</span>
-<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a>(as real embeddings are) and across blocks the signal is genuinely complementary: the</span>
-<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a>binary outcome (a conversion, say) depends on all three latents. This construction is</span>
-<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a>exactly the situation fusion is meant for, and it lets us see what each strategy</span>
-<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a>recovers.</span>
-<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-145"><a href="#cb5-145" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-setup, message=FALSE, warning=FALSE}</span></span>
-<span id="cb5-146"><a href="#cb5-146" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">58</span>)</span>
-<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
-<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(glmnet)        <span class="co"># penalized regression for early fusion</span></span>
-<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(randomForest)  <span class="co"># per-modality learners for late fusion</span></span>
-<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb5-151"><a href="#cb5-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-152"><a href="#cb5-152" aria-hidden="true" tabindex="-1"></a>n      <span class="ot">&lt;-</span> <span class="dv">1500</span>            <span class="co"># customers</span></span>
-<span id="cb5-153"><a href="#cb5-153" aria-hidden="true" tabindex="-1"></a>d_text <span class="ot">&lt;-</span> <span class="dv">20</span>             <span class="co"># text-embedding dimension</span></span>
-<span id="cb5-154"><a href="#cb5-154" aria-hidden="true" tabindex="-1"></a>d_img  <span class="ot">&lt;-</span> <span class="dv">15</span>             <span class="co"># image-feature dimension</span></span>
-<span id="cb5-155"><a href="#cb5-155" aria-hidden="true" tabindex="-1"></a>d_beh  <span class="ot">&lt;-</span> <span class="dv">8</span>              <span class="co"># behavioral-feature dimension</span></span>
-<span id="cb5-156"><a href="#cb5-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-157"><a href="#cb5-157" aria-hidden="true" tabindex="-1"></a><span class="co"># One latent driver per modality. The outcome depends on all three,</span></span>
-<span id="cb5-158"><a href="#cb5-158" aria-hidden="true" tabindex="-1"></a><span class="co"># so no single modality is sufficient: this is the case for fusion.</span></span>
-<span id="cb5-159"><a href="#cb5-159" aria-hidden="true" tabindex="-1"></a>z_text <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)</span>
-<span id="cb5-160"><a href="#cb5-160" aria-hidden="true" tabindex="-1"></a>z_img  <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)</span>
-<span id="cb5-161"><a href="#cb5-161" aria-hidden="true" tabindex="-1"></a>z_beh  <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)</span>
-<span id="cb5-162"><a href="#cb5-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-163"><a href="#cb5-163" aria-hidden="true" tabindex="-1"></a><span class="co"># Each modality block: a latent loading plus independent noise, so that</span></span>
-<span id="cb5-164"><a href="#cb5-164" aria-hidden="true" tabindex="-1"></a><span class="co"># features within a block are correlated, as learned embeddings are.</span></span>
-<span id="cb5-165"><a href="#cb5-165" aria-hidden="true" tabindex="-1"></a>make_block <span class="ot">&lt;-</span> <span class="cf">function</span>(z, d, loading) {</span>
-<span id="cb5-166"><a href="#cb5-166" aria-hidden="true" tabindex="-1"></a>  L <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(d, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> loading)        <span class="co"># per-dimension loadings</span></span>
-<span id="cb5-167"><a href="#cb5-167" aria-hidden="true" tabindex="-1"></a>  <span class="fu">outer</span>(z, L) <span class="sc">+</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> d, <span class="at">sd =</span> <span class="dv">1</span>), n, d)</span>
-<span id="cb5-168"><a href="#cb5-168" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a>representations as it goes; @fig-fus-strategies draws the three architectures side by</span>
+<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a>side. The runnable demonstration below contrasts the two that can</span>
+<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a>be built from off-the-shelf, maintained packages: early fusion with a penalized linear</span>
+<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a>model and late fusion with per-modality random forests combined by a stacking</span>
+<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a>meta-learner. Joint fusion is treated conceptually, because its honest demonstration</span>
+<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a>requires a deep-learning stack outside this book's runnable scope.</span>
+<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a>%%| label: fig-fus-strategies</span>
+<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The three canonical fusion strategies. Early fusion concatenates per-modality features into a single wide input; late fusion fits one model per modality and combines their decisions; joint fusion trains modality encoders and their combination end to end, so gradient signal from the task reshapes each encoder.</span><span class="ot">"</span></span>
+<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a>  subgraph EF[<span class="ot">"</span><span class="st">Early fusion: fuse features</span><span class="ot">"</span>]</span>
+<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a>    direction TB</span>
+<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a>    ET[<span class="ot">"</span><span class="st">Text&lt;br/&gt;features</span><span class="ot">"</span>] --&gt; EC[<span class="ot">"</span><span class="st">Concatenate into&lt;br/&gt;one wide vector</span><span class="ot">"</span>]</span>
+<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a>    EI[<span class="ot">"</span><span class="st">Image&lt;br/&gt;features</span><span class="ot">"</span>] --&gt; EC</span>
+<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a>    EB[<span class="ot">"</span><span class="st">Behavior&lt;br/&gt;features</span><span class="ot">"</span>] --&gt; EC</span>
+<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a>    EC --&gt; EM[<span class="ot">"</span><span class="st">Single model</span><span class="ot">"</span>]</span>
+<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a>    EM --&gt; EP[<span class="ot">"</span><span class="st">Prediction</span><span class="ot">"</span>]</span>
+<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a>  end</span>
+<span id="cb5-145"><a href="#cb5-145" aria-hidden="true" tabindex="-1"></a>  subgraph LF[<span class="ot">"</span><span class="st">Late fusion: fuse decisions</span><span class="ot">"</span>]</span>
+<span id="cb5-146"><a href="#cb5-146" aria-hidden="true" tabindex="-1"></a>    direction TB</span>
+<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a>    LT[<span class="ot">"</span><span class="st">Text&lt;br/&gt;features</span><span class="ot">"</span>] --&gt; MT[<span class="ot">"</span><span class="st">Text&lt;br/&gt;model</span><span class="ot">"</span>]</span>
+<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a>    LI[<span class="ot">"</span><span class="st">Image&lt;br/&gt;features</span><span class="ot">"</span>] --&gt; MI[<span class="ot">"</span><span class="st">Image&lt;br/&gt;model</span><span class="ot">"</span>]</span>
+<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a>    LB[<span class="ot">"</span><span class="st">Behavior&lt;br/&gt;features</span><span class="ot">"</span>] --&gt; MB[<span class="ot">"</span><span class="st">Behavior&lt;br/&gt;model</span><span class="ot">"</span>]</span>
+<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a>    MT --&gt; CB[<span class="ot">"</span><span class="st">Combiner: average or&lt;br/&gt;stacked meta-learner</span><span class="ot">"</span>]</span>
+<span id="cb5-151"><a href="#cb5-151" aria-hidden="true" tabindex="-1"></a>    MI --&gt; CB</span>
+<span id="cb5-152"><a href="#cb5-152" aria-hidden="true" tabindex="-1"></a>    MB --&gt; CB</span>
+<span id="cb5-153"><a href="#cb5-153" aria-hidden="true" tabindex="-1"></a>    CB --&gt; LP[<span class="ot">"</span><span class="st">Prediction</span><span class="ot">"</span>]</span>
+<span id="cb5-154"><a href="#cb5-154" aria-hidden="true" tabindex="-1"></a>  end</span>
+<span id="cb5-155"><a href="#cb5-155" aria-hidden="true" tabindex="-1"></a>  subgraph JF[<span class="ot">"</span><span class="st">Joint fusion: fuse representations</span><span class="ot">"</span>]</span>
+<span id="cb5-156"><a href="#cb5-156" aria-hidden="true" tabindex="-1"></a>    direction TB</span>
+<span id="cb5-157"><a href="#cb5-157" aria-hidden="true" tabindex="-1"></a>    JT[<span class="ot">"</span><span class="st">Text</span><span class="ot">"</span>] --&gt; ENT[<span class="ot">"</span><span class="st">Text&lt;br/&gt;encoder</span><span class="ot">"</span>]</span>
+<span id="cb5-158"><a href="#cb5-158" aria-hidden="true" tabindex="-1"></a>    JI[<span class="ot">"</span><span class="st">Image</span><span class="ot">"</span>] --&gt; ENI[<span class="ot">"</span><span class="st">Image&lt;br/&gt;encoder</span><span class="ot">"</span>]</span>
+<span id="cb5-159"><a href="#cb5-159" aria-hidden="true" tabindex="-1"></a>    JB[<span class="ot">"</span><span class="st">Behavior</span><span class="ot">"</span>] --&gt; ENB[<span class="ot">"</span><span class="st">Behavior&lt;br/&gt;encoder</span><span class="ot">"</span>]</span>
+<span id="cb5-160"><a href="#cb5-160" aria-hidden="true" tabindex="-1"></a>    ENT --&gt; JC[<span class="ot">"</span><span class="st">Combine: concatenation,&lt;br/&gt;summation, cross-attention</span><span class="ot">"</span>]</span>
+<span id="cb5-161"><a href="#cb5-161" aria-hidden="true" tabindex="-1"></a>    ENI --&gt; JC</span>
+<span id="cb5-162"><a href="#cb5-162" aria-hidden="true" tabindex="-1"></a>    ENB --&gt; JC</span>
+<span id="cb5-163"><a href="#cb5-163" aria-hidden="true" tabindex="-1"></a>    JC --&gt; JP[<span class="ot">"</span><span class="st">Prediction</span><span class="ot">"</span>]</span>
+<span id="cb5-164"><a href="#cb5-164" aria-hidden="true" tabindex="-1"></a>    JP -.-&gt;|<span class="ot">"</span><span class="st">end-to-end gradient&lt;br/&gt;reshapes encoders</span><span class="ot">"</span>| ENT</span>
+<span id="cb5-165"><a href="#cb5-165" aria-hidden="true" tabindex="-1"></a>  end</span>
+<span id="cb5-166"><a href="#cb5-166" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-167"><a href="#cb5-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-168"><a href="#cb5-168" aria-hidden="true" tabindex="-1"></a><span class="fu">### A Runnable Early-versus-Late Demonstration {#sec-mmf-demo}</span></span>
 <span id="cb5-169"><a href="#cb5-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-170"><a href="#cb5-170" aria-hidden="true" tabindex="-1"></a>X_text <span class="ot">&lt;-</span> <span class="fu">make_block</span>(z_text, d_text, <span class="at">loading =</span> <span class="fl">0.9</span>)</span>
-<span id="cb5-171"><a href="#cb5-171" aria-hidden="true" tabindex="-1"></a>X_img  <span class="ot">&lt;-</span> <span class="fu">make_block</span>(z_img,  d_img,  <span class="at">loading =</span> <span class="fl">0.9</span>)</span>
-<span id="cb5-172"><a href="#cb5-172" aria-hidden="true" tabindex="-1"></a>X_beh  <span class="ot">&lt;-</span> <span class="fu">make_block</span>(z_beh,  d_beh,  <span class="at">loading =</span> <span class="fl">1.1</span>)</span>
-<span id="cb5-173"><a href="#cb5-173" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X_text) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"txt"</span>, <span class="fu">seq_len</span>(d_text))</span>
-<span id="cb5-174"><a href="#cb5-174" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X_img)  <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"img"</span>, <span class="fu">seq_len</span>(d_img))</span>
-<span id="cb5-175"><a href="#cb5-175" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X_beh)  <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"beh"</span>, <span class="fu">seq_len</span>(d_beh))</span>
-<span id="cb5-176"><a href="#cb5-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-177"><a href="#cb5-177" aria-hidden="true" tabindex="-1"></a><span class="co"># Binary outcome driven by all three latents (true complementarity).</span></span>
-<span id="cb5-178"><a href="#cb5-178" aria-hidden="true" tabindex="-1"></a>eta <span class="ot">&lt;-</span> <span class="fl">1.1</span> <span class="sc">*</span> z_text <span class="sc">+</span> <span class="fl">0.8</span> <span class="sc">*</span> z_img <span class="sc">+</span> <span class="fl">0.9</span> <span class="sc">*</span> z_beh <span class="sc">-</span> <span class="fl">0.5</span></span>
-<span id="cb5-179"><a href="#cb5-179" aria-hidden="true" tabindex="-1"></a>y   <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>eta)))</span>
-<span id="cb5-180"><a href="#cb5-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-181"><a href="#cb5-181" aria-hidden="true" tabindex="-1"></a><span class="co"># Train / test split.</span></span>
-<span id="cb5-182"><a href="#cb5-182" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">seq_len</span>(n), <span class="at">size =</span> <span class="dv">1000</span>)</span>
-<span id="cb5-183"><a href="#cb5-183" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">seq_len</span>(n), train)</span>
-<span id="cb5-184"><a href="#cb5-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-185"><a href="#cb5-185" aria-hidden="true" tabindex="-1"></a><span class="co"># Rank-based AUC (Mann-Whitney form); no extra package needed.</span></span>
-<span id="cb5-186"><a href="#cb5-186" aria-hidden="true" tabindex="-1"></a>auc <span class="ot">&lt;-</span> <span class="cf">function</span>(y_true, p_hat) {</span>
-<span id="cb5-187"><a href="#cb5-187" aria-hidden="true" tabindex="-1"></a>  r  <span class="ot">&lt;-</span> <span class="fu">rank</span>(p_hat)</span>
-<span id="cb5-188"><a href="#cb5-188" aria-hidden="true" tabindex="-1"></a>  n1 <span class="ot">&lt;-</span> <span class="fu">sum</span>(y_true <span class="sc">==</span> <span class="dv">1</span>); n0 <span class="ot">&lt;-</span> <span class="fu">sum</span>(y_true <span class="sc">==</span> <span class="dv">0</span>)</span>
-<span id="cb5-189"><a href="#cb5-189" aria-hidden="true" tabindex="-1"></a>  (<span class="fu">sum</span>(r[y_true <span class="sc">==</span> <span class="dv">1</span>]) <span class="sc">-</span> n1 <span class="sc">*</span> (n1 <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">2</span>) <span class="sc">/</span> (n1 <span class="sc">*</span> n0)</span>
-<span id="cb5-190"><a href="#cb5-190" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-191"><a href="#cb5-191" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-192"><a href="#cb5-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-193"><a href="#cb5-193" aria-hidden="true" tabindex="-1"></a>With the data in hand, **early fusion** concatenates the three blocks into one wide</span>
-<span id="cb5-194"><a href="#cb5-194" aria-hidden="true" tabindex="-1"></a>matrix and fits a single elastic-net logistic model over it. The penalty matters here:</span>
-<span id="cb5-195"><a href="#cb5-195" aria-hidden="true" tabindex="-1"></a>the concatenated input is 43-dimensional with correlated columns, and regularization is</span>
-<span id="cb5-196"><a href="#cb5-196" aria-hidden="true" tabindex="-1"></a>what keeps a wide, partly redundant feature stack from overfitting. This is the typical</span>
-<span id="cb5-197"><a href="#cb5-197" aria-hidden="true" tabindex="-1"></a>shape of a real fused-embedding regression, where the right-hand side is hundreds or</span>
-<span id="cb5-198"><a href="#cb5-198" aria-hidden="true" tabindex="-1"></a>thousands of embedding dimensions wide.</span>
-<span id="cb5-199"><a href="#cb5-199" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-200"><a href="#cb5-200" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-early, message=FALSE, warning=FALSE}</span></span>
-<span id="cb5-201"><a href="#cb5-201" aria-hidden="true" tabindex="-1"></a>X_all <span class="ot">&lt;-</span> <span class="fu">cbind</span>(X_text, X_img, X_beh)        <span class="co"># concatenation = early fusion</span></span>
-<span id="cb5-202"><a href="#cb5-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-203"><a href="#cb5-203" aria-hidden="true" tabindex="-1"></a>cv_early <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(X_all[train, ], y[train],</span>
-<span id="cb5-204"><a href="#cb5-204" aria-hidden="true" tabindex="-1"></a>                      <span class="at">family =</span> <span class="st">"binomial"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>)</span>
-<span id="cb5-205"><a href="#cb5-205" aria-hidden="true" tabindex="-1"></a>p_early  <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(<span class="fu">predict</span>(cv_early, X_all[test, ],</span>
-<span id="cb5-206"><a href="#cb5-206" aria-hidden="true" tabindex="-1"></a>                              <span class="at">s =</span> <span class="st">"lambda.min"</span>, <span class="at">type =</span> <span class="st">"response"</span>))</span>
+<span id="cb5-170"><a href="#cb5-170" aria-hidden="true" tabindex="-1"></a>The demonstration is deliberately synthetic so that the data-generating process is</span>
+<span id="cb5-171"><a href="#cb5-171" aria-hidden="true" tabindex="-1"></a>known and the comparison is interpretable. We simulate per-customer features standing</span>
+<span id="cb5-172"><a href="#cb5-172" aria-hidden="true" tabindex="-1"></a>in for three modalities. A 20-dimensional **text-embedding block** stands in for, say,</span>
+<span id="cb5-173"><a href="#cb5-173" aria-hidden="true" tabindex="-1"></a>a sentence-embedding of a customer's reviews and messages; a 15-dimensional</span>
+<span id="cb5-174"><a href="#cb5-174" aria-hidden="true" tabindex="-1"></a>**image-feature block** stands in for a CNN or vision-transformer embedding of</span>
+<span id="cb5-175"><a href="#cb5-175" aria-hidden="true" tabindex="-1"></a>customer-associated images; and an 8-dimensional **behavioral block** stands in for</span>
+<span id="cb5-176"><a href="#cb5-176" aria-hidden="true" tabindex="-1"></a>clickstream and transaction summaries. Each block is generated from a single latent</span>
+<span id="cb5-177"><a href="#cb5-177" aria-hidden="true" tabindex="-1"></a>driver plus independent noise, so that within a block the features are correlated</span>
+<span id="cb5-178"><a href="#cb5-178" aria-hidden="true" tabindex="-1"></a>(as real embeddings are) and across blocks the signal is genuinely complementary: the</span>
+<span id="cb5-179"><a href="#cb5-179" aria-hidden="true" tabindex="-1"></a>binary outcome (a conversion, say) depends on all three latents. This construction is</span>
+<span id="cb5-180"><a href="#cb5-180" aria-hidden="true" tabindex="-1"></a>exactly the situation fusion is meant for, and it lets us see what each strategy</span>
+<span id="cb5-181"><a href="#cb5-181" aria-hidden="true" tabindex="-1"></a>recovers.</span>
+<span id="cb5-182"><a href="#cb5-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-183"><a href="#cb5-183" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-setup, message=FALSE, warning=FALSE}</span></span>
+<span id="cb5-184"><a href="#cb5-184" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">58</span>)</span>
+<span id="cb5-185"><a href="#cb5-185" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>({</span>
+<span id="cb5-186"><a href="#cb5-186" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(glmnet)        <span class="co"># penalized regression for early fusion</span></span>
+<span id="cb5-187"><a href="#cb5-187" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(randomForest)  <span class="co"># per-modality learners for late fusion</span></span>
+<span id="cb5-188"><a href="#cb5-188" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb5-189"><a href="#cb5-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-190"><a href="#cb5-190" aria-hidden="true" tabindex="-1"></a>n      <span class="ot">&lt;-</span> <span class="dv">1500</span>            <span class="co"># customers</span></span>
+<span id="cb5-191"><a href="#cb5-191" aria-hidden="true" tabindex="-1"></a>d_text <span class="ot">&lt;-</span> <span class="dv">20</span>             <span class="co"># text-embedding dimension</span></span>
+<span id="cb5-192"><a href="#cb5-192" aria-hidden="true" tabindex="-1"></a>d_img  <span class="ot">&lt;-</span> <span class="dv">15</span>             <span class="co"># image-feature dimension</span></span>
+<span id="cb5-193"><a href="#cb5-193" aria-hidden="true" tabindex="-1"></a>d_beh  <span class="ot">&lt;-</span> <span class="dv">8</span>              <span class="co"># behavioral-feature dimension</span></span>
+<span id="cb5-194"><a href="#cb5-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-195"><a href="#cb5-195" aria-hidden="true" tabindex="-1"></a><span class="co"># One latent driver per modality. The outcome depends on all three,</span></span>
+<span id="cb5-196"><a href="#cb5-196" aria-hidden="true" tabindex="-1"></a><span class="co"># so no single modality is sufficient: this is the case for fusion.</span></span>
+<span id="cb5-197"><a href="#cb5-197" aria-hidden="true" tabindex="-1"></a>z_text <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb5-198"><a href="#cb5-198" aria-hidden="true" tabindex="-1"></a>z_img  <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb5-199"><a href="#cb5-199" aria-hidden="true" tabindex="-1"></a>z_beh  <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb5-200"><a href="#cb5-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-201"><a href="#cb5-201" aria-hidden="true" tabindex="-1"></a><span class="co"># Each modality block: a latent loading plus independent noise, so that</span></span>
+<span id="cb5-202"><a href="#cb5-202" aria-hidden="true" tabindex="-1"></a><span class="co"># features within a block are correlated, as learned embeddings are.</span></span>
+<span id="cb5-203"><a href="#cb5-203" aria-hidden="true" tabindex="-1"></a>make_block <span class="ot">&lt;-</span> <span class="cf">function</span>(z, d, loading) {</span>
+<span id="cb5-204"><a href="#cb5-204" aria-hidden="true" tabindex="-1"></a>  L <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(d, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> loading)        <span class="co"># per-dimension loadings</span></span>
+<span id="cb5-205"><a href="#cb5-205" aria-hidden="true" tabindex="-1"></a>  <span class="fu">outer</span>(z, L) <span class="sc">+</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> d, <span class="at">sd =</span> <span class="dv">1</span>), n, d)</span>
+<span id="cb5-206"><a href="#cb5-206" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb5-207"><a href="#cb5-207" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-208"><a href="#cb5-208" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Early fusion (elastic-net) AUC:"</span>, <span class="fu">round</span>(<span class="fu">auc</span>(y[test], p_early), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb5-209"><a href="#cb5-209" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-210"><a href="#cb5-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-211"><a href="#cb5-211" aria-hidden="true" tabindex="-1"></a>**Late fusion** fits a separate random forest to each modality, then combines their</span>
-<span id="cb5-212"><a href="#cb5-212" aria-hidden="true" tabindex="-1"></a>predictions. We show two combiners. The first is a simple average of the three</span>
-<span id="cb5-213"><a href="#cb5-213" aria-hidden="true" tabindex="-1"></a>per-modality probabilities, the most common and most robust late-fusion rule. The</span>
-<span id="cb5-214"><a href="#cb5-214" aria-hidden="true" tabindex="-1"></a>second is a **stacked** combiner: a logistic meta-learner trained on the base models'</span>
-<span id="cb5-215"><a href="#cb5-215" aria-hidden="true" tabindex="-1"></a>predictions. Crucially, the meta-learner is trained on each forest's *out-of-bag*</span>
-<span id="cb5-216"><a href="#cb5-216" aria-hidden="true" tabindex="-1"></a>predictions for the training customers, not on its in-sample fits, so that the stacking</span>
-<span id="cb5-217"><a href="#cb5-217" aria-hidden="true" tabindex="-1"></a>model learns to weight modalities on honest, held-out signal rather than on the base</span>
-<span id="cb5-218"><a href="#cb5-218" aria-hidden="true" tabindex="-1"></a>models' overfit training scores. This out-of-bag construction is what makes stacking</span>
-<span id="cb5-219"><a href="#cb5-219" aria-hidden="true" tabindex="-1"></a>defensible rather than leaky.</span>
-<span id="cb5-220"><a href="#cb5-220" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-221"><a href="#cb5-221" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-late, message=FALSE, warning=FALSE}</span></span>
-<span id="cb5-222"><a href="#cb5-222" aria-hidden="true" tabindex="-1"></a>fit_rf <span class="ot">&lt;-</span> <span class="cf">function</span>(X) {</span>
-<span id="cb5-223"><a href="#cb5-223" aria-hidden="true" tabindex="-1"></a>  <span class="fu">randomForest</span>(<span class="at">x =</span> X[train, ], <span class="at">y =</span> <span class="fu">factor</span>(y[train]), <span class="at">ntree =</span> <span class="dv">300</span>)</span>
-<span id="cb5-224"><a href="#cb5-224" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-225"><a href="#cb5-225" aria-hidden="true" tabindex="-1"></a>prob_test <span class="ot">&lt;-</span> <span class="cf">function</span>(model, X) {</span>
-<span id="cb5-226"><a href="#cb5-226" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(model, X[test, ], <span class="at">type =</span> <span class="st">"prob"</span>)[, <span class="dv">2</span>]</span>
-<span id="cb5-227"><a href="#cb5-227" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-228"><a href="#cb5-228" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-229"><a href="#cb5-229" aria-hidden="true" tabindex="-1"></a>rf_text <span class="ot">&lt;-</span> <span class="fu">fit_rf</span>(X_text)</span>
-<span id="cb5-230"><a href="#cb5-230" aria-hidden="true" tabindex="-1"></a>rf_img  <span class="ot">&lt;-</span> <span class="fu">fit_rf</span>(X_img)</span>
-<span id="cb5-231"><a href="#cb5-231" aria-hidden="true" tabindex="-1"></a>rf_beh  <span class="ot">&lt;-</span> <span class="fu">fit_rf</span>(X_beh)</span>
-<span id="cb5-232"><a href="#cb5-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-233"><a href="#cb5-233" aria-hidden="true" tabindex="-1"></a><span class="co"># Per-modality predictions on the test set.</span></span>
-<span id="cb5-234"><a href="#cb5-234" aria-hidden="true" tabindex="-1"></a>p_text <span class="ot">&lt;-</span> <span class="fu">prob_test</span>(rf_text, X_text)</span>
-<span id="cb5-235"><a href="#cb5-235" aria-hidden="true" tabindex="-1"></a>p_img  <span class="ot">&lt;-</span> <span class="fu">prob_test</span>(rf_img,  X_img)</span>
-<span id="cb5-236"><a href="#cb5-236" aria-hidden="true" tabindex="-1"></a>p_beh  <span class="ot">&lt;-</span> <span class="fu">prob_test</span>(rf_beh,  X_beh)</span>
+<span id="cb5-208"><a href="#cb5-208" aria-hidden="true" tabindex="-1"></a>X_text <span class="ot">&lt;-</span> <span class="fu">make_block</span>(z_text, d_text, <span class="at">loading =</span> <span class="fl">0.9</span>)</span>
+<span id="cb5-209"><a href="#cb5-209" aria-hidden="true" tabindex="-1"></a>X_img  <span class="ot">&lt;-</span> <span class="fu">make_block</span>(z_img,  d_img,  <span class="at">loading =</span> <span class="fl">0.9</span>)</span>
+<span id="cb5-210"><a href="#cb5-210" aria-hidden="true" tabindex="-1"></a>X_beh  <span class="ot">&lt;-</span> <span class="fu">make_block</span>(z_beh,  d_beh,  <span class="at">loading =</span> <span class="fl">1.1</span>)</span>
+<span id="cb5-211"><a href="#cb5-211" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X_text) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"txt"</span>, <span class="fu">seq_len</span>(d_text))</span>
+<span id="cb5-212"><a href="#cb5-212" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X_img)  <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"img"</span>, <span class="fu">seq_len</span>(d_img))</span>
+<span id="cb5-213"><a href="#cb5-213" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(X_beh)  <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"beh"</span>, <span class="fu">seq_len</span>(d_beh))</span>
+<span id="cb5-214"><a href="#cb5-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-215"><a href="#cb5-215" aria-hidden="true" tabindex="-1"></a><span class="co"># Binary outcome driven by all three latents (true complementarity).</span></span>
+<span id="cb5-216"><a href="#cb5-216" aria-hidden="true" tabindex="-1"></a>eta <span class="ot">&lt;-</span> <span class="fl">1.1</span> <span class="sc">*</span> z_text <span class="sc">+</span> <span class="fl">0.8</span> <span class="sc">*</span> z_img <span class="sc">+</span> <span class="fl">0.9</span> <span class="sc">*</span> z_beh <span class="sc">-</span> <span class="fl">0.5</span></span>
+<span id="cb5-217"><a href="#cb5-217" aria-hidden="true" tabindex="-1"></a>y   <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="at">size =</span> <span class="dv">1</span>, <span class="at">prob =</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>eta)))</span>
+<span id="cb5-218"><a href="#cb5-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-219"><a href="#cb5-219" aria-hidden="true" tabindex="-1"></a><span class="co"># Train / test split.</span></span>
+<span id="cb5-220"><a href="#cb5-220" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">seq_len</span>(n), <span class="at">size =</span> <span class="dv">1000</span>)</span>
+<span id="cb5-221"><a href="#cb5-221" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">seq_len</span>(n), train)</span>
+<span id="cb5-222"><a href="#cb5-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-223"><a href="#cb5-223" aria-hidden="true" tabindex="-1"></a><span class="co"># Rank-based AUC (Mann-Whitney form); no extra package needed.</span></span>
+<span id="cb5-224"><a href="#cb5-224" aria-hidden="true" tabindex="-1"></a>auc <span class="ot">&lt;-</span> <span class="cf">function</span>(y_true, p_hat) {</span>
+<span id="cb5-225"><a href="#cb5-225" aria-hidden="true" tabindex="-1"></a>  r  <span class="ot">&lt;-</span> <span class="fu">rank</span>(p_hat)</span>
+<span id="cb5-226"><a href="#cb5-226" aria-hidden="true" tabindex="-1"></a>  n1 <span class="ot">&lt;-</span> <span class="fu">sum</span>(y_true <span class="sc">==</span> <span class="dv">1</span>); n0 <span class="ot">&lt;-</span> <span class="fu">sum</span>(y_true <span class="sc">==</span> <span class="dv">0</span>)</span>
+<span id="cb5-227"><a href="#cb5-227" aria-hidden="true" tabindex="-1"></a>  (<span class="fu">sum</span>(r[y_true <span class="sc">==</span> <span class="dv">1</span>]) <span class="sc">-</span> n1 <span class="sc">*</span> (n1 <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">2</span>) <span class="sc">/</span> (n1 <span class="sc">*</span> n0)</span>
+<span id="cb5-228"><a href="#cb5-228" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-229"><a href="#cb5-229" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-230"><a href="#cb5-230" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-231"><a href="#cb5-231" aria-hidden="true" tabindex="-1"></a>With the data in hand, **early fusion** concatenates the three blocks into one wide</span>
+<span id="cb5-232"><a href="#cb5-232" aria-hidden="true" tabindex="-1"></a>matrix and fits a single elastic-net logistic model over it. The penalty matters here:</span>
+<span id="cb5-233"><a href="#cb5-233" aria-hidden="true" tabindex="-1"></a>the concatenated input is 43-dimensional with correlated columns, and regularization is</span>
+<span id="cb5-234"><a href="#cb5-234" aria-hidden="true" tabindex="-1"></a>what keeps a wide, partly redundant feature stack from overfitting. This is the typical</span>
+<span id="cb5-235"><a href="#cb5-235" aria-hidden="true" tabindex="-1"></a>shape of a real fused-embedding regression, where the right-hand side is hundreds or</span>
+<span id="cb5-236"><a href="#cb5-236" aria-hidden="true" tabindex="-1"></a>thousands of embedding dimensions wide.</span>
 <span id="cb5-237"><a href="#cb5-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-238"><a href="#cb5-238" aria-hidden="true" tabindex="-1"></a><span class="co"># Combiner 1: simple average of decisions.</span></span>
-<span id="cb5-239"><a href="#cb5-239" aria-hidden="true" tabindex="-1"></a>p_late_avg <span class="ot">&lt;-</span> (p_text <span class="sc">+</span> p_img <span class="sc">+</span> p_beh) <span class="sc">/</span> <span class="dv">3</span></span>
+<span id="cb5-238"><a href="#cb5-238" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-early, message=FALSE, warning=FALSE}</span></span>
+<span id="cb5-239"><a href="#cb5-239" aria-hidden="true" tabindex="-1"></a>X_all <span class="ot">&lt;-</span> <span class="fu">cbind</span>(X_text, X_img, X_beh)        <span class="co"># concatenation = early fusion</span></span>
 <span id="cb5-240"><a href="#cb5-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-241"><a href="#cb5-241" aria-hidden="true" tabindex="-1"></a><span class="co"># Combiner 2: stacked logistic meta-learner trained on OUT-OF-BAG</span></span>
-<span id="cb5-242"><a href="#cb5-242" aria-hidden="true" tabindex="-1"></a><span class="co"># predictions, so the stack does not see the base models' in-sample fits.</span></span>
-<span id="cb5-243"><a href="#cb5-243" aria-hidden="true" tabindex="-1"></a>oob <span class="ot">&lt;-</span> <span class="cf">function</span>(model) model<span class="sc">$</span>votes[, <span class="dv">2</span>]</span>
-<span id="cb5-244"><a href="#cb5-244" aria-hidden="true" tabindex="-1"></a>stack_train <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb5-245"><a href="#cb5-245" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">factor</span>(y[train]),</span>
-<span id="cb5-246"><a href="#cb5-246" aria-hidden="true" tabindex="-1"></a>  <span class="at">a =</span> <span class="fu">oob</span>(rf_text), <span class="at">b =</span> <span class="fu">oob</span>(rf_img), <span class="at">c =</span> <span class="fu">oob</span>(rf_beh)</span>
-<span id="cb5-247"><a href="#cb5-247" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-248"><a href="#cb5-248" aria-hidden="true" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">glm</span>(y <span class="sc">~</span> a <span class="sc">+</span> b <span class="sc">+</span> c, <span class="at">data =</span> stack_train, <span class="at">family =</span> <span class="st">"binomial"</span>)</span>
-<span id="cb5-249"><a href="#cb5-249" aria-hidden="true" tabindex="-1"></a>p_late_stack <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(<span class="fu">predict</span>(</span>
-<span id="cb5-250"><a href="#cb5-250" aria-hidden="true" tabindex="-1"></a>  meta, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">a =</span> p_text, <span class="at">b =</span> p_img, <span class="at">c =</span> p_beh),</span>
-<span id="cb5-251"><a href="#cb5-251" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"response"</span></span>
-<span id="cb5-252"><a href="#cb5-252" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb5-253"><a href="#cb5-253" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-254"><a href="#cb5-254" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Late fusion (average)  AUC:"</span>, <span class="fu">round</span>(<span class="fu">auc</span>(y[test], p_late_avg),   <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb5-255"><a href="#cb5-255" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Late fusion (stacked)  AUC:"</span>, <span class="fu">round</span>(<span class="fu">auc</span>(y[test], p_late_stack), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb5-256"><a href="#cb5-256" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-257"><a href="#cb5-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-258"><a href="#cb5-258" aria-hidden="true" tabindex="-1"></a>To make the value of fusion itself visible, we also report what a single modality</span>
-<span id="cb5-259"><a href="#cb5-259" aria-hidden="true" tabindex="-1"></a>achieves on its own. The comparison is the point of the whole exercise: because the</span>
-<span id="cb5-260"><a href="#cb5-260" aria-hidden="true" tabindex="-1"></a>outcome depends on all three latents, no unimodal model can reach what a fused model</span>
-<span id="cb5-261"><a href="#cb5-261" aria-hidden="true" tabindex="-1"></a>reaches, and the gap between the best single modality and either fusion strategy is the</span>
-<span id="cb5-262"><a href="#cb5-262" aria-hidden="true" tabindex="-1"></a>empirical case for fusing.</span>
-<span id="cb5-263"><a href="#cb5-263" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-264"><a href="#cb5-264" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-compare, message=FALSE, warning=FALSE}</span></span>
-<span id="cb5-265"><a href="#cb5-265" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb5-266"><a href="#cb5-266" aria-hidden="true" tabindex="-1"></a>  <span class="at">approach =</span> <span class="fu">c</span>(<span class="st">"Text only"</span>, <span class="st">"Image only"</span>, <span class="st">"Behavior only"</span>,</span>
-<span id="cb5-267"><a href="#cb5-267" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Early fusion (concat)"</span>,</span>
-<span id="cb5-268"><a href="#cb5-268" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Late fusion (average)"</span>, <span class="st">"Late fusion (stacked)"</span>),</span>
-<span id="cb5-269"><a href="#cb5-269" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUC =</span> <span class="fu">round</span>(<span class="fu">c</span>(</span>
-<span id="cb5-270"><a href="#cb5-270" aria-hidden="true" tabindex="-1"></a>    <span class="fu">auc</span>(y[test], p_text), <span class="fu">auc</span>(y[test], p_img), <span class="fu">auc</span>(y[test], p_beh),</span>
-<span id="cb5-271"><a href="#cb5-271" aria-hidden="true" tabindex="-1"></a>    <span class="fu">auc</span>(y[test], p_early), <span class="fu">auc</span>(y[test], p_late_avg), <span class="fu">auc</span>(y[test], p_late_stack)</span>
-<span id="cb5-272"><a href="#cb5-272" aria-hidden="true" tabindex="-1"></a>  ), <span class="dv">3</span>)</span>
-<span id="cb5-273"><a href="#cb5-273" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-274"><a href="#cb5-274" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(results[<span class="fu">order</span>(<span class="sc">-</span>results<span class="sc">$</span>AUC), ], <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-275"><a href="#cb5-275" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-276"><a href="#cb5-276" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-277"><a href="#cb5-277" aria-hidden="true" tabindex="-1"></a>The qualitative pattern is what the data-generating process guarantees and what the</span>
-<span id="cb5-278"><a href="#cb5-278" aria-hidden="true" tabindex="-1"></a>literature reports on real data. Every unimodal model trails the fused models, because</span>
-<span id="cb5-279"><a href="#cb5-279" aria-hidden="true" tabindex="-1"></a>each sees only one of the three drivers. Among the fusion strategies, early and late</span>
-<span id="cb5-280"><a href="#cb5-280" aria-hidden="true" tabindex="-1"></a>fusion land close together on this clean synthetic problem; which one wins in practice</span>
-<span id="cb5-281"><a href="#cb5-281" aria-hidden="true" tabindex="-1"></a>depends on the data. Early fusion tends to lead when cross-modal interactions are strong</span>
-<span id="cb5-282"><a href="#cb5-282" aria-hidden="true" tabindex="-1"></a>and the sample is large enough to estimate a wide model, because only early (or joint)</span>
-<span id="cb5-283"><a href="#cb5-283" aria-hidden="true" tabindex="-1"></a>fusion can see raw features from two modalities together. Late fusion tends to lead when</span>
-<span id="cb5-284"><a href="#cb5-284" aria-hidden="true" tabindex="-1"></a>modalities are heterogeneous in scale and noise, when some modalities are frequently</span>
-<span id="cb5-285"><a href="#cb5-285" aria-hidden="true" tabindex="-1"></a>missing, or when sample size is tight relative to the concatenated dimension, because</span>
-<span id="cb5-286"><a href="#cb5-286" aria-hidden="true" tabindex="-1"></a>each base model is fit and regularized to its own modality and the combiner has few</span>
-<span id="cb5-287"><a href="#cb5-287" aria-hidden="true" tabindex="-1"></a>parameters to estimate. The honest takeaway is not that one strategy dominates but that</span>
-<span id="cb5-288"><a href="#cb5-288" aria-hidden="true" tabindex="-1"></a>the choice is an empirical, validated decision, and that fusing beats not fusing whenever</span>
-<span id="cb5-289"><a href="#cb5-289" aria-hidden="true" tabindex="-1"></a>the modalities carry complementary signal.</span>
-<span id="cb5-290"><a href="#cb5-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-291"><a href="#cb5-291" aria-hidden="true" tabindex="-1"></a><span class="fu">## Shared Representations and Contrastive Models {#sec-mmf-clip}</span></span>
-<span id="cb5-292"><a href="#cb5-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-293"><a href="#cb5-293" aria-hidden="true" tabindex="-1"></a>Early and late fusion as demonstrated above take the per-modality representations as</span>
-<span id="cb5-294"><a href="#cb5-294" aria-hidden="true" tabindex="-1"></a>*given*. The deeper question is where a shared, comparable representation across</span>
-<span id="cb5-295"><a href="#cb5-295" aria-hidden="true" tabindex="-1"></a>modalities comes from in the first place. The answer that reorganized the field is</span>
-<span id="cb5-296"><a href="#cb5-296" aria-hidden="true" tabindex="-1"></a>**contrastive image-text pretraining**, exemplified by CLIP (Contrastive</span>
-<span id="cb5-297"><a href="#cb5-297" aria-hidden="true" tabindex="-1"></a>Language-Image Pre-training), introduced by Radford and colleagues at OpenAI in 2021</span>
-<span id="cb5-298"><a href="#cb5-298" aria-hidden="true" tabindex="-1"></a>(ICML 2021; the foundational paper has no canonical Crossref DOI and is cited here by</span>
-<span id="cb5-299"><a href="#cb5-299" aria-hidden="true" tabindex="-1"></a>name and venue). The idea is conceptually simple and is best understood as a learned,</span>
-<span id="cb5-300"><a href="#cb5-300" aria-hidden="true" tabindex="-1"></a>*joint* embedding space.</span>
+<span id="cb5-241"><a href="#cb5-241" aria-hidden="true" tabindex="-1"></a>cv_early <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(X_all[train, ], y[train],</span>
+<span id="cb5-242"><a href="#cb5-242" aria-hidden="true" tabindex="-1"></a>                      <span class="at">family =</span> <span class="st">"binomial"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>)</span>
+<span id="cb5-243"><a href="#cb5-243" aria-hidden="true" tabindex="-1"></a>p_early  <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(<span class="fu">predict</span>(cv_early, X_all[test, ],</span>
+<span id="cb5-244"><a href="#cb5-244" aria-hidden="true" tabindex="-1"></a>                              <span class="at">s =</span> <span class="st">"lambda.min"</span>, <span class="at">type =</span> <span class="st">"response"</span>))</span>
+<span id="cb5-245"><a href="#cb5-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-246"><a href="#cb5-246" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Early fusion (elastic-net) AUC:"</span>, <span class="fu">round</span>(<span class="fu">auc</span>(y[test], p_early), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb5-247"><a href="#cb5-247" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-248"><a href="#cb5-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-249"><a href="#cb5-249" aria-hidden="true" tabindex="-1"></a>**Late fusion** fits a separate random forest to each modality, then combines their</span>
+<span id="cb5-250"><a href="#cb5-250" aria-hidden="true" tabindex="-1"></a>predictions. We show two combiners. The first is a simple average of the three</span>
+<span id="cb5-251"><a href="#cb5-251" aria-hidden="true" tabindex="-1"></a>per-modality probabilities, the most common and most robust late-fusion rule. The</span>
+<span id="cb5-252"><a href="#cb5-252" aria-hidden="true" tabindex="-1"></a>second is a **stacked** combiner: a logistic meta-learner trained on the base models'</span>
+<span id="cb5-253"><a href="#cb5-253" aria-hidden="true" tabindex="-1"></a>predictions. Crucially, the meta-learner is trained on each forest's *out-of-bag*</span>
+<span id="cb5-254"><a href="#cb5-254" aria-hidden="true" tabindex="-1"></a>predictions for the training customers, not on its in-sample fits, so that the stacking</span>
+<span id="cb5-255"><a href="#cb5-255" aria-hidden="true" tabindex="-1"></a>model learns to weight modalities on honest, held-out signal rather than on the base</span>
+<span id="cb5-256"><a href="#cb5-256" aria-hidden="true" tabindex="-1"></a>models' overfit training scores. This out-of-bag construction is what makes stacking</span>
+<span id="cb5-257"><a href="#cb5-257" aria-hidden="true" tabindex="-1"></a>defensible rather than leaky.</span>
+<span id="cb5-258"><a href="#cb5-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-259"><a href="#cb5-259" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-late, message=FALSE, warning=FALSE}</span></span>
+<span id="cb5-260"><a href="#cb5-260" aria-hidden="true" tabindex="-1"></a>fit_rf <span class="ot">&lt;-</span> <span class="cf">function</span>(X) {</span>
+<span id="cb5-261"><a href="#cb5-261" aria-hidden="true" tabindex="-1"></a>  <span class="fu">randomForest</span>(<span class="at">x =</span> X[train, ], <span class="at">y =</span> <span class="fu">factor</span>(y[train]), <span class="at">ntree =</span> <span class="dv">300</span>)</span>
+<span id="cb5-262"><a href="#cb5-262" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-263"><a href="#cb5-263" aria-hidden="true" tabindex="-1"></a>prob_test <span class="ot">&lt;-</span> <span class="cf">function</span>(model, X) {</span>
+<span id="cb5-264"><a href="#cb5-264" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(model, X[test, ], <span class="at">type =</span> <span class="st">"prob"</span>)[, <span class="dv">2</span>]</span>
+<span id="cb5-265"><a href="#cb5-265" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-266"><a href="#cb5-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-267"><a href="#cb5-267" aria-hidden="true" tabindex="-1"></a>rf_text <span class="ot">&lt;-</span> <span class="fu">fit_rf</span>(X_text)</span>
+<span id="cb5-268"><a href="#cb5-268" aria-hidden="true" tabindex="-1"></a>rf_img  <span class="ot">&lt;-</span> <span class="fu">fit_rf</span>(X_img)</span>
+<span id="cb5-269"><a href="#cb5-269" aria-hidden="true" tabindex="-1"></a>rf_beh  <span class="ot">&lt;-</span> <span class="fu">fit_rf</span>(X_beh)</span>
+<span id="cb5-270"><a href="#cb5-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-271"><a href="#cb5-271" aria-hidden="true" tabindex="-1"></a><span class="co"># Per-modality predictions on the test set.</span></span>
+<span id="cb5-272"><a href="#cb5-272" aria-hidden="true" tabindex="-1"></a>p_text <span class="ot">&lt;-</span> <span class="fu">prob_test</span>(rf_text, X_text)</span>
+<span id="cb5-273"><a href="#cb5-273" aria-hidden="true" tabindex="-1"></a>p_img  <span class="ot">&lt;-</span> <span class="fu">prob_test</span>(rf_img,  X_img)</span>
+<span id="cb5-274"><a href="#cb5-274" aria-hidden="true" tabindex="-1"></a>p_beh  <span class="ot">&lt;-</span> <span class="fu">prob_test</span>(rf_beh,  X_beh)</span>
+<span id="cb5-275"><a href="#cb5-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-276"><a href="#cb5-276" aria-hidden="true" tabindex="-1"></a><span class="co"># Combiner 1: simple average of decisions.</span></span>
+<span id="cb5-277"><a href="#cb5-277" aria-hidden="true" tabindex="-1"></a>p_late_avg <span class="ot">&lt;-</span> (p_text <span class="sc">+</span> p_img <span class="sc">+</span> p_beh) <span class="sc">/</span> <span class="dv">3</span></span>
+<span id="cb5-278"><a href="#cb5-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-279"><a href="#cb5-279" aria-hidden="true" tabindex="-1"></a><span class="co"># Combiner 2: stacked logistic meta-learner trained on OUT-OF-BAG</span></span>
+<span id="cb5-280"><a href="#cb5-280" aria-hidden="true" tabindex="-1"></a><span class="co"># predictions, so the stack does not see the base models' in-sample fits.</span></span>
+<span id="cb5-281"><a href="#cb5-281" aria-hidden="true" tabindex="-1"></a>oob <span class="ot">&lt;-</span> <span class="cf">function</span>(model) model<span class="sc">$</span>votes[, <span class="dv">2</span>]</span>
+<span id="cb5-282"><a href="#cb5-282" aria-hidden="true" tabindex="-1"></a>stack_train <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-283"><a href="#cb5-283" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">factor</span>(y[train]),</span>
+<span id="cb5-284"><a href="#cb5-284" aria-hidden="true" tabindex="-1"></a>  <span class="at">a =</span> <span class="fu">oob</span>(rf_text), <span class="at">b =</span> <span class="fu">oob</span>(rf_img), <span class="at">c =</span> <span class="fu">oob</span>(rf_beh)</span>
+<span id="cb5-285"><a href="#cb5-285" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-286"><a href="#cb5-286" aria-hidden="true" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">glm</span>(y <span class="sc">~</span> a <span class="sc">+</span> b <span class="sc">+</span> c, <span class="at">data =</span> stack_train, <span class="at">family =</span> <span class="st">"binomial"</span>)</span>
+<span id="cb5-287"><a href="#cb5-287" aria-hidden="true" tabindex="-1"></a>p_late_stack <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(<span class="fu">predict</span>(</span>
+<span id="cb5-288"><a href="#cb5-288" aria-hidden="true" tabindex="-1"></a>  meta, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">a =</span> p_text, <span class="at">b =</span> p_img, <span class="at">c =</span> p_beh),</span>
+<span id="cb5-289"><a href="#cb5-289" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">"response"</span></span>
+<span id="cb5-290"><a href="#cb5-290" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb5-291"><a href="#cb5-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-292"><a href="#cb5-292" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Late fusion (average)  AUC:"</span>, <span class="fu">round</span>(<span class="fu">auc</span>(y[test], p_late_avg),   <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb5-293"><a href="#cb5-293" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Late fusion (stacked)  AUC:"</span>, <span class="fu">round</span>(<span class="fu">auc</span>(y[test], p_late_stack), <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb5-294"><a href="#cb5-294" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-295"><a href="#cb5-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-296"><a href="#cb5-296" aria-hidden="true" tabindex="-1"></a>To make the value of fusion itself visible, we also report what a single modality</span>
+<span id="cb5-297"><a href="#cb5-297" aria-hidden="true" tabindex="-1"></a>achieves on its own. The comparison is the point of the whole exercise: because the</span>
+<span id="cb5-298"><a href="#cb5-298" aria-hidden="true" tabindex="-1"></a>outcome depends on all three latents, no unimodal model can reach what a fused model</span>
+<span id="cb5-299"><a href="#cb5-299" aria-hidden="true" tabindex="-1"></a>reaches, and the gap between the best single modality and either fusion strategy is the</span>
+<span id="cb5-300"><a href="#cb5-300" aria-hidden="true" tabindex="-1"></a>empirical case for fusing.</span>
 <span id="cb5-301"><a href="#cb5-301" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-302"><a href="#cb5-302" aria-hidden="true" tabindex="-1"></a>CLIP trains two encoders together: an image encoder and a text encoder. It is fed a very</span>
-<span id="cb5-303"><a href="#cb5-303" aria-hidden="true" tabindex="-1"></a>large corpus of image-caption pairs scraped from the web. For each batch, it computes an</span>
-<span id="cb5-304"><a href="#cb5-304" aria-hidden="true" tabindex="-1"></a>image embedding for every image and a text embedding for every caption, and it optimizes</span>
-<span id="cb5-305"><a href="#cb5-305" aria-hidden="true" tabindex="-1"></a>a contrastive objective: the embedding of an image should have high similarity (inner</span>
-<span id="cb5-306"><a href="#cb5-306" aria-hidden="true" tabindex="-1"></a>product) to the embedding of *its own* caption and low similarity to the embeddings of</span>
-<span id="cb5-307"><a href="#cb5-307" aria-hidden="true" tabindex="-1"></a>the *other* captions in the batch, and symmetrically for captions. After training on</span>
-<span id="cb5-308"><a href="#cb5-308" aria-hidden="true" tabindex="-1"></a>hundreds of millions of pairs, the two encoders share a single embedding space in which</span>
-<span id="cb5-309"><a href="#cb5-309" aria-hidden="true" tabindex="-1"></a>an image of a red sneaker and the text "a red sneaker" land near each other, while</span>
-<span id="cb5-310"><a href="#cb5-310" aria-hidden="true" tabindex="-1"></a>unrelated images and texts land far apart.</span>
-<span id="cb5-311"><a href="#cb5-311" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-312"><a href="#cb5-312" aria-hidden="true" tabindex="-1"></a>Two properties make this transformative for marketing measurement. The first is **a</span>
-<span id="cb5-313"><a href="#cb5-313" aria-hidden="true" tabindex="-1"></a>common space**: because images and text are embedded into the *same* geometry, the</span>
-<span id="cb5-314"><a href="#cb5-314" aria-hidden="true" tabindex="-1"></a>cosine similarity between an image embedding and a text embedding is meaningful. One can</span>
-<span id="cb5-315"><a href="#cb5-315" aria-hidden="true" tabindex="-1"></a>score how well a product photo matches the phrase "premium and minimalist," or rank</span>
-<span id="cb5-316"><a href="#cb5-316" aria-hidden="true" tabindex="-1"></a>thousands of ad creatives by their alignment to a brand-attribute phrase, with no</span>
-<span id="cb5-317"><a href="#cb5-317" aria-hidden="true" tabindex="-1"></a>labeled training data for that attribute. The second is **zero-shot transfer**: novel</span>
-<span id="cb5-318"><a href="#cb5-318" aria-hidden="true" tabindex="-1"></a>categories can be scored by writing them as text prompts rather than by collecting</span>
-<span id="cb5-319"><a href="#cb5-319" aria-hidden="true" tabindex="-1"></a>labeled examples, which collapses the cost of building an image classifier for a new</span>
-<span id="cb5-320"><a href="#cb5-320" aria-hidden="true" tabindex="-1"></a>marketing construct from a labeling project to a sentence. Successor models in the same</span>
-<span id="cb5-321"><a href="#cb5-321" aria-hidden="true" tabindex="-1"></a>family (for example SigLIP, which replaces the contrastive softmax with a sigmoid loss)</span>
-<span id="cb5-322"><a href="#cb5-322" aria-hidden="true" tabindex="-1"></a>refine the training objective while preserving the shared-space property.</span>
-<span id="cb5-323"><a href="#cb5-323" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-324"><a href="#cb5-324" aria-hidden="true" tabindex="-1"></a>For the analyst, the practical consequence is that the per-modality feature blocks of</span>
-<span id="cb5-325"><a href="#cb5-325" aria-hidden="true" tabindex="-1"></a>@sec-mmf-demo are increasingly drawn from a *single shared encoder family* rather than</span>
-<span id="cb5-326"><a href="#cb5-326" aria-hidden="true" tabindex="-1"></a>from separate, incommensurable models. When the text embedding and the image embedding</span>
-<span id="cb5-327"><a href="#cb5-327" aria-hidden="true" tabindex="-1"></a>already live in a common space, fusion becomes partly a matter of geometry rather than</span>
-<span id="cb5-328"><a href="#cb5-328" aria-hidden="true" tabindex="-1"></a>of ad hoc concatenation, and the comparability that contrastive pretraining buys is</span>
-<span id="cb5-329"><a href="#cb5-329" aria-hidden="true" tabindex="-1"></a>itself a form of joint fusion performed once, at scale, by the foundation model</span>
-<span id="cb5-330"><a href="#cb5-330" aria-hidden="true" tabindex="-1"></a>provider. In marketing, vision-language models of this lineage have been shown to</span>
-<span id="cb5-331"><a href="#cb5-331" aria-hidden="true" tabindex="-1"></a>classify marketing images effectively and to bridge the gap from image-only</span>
-<span id="cb5-332"><a href="#cb5-332" aria-hidden="true" tabindex="-1"></a>convolutional pipelines to general-purpose foundation models <span class="co">[</span><span class="ot">@witte2026language</span><span class="co">]</span>.</span>
-<span id="cb5-333"><a href="#cb5-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-334"><a href="#cb5-334" aria-hidden="true" tabindex="-1"></a><span class="fu">## Multimodal LLMs and the LLM-as-Instrument {#sec-mmf-mllm}</span></span>
-<span id="cb5-335"><a href="#cb5-335" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-336"><a href="#cb5-336" aria-hidden="true" tabindex="-1"></a>The contrastive models of the previous section produce *embeddings*. The next</span>
-<span id="cb5-337"><a href="#cb5-337" aria-hidden="true" tabindex="-1"></a>development absorbs vision encoders into generative language models to produce</span>
-<span id="cb5-338"><a href="#cb5-338" aria-hidden="true" tabindex="-1"></a>**multimodal large language models** (MLLMs): systems that ingest interleaved text and</span>
-<span id="cb5-339"><a href="#cb5-339" aria-hidden="true" tabindex="-1"></a>images (and, increasingly, audio and video frames) and *emit text*, including</span>
-<span id="cb5-340"><a href="#cb5-340" aria-hidden="true" tabindex="-1"></a>structured outputs. Architecturally, an MLLM typically couples a vision encoder of the</span>
-<span id="cb5-341"><a href="#cb5-341" aria-hidden="true" tabindex="-1"></a>CLIP lineage to a transformer language model (the transformer architecture is due to</span>
-<span id="cb5-342"><a href="#cb5-342" aria-hidden="true" tabindex="-1"></a>Vaswani and colleagues, NeurIPS 2017, and like CLIP is cited by name and venue rather</span>
-<span id="cb5-343"><a href="#cb5-343" aria-hidden="true" tabindex="-1"></a>than by a canonical Crossref DOI), so that image patches are projected into the</span>
-<span id="cb5-344"><a href="#cb5-344" aria-hidden="true" tabindex="-1"></a>language model's token space and processed alongside words. The GPT-4o-class, Claude,</span>
-<span id="cb5-345"><a href="#cb5-345" aria-hidden="true" tabindex="-1"></a>and Gemini model families, together with open-weight vision-language models, are the</span>
-<span id="cb5-346"><a href="#cb5-346" aria-hidden="true" tabindex="-1"></a>current instances. For the marketing researcher, what matters is less the architecture</span>
-<span id="cb5-347"><a href="#cb5-347" aria-hidden="true" tabindex="-1"></a>than the new *interface* it offers: one can hand the model an image and a question</span>
-<span id="cb5-348"><a href="#cb5-348" aria-hidden="true" tabindex="-1"></a>about it, or a product listing and an instruction to extract attributes, and receive a</span>
-<span id="cb5-349"><a href="#cb5-349" aria-hidden="true" tabindex="-1"></a>structured answer.</span>
+<span id="cb5-302"><a href="#cb5-302" aria-hidden="true" tabindex="-1"></a><span class="in">```{r mmf-compare, message=FALSE, warning=FALSE}</span></span>
+<span id="cb5-303"><a href="#cb5-303" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-304"><a href="#cb5-304" aria-hidden="true" tabindex="-1"></a>  <span class="at">approach =</span> <span class="fu">c</span>(<span class="st">"Text only"</span>, <span class="st">"Image only"</span>, <span class="st">"Behavior only"</span>,</span>
+<span id="cb5-305"><a href="#cb5-305" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Early fusion (concat)"</span>,</span>
+<span id="cb5-306"><a href="#cb5-306" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Late fusion (average)"</span>, <span class="st">"Late fusion (stacked)"</span>),</span>
+<span id="cb5-307"><a href="#cb5-307" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUC =</span> <span class="fu">round</span>(<span class="fu">c</span>(</span>
+<span id="cb5-308"><a href="#cb5-308" aria-hidden="true" tabindex="-1"></a>    <span class="fu">auc</span>(y[test], p_text), <span class="fu">auc</span>(y[test], p_img), <span class="fu">auc</span>(y[test], p_beh),</span>
+<span id="cb5-309"><a href="#cb5-309" aria-hidden="true" tabindex="-1"></a>    <span class="fu">auc</span>(y[test], p_early), <span class="fu">auc</span>(y[test], p_late_avg), <span class="fu">auc</span>(y[test], p_late_stack)</span>
+<span id="cb5-310"><a href="#cb5-310" aria-hidden="true" tabindex="-1"></a>  ), <span class="dv">3</span>)</span>
+<span id="cb5-311"><a href="#cb5-311" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-312"><a href="#cb5-312" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(results[<span class="fu">order</span>(<span class="sc">-</span>results<span class="sc">$</span>AUC), ], <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-313"><a href="#cb5-313" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-314"><a href="#cb5-314" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-315"><a href="#cb5-315" aria-hidden="true" tabindex="-1"></a>The qualitative pattern is what the data-generating process guarantees and what the</span>
+<span id="cb5-316"><a href="#cb5-316" aria-hidden="true" tabindex="-1"></a>literature reports on real data. Every unimodal model trails the fused models, because</span>
+<span id="cb5-317"><a href="#cb5-317" aria-hidden="true" tabindex="-1"></a>each sees only one of the three drivers. Among the fusion strategies, early and late</span>
+<span id="cb5-318"><a href="#cb5-318" aria-hidden="true" tabindex="-1"></a>fusion land close together on this clean synthetic problem; which one wins in practice</span>
+<span id="cb5-319"><a href="#cb5-319" aria-hidden="true" tabindex="-1"></a>depends on the data. Early fusion tends to lead when cross-modal interactions are strong</span>
+<span id="cb5-320"><a href="#cb5-320" aria-hidden="true" tabindex="-1"></a>and the sample is large enough to estimate a wide model, because only early (or joint)</span>
+<span id="cb5-321"><a href="#cb5-321" aria-hidden="true" tabindex="-1"></a>fusion can see raw features from two modalities together. Late fusion tends to lead when</span>
+<span id="cb5-322"><a href="#cb5-322" aria-hidden="true" tabindex="-1"></a>modalities are heterogeneous in scale and noise, when some modalities are frequently</span>
+<span id="cb5-323"><a href="#cb5-323" aria-hidden="true" tabindex="-1"></a>missing, or when sample size is tight relative to the concatenated dimension, because</span>
+<span id="cb5-324"><a href="#cb5-324" aria-hidden="true" tabindex="-1"></a>each base model is fit and regularized to its own modality and the combiner has few</span>
+<span id="cb5-325"><a href="#cb5-325" aria-hidden="true" tabindex="-1"></a>parameters to estimate. The honest takeaway is not that one strategy dominates but that</span>
+<span id="cb5-326"><a href="#cb5-326" aria-hidden="true" tabindex="-1"></a>the choice is an empirical, validated decision, and that fusing beats not fusing whenever</span>
+<span id="cb5-327"><a href="#cb5-327" aria-hidden="true" tabindex="-1"></a>the modalities carry complementary signal.</span>
+<span id="cb5-328"><a href="#cb5-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-329"><a href="#cb5-329" aria-hidden="true" tabindex="-1"></a><span class="fu">## Shared Representations and Contrastive Models {#sec-mmf-clip}</span></span>
+<span id="cb5-330"><a href="#cb5-330" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-331"><a href="#cb5-331" aria-hidden="true" tabindex="-1"></a>Early and late fusion as demonstrated above take the per-modality representations as</span>
+<span id="cb5-332"><a href="#cb5-332" aria-hidden="true" tabindex="-1"></a>*given*. The deeper question is where a shared, comparable representation across</span>
+<span id="cb5-333"><a href="#cb5-333" aria-hidden="true" tabindex="-1"></a>modalities comes from in the first place. The answer that reorganized the field is</span>
+<span id="cb5-334"><a href="#cb5-334" aria-hidden="true" tabindex="-1"></a>**contrastive image-text pretraining**, exemplified by CLIP (Contrastive</span>
+<span id="cb5-335"><a href="#cb5-335" aria-hidden="true" tabindex="-1"></a>Language-Image Pre-training), introduced by Radford and colleagues at OpenAI in 2021</span>
+<span id="cb5-336"><a href="#cb5-336" aria-hidden="true" tabindex="-1"></a>(ICML 2021; the foundational paper has no canonical Crossref DOI and is cited here by</span>
+<span id="cb5-337"><a href="#cb5-337" aria-hidden="true" tabindex="-1"></a>name and venue). The idea is conceptually simple and is best understood as a learned,</span>
+<span id="cb5-338"><a href="#cb5-338" aria-hidden="true" tabindex="-1"></a>*joint* embedding space.</span>
+<span id="cb5-339"><a href="#cb5-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-340"><a href="#cb5-340" aria-hidden="true" tabindex="-1"></a>CLIP trains two encoders together: an image encoder and a text encoder. It is fed a very</span>
+<span id="cb5-341"><a href="#cb5-341" aria-hidden="true" tabindex="-1"></a>large corpus of image-caption pairs scraped from the web. For each batch, it computes an</span>
+<span id="cb5-342"><a href="#cb5-342" aria-hidden="true" tabindex="-1"></a>image embedding for every image and a text embedding for every caption, and it optimizes</span>
+<span id="cb5-343"><a href="#cb5-343" aria-hidden="true" tabindex="-1"></a>a contrastive objective: the embedding of an image should have high similarity (inner</span>
+<span id="cb5-344"><a href="#cb5-344" aria-hidden="true" tabindex="-1"></a>product) to the embedding of *its own* caption and low similarity to the embeddings of</span>
+<span id="cb5-345"><a href="#cb5-345" aria-hidden="true" tabindex="-1"></a>the *other* captions in the batch, and symmetrically for captions. After training on</span>
+<span id="cb5-346"><a href="#cb5-346" aria-hidden="true" tabindex="-1"></a>hundreds of millions of pairs, the two encoders share a single embedding space in which</span>
+<span id="cb5-347"><a href="#cb5-347" aria-hidden="true" tabindex="-1"></a>an image of a red sneaker and the text "a red sneaker" land near each other, while</span>
+<span id="cb5-348"><a href="#cb5-348" aria-hidden="true" tabindex="-1"></a>unrelated images and texts land far apart. @fig-fus-clip sketches the training</span>
+<span id="cb5-349"><a href="#cb5-349" aria-hidden="true" tabindex="-1"></a>geometry and the shared space it produces.</span>
 <span id="cb5-350"><a href="#cb5-350" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-351"><a href="#cb5-351" aria-hidden="true" tabindex="-1"></a>This reframes the foundation model as a **measurement instrument**. Rather than training</span>
-<span id="cb5-352"><a href="#cb5-352" aria-hidden="true" tabindex="-1"></a>a bespoke classifier for each marketing construct, the analyst prompts a general model</span>
-<span id="cb5-353"><a href="#cb5-353" aria-hidden="true" tabindex="-1"></a>to read an artifact and emit a measure: the sentiment of a review, the attributes</span>
-<span id="cb5-354"><a href="#cb5-354" aria-hidden="true" tabindex="-1"></a>visible in a product photo, the emotional arc of a video ad, the persuasion tactics in</span>
-<span id="cb5-355"><a href="#cb5-355" aria-hidden="true" tabindex="-1"></a>ad copy. The text chapter introduced the LLM-as-annotator pattern; the multimodal</span>
-<span id="cb5-356"><a href="#cb5-356" aria-hidden="true" tabindex="-1"></a>version extends it across modalities, and the integrative survey of machine learning and</span>
-<span id="cb5-357"><a href="#cb5-357" aria-hidden="true" tabindex="-1"></a>artificial intelligence in marketing situates this shift within the broader arc of</span>
-<span id="cb5-358"><a href="#cb5-358" aria-hidden="true" tabindex="-1"></a>connecting computational power to substantive marketing insight <span class="co">[</span><span class="ot">@ma2020machine</span><span class="co">]</span>. The</span>
-<span id="cb5-359"><a href="#cb5-359" aria-hidden="true" tabindex="-1"></a>appeal is obvious: speed, breadth, and zero marginal labeling cost. The cautions are</span>
-<span id="cb5-360"><a href="#cb5-360" aria-hidden="true" tabindex="-1"></a>equally real and are taken up in @sec-mmf-demand, because an LLM-derived measure is a</span>
-<span id="cb5-361"><a href="#cb5-361" aria-hidden="true" tabindex="-1"></a>generated regressor par excellence, produced by an opaque model whose errors may be</span>
-<span id="cb5-362"><a href="#cb5-362" aria-hidden="true" tabindex="-1"></a>systematic and outcome-correlated.</span>
-<span id="cb5-363"><a href="#cb5-363" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-364"><a href="#cb5-364" aria-hidden="true" tabindex="-1"></a>A more radical proposal pushes the instrument metaphor further: the **LLM as simulated</span>
-<span id="cb5-365"><a href="#cb5-365" aria-hidden="true" tabindex="-1"></a>respondent**, or *silicon sampling*. Here the language model is prompted to role-play a</span>
-<span id="cb5-366"><a href="#cb5-366" aria-hidden="true" tabindex="-1"></a>consumer with specified demographics and dispositions, and its responses are treated as</span>
-<span id="cb5-367"><a href="#cb5-367" aria-hidden="true" tabindex="-1"></a>synthetic survey or experimental data, a "silicon sample" standing in for human</span>
-<span id="cb5-368"><a href="#cb5-368" aria-hidden="true" tabindex="-1"></a>participants. The attraction is the prospect of cheap, fast pilot studies, pretesting of</span>
-<span id="cb5-369"><a href="#cb5-369" aria-hidden="true" tabindex="-1"></a>stimuli, and exploration of segments that are expensive to recruit. The literature that</span>
-<span id="cb5-370"><a href="#cb5-370" aria-hidden="true" tabindex="-1"></a>examines this practice in consumer and marketing research is explicit that it is a</span>
-<span id="cb5-371"><a href="#cb5-371" aria-hidden="true" tabindex="-1"></a>frontier with serious hazards rather than a settled method, and it offers guidelines</span>
-<span id="cb5-372"><a href="#cb5-372" aria-hidden="true" tabindex="-1"></a>accordingly <span class="co">[</span><span class="ot">@sarstedt2024silicon</span><span class="co">]</span>. The central concerns are that silicon samples can</span>
-<span id="cb5-373"><a href="#cb5-373" aria-hidden="true" tabindex="-1"></a>homogenize away the heterogeneity that is the whole point of sampling, can reflect the</span>
-<span id="cb5-374"><a href="#cb5-374" aria-hidden="true" tabindex="-1"></a>biases and the training-data demographics of the underlying model rather than any real</span>
-<span id="cb5-375"><a href="#cb5-375" aria-hidden="true" tabindex="-1"></a>population, can be confidently wrong in ways that are hard to detect without the human</span>
-<span id="cb5-376"><a href="#cb5-376" aria-hidden="true" tabindex="-1"></a>data they are meant to replace, and can drift as the underlying model is updated, so</span>
-<span id="cb5-377"><a href="#cb5-377" aria-hidden="true" tabindex="-1"></a>that a "respondent" is not a stable object across time. The responsible posture treats</span>
-<span id="cb5-378"><a href="#cb5-378" aria-hidden="true" tabindex="-1"></a>silicon samples as a hypothesis-generating and stimulus-pretesting tool whose outputs</span>
-<span id="cb5-379"><a href="#cb5-379" aria-hidden="true" tabindex="-1"></a>require validation against human data before they bear any inferential weight, never as</span>
-<span id="cb5-380"><a href="#cb5-380" aria-hidden="true" tabindex="-1"></a>a drop-in substitute for primary research.</span>
-<span id="cb5-381"><a href="#cb5-381" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-382"><a href="#cb5-382" aria-hidden="true" tabindex="-1"></a><span class="fu">## Demand and Response Estimation with Multimodal Data {#sec-mmf-demand}</span></span>
-<span id="cb5-383"><a href="#cb5-383" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-384"><a href="#cb5-384" aria-hidden="true" tabindex="-1"></a>The destination of all this representation work, for the empirical marketing scientist,</span>
-<span id="cb5-385"><a href="#cb5-385" aria-hidden="true" tabindex="-1"></a>is usually a model of demand or response in which text and image features appear on the</span>
-<span id="cb5-386"><a href="#cb5-386" aria-hidden="true" tabindex="-1"></a>right-hand side. A flagship example fuses the visual frames, the audio, and the spoken</span>
-<span id="cb5-387"><a href="#cb5-387" aria-hidden="true" tabindex="-1"></a>and on-screen text of short-form influencer video advertisements to predict sales,</span>
-<span id="cb5-388"><a href="#cb5-388" aria-hidden="true" tabindex="-1"></a>demonstrating both that the fused representation carries real predictive signal and that</span>
-<span id="cb5-389"><a href="#cb5-389" aria-hidden="true" tabindex="-1"></a>the fusion of modalities outperforms any one of them <span class="co">[</span><span class="ot">@yang2024engagement</span><span class="co">]</span>. The pattern</span>
-<span id="cb5-390"><a href="#cb5-390" aria-hidden="true" tabindex="-1"></a>generalizes across artifacts and outcomes: image features predict product return rates</span>
-<span id="cb5-391"><a href="#cb5-391" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@dzyabura2023images</span><span class="co">]</span>, visual brand portrayal extracted from social images predicts brand</span>
-<span id="cb5-392"><a href="#cb5-392" aria-hidden="true" tabindex="-1"></a>perceptions <span class="co">[</span><span class="ot">@liu2020; @dzyabura2021visual</span><span class="co">]</span>, and combining unstructured text and image</span>
-<span id="cb5-393"><a href="#cb5-393" aria-hidden="true" tabindex="-1"></a>with structured data at scale predicts demand <span class="co">[</span><span class="ot">@liu2016structured</span><span class="co">]</span>, each by inserting a</span>
-<span id="cb5-394"><a href="#cb5-394" aria-hidden="true" tabindex="-1"></a>learned representation into an otherwise standard predictive or causal model. Live</span>
-<span id="cb5-395"><a href="#cb5-395" aria-hidden="true" tabindex="-1"></a>commerce is the most fully multimodal case: frameworks that fuse a host's audio, visual,</span>
-<span id="cb5-396"><a href="#cb5-396" aria-hidden="true" tabindex="-1"></a>and verbal signals predict within-stream sales <span class="co">[</span><span class="ot">@xu2024multimodal; @xu2024memf</span><span class="co">]</span> and</span>
-<span id="cb5-397"><a href="#cb5-397" aria-hidden="true" tabindex="-1"></a>attribute them to specific on-screen behaviors via explainable AI <span class="co">[</span><span class="ot">@wen2026livestream</span><span class="co">]</span>.</span>
-<span id="cb5-398"><a href="#cb5-398" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-399"><a href="#cb5-399" aria-hidden="true" tabindex="-1"></a>Precisely because the representation is *learned*, the identification cautions that have</span>
-<span id="cb5-400"><a href="#cb5-400" aria-hidden="true" tabindex="-1"></a>recurred throughout this part apply with full force, and fusion compounds them. Three</span>
-<span id="cb5-401"><a href="#cb5-401" aria-hidden="true" tabindex="-1"></a>deserve restatement in the multimodal setting.</span>
-<span id="cb5-402"><a href="#cb5-402" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-403"><a href="#cb5-403" aria-hidden="true" tabindex="-1"></a>The first is the **generated-regressor problem**. Every fused feature is the output of</span>
-<span id="cb5-404"><a href="#cb5-404" aria-hidden="true" tabindex="-1"></a>an upstream encoder estimated with error. Inserting it into a second-stage regression</span>
-<span id="cb5-405"><a href="#cb5-405" aria-hidden="true" tabindex="-1"></a>as if it were measured without error understates standard errors and, more seriously,</span>
-<span id="cb5-406"><a href="#cb5-406" aria-hidden="true" tabindex="-1"></a>can bias coefficients when the encoder's error is correlated with the outcome. With</span>
-<span id="cb5-407"><a href="#cb5-407" aria-hidden="true" tabindex="-1"></a>several modalities, there are several such channels, and they need not be independent;</span>
-<span id="cb5-408"><a href="#cb5-408" aria-hidden="true" tabindex="-1"></a>a shared foundation-model backbone can induce correlated errors *across* the text and</span>
-<span id="cb5-409"><a href="#cb5-409" aria-hidden="true" tabindex="-1"></a>image features that the analyst treats as separate covariates. The honest analysis</span>
-<span id="cb5-410"><a href="#cb5-410" aria-hidden="true" tabindex="-1"></a>acknowledges that the right-hand-side variables are estimates and propagates that</span>
-<span id="cb5-411"><a href="#cb5-411" aria-hidden="true" tabindex="-1"></a>uncertainty, whether by sample splitting, by bootstrapping the full pipeline including</span>
-<span id="cb5-412"><a href="#cb5-412" aria-hidden="true" tabindex="-1"></a>the encoding step, or by the two-stage corrections the methodology chapters develop.</span>
-<span id="cb5-413"><a href="#cb5-413" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-414"><a href="#cb5-414" aria-hidden="true" tabindex="-1"></a>The second is **endogeneity of the artifact**. Multimodal artifacts are choices.</span>
-<span id="cb5-415"><a href="#cb5-415" aria-hidden="true" tabindex="-1"></a>A firm selects which photographs to show, an influencer designs a video, a consumer</span>
-<span id="cb5-416"><a href="#cb5-416" aria-hidden="true" tabindex="-1"></a>decides whether and what to post. The features extracted from these artifacts are</span>
-<span id="cb5-417"><a href="#cb5-417" aria-hidden="true" tabindex="-1"></a>therefore correlated with the unobserved strategies and types that also drive the</span>
-<span id="cb5-418"><a href="#cb5-418" aria-hidden="true" tabindex="-1"></a>outcome. A measured association between a visual feature and sales may reflect that</span>
-<span id="cb5-419"><a href="#cb5-419" aria-hidden="true" tabindex="-1"></a>better firms make better images *and* sell more, not that the image causes the sale.</span>
-<span id="cb5-420"><a href="#cb5-420" aria-hidden="true" tabindex="-1"></a>Fusion does not solve this and can obscure it by burying the endogenous artifact inside</span>
-<span id="cb5-421"><a href="#cb5-421" aria-hidden="true" tabindex="-1"></a>a high-dimensional embedding where the analyst loses sight of it. Credible causal claims</span>
-<span id="cb5-422"><a href="#cb5-422" aria-hidden="true" tabindex="-1"></a>still require the identification apparatus of the rest of the book: experiments,</span>
-<span id="cb5-423"><a href="#cb5-423" aria-hidden="true" tabindex="-1"></a>instruments, or design-based variation in the artifact.</span>
-<span id="cb5-424"><a href="#cb5-424" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-425"><a href="#cb5-425" aria-hidden="true" tabindex="-1"></a>The third is **construct validity of the learned measure**. A CLIP similarity to</span>
-<span id="cb5-426"><a href="#cb5-426" aria-hidden="true" tabindex="-1"></a>"luxurious," or an MLLM's judgment that an ad is "authentic," is a model's operational</span>
-<span id="cb5-427"><a href="#cb5-427" aria-hidden="true" tabindex="-1"></a>proxy for a human construct, and the proxy must be validated against human judgment on a</span>
-<span id="cb5-428"><a href="#cb5-428" aria-hidden="true" tabindex="-1"></a>held-out sample before it is trusted, exactly as the sentiment-analysis benchmarking</span>
-<span id="cb5-429"><a href="#cb5-429" aria-hidden="true" tabindex="-1"></a>logic of the text chapter requires. A fused, foundation-model-derived feature is more</span>
-<span id="cb5-430"><a href="#cb5-430" aria-hidden="true" tabindex="-1"></a>opaque than a hand-built one, which raises rather than lowers the validation burden. The</span>
-<span id="cb5-431"><a href="#cb5-431" aria-hidden="true" tabindex="-1"></a>convenience of zero-shot measurement is real, but it does not exempt the measure from</span>
-<span id="cb5-432"><a href="#cb5-432" aria-hidden="true" tabindex="-1"></a>the requirement that it actually measure what it claims to.</span>
-<span id="cb5-433"><a href="#cb5-433" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-434"><a href="#cb5-434" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#sec-mmf-production}</span></span>
-<span id="cb5-435"><a href="#cb5-435" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-436"><a href="#cb5-436" aria-hidden="true" tabindex="-1"></a>Operationalizing multimodal fusion at scale is as much an engineering problem as a</span>
-<span id="cb5-437"><a href="#cb5-437" aria-hidden="true" tabindex="-1"></a>modeling one, and the production patterns have converged on a recognizable stack.</span>
+<span id="cb5-353"><a href="#cb5-353" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb5-354"><a href="#cb5-354" aria-hidden="true" tabindex="-1"></a>%%| label: fig-fus-clip</span>
+<span id="cb5-355"><a href="#cb5-355" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Contrastive image-text pretraining. Two encoders trained on web-scale image-caption pairs place each image near its own caption and far from the others in one shared embedding space, where cross-modal similarity is meaningful and new constructs can be scored zero-shot from a text prompt.</span><span class="ot">"</span></span>
+<span id="cb5-356"><a href="#cb5-356" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb5-357"><a href="#cb5-357" aria-hidden="true" tabindex="-1"></a>  IMG[<span class="ot">"</span><span class="st">Image</span><span class="ot">"</span>] --&gt; IE[<span class="ot">"</span><span class="st">Image encoder</span><span class="ot">"</span>]</span>
+<span id="cb5-358"><a href="#cb5-358" aria-hidden="true" tabindex="-1"></a>  CAP[<span class="ot">"</span><span class="st">Its caption</span><span class="ot">"</span>] --&gt; TXE[<span class="ot">"</span><span class="st">Text encoder</span><span class="ot">"</span>]</span>
+<span id="cb5-359"><a href="#cb5-359" aria-hidden="true" tabindex="-1"></a>  subgraph SP[<span class="ot">"</span><span class="st">Shared embedding space</span><span class="ot">"</span>]</span>
+<span id="cb5-360"><a href="#cb5-360" aria-hidden="true" tabindex="-1"></a>    VI[<span class="ot">"</span><span class="st">Image&lt;br/&gt;embedding</span><span class="ot">"</span>] ---|<span class="ot">"</span><span class="st">contrastive objective:&lt;br/&gt;own caption near,&lt;br/&gt;other captions far</span><span class="ot">"</span>| VT[<span class="ot">"</span><span class="st">Text&lt;br/&gt;embedding</span><span class="ot">"</span>]</span>
+<span id="cb5-361"><a href="#cb5-361" aria-hidden="true" tabindex="-1"></a>  end</span>
+<span id="cb5-362"><a href="#cb5-362" aria-hidden="true" tabindex="-1"></a>  IE --&gt; VI</span>
+<span id="cb5-363"><a href="#cb5-363" aria-hidden="true" tabindex="-1"></a>  TXE --&gt; VT</span>
+<span id="cb5-364"><a href="#cb5-364" aria-hidden="true" tabindex="-1"></a>  SP --&gt; ZS[<span class="ot">"</span><span class="st">Zero-shot scoring:&lt;br/&gt;any image against&lt;br/&gt;any text prompt</span><span class="ot">"</span>]</span>
+<span id="cb5-365"><a href="#cb5-365" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-366"><a href="#cb5-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-367"><a href="#cb5-367" aria-hidden="true" tabindex="-1"></a>Two properties make this transformative for marketing measurement. The first is **a</span>
+<span id="cb5-368"><a href="#cb5-368" aria-hidden="true" tabindex="-1"></a>common space**: because images and text are embedded into the *same* geometry, the</span>
+<span id="cb5-369"><a href="#cb5-369" aria-hidden="true" tabindex="-1"></a>cosine similarity between an image embedding and a text embedding is meaningful. One can</span>
+<span id="cb5-370"><a href="#cb5-370" aria-hidden="true" tabindex="-1"></a>score how well a product photo matches the phrase "premium and minimalist," or rank</span>
+<span id="cb5-371"><a href="#cb5-371" aria-hidden="true" tabindex="-1"></a>thousands of ad creatives by their alignment to a brand-attribute phrase, with no</span>
+<span id="cb5-372"><a href="#cb5-372" aria-hidden="true" tabindex="-1"></a>labeled training data for that attribute. The second is **zero-shot transfer**: novel</span>
+<span id="cb5-373"><a href="#cb5-373" aria-hidden="true" tabindex="-1"></a>categories can be scored by writing them as text prompts rather than by collecting</span>
+<span id="cb5-374"><a href="#cb5-374" aria-hidden="true" tabindex="-1"></a>labeled examples, which collapses the cost of building an image classifier for a new</span>
+<span id="cb5-375"><a href="#cb5-375" aria-hidden="true" tabindex="-1"></a>marketing construct from a labeling project to a sentence. Successor models in the same</span>
+<span id="cb5-376"><a href="#cb5-376" aria-hidden="true" tabindex="-1"></a>family (for example SigLIP, which replaces the contrastive softmax with a sigmoid loss)</span>
+<span id="cb5-377"><a href="#cb5-377" aria-hidden="true" tabindex="-1"></a>refine the training objective while preserving the shared-space property.</span>
+<span id="cb5-378"><a href="#cb5-378" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-379"><a href="#cb5-379" aria-hidden="true" tabindex="-1"></a>For the analyst, the practical consequence is that the per-modality feature blocks of</span>
+<span id="cb5-380"><a href="#cb5-380" aria-hidden="true" tabindex="-1"></a>@sec-mmf-demo are increasingly drawn from a *single shared encoder family* rather than</span>
+<span id="cb5-381"><a href="#cb5-381" aria-hidden="true" tabindex="-1"></a>from separate, incommensurable models. When the text embedding and the image embedding</span>
+<span id="cb5-382"><a href="#cb5-382" aria-hidden="true" tabindex="-1"></a>already live in a common space, fusion becomes partly a matter of geometry rather than</span>
+<span id="cb5-383"><a href="#cb5-383" aria-hidden="true" tabindex="-1"></a>of ad hoc concatenation, and the comparability that contrastive pretraining buys is</span>
+<span id="cb5-384"><a href="#cb5-384" aria-hidden="true" tabindex="-1"></a>itself a form of joint fusion performed once, at scale, by the foundation model</span>
+<span id="cb5-385"><a href="#cb5-385" aria-hidden="true" tabindex="-1"></a>provider. In marketing, vision-language models of this lineage have been shown to</span>
+<span id="cb5-386"><a href="#cb5-386" aria-hidden="true" tabindex="-1"></a>classify marketing images effectively and to bridge the gap from image-only</span>
+<span id="cb5-387"><a href="#cb5-387" aria-hidden="true" tabindex="-1"></a>convolutional pipelines to general-purpose foundation models <span class="co">[</span><span class="ot">@witte2026language</span><span class="co">]</span>.</span>
+<span id="cb5-388"><a href="#cb5-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-389"><a href="#cb5-389" aria-hidden="true" tabindex="-1"></a><span class="fu">## Multimodal LLMs and the LLM-as-Instrument {#sec-mmf-mllm}</span></span>
+<span id="cb5-390"><a href="#cb5-390" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-391"><a href="#cb5-391" aria-hidden="true" tabindex="-1"></a>The contrastive models of the previous section produce *embeddings*. The next</span>
+<span id="cb5-392"><a href="#cb5-392" aria-hidden="true" tabindex="-1"></a>development absorbs vision encoders into generative language models to produce</span>
+<span id="cb5-393"><a href="#cb5-393" aria-hidden="true" tabindex="-1"></a>**multimodal large language models** (MLLMs): systems that ingest interleaved text and</span>
+<span id="cb5-394"><a href="#cb5-394" aria-hidden="true" tabindex="-1"></a>images (and, increasingly, audio and video frames) and *emit text*, including</span>
+<span id="cb5-395"><a href="#cb5-395" aria-hidden="true" tabindex="-1"></a>structured outputs. Architecturally, an MLLM typically couples a vision encoder of the</span>
+<span id="cb5-396"><a href="#cb5-396" aria-hidden="true" tabindex="-1"></a>CLIP lineage to a transformer language model (the transformer architecture is due to</span>
+<span id="cb5-397"><a href="#cb5-397" aria-hidden="true" tabindex="-1"></a>Vaswani and colleagues, NeurIPS 2017, and like CLIP is cited by name and venue rather</span>
+<span id="cb5-398"><a href="#cb5-398" aria-hidden="true" tabindex="-1"></a>than by a canonical Crossref DOI), so that image patches are projected into the</span>
+<span id="cb5-399"><a href="#cb5-399" aria-hidden="true" tabindex="-1"></a>language model's token space and processed alongside words. The GPT-4o-class, Claude,</span>
+<span id="cb5-400"><a href="#cb5-400" aria-hidden="true" tabindex="-1"></a>and Gemini model families, together with open-weight vision-language models, are the</span>
+<span id="cb5-401"><a href="#cb5-401" aria-hidden="true" tabindex="-1"></a>current instances. For the marketing researcher, what matters is less the architecture</span>
+<span id="cb5-402"><a href="#cb5-402" aria-hidden="true" tabindex="-1"></a>than the new *interface* it offers: one can hand the model an image and a question</span>
+<span id="cb5-403"><a href="#cb5-403" aria-hidden="true" tabindex="-1"></a>about it, or a product listing and an instruction to extract attributes, and receive a</span>
+<span id="cb5-404"><a href="#cb5-404" aria-hidden="true" tabindex="-1"></a>structured answer.</span>
+<span id="cb5-405"><a href="#cb5-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-406"><a href="#cb5-406" aria-hidden="true" tabindex="-1"></a>This reframes the foundation model as a **measurement instrument**. Rather than training</span>
+<span id="cb5-407"><a href="#cb5-407" aria-hidden="true" tabindex="-1"></a>a bespoke classifier for each marketing construct, the analyst prompts a general model</span>
+<span id="cb5-408"><a href="#cb5-408" aria-hidden="true" tabindex="-1"></a>to read an artifact and emit a measure: the sentiment of a review, the attributes</span>
+<span id="cb5-409"><a href="#cb5-409" aria-hidden="true" tabindex="-1"></a>visible in a product photo, the emotional arc of a video ad, the persuasion tactics in</span>
+<span id="cb5-410"><a href="#cb5-410" aria-hidden="true" tabindex="-1"></a>ad copy. The text chapter introduced the LLM-as-annotator pattern; the multimodal</span>
+<span id="cb5-411"><a href="#cb5-411" aria-hidden="true" tabindex="-1"></a>version extends it across modalities, and the integrative survey of machine learning and</span>
+<span id="cb5-412"><a href="#cb5-412" aria-hidden="true" tabindex="-1"></a>artificial intelligence in marketing situates this shift within the broader arc of</span>
+<span id="cb5-413"><a href="#cb5-413" aria-hidden="true" tabindex="-1"></a>connecting computational power to substantive marketing insight <span class="co">[</span><span class="ot">@ma2020machine</span><span class="co">]</span>. The</span>
+<span id="cb5-414"><a href="#cb5-414" aria-hidden="true" tabindex="-1"></a>appeal is obvious: speed, breadth, and zero marginal labeling cost. The cautions are</span>
+<span id="cb5-415"><a href="#cb5-415" aria-hidden="true" tabindex="-1"></a>equally real and are taken up in @sec-mmf-demand, because an LLM-derived measure is a</span>
+<span id="cb5-416"><a href="#cb5-416" aria-hidden="true" tabindex="-1"></a>generated regressor par excellence, produced by an opaque model whose errors may be</span>
+<span id="cb5-417"><a href="#cb5-417" aria-hidden="true" tabindex="-1"></a>systematic and outcome-correlated.</span>
+<span id="cb5-418"><a href="#cb5-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-419"><a href="#cb5-419" aria-hidden="true" tabindex="-1"></a>A more radical proposal pushes the instrument metaphor further: the **LLM as simulated</span>
+<span id="cb5-420"><a href="#cb5-420" aria-hidden="true" tabindex="-1"></a>respondent**, or *silicon sampling*. Here the language model is prompted to role-play a</span>
+<span id="cb5-421"><a href="#cb5-421" aria-hidden="true" tabindex="-1"></a>consumer with specified demographics and dispositions, and its responses are treated as</span>
+<span id="cb5-422"><a href="#cb5-422" aria-hidden="true" tabindex="-1"></a>synthetic survey or experimental data, a "silicon sample" standing in for human</span>
+<span id="cb5-423"><a href="#cb5-423" aria-hidden="true" tabindex="-1"></a>participants. The attraction is the prospect of cheap, fast pilot studies, pretesting of</span>
+<span id="cb5-424"><a href="#cb5-424" aria-hidden="true" tabindex="-1"></a>stimuli, and exploration of segments that are expensive to recruit. The literature that</span>
+<span id="cb5-425"><a href="#cb5-425" aria-hidden="true" tabindex="-1"></a>examines this practice in consumer and marketing research is explicit that it is a</span>
+<span id="cb5-426"><a href="#cb5-426" aria-hidden="true" tabindex="-1"></a>frontier with serious hazards rather than a settled method, and it offers guidelines</span>
+<span id="cb5-427"><a href="#cb5-427" aria-hidden="true" tabindex="-1"></a>accordingly <span class="co">[</span><span class="ot">@sarstedt2024silicon</span><span class="co">]</span>. The central concerns are that silicon samples can</span>
+<span id="cb5-428"><a href="#cb5-428" aria-hidden="true" tabindex="-1"></a>homogenize away the heterogeneity that is the whole point of sampling, can reflect the</span>
+<span id="cb5-429"><a href="#cb5-429" aria-hidden="true" tabindex="-1"></a>biases and the training-data demographics of the underlying model rather than any real</span>
+<span id="cb5-430"><a href="#cb5-430" aria-hidden="true" tabindex="-1"></a>population, can be confidently wrong in ways that are hard to detect without the human</span>
+<span id="cb5-431"><a href="#cb5-431" aria-hidden="true" tabindex="-1"></a>data they are meant to replace, and can drift as the underlying model is updated, so</span>
+<span id="cb5-432"><a href="#cb5-432" aria-hidden="true" tabindex="-1"></a>that a "respondent" is not a stable object across time. The responsible posture treats</span>
+<span id="cb5-433"><a href="#cb5-433" aria-hidden="true" tabindex="-1"></a>silicon samples as a hypothesis-generating and stimulus-pretesting tool whose outputs</span>
+<span id="cb5-434"><a href="#cb5-434" aria-hidden="true" tabindex="-1"></a>require validation against human data before they bear any inferential weight, never as</span>
+<span id="cb5-435"><a href="#cb5-435" aria-hidden="true" tabindex="-1"></a>a drop-in substitute for primary research.</span>
+<span id="cb5-436"><a href="#cb5-436" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-437"><a href="#cb5-437" aria-hidden="true" tabindex="-1"></a><span class="fu">## Demand and Response Estimation with Multimodal Data {#sec-mmf-demand}</span></span>
 <span id="cb5-438"><a href="#cb5-438" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-439"><a href="#cb5-439" aria-hidden="true" tabindex="-1"></a>At the center sits the **embedding pipeline**. Raw artifacts (images, text, audio,</span>
-<span id="cb5-440"><a href="#cb5-440" aria-hidden="true" tabindex="-1"></a>video frames) are passed through encoders, usually hosted **foundation-model APIs** or</span>
-<span id="cb5-441"><a href="#cb5-441" aria-hidden="true" tabindex="-1"></a>self-hosted open-weight models, to produce embeddings. Because encoding is the expensive</span>
-<span id="cb5-442"><a href="#cb5-442" aria-hidden="true" tabindex="-1"></a>step and embeddings are reused across many downstream tasks, embeddings are computed once</span>
-<span id="cb5-443"><a href="#cb5-443" aria-hidden="true" tabindex="-1"></a>and persisted rather than recomputed per model. This is the role of the **feature store**:</span>
-<span id="cb5-444"><a href="#cb5-444" aria-hidden="true" tabindex="-1"></a>a system that holds precomputed per-entity features, including embeddings, keyed by entity</span>
-<span id="cb5-445"><a href="#cb5-445" aria-hidden="true" tabindex="-1"></a>(customer, product, creative) and timestamp, and serves them consistently to both training</span>
-<span id="cb5-446"><a href="#cb5-446" aria-hidden="true" tabindex="-1"></a>and inference. The feature store solves two problems that otherwise sink multimodal</span>
-<span id="cb5-447"><a href="#cb5-447" aria-hidden="true" tabindex="-1"></a>projects. It enforces **train-serve consistency**, guaranteeing that the embedding a model</span>
-<span id="cb5-448"><a href="#cb5-448" aria-hidden="true" tabindex="-1"></a>sees at inference time was produced by the same encoder version as the one it was trained</span>
-<span id="cb5-449"><a href="#cb5-449" aria-hidden="true" tabindex="-1"></a>on, and it enables **point-in-time correctness**, returning the feature value as it stood</span>
-<span id="cb5-450"><a href="#cb5-450" aria-hidden="true" tabindex="-1"></a>at the moment of a historical event rather than its current value, which is essential to</span>
-<span id="cb5-451"><a href="#cb5-451" aria-hidden="true" tabindex="-1"></a>avoid leakage in any model trained on time-stamped marketing data.</span>
-<span id="cb5-452"><a href="#cb5-452" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-453"><a href="#cb5-453" aria-hidden="true" tabindex="-1"></a>**Versioning** is the discipline that holds the stack together. Foundation models are</span>
-<span id="cb5-454"><a href="#cb5-454" aria-hidden="true" tabindex="-1"></a>updated, and an embedding produced by one model version is not interchangeable with one</span>
-<span id="cb5-455"><a href="#cb5-455" aria-hidden="true" tabindex="-1"></a>produced by another; cosine similarities and learned downstream weights are only valid</span>
-<span id="cb5-456"><a href="#cb5-456" aria-hidden="true" tabindex="-1"></a>within a fixed encoder version. Production systems therefore pin encoder versions, store</span>
-<span id="cb5-457"><a href="#cb5-457" aria-hidden="true" tabindex="-1"></a>the version alongside every embedding, and treat a model upgrade as a re-embedding and</span>
-<span id="cb5-458"><a href="#cb5-458" aria-hidden="true" tabindex="-1"></a>re-validation event, not a transparent swap. This is the engineering face of the silicon-</span>
-<span id="cb5-459"><a href="#cb5-459" aria-hidden="true" tabindex="-1"></a>sampling drift concern from @sec-mmf-mllm: a measure built on a foundation model inherits</span>
-<span id="cb5-460"><a href="#cb5-460" aria-hidden="true" tabindex="-1"></a>that model's mutability.</span>
-<span id="cb5-461"><a href="#cb5-461" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-462"><a href="#cb5-462" aria-hidden="true" tabindex="-1"></a>A few further practices recur. Embeddings are often **dimension-reduced** (by PCA or a</span>
-<span id="cb5-463"><a href="#cb5-463" aria-hidden="true" tabindex="-1"></a>learned projection) before entering downstream models, to control the width of the fused</span>
-<span id="cb5-464"><a href="#cb5-464" aria-hidden="true" tabindex="-1"></a>input. **Vector databases** index embeddings for similarity search and retrieval, which</span>
-<span id="cb5-465"><a href="#cb5-465" aria-hidden="true" tabindex="-1"></a>is the substrate of retrieval-augmented pipelines. And **cost and latency** govern</span>
-<span id="cb5-466"><a href="#cb5-466" aria-hidden="true" tabindex="-1"></a>architecture choices in production in a way they never do in a paper: batch precomputation</span>
-<span id="cb5-467"><a href="#cb5-467" aria-hidden="true" tabindex="-1"></a>of embeddings, caching, and the choice between a hosted API and a self-hosted model are</span>
-<span id="cb5-468"><a href="#cb5-468" aria-hidden="true" tabindex="-1"></a>driven by throughput and unit economics as much as by accuracy. None of this changes the</span>
-<span id="cb5-469"><a href="#cb5-469" aria-hidden="true" tabindex="-1"></a>statistics, but all of it determines whether a multimodal model is something a firm can</span>
-<span id="cb5-470"><a href="#cb5-470" aria-hidden="true" tabindex="-1"></a>actually run.</span>
-<span id="cb5-471"><a href="#cb5-471" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-472"><a href="#cb5-472" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb5-473"><a href="#cb5-473" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: multimodal fusion</span></span>
-<span id="cb5-474"><a href="#cb5-474" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-475"><a href="#cb5-475" aria-hidden="true" tabindex="-1"></a>The early-versus-late fusion demonstration in this chapter runs on base R and standard</span>
-<span id="cb5-476"><a href="#cb5-476" aria-hidden="true" tabindex="-1"></a>modeling packages. A production fusion stack draws on open encoders—<span class="in">`sentence-transformers`</span></span>
-<span id="cb5-477"><a href="#cb5-477" aria-hidden="true" tabindex="-1"></a>and Hugging Face models for text, torchvision/<span class="in">`timm`</span> backbones for images (the ResNet</span>
-<span id="cb5-478"><a href="#cb5-478" aria-hidden="true" tabindex="-1"></a>reference code accompanies @he2016resnet), and open multimodal models—plus a vector store</span>
-<span id="cb5-479"><a href="#cb5-479" aria-hidden="true" tabindex="-1"></a>for retrieval. Survey and taxonomy: @baltrusaitis2019multimodal. The empirical marketing</span>
-<span id="cb5-480"><a href="#cb5-480" aria-hidden="true" tabindex="-1"></a>fusion studies cited here (@yang2024engagement, @wen2026livestream, @xu2024multimodal,</span>
-<span id="cb5-481"><a href="#cb5-481" aria-hidden="true" tabindex="-1"></a>@xu2024memf, @dzyabura2023images) rely on proprietary platform or firm data and rarely ship</span>
-<span id="cb5-482"><a href="#cb5-482" aria-hidden="true" tabindex="-1"></a>public packages; verify any code/data link on the article page rather than assuming one.</span>
-<span id="cb5-483"><a href="#cb5-483" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb5-484"><a href="#cb5-484" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-485"><a href="#cb5-485" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Representation Throughline {#sec-mmf-throughline}</span></span>
-<span id="cb5-486"><a href="#cb5-486" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-487"><a href="#cb5-487" aria-hidden="true" tabindex="-1"></a>It is now possible to state plainly the idea that has run beneath every chapter of this</span>
-<span id="cb5-488"><a href="#cb5-488" aria-hidden="true" tabindex="-1"></a>part. **Every modality reduces to a learned representation, and once it is a vector, the</span>
-<span id="cb5-489"><a href="#cb5-489" aria-hidden="true" tabindex="-1"></a>book's downstream methods take over.** Text became embeddings; images became CNN or</span>
-<span id="cb5-490"><a href="#cb5-490" aria-hidden="true" tabindex="-1"></a>vision-transformer features; audio became prosodic and spectral features or wav2vec-style</span>
-<span id="cb5-491"><a href="#cb5-491" aria-hidden="true" tabindex="-1"></a>embeddings; video became fused frame, audio, and text features; behavior, geography,</span>
-<span id="cb5-492"><a href="#cb5-492" aria-hidden="true" tabindex="-1"></a>networks, and sensors each became a feature vector. The encoders differ, the modalities</span>
-<span id="cb5-493"><a href="#cb5-493" aria-hidden="true" tabindex="-1"></a>differ, but the output type is the same, and that common output type is the seam along</span>
-<span id="cb5-494"><a href="#cb5-494" aria-hidden="true" tabindex="-1"></a>which the unstructured-data part attaches to the rest of the book.</span>
-<span id="cb5-495"><a href="#cb5-495" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-496"><a href="#cb5-496" aria-hidden="true" tabindex="-1"></a>This is why the part can exist as a coherent unit rather than a list of unrelated</span>
-<span id="cb5-497"><a href="#cb5-497" aria-hidden="true" tabindex="-1"></a>techniques. The regression, classification, choice, causal-inference, and Bayesian</span>
-<span id="cb5-498"><a href="#cb5-498" aria-hidden="true" tabindex="-1"></a>machinery developed elsewhere in the book does not need to know whether a covariate</span>
-<span id="cb5-499"><a href="#cb5-499" aria-hidden="true" tabindex="-1"></a>originated as a pixel, a phoneme, a click, or a word. It needs the covariate to be a</span>
-<span id="cb5-500"><a href="#cb5-500" aria-hidden="true" tabindex="-1"></a>number, or a vector of numbers, with a defensible claim to measuring something. Fusion is</span>
-<span id="cb5-501"><a href="#cb5-501" aria-hidden="true" tabindex="-1"></a>the operation that combines several such vectors; foundation models are the engines that</span>
-<span id="cb5-502"><a href="#cb5-502" aria-hidden="true" tabindex="-1"></a>increasingly produce them; and the generated-regressor caution is the price of admission</span>
-<span id="cb5-503"><a href="#cb5-503" aria-hidden="true" tabindex="-1"></a>that every one of them must pay. The representation is the universal interface, and the</span>
-<span id="cb5-504"><a href="#cb5-504" aria-hidden="true" tabindex="-1"></a>discipline of the part is to remember, at every step, that the interface is *learned* and</span>
-<span id="cb5-505"><a href="#cb5-505" aria-hidden="true" tabindex="-1"></a>therefore *uncertain*.</span>
-<span id="cb5-506"><a href="#cb5-506" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-507"><a href="#cb5-507" aria-hidden="true" tabindex="-1"></a>Stated as a principle: unstructured data of any modality becomes a learned, lossy feature</span>
-<span id="cb5-508"><a href="#cb5-508" aria-hidden="true" tabindex="-1"></a>vector, and that vector is a generated regressor whose error may correlate with the</span>
-<span id="cb5-509"><a href="#cb5-509" aria-hidden="true" tabindex="-1"></a>outcome. Every modality chapter specialized this caution; this capstone generalizes it.</span>
-<span id="cb5-510"><a href="#cb5-510" aria-hidden="true" tabindex="-1"></a>The methods that consume the vector are powerful, but they inherit whatever the encoding</span>
-<span id="cb5-511"><a href="#cb5-511" aria-hidden="true" tabindex="-1"></a>got wrong, and no amount of downstream sophistication repairs a representation that does</span>
-<span id="cb5-512"><a href="#cb5-512" aria-hidden="true" tabindex="-1"></a>not measure what the analyst believes it measures.</span>
-<span id="cb5-513"><a href="#cb5-513" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-514"><a href="#cb5-514" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#sec-mmf-frontier}</span></span>
-<span id="cb5-515"><a href="#cb5-515" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-516"><a href="#cb5-516" aria-hidden="true" tabindex="-1"></a>Several directions are moving quickly enough to reshape the practice within the life of</span>
-<span id="cb5-517"><a href="#cb5-517" aria-hidden="true" tabindex="-1"></a>this edition.</span>
-<span id="cb5-518"><a href="#cb5-518" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-519"><a href="#cb5-519" aria-hidden="true" tabindex="-1"></a>**Any-to-any and natively multimodal models.** The trajectory is toward single models</span>
-<span id="cb5-520"><a href="#cb5-520" aria-hidden="true" tabindex="-1"></a>trained from the outset on text, images, audio, and video jointly, rather than a language</span>
-<span id="cb5-521"><a href="#cb5-521" aria-hidden="true" tabindex="-1"></a>model with a vision encoder bolted on. As the modalities share more of the architecture</span>
-<span id="cb5-522"><a href="#cb5-522" aria-hidden="true" tabindex="-1"></a>and the pretraining, the line between "fusion strategy" and "model" dissolves: fusion</span>
-<span id="cb5-523"><a href="#cb5-523" aria-hidden="true" tabindex="-1"></a>becomes an internal property of a natively multimodal network rather than a choice the</span>
-<span id="cb5-524"><a href="#cb5-524" aria-hidden="true" tabindex="-1"></a>analyst makes downstream.</span>
-<span id="cb5-525"><a href="#cb5-525" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-526"><a href="#cb5-526" aria-hidden="true" tabindex="-1"></a>**Agentic and tool-using measurement.** Foundation models that can call tools, retrieve</span>
-<span id="cb5-527"><a href="#cb5-527" aria-hidden="true" tabindex="-1"></a>documents, and execute multistep procedures turn measurement from a single prompt into a</span>
-<span id="cb5-528"><a href="#cb5-528" aria-hidden="true" tabindex="-1"></a>pipeline the model itself orchestrates. This raises the ceiling on what can be measured</span>
-<span id="cb5-529"><a href="#cb5-529" aria-hidden="true" tabindex="-1"></a>from raw artifacts and simultaneously lowers the transparency of how the measure was</span>
-<span id="cb5-530"><a href="#cb5-530" aria-hidden="true" tabindex="-1"></a>produced, sharpening the validation problem rather than relaxing it.</span>
-<span id="cb5-531"><a href="#cb5-531" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-532"><a href="#cb5-532" aria-hidden="true" tabindex="-1"></a>**Generative multimodal artifacts.** The same models that measure creative can generate</span>
-<span id="cb5-533"><a href="#cb5-533" aria-hidden="true" tabindex="-1"></a>it. Synthetic ad images, video, and copy are now cheap to produce, which collapses the</span>
-<span id="cb5-534"><a href="#cb5-534" aria-hidden="true" tabindex="-1"></a>cost of creative experimentation and at the same time pollutes the observational record</span>
-<span id="cb5-535"><a href="#cb5-535" aria-hidden="true" tabindex="-1"></a>with machine-made artifacts whose provenance the analyst may not know; @hartmann2025generative</span>
-<span id="cb5-536"><a href="#cb5-536" aria-hidden="true" tabindex="-1"></a>ask directly whether generative AI can create or reach human-level visual marketing content,</span>
-<span id="cb5-537"><a href="#cb5-537" aria-hidden="true" tabindex="-1"></a>the question on which this frontier turns. Modeling demand in</span>
-<span id="cb5-538"><a href="#cb5-538" aria-hidden="true" tabindex="-1"></a>a world where some of the creative was generated by the same model class used to measure</span>
-<span id="cb5-539"><a href="#cb5-539" aria-hidden="true" tabindex="-1"></a>it is an open and consequential problem.</span>
-<span id="cb5-540"><a href="#cb5-540" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-541"><a href="#cb5-541" aria-hidden="true" tabindex="-1"></a>**Causal multimodal inference.** The hardest and most valuable frontier is integrating</span>
-<span id="cb5-542"><a href="#cb5-542" aria-hidden="true" tabindex="-1"></a>learned multimodal representations into credible causal designs: using fused features as</span>
-<span id="cb5-543"><a href="#cb5-543" aria-hidden="true" tabindex="-1"></a>controls without inducing collider bias, isolating the causal effect of a manipulable</span>
-<span id="cb5-544"><a href="#cb5-544" aria-hidden="true" tabindex="-1"></a>visual or textual attribute while holding the rest of a complex artifact fixed, and</span>
-<span id="cb5-545"><a href="#cb5-545" aria-hidden="true" tabindex="-1"></a>propagating encoding uncertainty through a causal estimate. The methods exist in pieces</span>
-<span id="cb5-546"><a href="#cb5-546" aria-hidden="true" tabindex="-1"></a>across the book; assembling them for high-dimensional, multimodal, foundation-model-</span>
-<span id="cb5-547"><a href="#cb5-547" aria-hidden="true" tabindex="-1"></a>derived features is where the next decade of empirical marketing methodology will largely</span>
-<span id="cb5-548"><a href="#cb5-548" aria-hidden="true" tabindex="-1"></a>be spent.</span>
-<span id="cb5-549"><a href="#cb5-549" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-550"><a href="#cb5-550" aria-hidden="true" tabindex="-1"></a>The arc of this part runs from a single modality measured in isolation to many modalities</span>
-<span id="cb5-551"><a href="#cb5-551" aria-hidden="true" tabindex="-1"></a>fused through general-purpose foundation models. The constant across that arc is the</span>
-<span id="cb5-552"><a href="#cb5-552" aria-hidden="true" tabindex="-1"></a>representation: learned, lossy, powerful, and uncertain. Holding all four of those</span>
-<span id="cb5-553"><a href="#cb5-553" aria-hidden="true" tabindex="-1"></a>adjectives in mind at once is the whole discipline of doing marketing science with</span>
-<span id="cb5-554"><a href="#cb5-554" aria-hidden="true" tabindex="-1"></a>unstructured and multimodal data.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb5-439"><a href="#cb5-439" aria-hidden="true" tabindex="-1"></a>The destination of all this representation work, for the empirical marketing scientist,</span>
+<span id="cb5-440"><a href="#cb5-440" aria-hidden="true" tabindex="-1"></a>is usually a model of demand or response in which text and image features appear on the</span>
+<span id="cb5-441"><a href="#cb5-441" aria-hidden="true" tabindex="-1"></a>right-hand side. A flagship example fuses the visual frames, the audio, and the spoken</span>
+<span id="cb5-442"><a href="#cb5-442" aria-hidden="true" tabindex="-1"></a>and on-screen text of short-form influencer video advertisements to predict sales,</span>
+<span id="cb5-443"><a href="#cb5-443" aria-hidden="true" tabindex="-1"></a>demonstrating both that the fused representation carries real predictive signal and that</span>
+<span id="cb5-444"><a href="#cb5-444" aria-hidden="true" tabindex="-1"></a>the fusion of modalities outperforms any one of them <span class="co">[</span><span class="ot">@yang2024engagement</span><span class="co">]</span>. The pattern</span>
+<span id="cb5-445"><a href="#cb5-445" aria-hidden="true" tabindex="-1"></a>generalizes across artifacts and outcomes: image features predict product return rates</span>
+<span id="cb5-446"><a href="#cb5-446" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@dzyabura2023images</span><span class="co">]</span>, visual brand portrayal extracted from social images predicts brand</span>
+<span id="cb5-447"><a href="#cb5-447" aria-hidden="true" tabindex="-1"></a>perceptions <span class="co">[</span><span class="ot">@liu2020; @dzyabura2021visual</span><span class="co">]</span>, and combining unstructured text and image</span>
+<span id="cb5-448"><a href="#cb5-448" aria-hidden="true" tabindex="-1"></a>with structured data at scale predicts demand <span class="co">[</span><span class="ot">@liu2016structured</span><span class="co">]</span>, each by inserting a</span>
+<span id="cb5-449"><a href="#cb5-449" aria-hidden="true" tabindex="-1"></a>learned representation into an otherwise standard predictive or causal model. Live</span>
+<span id="cb5-450"><a href="#cb5-450" aria-hidden="true" tabindex="-1"></a>commerce is the most fully multimodal case: frameworks that fuse a host's audio, visual,</span>
+<span id="cb5-451"><a href="#cb5-451" aria-hidden="true" tabindex="-1"></a>and verbal signals predict within-stream sales <span class="co">[</span><span class="ot">@xu2024multimodal; @xu2024memf</span><span class="co">]</span> and</span>
+<span id="cb5-452"><a href="#cb5-452" aria-hidden="true" tabindex="-1"></a>attribute them to specific on-screen behaviors via explainable AI <span class="co">[</span><span class="ot">@wen2026livestream</span><span class="co">]</span>.</span>
+<span id="cb5-453"><a href="#cb5-453" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-454"><a href="#cb5-454" aria-hidden="true" tabindex="-1"></a>Precisely because the representation is *learned*, the identification cautions that have</span>
+<span id="cb5-455"><a href="#cb5-455" aria-hidden="true" tabindex="-1"></a>recurred throughout this part apply with full force, and fusion compounds them. Three</span>
+<span id="cb5-456"><a href="#cb5-456" aria-hidden="true" tabindex="-1"></a>deserve restatement in the multimodal setting.</span>
+<span id="cb5-457"><a href="#cb5-457" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-458"><a href="#cb5-458" aria-hidden="true" tabindex="-1"></a>The first is the **generated-regressor problem**. Every fused feature is the output of</span>
+<span id="cb5-459"><a href="#cb5-459" aria-hidden="true" tabindex="-1"></a>an upstream encoder estimated with error. Inserting it into a second-stage regression</span>
+<span id="cb5-460"><a href="#cb5-460" aria-hidden="true" tabindex="-1"></a>as if it were measured without error understates standard errors and, more seriously,</span>
+<span id="cb5-461"><a href="#cb5-461" aria-hidden="true" tabindex="-1"></a>can bias coefficients when the encoder's error is correlated with the outcome. With</span>
+<span id="cb5-462"><a href="#cb5-462" aria-hidden="true" tabindex="-1"></a>several modalities, there are several such channels, and they need not be independent;</span>
+<span id="cb5-463"><a href="#cb5-463" aria-hidden="true" tabindex="-1"></a>a shared foundation-model backbone can induce correlated errors *across* the text and</span>
+<span id="cb5-464"><a href="#cb5-464" aria-hidden="true" tabindex="-1"></a>image features that the analyst treats as separate covariates. The honest analysis</span>
+<span id="cb5-465"><a href="#cb5-465" aria-hidden="true" tabindex="-1"></a>acknowledges that the right-hand-side variables are estimates and propagates that</span>
+<span id="cb5-466"><a href="#cb5-466" aria-hidden="true" tabindex="-1"></a>uncertainty, whether by sample splitting, by bootstrapping the full pipeline including</span>
+<span id="cb5-467"><a href="#cb5-467" aria-hidden="true" tabindex="-1"></a>the encoding step, or by the two-stage corrections the methodology chapters develop.</span>
+<span id="cb5-468"><a href="#cb5-468" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-469"><a href="#cb5-469" aria-hidden="true" tabindex="-1"></a>The second is **endogeneity of the artifact**. Multimodal artifacts are choices.</span>
+<span id="cb5-470"><a href="#cb5-470" aria-hidden="true" tabindex="-1"></a>A firm selects which photographs to show, an influencer designs a video, a consumer</span>
+<span id="cb5-471"><a href="#cb5-471" aria-hidden="true" tabindex="-1"></a>decides whether and what to post. The features extracted from these artifacts are</span>
+<span id="cb5-472"><a href="#cb5-472" aria-hidden="true" tabindex="-1"></a>therefore correlated with the unobserved strategies and types that also drive the</span>
+<span id="cb5-473"><a href="#cb5-473" aria-hidden="true" tabindex="-1"></a>outcome. A measured association between a visual feature and sales may reflect that</span>
+<span id="cb5-474"><a href="#cb5-474" aria-hidden="true" tabindex="-1"></a>better firms make better images *and* sell more, not that the image causes the sale.</span>
+<span id="cb5-475"><a href="#cb5-475" aria-hidden="true" tabindex="-1"></a>Fusion does not solve this and can obscure it by burying the endogenous artifact inside</span>
+<span id="cb5-476"><a href="#cb5-476" aria-hidden="true" tabindex="-1"></a>a high-dimensional embedding where the analyst loses sight of it. Credible causal claims</span>
+<span id="cb5-477"><a href="#cb5-477" aria-hidden="true" tabindex="-1"></a>still require the identification apparatus of the rest of the book: experiments,</span>
+<span id="cb5-478"><a href="#cb5-478" aria-hidden="true" tabindex="-1"></a>instruments, or design-based variation in the artifact.</span>
+<span id="cb5-479"><a href="#cb5-479" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-480"><a href="#cb5-480" aria-hidden="true" tabindex="-1"></a>The third is **construct validity of the learned measure**. A CLIP similarity to</span>
+<span id="cb5-481"><a href="#cb5-481" aria-hidden="true" tabindex="-1"></a>"luxurious," or an MLLM's judgment that an ad is "authentic," is a model's operational</span>
+<span id="cb5-482"><a href="#cb5-482" aria-hidden="true" tabindex="-1"></a>proxy for a human construct, and the proxy must be validated against human judgment on a</span>
+<span id="cb5-483"><a href="#cb5-483" aria-hidden="true" tabindex="-1"></a>held-out sample before it is trusted, exactly as the sentiment-analysis benchmarking</span>
+<span id="cb5-484"><a href="#cb5-484" aria-hidden="true" tabindex="-1"></a>logic of the text chapter requires. A fused, foundation-model-derived feature is more</span>
+<span id="cb5-485"><a href="#cb5-485" aria-hidden="true" tabindex="-1"></a>opaque than a hand-built one, which raises rather than lowers the validation burden. The</span>
+<span id="cb5-486"><a href="#cb5-486" aria-hidden="true" tabindex="-1"></a>convenience of zero-shot measurement is real, but it does not exempt the measure from</span>
+<span id="cb5-487"><a href="#cb5-487" aria-hidden="true" tabindex="-1"></a>the requirement that it actually measure what it claims to.</span>
+<span id="cb5-488"><a href="#cb5-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-489"><a href="#cb5-489" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#sec-mmf-production}</span></span>
+<span id="cb5-490"><a href="#cb5-490" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-491"><a href="#cb5-491" aria-hidden="true" tabindex="-1"></a>Operationalizing multimodal fusion at scale is as much an engineering problem as a</span>
+<span id="cb5-492"><a href="#cb5-492" aria-hidden="true" tabindex="-1"></a>modeling one, and the production patterns have converged on a recognizable stack.</span>
+<span id="cb5-493"><a href="#cb5-493" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-494"><a href="#cb5-494" aria-hidden="true" tabindex="-1"></a>At the center sits the **embedding pipeline**. Raw artifacts (images, text, audio,</span>
+<span id="cb5-495"><a href="#cb5-495" aria-hidden="true" tabindex="-1"></a>video frames) are passed through encoders, usually hosted **foundation-model APIs** or</span>
+<span id="cb5-496"><a href="#cb5-496" aria-hidden="true" tabindex="-1"></a>self-hosted open-weight models, to produce embeddings. Because encoding is the expensive</span>
+<span id="cb5-497"><a href="#cb5-497" aria-hidden="true" tabindex="-1"></a>step and embeddings are reused across many downstream tasks, embeddings are computed once</span>
+<span id="cb5-498"><a href="#cb5-498" aria-hidden="true" tabindex="-1"></a>and persisted rather than recomputed per model. This is the role of the **feature store**:</span>
+<span id="cb5-499"><a href="#cb5-499" aria-hidden="true" tabindex="-1"></a>a system that holds precomputed per-entity features, including embeddings, keyed by entity</span>
+<span id="cb5-500"><a href="#cb5-500" aria-hidden="true" tabindex="-1"></a>(customer, product, creative) and timestamp, and serves them consistently to both training</span>
+<span id="cb5-501"><a href="#cb5-501" aria-hidden="true" tabindex="-1"></a>and inference. The feature store solves two problems that otherwise sink multimodal</span>
+<span id="cb5-502"><a href="#cb5-502" aria-hidden="true" tabindex="-1"></a>projects. It enforces **train-serve consistency**, guaranteeing that the embedding a model</span>
+<span id="cb5-503"><a href="#cb5-503" aria-hidden="true" tabindex="-1"></a>sees at inference time was produced by the same encoder version as the one it was trained</span>
+<span id="cb5-504"><a href="#cb5-504" aria-hidden="true" tabindex="-1"></a>on, and it enables **point-in-time correctness**, returning the feature value as it stood</span>
+<span id="cb5-505"><a href="#cb5-505" aria-hidden="true" tabindex="-1"></a>at the moment of a historical event rather than its current value, which is essential to</span>
+<span id="cb5-506"><a href="#cb5-506" aria-hidden="true" tabindex="-1"></a>avoid leakage in any model trained on time-stamped marketing data.</span>
+<span id="cb5-507"><a href="#cb5-507" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-508"><a href="#cb5-508" aria-hidden="true" tabindex="-1"></a>**Versioning** is the discipline that holds the stack together. Foundation models are</span>
+<span id="cb5-509"><a href="#cb5-509" aria-hidden="true" tabindex="-1"></a>updated, and an embedding produced by one model version is not interchangeable with one</span>
+<span id="cb5-510"><a href="#cb5-510" aria-hidden="true" tabindex="-1"></a>produced by another; cosine similarities and learned downstream weights are only valid</span>
+<span id="cb5-511"><a href="#cb5-511" aria-hidden="true" tabindex="-1"></a>within a fixed encoder version. Production systems therefore pin encoder versions, store</span>
+<span id="cb5-512"><a href="#cb5-512" aria-hidden="true" tabindex="-1"></a>the version alongside every embedding, and treat a model upgrade as a re-embedding and</span>
+<span id="cb5-513"><a href="#cb5-513" aria-hidden="true" tabindex="-1"></a>re-validation event, not a transparent swap. This is the engineering face of the silicon-</span>
+<span id="cb5-514"><a href="#cb5-514" aria-hidden="true" tabindex="-1"></a>sampling drift concern from @sec-mmf-mllm: a measure built on a foundation model inherits</span>
+<span id="cb5-515"><a href="#cb5-515" aria-hidden="true" tabindex="-1"></a>that model's mutability.</span>
+<span id="cb5-516"><a href="#cb5-516" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-517"><a href="#cb5-517" aria-hidden="true" tabindex="-1"></a>A few further practices recur. Embeddings are often **dimension-reduced** (by PCA or a</span>
+<span id="cb5-518"><a href="#cb5-518" aria-hidden="true" tabindex="-1"></a>learned projection) before entering downstream models, to control the width of the fused</span>
+<span id="cb5-519"><a href="#cb5-519" aria-hidden="true" tabindex="-1"></a>input. **Vector databases** index embeddings for similarity search and retrieval, which</span>
+<span id="cb5-520"><a href="#cb5-520" aria-hidden="true" tabindex="-1"></a>is the substrate of retrieval-augmented pipelines. And **cost and latency** govern</span>
+<span id="cb5-521"><a href="#cb5-521" aria-hidden="true" tabindex="-1"></a>architecture choices in production in a way they never do in a paper: batch precomputation</span>
+<span id="cb5-522"><a href="#cb5-522" aria-hidden="true" tabindex="-1"></a>of embeddings, caching, and the choice between a hosted API and a self-hosted model are</span>
+<span id="cb5-523"><a href="#cb5-523" aria-hidden="true" tabindex="-1"></a>driven by throughput and unit economics as much as by accuracy. None of this changes the</span>
+<span id="cb5-524"><a href="#cb5-524" aria-hidden="true" tabindex="-1"></a>statistics, but all of it determines whether a multimodal model is something a firm can</span>
+<span id="cb5-525"><a href="#cb5-525" aria-hidden="true" tabindex="-1"></a>actually run.</span>
+<span id="cb5-526"><a href="#cb5-526" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-527"><a href="#cb5-527" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb5-528"><a href="#cb5-528" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: multimodal fusion</span></span>
+<span id="cb5-529"><a href="#cb5-529" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-530"><a href="#cb5-530" aria-hidden="true" tabindex="-1"></a>The early-versus-late fusion demonstration in this chapter runs on base R and standard</span>
+<span id="cb5-531"><a href="#cb5-531" aria-hidden="true" tabindex="-1"></a>modeling packages. A production fusion stack draws on open encoders—<span class="in">`sentence-transformers`</span></span>
+<span id="cb5-532"><a href="#cb5-532" aria-hidden="true" tabindex="-1"></a>and Hugging Face models for text, torchvision/<span class="in">`timm`</span> backbones for images (the ResNet</span>
+<span id="cb5-533"><a href="#cb5-533" aria-hidden="true" tabindex="-1"></a>reference code accompanies @he2016resnet), and open multimodal models—plus a vector store</span>
+<span id="cb5-534"><a href="#cb5-534" aria-hidden="true" tabindex="-1"></a>for retrieval. Survey and taxonomy: @baltrusaitis2019multimodal. The empirical marketing</span>
+<span id="cb5-535"><a href="#cb5-535" aria-hidden="true" tabindex="-1"></a>fusion studies cited here (@yang2024engagement, @wen2026livestream, @xu2024multimodal,</span>
+<span id="cb5-536"><a href="#cb5-536" aria-hidden="true" tabindex="-1"></a>@xu2024memf, @dzyabura2023images) rely on proprietary platform or firm data and rarely ship</span>
+<span id="cb5-537"><a href="#cb5-537" aria-hidden="true" tabindex="-1"></a>public packages; verify any code/data link on the article page rather than assuming one.</span>
+<span id="cb5-538"><a href="#cb5-538" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-539"><a href="#cb5-539" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-540"><a href="#cb5-540" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Representation Throughline {#sec-mmf-throughline}</span></span>
+<span id="cb5-541"><a href="#cb5-541" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-542"><a href="#cb5-542" aria-hidden="true" tabindex="-1"></a>It is now possible to state plainly the idea that has run beneath every chapter of this</span>
+<span id="cb5-543"><a href="#cb5-543" aria-hidden="true" tabindex="-1"></a>part. **Every modality reduces to a learned representation, and once it is a vector, the</span>
+<span id="cb5-544"><a href="#cb5-544" aria-hidden="true" tabindex="-1"></a>book's downstream methods take over.** Text became embeddings; images became CNN or</span>
+<span id="cb5-545"><a href="#cb5-545" aria-hidden="true" tabindex="-1"></a>vision-transformer features; audio became prosodic and spectral features or wav2vec-style</span>
+<span id="cb5-546"><a href="#cb5-546" aria-hidden="true" tabindex="-1"></a>embeddings; video became fused frame, audio, and text features; behavior, geography,</span>
+<span id="cb5-547"><a href="#cb5-547" aria-hidden="true" tabindex="-1"></a>networks, and sensors each became a feature vector. The encoders differ, the modalities</span>
+<span id="cb5-548"><a href="#cb5-548" aria-hidden="true" tabindex="-1"></a>differ, but the output type is the same, and that common output type is the seam along</span>
+<span id="cb5-549"><a href="#cb5-549" aria-hidden="true" tabindex="-1"></a>which the unstructured-data part attaches to the rest of the book.</span>
+<span id="cb5-550"><a href="#cb5-550" aria-hidden="true" tabindex="-1"></a>@fig-fus-throughline draws the convergence.</span>
+<span id="cb5-551"><a href="#cb5-551" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-554"><a href="#cb5-554" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb5-555"><a href="#cb5-555" aria-hidden="true" tabindex="-1"></a>%%| label: fig-fus-throughline</span>
+<span id="cb5-556"><a href="#cb5-556" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The representation throughline of the unstructured-data part. Every modality passes through a learned encoder and emerges as a feature vector; the downstream methods consume the vector without regard to its origin, so the generated-regressor caution travels with it.</span><span class="ot">"</span></span>
+<span id="cb5-557"><a href="#cb5-557" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb5-558"><a href="#cb5-558" aria-hidden="true" tabindex="-1"></a>  TX[<span class="ot">"</span><span class="st">Text</span><span class="ot">"</span>] --&gt; TXE[<span class="ot">"</span><span class="st">Embeddings</span><span class="ot">"</span>]</span>
+<span id="cb5-559"><a href="#cb5-559" aria-hidden="true" tabindex="-1"></a>  IM[<span class="ot">"</span><span class="st">Images</span><span class="ot">"</span>] --&gt; IME[<span class="ot">"</span><span class="st">CNN or vision-&lt;br/&gt;transformer features</span><span class="ot">"</span>]</span>
+<span id="cb5-560"><a href="#cb5-560" aria-hidden="true" tabindex="-1"></a>  AU[<span class="ot">"</span><span class="st">Audio</span><span class="ot">"</span>] --&gt; AUE[<span class="ot">"</span><span class="st">Prosodic, spectral,&lt;br/&gt;wav2vec-style features</span><span class="ot">"</span>]</span>
+<span id="cb5-561"><a href="#cb5-561" aria-hidden="true" tabindex="-1"></a>  VD[<span class="ot">"</span><span class="st">Video</span><span class="ot">"</span>] --&gt; VDE[<span class="ot">"</span><span class="st">Fused frame, audio,&lt;br/&gt;and text features</span><span class="ot">"</span>]</span>
+<span id="cb5-562"><a href="#cb5-562" aria-hidden="true" tabindex="-1"></a>  BG[<span class="ot">"</span><span class="st">Behavior, geography,&lt;br/&gt;networks, sensors</span><span class="ot">"</span>] --&gt; BGE[<span class="ot">"</span><span class="st">Feature vectors</span><span class="ot">"</span>]</span>
+<span id="cb5-563"><a href="#cb5-563" aria-hidden="true" tabindex="-1"></a>  TXE --&gt; RV[<span class="ot">"</span><span class="st">Learned representation:&lt;br/&gt;a vector, estimated&lt;br/&gt;with error</span><span class="ot">"</span>]</span>
+<span id="cb5-564"><a href="#cb5-564" aria-hidden="true" tabindex="-1"></a>  IME --&gt; RV</span>
+<span id="cb5-565"><a href="#cb5-565" aria-hidden="true" tabindex="-1"></a>  AUE --&gt; RV</span>
+<span id="cb5-566"><a href="#cb5-566" aria-hidden="true" tabindex="-1"></a>  VDE --&gt; RV</span>
+<span id="cb5-567"><a href="#cb5-567" aria-hidden="true" tabindex="-1"></a>  BGE --&gt; RV</span>
+<span id="cb5-568"><a href="#cb5-568" aria-hidden="true" tabindex="-1"></a>  RV --&gt; DM[<span class="ot">"</span><span class="st">Downstream methods:&lt;br/&gt;regression, classification,&lt;br/&gt;choice, causal, Bayesian</span><span class="ot">"</span>]</span>
+<span id="cb5-569"><a href="#cb5-569" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-570"><a href="#cb5-570" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-571"><a href="#cb5-571" aria-hidden="true" tabindex="-1"></a>This is why the part can exist as a coherent unit rather than a list of unrelated</span>
+<span id="cb5-572"><a href="#cb5-572" aria-hidden="true" tabindex="-1"></a>techniques. The regression, classification, choice, causal-inference, and Bayesian</span>
+<span id="cb5-573"><a href="#cb5-573" aria-hidden="true" tabindex="-1"></a>machinery developed elsewhere in the book does not need to know whether a covariate</span>
+<span id="cb5-574"><a href="#cb5-574" aria-hidden="true" tabindex="-1"></a>originated as a pixel, a phoneme, a click, or a word. It needs the covariate to be a</span>
+<span id="cb5-575"><a href="#cb5-575" aria-hidden="true" tabindex="-1"></a>number, or a vector of numbers, with a defensible claim to measuring something. Fusion is</span>
+<span id="cb5-576"><a href="#cb5-576" aria-hidden="true" tabindex="-1"></a>the operation that combines several such vectors; foundation models are the engines that</span>
+<span id="cb5-577"><a href="#cb5-577" aria-hidden="true" tabindex="-1"></a>increasingly produce them; and the generated-regressor caution is the price of admission</span>
+<span id="cb5-578"><a href="#cb5-578" aria-hidden="true" tabindex="-1"></a>that every one of them must pay. The representation is the universal interface, and the</span>
+<span id="cb5-579"><a href="#cb5-579" aria-hidden="true" tabindex="-1"></a>discipline of the part is to remember, at every step, that the interface is *learned* and</span>
+<span id="cb5-580"><a href="#cb5-580" aria-hidden="true" tabindex="-1"></a>therefore *uncertain*.</span>
+<span id="cb5-581"><a href="#cb5-581" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-582"><a href="#cb5-582" aria-hidden="true" tabindex="-1"></a>Stated as a principle: unstructured data of any modality becomes a learned, lossy feature</span>
+<span id="cb5-583"><a href="#cb5-583" aria-hidden="true" tabindex="-1"></a>vector, and that vector is a generated regressor whose error may correlate with the</span>
+<span id="cb5-584"><a href="#cb5-584" aria-hidden="true" tabindex="-1"></a>outcome. Every modality chapter specialized this caution; this capstone generalizes it.</span>
+<span id="cb5-585"><a href="#cb5-585" aria-hidden="true" tabindex="-1"></a>The methods that consume the vector are powerful, but they inherit whatever the encoding</span>
+<span id="cb5-586"><a href="#cb5-586" aria-hidden="true" tabindex="-1"></a>got wrong, and no amount of downstream sophistication repairs a representation that does</span>
+<span id="cb5-587"><a href="#cb5-587" aria-hidden="true" tabindex="-1"></a>not measure what the analyst believes it measures.</span>
+<span id="cb5-588"><a href="#cb5-588" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-589"><a href="#cb5-589" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#sec-mmf-frontier}</span></span>
+<span id="cb5-590"><a href="#cb5-590" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-591"><a href="#cb5-591" aria-hidden="true" tabindex="-1"></a>Several directions are moving quickly enough to reshape the practice within the life of</span>
+<span id="cb5-592"><a href="#cb5-592" aria-hidden="true" tabindex="-1"></a>this edition.</span>
+<span id="cb5-593"><a href="#cb5-593" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-594"><a href="#cb5-594" aria-hidden="true" tabindex="-1"></a>**Any-to-any and natively multimodal models.** The trajectory is toward single models</span>
+<span id="cb5-595"><a href="#cb5-595" aria-hidden="true" tabindex="-1"></a>trained from the outset on text, images, audio, and video jointly, rather than a language</span>
+<span id="cb5-596"><a href="#cb5-596" aria-hidden="true" tabindex="-1"></a>model with a vision encoder bolted on. As the modalities share more of the architecture</span>
+<span id="cb5-597"><a href="#cb5-597" aria-hidden="true" tabindex="-1"></a>and the pretraining, the line between "fusion strategy" and "model" dissolves: fusion</span>
+<span id="cb5-598"><a href="#cb5-598" aria-hidden="true" tabindex="-1"></a>becomes an internal property of a natively multimodal network rather than a choice the</span>
+<span id="cb5-599"><a href="#cb5-599" aria-hidden="true" tabindex="-1"></a>analyst makes downstream.</span>
+<span id="cb5-600"><a href="#cb5-600" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-601"><a href="#cb5-601" aria-hidden="true" tabindex="-1"></a>**Agentic and tool-using measurement.** Foundation models that can call tools, retrieve</span>
+<span id="cb5-602"><a href="#cb5-602" aria-hidden="true" tabindex="-1"></a>documents, and execute multistep procedures turn measurement from a single prompt into a</span>
+<span id="cb5-603"><a href="#cb5-603" aria-hidden="true" tabindex="-1"></a>pipeline the model itself orchestrates. This raises the ceiling on what can be measured</span>
+<span id="cb5-604"><a href="#cb5-604" aria-hidden="true" tabindex="-1"></a>from raw artifacts and simultaneously lowers the transparency of how the measure was</span>
+<span id="cb5-605"><a href="#cb5-605" aria-hidden="true" tabindex="-1"></a>produced, sharpening the validation problem rather than relaxing it.</span>
+<span id="cb5-606"><a href="#cb5-606" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-607"><a href="#cb5-607" aria-hidden="true" tabindex="-1"></a>**Generative multimodal artifacts.** The same models that measure creative can generate</span>
+<span id="cb5-608"><a href="#cb5-608" aria-hidden="true" tabindex="-1"></a>it. Synthetic ad images, video, and copy are now cheap to produce, which collapses the</span>
+<span id="cb5-609"><a href="#cb5-609" aria-hidden="true" tabindex="-1"></a>cost of creative experimentation and at the same time pollutes the observational record</span>
+<span id="cb5-610"><a href="#cb5-610" aria-hidden="true" tabindex="-1"></a>with machine-made artifacts whose provenance the analyst may not know; @hartmann2025generative</span>
+<span id="cb5-611"><a href="#cb5-611" aria-hidden="true" tabindex="-1"></a>ask directly whether generative AI can create or reach human-level visual marketing content,</span>
+<span id="cb5-612"><a href="#cb5-612" aria-hidden="true" tabindex="-1"></a>the question on which this frontier turns. Modeling demand in</span>
+<span id="cb5-613"><a href="#cb5-613" aria-hidden="true" tabindex="-1"></a>a world where some of the creative was generated by the same model class used to measure</span>
+<span id="cb5-614"><a href="#cb5-614" aria-hidden="true" tabindex="-1"></a>it is an open and consequential problem.</span>
+<span id="cb5-615"><a href="#cb5-615" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-616"><a href="#cb5-616" aria-hidden="true" tabindex="-1"></a>**Causal multimodal inference.** The hardest and most valuable frontier is integrating</span>
+<span id="cb5-617"><a href="#cb5-617" aria-hidden="true" tabindex="-1"></a>learned multimodal representations into credible causal designs: using fused features as</span>
+<span id="cb5-618"><a href="#cb5-618" aria-hidden="true" tabindex="-1"></a>controls without inducing collider bias, isolating the causal effect of a manipulable</span>
+<span id="cb5-619"><a href="#cb5-619" aria-hidden="true" tabindex="-1"></a>visual or textual attribute while holding the rest of a complex artifact fixed, and</span>
+<span id="cb5-620"><a href="#cb5-620" aria-hidden="true" tabindex="-1"></a>propagating encoding uncertainty through a causal estimate. The methods exist in pieces</span>
+<span id="cb5-621"><a href="#cb5-621" aria-hidden="true" tabindex="-1"></a>across the book; assembling them for high-dimensional, multimodal, foundation-model-</span>
+<span id="cb5-622"><a href="#cb5-622" aria-hidden="true" tabindex="-1"></a>derived features is where the next decade of empirical marketing methodology will largely</span>
+<span id="cb5-623"><a href="#cb5-623" aria-hidden="true" tabindex="-1"></a>be spent.</span>
+<span id="cb5-624"><a href="#cb5-624" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-625"><a href="#cb5-625" aria-hidden="true" tabindex="-1"></a>The arc of this part runs from a single modality measured in isolation to many modalities</span>
+<span id="cb5-626"><a href="#cb5-626" aria-hidden="true" tabindex="-1"></a>fused through general-purpose foundation models. The constant across that arc is the</span>
+<span id="cb5-627"><a href="#cb5-627" aria-hidden="true" tabindex="-1"></a>representation: learned, lossy, powerful, and uncertain. Holding all four of those</span>
+<span id="cb5-628"><a href="#cb5-628" aria-hidden="true" tabindex="-1"></a>adjectives in mind at once is the whole discipline of doing marketing science with</span>
+<span id="cb5-629"><a href="#cb5-629" aria-hidden="true" tabindex="-1"></a>unstructured and multimodal data.</span>
+</code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

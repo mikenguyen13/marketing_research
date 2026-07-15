@@ -126,7 +126,20 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-46EBZ61358', { 'anonymize_ip': true});
-</script><script src="site_libs/quarto-diagram/mermaid.min.js"></script><script src="site_libs/quarto-diagram/mermaid-init.js"></script><link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+</script><!-- schema.org structured data for search engines --><script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Book",
+  "name": "Marketing Research",
+  "url": "https://mike-marketing-research.share.connect.posit.cloud/",
+  "inLanguage": "en",
+  "bookFormat": "https://schema.org/EBook",
+  "description": "A technical and academic treatment of marketing research: constructs, substantive domains, and the methods that connect them, with reproducible R code throughout.",
+  "author": { "@type": "Person", "name": "Mike Nguyen" },
+  "publisher": { "@type": "Person", "name": "Mike Nguyen" }
+}
+</script><!-- Search Console verification: paste code and uncomment.
+     https://search.google.com/search-console --><!-- <meta name="google-site-verification" content="PASTE_GOOGLE_CODE"> --><script src="site_libs/quarto-diagram/mermaid.min.js"></script><script src="site_libs/quarto-diagram/mermaid-init.js"></script><link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
 const typesetMath = (el) => {
   if (window.MathJax) {
@@ -780,7 +793,28 @@ window.Quarto = {
 <p>The chapter proceeds from intuition to formalism to estimation. We first define reservation price and derive it from an additive utility model, making explicit the assumptions that license the derivation. We then develop conjoint analysis as the general framework: its experimental-design logic, its measurement variants (full-profile, choice-based, adaptive, hybrid, self-explicated, MaxDiff), the random-utility model that underlies the modern choice-based form, and the estimators (OLS, multinomial and mixed logit, hierarchical Bayes) that recover heterogeneous partworths. Throughout we flag what breaks identification—confounded designs, scale–heterogeneity confounds, hypothetical bias—because a partworth that is not identified is a number without a referent. Worked, reproducible R code accompanies each major method.</p>
 <section id="reservation-price-and-the-additive-utility-model" class="level2" data-number="37.1"><h2 data-number="37.1" class="anchored" data-anchor-id="reservation-price-and-the-additive-utility-model">
 <span class="header-section-number">37.1</span> Reservation Price and the Additive Utility Model</h2>
-<p>The commercial questions branded around pricing—segmentation, positioning, product-line design, the go/no-go decision on a feature—reduce to a single quantity per consumer: how many dollars of value the consumer attaches to a given configuration. Two routes lead to that quantity. The <strong>direct</strong> route asks the consumer outright, but self-reported reservation prices are systematically biased downward: respondents understate WTP because they do not wish to appear price insensitive, and because a hypothetical question carries no budget consequence.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> The <strong>indirect</strong> route, which this chapter develops, recovers reservation price as a <em>derived</em> quantity from a fitted utility model, most commonly the coefficients of a conjoint study.</p>
+<p>The commercial questions branded around pricing—segmentation, positioning, product-line design, the go/no-go decision on a feature—reduce to a single quantity per consumer: how many dollars of value the consumer attaches to a given configuration. Two routes lead to that quantity. The <strong>direct</strong> route asks the consumer outright, but self-reported reservation prices are systematically biased downward: respondents understate WTP because they do not wish to appear price insensitive, and because a hypothetical question carries no budget consequence.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> The <strong>indirect</strong> route, which this chapter develops, recovers reservation price as a <em>derived</em> quantity from a fitted utility model, most commonly the coefficients of a conjoint study. <a href="#fig-pref-routes" class="quarto-xref">Figure&nbsp;<span>37.1</span></a> contrasts the two routes and previews the conversion the rest of this section derives.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-pref-routes" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-pref-routes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-pref-routes">flowchart TD
+  Q["Target: reservation price&lt;br/&gt;(maximum willingness to pay)"] --&gt; DR["Direct route:&lt;br/&gt;ask the consumer outright"]
+  Q --&gt; IR["Indirect route:&lt;br/&gt;infer from a fitted&lt;br/&gt;utility model"]
+  DR --&gt; DB["Biased downward:&lt;br/&gt;reluctance to appear price&lt;br/&gt;insensitive; no budget consequence"]
+  IR --&gt; CJ["Conjoint study:&lt;br/&gt;partworths from designed&lt;br/&gt;trade-offs"]
+  CJ --&gt; DU["Dollar value of a util:&lt;br/&gt;-Δp / β_p"]
+  DU --&gt; RP["Reservation price: sum of&lt;br/&gt;attribute partworths&lt;br/&gt;converted to dollars"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pref-routes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;37.1: Two routes to a reservation price. Asking directly yields answers biased downward; the indirect route infers the quantity from a fitted utility model, converting attribute partworths into dollars through the price coefficient.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <p>The indirect route rests on one structural assumption, which should be stated before any result: <strong>additive separability</strong> of utility across attributes. Consumption utility is taken to equal the sum of the utilities contributed by the product’s attributes, with no interaction among them. Let a product be described by a price <span class="math inline">\(P\)</span> and by <span class="math inline">\(N\)</span> non-price attributes, each taking one of several discrete levels. Index the attributes by <span class="math inline">\(k = 1,\dots,N\)</span> and let <span class="math inline">\(A_k\)</span> denote the level of attribute <span class="math inline">\(k\)</span>. The additive model writes a consumer’s utility (or rating) as</p>
 <p><span id="eq-additive-utility"><span class="math display">\[
 U = \beta_0 + \beta_p P + \sum_{k=1}^{N} \beta_k A_k + \epsilon,
@@ -820,7 +854,7 @@ Sign and scale conventions
 <span class="header-section-number">37.2.1</span> Designing the Attribute Space</h3>
 <p>The quality of a conjoint study is fixed before any data are collected, in the choice of attributes and levels. Four design principles recur, and each protects a specific inferential property rather than being mere good practice. Attributes must be <strong>actionable</strong>—a partworth on a feature the firm cannot build is uninterpretable as a decision input. Their number must be <strong>bounded</strong>, because respondent cognitive load grows with the dimensionality of each profile and noisy responses inflate <span class="math inline">\(\epsilon\)</span> in <a href="#eq-additive-utility" class="quarto-xref">Equation&nbsp;<span>37.1</span></a>. Levels must span a <strong>feasible and relevant range</strong>: every level should be one the firm could actually offer and one the consumer would plausibly encounter, since extrapolating partworths outside the studied range is unsupported. Finally, the <strong>number of levels</strong> per attribute is itself a design variable with a known artifact—the <em>number-of-levels effect</em>, whereby an attribute is estimated to be more important simply because it is split into more levels, independent of its true importance.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
 <p>Under additivity and independence, the number of profiles the design must support equals the number of estimated dummy variables. When the analyst suspects an <strong>interaction</strong>—a violation of the additive separability that <a href="#eq-additive-utility" class="quarto-xref">Equation&nbsp;<span>37.1</span></a> assumes—two remedies are available, and they trade respondent effort against bias. One can fold the interacting pair into a single higher-level “super-attribute” whose levels enumerate the relevant combinations, absorbing the interaction into main effects; or one can enlarge the design to include enough profiles to estimate the interaction term explicitly. The first is cheaper but coarsens the attribute space; the second is faithful but costly in profiles.</p>
-<p>The mechanism that makes a reduced design estimable is the <strong>fractional factorial</strong>: a carefully chosen subset of the full factorial that preserves orthogonality among main effects so that partworths remain independently identified. A full factorial over <span class="math inline">\(N\)</span> attributes with <span class="math inline">\(L\)</span> levels each contains <span class="math inline">\(L^N\)</span> profiles—infeasible for any realistic <span class="math inline">\(N\)</span>— so the analyst selects a fraction in which the columns of the design matrix remain uncorrelated. <a href="#fig-conjoint-pipeline" class="quarto-xref">Figure&nbsp;<span>37.1</span></a> summarizes the workflow from attribute definition through to managerial action.</p>
+<p>The mechanism that makes a reduced design estimable is the <strong>fractional factorial</strong>: a carefully chosen subset of the full factorial that preserves orthogonality among main effects so that partworths remain independently identified. A full factorial over <span class="math inline">\(N\)</span> attributes with <span class="math inline">\(L\)</span> levels each contains <span class="math inline">\(L^N\)</span> profiles—infeasible for any realistic <span class="math inline">\(N\)</span>— so the analyst selects a fraction in which the columns of the design matrix remain uncorrelated. <a href="#fig-conjoint-pipeline" class="quarto-xref">Figure&nbsp;<span>37.2</span></a> summarizes the workflow from attribute definition through to managerial action.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-conjoint-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -837,7 +871,7 @@ Sign and scale conventions
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-conjoint-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;37.1: The conjoint analysis pipeline, from attribute specification to managerial decision. The estimation step varies by conjoint type (see <a href="#tbl-conjoint-types" class="quarto-xref">Table&nbsp;<span>37.1</span></a>).
+Figure&nbsp;37.2: The conjoint analysis pipeline, from attribute specification to managerial decision. The estimation step varies by conjoint type (see <a href="#tbl-conjoint-types" class="quarto-xref">Table&nbsp;<span>37.1</span></a>).
 </figcaption></figure>
 </div>
 </div>
@@ -943,7 +977,31 @@ Table&nbsp;37.1: Conjoint variants by elicitation task and estimator. Ranking an
 </div>
 <p><strong>Full-profile</strong> conjoint presents complete product descriptions for rating or ranking and estimates the partworths of <a href="#eq-additive-utility" class="quarto-xref">Equation&nbsp;<span>37.1</span></a> by regression. A classic result is that ranking and rating data, though they look different, recover the same preference structure and need not be treated as fundamentally distinct response modes <span class="citation" data-cites="kalish1991">(<a href="#ref-kalish1991" role="doc-biblioref">Kalish and Nelson 1991</a>)</span>.</p>
 <p><strong>Choice-based conjoint</strong> (CBC), also called discrete-choice conjoint, replaces the rating with a <em>choice</em> among profiles, often including a no-choice option. It is the most behaviorally realistic variant—people choose in markets, they do not rate—and it is estimated with the RUM machinery of <a href="#sec-rum" class="quarto-xref"><span>Section 37.2.2</span></a>, yielding WTP and market-share simulations directly. CBC is now the default in commercial practice.</p>
-<p><strong>Adaptive conjoint</strong> (ACA) varies the choice sets dynamically, conditioning each question on the respondent’s earlier answers to concentrate information where the respondent’s preferences are most uncertain, thereby shortening the survey for high-dimensional attribute spaces. The polyhedral methods of <span class="citation" data-cites="toubia2013">Toubia and Stephen (<a href="#ref-toubia2013" role="doc-biblioref">2013</a>)</span> formalize adaptive question selection as iteratively shrinking the set of partworth vectors consistent with a respondent’s answers, and incentive-aligned and incentive-compatible variants address the hypothetical-bias problem at the elicitation stage. <strong>Hybrid</strong> conjoint combines a self-explicated stage with full-profile or choice tasks, and <strong>self-explicated</strong> conjoint dispenses with profiles entirely, asking respondents to rate each level’s desirability and each attribute’s importance and composing partworths from the product—cheap and scalable but vulnerable to the “everything is important” inflation that holistic methods avoid. <strong>MaxDiff</strong> (best–worst scaling) asks respondents to identify the most- and least-preferred items in a set, a task that produces sharper discrimination among many items than rating scales and is estimated as a best–worst extension of MNL.</p>
+<p><strong>Adaptive conjoint</strong> (ACA) varies the choice sets dynamically, conditioning each question on the respondent’s earlier answers to concentrate information where the respondent’s preferences are most uncertain, thereby shortening the survey for high-dimensional attribute spaces. The polyhedral methods of <span class="citation" data-cites="toubia2013">Toubia and Stephen (<a href="#ref-toubia2013" role="doc-biblioref">2013</a>)</span> formalize adaptive question selection as iteratively shrinking the set of partworth vectors consistent with a respondent’s answers, and incentive-aligned and incentive-compatible variants address the hypothetical-bias problem at the elicitation stage. <strong>Hybrid</strong> conjoint combines a self-explicated stage with full-profile or choice tasks, and <strong>self-explicated</strong> conjoint dispenses with profiles entirely, asking respondents to rate each level’s desirability and each attribute’s importance and composing partworths from the product—cheap and scalable but vulnerable to the “everything is important” inflation that holistic methods avoid. <strong>MaxDiff</strong> (best–worst scaling) asks respondents to identify the most- and least-preferred items in a set, a task that produces sharper discrimination among many items than rating scales and is estimated as a best–worst extension of MNL. <a href="#fig-pref-variants" class="quarto-xref">Figure&nbsp;<span>37.3</span></a> organizes the family by its underlying elicitation logic—partworths decomposed from holistic evaluations, composed from stated ratings, or a combination of the two.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-pref-variants" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-pref-variants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-pref-variants">flowchart TD
+  R["Preference elicitation"] --&gt; DC["Decompositional:&lt;br/&gt;partworths recovered from&lt;br/&gt;holistic evaluations"]
+  R --&gt; CP["Compositional:&lt;br/&gt;partworths composed&lt;br/&gt;from stated ratings"]
+  R --&gt; CM["Combined:&lt;br/&gt;self-explicated stage&lt;br/&gt;plus trade-off tasks"]
+  DC --&gt; FP["Full-profile:&lt;br/&gt;rate or rank complete profiles;&lt;br/&gt;OLS regression"]
+  DC --&gt; CB["Choice-based (CBC):&lt;br/&gt;choose one from a set;&lt;br/&gt;MNL, mixed logit, HB"]
+  DC --&gt; MD["MaxDiff:&lt;br/&gt;most and least preferred;&lt;br/&gt;best-worst MNL"]
+  CP --&gt; SE["Self-explicated:&lt;br/&gt;level desirability and&lt;br/&gt;attribute importance"]
+  CM --&gt; AD["Adaptive (ACA):&lt;br/&gt;questions tailored to&lt;br/&gt;earlier answers"]
+  CM --&gt; HY["Hybrid:&lt;br/&gt;self-explicated plus&lt;br/&gt;full-profile or choice"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pref-variants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;37.3: The conjoint family by elicitation logic. Decompositional variants recover partworths from holistic evaluations of whole profiles; the self-explicated route composes them from stated desirabilities and importances; adaptive and hybrid designs combine the two logics to handle many attributes.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <p>A persistent practical problem is <strong>missing data</strong> in partial profiles—respondents do not see every attribute or level. <span class="citation" data-cites="bradlow2004learning">Bradlow, Hu, and Ho (<a href="#ref-bradlow2004learning" role="doc-biblioref">2004</a>)</span> develop a learning-based model that imputes the missing levels by treating the partial profile as informative about the respondent’s inferences, rather than discarding incomplete responses; modern machine- learning approaches extend this to learn preferences from sparse, adaptively collected data <span class="citation" data-cites="ding2015learning">(<a href="#ref-ding2015learning" role="doc-biblioref">Ding, Li, and Chatterjee 2015</a>)</span>. The broader frontier integrates conjoint with text and image data and with structural demand models so that designed-experiment partworths and revealed-preference market data can be reconciled <span class="citation" data-cites="netzer2008hidden rao2017 wedel2016">(<a href="#ref-netzer2008hidden" role="doc-biblioref">Netzer, Lattin, and Srinivasan 2008</a>; <a href="#ref-rao2017" role="doc-biblioref">Rao and Wang 2017</a>; <a href="#ref-wedel2016" role="doc-biblioref">Wedel and Kannan 2016</a>)</span>.</p>
 </section></section><section id="worked-examples" class="level2" data-number="37.3"><h2 data-number="37.3" class="anchored" data-anchor-id="worked-examples">
 <span class="header-section-number">37.3</span> Worked Examples</h2>
@@ -1058,7 +1116,40 @@ Table&nbsp;37.1: Conjoint variants by elicitation task and estimator. Ranking an
 <p>The recovered WTP—the dollar premium a consumer would pay to upgrade battery life or extend the warranty—is the reservation-price increment of <a href="#eq-reservation-price" class="quarto-xref">Equation&nbsp;<span>37.3</span></a>, attribute by attribute. Summing these increments across a configuration’s upgraded attributes yields the configuration’s total reservation price relative to the baseline product, which is the input that pricing and product-line decisions actually consume.</p>
 </section></section><section id="pitfalls-and-identification" class="level2" data-number="37.4"><h2 data-number="37.4" class="anchored" data-anchor-id="pitfalls-and-identification">
 <span class="header-section-number">37.4</span> Pitfalls and Identification</h2>
-<p>Three threats recur, each tracing to an assumption made explicit above.</p>
+<p>Three threats recur, each tracing to an assumption made explicit above; <a href="#fig-pref-threats" class="quarto-xref">Figure&nbsp;<span>37.4</span></a> maps each threat to what it breaks and to the standard defense.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-pref-threats" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure"><div aria-describedby="fig-pref-threats-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-pref-threats">flowchart LR
+  subgraph TH["Threat"]
+    T1["Hypothetical bias:&lt;br/&gt;survey choices carry&lt;br/&gt;no consequence"]
+    T2["Confounded design:&lt;br/&gt;correlated attribute&lt;br/&gt;columns"]
+    T3["Heterogeneity and scale:&lt;br/&gt;aggregate logit ignores variation;&lt;br/&gt;scale masquerades as preference"]
+  end
+  subgraph BR["What it breaks"]
+    A1["Stated partworths diverge&lt;br/&gt;from revealed behavior"]
+    A2["Partworths not separately&lt;br/&gt;identified: the design, not the&lt;br/&gt;data, determines estimates"]
+    A3["Elasticities biased through&lt;br/&gt;composition; individual&lt;br/&gt;partworths misread"]
+  end
+  subgraph DF["Defense"]
+    D1["Incentive-aligned designs;&lt;br/&gt;reconcile against market data"]
+    D2["Orthogonality check on the&lt;br/&gt;fractional factorial"]
+    D3["Mixed logit / HB estimators;&lt;br/&gt;WTP ratios partially&lt;br/&gt;cancel scale"]
+  end
+  T1 --&gt; A1 --&gt; D1
+  T2 --&gt; A2 --&gt; D2
+  T3 --&gt; A3 --&gt; D3
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pref-threats-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;37.4: Recurring threats to partworth identification, what each breaks, and the standard defense. A fourth, structural threat—attribute interactions that violate additive separability—is handled at the design stage by modeling the interaction explicitly or folding it into a super-attribute.
+</figcaption></figure>
+</div>
+</div>
+</div>
 <p><strong>Hypothetical bias.</strong> Stated-preference partworths can diverge from revealed behavior because survey choices carry no consequence. Incentive-aligned designs—where the respondent faces a real chance of receiving the chosen option—and the reconciliation of conjoint partworths against market data are the standard defenses <span class="citation" data-cites="toubia2017 ding2015learning">(<a href="#ref-toubia2017" role="doc-biblioref">Toubia and Netzer 2017</a>; <a href="#ref-ding2015learning" role="doc-biblioref">Ding, Li, and Chatterjee 2015</a>)</span>. WTP, being a ratio, is somewhat insulated, but level effects on the absolute scale are not.</p>
 <p><strong>Confounded designs.</strong> If the fractional factorial is poorly chosen, attribute columns are correlated and their partworths are not separately identified—the design, not the data, determines the estimates. The orthogonality check in the worked example is not decorative; it is the diagnostic that the partworths in <a href="#eq-additive-utility" class="quarto-xref">Equation&nbsp;<span>37.1</span></a> are recoverable at all.</p>
 <p><strong>Heterogeneity and scale.</strong> Treating a heterogeneous market with a single aggregate logit biases elasticities through composition; the mixed-logit and HB estimators of <a href="#sec-rum" class="quarto-xref"><span>Section 37.2.2</span></a> exist to fix this. But heterogeneity in choice <em>consistency</em> (scale) masquerades as heterogeneity in <em>preference</em>, so individual-level partworths must be interpreted with the scale– heterogeneity confound in mind. Segmenting on partworth vectors via cluster analysis is sound only after this confound is addressed.</p>
@@ -1649,458 +1740,513 @@ Wedel, Michel, and P.K. Kannan. 2016. <span>“Marketing Analytics for Data-Rich
 <span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>insensitive, and because a hypothetical question carries no budget consequence.<span class="ot">[^direct]</span></span>
 <span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>The **indirect** route, which this chapter develops, recovers reservation price as a</span>
 <span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>*derived* quantity from a fitted utility model, most commonly the coefficients of a</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>conjoint study.</span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="ot">[^direct]: </span>Direct elicitation is not worthless—open-ended WTP, the Becker–DeGroot–</span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>Marschak mechanism, and contingent valuation all have their uses—but for</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>multi-attribute products the indirect route dominates because it yields attribute-level</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>dollar values, not just a single product-level number, and it embeds the valuation in</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>a choice context that disciplines hypothetical bias.</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>The indirect route rests on one structural assumption, which should be stated before</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>any result: **additive separability** of utility across attributes. Consumption</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>utility is taken to equal the sum of the utilities contributed by the product's</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>attributes, with no interaction among them. Let a product be described by a price $P$</span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>and by $N$ non-price attributes, each taking one of several discrete levels. Index the</span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>attributes by $k = 1,\dots,N$ and let $A_k$ denote the level of attribute $k$. The</span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>additive model writes a consumer's utility (or rating) as</span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>U = \beta_0 + \beta_p P + \sum_{k=1}^{N} \beta_k A_k + \epsilon,</span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>$$ {#eq-additive-utility}</span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>where the $\beta$'s are *utility weights* (partworths in conjoint language),</span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>$\beta_0$ absorbs consumer-specific shifts in the rating scale, $\beta_p$ is the</span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>marginal utility of price (expected to be negative), and $\epsilon$ is an idiosyncratic</span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>error. Equation @eq-additive-utility is the linear, additive special case of the</span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>random-utility model formalized in @sec-rum; the categorical attributes $A_k$ are in</span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>practice expanded into level dummies, so each attribute contributes one coefficient per</span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>non-baseline level.</span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>The dollar value of one *util* follows immediately. Because price enters linearly,</span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>the marginal rate of substitution between money and utility is the negative reciprocal</span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>of the price coefficient. If $\Delta p$ is the price difference between two levels of</span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>the price attribute, the dollar value of a unit of utility is</span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>\text{\$ per util} = -\frac{\Delta p}{\beta_p},</span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>$$ {#eq-dollar-per-util}</span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>and the utility a consumer derives from attribute $k$, expressed per unit of that</span>
-<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>attribute, is $(\beta_k / \Delta A_k)\,A_k$, where $\Delta A_k$ is the spacing between</span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>adjacent levels of attribute $k$. The **reservation price** for a configuration is then</span>
-<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>the total utility of its non-price attributes converted to dollars:</span>
-<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>r(P) = -\frac{\Delta p}{\beta_p}\sum_{k=1}^{N}\frac{\beta_k}{\Delta A_k}\,A_k.</span>
-<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>$$ {#eq-reservation-price}</span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>The interpretation is exactly the intuition with which we began. A consumer's</span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>reservation price for a product is the sum of the dollar values she places on each of</span>
-<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>its attributes—each attribute's partworth, scaled by the dollar value of a util in</span>
-<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>@eq-dollar-per-util. Two assumptions make @eq-reservation-price legitimate, and both</span>
-<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>fail in identifiable circumstances. First, **additivity**: if attributes interact</span>
-<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>(a fast processor is worth more in a laptop with a good screen), the cross-terms</span>
-<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>omitted from @eq-additive-utility are loaded onto the main effects and the partworths</span>
-<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>are biased. Second, **linearity of the price disutility**: if $\beta_p$ is not</span>
-<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>constant across the price range—if marginal price sensitivity rises near a budget</span>
-<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>ceiling—then $\Delta p / \beta_p$ is not a single number and @eq-dollar-per-util is</span>
-<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>only a local approximation. We return to both threats once the design machinery is in</span>
-<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>place.</span>
-<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sign and scale conventions</span></span>
-<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>We write $\beta_p &lt; 0$, so the dollar-per-util conversion in @eq-dollar-per-util carries</span>
-<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>an explicit negative sign that makes $r(P)$ positive for value-adding attributes. In a</span>
-<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a>ratings model the scale of $U$ is set by the response scale and $\beta_0$ absorbs</span>
-<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>per-respondent scale heterogeneity; in a choice model (@sec-rum) the scale is fixed by</span>
-<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a>normalizing the error variance, which has consequences for cross-respondent comparison</span>
-<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>that we take up under the scale–heterogeneity confound.</span>
-<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a><span class="fu">## Conjoint Analysis {#sec-conjoint}</span></span>
-<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>Conjoint analysis—originally *conjoint measurement*, a term inherited from mathematical</span>
-<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a>psychology and psychometrics—is the workhorse for estimating the partworths in</span>
-<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a>@eq-additive-utility. Its premise is that consumers evaluate products holistically, as</span>
-<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a>bundles, and that the analyst can recover the weight on each attribute by observing</span>
-<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a>evaluations of systematically varied bundles. The name encodes the logic: the joint</span>
-<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a>("con-joint") effect of attributes considered together is decomposed into separable</span>
-<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a>contributions.</span>
-<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Conjoint analysis is a decompositional method that estimates the structure of a</span></span>
-<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; consumer's preferences given her overall evaluations of a set of alternatives that</span></span>
-<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; are prespecified in terms of levels of different attributes.</span></span>
-<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a>The method's enduring appeal is twofold. It improves the analyst's ability to assess</span>
-<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a>customers' true wants—above all their price sensitivity, which direct questioning</span>
-<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a>distorts—and it dissolves the "everything is important" problem that plagues</span>
-<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a>self-reported importance ratings, forcing trade-offs that reveal which attributes</span>
-<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a>genuinely move choice. @netzer2008 survey the field and organize it around three</span>
-<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a>managerial tasks that conjoint serves—product development, pricing and segmentation,</span>
-<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a>and positioning—together with parallel uses for consumers (recommendation agents),</span>
-<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a>policymakers, and academic researchers; the review traces the field's movement from</span>
-<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a>designs that maximize statistical efficiency toward designs and adaptive elicitation</span>
-<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a>that also respect managerial and respondent constraints.</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>conjoint study. @fig-pref-routes contrasts the two routes and previews the</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>conversion the rest of this section derives.</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="ot">[^direct]: </span>Direct elicitation is not worthless—open-ended WTP, the Becker–DeGroot–</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>Marschak mechanism, and contingent valuation all have their uses—but for</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>multi-attribute products the indirect route dominates because it yields attribute-level</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>dollar values, not just a single product-level number, and it embeds the valuation in</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>a choice context that disciplines hypothetical bias.</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>%%| label: fig-pref-routes</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Two routes to a reservation price. Asking directly yields answers biased downward; the indirect route infers the quantity from a fitted utility model, converting attribute partworths into dollars through the price coefficient.</span><span class="ot">"</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>  Q[<span class="ot">"</span><span class="st">Target: reservation price&lt;br/&gt;(maximum willingness to pay)</span><span class="ot">"</span>] --&gt; DR[<span class="ot">"</span><span class="st">Direct route:&lt;br/&gt;ask the consumer outright</span><span class="ot">"</span>]</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>  Q --&gt; IR[<span class="ot">"</span><span class="st">Indirect route:&lt;br/&gt;infer from a fitted&lt;br/&gt;utility model</span><span class="ot">"</span>]</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>  DR --&gt; DB[<span class="ot">"</span><span class="st">Biased downward:&lt;br/&gt;reluctance to appear price&lt;br/&gt;insensitive; no budget consequence</span><span class="ot">"</span>]</span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>  IR --&gt; CJ[<span class="ot">"</span><span class="st">Conjoint study:&lt;br/&gt;partworths from designed&lt;br/&gt;trade-offs</span><span class="ot">"</span>]</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>  CJ --&gt; DU[<span class="ot">"</span><span class="st">Dollar value of a util:&lt;br/&gt;-Δp / β_p</span><span class="ot">"</span>]</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>  DU --&gt; RP[<span class="ot">"</span><span class="st">Reservation price: sum of&lt;br/&gt;attribute partworths&lt;br/&gt;converted to dollars</span><span class="ot">"</span>]</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>The indirect route rests on one structural assumption, which should be stated before</span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>any result: **additive separability** of utility across attributes. Consumption</span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>utility is taken to equal the sum of the utilities contributed by the product's</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>attributes, with no interaction among them. Let a product be described by a price $P$</span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>and by $N$ non-price attributes, each taking one of several discrete levels. Index the</span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>attributes by $k = 1,\dots,N$ and let $A_k$ denote the level of attribute $k$. The</span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>additive model writes a consumer's utility (or rating) as</span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>U = \beta_0 + \beta_p P + \sum_{k=1}^{N} \beta_k A_k + \epsilon,</span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>$$ {#eq-additive-utility}</span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>where the $\beta$'s are *utility weights* (partworths in conjoint language),</span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>$\beta_0$ absorbs consumer-specific shifts in the rating scale, $\beta_p$ is the</span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>marginal utility of price (expected to be negative), and $\epsilon$ is an idiosyncratic</span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>error. Equation @eq-additive-utility is the linear, additive special case of the</span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>random-utility model formalized in @sec-rum; the categorical attributes $A_k$ are in</span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>practice expanded into level dummies, so each attribute contributes one coefficient per</span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>non-baseline level.</span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>The dollar value of one *util* follows immediately. Because price enters linearly,</span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>the marginal rate of substitution between money and utility is the negative reciprocal</span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>of the price coefficient. If $\Delta p$ is the price difference between two levels of</span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>the price attribute, the dollar value of a unit of utility is</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>\text{\$ per util} = -\frac{\Delta p}{\beta_p},</span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>$$ {#eq-dollar-per-util}</span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>and the utility a consumer derives from attribute $k$, expressed per unit of that</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>attribute, is $(\beta_k / \Delta A_k)\,A_k$, where $\Delta A_k$ is the spacing between</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>adjacent levels of attribute $k$. The **reservation price** for a configuration is then</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>the total utility of its non-price attributes converted to dollars:</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>r(P) = -\frac{\Delta p}{\beta_p}\sum_{k=1}^{N}\frac{\beta_k}{\Delta A_k}\,A_k.</span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>$$ {#eq-reservation-price}</span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>The interpretation is exactly the intuition with which we began. A consumer's</span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>reservation price for a product is the sum of the dollar values she places on each of</span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a>its attributes—each attribute's partworth, scaled by the dollar value of a util in</span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>@eq-dollar-per-util. Two assumptions make @eq-reservation-price legitimate, and both</span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a>fail in identifiable circumstances. First, **additivity**: if attributes interact</span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>(a fast processor is worth more in a laptop with a good screen), the cross-terms</span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a>omitted from @eq-additive-utility are loaded onto the main effects and the partworths</span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a>are biased. Second, **linearity of the price disutility**: if $\beta_p$ is not</span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a>constant across the price range—if marginal price sensitivity rises near a budget</span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a>ceiling—then $\Delta p / \beta_p$ is not a single number and @eq-dollar-per-util is</span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>only a local approximation. We return to both threats once the design machinery is in</span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a>place.</span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sign and scale conventions</span></span>
+<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a>We write $\beta_p &lt; 0$, so the dollar-per-util conversion in @eq-dollar-per-util carries</span>
+<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a>an explicit negative sign that makes $r(P)$ positive for value-adding attributes. In a</span>
+<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a>ratings model the scale of $U$ is set by the response scale and $\beta_0$ absorbs</span>
+<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a>per-respondent scale heterogeneity; in a choice model (@sec-rum) the scale is fixed by</span>
+<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a>normalizing the error variance, which has consequences for cross-respondent comparison</span>
+<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a>that we take up under the scale–heterogeneity confound.</span>
+<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a><span class="fu">## Conjoint Analysis {#sec-conjoint}</span></span>
+<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a>Conjoint analysis—originally *conjoint measurement*, a term inherited from mathematical</span>
+<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a>psychology and psychometrics—is the workhorse for estimating the partworths in</span>
+<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a>@eq-additive-utility. Its premise is that consumers evaluate products holistically, as</span>
+<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a>bundles, and that the analyst can recover the weight on each attribute by observing</span>
+<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a>evaluations of systematically varied bundles. The name encodes the logic: the joint</span>
+<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a>("con-joint") effect of attributes considered together is decomposed into separable</span>
+<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a>contributions.</span>
 <span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a>A foundational distinction motivates why preference, not perception, is the target.</span>
-<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a>*Perception*—beliefs about what products exist and what they are like—is largely</span>
-<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a>**homogeneous** across consumers: people broadly agree that one car is faster than</span>
-<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a>another. *Preference*—which product a consumer actually wants—is **heterogeneous**:</span>
-<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a>people who agree on the facts still choose differently <span class="co">[</span><span class="ot">@netzer2008</span><span class="co">]</span>. Conjoint is a tool</span>
-<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a>for the second object, and its modern forms are built to estimate the *distribution* of</span>
-<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a>partworths across consumers, not merely their average. The original combinatorial</span>
-<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a>treatment of @greenwind1975 already contained the core recipe: use an orthogonal array</span>
-<span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a>to construct a balanced subset of attribute combinations so that each attribute's</span>
-<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a>contribution is estimated independently of the others, then collect rankings or ratings</span>
-<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a>over that reduced set. Their catalog of applications—new-product development, package</span>
-<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a>design, pricing and brand alternatives, service design, and industrial (organizational)</span>
-<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a>buying—remains an accurate map of where conjoint is used today.</span>
-<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a><span class="fu">### Designing the Attribute Space</span></span>
-<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a>The quality of a conjoint study is fixed before any data are collected, in the choice of</span>
-<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a>attributes and levels. Four design principles recur, and each protects a specific</span>
-<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a>inferential property rather than being mere good practice. Attributes must be</span>
-<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a>**actionable**—a partworth on a feature the firm cannot build is uninterpretable as a</span>
-<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a>decision input. Their number must be **bounded**, because respondent cognitive load</span>
-<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a>grows with the dimensionality of each profile and noisy responses inflate $\epsilon$ in</span>
-<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a>@eq-additive-utility. Levels must span a **feasible and relevant range**: every level</span>
-<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a>should be one the firm could actually offer and one the consumer would plausibly</span>
-<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a>encounter, since extrapolating partworths outside the studied range is unsupported.</span>
-<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a>Finally, the **number of levels** per attribute is itself a design variable with a known</span>
-<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a>artifact—the *number-of-levels effect*, whereby an attribute is estimated to be more</span>
-<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a>important simply because it is split into more levels, independent of its true</span>
-<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a>importance.<span class="ot">[^nlevels]</span></span>
-<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a><span class="ot">[^nlevels]: </span>The number-of-levels effect is partly a halo of the level count and partly an</span>
-<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a>ordering artifact; it means importance comparisons across attributes with different</span>
-<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a>numbers of levels are not clean. The defensive design is to equalize level counts where</span>
-<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a>possible, or to interpret importances within, not across, attributes.</span>
-<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a>Under additivity and independence, the number of profiles the design must support equals</span>
-<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a>the number of estimated dummy variables. When the analyst suspects an **interaction**—a</span>
-<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a>violation of the additive separability that @eq-additive-utility assumes—two remedies are</span>
-<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a>available, and they trade respondent effort against bias. One can fold the interacting</span>
-<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a>pair into a single higher-level "super-attribute" whose levels enumerate the relevant</span>
-<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a>combinations, absorbing the interaction into main effects; or one can enlarge the design</span>
-<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a>to include enough profiles to estimate the interaction term explicitly. The first is</span>
-<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a>cheaper but coarsens the attribute space; the second is faithful but costly in profiles.</span>
-<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a>The mechanism that makes a reduced design estimable is the **fractional factorial**: a</span>
-<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a>carefully chosen subset of the full factorial that preserves orthogonality among main</span>
-<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a>effects so that partworths remain independently identified. A full factorial over $N$</span>
-<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a>attributes with $L$ levels each contains $L^N$ profiles—infeasible for any realistic $N$—</span>
-<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a>so the analyst selects a fraction in which the columns of the design matrix remain</span>
-<span id="cb4-188"><a href="#cb4-188" aria-hidden="true" tabindex="-1"></a>uncorrelated. @fig-conjoint-pipeline summarizes the workflow from attribute definition</span>
-<span id="cb4-189"><a href="#cb4-189" aria-hidden="true" tabindex="-1"></a>through to managerial action.</span>
-<span id="cb4-190"><a href="#cb4-190" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-193"><a href="#cb4-193" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb4-194"><a href="#cb4-194" aria-hidden="true" tabindex="-1"></a>%%| label: fig-conjoint-pipeline</span>
-<span id="cb4-195"><a href="#cb4-195" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The conjoint analysis pipeline, from attribute specification to managerial decision. The estimation step varies by conjoint type (see </span><span class="dt">@tbl</span><span class="st">-conjoint-types).</span><span class="ot">"</span></span>
-<span id="cb4-196"><a href="#cb4-196" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
-<span id="cb4-197"><a href="#cb4-197" aria-hidden="true" tabindex="-1"></a>    A[Define attributes &amp; levels&lt;br/&gt;actionable, feasible, bounded] --&gt; B[Construct design&lt;br/&gt;fractional factorial / orthogonal array]</span>
-<span id="cb4-198"><a href="#cb4-198" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[Choose elicitation&lt;br/&gt;rate · rank · choose · MaxDiff]</span>
-<span id="cb4-199"><a href="#cb4-199" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[Collect responses]</span>
-<span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[Estimate partworths&lt;br/&gt;OLS · MNL · mixed logit · HB]</span>
-<span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a>    E --&gt; F[Derive quantities&lt;br/&gt;WTP · importance · share-of-preference]</span>
-<span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a>    F --&gt; G[Managerial action&lt;br/&gt;design · price · segment · position]</span>
-<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a>Conjoint is rarely run in isolation. It pairs naturally with **factor analysis** for</span>
-<span id="cb4-206"><a href="#cb4-206" aria-hidden="true" tabindex="-1"></a>reducing a large attribute set to underlying dimensions, with **perceptual mapping**</span>
-<span id="cb4-207"><a href="#cb4-207" aria-hidden="true" tabindex="-1"></a>(multidimensional scaling) for positioning the estimated preferences in a perceptual</span>
-<span id="cb4-208"><a href="#cb4-208" aria-hidden="true" tabindex="-1"></a>space, and with **cluster analysis** for grouping consumers by their partworth vectors</span>
-<span id="cb4-209"><a href="#cb4-209" aria-hidden="true" tabindex="-1"></a>into actionable segments—the empirical expression of preference heterogeneity.</span>
-<span id="cb4-210"><a href="#cb4-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-211"><a href="#cb4-211" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Random-Utility Foundation {#sec-rum}</span></span>
-<span id="cb4-212"><a href="#cb4-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-213"><a href="#cb4-213" aria-hidden="true" tabindex="-1"></a>The ratings model in @eq-additive-utility treats $U$ as an observed (or directly</span>
-<span id="cb4-214"><a href="#cb4-214" aria-hidden="true" tabindex="-1"></a>reported) quantity. Modern conjoint, especially its choice-based form, instead treats</span>
-<span id="cb4-215"><a href="#cb4-215" aria-hidden="true" tabindex="-1"></a>$U$ as **latent** and observes only the consumer's *choice* among alternatives. This is</span>
-<span id="cb4-216"><a href="#cb4-216" aria-hidden="true" tabindex="-1"></a>the random-utility model (RUM), the foundation McFadden built for discrete choice</span>
-<span id="cb4-217"><a href="#cb4-217" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@mcfadden1986choice; @mcfadden2001economic</span><span class="co">]</span>. Consumer $i$ derives utility from</span>
-<span id="cb4-218"><a href="#cb4-218" aria-hidden="true" tabindex="-1"></a>alternative $j$ in choice set $\mathcal{S}_t$,</span>
+<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Conjoint analysis is a decompositional method that estimates the structure of a</span></span>
+<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; consumer's preferences given her overall evaluations of a set of alternatives that</span></span>
+<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; are prespecified in terms of levels of different attributes.</span></span>
+<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a>The method's enduring appeal is twofold. It improves the analyst's ability to assess</span>
+<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a>customers' true wants—above all their price sensitivity, which direct questioning</span>
+<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a>distorts—and it dissolves the "everything is important" problem that plagues</span>
+<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a>self-reported importance ratings, forcing trade-offs that reveal which attributes</span>
+<span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a>genuinely move choice. @netzer2008 survey the field and organize it around three</span>
+<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a>managerial tasks that conjoint serves—product development, pricing and segmentation,</span>
+<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a>and positioning—together with parallel uses for consumers (recommendation agents),</span>
+<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a>policymakers, and academic researchers; the review traces the field's movement from</span>
+<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a>designs that maximize statistical efficiency toward designs and adaptive elicitation</span>
+<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a>that also respect managerial and respondent constraints.</span>
+<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a>A foundational distinction motivates why preference, not perception, is the target.</span>
+<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a>*Perception*—beliefs about what products exist and what they are like—is largely</span>
+<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a>**homogeneous** across consumers: people broadly agree that one car is faster than</span>
+<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a>another. *Preference*—which product a consumer actually wants—is **heterogeneous**:</span>
+<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a>people who agree on the facts still choose differently <span class="co">[</span><span class="ot">@netzer2008</span><span class="co">]</span>. Conjoint is a tool</span>
+<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a>for the second object, and its modern forms are built to estimate the *distribution* of</span>
+<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a>partworths across consumers, not merely their average. The original combinatorial</span>
+<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a>treatment of @greenwind1975 already contained the core recipe: use an orthogonal array</span>
+<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a>to construct a balanced subset of attribute combinations so that each attribute's</span>
+<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a>contribution is estimated independently of the others, then collect rankings or ratings</span>
+<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a>over that reduced set. Their catalog of applications—new-product development, package</span>
+<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a>design, pricing and brand alternatives, service design, and industrial (organizational)</span>
+<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a>buying—remains an accurate map of where conjoint is used today.</span>
+<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a><span class="fu">### Designing the Attribute Space</span></span>
+<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a>The quality of a conjoint study is fixed before any data are collected, in the choice of</span>
+<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a>attributes and levels. Four design principles recur, and each protects a specific</span>
+<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a>inferential property rather than being mere good practice. Attributes must be</span>
+<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a>**actionable**—a partworth on a feature the firm cannot build is uninterpretable as a</span>
+<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a>decision input. Their number must be **bounded**, because respondent cognitive load</span>
+<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a>grows with the dimensionality of each profile and noisy responses inflate $\epsilon$ in</span>
+<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a>@eq-additive-utility. Levels must span a **feasible and relevant range**: every level</span>
+<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a>should be one the firm could actually offer and one the consumer would plausibly</span>
+<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a>encounter, since extrapolating partworths outside the studied range is unsupported.</span>
+<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a>Finally, the **number of levels** per attribute is itself a design variable with a known</span>
+<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a>artifact—the *number-of-levels effect*, whereby an attribute is estimated to be more</span>
+<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a>important simply because it is split into more levels, independent of its true</span>
+<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a>importance.<span class="ot">[^nlevels]</span></span>
+<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a><span class="ot">[^nlevels]: </span>The number-of-levels effect is partly a halo of the level count and partly an</span>
+<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a>ordering artifact; it means importance comparisons across attributes with different</span>
+<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a>numbers of levels are not clean. The defensive design is to equalize level counts where</span>
+<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a>possible, or to interpret importances within, not across, attributes.</span>
+<span id="cb4-188"><a href="#cb4-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-189"><a href="#cb4-189" aria-hidden="true" tabindex="-1"></a>Under additivity and independence, the number of profiles the design must support equals</span>
+<span id="cb4-190"><a href="#cb4-190" aria-hidden="true" tabindex="-1"></a>the number of estimated dummy variables. When the analyst suspects an **interaction**—a</span>
+<span id="cb4-191"><a href="#cb4-191" aria-hidden="true" tabindex="-1"></a>violation of the additive separability that @eq-additive-utility assumes—two remedies are</span>
+<span id="cb4-192"><a href="#cb4-192" aria-hidden="true" tabindex="-1"></a>available, and they trade respondent effort against bias. One can fold the interacting</span>
+<span id="cb4-193"><a href="#cb4-193" aria-hidden="true" tabindex="-1"></a>pair into a single higher-level "super-attribute" whose levels enumerate the relevant</span>
+<span id="cb4-194"><a href="#cb4-194" aria-hidden="true" tabindex="-1"></a>combinations, absorbing the interaction into main effects; or one can enlarge the design</span>
+<span id="cb4-195"><a href="#cb4-195" aria-hidden="true" tabindex="-1"></a>to include enough profiles to estimate the interaction term explicitly. The first is</span>
+<span id="cb4-196"><a href="#cb4-196" aria-hidden="true" tabindex="-1"></a>cheaper but coarsens the attribute space; the second is faithful but costly in profiles.</span>
+<span id="cb4-197"><a href="#cb4-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-198"><a href="#cb4-198" aria-hidden="true" tabindex="-1"></a>The mechanism that makes a reduced design estimable is the **fractional factorial**: a</span>
+<span id="cb4-199"><a href="#cb4-199" aria-hidden="true" tabindex="-1"></a>carefully chosen subset of the full factorial that preserves orthogonality among main</span>
+<span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a>effects so that partworths remain independently identified. A full factorial over $N$</span>
+<span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a>attributes with $L$ levels each contains $L^N$ profiles—infeasible for any realistic $N$—</span>
+<span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a>so the analyst selects a fraction in which the columns of the design matrix remain</span>
+<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a>uncorrelated. @fig-conjoint-pipeline summarizes the workflow from attribute definition</span>
+<span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a>through to managerial action.</span>
+<span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-208"><a href="#cb4-208" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb4-209"><a href="#cb4-209" aria-hidden="true" tabindex="-1"></a>%%| label: fig-conjoint-pipeline</span>
+<span id="cb4-210"><a href="#cb4-210" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The conjoint analysis pipeline, from attribute specification to managerial decision. The estimation step varies by conjoint type (see </span><span class="dt">@tbl</span><span class="st">-conjoint-types).</span><span class="ot">"</span></span>
+<span id="cb4-211"><a href="#cb4-211" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
+<span id="cb4-212"><a href="#cb4-212" aria-hidden="true" tabindex="-1"></a>    A[Define attributes &amp; levels&lt;br/&gt;actionable, feasible, bounded] --&gt; B[Construct design&lt;br/&gt;fractional factorial / orthogonal array]</span>
+<span id="cb4-213"><a href="#cb4-213" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[Choose elicitation&lt;br/&gt;rate · rank · choose · MaxDiff]</span>
+<span id="cb4-214"><a href="#cb4-214" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[Collect responses]</span>
+<span id="cb4-215"><a href="#cb4-215" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[Estimate partworths&lt;br/&gt;OLS · MNL · mixed logit · HB]</span>
+<span id="cb4-216"><a href="#cb4-216" aria-hidden="true" tabindex="-1"></a>    E --&gt; F[Derive quantities&lt;br/&gt;WTP · importance · share-of-preference]</span>
+<span id="cb4-217"><a href="#cb4-217" aria-hidden="true" tabindex="-1"></a>    F --&gt; G[Managerial action&lt;br/&gt;design · price · segment · position]</span>
+<span id="cb4-218"><a href="#cb4-218" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb4-219"><a href="#cb4-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-220"><a href="#cb4-220" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-221"><a href="#cb4-221" aria-hidden="true" tabindex="-1"></a>U_{ijt} = \mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i + \varepsilon_{ijt},</span>
-<span id="cb4-222"><a href="#cb4-222" aria-hidden="true" tabindex="-1"></a>$$ {#eq-32-rum}</span>
-<span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a>where $\mathbf{x}_{jt}$ collects the attribute levels of alternative $j$ (including</span>
-<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a>price), $\boldsymbol{\beta}_i$ is consumer $i$'s partworth vector, and $\varepsilon_{ijt}$</span>
-<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a>is an unobserved component. The consumer chooses the alternative of greatest utility, so</span>
-<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a>the analyst observes $y_{it} = \arg\max_{j \in \mathcal{S}_t} U_{ijt}$. The systematic</span>
-<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a>part $\mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i$ is exactly the additive partworth sum of</span>
-<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a>@eq-additive-utility; what RUM adds is an explicit stochastic structure on $\varepsilon$</span>
-<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a>that delivers a likelihood for *choices*.</span>
-<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a>If the $\varepsilon_{ijt}$ are independent and identically distributed type-I extreme</span>
-<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a>value, the choice probabilities take the **multinomial logit** (MNL) form,</span>
+<span id="cb4-220"><a href="#cb4-220" aria-hidden="true" tabindex="-1"></a>Conjoint is rarely run in isolation. It pairs naturally with **factor analysis** for</span>
+<span id="cb4-221"><a href="#cb4-221" aria-hidden="true" tabindex="-1"></a>reducing a large attribute set to underlying dimensions, with **perceptual mapping**</span>
+<span id="cb4-222"><a href="#cb4-222" aria-hidden="true" tabindex="-1"></a>(multidimensional scaling) for positioning the estimated preferences in a perceptual</span>
+<span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a>space, and with **cluster analysis** for grouping consumers by their partworth vectors</span>
+<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a>into actionable segments—the empirical expression of preference heterogeneity.</span>
+<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a><span class="fu">### The Random-Utility Foundation {#sec-rum}</span></span>
+<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a>The ratings model in @eq-additive-utility treats $U$ as an observed (or directly</span>
+<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a>reported) quantity. Modern conjoint, especially its choice-based form, instead treats</span>
+<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a>$U$ as **latent** and observes only the consumer's *choice* among alternatives. This is</span>
+<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a>the random-utility model (RUM), the foundation McFadden built for discrete choice</span>
+<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@mcfadden1986choice; @mcfadden2001economic</span><span class="co">]</span>. Consumer $i$ derives utility from</span>
+<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a>alternative $j$ in choice set $\mathcal{S}_t$,</span>
 <span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a>\Pr(y_{it} = j) = \frac{\exp(\mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i)}</span>
-<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a>{\sum_{l \in \mathcal{S}_t}\exp(\mathbf{x}_{lt}^{\top}\boldsymbol{\beta}_i)}.</span>
-<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a>$$ {#eq-32-mnl}</span>
-<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a>The aggregate logit of @eq-32-mnl (with $\boldsymbol{\beta}_i = \boldsymbol{\beta}$ common</span>
-<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a>to all consumers) is the model behind the @guadagni1983 scanner-data application that</span>
-<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a>launched choice modeling in marketing, and it is the workhorse for demand estimation more</span>
-<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a>broadly <span class="co">[</span><span class="ot">@berry1995</span><span class="co">]</span>. Two identification facts must be stated. First, **only utility</span>
-<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a>differences are identified**: adding a constant to every alternative's utility leaves</span>
-<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a>choices unchanged, so one alternative's intercept is normalized to zero. Second, the</span>
-<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a>**scale is not separately identified** from the partworths: the error variance is</span>
-<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a>normalized (to $\pi^2/6$ in the logit), which means estimated $\boldsymbol{\beta}$ are</span>
-<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a>confounded with scale. This scale normalization is the root of the scale–heterogeneity</span>
-<span id="cb4-249"><a href="#cb4-249" aria-hidden="true" tabindex="-1"></a>confound discussed below. MNL also carries the **independence of irrelevant alternatives**</span>
-<span id="cb4-250"><a href="#cb4-250" aria-hidden="true" tabindex="-1"></a>(IIA) property—the odds of choosing $j$ over $l$ are independent of other alternatives—</span>
-<span id="cb4-251"><a href="#cb4-251" aria-hidden="true" tabindex="-1"></a>which is implausible when alternatives are close substitutes and which the richer models</span>
-<span id="cb4-252"><a href="#cb4-252" aria-hidden="true" tabindex="-1"></a>below relax.</span>
-<span id="cb4-253"><a href="#cb4-253" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-254"><a href="#cb4-254" aria-hidden="true" tabindex="-1"></a><span class="fu">### Heterogeneity: Mixed Logit and Hierarchical Bayes</span></span>
-<span id="cb4-255"><a href="#cb4-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-256"><a href="#cb4-256" aria-hidden="true" tabindex="-1"></a>Because preference is heterogeneous, a single $\boldsymbol{\beta}$ misrepresents the</span>
-<span id="cb4-257"><a href="#cb4-257" aria-hidden="true" tabindex="-1"></a>market and, worse, can produce biased aggregate elasticities. The **mixed (random-</span>
-<span id="cb4-258"><a href="#cb4-258" aria-hidden="true" tabindex="-1"></a>coefficients) logit** lets partworths vary across consumers, $\boldsymbol{\beta}_i \sim</span>
-<span id="cb4-259"><a href="#cb4-259" aria-hidden="true" tabindex="-1"></a>g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$, and integrates them out of the likelihood:</span>
-<span id="cb4-260"><a href="#cb4-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-261"><a href="#cb4-261" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-262"><a href="#cb4-262" aria-hidden="true" tabindex="-1"></a>\Pr(y_{it} = j) = \int \frac{\exp(\mathbf{x}_{jt}^{\top}\boldsymbol{\beta})}</span>
-<span id="cb4-263"><a href="#cb4-263" aria-hidden="true" tabindex="-1"></a>{\sum_{l \in \mathcal{S}_t}\exp(\mathbf{x}_{lt}^{\top}\boldsymbol{\beta})}\,</span>
-<span id="cb4-264"><a href="#cb4-264" aria-hidden="true" tabindex="-1"></a>g(\boldsymbol{\beta}\mid\boldsymbol{\theta})\,d\boldsymbol{\beta}.</span>
-<span id="cb4-265"><a href="#cb4-265" aria-hidden="true" tabindex="-1"></a>$$ {#eq-mixed-logit}</span>
-<span id="cb4-266"><a href="#cb4-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-267"><a href="#cb4-267" aria-hidden="true" tabindex="-1"></a>Mixed logit relaxes IIA and accommodates flexible substitution, at the cost of a</span>
-<span id="cb4-268"><a href="#cb4-268" aria-hidden="true" tabindex="-1"></a>likelihood with no closed form that must be simulated. In marketing the dominant route to</span>
-<span id="cb4-269"><a href="#cb4-269" aria-hidden="true" tabindex="-1"></a>@eq-mixed-logit is **hierarchical Bayes** (HB): a Gaussian (or richer) population prior</span>
-<span id="cb4-270"><a href="#cb4-270" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_i \sim \mathcal{N}(\bar{\boldsymbol{\beta}}, \boldsymbol{\Sigma})$ is</span>
-<span id="cb4-271"><a href="#cb4-271" aria-hidden="true" tabindex="-1"></a>placed over individual partworths, and Markov chain Monte Carlo recovers a full posterior</span>
-<span id="cb4-272"><a href="#cb4-272" aria-hidden="true" tabindex="-1"></a>for *each respondent's* partworth vector by borrowing strength across the panel</span>
-<span id="cb4-273"><a href="#cb4-273" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@rossi2014; @allenby1999dynamic</span><span class="co">]</span>. HB is what makes individual-level WTP estimable from a</span>
-<span id="cb4-274"><a href="#cb4-274" aria-hidden="true" tabindex="-1"></a>handful of choices per respondent—too few to fit a separate model per person—and it is the</span>
-<span id="cb4-275"><a href="#cb4-275" aria-hidden="true" tabindex="-1"></a>engine behind commercial choice-based conjoint. The same Bayesian decomposition recovers</span>
-<span id="cb4-276"><a href="#cb4-276" aria-hidden="true" tabindex="-1"></a>brand value from choice data by splitting utility into attribute-driven and name-driven</span>
-<span id="cb4-277"><a href="#cb4-277" aria-hidden="true" tabindex="-1"></a>components <span class="co">[</span><span class="ot">@kamakura1993; @jedidi2003</span><span class="co">]</span>.</span>
-<span id="cb4-278"><a href="#cb4-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-279"><a href="#cb4-279" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
-<span id="cb4-280"><a href="#cb4-280" aria-hidden="true" tabindex="-1"></a><span class="fu">## The scale–heterogeneity confound</span></span>
-<span id="cb4-281"><a href="#cb4-281" aria-hidden="true" tabindex="-1"></a>Because the logit fixes the error scale, what looks like heterogeneity in partworths can</span>
-<span id="cb4-282"><a href="#cb4-282" aria-hidden="true" tabindex="-1"></a>instead be heterogeneity in *scale*—how deterministically a respondent chooses. Two</span>
-<span id="cb4-283"><a href="#cb4-283" aria-hidden="true" tabindex="-1"></a>respondents with identical relative preferences but different choice consistency will</span>
-<span id="cb4-284"><a href="#cb4-284" aria-hidden="true" tabindex="-1"></a>appear to have proportionally different $\boldsymbol{\beta}_i$. WTP, a ratio of two</span>
-<span id="cb4-285"><a href="#cb4-285" aria-hidden="true" tabindex="-1"></a>coefficients ($-\beta_k/\beta_p$), partially cancels scale, which is one reason WTP is</span>
-<span id="cb4-286"><a href="#cb4-286" aria-hidden="true" tabindex="-1"></a>often more stable across respondents than raw partworths—but only if scale is common to</span>
-<span id="cb4-287"><a href="#cb4-287" aria-hidden="true" tabindex="-1"></a>the numerator and denominator. Mis-attributing scale to preference is a standard threat to</span>
-<span id="cb4-288"><a href="#cb4-288" aria-hidden="true" tabindex="-1"></a>identification in choice-based conjoint.</span>
-<span id="cb4-289"><a href="#cb4-289" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb4-290"><a href="#cb4-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-291"><a href="#cb4-291" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variants of Conjoint {#sec-conjoint-variants}</span></span>
-<span id="cb4-292"><a href="#cb4-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-293"><a href="#cb4-293" aria-hidden="true" tabindex="-1"></a>Conjoint is a family, not a single method. The variants differ in how preferences are</span>
-<span id="cb4-294"><a href="#cb4-294" aria-hidden="true" tabindex="-1"></a>*elicited* and therefore in what they assume about the respondent and what they can</span>
-<span id="cb4-295"><a href="#cb4-295" aria-hidden="true" tabindex="-1"></a>estimate. @tbl-conjoint-types contrasts them.</span>
-<span id="cb4-296"><a href="#cb4-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-297"><a href="#cb4-297" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Variant <span class="pp">|</span> Elicitation task <span class="pp">|</span> Estimator <span class="pp">|</span> When it fits <span class="pp">|</span></span>
-<span id="cb4-298"><a href="#cb4-298" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
-<span id="cb4-299"><a href="#cb4-299" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Full-profile** <span class="pp">|</span> Rate or rank complete profiles <span class="pp">|</span> OLS / regression on partworths <span class="pp">|</span> Few attributes; ratings interpretable <span class="pp">|</span></span>
-<span id="cb4-300"><a href="#cb4-300" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Choice-based (CBC)** <span class="pp">|</span> Choose one profile from a set <span class="pp">|</span> MNL / mixed logit / HB <span class="pp">|</span> Realistic; recovers WTP and shares <span class="pp">|</span></span>
-<span id="cb4-301"><a href="#cb4-301" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Adaptive (ACA)** <span class="pp">|</span> Tailored questions by prior answers <span class="pp">|</span> Self-explicated + tradeoff, often HB <span class="pp">|</span> Many attributes; shorten survey <span class="pp">|</span></span>
-<span id="cb4-302"><a href="#cb4-302" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Hybrid** <span class="pp">|</span> Self-explicated stage + full-profile/choice <span class="pp">|</span> Two-stage / HB <span class="pp">|</span> Many attributes with efficiency <span class="pp">|</span></span>
-<span id="cb4-303"><a href="#cb4-303" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Self-explicated** <span class="pp">|</span> Rate level desirability and attribute importance <span class="pp">|</span> Weighted compositional sum <span class="pp">|</span> Many attributes; minimal load <span class="pp">|</span></span>
-<span id="cb4-304"><a href="#cb4-304" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MaxDiff** <span class="pp">|</span> Pick most- and least-preferred items <span class="pp">|</span> Best–worst MNL <span class="pp">|</span> Importance ranking of many items <span class="pp">|</span></span>
+<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a>U_{ijt} = \mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i + \varepsilon_{ijt},</span>
+<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a>$$ {#eq-32-rum}</span>
+<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a>where $\mathbf{x}_{jt}$ collects the attribute levels of alternative $j$ (including</span>
+<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a>price), $\boldsymbol{\beta}_i$ is consumer $i$'s partworth vector, and $\varepsilon_{ijt}$</span>
+<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a>is an unobserved component. The consumer chooses the alternative of greatest utility, so</span>
+<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a>the analyst observes $y_{it} = \arg\max_{j \in \mathcal{S}_t} U_{ijt}$. The systematic</span>
+<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a>part $\mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i$ is exactly the additive partworth sum of</span>
+<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a>@eq-additive-utility; what RUM adds is an explicit stochastic structure on $\varepsilon$</span>
+<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a>that delivers a likelihood for *choices*.</span>
+<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a>If the $\varepsilon_{ijt}$ are independent and identically distributed type-I extreme</span>
+<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a>value, the choice probabilities take the **multinomial logit** (MNL) form,</span>
+<span id="cb4-249"><a href="#cb4-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-250"><a href="#cb4-250" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-251"><a href="#cb4-251" aria-hidden="true" tabindex="-1"></a>\Pr(y_{it} = j) = \frac{\exp(\mathbf{x}_{jt}^{\top}\boldsymbol{\beta}_i)}</span>
+<span id="cb4-252"><a href="#cb4-252" aria-hidden="true" tabindex="-1"></a>{\sum_{l \in \mathcal{S}_t}\exp(\mathbf{x}_{lt}^{\top}\boldsymbol{\beta}_i)}.</span>
+<span id="cb4-253"><a href="#cb4-253" aria-hidden="true" tabindex="-1"></a>$$ {#eq-32-mnl}</span>
+<span id="cb4-254"><a href="#cb4-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-255"><a href="#cb4-255" aria-hidden="true" tabindex="-1"></a>The aggregate logit of @eq-32-mnl (with $\boldsymbol{\beta}_i = \boldsymbol{\beta}$ common</span>
+<span id="cb4-256"><a href="#cb4-256" aria-hidden="true" tabindex="-1"></a>to all consumers) is the model behind the @guadagni1983 scanner-data application that</span>
+<span id="cb4-257"><a href="#cb4-257" aria-hidden="true" tabindex="-1"></a>launched choice modeling in marketing, and it is the workhorse for demand estimation more</span>
+<span id="cb4-258"><a href="#cb4-258" aria-hidden="true" tabindex="-1"></a>broadly <span class="co">[</span><span class="ot">@berry1995</span><span class="co">]</span>. Two identification facts must be stated. First, **only utility</span>
+<span id="cb4-259"><a href="#cb4-259" aria-hidden="true" tabindex="-1"></a>differences are identified**: adding a constant to every alternative's utility leaves</span>
+<span id="cb4-260"><a href="#cb4-260" aria-hidden="true" tabindex="-1"></a>choices unchanged, so one alternative's intercept is normalized to zero. Second, the</span>
+<span id="cb4-261"><a href="#cb4-261" aria-hidden="true" tabindex="-1"></a>**scale is not separately identified** from the partworths: the error variance is</span>
+<span id="cb4-262"><a href="#cb4-262" aria-hidden="true" tabindex="-1"></a>normalized (to $\pi^2/6$ in the logit), which means estimated $\boldsymbol{\beta}$ are</span>
+<span id="cb4-263"><a href="#cb4-263" aria-hidden="true" tabindex="-1"></a>confounded with scale. This scale normalization is the root of the scale–heterogeneity</span>
+<span id="cb4-264"><a href="#cb4-264" aria-hidden="true" tabindex="-1"></a>confound discussed below. MNL also carries the **independence of irrelevant alternatives**</span>
+<span id="cb4-265"><a href="#cb4-265" aria-hidden="true" tabindex="-1"></a>(IIA) property—the odds of choosing $j$ over $l$ are independent of other alternatives—</span>
+<span id="cb4-266"><a href="#cb4-266" aria-hidden="true" tabindex="-1"></a>which is implausible when alternatives are close substitutes and which the richer models</span>
+<span id="cb4-267"><a href="#cb4-267" aria-hidden="true" tabindex="-1"></a>below relax.</span>
+<span id="cb4-268"><a href="#cb4-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-269"><a href="#cb4-269" aria-hidden="true" tabindex="-1"></a><span class="fu">### Heterogeneity: Mixed Logit and Hierarchical Bayes</span></span>
+<span id="cb4-270"><a href="#cb4-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-271"><a href="#cb4-271" aria-hidden="true" tabindex="-1"></a>Because preference is heterogeneous, a single $\boldsymbol{\beta}$ misrepresents the</span>
+<span id="cb4-272"><a href="#cb4-272" aria-hidden="true" tabindex="-1"></a>market and, worse, can produce biased aggregate elasticities. The **mixed (random-</span>
+<span id="cb4-273"><a href="#cb4-273" aria-hidden="true" tabindex="-1"></a>coefficients) logit** lets partworths vary across consumers, $\boldsymbol{\beta}_i \sim</span>
+<span id="cb4-274"><a href="#cb4-274" aria-hidden="true" tabindex="-1"></a>g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$, and integrates them out of the likelihood:</span>
+<span id="cb4-275"><a href="#cb4-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-276"><a href="#cb4-276" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-277"><a href="#cb4-277" aria-hidden="true" tabindex="-1"></a>\Pr(y_{it} = j) = \int \frac{\exp(\mathbf{x}_{jt}^{\top}\boldsymbol{\beta})}</span>
+<span id="cb4-278"><a href="#cb4-278" aria-hidden="true" tabindex="-1"></a>{\sum_{l \in \mathcal{S}_t}\exp(\mathbf{x}_{lt}^{\top}\boldsymbol{\beta})}\,</span>
+<span id="cb4-279"><a href="#cb4-279" aria-hidden="true" tabindex="-1"></a>g(\boldsymbol{\beta}\mid\boldsymbol{\theta})\,d\boldsymbol{\beta}.</span>
+<span id="cb4-280"><a href="#cb4-280" aria-hidden="true" tabindex="-1"></a>$$ {#eq-mixed-logit}</span>
+<span id="cb4-281"><a href="#cb4-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-282"><a href="#cb4-282" aria-hidden="true" tabindex="-1"></a>Mixed logit relaxes IIA and accommodates flexible substitution, at the cost of a</span>
+<span id="cb4-283"><a href="#cb4-283" aria-hidden="true" tabindex="-1"></a>likelihood with no closed form that must be simulated. In marketing the dominant route to</span>
+<span id="cb4-284"><a href="#cb4-284" aria-hidden="true" tabindex="-1"></a>@eq-mixed-logit is **hierarchical Bayes** (HB): a Gaussian (or richer) population prior</span>
+<span id="cb4-285"><a href="#cb4-285" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_i \sim \mathcal{N}(\bar{\boldsymbol{\beta}}, \boldsymbol{\Sigma})$ is</span>
+<span id="cb4-286"><a href="#cb4-286" aria-hidden="true" tabindex="-1"></a>placed over individual partworths, and Markov chain Monte Carlo recovers a full posterior</span>
+<span id="cb4-287"><a href="#cb4-287" aria-hidden="true" tabindex="-1"></a>for *each respondent's* partworth vector by borrowing strength across the panel</span>
+<span id="cb4-288"><a href="#cb4-288" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@rossi2014; @allenby1999dynamic</span><span class="co">]</span>. HB is what makes individual-level WTP estimable from a</span>
+<span id="cb4-289"><a href="#cb4-289" aria-hidden="true" tabindex="-1"></a>handful of choices per respondent—too few to fit a separate model per person—and it is the</span>
+<span id="cb4-290"><a href="#cb4-290" aria-hidden="true" tabindex="-1"></a>engine behind commercial choice-based conjoint. The same Bayesian decomposition recovers</span>
+<span id="cb4-291"><a href="#cb4-291" aria-hidden="true" tabindex="-1"></a>brand value from choice data by splitting utility into attribute-driven and name-driven</span>
+<span id="cb4-292"><a href="#cb4-292" aria-hidden="true" tabindex="-1"></a>components <span class="co">[</span><span class="ot">@kamakura1993; @jedidi2003</span><span class="co">]</span>.</span>
+<span id="cb4-293"><a href="#cb4-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-294"><a href="#cb4-294" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb4-295"><a href="#cb4-295" aria-hidden="true" tabindex="-1"></a><span class="fu">## The scale–heterogeneity confound</span></span>
+<span id="cb4-296"><a href="#cb4-296" aria-hidden="true" tabindex="-1"></a>Because the logit fixes the error scale, what looks like heterogeneity in partworths can</span>
+<span id="cb4-297"><a href="#cb4-297" aria-hidden="true" tabindex="-1"></a>instead be heterogeneity in *scale*—how deterministically a respondent chooses. Two</span>
+<span id="cb4-298"><a href="#cb4-298" aria-hidden="true" tabindex="-1"></a>respondents with identical relative preferences but different choice consistency will</span>
+<span id="cb4-299"><a href="#cb4-299" aria-hidden="true" tabindex="-1"></a>appear to have proportionally different $\boldsymbol{\beta}_i$. WTP, a ratio of two</span>
+<span id="cb4-300"><a href="#cb4-300" aria-hidden="true" tabindex="-1"></a>coefficients ($-\beta_k/\beta_p$), partially cancels scale, which is one reason WTP is</span>
+<span id="cb4-301"><a href="#cb4-301" aria-hidden="true" tabindex="-1"></a>often more stable across respondents than raw partworths—but only if scale is common to</span>
+<span id="cb4-302"><a href="#cb4-302" aria-hidden="true" tabindex="-1"></a>the numerator and denominator. Mis-attributing scale to preference is a standard threat to</span>
+<span id="cb4-303"><a href="#cb4-303" aria-hidden="true" tabindex="-1"></a>identification in choice-based conjoint.</span>
+<span id="cb4-304"><a href="#cb4-304" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb4-305"><a href="#cb4-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-306"><a href="#cb4-306" aria-hidden="true" tabindex="-1"></a>: Conjoint variants by elicitation task and estimator. Ranking and rating full-profile</span>
-<span id="cb4-307"><a href="#cb4-307" aria-hidden="true" tabindex="-1"></a>conjoint yield substantively equivalent partworths <span class="co">[</span><span class="ot">@kalish1991</span><span class="co">]</span>. {#tbl-conjoint-types}</span>
-<span id="cb4-308"><a href="#cb4-308" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-309"><a href="#cb4-309" aria-hidden="true" tabindex="-1"></a>**Full-profile** conjoint presents complete product descriptions for rating or ranking and</span>
-<span id="cb4-310"><a href="#cb4-310" aria-hidden="true" tabindex="-1"></a>estimates the partworths of @eq-additive-utility by regression. A classic result is that</span>
-<span id="cb4-311"><a href="#cb4-311" aria-hidden="true" tabindex="-1"></a>ranking and rating data, though they look different, recover the same preference structure</span>
-<span id="cb4-312"><a href="#cb4-312" aria-hidden="true" tabindex="-1"></a>and need not be treated as fundamentally distinct response modes <span class="co">[</span><span class="ot">@kalish1991</span><span class="co">]</span>.</span>
-<span id="cb4-313"><a href="#cb4-313" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-314"><a href="#cb4-314" aria-hidden="true" tabindex="-1"></a>**Choice-based conjoint** (CBC), also called discrete-choice conjoint, replaces the rating</span>
-<span id="cb4-315"><a href="#cb4-315" aria-hidden="true" tabindex="-1"></a>with a *choice* among profiles, often including a no-choice option. It is the most</span>
-<span id="cb4-316"><a href="#cb4-316" aria-hidden="true" tabindex="-1"></a>behaviorally realistic variant—people choose in markets, they do not rate—and it is</span>
-<span id="cb4-317"><a href="#cb4-317" aria-hidden="true" tabindex="-1"></a>estimated with the RUM machinery of @sec-rum, yielding WTP and market-share simulations</span>
-<span id="cb4-318"><a href="#cb4-318" aria-hidden="true" tabindex="-1"></a>directly. CBC is now the default in commercial practice.</span>
-<span id="cb4-319"><a href="#cb4-319" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-320"><a href="#cb4-320" aria-hidden="true" tabindex="-1"></a>**Adaptive conjoint** (ACA) varies the choice sets dynamically, conditioning each question</span>
-<span id="cb4-321"><a href="#cb4-321" aria-hidden="true" tabindex="-1"></a>on the respondent's earlier answers to concentrate information where the respondent's</span>
-<span id="cb4-322"><a href="#cb4-322" aria-hidden="true" tabindex="-1"></a>preferences are most uncertain, thereby shortening the survey for high-dimensional</span>
-<span id="cb4-323"><a href="#cb4-323" aria-hidden="true" tabindex="-1"></a>attribute spaces. The polyhedral methods of @toubia2013 formalize adaptive question</span>
-<span id="cb4-324"><a href="#cb4-324" aria-hidden="true" tabindex="-1"></a>selection as iteratively shrinking the set of partworth vectors consistent with a</span>
-<span id="cb4-325"><a href="#cb4-325" aria-hidden="true" tabindex="-1"></a>respondent's answers, and incentive-aligned and incentive-compatible variants address the</span>
-<span id="cb4-326"><a href="#cb4-326" aria-hidden="true" tabindex="-1"></a>hypothetical-bias problem at the elicitation stage. **Hybrid** conjoint combines a</span>
-<span id="cb4-327"><a href="#cb4-327" aria-hidden="true" tabindex="-1"></a>self-explicated stage with full-profile or choice tasks, and **self-explicated** conjoint</span>
-<span id="cb4-328"><a href="#cb4-328" aria-hidden="true" tabindex="-1"></a>dispenses with profiles entirely, asking respondents to rate each level's desirability and</span>
-<span id="cb4-329"><a href="#cb4-329" aria-hidden="true" tabindex="-1"></a>each attribute's importance and composing partworths from the product—cheap and scalable</span>
-<span id="cb4-330"><a href="#cb4-330" aria-hidden="true" tabindex="-1"></a>but vulnerable to the "everything is important" inflation that holistic methods avoid.</span>
-<span id="cb4-331"><a href="#cb4-331" aria-hidden="true" tabindex="-1"></a>**MaxDiff** (best–worst scaling) asks respondents to identify the most- and least-preferred</span>
-<span id="cb4-332"><a href="#cb4-332" aria-hidden="true" tabindex="-1"></a>items in a set, a task that produces sharper discrimination among many items than rating</span>
-<span id="cb4-333"><a href="#cb4-333" aria-hidden="true" tabindex="-1"></a>scales and is estimated as a best–worst extension of MNL.</span>
+<span id="cb4-306"><a href="#cb4-306" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variants of Conjoint {#sec-conjoint-variants}</span></span>
+<span id="cb4-307"><a href="#cb4-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-308"><a href="#cb4-308" aria-hidden="true" tabindex="-1"></a>Conjoint is a family, not a single method. The variants differ in how preferences are</span>
+<span id="cb4-309"><a href="#cb4-309" aria-hidden="true" tabindex="-1"></a>*elicited* and therefore in what they assume about the respondent and what they can</span>
+<span id="cb4-310"><a href="#cb4-310" aria-hidden="true" tabindex="-1"></a>estimate. @tbl-conjoint-types contrasts them.</span>
+<span id="cb4-311"><a href="#cb4-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-312"><a href="#cb4-312" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Variant <span class="pp">|</span> Elicitation task <span class="pp">|</span> Estimator <span class="pp">|</span> When it fits <span class="pp">|</span></span>
+<span id="cb4-313"><a href="#cb4-313" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb4-314"><a href="#cb4-314" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Full-profile** <span class="pp">|</span> Rate or rank complete profiles <span class="pp">|</span> OLS / regression on partworths <span class="pp">|</span> Few attributes; ratings interpretable <span class="pp">|</span></span>
+<span id="cb4-315"><a href="#cb4-315" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Choice-based (CBC)** <span class="pp">|</span> Choose one profile from a set <span class="pp">|</span> MNL / mixed logit / HB <span class="pp">|</span> Realistic; recovers WTP and shares <span class="pp">|</span></span>
+<span id="cb4-316"><a href="#cb4-316" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Adaptive (ACA)** <span class="pp">|</span> Tailored questions by prior answers <span class="pp">|</span> Self-explicated + tradeoff, often HB <span class="pp">|</span> Many attributes; shorten survey <span class="pp">|</span></span>
+<span id="cb4-317"><a href="#cb4-317" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Hybrid** <span class="pp">|</span> Self-explicated stage + full-profile/choice <span class="pp">|</span> Two-stage / HB <span class="pp">|</span> Many attributes with efficiency <span class="pp">|</span></span>
+<span id="cb4-318"><a href="#cb4-318" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Self-explicated** <span class="pp">|</span> Rate level desirability and attribute importance <span class="pp">|</span> Weighted compositional sum <span class="pp">|</span> Many attributes; minimal load <span class="pp">|</span></span>
+<span id="cb4-319"><a href="#cb4-319" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MaxDiff** <span class="pp">|</span> Pick most- and least-preferred items <span class="pp">|</span> Best–worst MNL <span class="pp">|</span> Importance ranking of many items <span class="pp">|</span></span>
+<span id="cb4-320"><a href="#cb4-320" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-321"><a href="#cb4-321" aria-hidden="true" tabindex="-1"></a>: Conjoint variants by elicitation task and estimator. Ranking and rating full-profile</span>
+<span id="cb4-322"><a href="#cb4-322" aria-hidden="true" tabindex="-1"></a>conjoint yield substantively equivalent partworths <span class="co">[</span><span class="ot">@kalish1991</span><span class="co">]</span>. {#tbl-conjoint-types}</span>
+<span id="cb4-323"><a href="#cb4-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-324"><a href="#cb4-324" aria-hidden="true" tabindex="-1"></a>**Full-profile** conjoint presents complete product descriptions for rating or ranking and</span>
+<span id="cb4-325"><a href="#cb4-325" aria-hidden="true" tabindex="-1"></a>estimates the partworths of @eq-additive-utility by regression. A classic result is that</span>
+<span id="cb4-326"><a href="#cb4-326" aria-hidden="true" tabindex="-1"></a>ranking and rating data, though they look different, recover the same preference structure</span>
+<span id="cb4-327"><a href="#cb4-327" aria-hidden="true" tabindex="-1"></a>and need not be treated as fundamentally distinct response modes <span class="co">[</span><span class="ot">@kalish1991</span><span class="co">]</span>.</span>
+<span id="cb4-328"><a href="#cb4-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-329"><a href="#cb4-329" aria-hidden="true" tabindex="-1"></a>**Choice-based conjoint** (CBC), also called discrete-choice conjoint, replaces the rating</span>
+<span id="cb4-330"><a href="#cb4-330" aria-hidden="true" tabindex="-1"></a>with a *choice* among profiles, often including a no-choice option. It is the most</span>
+<span id="cb4-331"><a href="#cb4-331" aria-hidden="true" tabindex="-1"></a>behaviorally realistic variant—people choose in markets, they do not rate—and it is</span>
+<span id="cb4-332"><a href="#cb4-332" aria-hidden="true" tabindex="-1"></a>estimated with the RUM machinery of @sec-rum, yielding WTP and market-share simulations</span>
+<span id="cb4-333"><a href="#cb4-333" aria-hidden="true" tabindex="-1"></a>directly. CBC is now the default in commercial practice.</span>
 <span id="cb4-334"><a href="#cb4-334" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-335"><a href="#cb4-335" aria-hidden="true" tabindex="-1"></a>A persistent practical problem is **missing data** in partial profiles—respondents do not</span>
-<span id="cb4-336"><a href="#cb4-336" aria-hidden="true" tabindex="-1"></a>see every attribute or level. @bradlow2004learning develop a learning-based model that</span>
-<span id="cb4-337"><a href="#cb4-337" aria-hidden="true" tabindex="-1"></a>imputes the missing levels by treating the partial profile as informative about the</span>
-<span id="cb4-338"><a href="#cb4-338" aria-hidden="true" tabindex="-1"></a>respondent's inferences, rather than discarding incomplete responses; modern machine-</span>
-<span id="cb4-339"><a href="#cb4-339" aria-hidden="true" tabindex="-1"></a>learning approaches extend this to learn preferences from sparse, adaptively collected data</span>
-<span id="cb4-340"><a href="#cb4-340" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@ding2015learning</span><span class="co">]</span>. The broader frontier integrates conjoint with text and image data and</span>
-<span id="cb4-341"><a href="#cb4-341" aria-hidden="true" tabindex="-1"></a>with structural demand models so that designed-experiment partworths and revealed-preference</span>
-<span id="cb4-342"><a href="#cb4-342" aria-hidden="true" tabindex="-1"></a>market data can be reconciled <span class="co">[</span><span class="ot">@netzer2008hidden; @rao2017; @wedel2016</span><span class="co">]</span>.</span>
-<span id="cb4-343"><a href="#cb4-343" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-344"><a href="#cb4-344" aria-hidden="true" tabindex="-1"></a><span class="fu">## Worked Examples</span></span>
-<span id="cb4-345"><a href="#cb4-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-346"><a href="#cb4-346" aria-hidden="true" tabindex="-1"></a>The examples below use the <span class="in">`conjoint`</span> and <span class="in">`AlgDesign`</span> packages, which implement the</span>
-<span id="cb4-347"><a href="#cb4-347" aria-hidden="true" tabindex="-1"></a>orthogonal-array design and OLS-based partworth estimation of full-profile conjoint. They</span>
-<span id="cb4-348"><a href="#cb4-348" aria-hidden="true" tabindex="-1"></a>are deliberately small and reproducible; production CBC studies would substitute the HB</span>
-<span id="cb4-349"><a href="#cb4-349" aria-hidden="true" tabindex="-1"></a>estimator of @sec-rum.</span>
-<span id="cb4-350"><a href="#cb4-350" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-351"><a href="#cb4-351" aria-hidden="true" tabindex="-1"></a><span class="fu">### Generating an Efficient Design</span></span>
-<span id="cb4-352"><a href="#cb4-352" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-353"><a href="#cb4-353" aria-hidden="true" tabindex="-1"></a>The first task is to reduce a full factorial to an estimable fractional design whose</span>
-<span id="cb4-354"><a href="#cb4-354" aria-hidden="true" tabindex="-1"></a>columns remain (near-)orthogonal. The example below specifies a four-attribute product and</span>
-<span id="cb4-355"><a href="#cb4-355" aria-hidden="true" tabindex="-1"></a>extracts an orthogonal fraction, then verifies that the selected profiles are mutually</span>
-<span id="cb4-356"><a href="#cb4-356" aria-hidden="true" tabindex="-1"></a>near-uncorrelated—the property that keeps partworths independently identified.</span>
-<span id="cb4-357"><a href="#cb4-357" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-358"><a href="#cb4-358" aria-hidden="true" tabindex="-1"></a><span class="in">```{r conjoint-design}</span></span>
-<span id="cb4-359"><a href="#cb4-359" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb4-360"><a href="#cb4-360" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb4-361"><a href="#cb4-361" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(conjoint)</span>
-<span id="cb4-362"><a href="#cb4-362" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-363"><a href="#cb4-363" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb4-364"><a href="#cb4-364" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-365"><a href="#cb4-365" aria-hidden="true" tabindex="-1"></a><span class="co"># A four-attribute product; full factorial = 2 x 2 x 2 x 2 = 16 profiles</span></span>
-<span id="cb4-366"><a href="#cb4-366" aria-hidden="true" tabindex="-1"></a>experiment <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(</span>
-<span id="cb4-367"><a href="#cb4-367" aria-hidden="true" tabindex="-1"></a>  <span class="at">Weight   =</span> <span class="fu">c</span>(<span class="st">"light"</span>, <span class="st">"heavy"</span>),</span>
-<span id="cb4-368"><a href="#cb4-368" aria-hidden="true" tabindex="-1"></a>  <span class="at">Price    =</span> <span class="fu">c</span>(<span class="st">"low"</span>, <span class="st">"high"</span>),</span>
-<span id="cb4-369"><a href="#cb4-369" aria-hidden="true" tabindex="-1"></a>  <span class="at">Warranty =</span> <span class="fu">c</span>(<span class="st">"2yr"</span>, <span class="st">"3yr"</span>),</span>
-<span id="cb4-370"><a href="#cb4-370" aria-hidden="true" tabindex="-1"></a>  <span class="at">Battery  =</span> <span class="fu">c</span>(<span class="st">"10h"</span>, <span class="st">"20h"</span>)</span>
-<span id="cb4-371"><a href="#cb4-371" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-372"><a href="#cb4-372" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-373"><a href="#cb4-373" aria-hidden="true" tabindex="-1"></a><span class="co"># Reduce to an orthogonal fraction</span></span>
-<span id="cb4-374"><a href="#cb4-374" aria-hidden="true" tabindex="-1"></a>design  <span class="ot">&lt;-</span> <span class="fu">caFactorialDesign</span>(<span class="at">data =</span> experiment, <span class="at">type =</span> <span class="st">"orthogonal"</span>)</span>
-<span id="cb4-375"><a href="#cb4-375" aria-hidden="true" tabindex="-1"></a>encoded <span class="ot">&lt;-</span> <span class="fu">caEncodedDesign</span>(design)</span>
-<span id="cb4-376"><a href="#cb4-376" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-377"><a href="#cb4-377" aria-hidden="true" tabindex="-1"></a><span class="co"># Orthogonality check: off-diagonal correlations should be near zero</span></span>
-<span id="cb4-378"><a href="#cb4-378" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">cor</span>(encoded), <span class="dv">2</span>)</span>
-<span id="cb4-379"><a href="#cb4-379" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-380"><a href="#cb4-380" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-381"><a href="#cb4-381" aria-hidden="true" tabindex="-1"></a><span class="fu">### Estimating Partworths and Importances</span></span>
-<span id="cb4-382"><a href="#cb4-382" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-383"><a href="#cb4-383" aria-hidden="true" tabindex="-1"></a>With a design and a respondent's preferences in hand, OLS recovers the partworths. The</span>
-<span id="cb4-384"><a href="#cb4-384" aria-hidden="true" tabindex="-1"></a>example uses the <span class="in">`tea`</span> data shipped with the <span class="in">`conjoint`</span> package: preferences of</span>
-<span id="cb4-385"><a href="#cb4-385" aria-hidden="true" tabindex="-1"></a>respondents over tea profiles described by price, variety, kind, and aroma. We estimate one</span>
-<span id="cb4-386"><a href="#cb4-386" aria-hidden="true" tabindex="-1"></a>respondent's partworths, then the aggregate importances—the share of total preference range</span>
-<span id="cb4-387"><a href="#cb4-387" aria-hidden="true" tabindex="-1"></a>each attribute commands.</span>
-<span id="cb4-388"><a href="#cb4-388" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-389"><a href="#cb4-389" aria-hidden="true" tabindex="-1"></a><span class="in">```{r conjoint-estimate}</span></span>
-<span id="cb4-390"><a href="#cb4-390" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb4-391"><a href="#cb4-391" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb4-392"><a href="#cb4-392" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(conjoint)</span>
-<span id="cb4-393"><a href="#cb4-393" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(tea)</span>
-<span id="cb4-394"><a href="#cb4-394" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-395"><a href="#cb4-395" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-respondent partworths via OLS on the encoded design</span></span>
-<span id="cb4-396"><a href="#cb4-396" aria-hidden="true" tabindex="-1"></a><span class="fu">caModel</span>(<span class="at">y =</span> tprefm[<span class="dv">1</span>, ], <span class="at">x =</span> tprof)</span>
-<span id="cb4-397"><a href="#cb4-397" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-398"><a href="#cb4-398" aria-hidden="true" tabindex="-1"></a><span class="co"># Aggregate attribute importances across all respondents</span></span>
-<span id="cb4-399"><a href="#cb4-399" aria-hidden="true" tabindex="-1"></a><span class="fu">caImportance</span>(<span class="at">y =</span> tpref, <span class="at">x =</span> tprof)</span>
-<span id="cb4-400"><a href="#cb4-400" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-401"><a href="#cb4-401" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-402"><a href="#cb4-402" aria-hidden="true" tabindex="-1"></a>The importances sum to 100% and quantify how much of the preference variation each</span>
-<span id="cb4-403"><a href="#cb4-403" aria-hidden="true" tabindex="-1"></a>attribute explains. They are the empirical answer to "what matters?"—and, unlike</span>
-<span id="cb4-404"><a href="#cb4-404" aria-hidden="true" tabindex="-1"></a>self-reported importance ratings, they are forced to respect trade-offs, which is precisely</span>
-<span id="cb4-405"><a href="#cb4-405" aria-hidden="true" tabindex="-1"></a>why conjoint dissolves the "everything is important" pathology.</span>
+<span id="cb4-335"><a href="#cb4-335" aria-hidden="true" tabindex="-1"></a>**Adaptive conjoint** (ACA) varies the choice sets dynamically, conditioning each question</span>
+<span id="cb4-336"><a href="#cb4-336" aria-hidden="true" tabindex="-1"></a>on the respondent's earlier answers to concentrate information where the respondent's</span>
+<span id="cb4-337"><a href="#cb4-337" aria-hidden="true" tabindex="-1"></a>preferences are most uncertain, thereby shortening the survey for high-dimensional</span>
+<span id="cb4-338"><a href="#cb4-338" aria-hidden="true" tabindex="-1"></a>attribute spaces. The polyhedral methods of @toubia2013 formalize adaptive question</span>
+<span id="cb4-339"><a href="#cb4-339" aria-hidden="true" tabindex="-1"></a>selection as iteratively shrinking the set of partworth vectors consistent with a</span>
+<span id="cb4-340"><a href="#cb4-340" aria-hidden="true" tabindex="-1"></a>respondent's answers, and incentive-aligned and incentive-compatible variants address the</span>
+<span id="cb4-341"><a href="#cb4-341" aria-hidden="true" tabindex="-1"></a>hypothetical-bias problem at the elicitation stage. **Hybrid** conjoint combines a</span>
+<span id="cb4-342"><a href="#cb4-342" aria-hidden="true" tabindex="-1"></a>self-explicated stage with full-profile or choice tasks, and **self-explicated** conjoint</span>
+<span id="cb4-343"><a href="#cb4-343" aria-hidden="true" tabindex="-1"></a>dispenses with profiles entirely, asking respondents to rate each level's desirability and</span>
+<span id="cb4-344"><a href="#cb4-344" aria-hidden="true" tabindex="-1"></a>each attribute's importance and composing partworths from the product—cheap and scalable</span>
+<span id="cb4-345"><a href="#cb4-345" aria-hidden="true" tabindex="-1"></a>but vulnerable to the "everything is important" inflation that holistic methods avoid.</span>
+<span id="cb4-346"><a href="#cb4-346" aria-hidden="true" tabindex="-1"></a>**MaxDiff** (best–worst scaling) asks respondents to identify the most- and least-preferred</span>
+<span id="cb4-347"><a href="#cb4-347" aria-hidden="true" tabindex="-1"></a>items in a set, a task that produces sharper discrimination among many items than rating</span>
+<span id="cb4-348"><a href="#cb4-348" aria-hidden="true" tabindex="-1"></a>scales and is estimated as a best–worst extension of MNL. @fig-pref-variants organizes</span>
+<span id="cb4-349"><a href="#cb4-349" aria-hidden="true" tabindex="-1"></a>the family by its underlying elicitation logic—partworths decomposed from holistic</span>
+<span id="cb4-350"><a href="#cb4-350" aria-hidden="true" tabindex="-1"></a>evaluations, composed from stated ratings, or a combination of the two.</span>
+<span id="cb4-351"><a href="#cb4-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-354"><a href="#cb4-354" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb4-355"><a href="#cb4-355" aria-hidden="true" tabindex="-1"></a>%%| label: fig-pref-variants</span>
+<span id="cb4-356"><a href="#cb4-356" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The conjoint family by elicitation logic. Decompositional variants recover partworths from holistic evaluations of whole profiles; the self-explicated route composes them from stated desirabilities and importances; adaptive and hybrid designs combine the two logics to handle many attributes.</span><span class="ot">"</span></span>
+<span id="cb4-357"><a href="#cb4-357" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
+<span id="cb4-358"><a href="#cb4-358" aria-hidden="true" tabindex="-1"></a>  R[<span class="ot">"</span><span class="st">Preference elicitation</span><span class="ot">"</span>] --&gt; DC[<span class="ot">"</span><span class="st">Decompositional:&lt;br/&gt;partworths recovered from&lt;br/&gt;holistic evaluations</span><span class="ot">"</span>]</span>
+<span id="cb4-359"><a href="#cb4-359" aria-hidden="true" tabindex="-1"></a>  R --&gt; CP[<span class="ot">"</span><span class="st">Compositional:&lt;br/&gt;partworths composed&lt;br/&gt;from stated ratings</span><span class="ot">"</span>]</span>
+<span id="cb4-360"><a href="#cb4-360" aria-hidden="true" tabindex="-1"></a>  R --&gt; CM[<span class="ot">"</span><span class="st">Combined:&lt;br/&gt;self-explicated stage&lt;br/&gt;plus trade-off tasks</span><span class="ot">"</span>]</span>
+<span id="cb4-361"><a href="#cb4-361" aria-hidden="true" tabindex="-1"></a>  DC --&gt; FP[<span class="ot">"</span><span class="st">Full-profile:&lt;br/&gt;rate or rank complete profiles;&lt;br/&gt;OLS regression</span><span class="ot">"</span>]</span>
+<span id="cb4-362"><a href="#cb4-362" aria-hidden="true" tabindex="-1"></a>  DC --&gt; CB[<span class="ot">"</span><span class="st">Choice-based (CBC):&lt;br/&gt;choose one from a set;&lt;br/&gt;MNL, mixed logit, HB</span><span class="ot">"</span>]</span>
+<span id="cb4-363"><a href="#cb4-363" aria-hidden="true" tabindex="-1"></a>  DC --&gt; MD[<span class="ot">"</span><span class="st">MaxDiff:&lt;br/&gt;most and least preferred;&lt;br/&gt;best-worst MNL</span><span class="ot">"</span>]</span>
+<span id="cb4-364"><a href="#cb4-364" aria-hidden="true" tabindex="-1"></a>  CP --&gt; SE[<span class="ot">"</span><span class="st">Self-explicated:&lt;br/&gt;level desirability and&lt;br/&gt;attribute importance</span><span class="ot">"</span>]</span>
+<span id="cb4-365"><a href="#cb4-365" aria-hidden="true" tabindex="-1"></a>  CM --&gt; AD[<span class="ot">"</span><span class="st">Adaptive (ACA):&lt;br/&gt;questions tailored to&lt;br/&gt;earlier answers</span><span class="ot">"</span>]</span>
+<span id="cb4-366"><a href="#cb4-366" aria-hidden="true" tabindex="-1"></a>  CM --&gt; HY[<span class="ot">"</span><span class="st">Hybrid:&lt;br/&gt;self-explicated plus&lt;br/&gt;full-profile or choice</span><span class="ot">"</span>]</span>
+<span id="cb4-367"><a href="#cb4-367" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-368"><a href="#cb4-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-369"><a href="#cb4-369" aria-hidden="true" tabindex="-1"></a>A persistent practical problem is **missing data** in partial profiles—respondents do not</span>
+<span id="cb4-370"><a href="#cb4-370" aria-hidden="true" tabindex="-1"></a>see every attribute or level. @bradlow2004learning develop a learning-based model that</span>
+<span id="cb4-371"><a href="#cb4-371" aria-hidden="true" tabindex="-1"></a>imputes the missing levels by treating the partial profile as informative about the</span>
+<span id="cb4-372"><a href="#cb4-372" aria-hidden="true" tabindex="-1"></a>respondent's inferences, rather than discarding incomplete responses; modern machine-</span>
+<span id="cb4-373"><a href="#cb4-373" aria-hidden="true" tabindex="-1"></a>learning approaches extend this to learn preferences from sparse, adaptively collected data</span>
+<span id="cb4-374"><a href="#cb4-374" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@ding2015learning</span><span class="co">]</span>. The broader frontier integrates conjoint with text and image data and</span>
+<span id="cb4-375"><a href="#cb4-375" aria-hidden="true" tabindex="-1"></a>with structural demand models so that designed-experiment partworths and revealed-preference</span>
+<span id="cb4-376"><a href="#cb4-376" aria-hidden="true" tabindex="-1"></a>market data can be reconciled <span class="co">[</span><span class="ot">@netzer2008hidden; @rao2017; @wedel2016</span><span class="co">]</span>.</span>
+<span id="cb4-377"><a href="#cb4-377" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-378"><a href="#cb4-378" aria-hidden="true" tabindex="-1"></a><span class="fu">## Worked Examples</span></span>
+<span id="cb4-379"><a href="#cb4-379" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-380"><a href="#cb4-380" aria-hidden="true" tabindex="-1"></a>The examples below use the <span class="in">`conjoint`</span> and <span class="in">`AlgDesign`</span> packages, which implement the</span>
+<span id="cb4-381"><a href="#cb4-381" aria-hidden="true" tabindex="-1"></a>orthogonal-array design and OLS-based partworth estimation of full-profile conjoint. They</span>
+<span id="cb4-382"><a href="#cb4-382" aria-hidden="true" tabindex="-1"></a>are deliberately small and reproducible; production CBC studies would substitute the HB</span>
+<span id="cb4-383"><a href="#cb4-383" aria-hidden="true" tabindex="-1"></a>estimator of @sec-rum.</span>
+<span id="cb4-384"><a href="#cb4-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-385"><a href="#cb4-385" aria-hidden="true" tabindex="-1"></a><span class="fu">### Generating an Efficient Design</span></span>
+<span id="cb4-386"><a href="#cb4-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-387"><a href="#cb4-387" aria-hidden="true" tabindex="-1"></a>The first task is to reduce a full factorial to an estimable fractional design whose</span>
+<span id="cb4-388"><a href="#cb4-388" aria-hidden="true" tabindex="-1"></a>columns remain (near-)orthogonal. The example below specifies a four-attribute product and</span>
+<span id="cb4-389"><a href="#cb4-389" aria-hidden="true" tabindex="-1"></a>extracts an orthogonal fraction, then verifies that the selected profiles are mutually</span>
+<span id="cb4-390"><a href="#cb4-390" aria-hidden="true" tabindex="-1"></a>near-uncorrelated—the property that keeps partworths independently identified.</span>
+<span id="cb4-391"><a href="#cb4-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-392"><a href="#cb4-392" aria-hidden="true" tabindex="-1"></a><span class="in">```{r conjoint-design}</span></span>
+<span id="cb4-393"><a href="#cb4-393" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb4-394"><a href="#cb4-394" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb4-395"><a href="#cb4-395" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(conjoint)</span>
+<span id="cb4-396"><a href="#cb4-396" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-397"><a href="#cb4-397" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb4-398"><a href="#cb4-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-399"><a href="#cb4-399" aria-hidden="true" tabindex="-1"></a><span class="co"># A four-attribute product; full factorial = 2 x 2 x 2 x 2 = 16 profiles</span></span>
+<span id="cb4-400"><a href="#cb4-400" aria-hidden="true" tabindex="-1"></a>experiment <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(</span>
+<span id="cb4-401"><a href="#cb4-401" aria-hidden="true" tabindex="-1"></a>  <span class="at">Weight   =</span> <span class="fu">c</span>(<span class="st">"light"</span>, <span class="st">"heavy"</span>),</span>
+<span id="cb4-402"><a href="#cb4-402" aria-hidden="true" tabindex="-1"></a>  <span class="at">Price    =</span> <span class="fu">c</span>(<span class="st">"low"</span>, <span class="st">"high"</span>),</span>
+<span id="cb4-403"><a href="#cb4-403" aria-hidden="true" tabindex="-1"></a>  <span class="at">Warranty =</span> <span class="fu">c</span>(<span class="st">"2yr"</span>, <span class="st">"3yr"</span>),</span>
+<span id="cb4-404"><a href="#cb4-404" aria-hidden="true" tabindex="-1"></a>  <span class="at">Battery  =</span> <span class="fu">c</span>(<span class="st">"10h"</span>, <span class="st">"20h"</span>)</span>
+<span id="cb4-405"><a href="#cb4-405" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb4-406"><a href="#cb4-406" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-407"><a href="#cb4-407" aria-hidden="true" tabindex="-1"></a><span class="fu">### From Partworths to Willingness to Pay</span></span>
-<span id="cb4-408"><a href="#cb4-408" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-409"><a href="#cb4-409" aria-hidden="true" tabindex="-1"></a>The managerial payoff is dollar-valued WTP, obtained by dividing each attribute's partworth</span>
-<span id="cb4-410"><a href="#cb4-410" aria-hidden="true" tabindex="-1"></a>by the (negative) price partworth, as in @eq-dollar-per-util. The synthetic example below</span>
-<span id="cb4-411"><a href="#cb4-411" aria-hidden="true" tabindex="-1"></a>fits an aggregate model with a numeric price attribute so that the price coefficient is a</span>
-<span id="cb4-412"><a href="#cb4-412" aria-hidden="true" tabindex="-1"></a>single slope, then converts non-price partworths to dollars.</span>
-<span id="cb4-413"><a href="#cb4-413" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-414"><a href="#cb4-414" aria-hidden="true" tabindex="-1"></a><span class="in">```{r conjoint-wtp}</span></span>
-<span id="cb4-415"><a href="#cb4-415" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
-<span id="cb4-416"><a href="#cb4-416" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb4-417"><a href="#cb4-417" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2024</span>)</span>
-<span id="cb4-418"><a href="#cb4-418" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-419"><a href="#cb4-419" aria-hidden="true" tabindex="-1"></a><span class="co"># Synthetic full-profile ratings for a 3-attribute product with numeric price</span></span>
-<span id="cb4-420"><a href="#cb4-420" aria-hidden="true" tabindex="-1"></a>profiles <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(</span>
-<span id="cb4-421"><a href="#cb4-421" aria-hidden="true" tabindex="-1"></a>  <span class="at">price    =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>),          <span class="co"># dollars</span></span>
-<span id="cb4-422"><a href="#cb4-422" aria-hidden="true" tabindex="-1"></a>  <span class="at">battery  =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),                <span class="co"># 0 = 10h, 1 = 20h</span></span>
-<span id="cb4-423"><a href="#cb4-423" aria-hidden="true" tabindex="-1"></a>  <span class="at">warranty =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)                 <span class="co"># 0 = 2yr, 1 = 3yr</span></span>
-<span id="cb4-424"><a href="#cb4-424" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-425"><a href="#cb4-425" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-426"><a href="#cb4-426" aria-hidden="true" tabindex="-1"></a><span class="co"># True partworths (utils): price hurts, battery and warranty help</span></span>
-<span id="cb4-427"><a href="#cb4-427" aria-hidden="true" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">intercept =</span> <span class="dv">5</span>, <span class="at">price =</span> <span class="sc">-</span><span class="fl">0.15</span>, <span class="at">battery =</span> <span class="fl">1.2</span>, <span class="at">warranty =</span> <span class="fl">0.6</span>)</span>
-<span id="cb4-428"><a href="#cb4-428" aria-hidden="true" tabindex="-1"></a>profiles<span class="sc">$</span>rating <span class="ot">&lt;-</span> <span class="fu">with</span>(profiles,</span>
-<span id="cb4-429"><a href="#cb4-429" aria-hidden="true" tabindex="-1"></a>  beta_true[<span class="st">"intercept"</span>] <span class="sc">+</span> beta_true[<span class="st">"price"</span>] <span class="sc">*</span> price <span class="sc">+</span></span>
-<span id="cb4-430"><a href="#cb4-430" aria-hidden="true" tabindex="-1"></a>    beta_true[<span class="st">"battery"</span>] <span class="sc">*</span> battery <span class="sc">+</span> beta_true[<span class="st">"warranty"</span>] <span class="sc">*</span> warranty <span class="sc">+</span></span>
-<span id="cb4-431"><a href="#cb4-431" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rnorm</span>(<span class="fu">nrow</span>(profiles), <span class="at">sd =</span> <span class="fl">0.1</span>)</span>
-<span id="cb4-432"><a href="#cb4-432" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-433"><a href="#cb4-433" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-434"><a href="#cb4-434" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(rating <span class="sc">~</span> price <span class="sc">+</span> battery <span class="sc">+</span> warranty, <span class="at">data =</span> profiles)</span>
-<span id="cb4-435"><a href="#cb4-435" aria-hidden="true" tabindex="-1"></a>b   <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit)</span>
-<span id="cb4-436"><a href="#cb4-436" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-437"><a href="#cb4-437" aria-hidden="true" tabindex="-1"></a><span class="co"># Dollar value of one util = -1 / price coefficient  (Delta p = 1 here)</span></span>
-<span id="cb4-438"><a href="#cb4-438" aria-hidden="true" tabindex="-1"></a>dollars_per_util <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">1</span> <span class="sc">/</span> b[<span class="st">"price"</span>]</span>
-<span id="cb4-439"><a href="#cb4-439" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-440"><a href="#cb4-440" aria-hidden="true" tabindex="-1"></a>wtp <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb4-441"><a href="#cb4-441" aria-hidden="true" tabindex="-1"></a>  <span class="at">battery_20h_vs_10h =</span> b[<span class="st">"battery"</span>]  <span class="sc">*</span> dollars_per_util,</span>
-<span id="cb4-442"><a href="#cb4-442" aria-hidden="true" tabindex="-1"></a>  <span class="at">warranty_3yr_vs_2yr =</span> b[<span class="st">"warranty"</span>] <span class="sc">*</span> dollars_per_util</span>
-<span id="cb4-443"><a href="#cb4-443" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-444"><a href="#cb4-444" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(wtp, <span class="dv">2</span>)</span>
-<span id="cb4-445"><a href="#cb4-445" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-446"><a href="#cb4-446" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-447"><a href="#cb4-447" aria-hidden="true" tabindex="-1"></a>The recovered WTP—the dollar premium a consumer would pay to upgrade battery life or extend</span>
-<span id="cb4-448"><a href="#cb4-448" aria-hidden="true" tabindex="-1"></a>the warranty—is the reservation-price increment of @eq-reservation-price, attribute by</span>
-<span id="cb4-449"><a href="#cb4-449" aria-hidden="true" tabindex="-1"></a>attribute. Summing these increments across a configuration's upgraded attributes yields the</span>
-<span id="cb4-450"><a href="#cb4-450" aria-hidden="true" tabindex="-1"></a>configuration's total reservation price relative to the baseline product, which is the input</span>
-<span id="cb4-451"><a href="#cb4-451" aria-hidden="true" tabindex="-1"></a>that pricing and product-line decisions actually consume.</span>
+<span id="cb4-407"><a href="#cb4-407" aria-hidden="true" tabindex="-1"></a><span class="co"># Reduce to an orthogonal fraction</span></span>
+<span id="cb4-408"><a href="#cb4-408" aria-hidden="true" tabindex="-1"></a>design  <span class="ot">&lt;-</span> <span class="fu">caFactorialDesign</span>(<span class="at">data =</span> experiment, <span class="at">type =</span> <span class="st">"orthogonal"</span>)</span>
+<span id="cb4-409"><a href="#cb4-409" aria-hidden="true" tabindex="-1"></a>encoded <span class="ot">&lt;-</span> <span class="fu">caEncodedDesign</span>(design)</span>
+<span id="cb4-410"><a href="#cb4-410" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-411"><a href="#cb4-411" aria-hidden="true" tabindex="-1"></a><span class="co"># Orthogonality check: off-diagonal correlations should be near zero</span></span>
+<span id="cb4-412"><a href="#cb4-412" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">cor</span>(encoded), <span class="dv">2</span>)</span>
+<span id="cb4-413"><a href="#cb4-413" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-414"><a href="#cb4-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-415"><a href="#cb4-415" aria-hidden="true" tabindex="-1"></a><span class="fu">### Estimating Partworths and Importances</span></span>
+<span id="cb4-416"><a href="#cb4-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-417"><a href="#cb4-417" aria-hidden="true" tabindex="-1"></a>With a design and a respondent's preferences in hand, OLS recovers the partworths. The</span>
+<span id="cb4-418"><a href="#cb4-418" aria-hidden="true" tabindex="-1"></a>example uses the <span class="in">`tea`</span> data shipped with the <span class="in">`conjoint`</span> package: preferences of</span>
+<span id="cb4-419"><a href="#cb4-419" aria-hidden="true" tabindex="-1"></a>respondents over tea profiles described by price, variety, kind, and aroma. We estimate one</span>
+<span id="cb4-420"><a href="#cb4-420" aria-hidden="true" tabindex="-1"></a>respondent's partworths, then the aggregate importances—the share of total preference range</span>
+<span id="cb4-421"><a href="#cb4-421" aria-hidden="true" tabindex="-1"></a>each attribute commands.</span>
+<span id="cb4-422"><a href="#cb4-422" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-423"><a href="#cb4-423" aria-hidden="true" tabindex="-1"></a><span class="in">```{r conjoint-estimate}</span></span>
+<span id="cb4-424"><a href="#cb4-424" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb4-425"><a href="#cb4-425" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb4-426"><a href="#cb4-426" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(conjoint)</span>
+<span id="cb4-427"><a href="#cb4-427" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(tea)</span>
+<span id="cb4-428"><a href="#cb4-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-429"><a href="#cb4-429" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-respondent partworths via OLS on the encoded design</span></span>
+<span id="cb4-430"><a href="#cb4-430" aria-hidden="true" tabindex="-1"></a><span class="fu">caModel</span>(<span class="at">y =</span> tprefm[<span class="dv">1</span>, ], <span class="at">x =</span> tprof)</span>
+<span id="cb4-431"><a href="#cb4-431" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-432"><a href="#cb4-432" aria-hidden="true" tabindex="-1"></a><span class="co"># Aggregate attribute importances across all respondents</span></span>
+<span id="cb4-433"><a href="#cb4-433" aria-hidden="true" tabindex="-1"></a><span class="fu">caImportance</span>(<span class="at">y =</span> tpref, <span class="at">x =</span> tprof)</span>
+<span id="cb4-434"><a href="#cb4-434" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-435"><a href="#cb4-435" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-436"><a href="#cb4-436" aria-hidden="true" tabindex="-1"></a>The importances sum to 100% and quantify how much of the preference variation each</span>
+<span id="cb4-437"><a href="#cb4-437" aria-hidden="true" tabindex="-1"></a>attribute explains. They are the empirical answer to "what matters?"—and, unlike</span>
+<span id="cb4-438"><a href="#cb4-438" aria-hidden="true" tabindex="-1"></a>self-reported importance ratings, they are forced to respect trade-offs, which is precisely</span>
+<span id="cb4-439"><a href="#cb4-439" aria-hidden="true" tabindex="-1"></a>why conjoint dissolves the "everything is important" pathology.</span>
+<span id="cb4-440"><a href="#cb4-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-441"><a href="#cb4-441" aria-hidden="true" tabindex="-1"></a><span class="fu">### From Partworths to Willingness to Pay</span></span>
+<span id="cb4-442"><a href="#cb4-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-443"><a href="#cb4-443" aria-hidden="true" tabindex="-1"></a>The managerial payoff is dollar-valued WTP, obtained by dividing each attribute's partworth</span>
+<span id="cb4-444"><a href="#cb4-444" aria-hidden="true" tabindex="-1"></a>by the (negative) price partworth, as in @eq-dollar-per-util. The synthetic example below</span>
+<span id="cb4-445"><a href="#cb4-445" aria-hidden="true" tabindex="-1"></a>fits an aggregate model with a numeric price attribute so that the price coefficient is a</span>
+<span id="cb4-446"><a href="#cb4-446" aria-hidden="true" tabindex="-1"></a>single slope, then converts non-price partworths to dollars.</span>
+<span id="cb4-447"><a href="#cb4-447" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-448"><a href="#cb4-448" aria-hidden="true" tabindex="-1"></a><span class="in">```{r conjoint-wtp}</span></span>
+<span id="cb4-449"><a href="#cb4-449" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb4-450"><a href="#cb4-450" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb4-451"><a href="#cb4-451" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2024</span>)</span>
 <span id="cb4-452"><a href="#cb4-452" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-453"><a href="#cb4-453" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification</span></span>
-<span id="cb4-454"><a href="#cb4-454" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-455"><a href="#cb4-455" aria-hidden="true" tabindex="-1"></a>Three threats recur, each tracing to an assumption made explicit above.</span>
-<span id="cb4-456"><a href="#cb4-456" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-457"><a href="#cb4-457" aria-hidden="true" tabindex="-1"></a>**Hypothetical bias.** Stated-preference partworths can diverge from revealed behavior</span>
-<span id="cb4-458"><a href="#cb4-458" aria-hidden="true" tabindex="-1"></a>because survey choices carry no consequence. Incentive-aligned designs—where the respondent</span>
-<span id="cb4-459"><a href="#cb4-459" aria-hidden="true" tabindex="-1"></a>faces a real chance of receiving the chosen option—and the reconciliation of conjoint</span>
-<span id="cb4-460"><a href="#cb4-460" aria-hidden="true" tabindex="-1"></a>partworths against market data are the standard defenses <span class="co">[</span><span class="ot">@toubia2017; @ding2015learning</span><span class="co">]</span>.</span>
-<span id="cb4-461"><a href="#cb4-461" aria-hidden="true" tabindex="-1"></a>WTP, being a ratio, is somewhat insulated, but level effects on the absolute scale are not.</span>
-<span id="cb4-462"><a href="#cb4-462" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-463"><a href="#cb4-463" aria-hidden="true" tabindex="-1"></a>**Confounded designs.** If the fractional factorial is poorly chosen, attribute columns are</span>
-<span id="cb4-464"><a href="#cb4-464" aria-hidden="true" tabindex="-1"></a>correlated and their partworths are not separately identified—the design, not the data,</span>
-<span id="cb4-465"><a href="#cb4-465" aria-hidden="true" tabindex="-1"></a>determines the estimates. The orthogonality check in the worked example is not decorative;</span>
-<span id="cb4-466"><a href="#cb4-466" aria-hidden="true" tabindex="-1"></a>it is the diagnostic that the partworths in @eq-additive-utility are recoverable at all.</span>
+<span id="cb4-453"><a href="#cb4-453" aria-hidden="true" tabindex="-1"></a><span class="co"># Synthetic full-profile ratings for a 3-attribute product with numeric price</span></span>
+<span id="cb4-454"><a href="#cb4-454" aria-hidden="true" tabindex="-1"></a>profiles <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(</span>
+<span id="cb4-455"><a href="#cb4-455" aria-hidden="true" tabindex="-1"></a>  <span class="at">price    =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>),          <span class="co"># dollars</span></span>
+<span id="cb4-456"><a href="#cb4-456" aria-hidden="true" tabindex="-1"></a>  <span class="at">battery  =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>),                <span class="co"># 0 = 10h, 1 = 20h</span></span>
+<span id="cb4-457"><a href="#cb4-457" aria-hidden="true" tabindex="-1"></a>  <span class="at">warranty =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)                 <span class="co"># 0 = 2yr, 1 = 3yr</span></span>
+<span id="cb4-458"><a href="#cb4-458" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-459"><a href="#cb4-459" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-460"><a href="#cb4-460" aria-hidden="true" tabindex="-1"></a><span class="co"># True partworths (utils): price hurts, battery and warranty help</span></span>
+<span id="cb4-461"><a href="#cb4-461" aria-hidden="true" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">intercept =</span> <span class="dv">5</span>, <span class="at">price =</span> <span class="sc">-</span><span class="fl">0.15</span>, <span class="at">battery =</span> <span class="fl">1.2</span>, <span class="at">warranty =</span> <span class="fl">0.6</span>)</span>
+<span id="cb4-462"><a href="#cb4-462" aria-hidden="true" tabindex="-1"></a>profiles<span class="sc">$</span>rating <span class="ot">&lt;-</span> <span class="fu">with</span>(profiles,</span>
+<span id="cb4-463"><a href="#cb4-463" aria-hidden="true" tabindex="-1"></a>  beta_true[<span class="st">"intercept"</span>] <span class="sc">+</span> beta_true[<span class="st">"price"</span>] <span class="sc">*</span> price <span class="sc">+</span></span>
+<span id="cb4-464"><a href="#cb4-464" aria-hidden="true" tabindex="-1"></a>    beta_true[<span class="st">"battery"</span>] <span class="sc">*</span> battery <span class="sc">+</span> beta_true[<span class="st">"warranty"</span>] <span class="sc">*</span> warranty <span class="sc">+</span></span>
+<span id="cb4-465"><a href="#cb4-465" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rnorm</span>(<span class="fu">nrow</span>(profiles), <span class="at">sd =</span> <span class="fl">0.1</span>)</span>
+<span id="cb4-466"><a href="#cb4-466" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb4-467"><a href="#cb4-467" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-468"><a href="#cb4-468" aria-hidden="true" tabindex="-1"></a>**Heterogeneity and scale.** Treating a heterogeneous market with a single aggregate logit</span>
-<span id="cb4-469"><a href="#cb4-469" aria-hidden="true" tabindex="-1"></a>biases elasticities through composition; the mixed-logit and HB estimators of @sec-rum exist</span>
-<span id="cb4-470"><a href="#cb4-470" aria-hidden="true" tabindex="-1"></a>to fix this. But heterogeneity in choice *consistency* (scale) masquerades as heterogeneity</span>
-<span id="cb4-471"><a href="#cb4-471" aria-hidden="true" tabindex="-1"></a>in *preference*, so individual-level partworths must be interpreted with the scale–</span>
-<span id="cb4-472"><a href="#cb4-472" aria-hidden="true" tabindex="-1"></a>heterogeneity confound in mind. Segmenting on partworth vectors via cluster analysis is sound</span>
-<span id="cb4-473"><a href="#cb4-473" aria-hidden="true" tabindex="-1"></a>only after this confound is addressed.</span>
-<span id="cb4-474"><a href="#cb4-474" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-475"><a href="#cb4-475" aria-hidden="true" tabindex="-1"></a>A final, structural caveat returns to additivity. Equation @eq-additive-utility and the</span>
-<span id="cb4-476"><a href="#cb4-476" aria-hidden="true" tabindex="-1"></a>reservation-price formula @eq-reservation-price assume attributes contribute independently.</span>
-<span id="cb4-477"><a href="#cb4-477" aria-hidden="true" tabindex="-1"></a>Where they do not—where a feature's value depends on the presence of another—the analyst must</span>
-<span id="cb4-478"><a href="#cb4-478" aria-hidden="true" tabindex="-1"></a>either model the interaction explicitly (more profiles) or absorb it into a higher-level</span>
-<span id="cb4-479"><a href="#cb4-479" aria-hidden="true" tabindex="-1"></a>attribute, as discussed in @sec-conjoint. A partworth estimated under a falsely additive model</span>
-<span id="cb4-480"><a href="#cb4-480" aria-hidden="true" tabindex="-1"></a>is biased toward the configurations over-represented in the design, and the WTP derived from it</span>
-<span id="cb4-481"><a href="#cb4-481" aria-hidden="true" tabindex="-1"></a>inherits that bias.</span>
-<span id="cb4-482"><a href="#cb4-482" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-483"><a href="#cb4-483" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
-<span id="cb4-484"><a href="#cb4-484" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-485"><a href="#cb4-485" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reservation price is derived, not asked.** Direct WTP questions bias downward; the</span>
-<span id="cb4-486"><a href="#cb4-486" aria-hidden="true" tabindex="-1"></a>  defensible route recovers WTP from a fitted utility model as the partworth-to-price ratio in</span>
-<span id="cb4-487"><a href="#cb4-487" aria-hidden="true" tabindex="-1"></a>  @eq-dollar-per-util.</span>
-<span id="cb4-488"><a href="#cb4-488" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Additive separability is the load-bearing assumption.** Equations @eq-additive-utility and</span>
-<span id="cb4-489"><a href="#cb4-489" aria-hidden="true" tabindex="-1"></a>  @eq-reservation-price hold only when attributes do not interact and price disutility is</span>
-<span id="cb4-490"><a href="#cb4-490" aria-hidden="true" tabindex="-1"></a>  locally linear; both fail in identifiable ways.</span>
-<span id="cb4-491"><a href="#cb4-491" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Choice-based conjoint with random utility is the modern default.** The MNL/mixed-logit/HB</span>
-<span id="cb4-492"><a href="#cb4-492" aria-hidden="true" tabindex="-1"></a>  stack of @sec-rum estimates heterogeneous, individual-level partworths from realistic choice</span>
-<span id="cb4-493"><a href="#cb4-493" aria-hidden="true" tabindex="-1"></a>  tasks <span class="co">[</span><span class="ot">@mcfadden1986choice; @rossi2014</span><span class="co">]</span>.</span>
-<span id="cb4-494"><a href="#cb4-494" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Design determines identification.** Orthogonal fractional factorials keep partworths</span>
-<span id="cb4-495"><a href="#cb4-495" aria-hidden="true" tabindex="-1"></a>  separately estimable; a confounded design produces numbers without referents.</span>
-<span id="cb4-496"><a href="#cb4-496" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Mind the confounds.** Hypothetical bias, the number-of-levels effect, and the</span>
-<span id="cb4-497"><a href="#cb4-497" aria-hidden="true" tabindex="-1"></a>  scale–heterogeneity confound each threaten the interpretation of partworths and the WTP</span>
-<span id="cb4-498"><a href="#cb4-498" aria-hidden="true" tabindex="-1"></a>  derived from them.</span>
+<span id="cb4-468"><a href="#cb4-468" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(rating <span class="sc">~</span> price <span class="sc">+</span> battery <span class="sc">+</span> warranty, <span class="at">data =</span> profiles)</span>
+<span id="cb4-469"><a href="#cb4-469" aria-hidden="true" tabindex="-1"></a>b   <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit)</span>
+<span id="cb4-470"><a href="#cb4-470" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-471"><a href="#cb4-471" aria-hidden="true" tabindex="-1"></a><span class="co"># Dollar value of one util = -1 / price coefficient  (Delta p = 1 here)</span></span>
+<span id="cb4-472"><a href="#cb4-472" aria-hidden="true" tabindex="-1"></a>dollars_per_util <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">1</span> <span class="sc">/</span> b[<span class="st">"price"</span>]</span>
+<span id="cb4-473"><a href="#cb4-473" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-474"><a href="#cb4-474" aria-hidden="true" tabindex="-1"></a>wtp <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-475"><a href="#cb4-475" aria-hidden="true" tabindex="-1"></a>  <span class="at">battery_20h_vs_10h =</span> b[<span class="st">"battery"</span>]  <span class="sc">*</span> dollars_per_util,</span>
+<span id="cb4-476"><a href="#cb4-476" aria-hidden="true" tabindex="-1"></a>  <span class="at">warranty_3yr_vs_2yr =</span> b[<span class="st">"warranty"</span>] <span class="sc">*</span> dollars_per_util</span>
+<span id="cb4-477"><a href="#cb4-477" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-478"><a href="#cb4-478" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(wtp, <span class="dv">2</span>)</span>
+<span id="cb4-479"><a href="#cb4-479" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-480"><a href="#cb4-480" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-481"><a href="#cb4-481" aria-hidden="true" tabindex="-1"></a>The recovered WTP—the dollar premium a consumer would pay to upgrade battery life or extend</span>
+<span id="cb4-482"><a href="#cb4-482" aria-hidden="true" tabindex="-1"></a>the warranty—is the reservation-price increment of @eq-reservation-price, attribute by</span>
+<span id="cb4-483"><a href="#cb4-483" aria-hidden="true" tabindex="-1"></a>attribute. Summing these increments across a configuration's upgraded attributes yields the</span>
+<span id="cb4-484"><a href="#cb4-484" aria-hidden="true" tabindex="-1"></a>configuration's total reservation price relative to the baseline product, which is the input</span>
+<span id="cb4-485"><a href="#cb4-485" aria-hidden="true" tabindex="-1"></a>that pricing and product-line decisions actually consume.</span>
+<span id="cb4-486"><a href="#cb4-486" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-487"><a href="#cb4-487" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification</span></span>
+<span id="cb4-488"><a href="#cb4-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-489"><a href="#cb4-489" aria-hidden="true" tabindex="-1"></a>Three threats recur, each tracing to an assumption made explicit above;</span>
+<span id="cb4-490"><a href="#cb4-490" aria-hidden="true" tabindex="-1"></a>@fig-pref-threats maps each threat to what it breaks and to the standard defense.</span>
+<span id="cb4-491"><a href="#cb4-491" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-494"><a href="#cb4-494" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb4-495"><a href="#cb4-495" aria-hidden="true" tabindex="-1"></a>%%| label: fig-pref-threats</span>
+<span id="cb4-496"><a href="#cb4-496" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Recurring threats to partworth identification, what each breaks, and the standard defense. A fourth, structural threat—attribute interactions that violate additive separability—is handled at the design stage by modeling the interaction explicitly or folding it into a super-attribute.</span><span class="ot">"</span></span>
+<span id="cb4-497"><a href="#cb4-497" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb4-498"><a href="#cb4-498" aria-hidden="true" tabindex="-1"></a>  subgraph TH[<span class="ot">"</span><span class="st">Threat</span><span class="ot">"</span>]</span>
+<span id="cb4-499"><a href="#cb4-499" aria-hidden="true" tabindex="-1"></a>    T1[<span class="ot">"</span><span class="st">Hypothetical bias:&lt;br/&gt;survey choices carry&lt;br/&gt;no consequence</span><span class="ot">"</span>]</span>
+<span id="cb4-500"><a href="#cb4-500" aria-hidden="true" tabindex="-1"></a>    T2[<span class="ot">"</span><span class="st">Confounded design:&lt;br/&gt;correlated attribute&lt;br/&gt;columns</span><span class="ot">"</span>]</span>
+<span id="cb4-501"><a href="#cb4-501" aria-hidden="true" tabindex="-1"></a>    T3[<span class="ot">"</span><span class="st">Heterogeneity and scale:&lt;br/&gt;aggregate logit ignores variation;&lt;br/&gt;scale masquerades as preference</span><span class="ot">"</span>]</span>
+<span id="cb4-502"><a href="#cb4-502" aria-hidden="true" tabindex="-1"></a>  end</span>
+<span id="cb4-503"><a href="#cb4-503" aria-hidden="true" tabindex="-1"></a>  subgraph BR[<span class="ot">"</span><span class="st">What it breaks</span><span class="ot">"</span>]</span>
+<span id="cb4-504"><a href="#cb4-504" aria-hidden="true" tabindex="-1"></a>    A1[<span class="ot">"</span><span class="st">Stated partworths diverge&lt;br/&gt;from revealed behavior</span><span class="ot">"</span>]</span>
+<span id="cb4-505"><a href="#cb4-505" aria-hidden="true" tabindex="-1"></a>    A2[<span class="ot">"</span><span class="st">Partworths not separately&lt;br/&gt;identified: the design, not the&lt;br/&gt;data, determines estimates</span><span class="ot">"</span>]</span>
+<span id="cb4-506"><a href="#cb4-506" aria-hidden="true" tabindex="-1"></a>    A3[<span class="ot">"</span><span class="st">Elasticities biased through&lt;br/&gt;composition; individual&lt;br/&gt;partworths misread</span><span class="ot">"</span>]</span>
+<span id="cb4-507"><a href="#cb4-507" aria-hidden="true" tabindex="-1"></a>  end</span>
+<span id="cb4-508"><a href="#cb4-508" aria-hidden="true" tabindex="-1"></a>  subgraph DF[<span class="ot">"</span><span class="st">Defense</span><span class="ot">"</span>]</span>
+<span id="cb4-509"><a href="#cb4-509" aria-hidden="true" tabindex="-1"></a>    D1[<span class="ot">"</span><span class="st">Incentive-aligned designs;&lt;br/&gt;reconcile against market data</span><span class="ot">"</span>]</span>
+<span id="cb4-510"><a href="#cb4-510" aria-hidden="true" tabindex="-1"></a>    D2[<span class="ot">"</span><span class="st">Orthogonality check on the&lt;br/&gt;fractional factorial</span><span class="ot">"</span>]</span>
+<span id="cb4-511"><a href="#cb4-511" aria-hidden="true" tabindex="-1"></a>    D3[<span class="ot">"</span><span class="st">Mixed logit / HB estimators;&lt;br/&gt;WTP ratios partially&lt;br/&gt;cancel scale</span><span class="ot">"</span>]</span>
+<span id="cb4-512"><a href="#cb4-512" aria-hidden="true" tabindex="-1"></a>  end</span>
+<span id="cb4-513"><a href="#cb4-513" aria-hidden="true" tabindex="-1"></a>  T1 --&gt; A1 --&gt; D1</span>
+<span id="cb4-514"><a href="#cb4-514" aria-hidden="true" tabindex="-1"></a>  T2 --&gt; A2 --&gt; D2</span>
+<span id="cb4-515"><a href="#cb4-515" aria-hidden="true" tabindex="-1"></a>  T3 --&gt; A3 --&gt; D3</span>
+<span id="cb4-516"><a href="#cb4-516" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-517"><a href="#cb4-517" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-518"><a href="#cb4-518" aria-hidden="true" tabindex="-1"></a>**Hypothetical bias.** Stated-preference partworths can diverge from revealed behavior</span>
+<span id="cb4-519"><a href="#cb4-519" aria-hidden="true" tabindex="-1"></a>because survey choices carry no consequence. Incentive-aligned designs—where the respondent</span>
+<span id="cb4-520"><a href="#cb4-520" aria-hidden="true" tabindex="-1"></a>faces a real chance of receiving the chosen option—and the reconciliation of conjoint</span>
+<span id="cb4-521"><a href="#cb4-521" aria-hidden="true" tabindex="-1"></a>partworths against market data are the standard defenses <span class="co">[</span><span class="ot">@toubia2017; @ding2015learning</span><span class="co">]</span>.</span>
+<span id="cb4-522"><a href="#cb4-522" aria-hidden="true" tabindex="-1"></a>WTP, being a ratio, is somewhat insulated, but level effects on the absolute scale are not.</span>
+<span id="cb4-523"><a href="#cb4-523" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-524"><a href="#cb4-524" aria-hidden="true" tabindex="-1"></a>**Confounded designs.** If the fractional factorial is poorly chosen, attribute columns are</span>
+<span id="cb4-525"><a href="#cb4-525" aria-hidden="true" tabindex="-1"></a>correlated and their partworths are not separately identified—the design, not the data,</span>
+<span id="cb4-526"><a href="#cb4-526" aria-hidden="true" tabindex="-1"></a>determines the estimates. The orthogonality check in the worked example is not decorative;</span>
+<span id="cb4-527"><a href="#cb4-527" aria-hidden="true" tabindex="-1"></a>it is the diagnostic that the partworths in @eq-additive-utility are recoverable at all.</span>
+<span id="cb4-528"><a href="#cb4-528" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-529"><a href="#cb4-529" aria-hidden="true" tabindex="-1"></a>**Heterogeneity and scale.** Treating a heterogeneous market with a single aggregate logit</span>
+<span id="cb4-530"><a href="#cb4-530" aria-hidden="true" tabindex="-1"></a>biases elasticities through composition; the mixed-logit and HB estimators of @sec-rum exist</span>
+<span id="cb4-531"><a href="#cb4-531" aria-hidden="true" tabindex="-1"></a>to fix this. But heterogeneity in choice *consistency* (scale) masquerades as heterogeneity</span>
+<span id="cb4-532"><a href="#cb4-532" aria-hidden="true" tabindex="-1"></a>in *preference*, so individual-level partworths must be interpreted with the scale–</span>
+<span id="cb4-533"><a href="#cb4-533" aria-hidden="true" tabindex="-1"></a>heterogeneity confound in mind. Segmenting on partworth vectors via cluster analysis is sound</span>
+<span id="cb4-534"><a href="#cb4-534" aria-hidden="true" tabindex="-1"></a>only after this confound is addressed.</span>
+<span id="cb4-535"><a href="#cb4-535" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-536"><a href="#cb4-536" aria-hidden="true" tabindex="-1"></a>A final, structural caveat returns to additivity. Equation @eq-additive-utility and the</span>
+<span id="cb4-537"><a href="#cb4-537" aria-hidden="true" tabindex="-1"></a>reservation-price formula @eq-reservation-price assume attributes contribute independently.</span>
+<span id="cb4-538"><a href="#cb4-538" aria-hidden="true" tabindex="-1"></a>Where they do not—where a feature's value depends on the presence of another—the analyst must</span>
+<span id="cb4-539"><a href="#cb4-539" aria-hidden="true" tabindex="-1"></a>either model the interaction explicitly (more profiles) or absorb it into a higher-level</span>
+<span id="cb4-540"><a href="#cb4-540" aria-hidden="true" tabindex="-1"></a>attribute, as discussed in @sec-conjoint. A partworth estimated under a falsely additive model</span>
+<span id="cb4-541"><a href="#cb4-541" aria-hidden="true" tabindex="-1"></a>is biased toward the configurations over-represented in the design, and the WTP derived from it</span>
+<span id="cb4-542"><a href="#cb4-542" aria-hidden="true" tabindex="-1"></a>inherits that bias.</span>
+<span id="cb4-543"><a href="#cb4-543" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-544"><a href="#cb4-544" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb4-545"><a href="#cb4-545" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-546"><a href="#cb4-546" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reservation price is derived, not asked.** Direct WTP questions bias downward; the</span>
+<span id="cb4-547"><a href="#cb4-547" aria-hidden="true" tabindex="-1"></a>  defensible route recovers WTP from a fitted utility model as the partworth-to-price ratio in</span>
+<span id="cb4-548"><a href="#cb4-548" aria-hidden="true" tabindex="-1"></a>  @eq-dollar-per-util.</span>
+<span id="cb4-549"><a href="#cb4-549" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Additive separability is the load-bearing assumption.** Equations @eq-additive-utility and</span>
+<span id="cb4-550"><a href="#cb4-550" aria-hidden="true" tabindex="-1"></a>  @eq-reservation-price hold only when attributes do not interact and price disutility is</span>
+<span id="cb4-551"><a href="#cb4-551" aria-hidden="true" tabindex="-1"></a>  locally linear; both fail in identifiable ways.</span>
+<span id="cb4-552"><a href="#cb4-552" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Choice-based conjoint with random utility is the modern default.** The MNL/mixed-logit/HB</span>
+<span id="cb4-553"><a href="#cb4-553" aria-hidden="true" tabindex="-1"></a>  stack of @sec-rum estimates heterogeneous, individual-level partworths from realistic choice</span>
+<span id="cb4-554"><a href="#cb4-554" aria-hidden="true" tabindex="-1"></a>  tasks <span class="co">[</span><span class="ot">@mcfadden1986choice; @rossi2014</span><span class="co">]</span>.</span>
+<span id="cb4-555"><a href="#cb4-555" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Design determines identification.** Orthogonal fractional factorials keep partworths</span>
+<span id="cb4-556"><a href="#cb4-556" aria-hidden="true" tabindex="-1"></a>  separately estimable; a confounded design produces numbers without referents.</span>
+<span id="cb4-557"><a href="#cb4-557" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Mind the confounds.** Hypothetical bias, the number-of-levels effect, and the</span>
+<span id="cb4-558"><a href="#cb4-558" aria-hidden="true" tabindex="-1"></a>  scale–heterogeneity confound each threaten the interpretation of partworths and the WTP</span>
+<span id="cb4-559"><a href="#cb4-559" aria-hidden="true" tabindex="-1"></a>  derived from them.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
