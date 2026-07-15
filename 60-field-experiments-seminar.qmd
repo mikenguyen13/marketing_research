@@ -80,6 +80,34 @@ the *identifying assumption*—unconfoundedness, parallel trends, the exclusion
 restriction, continuity at the cutoff, no-interference—that stands between a
 comparison and a causal claim.
 
+@fig-fex-arc maps the fourteen weeks onto this three-movement progression, naming
+each quasi-experimental design's identifying assumption.
+
+```{mermaid}
+%%| label: fig-fex-arc
+%%| fig-cap: "The seminar's arc. The foundation installs potential outcomes and the experimental ideal; the middle tours the quasi-experimental designs, each paired with the identifying assumption its module names; the close turns to heterogeneity, scaling, replication, and interference."
+flowchart TB
+  subgraph MA["Foundation and the experimental ideal (Weeks 1-4)"]
+    W1["Potential outcomes and<br/>the credibility revolution"] --> W2["Randomized and<br/>field experiments"]
+    W2 --> W3["A/B testing at scale"]
+    W3 --> W4["Advertising returns<br/>and measurement"]
+  end
+  subgraph MB["Quasi-experimental designs (Weeks 5-10)"]
+    W5["Difference-in-differences —<br/>parallel trends"] --> W6["Regression discontinuity —<br/>continuity at the cutoff"]
+    W6 --> W7["Instrumental variables —<br/>exclusion restriction"]
+    W7 --> W8["Synthetic control —<br/>pre-treatment fit"]
+    W8 --> W9["Matching —<br/>unconfoundedness"]
+    W9 --> W10["Mediation —<br/>sequential ignorability"]
+  end
+  subgraph MC["Frontier (Weeks 11-14)"]
+    W11["Causal machine learning and<br/>heterogeneous effects"] --> W12["External validity<br/>and scaling"]
+    W12 --> W13["Open science, power,<br/>and replication"]
+    W13 --> W14["Interference, marketplaces,<br/>and synthesis"]
+  end
+  W4 --> W5
+  W10 --> W11
+```
+
 The reading map uses two tags: **[F] = Foundational** (canon a causal-inference
 scholar is expected to know cold) and **[R] = Frontier/Recent** (an active research
 front, refreshed as the literature moves). Each week pairs at least one foundational
@@ -484,7 +512,26 @@ and supply-side effects; comparison of academic vs. at-scale effect sizes.
 
 **Debate.** Is the publication-to-scale shrinkage a story of publication bias, of
 non-representative samples, or of genuine general-equilibrium effects? Can external
-validity be designed in, or only diagnosed after the fact?
+validity be designed in, or only diagnosed after the fact? @fig-fex-scaling
+assembles the module's named threats into the pilot-to-scale pipeline.
+
+```{mermaid}
+%%| label: fig-fex-scaling
+%%| fig-cap: "The voltage drop from pilot to scale. Each threat named in this module widens the gap between a published pilot estimate and the effect the program delivers at scale."
+flowchart LR
+  PL["Pilot experiment:<br/>published effect"] --> VD["Voltage drop"]
+  VD --> SC["Program at scale:<br/>nudge effects roughly a quarter<br/>of published academic estimates"]
+  subgraph TH["Threats to scalability"]
+    T1["False positives"]
+    T2["Non-representative<br/>population and situation"]
+    T3["Spillovers"]
+    T4["Supply-side constraints"]
+  end
+  T1 --> VD
+  T2 --> VD
+  T3 --> VD
+  T4 --> VD
+```
 
 ## Week 13 — Open science, power, and replication {#sec-fexp-week13}
 
@@ -673,7 +720,20 @@ group-time average treatment effects $\text{ATT}(g,t)$ with non-negative weights
 [doi:10.1016/j.jeconom.2020.09.006](https://doi.org/10.1016/j.jeconom.2020.09.006).
 The lesson generalizes: an estimator is only as credible as the comparison it
 secretly makes, and a single regression coefficient can hide an unfavorable
-weighting of the effects it claims to average.
+weighting of the effects it claims to average. @fig-fex-twfe summarizes the
+decomposition and its repair.
+
+```{mermaid}
+%%| label: fig-fex-twfe
+%%| fig-cap: "The staggered-adoption critique of two-way fixed effects. The TWFE coefficient averages every 2x2 sub-comparison, including forbidden ones that use already-treated units as controls; heterogeneity-robust estimators restrict attention to clean comparisons and aggregate group-time effects with non-negative weights."
+flowchart TD
+  TW["TWFE coefficient<br/>under staggered adoption"] --> GB["Goodman-Bacon decomposition:<br/>weighted average of all 2×2 comparisons"]
+  GB --> CL["Clean comparisons:<br/>newly treated vs not-yet-treated"]
+  GB --> FB["Forbidden comparisons:<br/>already-treated units used as controls"]
+  FB --> NW["Weights can turn negative when effects<br/>differ across groups or grow over time"]
+  NW --> BI["Biased estimate — in extreme cases<br/>opposite in sign to every unit-level effect"]
+  CL --> RB["Heterogeneity-robust repair:<br/>aggregate group-time ATT(g,t)<br/>with non-negative weights"]
+```
 
 ## Key Takeaways
 

@@ -137,7 +137,23 @@ unchanged, so the variance of $\varepsilon_{nj}$ must be normalized. Third, the 
 of the choice probability is determined entirely by the **assumed joint distribution
 of the unobserved terms** $\boldsymbol{\varepsilon}_n = (\varepsilon_{n1},\dots)$.
 Different assumptions generate the logit, probit, nested, and mixed models that
-organize the rest of the course.
+organize the rest of the course. @fig-cb-rum assembles the framework, tracing
+utility from its observed and unobserved components through the argmax rule to
+the choice probability.
+
+```{mermaid}
+%%| label: fig-cb-rum
+%%| fig-cap: "The random-utility framework. Observed attributes and taste parameters form the systematic component; everything the analyst cannot observe enters the random term. The argmax rule turns latent utility into a choice, and the assumed distribution of the unobserved terms determines the form of the choice probability—and with it the model family of the course."
+flowchart LR
+  X["Observed attributes x_nj<br/>(price, features, brand)"] --> V["Systematic component<br/>V_nj = x_nj'β"]
+  B["Taste parameters β"] --> V
+  W["Unobserved determinants<br/>(the analyst's ignorance)"] --> E["Random term ε_nj"]
+  V --> U["Latent utility<br/>U_nj = V_nj + ε_nj"]
+  E --> U
+  U --> R["Choice rule:<br/>pick i iff U_ni ≥ U_nj for all j"]
+  R --> P["Choice probability P_ni,<br/>set by the distribution of ε"]
+  P --> M["Distributional assumption →<br/>logit, probit, nested, mixed"]
+```
 
 **Key readings.**
 
@@ -261,7 +277,25 @@ near-duplicate *steals* share from the car as readily as from the bus it nearly
 clones. In a marketing setting the same failure means a logit demand model predicts
 that a new product cannibalizes every incumbent in proportion to its share,
 regardless of how close a substitute it actually is—a prediction that misvalues line
-extensions, new entrants, and assortment changes.
+extensions, new entrants, and assortment changes. @fig-cb-nest contrasts the two
+predictions and shows the nesting structure that repairs the failure.
+
+```{mermaid}
+%%| label: fig-cb-nest
+%%| fig-cap: "The red-bus/blue-bus problem and its nested-logit repair. Plain logit preserves all pairwise ratios, so the duplicate bus steals share from the car as readily as from its near-clone; nesting the two buses—alternatives that share unobserved attributes, with correlation governed by the dissimilarity parameter—confines proportional substitution to within the nest and restores the behaviorally sensible split."
+flowchart TD
+  subgraph LG["Plain logit (IIA)"]
+    L0["Choice among<br/>three modes"] --> L1["Car<br/>P = 1/3"]
+    L0 --> L2["Red bus<br/>P = 1/3"]
+    L0 --> L3["Blue bus<br/>P = 1/3"]
+  end
+  subgraph NL["Nested logit"]
+    N0["Choice among<br/>nests"] --> N1["Car<br/>P = 1/2"]
+    N0 --> N2["Bus nest<br/>(shared unobserved attributes;<br/>dissimilarity parameter)"]
+    N2 --> N3["Red bus<br/>P = 1/4"]
+    N2 --> N4["Blue bus<br/>P = 1/4"]
+  end
+```
 
 ::: {.callout-warning}
 ## What IIA gets wrong, and when it is safe
@@ -450,6 +484,24 @@ on the likelihood and prior, never on the intractable normalizing constant. For
 probit and multinomial models, **data augmentation** restores conjugacy by sampling
 the latent utilities as additional unknowns. The full mechanics—including the
 acceptance ratio and one sampler sweep—are developed concretely in @sec-cb-week-7.
+@fig-cb-bayes places these engines in the full workflow from prior and likelihood
+to usable posterior draws.
+
+```{mermaid}
+%%| label: fig-cb-bayes
+%%| fig-cap: "The Bayesian workflow for choice models. Prior and likelihood combine into a posterior whose normalizing constant is intractable; MCMC constructs a Markov chain with that posterior as its stationary distribution—Gibbs draws for conjugate blocks, Metropolis-Hastings for non-conjugate ones, and data augmentation to restore conjugacy in probit and multinomial models. After burn-in and convergence checks, the retained draws deliver any quantity of interest as a sample average."
+flowchart LR
+  PR["Prior"] --> PO["Posterior<br/>(normalizing constant<br/>intractable)"]
+  LK["Likelihood of the<br/>observed choices"] --> PO
+  PO --> MC["MCMC: Markov chain whose<br/>stationary distribution<br/>is the posterior"]
+  MC --> G["Gibbs sampler:<br/>conjugate blocks drawn<br/>from full conditionals"]
+  MC --> MH["Metropolis-Hastings:<br/>non-conjugate blocks"]
+  MC --> DA["Data augmentation:<br/>latent utilities sampled<br/>as unknowns"]
+  G --> BI["Discard burn-in;<br/>check convergence and mixing"]
+  MH --> BI
+  DA --> BI
+  BI --> QI["Posterior draws:<br/>quantities of interest as<br/>sample averages"]
+```
 
 **Key readings.**
 

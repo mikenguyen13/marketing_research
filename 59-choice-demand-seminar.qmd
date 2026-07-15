@@ -36,7 +36,22 @@ control functions, and distributional assumptions devised to break this
 contamination. A student who completes the seminar can read a demand paper and
 locate, immediately, the source of variation that identifies its price
 coefficient, the assumption that makes that variation exogenous, and the
-counterfactual that assumption licenses.
+counterfactual that assumption licenses. @fig-cds-endog diagrams the contamination
+and the remedies the seminar develops.
+
+```{mermaid}
+%%| label: fig-cds-endog
+%%| fig-cap: "The identification tension at the center of the seminar. Preferences are latent and must be inferred from choices, but firms set prices knowing demand shifters the analyst never observes, so prices correlate with unobserved quality and naive elasticity estimates are contaminated—along with every counterfactual built on them. Instruments, control functions, and distributional assumptions are the field's devices for breaking the contamination."
+flowchart TD
+  L["Preferences never observed;<br/>only choices are"] --> EST["Recover taste parameters,<br/>above all price sensitivity"]
+  F["Firms observe demand shifters<br/>the analyst does not"] --> PE["Prices correlate with<br/>unobserved product quality ξ"]
+  PE --> EST
+  EST --> BIAS["Contaminated elasticities:<br/>every downstream counterfactual<br/>inherits the bias"]
+  BIAS --> RX["Devices that break<br/>the contamination"]
+  RX --> IV["Instruments:<br/>cost shifters, rival<br/>product characteristics"]
+  RX --> CF["Control functions:<br/>two-stage residual inclusion"]
+  RX --> CO["Copulas: distributional<br/>assumptions in place of<br/>external instruments"]
+```
 
 ## Semester arc
 
@@ -65,7 +80,33 @@ estimable. Week 13 brings the machine-learning frontier—flexible demand predic
 and heterogeneous-treatment-effect estimation—into contact with structural demand.
 Week 14 returns to first principles: the demand system exists to compute welfare and
 counterfactuals, so the capstone reads the new-product and merger-welfare papers
-that justify the entire enterprise.
+that justify the entire enterprise. @fig-cds-arc maps the fourteen weeks onto this
+three-part structure.
+
+```{mermaid}
+%%| label: fig-cds-arc
+%%| fig-cap: "The seminar's fourteen-week arc in three nested thirds: the random-utility microfoundation and its disaggregate estimators; heterogeneity and the pivotal transition to aggregate demand; and the dynamic, strategic, and welfare questions the estimated demand system exists to answer."
+flowchart TD
+  subgraph P1["Weeks 1-4"]
+    W1["Random utility:<br/>Thurstone, Luce, McFadden's<br/>conditional logit"] --> W2["Brand choice on<br/>scanner panels"]
+    W2 --> W3["IIA and its nested-logit<br/>and GEV repairs"]
+    W3 --> W4["Mixed logit:<br/>heterogeneity dissolves IIA"]
+  end
+  subgraph P2["Weeks 5-8"]
+    W5["Hierarchical Bayes:<br/>individual-level parameters"] --> W6["Conjoint and stated-<br/>preference measurement"]
+    W6 --> W7["Berry inversion and BLP:<br/>individual choice to<br/>aggregate demand"]
+    W7 --> W8["BLP in practice:<br/>instruments and numerics"]
+  end
+  subgraph P3["Weeks 9-14"]
+    W9["Dynamic demand:<br/>stockpiling and durables"] --> W10["Search and<br/>consideration sets"]
+    W10 --> W11["Endogeneity: control functions,<br/>copulas, instruments"]
+    W11 --> W12["Bayesian estimation<br/>and MCMC"]
+    W12 --> W13["Machine learning<br/>and demand"]
+    W13 --> W14["Welfare and<br/>counterfactuals"]
+  end
+  P1 --> P2
+  P2 --> P3
+```
 
 The reading map uses two tags. **[F] = Foundational** marks canon a choice-and-
 demand scholar is expected to know cold; **[R] = Frontier/Recent** marks an active
@@ -654,6 +695,21 @@ $$ {#eq-cdem-gmm}
 with weight matrix $\mathbf{W}$. The standard instruments are **cost shifters** and
 functions of **rival products' characteristics** (the BLP instruments), which shift
 a product's price and markup through competition without entering its own demand.
+@fig-cds-blp assembles these pieces into the estimator's nested structure of inner
+contraction and outer GMM search.
+
+```{mermaid}
+%%| label: fig-cds-blp
+%%| fig-cap: "The BLP estimator as a nested loop. For each trial value of the heterogeneity parameters, the inner contraction inverts observed market shares into mean utilities; the structural error is the part of mean utility not explained by characteristics and price, and the outer GMM loop searches for parameters that make that error orthogonal to the instruments. Every markup, merger, and welfare number downstream rests on instrument exogeneity."
+flowchart TD
+  T0["Trial heterogeneity<br/>parameters θ₂"] --> INV["Inner loop: contraction mapping<br/>iterates δ until predicted shares<br/>equal observed shares"]
+  INV --> XI["Structural error ξ:<br/>mean utility net of<br/>characteristics and price"]
+  XI --> MOM["Interact ξ with instruments z:<br/>cost shifters, rival<br/>product characteristics"]
+  MOM --> OBJ{"GMM objective<br/>minimized?"}
+  OBJ -->|"no: update θ"| T0
+  OBJ -->|"yes"| RES["Demand estimates:<br/>elasticities, markups, merger<br/>and welfare counterfactuals"]
+  RES --> KEY["All rest on instrument exogeneity:<br/>instruments uncorrelated with<br/>unobserved quality ξ"]
+```
 
 The entire causal content rests on one **identifying assumption**: instrument
 exogeneity, $\mathbb{E}[\xi_{jt}\mid \mathbf{z}_{jt}]=0$. Substantively, this

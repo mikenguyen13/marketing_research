@@ -123,7 +123,22 @@ price—and $\gamma$ is the behavioral sensitivity. Under the neoclassical axiom
 $\gamma = 0$: presentation is irrelevant and choice is invariant to anything but
 $(\mathbf{x}_j, p_j)$. Every nudge is, in this notation, a claim that
 $\gamma \neq 0$ for some architecture-dependent term that a fully rational agent
-would ignore.
+would ignore. @fig-nud-formal locates the nudge among the interventions available
+to anyone who shapes a choice: it alone moves behavior while leaving both the menu
+and the economic terms intact.
+
+```{mermaid}
+%%| label: fig-nud-formal
+%%| fig-cap: "Three ways to move a choice, and what each changes. A price cut or quality improvement works through the economic terms; a ban works through the menu; a nudge changes neither, entering utility only through an architecture term that a fully rational chooser would ignore."
+flowchart TD
+  I["Intervention on a choice from<br/>menu C with attributes x_j<br/>and prices p_j"] --> PC["Price cut or<br/>quality improvement"]
+  I --> BN["Ban"]
+  I --> ND["Nudge"]
+  PC --> PC2["Changes V through<br/>p_j or x_j:<br/>economic incentives"]
+  BN --> BN2["Deletes option j<br/>from the menu C"]
+  ND --> ND2["Adds γ·d_j(a):<br/>default status, list rank,<br/>salience weight"]
+  ND2 --> ND3["Menu and prices intact;<br/>under neoclassical axioms γ = 0"]
+```
 
 > A **nudge** is any aspect of the choice architecture that alters people's
 > behavior in a predictable way without forbidding any options or significantly
@@ -191,7 +206,23 @@ procedural cost). The celebrated cross-country contrast in organ-donor rates—n
 universal registration under opt-out regimes, sparse registration under opt-in,
 holding stated attitudes roughly constant—is the limiting case in which $c_i$
 dominates the modest utility difference between registering and not
-[@johnson2003defaults].
+[@johnson2003defaults]. @fig-nud-default traces the process by which the pre-set
+option becomes the outcome.
+
+```{mermaid}
+%%| label: fig-nud-default
+%%| fig-cap: "How a default captures the choice. The pre-set option obtains unless the chooser engages the comparison and the utility gain from switching exceeds the switching cost, which inertia, implied endorsement, and effort all inflate."
+flowchart TD
+  J0["Default j0 pre-set:<br/>obtains if the chooser<br/>does nothing"] --> AT{"Does the chooser engage<br/>the comparison at all?<br/>(attention is costly)"}
+  AT -->|"no"| ST["Default stands"]
+  AT -->|"yes"| SW{"Utility gain from switching<br/>greater than cost c_i?"}
+  SW -->|"no"| ST
+  SW -->|"yes"| MV["Chooser switches to j"]
+  F1["Inertia:<br/>status-quo bias,<br/>loss aversion"] --> CI["Forces that inflate c_i"]
+  F2["Implied endorsement:<br/>default read as the<br/>architect's recommendation"] --> CI
+  F3["Effort:<br/>cognitive and<br/>procedural cost"] --> CI
+  CI -.-> SW
+```
 
 The same mechanism drives the marquee result in household finance: automatic
 enrollment in defined-contribution retirement plans raises participation sharply
@@ -444,7 +475,23 @@ hits one group only, or if treatment timing is staggered and effects are
 heterogeneous across cohorts—the last a now-well-understood pitfall in
 two-way-fixed-effects estimation. The credible applications buttress parallel
 trends with pre-period event-study coefficients (flat pre-trends) and placebo
-outcomes that the nudge should not move.
+outcomes that the nudge should not move. @fig-nud-ident summarizes the two
+identification paths and the assumptions each must defend.
+
+```{mermaid}
+%%| label: fig-nud-ident
+%%| fig-cap: "Two paths to identifying a nudge effect in the field. Randomization identifies the average treatment effect under randomization integrity, SUTVA, and no differential attrition; a rollout to everyone at once forces difference-in-differences, which substitutes parallel trends defended by flat pre-trends and placebo outcomes. Either way, the outcome that matters is persistence, not a novelty bump."
+flowchart TD
+  CL["Causal claim: γ ≠ 0 for<br/>a specific architecture d_j(a)"] --> RQ{"Can assignment to the<br/>architecture be randomized?"}
+  RQ -->|"yes"| RCT["Randomized field experiment:<br/>ATE by difference in means"]
+  RQ -->|"no: rolled out to<br/>everyone at once"| DID["Difference-in-differences<br/>around the rollout"]
+  RCT --> RA["Must hold: randomization,<br/>SUTVA, no differential attrition"]
+  RA --> RB["Breaks: spillovers (social proof),<br/>overridden defaults,<br/>novelty-only outcomes"]
+  DID --> PA["Must hold: parallel trends"]
+  PA --> PB["Defend with flat pre-trends<br/>(event study) and<br/>placebo outcomes"]
+  RB --> PS["Measure persistence:<br/>a default's value pays<br/>only if inertia endures"]
+  PB --> PS
+```
 
 The simulation below makes the design concrete and reproducible. We generate a
 default nudge with a known true effect, embed realistic heterogeneity (the nudge

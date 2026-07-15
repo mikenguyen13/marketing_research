@@ -112,7 +112,23 @@ Across all four streams the same architecture recurs and is worth adopting as a
 default. Run automatic speech recognition to obtain a transcript and feed it to the
 text pipeline; separately extract acoustic-prosodic features as their own signal;
 and model the two channels jointly, never collapsing how-it-was-said into
-what-was-said. The remainder of the chapter equips each half of that architecture.
+what-was-said. The remainder of the chapter equips each half of that architecture,
+whose shape @fig-aud-pipeline traces from a single recording to a marketing outcome.
+
+```{mermaid}
+%%| label: fig-aud-pipeline
+%%| fig-cap: "The default audio architecture. A single recording splits into a lexical channel (what is said) recovered by speech recognition and a paralinguistic channel (how it is said) recovered by acoustic-prosodic features, and the two are modeled jointly rather than collapsed into one."
+flowchart LR
+  R["Raw audio<br/>(waveform)"]
+  R --> A["Automatic speech<br/>recognition"]
+  A --> T["Transcript<br/>lexical channel:<br/>what is said"]
+  T --> TP["Text-as-data<br/>pipeline"]
+  R --> AC["Acoustic-prosodic<br/>feature extraction"]
+  AC --> PL["Paralinguistic channel:<br/>how it is said"]
+  TP --> J["Joint model"]
+  PL --> J
+  J --> M["Marketing outcome<br/>(churn, satisfaction, conversion)"]
+```
 
 ## What a Sound Is, and Its Classic Features {#sec-audio-features}
 
@@ -178,6 +194,26 @@ which carry arousal, emphasis, and conversational dynamics.
 the variability in amplitude; and the harmonics-to-noise ratio) quantify the
 roughness, breathiness, or strain of a voice, and are sensitive markers of stress
 and emotion.
+
+@fig-aud-features groups these classic descriptors by the perceptual correlate each
+one carries, all of them read off the spectrogram introduced above.
+
+```{mermaid}
+%%| label: fig-aud-features
+%%| fig-cap: "A taxonomy of the classic acoustic features. All are read from the spectrogram, and each family carries a distinct perceptual correlate that downstream marketing constructs draw on."
+flowchart TB
+  W["Digital waveform"] --> S["Spectrogram<br/>(short-time Fourier transform)"]
+  S --> F0["Fundamental frequency f₀"]
+  S --> MF["MFCCs<br/>(spectral envelope)"]
+  S --> SS["Spectral shape<br/>(centroid, rolloff)"]
+  S --> ER["Energy and rhythm<br/>(loudness, rate, pauses)"]
+  S --> VQ["Voice quality<br/>(jitter, shimmer, HNR)"]
+  F0 --> C1["Pitch, intonation"]
+  MF --> C2["Timbre"]
+  SS --> C3["Brightness"]
+  ER --> C4["Arousal, emphasis, pacing"]
+  VQ --> C5["Roughness, breathiness, strain"]
+```
 
 These features are interpretable, cheap, and defensible, the audio analogue of the
 hand-engineered color and composition features of @sec-image-processing. They were
@@ -537,7 +573,22 @@ detection to find speech, diarization to separate speakers, ASR to transcribe, a
 a parallel acoustic-feature extractor for prosody and emotion, then fuses the
 lexical and paralinguistic streams for the downstream task. Each stage is a model
 with its own error rate, and those errors compound, so monitoring and human spot-
-checking at each stage are not optional.
+checking at each stage are not optional. @fig-aud-prod sets out these stages in
+sequence, each a model whose error feeds the next.
+
+```{mermaid}
+%%| label: fig-aud-prod
+%%| fig-cap: "A production speech-analytics pipeline. Voice-activity detection and diarization precede parallel transcription and acoustic-feature extraction, whose lexical and paralinguistic streams are fused for the downstream task. Each stage is a model whose errors compound."
+flowchart LR
+  VAD["Voice-activity<br/>detection"] --> DIA["Speaker<br/>diarization"]
+  DIA --> ASR["ASR<br/>(transcribe)"]
+  DIA --> AFE["Acoustic-feature<br/>extractor (prosody, emotion)"]
+  ASR --> LEX["Lexical stream"]
+  AFE --> PAR["Paralinguistic stream"]
+  LEX --> FUS["Fusion"]
+  PAR --> FUS
+  FUS --> DWN["Downstream task"]
+```
 
 The fourth is *build-versus-buy*. A mature ecosystem of commercial speech-to-text,
 diarization, and emotion APIs (from the major cloud providers and specialized

@@ -35,7 +35,19 @@ simulates an independent-cascade process over a graph. It surveys the learned-
 representation frontier, *graph embeddings* and *graph neural networks*, keeping the
 deep-learning specifics conceptual but clearly labeled. It closes with *industry and
 production* practice (recommendation, fraud, influencer selection) and a *frontier*
-section on where the field is moving.
+section on where the field is moving. @fig-net-workflow previews the shared analytic
+arc these sections instantiate: relational data become a graph, the graph yields
+features, and those features serve description, prediction, or causal claims.
+
+```{mermaid}
+%%| label: fig-net-workflow
+%%| fig-cap: "The shared analytic arc of network data. Relational records become a graph of nodes and edges, the graph yields features such as centrality, community, and embeddings, and those features serve description, prediction, or causal claims."
+flowchart LR
+  RD["Relational data<br/>(friendships, co-purchases, referrals, co-mentions)"]
+  RD --> GR["Graph<br/>(nodes and edges)"]
+  GR --> FE["Network features<br/>(centrality, community, embeddings)"]
+  FE --> US["Uses<br/>(description, prediction, causal claims)"]
+```
 
 ## Why Networks Matter in Marketing {#sec-graph-applications}
 
@@ -128,8 +140,26 @@ analyst recover perceptual structure from unstructured co-occurrence rather than
 surveys.
 
 Across these applications the same primitive recurs: a position in a graph is a
-feature, and the configuration of the graph is information. The rest of the chapter
-develops the methods that turn that information into measures.
+feature, and the configuration of the graph is information. @fig-net-types sorts these
+applications by the kind of graph each builds, since the nodes and edges differ sharply
+across them.
+
+```{mermaid}
+%%| label: fig-net-types
+%%| fig-cap: "A taxonomy of marketing networks by what their nodes and edges represent, with the marketing use each structure supports."
+flowchart TB
+  G["Marketing networks"]
+  G --> SO["Social / word-of-mouth<br/>(people to people)"]
+  G --> CP["Co-purchase / recommendation<br/>(product to product, customer to product)"]
+  G --> RE["Referral / seeding<br/>(directed: who referred whom)"]
+  G --> BC["Brand co-mention / semantic<br/>(brand to brand)"]
+  SO --> SOu["Contagion, influence,<br/>churn spillover"]
+  CP --> CPu["Recommendation, retrieval"]
+  RE --> REu["Seeding, referral value"]
+  BC --> BCu["Market-structure maps"]
+```
+
+The rest of the chapter develops the methods that turn that information into measures.
 
 ## Graph Representation and Centrality {#sec-graph-centrality}
 
@@ -383,6 +413,23 @@ panel structure, and dynamic models to argue that influence, not merely similari
 drives observed clustering. @peng2018 exploited *network overlap*, the extent to which
 two users share common friends, to study content sharing, a structural feature that
 itself shapes diffusion.
+
+@fig-net-identification shows why the naive reading fails and how the two routes
+restore identification.
+
+```{mermaid}
+%%| label: fig-net-identification
+%%| fig-cap: "The identification problem for social influence. Contagion, homophily, and common external shocks all produce the same observed clustering, the reflection problem blocks their separation from a single cross-section, and only randomization or architecture-based structure recovers identified contagion."
+flowchart LR
+  CO["Contagion<br/>(influence)"] --> OB["Observed clustering<br/>(adoption correlated across ties)"]
+  HO["Homophily<br/>(selection on similarity)"] --> OB
+  CS["Common external shocks<br/>(shared environment)"] --> OB
+  OB --> RP["Reflection problem<br/>(not separable from a single cross-section)"]
+  RP --> EX["Randomized experiment"]
+  RP --> STR["Observational with structure<br/>(architecture-based instrument)"]
+  EX --> ID["Identified contagion<br/>(justifies seeding)"]
+  STR --> ID
+```
 
 The discipline this section imposes is non-negotiable. A centrality score, a community
 label, or a "fraction of neighbors who adopted" is a generated regressor saturated with

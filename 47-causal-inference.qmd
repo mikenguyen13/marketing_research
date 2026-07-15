@@ -784,7 +784,31 @@ error guarantee survives continuous monitoring.
 
 The following simulation makes the bias-then-fix logic concrete: it first shows
 that a confounded observational comparison recovers the wrong effect, then that
-randomization recovers the truth.
+randomization recovers the truth. @fig-ci-selection diagrams the two assignment
+mechanisms the simulation contrasts.
+
+```{mermaid}
+%%| label: fig-ci-selection
+%%| fig-cap: "Selection versus randomization. Under observational assignment (left), a latent propensity drives both treatment take-up and the baseline outcome, so the naive comparison mixes the causal effect with selection bias. Randomization (right) severs the path into treatment, leaving only the causal path."
+flowchart LR
+  subgraph OB["Observational assignment"]
+    PR1["Latent propensity<br/>(buying inclination)"]
+    D1["Treatment D"]
+    Y1["Outcome Y"]
+    PR1 -.-> D1
+    PR1 -.-> Y1
+    D1 --> Y1
+  end
+  subgraph RC["Randomized assignment"]
+    RA["Random assignment"]
+    PR2["Latent propensity<br/>(buying inclination)"]
+    D2["Treatment D"]
+    Y2["Outcome Y"]
+    RA --> D2
+    PR2 -.-> Y2
+    D2 --> Y2
+  end
+```
 
 ```{r ab-test-sim}
 #| echo: true
@@ -875,7 +899,25 @@ outcomes for a treated group, before versus after the intervention, against the
 contemporaneous change for an untreated control group. Differencing over time
 removes any fixed differences between the groups; differencing across groups
 removes any common time trend. What remains, under one key assumption, is the
-treatment effect.
+treatment effect. @fig-ci-did-logic traces the two subtractions.
+
+```{mermaid}
+%%| label: fig-ci-did-logic
+%%| fig-cap: "The difference-in-differences logic. Each within-group change over time removes that group's fixed level; the difference of the two changes removes the common time trend. What remains is the ATT, provided the untreated trends are parallel."
+flowchart LR
+  subgraph TG["Treated group"]
+    TP["Mean outcome,<br/>pre-period"] --> TQ["Mean outcome,<br/>post-period"]
+  end
+  subgraph CG["Control group"]
+    CP["Mean outcome,<br/>pre-period"] --> CQ["Mean outcome,<br/>post-period"]
+  end
+  TP --> DT["First difference, treated:<br/>fixed group differences drop out"]
+  TQ --> DT
+  CP --> DC["First difference, control:<br/>fixed group differences drop out"]
+  CQ --> DC
+  DT --> DD["Difference of differences:<br/>common time trend drops out;<br/>equals the ATT under parallel trends"]
+  DC --> DD
+```
 
 Formally, with two periods (pre, post) and two groups (treated $T$, control $C$),
 the DiD estimator is the difference of differences in group means,
@@ -987,6 +1029,19 @@ $\beta_1$ if it satisfies three conditions:
    institutional knowledge.
 3. **Exogeneity (independence):** $Z_i$ is as good as randomly assigned with respect
    to the unobservables driving $Y_i$.
+
+@fig-ci-iv-dag depicts the structure in the demand-estimation setting that
+motivates it.
+
+```{mermaid}
+%%| label: fig-ci-iv-dag
+%%| fig-cap: "The instrumental-variable structure. An unobserved demand shock u moves both price and quantity (dashed paths), so OLS is biased; a supply-side cost shifter Z moves price for reasons unrelated to u. The exclusion restriction is the absence of any direct path from Z to Y."
+flowchart LR
+  Z["Instrument Z<br/>(supply-side cost shifter)"] -->|"relevance:<br/>the first stage"| D["Endogenous treatment D<br/>(price)"]
+  D -->|"causal effect β₁"| Y["Outcome Y<br/>(quantity demanded)"]
+  U["Unobserved u<br/>(demand shock)"] -.-> D
+  U -.-> Y
+```
 
 The estimator is **two-stage least squares (2SLS)**: regress $D_i$ on $Z_i$ and
 covariates to obtain fitted $\hat D_i$ (the exogenous part of treatment variation),
@@ -1274,6 +1329,25 @@ invites DiD, a single large treated entity invites SCM, and a credible supply-si
 shifter invites IV. Third, **triangulate**: where two designs with different
 assumptions point to the same answer, the causal claim is far more credible than
 any single estimate, because the assumptions fail for different reasons.
+@fig-ci-design-choice condenses these principles into the decision sequence an
+analyst walks.
+
+```{mermaid}
+%%| label: fig-ci-design-choice
+%%| fig-cap: "Choosing a causal design. Prefer an experiment where its cost is bearable; otherwise match the design to the source of as-good-as-random variation the world supplies, and triangulate across designs whose assumptions fail for different reasons."
+flowchart TD
+  Q1{"Can the firm run an experiment<br/>at bearable cost?"}
+  Q1 -->|"yes"| EX["Run the experiment:<br/>user-level A-B test or geo holdout<br/>(ATE by design)"]
+  Q1 -->|"no"| Q2{"What as-good-as-random<br/>variation does the world supply?"}
+  Q2 -->|"sharp eligibility rule"| RD["Regression discontinuity<br/>(local effect at the cutoff)"]
+  Q2 -->|"staggered rollout"| DD["Difference-in-differences<br/>(ATT under parallel trends)"]
+  Q2 -->|"single large treated entity"| SC["Synthetic control<br/>(ATT for a single treated unit)"]
+  Q2 -->|"credible supply-side shifter"| IV["Instrumental variables<br/>(LATE for compliers)"]
+  RD --> TRI["Triangulate: agreement across designs<br/>whose assumptions fail for different<br/>reasons strengthens the causal claim"]
+  DD --> TRI
+  SC --> TRI
+  IV --> TRI
+```
 
 ## Threats Common to All Designs {#sec-causal-threats}
 

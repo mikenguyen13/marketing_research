@@ -43,7 +43,29 @@ returns to **attribution** as a problem in its own right, and closes with **indu
 and production practice**, the event pipelines and feature engineering that turn raw
 logs into model inputs without leaking the future into the past. Throughout, the worked
 code is genuinely runnable: we simulate an event log and analyze it with the
-`markovchain` and `TraMineR` packages.
+`markovchain` and `TraMineR` packages. @fig-clk-models maps the three modeling
+traditions onto the shared object they consume.
+
+```{mermaid}
+%%| label: fig-clk-models
+%%| fig-cap: "The chapter's three modeling traditions. Each consumes the same object, the ordered action sequence recovered by sessionization, and differs in what it extracts from it."
+flowchart TB
+  LOG["Sessionized log:<br/>ordered action sequences"]
+  subgraph MK["Path and Markov models"]
+    M1["Transition probabilities<br/>between states"] --> M2["Removal-effect<br/>attribution"]
+  end
+  subgraph SA["Sequence analysis"]
+    S1["Optimal-matching<br/>distances"] --> S2["Clusters of<br/>behavioral types"]
+  end
+  subgraph DP["Deep sequence models"]
+    D1["RNN, LSTM, GRU"]
+    D2["Transformers,<br/>self-attention"]
+    D3["Survival models,<br/>hazard of churn"]
+  end
+  LOG --> MK
+  LOG --> SA
+  LOG --> DP
+```
 
 ## Applications {#sec-click-applications}
 
@@ -150,7 +172,27 @@ event log with realistic structure: many users, multiple sessions per user separ
 idle gaps, and within-session navigation governed by a plausible page-transition
 process that culminates, for some sessions, in a purchase. We carry this single
 simulated log through the sessionization, Markov, and sequence-analysis demonstrations
-that follow.
+that follow. @fig-clk-walk sketches the page-transition process that generates each
+session: a forward funnel from home toward checkout, with backtracking and a persistent
+risk of exit at every page.
+
+```{mermaid}
+%%| label: fig-clk-walk
+%%| fig-cap: "The page-transition process generating each simulated session. Edges show transition probabilities; self-loops and transitions below 0.10 are omitted for clarity. Every transient page risks exit, and checkout leads to exit with certainty, so exit is absorbing."
+flowchart LR
+  HM["home"] -->|"0.45"| SR["search"]
+  HM -->|"0.25"| PD["product"]
+  SR -->|"0.50"| PD
+  PD -->|"0.30"| CT["cart"]
+  PD -->|"0.20"| SR
+  CT -->|"0.45"| CO["checkout"]
+  CT -->|"0.20"| PD
+  CO -->|"1.00"| EX["exit<br/>(absorbing)"]
+  HM -->|"0.25"| EX
+  SR -->|"0.25"| EX
+  PD -->|"0.20"| EX
+  CT -->|"0.20"| EX
+```
 
 ```{r click-simulate}
 #| message: false
@@ -709,7 +751,21 @@ The methods above presuppose a clean event log. In practice that log is the *out
 substantial data-engineering pipeline, and the integrity of every downstream analysis
 depends on how that pipeline is built. This section sketches the production reality that
 academic treatments usually omit, because the failure modes it introduces are precisely
-the ones that invalidate published-looking results.
+the ones that invalidate published-looking results. @fig-clk-pipeline maps the
+pipeline end to end, from instrumentation to the point-in-time features a model
+consumes.
+
+```{mermaid}
+%%| label: fig-clk-pipeline
+%%| fig-cap: "The production event pipeline. Instrumented events flow through a collection layer into an append-only warehouse table; derived tables materialize sessionization and identity resolution; and the feature pipeline assembles training examples whose features use only information available at the prediction time, with labels observed after it."
+flowchart LR
+  IN["Instrumentation<br/>tracking plan on<br/>web and app clients"] --> CL["Collection layer<br/>streaming bus"]
+  CL --> WH["Warehouse or lakehouse<br/>append-only event table"]
+  WH --> DT["Derived tables<br/>sessionization and<br/>identity resolution"]
+  DT --> FP["Feature pipeline<br/>features from history up<br/>to the prediction time"]
+  FP --> TE["Training example<br/>features joined to a label<br/>observed after prediction time"]
+  TE --> MD["Downstream models<br/>and metrics"]
+```
 
 The *event pipeline* originates in instrumentation: a *tracking plan* specifies which
 events are emitted, with which properties, from web and app clients. Events flow through

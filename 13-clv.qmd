@@ -143,6 +143,22 @@ non-contractual cells.
 
 : The organizing taxonomy of customer-base analysis. The cell decides which model class is admissible. {#tbl-clv-taxonomy}
 
+@fig-clv-model-choice recasts the same taxonomy as the sequence of questions an
+analyst answers before any estimation begins.
+
+```{mermaid}
+%%| label: fig-clv-model-choice
+%%| fig-cap: "Choosing a customer-base model. The contractual versus non-contractual distinction (is churn observed?) and the discrete versus continuous timing of purchase opportunities jointly decide which model class is admissible."
+flowchart TD
+  Q1{"Is churn observed?<br/>(contractual setting)"}
+  Q1 -->|"yes: subscriptions,<br/>insurance, B2B SaaS"| Q2{"Purchase opportunities<br/>in discrete periods?"}
+  Q1 -->|"no: retail, e-commerce,<br/>direct-to-consumer"| Q3{"Purchase opportunities<br/>in discrete periods?"}
+  Q2 -->|"discrete"| M1["sBG for retention;<br/>BG/BB for transactions"]
+  Q2 -->|"continuous"| M2["Survival models on time-to-churn<br/>(exponential, Weibull, Cox)"]
+  Q3 -->|"discrete"| M3["BG/BB"]
+  Q3 -->|"continuous"| M4["Pareto/NBD, BG/NBD,<br/>Gamma-Gamma"]
+```
+
 @fig-clv-pipeline shows how the pieces compose, from raw transactions through a
 latent survival process to a discounted, aggregated customer-equity figure.
 
@@ -722,7 +738,24 @@ $$
 $$ {#eq-clv-markov}
 
 the discounted expected reward of a customer currently in each state. @tbl-clv-markov
-computes it for a three-state migration model.
+computes it for a three-state migration model; @fig-clv-states draws the transition
+structure the code encodes.
+
+```{mermaid}
+%%| label: fig-clv-states
+%%| fig-cap: "The three-state customer-migration process behind the Markov-chain CLV. Only the active state earns margin; the lapsed state can be reactivated but leaks heavily into the absorbing lost state."
+flowchart LR
+  ACT["Active<br/>(reward 100)"]
+  LAP["Lapsed<br/>(reward 0)"]
+  LST["Lost<br/>(reward 0, absorbing)"]
+  ACT -->|"0.70"| ACT
+  ACT -->|"0.20"| LAP
+  ACT -->|"0.10"| LST
+  LAP -->|"0.30"| ACT
+  LAP -->|"0.40"| LAP
+  LAP -->|"0.30"| LST
+  LST -->|"1.00"| LST
+```
 
 ```{r markov-clv}
 #| message: false
@@ -828,7 +861,30 @@ zero (non-buyers) and the heavy right tail (a few high spenders) jointly. The
 [@wang2019ziln], does exactly this: one model outputs a churn logit, a lognormal mean,
 and a lognormal scale, and is trained on the combined likelihood. We fit a small ZILN
 model by maximum likelihood (no neural network required to make the point) and recover
-both the structure and a calibrated expected value.
+both the structure and a calibrated expected value. @fig-clv-ml-heads contrasts the
+joint ZILN head with the two-stage decomposition.
+
+```{mermaid}
+%%| label: fig-clv-ml-heads
+%%| fig-cap: "Two production architectures for machine-learning pLTV. The two-stage pattern multiplies a first-stage activity classifier by a second-stage conditional-spend regressor; the zero-inflated lognormal alternative trains one model on the combined likelihood of the zero spike and the heavy right tail."
+flowchart TB
+  FT["Customer features and event history"]
+  subgraph TS["Two-stage: churn-times-spend"]
+    C1["Stage 1 classifier:<br/>probability active over the horizon"]
+    R1["Stage 2 regressor:<br/>conditional spend among actives"]
+    PD["Product, times margin,<br/>discounted: pLTV"]
+    C1 --> PD
+    R1 --> PD
+  end
+  subgraph ZS["Joint head: zero-inflated lognormal"]
+    ZH["One model outputs a churn logit,<br/>a lognormal mean, and a<br/>lognormal scale"]
+    ZE["Trained on the combined likelihood:<br/>spike at zero plus heavy right tail"]
+    ZH --> ZE
+  end
+  FT --> C1
+  FT --> R1
+  FT --> ZH
+```
 
 ```{r ziln}
 #| message: false

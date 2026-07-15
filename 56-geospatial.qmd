@@ -26,6 +26,17 @@ geography itself. The same dependence is also the *signal* that trade-area model
 geodemographic segmentation, and geo-experiments are built to exploit. The
 analyst's task is to represent geometry correctly, measure spatial relations
 honestly, and then either model the dependence or design around it.
+@fig-geo-workflow previews that sequence of tasks.
+
+```{mermaid}
+%%| label: fig-geo-workflow
+%%| fig-cap: "The spatial analyst's task. Marketing objects acquire geometries on a shared coordinate reference system; the spatial relations among them become computable; and the dependence that emerges is either modeled directly or contained by experimental design."
+flowchart LR
+  RP["Represent<br/>points, lines, polygons<br/>on a shared CRS"] --> MS["Measure relations<br/>distance, containment,<br/>adjacency, overlap"]
+  MS --> DG["Diagnose dependence<br/>Moran's I"]
+  DG --> SM["Model it<br/>spatial regression,<br/>lag or error"]
+  DG --> GE["Design around it<br/>geo-experiments,<br/>randomized markets"]
+```
 
 The chapter proceeds from applications to representation to method. It surveys the
 marketing problems for which location is the central variable, fixes how spatial
@@ -150,7 +161,22 @@ meaningless; a *projected* CRS maps the curved earth onto a plane in meters or f
 so that distances and areas can be computed with ordinary arithmetic. Mismatched or
 missing CRS information is the single most common source of silent error in applied
 spatial work, and the rule is simple: never compute a distance in degrees, and
-never overlay two layers without confirming they share a CRS.
+never overlay two layers without confirming they share a CRS. @fig-geo-anatomy
+summarizes these ingredients and the CRS distinction on which computation rests.
+
+```{mermaid}
+%%| label: fig-geo-anatomy
+%%| fig-cap: "The anatomy of vector spatial data. A layer combines geometry, ordinary attribute columns, and a coordinate reference system; distances and areas are meaningful only in a projected CRS."
+flowchart TB
+  VL["Vector spatial layer"] --> GM["Geometry"]
+  VL --> AT["Attributes<br/>store revenue,<br/>tract population"]
+  VL --> CR["Coordinate reference system<br/>what the coordinates mean"]
+  GM --> PT["Point<br/>store, customer"]
+  GM --> LN["Line<br/>road, route"]
+  GM --> PL["Polygon<br/>trade area, census tract"]
+  CR --> GG["Geographic, EPSG:4326<br/>degrees on a sphere:<br/>no Euclidean distance"]
+  CR --> PJ["Projected, meters on a plane:<br/>distances and areas computable"]
+```
 
 The `sf` package implements the Open Geospatial Consortium *simple features*
 standard, storing a layer as a data frame with one list-column of geometries, so
@@ -431,6 +457,16 @@ clustering lives. Estimation of @eq-geo-lag and @eq-geo-error uses maximum
 likelihood or generalized method of moments and is the province of dedicated
 spatial-econometrics packages; the modeling discipline, diagnose autocorrelation
 first, then choose lag versus error on theory, is what the analyst owns.
+@fig-geo-lagerror lays out that decision.
+
+```{mermaid}
+%%| label: fig-geo-lagerror
+%%| fig-cap: "Choosing between the two canonical spatial regressions. The lag model writes the dependence into the outcome itself, implying genuine spillover; the error model places it in the disturbance, as befits omitted spatially smooth variables."
+flowchart TB
+  DX["Autocorrelated residuals<br/>diagnosed via Moran's I"] --> QW["Why do neighbors<br/>resemble neighbors?"]
+  QW -->|"genuine spatial<br/>interaction"| SL["Spatial lag model<br/>y = ρWy + Xβ + ε<br/>intervening in one area<br/>changes its neighbors"]
+  QW -->|"omitted spatially smooth<br/>variables: income,<br/>weather, culture"| SE["Spatial error model<br/>y = Xβ + u, u = λWu + ε<br/>intervention does not<br/>propagate to neighbors"]
+```
 
 ::: {.callout-warning}
 Spatial autocorrelation and the **modifiable areal unit problem** (MAUP) are

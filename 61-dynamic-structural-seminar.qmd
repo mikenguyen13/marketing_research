@@ -73,6 +73,32 @@ The course closes (Weeks 13–14) at the *computational frontier*—machine lear
 and reinforcement learning for high-dimensional dynamics—and on counterfactuals,
 validation, and synthesis.
 
+@fig-dsm-arc maps the fourteen weeks onto this progression.
+
+```{mermaid}
+%%| label: fig-dsm-arc
+%%| fig-cap: "The semester in three movements plus a close. The single-agent machinery of Weeks 1-2 supplies the vocabulary; Weeks 3-6 carry it into marketing demand-side questions; Weeks 7-12 add strategic interaction and equilibrium; Weeks 13-14 close at the computational frontier and on counterfactual validation."
+flowchart TB
+  subgraph MA["Movement 1 — single-agent machinery (Weeks 1-2)"]
+    D1["Dynamic discrete choice:<br/>Bellman equation, value function,<br/>conditional choice probabilities"] --> D2["Estimation paradigms:<br/>NFXP versus CCP"]
+  end
+  subgraph MB["Movement 2 — marketing demand-side (Weeks 3-6)"]
+    D3["Durables and adoption"] --> D4["Consumer learning"]
+    D4 --> D5["Stockpiling"]
+    D5 --> D6["Customer and CRM dynamics"]
+  end
+  subgraph MC["Movement 3 — dynamic games (Weeks 7-12)"]
+    D7["Theory: Markov-perfect equilibrium<br/>(Ericson-Pakes)"] --> D8["Two-step estimation<br/>of dynamic games"]
+    D8 --> D9["Applications: advertising goodwill,<br/>launch and pricing, entry and exit,<br/>salesforce incentives"]
+  end
+  subgraph MD["Close — frontier and synthesis (Weeks 13-14)"]
+    DA["Machine learning and reinforcement<br/>learning for high-dimensional dynamics"] --> DB["Counterfactuals, validation,<br/>and synthesis"]
+  end
+  D2 --> D3
+  D6 --> D7
+  D9 --> DA
+```
+
 Two tags organize the readings. **[F] = Foundational** marks canon a structural
 modeler must know cold—the framework papers and estimators the field still builds
 on. **[R] = Frontier/Recent** marks an active research front, refreshed as the
@@ -596,7 +622,21 @@ $$
 \bar v(x,a) = u(x,a) + \beta\, \sum_{x'} V(x')\, p(x' \mid x, a).
 $$ {#eq-dyns-choicevalue}
 The agent chooses $a$ if $\bar v(x,a) + \varepsilon(a) \ge \bar v(x,a') +
-\varepsilon(a')$ for all $a'$.
+\varepsilon(a')$ for all $a'$. @fig-dsm-loop draws the loop these objects close:
+today's choice trades the flow payoff against the discounted value of the state
+it induces.
+
+```{mermaid}
+%%| label: fig-dsm-loop
+%%| fig-cap: "The single-agent dynamic-decision loop. Each period the agent observes the state and shocks, chooses the action with the highest choice-specific value plus shock, and collects the flow payoff; the Markov transition delivers next period's state, and its discounted continuation value is what makes the choice forward-looking."
+flowchart LR
+  ST["State x observed;<br/>shocks ε(a) realized"] --> AC["Choose action a:<br/>maximize v(x,a) + ε(a)"]
+  AC --> FP["Flow payoff<br/>u(x,a) + ε(a)"]
+  AC --> TR["Markov transition<br/>to next state x′"]
+  TR -->|"next period"| ST
+  TR --> CV["Continuation value<br/>β E[V(x′)]"]
+  CV -->|"forward-looking term<br/>inside v(x,a)"| AC
+```
 
 When $\varepsilon$ is i.i.d. Type-I extreme value, two classic results follow. The
 *conditional choice probability* (CCP) takes the multinomial-logit form
@@ -624,7 +664,23 @@ function of those estimated probabilities (the "inversion"), and the structural
 payoff parameters recovered in a fast second stage—often by forward-*simulating*
 paths under $\hat P$ (Hotz, Miller, Sanders & Smith 1994). This is the
 **CCP** estimator: cheaper than NFXP, at some cost in efficiency and a dependence
-on the first-stage $\hat P$.
+on the first-stage $\hat P$. @fig-dsm-estimation sets the two estimation pipelines
+side by side.
+
+```{mermaid}
+%%| label: fig-dsm-estimation
+%%| fig-cap: "Two estimation paradigms for dynamic discrete choice. NFXP re-solves the dynamic program at every trial parameter (efficient but computationally heavy); the CCP route inverts observed choice probabilities into value differences, trading efficiency and a first-stage dependence for speed."
+flowchart TB
+  subgraph NF["Nested fixed point (NFXP)"]
+    N1["Outer loop:<br/>trial structural parameters θ"] --> N2["Inner loop: solve the Bellman<br/>fixed point by value-function iteration"]
+    N2 --> N3["Evaluate the likelihood<br/>of observed choices"]
+    N3 -->|"update θ and re-solve"| N1
+  end
+  subgraph CC["Conditional choice probabilities (CCP)"]
+    C1["Stage 1: estimate choice probabilities<br/>nonparametrically from the data"] --> C2["Hotz-Miller inversion:<br/>value differences from CCPs"]
+    C2 --> C3["Stage 2: recover payoff parameters,<br/>forward-simulating under the<br/>estimated CCPs"]
+  end
+```
 
 The **identification problem** is the field's defining caveat. Two normalizations
 are unavoidable. First, the level of $u$ is not separately identified from the

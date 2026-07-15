@@ -42,13 +42,26 @@ downward: respondents understate WTP because they do not wish to appear price
 insensitive, and because a hypothetical question carries no budget consequence.[^direct]
 The **indirect** route, which this chapter develops, recovers reservation price as a
 *derived* quantity from a fitted utility model, most commonly the coefficients of a
-conjoint study.
+conjoint study. @fig-pref-routes contrasts the two routes and previews the
+conversion the rest of this section derives.
 
 [^direct]: Direct elicitation is not worthless—open-ended WTP, the Becker–DeGroot–
 Marschak mechanism, and contingent valuation all have their uses—but for
 multi-attribute products the indirect route dominates because it yields attribute-level
 dollar values, not just a single product-level number, and it embeds the valuation in
 a choice context that disciplines hypothetical bias.
+
+```{mermaid}
+%%| label: fig-pref-routes
+%%| fig-cap: "Two routes to a reservation price. Asking directly yields answers biased downward; the indirect route infers the quantity from a fitted utility model, converting attribute partworths into dollars through the price coefficient."
+flowchart TD
+  Q["Target: reservation price<br/>(maximum willingness to pay)"] --> DR["Direct route:<br/>ask the consumer outright"]
+  Q --> IR["Indirect route:<br/>infer from a fitted<br/>utility model"]
+  DR --> DB["Biased downward:<br/>reluctance to appear price<br/>insensitive; no budget consequence"]
+  IR --> CJ["Conjoint study:<br/>partworths from designed<br/>trade-offs"]
+  CJ --> DU["Dollar value of a util:<br/>-Δp / β_p"]
+  DU --> RP["Reservation price: sum of<br/>attribute partworths<br/>converted to dollars"]
+```
 
 The indirect route rests on one structural assumption, which should be stated before
 any result: **additive separability** of utility across attributes. Consumption
@@ -328,7 +341,24 @@ each attribute's importance and composing partworths from the product—cheap an
 but vulnerable to the "everything is important" inflation that holistic methods avoid.
 **MaxDiff** (best–worst scaling) asks respondents to identify the most- and least-preferred
 items in a set, a task that produces sharper discrimination among many items than rating
-scales and is estimated as a best–worst extension of MNL.
+scales and is estimated as a best–worst extension of MNL. @fig-pref-variants organizes
+the family by its underlying elicitation logic—partworths decomposed from holistic
+evaluations, composed from stated ratings, or a combination of the two.
+
+```{mermaid}
+%%| label: fig-pref-variants
+%%| fig-cap: "The conjoint family by elicitation logic. Decompositional variants recover partworths from holistic evaluations of whole profiles; the self-explicated route composes them from stated desirabilities and importances; adaptive and hybrid designs combine the two logics to handle many attributes."
+flowchart TD
+  R["Preference elicitation"] --> DC["Decompositional:<br/>partworths recovered from<br/>holistic evaluations"]
+  R --> CP["Compositional:<br/>partworths composed<br/>from stated ratings"]
+  R --> CM["Combined:<br/>self-explicated stage<br/>plus trade-off tasks"]
+  DC --> FP["Full-profile:<br/>rate or rank complete profiles;<br/>OLS regression"]
+  DC --> CB["Choice-based (CBC):<br/>choose one from a set;<br/>MNL, mixed logit, HB"]
+  DC --> MD["MaxDiff:<br/>most and least preferred;<br/>best-worst MNL"]
+  CP --> SE["Self-explicated:<br/>level desirability and<br/>attribute importance"]
+  CM --> AD["Adaptive (ACA):<br/>questions tailored to<br/>earlier answers"]
+  CM --> HY["Hybrid:<br/>self-explicated plus<br/>full-profile or choice"]
+```
 
 A persistent practical problem is **missing data** in partial profiles—respondents do not
 see every attribute or level. @bradlow2004learning develop a learning-based model that
@@ -450,7 +480,32 @@ that pricing and product-line decisions actually consume.
 
 ## Pitfalls and Identification
 
-Three threats recur, each tracing to an assumption made explicit above.
+Three threats recur, each tracing to an assumption made explicit above;
+@fig-pref-threats maps each threat to what it breaks and to the standard defense.
+
+```{mermaid}
+%%| label: fig-pref-threats
+%%| fig-cap: "Recurring threats to partworth identification, what each breaks, and the standard defense. A fourth, structural threat—attribute interactions that violate additive separability—is handled at the design stage by modeling the interaction explicitly or folding it into a super-attribute."
+flowchart LR
+  subgraph TH["Threat"]
+    T1["Hypothetical bias:<br/>survey choices carry<br/>no consequence"]
+    T2["Confounded design:<br/>correlated attribute<br/>columns"]
+    T3["Heterogeneity and scale:<br/>aggregate logit ignores variation;<br/>scale masquerades as preference"]
+  end
+  subgraph BR["What it breaks"]
+    A1["Stated partworths diverge<br/>from revealed behavior"]
+    A2["Partworths not separately<br/>identified: the design, not the<br/>data, determines estimates"]
+    A3["Elasticities biased through<br/>composition; individual<br/>partworths misread"]
+  end
+  subgraph DF["Defense"]
+    D1["Incentive-aligned designs;<br/>reconcile against market data"]
+    D2["Orthogonality check on the<br/>fractional factorial"]
+    D3["Mixed logit / HB estimators;<br/>WTP ratios partially<br/>cancel scale"]
+  end
+  T1 --> A1 --> D1
+  T2 --> A2 --> D2
+  T3 --> A3 --> D3
+```
 
 **Hypothetical bias.** Stated-preference partworths can diverge from revealed behavior
 because survey choices carry no consequence. Incentive-aligned designs—where the respondent

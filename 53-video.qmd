@@ -141,6 +141,20 @@ short sequence of frames, mimicking a clip with two scene changes (a calm openin
 shot, a busy closing), then extracts per-frame brightness, colorfulness, and edge-density features,
 and finally computes a frame-to-frame difference signal whose spikes localize the cuts. This is the
 foundation, made concrete, on which the conceptual deep pipelines later in the chapter rest.
+@fig-vid-frames diagrams that foundation, sampling frames, turning each into a feature vector, and
+differencing consecutive frames to flag cuts, before the code below carries it out.
+
+```{mermaid}
+%%| label: fig-vid-frames
+%%| fig-cap: "The frame-level foundation of video analysis. Frames are sampled from the clip, each becomes a vector of per-frame features, the features are read as a time series, and the frame-to-frame difference is thresholded to flag shot changes."
+flowchart LR
+  VID["Video clip"] --> SMP["Frame sampling<br/>(uniform, keyframe, adaptive)"]
+  SMP --> FR["Sampled frames"]
+  FR --> PF["Per-frame features<br/>(brightness, colorfulness, edge density)"]
+  PF --> TSR["Feature time series<br/>(frames x features)"]
+  TSR --> DF["Frame-to-frame<br/>difference"]
+  DF --> SC["Threshold flags<br/>shot changes"]
+```
 
 ```{r video-magick-frames, message=FALSE, warning=FALSE}
 # Frame-level foundation with the maintained `magick` package.
@@ -378,6 +392,24 @@ Combining the streams is the modeling crux, and the choice of *when* to combine 
   which spoken words align with which on-screen moments. This is the architecture of modern multimodal
   transformers and the natural home for modeling *synchrony*, at a substantial data and compute cost.
 
+@fig-vid-fusion sets out the three streams and the point at which each fusion strategy combines them.
+
+```{mermaid}
+%%| label: fig-vid-fusion
+%%| fig-cap: "Multimodal video as three streams and a fusion choice. Visual, audio, and text streams each yield per-modality features, and late, early, or cross-attention fusion combines them before the outcome model of engagement or sales."
+flowchart LR
+  VDO["Marketing video"] --> VS["Visual stream<br/>(frames)"]
+  VDO --> AS["Audio stream<br/>(speech, prosody, music)"]
+  VDO --> TX["Text stream<br/>(transcript, captions, metadata)"]
+  VS --> VE["Visual features"]
+  AS --> AE["Acoustic features"]
+  TX --> TE["Text features"]
+  VE --> FUS["Fusion<br/>(late, early, or cross-attention)"]
+  AE --> FUS
+  TE --> FUS
+  FUS --> OUT["Outcome model<br/>(engagement, sales)"]
+```
+
 The flagship demonstration in marketing is @yang2024engagement, who extract video, audio, and text
 features from short-form influencer ads on TikTok and fuse them to predict product sales, finding that
 the fused representation, mediated through engagement, carries genuine predictive content for revenue.
@@ -449,6 +481,25 @@ Marketing analysts extract a recurring vocabulary of creative features, some int
 - **Temporal arcs.** Rather than collapsing a feature to its clip average, the *trajectory* of arousal,
   emotion, or brand presence over the clip is itself a feature: a rising emotional arc, an early brand
   reveal, a late call-to-action.
+
+@fig-vid-features collects this recurring creative vocabulary into the five families the analyst extracts.
+
+```{mermaid}
+%%| label: fig-vid-features
+%%| fig-cap: "The recurring vocabulary of video creative features, grouped into five families that feed predictive models of engagement and conversion."
+flowchart TB
+  CF["Creative features"]
+  CF --> PA["Pacing and structure"]
+  CF --> VI["Visual content"]
+  CF --> AU["Audio content"]
+  CF --> LI["Linguistic content"]
+  CF --> TA["Temporal arcs"]
+  PA --> PA1["Shots per minute, shot duration,<br/>time-to-first-cut, hook position"]
+  VI --> VI1["Color and brightness, faces,<br/>brand prominence, scene variety"]
+  AU --> AU1["Music tempo and valence,<br/>speech rate, loudness, cut synchrony"]
+  LI --> LI1["Transcript and caption topics,<br/>sentiment, calls-to-action"]
+  TA --> TA1["Trajectories of arousal,<br/>emotion, brand presence"]
+```
 
 ### Engagement prediction and its pitfalls
 

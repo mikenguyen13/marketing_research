@@ -121,11 +121,47 @@ one fits with a few lines of base R. The contrastive and transformer models of
 
 A useful way to hold the three together: early fusion fuses *features*, late fusion
 fuses *decisions*, and joint fusion fuses *representations*, learning those
-representations as it goes. The runnable demonstration below contrasts the two that can
+representations as it goes; @fig-fus-strategies draws the three architectures side by
+side. The runnable demonstration below contrasts the two that can
 be built from off-the-shelf, maintained packages: early fusion with a penalized linear
 model and late fusion with per-modality random forests combined by a stacking
 meta-learner. Joint fusion is treated conceptually, because its honest demonstration
 requires a deep-learning stack outside this book's runnable scope.
+
+```{mermaid}
+%%| label: fig-fus-strategies
+%%| fig-cap: "The three canonical fusion strategies. Early fusion concatenates per-modality features into a single wide input; late fusion fits one model per modality and combines their decisions; joint fusion trains modality encoders and their combination end to end, so gradient signal from the task reshapes each encoder."
+flowchart LR
+  subgraph EF["Early fusion: fuse features"]
+    direction TB
+    ET["Text<br/>features"] --> EC["Concatenate into<br/>one wide vector"]
+    EI["Image<br/>features"] --> EC
+    EB["Behavior<br/>features"] --> EC
+    EC --> EM["Single model"]
+    EM --> EP["Prediction"]
+  end
+  subgraph LF["Late fusion: fuse decisions"]
+    direction TB
+    LT["Text<br/>features"] --> MT["Text<br/>model"]
+    LI["Image<br/>features"] --> MI["Image<br/>model"]
+    LB["Behavior<br/>features"] --> MB["Behavior<br/>model"]
+    MT --> CB["Combiner: average or<br/>stacked meta-learner"]
+    MI --> CB
+    MB --> CB
+    CB --> LP["Prediction"]
+  end
+  subgraph JF["Joint fusion: fuse representations"]
+    direction TB
+    JT["Text"] --> ENT["Text<br/>encoder"]
+    JI["Image"] --> ENI["Image<br/>encoder"]
+    JB["Behavior"] --> ENB["Behavior<br/>encoder"]
+    ENT --> JC["Combine: concatenation,<br/>summation, cross-attention"]
+    ENI --> JC
+    ENB --> JC
+    JC --> JP["Prediction"]
+    JP -.->|"end-to-end gradient<br/>reshapes encoders"| ENT
+  end
+```
 
 ### A Runnable Early-versus-Late Demonstration {#sec-mmf-demo}
 
@@ -307,7 +343,22 @@ product) to the embedding of *its own* caption and low similarity to the embeddi
 the *other* captions in the batch, and symmetrically for captions. After training on
 hundreds of millions of pairs, the two encoders share a single embedding space in which
 an image of a red sneaker and the text "a red sneaker" land near each other, while
-unrelated images and texts land far apart.
+unrelated images and texts land far apart. @fig-fus-clip sketches the training
+geometry and the shared space it produces.
+
+```{mermaid}
+%%| label: fig-fus-clip
+%%| fig-cap: "Contrastive image-text pretraining. Two encoders trained on web-scale image-caption pairs place each image near its own caption and far from the others in one shared embedding space, where cross-modal similarity is meaningful and new constructs can be scored zero-shot from a text prompt."
+flowchart LR
+  IMG["Image"] --> IE["Image encoder"]
+  CAP["Its caption"] --> TXE["Text encoder"]
+  subgraph SP["Shared embedding space"]
+    VI["Image<br/>embedding"] ---|"contrastive objective:<br/>own caption near,<br/>other captions far"| VT["Text<br/>embedding"]
+  end
+  IE --> VI
+  TXE --> VT
+  SP --> ZS["Zero-shot scoring:<br/>any image against<br/>any text prompt"]
+```
 
 Two properties make this transformative for marketing measurement. The first is **a
 common space**: because images and text are embedded into the *same* geometry, the
@@ -492,6 +543,24 @@ embeddings; video became fused frame, audio, and text features; behavior, geogra
 networks, and sensors each became a feature vector. The encoders differ, the modalities
 differ, but the output type is the same, and that common output type is the seam along
 which the unstructured-data part attaches to the rest of the book.
+@fig-fus-throughline draws the convergence.
+
+```{mermaid}
+%%| label: fig-fus-throughline
+%%| fig-cap: "The representation throughline of the unstructured-data part. Every modality passes through a learned encoder and emerges as a feature vector; the downstream methods consume the vector without regard to its origin, so the generated-regressor caution travels with it."
+flowchart LR
+  TX["Text"] --> TXE["Embeddings"]
+  IM["Images"] --> IME["CNN or vision-<br/>transformer features"]
+  AU["Audio"] --> AUE["Prosodic, spectral,<br/>wav2vec-style features"]
+  VD["Video"] --> VDE["Fused frame, audio,<br/>and text features"]
+  BG["Behavior, geography,<br/>networks, sensors"] --> BGE["Feature vectors"]
+  TXE --> RV["Learned representation:<br/>a vector, estimated<br/>with error"]
+  IME --> RV
+  AUE --> RV
+  VDE --> RV
+  BGE --> RV
+  RV --> DM["Downstream methods:<br/>regression, classification,<br/>choice, causal, Bayesian"]
+```
 
 This is why the part can exist as a coherent unit rather than a list of unrelated
 techniques. The regression, classification, choice, causal-inference, and Bayesian
