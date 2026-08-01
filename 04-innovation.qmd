@@ -211,6 +211,144 @@ flowchart LR
     G2 -->|"disengage"| G3["Gen 3 …"]
 ```
 
+## Growth Curves Beyond Bass: Trend Extrapolation for a New Channel {#sec-growth-curves}
+
+The Bass model is one member of a larger family of **growth curves**, and the family
+matters whenever the task is not to explain adoption but to *project a young,
+saturating series forward*. A new product's cumulative sales, a technology's installed
+base, and—as @kaiser2026chatgpt show—a new marketing *channel's* conversion rate all
+trace an S: near-flat at launch, a steepening middle, a plateau as the addressable
+ceiling binds. The forecasting difficulty is that early data show only the bottom of
+the S, and the functional form the analyst imposes on the trend, not the data, then
+decides where the curve is headed. Kaiser and Schulze make the point concrete by
+projecting organic-LLM referral outcomes under four trend specifications and reporting
+that the choice "substantially impacts predictions." Those four specifications are
+worth stating precisely, because they span the space of sensible answers.
+
+The two **linear** forms are the null against which the curves earn their keep. A
+plain linear trend and its *centered* variant,
+$$
+y_t = \beta_0 + \beta_1 t
+\qquad\text{and}\qquad
+y_t = \tilde\beta_0 + \beta_1 (t - \bar t),
+$$ {#eq-04-growth-linear}
+fit the identical line—centering shifts only the intercept's meaning (from the
+extrapolated value at $t=0$ to the level at the sample midpoint) and decorrelates
+intercept from slope, which stabilizes the starting values the nonlinear fits below
+require. Their shared defect is fatal for a saturating quantity: a straight line has
+no ceiling. Extrapolated a year past a nascent channel's data, a linear conversion
+rate marches past every plausible bound, and a share past 100%. Centering cures none
+of this; it is a conditioning device, not a model of saturation.
+
+The **logistic** (sigmoid) curve is the symmetric saturating alternative. It is the
+solution of the autocatalytic law $\dot y = \tfrac{k}{L}\,y\,(L - y)$—growth
+proportional to both the level attained and the headroom remaining—giving
+$$
+y_t = \frac{L}{1 + \exp\!\big(-k\,(t - t_0)\big)},
+$$ {#eq-04-growth-logistic}
+with a **hard upper limit** $L$ (the ceiling, imposed a priori or estimated), growth
+rate $k$, and midpoint $t_0$ at which $y = L/2$. Its inflection sits exactly halfway
+up, so a logistic rises and levels off as mirror images. The **Gompertz** curve
+relaxes that symmetry. It solves $\dot y = c\,y\,\ln(a/y)$—growth proportional to the
+*log* headroom—so the brake engages later and the approach to the asymptote is slower
+than the take-off:
+$$
+y_t = a\,\exp\!\big(-b\,\exp(-c\,t)\big),
+$$ {#eq-04-growth-gompertz}
+with asymptote $a$, and inflection at $t = (\ln b)/c$ where $y = a/e \approx 0.368\,a$,
+below the logistic's half-way point—the signature of an **asymmetric S-curve**
+[@gompertz1825nature]. A channel that matures fast then crawls toward its ceiling is
+Gompertz-shaped; one that accelerates and decelerates evenly is logistic. The data
+rarely say which until the plateau is in view, and that is the whole problem: before
+the inflection, market potential and growth rate trade off just as $m$ and $q$ do in
+the Bass model (@eq-bass-cumulative), so competing curves fit the observed rise almost
+equally well while disagreeing sharply about the ceiling. The honest output of an
+early-life projection is therefore an *envelope* of forms, not a single line.
+
+**Estimation** is ordinary least squares for the linear forms and nonlinear least
+squares for the curves—the same `nls` machinery used for the cumulative Bass model,
+with the asymptote and rate given explicit starting values (or supplied by R's
+self-start models `SSlogis` and `SSgompertz`). @fig-growth-curves fits all four to a
+simulated year of a maturing channel and projects each a year beyond the data.
+
+```{r growth-curves, message=FALSE, warning=FALSE}
+#| label: fig-growth-curves
+#| fig-cap: "Four trend specifications fit to twelve months of a maturing channel's
+#|   monthly conversion rate (points), then projected twelve months past the end of the
+#|   data (dotted vertical line); the dashed horizontal line is the true 3% ceiling. In
+#|   sample the fits nearly coincide; out of sample the linear trend climbs past any
+#|   plausible ceiling while the logistic and Gompertz curves saturate—at different
+#|   levels, which is the weak identification of a pre-inflection series made visible."
+set.seed(2024)
+
+# Twelve months of a new channel's monthly conversion rate, truly approaching a
+# ceiling of 3% along a logistic path, observed with noise.
+months  <- 1:12
+L_true  <- 0.030; k_true <- 0.55; t0_true <- 7
+cr_true <- L_true / (1 + exp(-k_true * (months - t0_true)))
+cr_obs  <- pmax(cr_true + rnorm(12, 0, 0.0012), 1e-4)
+d <- data.frame(t = months, cr = cr_obs)
+
+ctrl <- nls.control(maxiter = 200, warnOnly = TRUE)   # return a fit rather than abort
+fit_lin <- lm(cr ~ t, data = d)
+fit_cen <- lm(cr ~ I(t - mean(t)), data = d)          # identical fit, centered trend
+fit_log <- nls(cr ~ L / (1 + exp(-k * (t - t0))),
+               start = list(L = 0.03, k = 0.4, t0 = 7), data = d, control = ctrl)
+fit_gom <- nls(cr ~ a * exp(-b * exp(-c * t)),
+               start = list(a = 0.03, b = 5, c = 0.4), data = d, control = ctrl)
+
+newt <- data.frame(t = 1:24)
+pr <- sapply(list(Linear = fit_lin, Logistic = fit_log, Gompertz = fit_gom),
+             function(m) predict(m, newdata = newt))
+
+matplot(newt$t, pr, type = "l", lwd = 2, lty = 1,
+        col = c("firebrick", "steelblue", "darkgreen"),
+        xlab = "Month since launch", ylab = "Monthly conversion rate",
+        ylim = range(0, pr, cr_obs))
+points(d$t, d$cr, pch = 19)
+abline(v = 12, lty = 3, col = "grey50")
+abline(h = L_true, lty = 2, col = "grey60")
+legend("topleft", bty = "n", lwd = 2,
+       col = c("firebrick", "steelblue", "darkgreen", "black", "grey60"),
+       lty = c(1, 1, 1, NA, 2), pch = c(NA, NA, NA, 19, NA),
+       legend = c("Linear", "Logistic", "Gompertz", "Observed", "True ceiling"))
+
+cat(sprintf("Projected CR at month 24 — linear %.3f, logistic %.3f, gompertz %.3f\n",
+            pr[24, "Linear"], pr[24, "Logistic"], pr[24, "Gompertz"]))
+cat(sprintf("Centered-linear reproduces the linear fit exactly: %s\n",
+            isTRUE(all.equal(unname(fitted(fit_lin)), unname(fitted(fit_cen))))))
+```
+
+The fits are nearly indistinguishable over the twelve observed months yet part company
+violently once extrapolated: the linear projection sails through the true ceiling while
+the two S-curves flatten toward different asymptotes. That spread *is* the forecast
+uncertainty a single fitted line hides, and it is why fitting the family—and reporting
+where the members agree and where they diverge—is the disciplined move for any young,
+saturating series.
+
+::: {.callout-note}
+## The trend-extrapolation discipline
+
+A saturating quantity demands a saturating model. Never linear-extrapolate a rate, a
+share, or a penetration figure: the linear form has no ceiling and will always, given
+enough horizon, predict the impossible. Fit at least one symmetric (logistic) and one
+asymmetric (Gompertz) curve, treat the gap between their projected asymptotes as the
+honest forecast interval, and distrust any point forecast made before the series has
+shown its inflection—the region where, exactly as in the Bass model, the ceiling and
+the growth rate are only weakly separated by the data.
+:::
+
+These curves are the reduced-form cousins of the Bass model of @sec-innovation-theory.
+Where Bass decomposes the S into interpretable innovation and imitation rates
+(@eq-04-bass-hazard), the logistic and Gompertz fit the shape directly, which is the
+pragmatic choice when only cumulative levels are observed and no adopter-level story is
+needed. @kaiser2026chatgpt turn exactly this apparatus on a marketing *channel* rather
+than a product—projecting how fast LLM referral converges toward established channels—
+and pair it with the overdispersed rate model of @sec-quasibinomial to keep the
+inference honest on sparse data. Diffusion logic, it turns out, describes the maturation
+of marketing infrastructure as readily as the adoption of the products that flow
+through it.
+
 ## Measuring Innovation {#sec-innovation-measure}
 
 Innovation has no natural unit, so every empirical claim about it rests on a
@@ -301,6 +439,31 @@ recover the importance an inventor or investor could have perceived *at the time
 of patenting, which is exactly the quantity a forward-looking valuation would want.
 @galasso2011ceo exploit this measurement apparatus to study how managerial risk
 exposure shapes the quantity and the citation-weighted quality of innovation.
+
+### Measuring Creativity with Embeddings {#sec-innovation-creativity-embeddings}
+
+Patent measures capture *firm* invention, but most consumer creativity leaves no patent
+and no citation trail: a recipe, a playlist, a graphic-design template, an outfit.
+Representation learning fills the gap. @sozuer2026recipe learn an **ingredient
+embedding**—each ingredient's vector inferred from the company it keeps across more than
+57,000 recipes, the same representation-learning idea as the product embeddings of
+@sec-bundle-rec applied to a dish's components—and from that geometry read two properties
+of a recipe: its **fit** (how coherently its ingredients belong together) and its
+**novelty** (how unusual its ingredients are for its category). The measure needs no
+expert taster and no citation graph; it recovers creativity from the statistics of
+recombination, exactly as the backward citations above recover a patent's novelty from
+the prior art it recombines.
+
+The payoff is a result that complicates the folklore that creativity is uniformly
+rewarded. High ingredient fit lifts *both* trial and ratings, but **unique** ingredients
+*cut* trial while *raising* ratings among those who do try—novelty carries an adoption
+cost and a quality dividend at once. The recipe that wins is therefore not the most novel
+but the most *balanced*: novel in its parts, coherent as a whole. This is the
+innovation-side echo of the atypicality-and-engagement result in social content
+(@sec-effectiveness-drivers)—distinctiveness pays, but only when it stays legible against
+a familiar ground—and it turns the embedding from a descriptive gauge into a design tool:
+the authors build a generator that proposes adding, dropping, or swapping an ingredient
+to move a recipe toward that balanced-creativity frontier.
 
 ## New Product Development
 

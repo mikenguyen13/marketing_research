@@ -396,6 +396,123 @@ auc_rank <- {
 cat("Held-out ranking AUC:", round(auc_rank, 3), "\n")
 ```
 
+### Bundle Recommendation at Scale {#sec-bundle-rec}
+
+Matrix factorization scores single items. A distinct and commercially large problem is
+recommending **bundles**—sets of products to buy together—which turns on a relationship
+factorization ignores: whether two products are **complements** (a phone and a case,
+bought together) or **substitutes** (two phones, bought instead of each other). Raw
+co-occurrence cannot tell them apart, because substitutes co-occur too—shoppers view and
+compare them—so a naive "frequently seen together" recommender fills bundles with
+substitutes, which no one buys as a pair.
+
+@kumar2026bundle solve this at scale with **dense product embeddings**. Products are
+embedded from behavioral co-occurrence—purchases and clickstream consideration sets—so
+that products used in similar ways land near one another, exactly as words do in a
+language model. The geometry then supplies the two signals a bundle needs:
+*substitutability* is proximity in the consideration-set space (interchangeable products
+are considered together), while *complementarity* is co-purchase association net of
+substitutability (products bought together that are not merely alternatives). Bundling a
+focal product with its complements while screening out its substitutes, and then using a
+field experiment to **learn the recommendation policy offline**—mapping bundle features
+to purchase likelihood and optimizing over them (@sec-field-experiments-seminar)—their
+policy generalizes across the retailer's assortment and raises bundle purchases by an
+estimated 35% over the incumbent.
+
+The replication below runs the whole pipeline in miniature. It simulates purchase
+baskets (complements) and consideration sets (substitutes), learns product embeddings by
+the standard PPMI-plus-SVD route—the closed-form cousin of word2vec—separates
+complementarity from substitutability, and shows a bundle policy built on that separation
+beating a naive co-occurrence recommender; it then tunes the substitute penalty by
+offline policy evaluation, the paper's optimization step in miniature.
+
+```{r aiml-bundle, message=FALSE, warning=FALSE}
+set.seed(48)
+
+# --- Catalog with latent complement/substitute structure ---------------------
+n_prod <- 120; n_cat <- 12
+cat_id <- rep(seq_len(n_cat), length.out = n_prod)      # each product's category
+role   <- matrix(rnorm(n_prod * 3), n_prod, 3)          # latent "goes-with" role
+
+# --- Baskets: complements co-occur (cross-category), with some substitute
+#     contamination (people sometimes buy similar items too) -------------------
+complement_of <- function(i) {
+  cross <- which(cat_id != cat_id[i])
+  aff   <- as.numeric(role[cross, ] %*% role[i, ])
+  cross[sample.int(length(cross), 1, prob = {p <- exp(2 * (aff - max(aff))); p / sum(p)})]
+}
+substitute_of <- function(i) {
+  same <- setdiff(which(cat_id == cat_id[i]), i)
+  if (!length(same)) i else same[sample.int(length(same), 1)]
+}
+make_basket <- function() {
+  items <- i <- sample.int(n_prod, 1)
+  for (r in seq_len(rbinom(1, 3, 0.6))) items <- c(items, complement_of(i))
+  if (runif(1) < 0.25) items <- c(items, substitute_of(i))    # contamination
+  unique(items)
+}
+make_view <- function() {                                # consideration set: substitutes
+  pool <- which(cat_id == sample.int(n_cat, 1))
+  if (length(pool) < 2) pool else sample(pool, min(length(pool), 2 + rbinom(1, 3, 0.5)))
+}
+baskets <- replicate(6000, make_basket(), simplify = FALSE)
+views   <- replicate(6000, make_view(),   simplify = FALSE)
+
+# --- Co-occurrence -> PPMI -> dense embeddings (SVD, the word2vec cousin) -----
+co_matrix <- function(sets, n) {
+  M <- matrix(0, n, n)
+  for (s in sets) if (length(s) > 1) M[s, s] <- M[s, s] + 1
+  diag(M) <- 0; M
+}
+ppmi <- function(M) {
+  tot <- sum(M); if (tot == 0) return(M)
+  P <- log((M / tot + 1e-12) / (outer(rowSums(M), colSums(M)) / tot^2 + 1e-12))
+  P[P < 0 | !is.finite(P)] <- 0; P
+}
+embed  <- function(M, k = 16) { sv <- svd(ppmi(M)); sv$u[, 1:k] %*% diag(sqrt(sv$d[1:k])) }
+cosine <- function(E) { En <- E / sqrt(rowSums(E^2) + 1e-12); En %*% t(En) }
+
+Cpur  <- co_matrix(baskets, n_prod)      # co-purchase (complementarity signal)
+Cview <- co_matrix(views,   n_prod)      # co-view     (substitutability signal)
+Craw  <- Cpur + Cview                    # what a naive co-occurrence recommender sees
+Comp  <- ppmi(Cpur)                      # complementarity = co-purchase association
+Sub   <- cosine(embed(Cview))            # substitutability = co-view embedding similarity
+
+# --- Policies: naive co-occurrence vs. complement-minus-substitute -----------
+naive    <- function(i, k = 3) { s <- Craw[i, ]; s[i] <- -Inf; order(s, decreasing = TRUE)[1:k] }
+policy_w <- function(w) function(i, k = 3) {
+  s <- Comp[i, ] * (1 - w * pmax(Sub[i, ], 0)); s[i] <- -Inf
+  order(s, decreasing = TRUE)[1:k]
+}
+
+# --- Ground-truth attach & offline policy evaluation -------------------------
+true_attach <- function(i, j) plogis(1.5 * sum(role[i, ] * role[j, ]) -
+                                       1.2 * (cat_id[i] == cat_id[j]))
+eval_policy <- function(policy, k = 3)
+  mean(vapply(seq_len(n_prod),
+              function(i) mean(vapply(policy(i, k), function(j) true_attach(i, j), 0)), 0))
+
+# --- Offline policy learning: tune the substitute penalty w ------------------
+ws     <- seq(0, 1.5, by = 0.25)
+vals   <- vapply(ws, function(w) eval_policy(policy_w(w)), 0)
+w_star <- ws[which.max(vals)]
+base   <- eval_policy(naive)
+
+cat(sprintf("Naive co-occurrence attach         : %.3f\n", base))
+cat(sprintf("Embedding policy, no penalty (w=0)  : %.3f\n", vals[1]))
+cat(sprintf("Optimized policy  w* = %.2f         : %.3f\n", w_star, max(vals)))
+cat(sprintf("Lift of optimized policy over naive : %+.0f%%\n", 100 * (max(vals) - base) / base))
+```
+
+The naive recommender, ranking by raw co-occurrence, fills bundles with the very
+substitutes that pollute that signal; switching to a purchase-based complementarity score
+and then penalizing embedded substitutes lifts expected attach sharply. The magnitude in
+this stylized market runs well above the field experiment's 35%—the simulation makes the
+naive baseline deliberately poor—but the direction and, more to the point, the *reason*
+are the paper's: the value is in separating complements from substitutes, which the
+embedding geometry does almost for free, and in learning the policy from an experiment
+rather than assuming it.
+
 ## Deep Learning
 
 *Deep learning* refers to neural networks with many layers of learned, nonlinear
@@ -475,6 +592,175 @@ risks a closed loop that measures the model's preferences rather than consumers'
 Used as instruments, LLMs are powerful but require the same validity scaffolding as
 any measure; used as generators, they require the brand-safety, factuality, and
 fairness controls developed in the rest of this chapter.
+
+One instrument use has grown prominent enough to name on its own: the LLM as a
+*synthetic respondent*. Prompted to adopt a demographic or attitudinal persona, an LLM
+will answer survey and choice questions as that person plausibly might—**silicon
+sampling** [@argyle2023]—which dangles the prospect of cheap, instant, fatigue-free
+subjects. The evidence is mixed by design and by domain: LLMs recover some
+individual-level preferences and reproduce aggregate patterns [@goli2024frontiers], yet
+their synthetic distributions are too narrow, shift with the wording of a prompt, and
+drift over time, so they are unreliable for the variance-dependent inference that survey
+data exist to support [@bisbee2024synthetic]. The productive posture is therefore
+*augmentation* rather than replacement—spending a little human data to debias a lot of
+LLM data [@wang2026llm]—which @sec-online-panels develops for survey respondents and
+@sec-conjoint-variants for conjoint.
+
+Both roles cast the LLM as a tool the firm wields. A third relevance is now emerging
+that the firm does not control at all: the LLM as a *distribution channel*. When a
+chat assistant answers a shopping question and links out to a retailer, it refers
+traffic the way a search engine or an affiliate does—a channel that did not exist
+before ChatGPT began emitting organic outbound links in August 2024.
+@kaiser2026chatgpt measure it across 973 e-commerce sites—more than 50,000
+LLM-referred transactions against 164 million from traditional channels—and find that
+organic LLM traffic still converts below every traditional channel except paid social
+(about 13% under organic search, 86% under affiliate) and earns less per session,
+though the gap narrows in complex product categories and is closing over time.
+
+The closing-over-time claim is where the paper's method rewards a look, because "how
+fast is a brand-new channel maturing?" is easy to answer badly. Rather than
+extrapolate a straight line, the authors fit a months-since-launch trend under
+competing functional forms—linear against Gompertz and logistic S-curves that
+*saturate*—so a nascent channel's trajectory cannot be projected off to implausible
+values. Its data sparsity is handled not with anything exotic but with overdispersed
+*quasibinomial* models for rate outcomes, linear models weighted by each cell's
+session count for dollar outcomes, and weekly aggregation to blunt zero inflation. The
+tools are standard—the same diffusion-curve logic marketing has long used for
+new-product growth (@sec-growth-curves), here turned on a distribution channel; the
+novelty is the channel, not the estimator. The two estimation ideas the paper leans
+on—overdispersed rate regression and saturating trend curves—are general enough to
+deserve their own treatment. The first belongs here, with inference; the second sits
+with diffusion in @sec-growth-curves.
+
+## Modeling Rates with Overdispersion: The Quasibinomial GLM {#sec-quasibinomial}
+
+The channel comparison above is an *inference* question in the exact sense of
+@sec-modeling-illustration's fork: not "predict whether this session converts" but
+"does channel $A$ convert at a different rate than channel $B$, and how sure are we?"
+The object of interest is a coefficient and its standard error, so the estimator must
+have a sampling distribution we trust. Aggregate conversion data look deceptively easy
+to model this way—$y_i$ conversions out of $n_i$ sessions is the textbook binomial—but
+the textbook variance is almost always wrong for marketing rates, and taking it at
+face value manufactures precision that is not there.
+
+Write the workhorse **logistic GLM** for a proportion. With $y_i$ conversions in
+$n_i$ sessions and covariates $\mathbf{x}_i$ (channel, website, device, month),
+$$
+y_i \sim \text{Binomial}(n_i, \mu_i), \qquad
+\operatorname{logit}(\mu_i) = \mathbf{x}_i^{\top}\boldsymbol\beta, \qquad
+\operatorname{Var}(y_i) = n_i\,\mu_i(1-\mu_i).
+$$ {#eq-aiml-binom}
+The last equality is not an assumption one gets to make lightly: it says the *only*
+source of variation in the count is the coin-flip randomness of $n_i$ independent
+sessions sharing a single rate $\mu_i$. Real channel-week-website cells violate it
+routinely. Sessions within a cell are correlated (a viral post, a promotion, a bot
+wave); the rate $\mu_i$ itself wanders with unmodeled heterogeneity across sites and
+weeks; a sparse new channel like oLLM piles many near-empty cells beside a few large
+ones. Each mechanism inflates the variance of $y_i$ beyond the binomial floor—it is
+**overdispersed**—and the inflation is exactly what a naive logistic regression
+assumes away.
+
+The **quasibinomial** model repairs the inference without pretending to a full
+likelihood. Following the quasi-likelihood idea [@wedderburn1974quasi;
+@mccullagh1989glm], one specifies only the mean and a variance *proportional* to the
+binomial one,
+$$
+\operatorname{Var}(y_i) = \phi\, n_i\,\mu_i(1-\mu_i), \qquad \phi \ge 1,
+$$ {#eq-aiml-overdisp}
+where $\phi$ is a **dispersion parameter** to be estimated rather than fixed at $1$.
+This is precisely the variance @kaiser2026chatgpt write as
+$\operatorname{Var}(y^{\text{txn}}_{it}) = \theta\, n^{\text{sess}}_{it}\,
+p_{it}(1-p_{it})$: their $\theta$ is this $\phi$, and their weekly aggregation and
+session weighting are complementary devices aimed at the same variance inflation.
+
+Two facts make the quasibinomial attractive. First, because the estimating equations
+for $\boldsymbol\beta$,
+$$
+\sum_i \frac{y_i - n_i\mu_i}{\phi\, n_i \mu_i(1-\mu_i)}\,
+\frac{\partial \mu_i}{\partial \boldsymbol\beta} = \mathbf{0},
+$$ {#eq-aiml-qscore}
+carry $\phi$ as a constant multiplier, it cancels: the **point estimates
+$\hat{\boldsymbol\beta}$ are identical to the ordinary binomial fit**. Overdispersion
+does not bias the coefficients; it corrupts their *standard errors*. Second, $\phi$ is
+estimated cheaply from the Pearson residuals,
+$$
+\hat\phi = \frac{1}{N-p}\sum_i
+\frac{(y_i - n_i\hat\mu_i)^2}{n_i\hat\mu_i(1-\hat\mu_i)},
+$$ {#eq-aiml-phihat}
+and the corrected covariance is just the binomial one scaled,
+$\widehat{\operatorname{Var}}_{\text{quasi}}(\hat{\boldsymbol\beta}) =
+\hat\phi\,\widehat{\operatorname{Var}}_{\text{binom}}(\hat{\boldsymbol\beta})$, so every
+standard error grows by $\sqrt{\hat\phi}$ and every naive $t$-statistic shrinks by the
+same factor. A cell that reports $\hat\phi = 9$ was quoting standard errors three times
+too small. The simulation below plants overdispersion deliberately and recovers it.
+
+```{r qbinom-demo, message=FALSE, warning=FALSE}
+set.seed(2024)
+
+# Weekly conversions for two channels across many websites. Overdispersion is built
+# in: each website carries its OWN latent conversion propensity (a Beta draw), so the
+# aggregate counts vary far more than a single common Binomial(n, p) would permit.
+sim_channel <- function(mean_p, rho, n_site = 500, mean_sess = 300) {
+  kappa  <- (1 - rho) / rho                          # Beta concentration; rho = dispersion
+  p_site <- rbeta(n_site, mean_p * kappa, (1 - mean_p) * kappa)
+  n_sess <- rpois(n_site, mean_sess) + 1L
+  data.frame(conv = rbinom(n_site, n_sess, p_site), sess = n_sess)
+}
+
+d <- rbind(
+  transform(sim_channel(0.020, rho = 0.10), channel = "oLLM"),
+  transform(sim_channel(0.023, rho = 0.10), channel = "organic_search")
+)
+d$channel <- relevel(factor(d$channel), ref = "oLLM")
+
+m_bin  <- glm(cbind(conv, sess - conv) ~ channel, family = binomial,      data = d)
+m_qbin <- glm(cbind(conv, sess - conv) ~ channel, family = quasibinomial, data = d)
+phi    <- summary(m_qbin)$dispersion               # estimated phi-hat
+
+compare <- data.frame(
+  term     = names(coef(m_bin)),
+  estimate = round(coef(m_bin), 4),                # identical across the two fits
+  se_binom = round(sqrt(diag(vcov(m_bin))),  4),
+  se_quasi = round(sqrt(diag(vcov(m_qbin))), 4)
+)
+compare$se_ratio <- round(compare$se_quasi / compare$se_binom, 2)
+
+cat(sprintf("Estimated dispersion  phi-hat = %.1f   (sqrt = %.2f)\n", phi, sqrt(phi)))
+print(compare, row.names = FALSE)
+```
+
+The coefficients are the same to the last digit; the quasibinomial standard errors are
+larger by very close to $\sqrt{\hat\phi}$, exactly as @eq-aiml-phihat predicts. The
+practical consequence is a matter of what survives: the organic-search-versus-oLLM
+contrast that clears significance under the binomial's optimistic errors may not clear
+it once the dispersion is admitted, which is why @kaiser2026chatgpt report their
+channel gaps against dispersion-corrected errors rather than the raw binomial ones.
+
+::: {.callout-note}
+## Quasibinomial and its neighbors
+
+The quasibinomial is the lightest of several overdispersion fixes, and the right
+choice depends on the question. A **beta-binomial** model puts an explicit
+distribution on the per-cell rate and yields a genuine likelihood (hence AIC/BIC and
+likelihood-ratio tests), at the cost of a distributional assumption the quasibinomial
+avoids. A **generalized linear mixed model** with a website random effect models the
+heterogeneity structurally and returns shrinkage estimates per site, but it is heavier
+and can be finicky with thousands of sparse cells. **Cluster-robust (sandwich)**
+standard errors correct inference without touching the variance function and are the
+natural move when the correlation is within known clusters. All four buy the same
+thing—honest uncertainty for a rate—so the quasibinomial's appeal is that it delivers
+it with one extra estimated scalar and no new distributional commitment. Reach past it
+only when you need the likelihood machinery or the per-site effects it does not
+provide.
+:::
+
+Note the tidy division of labor with the prediction–inference fork of
+@sec-modeling-illustration. A pure *predictor* of "will this session convert" is
+indifferent to $\phi$: overdispersion leaves the fitted probabilities $\hat\mu_i$
+untouched, so out-of-sample loss is unchanged. It is only when the coefficient itself
+is the deliverable—a channel comparison, an elasticity, a lift—that the dispersion
+parameter becomes load-bearing. Overdispersion is an inference bug, not a prediction
+bug, which is why it is invisible to a leaderboard and fatal to a claim.
 
 ## Machine Learning Across the Marketing Funnel
 

@@ -289,6 +289,101 @@ Eye-tracking measures the *opportunity* to process, which is why the strongest d
 pair gaze with a downstream measure, recall, choice, or sales, rather than treating
 dwell time as the outcome of interest in itself.
 
+## Scroll Tracking: Attention in the Wild {#sec-bio-scroll}
+
+Eye-tracking is the gold standard for visual attention, but it needs a camera, a
+calibration, and usually a lab—so it cannot follow the millions of choices people make
+by thumb on a phone. **Scroll tracking** is the naturalistic proxy that can. On a
+vertical mobile or web interface, the option in the viewport *is* the option being
+attended, so the scroll trajectory—which alternative is centered at each moment, how long
+it dwells there, how fast the user scrolls, how often they reverse direction—is a covert,
+hardware-free recording of the same attention dynamics an eye-tracker would capture,
+gathered in the wild during a real choice.
+
+@leppanen2026attention develops scroll tracking as a process-tracing method and validates
+it against the leading models of how attention shapes choice. Across binary choices
+(gambles and consumer goods) presented on a scrollable interface, the scroll-derived
+metrics—dwell asymmetry, direction reversals, scroll speed—predict not just the choice
+but the decision maker's subjective valuations, latent individual differences, and risk
+attitudes, and they improve every evidence-accumulation model tested.
+
+The model they improve is the **attentional drift-diffusion model** (aDDM) of
+@krajbich2010visual, the dominant account of how gaze and choice intertwine and the
+engine behind the eye-tracking-in-marketing lineage of @shi2013information. In the aDDM a
+relative decision value $\text{RDV}$ accumulates until it hits a boundary, but the drift
+at each instant is governed by *what is currently attended*: the attended option's value
+drives accumulation at full weight while the unattended option's is discounted by
+$\theta\in(0,1)$,
+$$
+\Delta\text{RDV}_t = d\big(v_{a(t)} - \theta\, v_{-a(t)}\big)\,\Delta t + \varepsilon_t,
+\qquad \varepsilon_t \sim \mathcal{N}(0, \sigma^2\Delta t),
+$$ {#eq-bio-addm}
+with a choice made when $\text{RDV}$ reaches $+B$ or $-B$, $a(t)$ the option attended at
+time $t$, and $d$ a drift scale. The consequence is a **gaze cascade**: because looking
+at an option boosts its accumulation, the option one dwells on is the option one tends to
+choose, over and above its value. Scroll tracking supplies exactly the $a(t)$ sequence
+@eq-bio-addm needs—which option is on screen—without an eye-tracker.
+
+The demonstration below simulates the aDDM with attention alternating as a shopper scrolls
+between two options, then puts the paper's two questions to the synthetic data: does the
+scroll-attention asymmetry predict choice, and do scroll metrics improve a choice model
+built on value alone?
+
+```{r bio-scroll-addm, message=FALSE, warning=FALSE}
+set.seed(57)
+
+# Attention (which option is on screen, i.e., where the shopper has scrolled) modulates
+# the drift of accumulated evidence. Parameters are illustrative, in the aDDM's range.
+theta <- 0.35     # attentional discount: unattended option's value is down-weighted
+d     <- 0.0006   # drift scaling (per ms);  sdw = accumulation noise;  B = boundary
+sdw   <- 0.02; B <- 1; dt <- 10; Tmax <- 1000
+
+sim_trial <- function(vL, vR) {
+  loc <- character(0); cur <- sample(c("L", "R"), 1)      # alternating "scroll" dwells
+  while (length(loc) < Tmax) {
+    fd  <- max(1L, round(rgamma(1, shape = 2, scale = 25)))
+    loc <- c(loc, rep(cur, fd)); cur <- if (cur == "L") "R" else "L"
+  }
+  loc <- loc[seq_len(Tmax)]
+  mu  <- ifelse(loc == "L", d * dt * (vL - theta * vR), d * dt * (theta * vL - vR))
+  rdv <- cumsum(mu + rnorm(Tmax, 0, sdw * sqrt(dt)))
+  hit <- which(abs(rdv) >= B)[1]; if (is.na(hit)) hit <- Tmax
+  c(choiceL = as.integer(rdv[hit] > 0),
+    dwellL  = sum(loc[seq_len(hit)] == "L") * dt,
+    dwellR  = sum(loc[seq_len(hit)] == "R") * dt)
+}
+
+n  <- 1500
+vL <- runif(n, 0, 4); vR <- runif(n, 0, 4)
+sim <- as.data.frame(t(vapply(seq_len(n), function(k) sim_trial(vL[k], vR[k]), numeric(3))))
+sim$val_diff   <- vL - vR
+sim$dwell_diff <- (sim$dwellL - sim$dwellR) / (sim$dwellL + sim$dwellR)  # scroll asymmetry
+
+# 1. The scroll (gaze) cascade: the option dwelt on is chosen more, beyond its value.
+cat(sprintf("P(choose left | dwelt more on LEFT)  = %.2f\n", mean(sim$choiceL[sim$dwell_diff > 0])))
+cat(sprintf("P(choose left | dwelt more on RIGHT) = %.2f\n", mean(sim$choiceL[sim$dwell_diff < 0])))
+
+# 2. Do scroll metrics improve a choice model over value alone?
+m0 <- glm(choiceL ~ val_diff,              family = binomial, data = sim)  # value only
+m1 <- glm(choiceL ~ val_diff + dwell_diff, family = binomial, data = sim)  # + scroll attention
+mcf <- function(m) 1 - m$deviance / m$null.deviance
+cat(sprintf("\nValue-only model    : pseudo-R2 %.3f\n", mcf(m0)))
+cat(sprintf("+ scroll attention  : pseudo-R2 %.3f   (LR chi-sq %.0f, df 1)\n",
+            mcf(m1), m0$deviance - m1$deviance))
+```
+
+The dwelt-on option is chosen well above chance regardless of value—the gaze cascade, now
+read from scroll rather than gaze—and adding one scroll-attention feature to a value-only
+choice model lifts its fit sharply, the miniature of the paper's finding that scroll
+metrics improve every drift-diffusion model. Two cautions match the eye-tracking ones.
+Attention and preference are *mutually* causal—we dwell on what we come to prefer as much
+as we prefer what we dwell on—so a scroll metric predicts choice without cleanly
+explaining it; and screen position is a coarser attention proxy than foveation, since a
+user can leave an option on screen while thinking of something else. Because scroll
+tracking is also *covert*, it inherits in sharper form the consent and manipulation
+concerns of @sec-bio-validity-ethics: a method that reads deliberation from an interface
+the firm itself designs is as usable for exploitation as for understanding.
+
 ## Autonomic Measures: Electrodermal Activity and Facial EMG {#sec-bio-autonomic}
 
 Below the eyes lies the autonomic nervous system, whose sympathetic branch responds to

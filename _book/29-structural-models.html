@@ -759,7 +759,12 @@ window.Quarto = {
 </li>
   <li><a href="#sec-sm-demand-supply" id="toc-sec-sm-demand-supply" class="nav-link" data-scroll-target="#sec-sm-demand-supply"><span class="header-section-number">34.2</span> A First Structural Model: Demand and Supply</a></li>
   <li><a href="#sec-sm-estimation" id="toc-sec-sm-estimation" class="nav-link" data-scroll-target="#sec-sm-estimation"><span class="header-section-number">34.3</span> Estimation: Maximum Likelihood and GMM</a></li>
-  <li><a href="#sec-sm-discrete-choice" id="toc-sec-sm-discrete-choice" class="nav-link" data-scroll-target="#sec-sm-discrete-choice"><span class="header-section-number">34.4</span> Discrete Choice as the Workhorse</a></li>
+  <li>
+<a href="#sec-sm-discrete-choice" id="toc-sec-sm-discrete-choice" class="nav-link" data-scroll-target="#sec-sm-discrete-choice"><span class="header-section-number">34.4</span> Discrete Choice as the Workhorse</a>
+  <ul class="collapse">
+<li><a href="#sec-sm-socpd" id="toc-sec-sm-socpd" class="nav-link" data-scroll-target="#sec-sm-socpd"><span class="header-section-number">34.4.1</span> From Estimated Demand to Optimal Design: The Exact Share-of-Choice Problem</a></li>
+  </ul>
+</li>
   <li><a href="#sec-sm-dynamic" id="toc-sec-sm-dynamic" class="nav-link" data-scroll-target="#sec-sm-dynamic"><span class="header-section-number">34.5</span> Dynamics, Learning, and Forward-Looking Agents</a></li>
   <li><a href="#sec-sm-identification" id="toc-sec-sm-identification" class="nav-link" data-scroll-target="#sec-sm-identification"><span class="header-section-number">34.6</span> Identification: What Can and Cannot Be Recovered</a></li>
   <li><a href="#getting-started" id="toc-getting-started" class="nav-link" data-scroll-target="#getting-started"><span class="header-section-number">34.7</span> Getting Started</a></li>
@@ -987,14 +992,44 @@ P_{ij} = \frac{\exp(V_{ij})}{\sum_{k=1}^{J}\exp(V_{ik})},
 </details>
 </div>
 <p>The naive coefficient is badly attenuated toward zero—the unobserved quality <span class="math inline">\(\xi_j\)</span> raises both utility and price, masking the true price sensitivity—while the instrumented estimate recovers <span class="math inline">\(-\alpha\)</span>. This is the lesson that recurs across every structural demand paper: the price coefficient is the parameter most contaminated by the unobserved quality term, and a valid instrument is the remedy.</p>
-</section><section id="sec-sm-dynamic" class="level2" data-number="34.5"><h2 data-number="34.5" class="anchored" data-anchor-id="sec-sm-dynamic">
+<section id="sec-sm-socpd" class="level3" data-number="34.4.1"><h3 data-number="34.4.1" class="anchored" data-anchor-id="sec-sm-socpd">
+<span class="header-section-number">34.4.1</span> From Estimated Demand to Optimal Design: The Exact Share-of-Choice Problem</h3>
+<p>Everything so far has been about <em>estimating</em> the logit—recovering <span class="math inline">\(\boldsymbol\beta\)</span> and <span class="math inline">\(\alpha\)</span> from observed choices. The mirror-image question is <em>prescriptive</em>: given the estimated logit, which product should the firm build? This is the <strong>share-of-choice product design (SOCPD)</strong> problem, and it is where a demand estimate earns its keep, because the same partworths recovered from choice-based conjoint (<a href="32-preference-measurement.html#sec-conjoint" class="quarto-xref"><span>Section 37.2</span></a>) become the input to a design optimization. Encode a product as a binary attribute vector <span class="math inline">\(\mathbf{x}\in\{0,1\}^{n}\)</span> (each feature present or absent, each level chosen or not). With <span class="math inline">\(K\)</span> customer types of weight <span class="math inline">\(\lambda_k\)</span> and partworths <span class="math inline">\(\boldsymbol\beta_k\)</span>, each type buys the focal product against an outside option of utility zero with the binary-logit probability of <a href="#eq-sm-logit" class="quarto-xref">Equation&nbsp;<span>34.8</span></a>, and the firm chooses the design that maximizes their weighted sum, <span id="eq-sm-socpd"><span class="math display">\[
+\max_{\mathbf{x}\in\{0,1\}^{n}}\;
+f(\mathbf{x}) \;=\; \sum_{k=1}^{K} \lambda_k\,
+\frac{\exp(\boldsymbol\beta_k^{\top}\mathbf{x})}{1+\exp(\boldsymbol\beta_k^{\top}\mathbf{x})}.
+\tag{34.10}\]</span></span></p>
+<p>The objective looks benign and is anything but. Each summand is a logistic <em>sigmoid</em>, and a sum of sigmoids is <strong>not concave</strong>, so the continuous relaxation carries multiple local optima and a gradient climb or a greedy attribute-flip has no optimality guarantee; the binary <span class="math inline">\(\mathbf{x}\)</span> then layers a combinatorial search over <span class="math inline">\(2^{n}\)</span> designs on top. <span class="citation" data-cites="akchen2026logit">Akchen and Mišić (<a href="#ref-akchen2026logit" role="doc-biblioref">2026</a>)</span> show the difficulty is intrinsic rather than an artifact of weak algorithms: the logit SOCPD is <strong>NP-hard even with only two customer types</strong>, and NP-hard even to <em>approximate</em> within a nontrivial factor, so no polynomial-time method can promise a near-optimal design in general.</p>
+<p>Their contribution is that, the hardness notwithstanding, the problem admits an <em>exact</em> reformulation. Exploiting the convexity latent in the log-sum-exp structure of the logit, they recast <a href="#eq-sm-socpd" class="quarto-xref">Equation&nbsp;<span>34.10</span></a> as a <strong>mixed-integer convex program</strong>—concretely a mixed-integer <em>exponential-cone</em> program, given in three formulations of increasing tightness—that modern conic solvers drive to <em>provable</em> optimality, or to a certified optimality gap, on instances far larger than enumeration could reach, and with higher realized share than the share-of-choice heuristics and branch-and-price schemes that preceded them. The lesson for the structural modeler is that the logit is not only an estimation object but an optimization primitive: the same <span class="math inline">\(\exp(V)/(1+\exp(V))\)</span> that makes shares tractable to <em>compute</em> is what makes them convex-representable and hence exactly <em>optimizable</em>. The brute-force enumeration below makes the objective—and the wall it runs into—concrete on a ten-attribute instance; the exact conic method is what carries the identical objective to the dozens of attributes a real design space spans.</p>
+<div class="cell" data-layout-align="center">
+<details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">29</span><span class="op">)</span></span>
+<span><span class="va">n_attr</span> <span class="op">&lt;-</span> <span class="fl">10</span>; <span class="va">K</span> <span class="op">&lt;-</span> <span class="fl">5</span>                     <span class="co"># 10 binary attributes -&gt; 2^10 designs; 5 segments</span></span>
+<span><span class="va">lambda</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">/</span> <span class="va">K</span>, <span class="va">K</span><span class="op">)</span>                  <span class="co"># segment weights</span></span>
+<span><span class="va">beta</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">K</span> <span class="op">*</span> <span class="va">n_attr</span>, <span class="fl">0</span>, <span class="fl">1.2</span><span class="op">)</span>, <span class="va">K</span>, <span class="va">n_attr</span><span class="op">)</span>   <span class="co"># partworths by segment</span></span>
+<span></span>
+<span><span class="va">designs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html">expand.grid</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>, <span class="va">n_attr</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>  <span class="co"># every 2^10 design</span></span>
+<span><span class="va">share</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html">plogis</a></span><span class="op">(</span><span class="va">designs</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">beta</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html">%*%</a></span> <span class="va">lambda</span><span class="op">)</span>   <span class="co"># share of choice, eq. sm-socpd</span></span>
+<span><span class="va">best</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.min.html">which.max</a></span><span class="op">(</span><span class="va">share</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"Attributes: %d    Designs enumerated: %d    Optimal share-of-choice: %.3f\n"</span>,</span>
+<span>            <span class="va">n_attr</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">designs</span><span class="op">)</span>, <span class="va">share</span><span class="op">[</span><span class="va">best</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Attributes: 10    Designs enumerated: 1024    Optimal share-of-choice: 0.778</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="st">"Optimal design (attribute on/off):"</span>, <span class="va">designs</span><span class="op">[</span><span class="va">best</span>, <span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Optimal design (attribute on/off): 0 1 1 0 1 0 0 0 0 1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html">sprintf</a></span><span class="op">(</span><span class="st">"At 30 attributes, the same brute force would face %.3g candidate designs.\n"</span>,</span>
+<span>            <span class="fl">2</span><span class="op">^</span><span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; At 30 attributes, the same brute force would face 1.07e+09 candidate designs.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Ten attributes enumerate in a blink; thirty would face over a billion designs, and the non-concavity means the shortcuts that tame smooth problems do not apply. That gap between a toy instance and a real one is exactly what <span class="citation" data-cites="akchen2026logit">Akchen and Mišić (<a href="#ref-akchen2026logit" role="doc-biblioref">2026</a>)</span> close—turning a provably hard design problem into one a solver can certify—and it is the reason the humble logit of <a href="#eq-sm-logit" class="quarto-xref">Equation&nbsp;<span>34.8</span></a> reaches past demand estimation into optimal product design.</p>
+</section></section><section id="sec-sm-dynamic" class="level2" data-number="34.5"><h2 data-number="34.5" class="anchored" data-anchor-id="sec-sm-dynamic">
 <span class="header-section-number">34.5</span> Dynamics, Learning, and Forward-Looking Agents</h2>
 <p>Many marketing decisions are intertemporal—when to buy a durable, whether a salesperson exerts effort today for a bonus tomorrow, how a relationship evolves—and a static choice model cannot represent them. <strong>Dynamic structural models</strong> treat the agent as solving a sequential optimization, and they are the technically hardest but most rewarding members of the family.</p>
 <p>The canonical object is a forward-looking agent who, in state <span class="math inline">\(s_t\)</span>, chooses action <span class="math inline">\(a_t\)</span> to maximize the expected present value of a stream of payoffs, <span id="eq-sm-bellman"><span class="math display">\[
 V(s_t) = \max_{a_t}\;
   \Big\{ u(s_t, a_t; \boldsymbol{\theta})
        + \delta\, \mathbb{E}\!\left[\, V(s_{t+1}) \mid s_t, a_t \,\right] \Big\},
-\tag{34.10}\]</span></span> the <strong>Bellman equation</strong>, where <span class="math inline">\(\delta\)</span> is the discount factor, <span class="math inline">\(u(\cdot)\)</span> the per-period payoff, and the expectation runs over the law of motion of the state. Estimation recovers the payoff primitives <span class="math inline">\(\boldsymbol{\theta}\)</span> from observed state–action sequences, typically by nesting the solution of 1 inside a likelihood. The substantive range is wide. <span class="citation" data-cites="allenby1999dynamic">Allenby, Leone, and Jen (<a href="#ref-allenby1999dynamic" role="doc-biblioref">1999</a>)</span> model purchase <em>timing</em> in direct marketing as a dynamic decision, recovering when a household will next buy. <span class="citation" data-cites="gowrisankaran2012dynamics">Gowrisankaran and Rysman (<a href="#ref-gowrisankaran2012dynamics" role="doc-biblioref">2012</a>)</span> let consumer preferences evolve and apply the machinery to durable-goods markets, where today’s purchase forecloses tomorrow’s. <span class="citation" data-cites="hitsch2006empirical">Hitsch (<a href="#ref-hitsch2006empirical" role="doc-biblioref">2006</a>)</span> study optimal product launch and exit under demand uncertainty, treating the firm as a forward-looking decision maker learning about an uncertain market. <span class="citation" data-cites="netzer2008hidden">Netzer, Lattin, and Srinivasan (<a href="#ref-netzer2008hidden" role="doc-biblioref">2008</a>)</span> model the dynamics of customer–firm relationships as a <strong>hidden Markov</strong> process, in which a latent relationship state migrates over time and governs observable purchase behavior—a structural account of relationship “states” rather than a reduced-form churn score.</p>
+\tag{34.11}\]</span></span> the <strong>Bellman equation</strong>, where <span class="math inline">\(\delta\)</span> is the discount factor, <span class="math inline">\(u(\cdot)\)</span> the per-period payoff, and the expectation runs over the law of motion of the state. Estimation recovers the payoff primitives <span class="math inline">\(\boldsymbol{\theta}\)</span> from observed state–action sequences, typically by nesting the solution of 1 inside a likelihood. The substantive range is wide. <span class="citation" data-cites="allenby1999dynamic">Allenby, Leone, and Jen (<a href="#ref-allenby1999dynamic" role="doc-biblioref">1999</a>)</span> model purchase <em>timing</em> in direct marketing as a dynamic decision, recovering when a household will next buy. <span class="citation" data-cites="gowrisankaran2012dynamics">Gowrisankaran and Rysman (<a href="#ref-gowrisankaran2012dynamics" role="doc-biblioref">2012</a>)</span> let consumer preferences evolve and apply the machinery to durable-goods markets, where today’s purchase forecloses tomorrow’s. <span class="citation" data-cites="hitsch2006empirical">Hitsch (<a href="#ref-hitsch2006empirical" role="doc-biblioref">2006</a>)</span> study optimal product launch and exit under demand uncertainty, treating the firm as a forward-looking decision maker learning about an uncertain market. <span class="citation" data-cites="netzer2008hidden">Netzer, Lattin, and Srinivasan (<a href="#ref-netzer2008hidden" role="doc-biblioref">2008</a>)</span> model the dynamics of customer–firm relationships as a <strong>hidden Markov</strong> process, in which a latent relationship state migrates over time and governs observable purchase behavior—a structural account of relationship “states” rather than a reduced-form churn score.</p>
 <p>Forward-looking <em>firms</em> appear on the compensation side of the same coin. <span class="citation" data-cites="misra2011structural">Misra and Nair (<a href="#ref-misra2011structural" role="doc-biblioref">2011</a>)</span> estimate a structural model of sales-force incentives in which the salesperson chooses unobserved effort given the compensation plan, the firm designs the plan anticipating that response, and the recovered primitives (the cost of effort, the agent’s risk attitude) support counterfactual plans the firm never tried—work that <span class="citation" data-cites="kim2022structural">Kim, Sudhir, and Uetake (<a href="#ref-kim2022structural" role="doc-biblioref">2022</a>)</span> extend to a multitasking sales force allocating effort across acquisition and retention. On the demand side over the customer lifecycle, <span class="citation" data-cites="gupta2006modeling">Gupta et al. (<a href="#ref-gupta2006modeling" role="doc-biblioref">2006</a>)</span> synthesize structural and other models of customer lifetime value, and <span class="citation" data-cites="kamakura2005choice">Kamakura et al. (<a href="#ref-kamakura2005choice" role="doc-biblioref">2005</a>)</span> embed choice models in customer-relationship strategy. <a href="#fig-sm-taxonomy" class="quarto-xref">Figure&nbsp;<span>34.2</span></a> organizes the marketing applications cited in this chapter by the decision they model.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
@@ -1056,6 +1091,9 @@ Figure&nbsp;34.2: A taxonomy of structural marketing applications by the decisio
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-abbring2007econometric3" class="csl-entry" role="listitem">
 Abbring, Jaap H, and James J Heckman. 2007. <span>“Econometric Evaluation of Social Programs, Part III: Distributional Treatment Effects, Dynamic Treatment Effects, Dynamic Discrete Choice, and General Equilibrium Policy Evaluation.”</span> <em>Handbook of Econometrics</em> 6: 5145–5303.
+</div>
+<div id="ref-akchen2026logit" class="csl-entry" role="listitem">
+Akchen, İrem, and Velibor V. Mišić. 2026. <span>“Exact Logit-Based Product Design.”</span> <em>Management Science</em>. <a href="https://doi.org/10.1287/mnsc.2023.01774">https://doi.org/10.1287/mnsc.2023.01774</a>.
 </div>
 <div id="ref-allenby1999dynamic" class="csl-entry" role="listitem">
 Allenby, Greg M, Robert P Leone, and Lichung Jen. 1999. <span>“A Dynamic Model of Purchase Timing with Application to Direct Marketing.”</span> <em>Journal of the American Statistical Association</em> 94 (446): 365–74.
@@ -1593,512 +1631,577 @@ Rutz, Oliver J, Michael Trusov, and Randolph E Bucklin. 2011. <span>“Modeling 
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Structural Models {#sec-structural-models}</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>A *structural model* is an empirical model whose parameters are the primitives of an</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>economic theory: the preferences of consumers, the technologies and costs of firms,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>the information agents hold, and the rules of the game they play. Rather than fit a</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>flexible function from covariates to an outcome, the analyst writes down how agents</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>*decide*—typically as the solution to an optimization problem under an equilibrium</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>concept—and then estimates the deep parameters that rationalize the observed data.</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>The payoff is that those parameters are, by construction, invariant to the policies</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>the analyst wants to study, so the model can answer questions about worlds that were</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>never observed: a price never charged, a product never launched, a compensation plan</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>never offered.</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>This is a different ambition from prediction or even from causal inference. A</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>reduced-form analysis asks *what is the effect of X on Y?* and answers it, ideally,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>with a research design that isolates exogenous variation. A structural analysis asks</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>*how does the system work?*—and, having recovered the mechanism, can simulate the</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>effect of any intervention the mechanism admits, including ones for which no</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>experiment or natural experiment exists. The cost of that generality is steep:</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>structural models impose strong assumptions (functional forms, equilibrium, the</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>information environment), and when those assumptions are wrong the conclusions are</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>wrong in ways that are hard to detect. Much of the craft lies in choosing</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>assumptions that buy identification without buying bias, and in being honest about</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>which results lean on which assumptions.</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>This chapter develops the structural approach for a reader who already understands</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>regression and causal inference and wants to see what changes when economic theory</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>is moved from the discussion section into the likelihood. We proceed from intuition</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>to formalism: first the anatomy of a structural model and its relationship to</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>causal inference (@sec-sm-vs-causal); then a worked supply-and-demand example that</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>exposes the endogeneity problem at the heart of the field (@sec-sm-demand-supply);</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>then the two workhorse estimators—maximum likelihood and the generalized method of</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>moments—and the discrete-choice and dynamic models that dominate marketing</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>applications (@sec-sm-estimation through @sec-sm-dynamic); and finally the</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>identification threats that decide whether any of it can be believed</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>(@sec-sm-identification). Throughout, the running theme is the one stated above:</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>structural parameters are valuable precisely to the extent that they are policy</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>invariant, and they are policy invariant only to the extent that the model is</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>correct.</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## What Makes a Model "Structural" {#sec-sm-vs-causal}</span></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>The defining feature of a structural model is that its parameters have an</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>interpretation *outside* the data-generating environment in which they were</span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>estimated. @chintagunta2006structural, in a field review, characterize structural</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>modeling as the practice of using economic theory to discipline the specification of</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>an empirical model so that the estimated coefficients correspond to taste,</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>technology, or strategic primitives rather than to environment-specific</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>correlations. The distinction matters most when the goal is counterfactual: a</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>demand elasticity estimated as a structural taste parameter can be carried into a</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>pricing simulation, whereas a regression slope estimated in one price regime carries</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>no guarantee of stability when the regime changes.</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>It is useful to state the contrast formally. Suppose an outcome $y$ is generated by</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>agents who choose actions to maximize an objective indexed by a structural parameter</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>vector $\boldsymbol{\theta}$ (e.g., utility weights, marginal costs) given a state</span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>$\mathbf{s}$ and a policy $\mathbf{p}$ (prices, assortment, incentives):</span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>y = m(\mathbf{s}, \mathbf{p}; \boldsymbol{\theta}) + \varepsilon ,</span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-structural}</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>where $m(\cdot)$ is the *decision rule*—the mapping from states and policy to</span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>behavior implied by the agent's optimization and the market equilibrium. A</span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>reduced-form analysis estimates a projection of $y$ on $(\mathbf{s},\mathbf{p})$</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>that is valid only on the support and policy regime observed. A structural analysis</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>estimates $\boldsymbol{\theta}$, then *re-solves* @eq-sm-structural under a new</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>policy $\mathbf{p}'$ to predict $y' = m(\mathbf{s}, \mathbf{p}';</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>\boldsymbol{\theta})$. The structural object is reusable; the reduced-form object,</span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>strictly, is not.</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Causal inference estimates the effect of a treatment that occurred; structural</span></span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; modeling estimates the mechanism that would produce the effect of a treatment that</span></span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; did not. The first is a statement about a realized intervention, the second a</span></span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; statement about a class of interventions the model can simulate.</span></span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>The two traditions are complements rather than rivals, and the modern literature</span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>treats them as such. Credible causal estimates discipline structural models—a</span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>quasi-experimental demand elasticity is a moment a structural demand system should</span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>reproduce—and structural reasoning, in turn, tells the causal analyst *where* the</span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>endogeneity is and *what* would constitute a valid instrument. @conlon2013demand</span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>illustrate the round trip: they build a structural demand model to handle</span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>endogenous product availability (stockouts that are correlated with demand shocks)</span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>and then use the structural estimates to run counterfactuals that no reduced-form</span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>design could deliver. The remainder of this section makes the three pillars of any</span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>structural exercise—behavioral assumptions, equilibrium, and counterfactuals—precise</span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>before we turn to estimation.</span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>@fig-sm-pipeline summarizes the workflow that distinguishes the structural pipeline</span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>from a reduced-form one.</span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>%%| label: fig-sm-pipeline</span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The structural modeling pipeline. Economic theory specifies agents' objectives; optimization and an equilibrium concept yield a decision rule whose deep parameters are estimated by MLE or GMM; the estimated rule is then re-solved under new policies for counterfactual analysis. The dashed path is the reduced-form alternative, which stops at an environment-specific association.</span><span class="ot">"</span></span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>    A[Economic theory:&lt;br/&gt;preferences, costs,&lt;br/&gt;information, game] --&gt; B[Agent optimization&lt;br/&gt;+ equilibrium concept]</span>
-<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[<span class="ot">"</span><span class="st">Decision rule&lt;br/&gt;m(s, p; θ)</span><span class="ot">"</span>]</span>
-<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[Estimation:&lt;br/&gt;MLE / GMM&lt;br/&gt;recover θ]</span>
-<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[Re-solve under&lt;br/&gt;new policy p′]</span>
-<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>    E --&gt; F[Counterfactual /&lt;br/&gt;policy simulation]</span>
-<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>    G[(Observed data)] -.-&gt;|reduced form| H[Environment-specific&lt;br/&gt;association]</span>
-<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>    G --&gt; D</span>
-<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a><span class="fu">### Behavioral and Equilibrium Assumptions</span></span>
-<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>Structural models earn their counterfactual power by committing to assumptions of</span>
-<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>four kinds, and the credibility of any application rests on how defensible those</span>
-<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>commitments are.</span>
-<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>The first is **functional form**: the shape of utility, demand, or cost. Is demand</span>
-<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>linear in price, or constant-elasticity? Is utility linear in attributes, or does it</span>
-<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>exhibit diminishing marginal utility? These choices are not innocuous, because the</span>
-<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>counterfactual extrapolates along the assumed curvature.</span>
-<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>The second is the **decision protocol**: the rule by which agents map information to</span>
-<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>actions. The canonical assumption is utility maximization—each consumer chooses the</span>
-<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>alternative delivering the highest utility—but the model must also say whether agents</span>
-<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>are myopic or forward looking, risk neutral or risk averse, and whether they learn.</span>
-<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>The third is the **information environment**. Do consumers know all product</span>
-<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>attributes when choosing, or do they face uncertainty and update beliefs?</span>
-<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>@erdem2008impact, for instance, build a model in which advertising influences price</span>
-<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>sensitivity precisely *because* consumers are uncertain about quality in experience-</span>
-<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>good markets and advertising conveys information; the substantive conclusion is</span>
-<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>inseparable from the informational assumption.</span>
-<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>The fourth is the **equilibrium concept**. In a market model the analyst must say how</span>
-<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>agents' choices are mutually consistent: that the market clears, or that firms play a</span>
-<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>Nash equilibrium in prices, or that a dynamic game is in Markov-perfect equilibrium.</span>
-<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>@kadiyali2001structural review how equilibrium assumptions let the analyst infer</span>
-<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>unobserved competitive conduct—whether firms behave more collusively or more</span>
-<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>competitively than Bertrand—from the comovement of prices and quantities, an</span>
-<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>inference impossible without the equilibrium restriction.</span>
-<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>These assumptions are what make the model *tractable and estimable*, and they are</span>
-<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>simultaneously the model's principal vulnerability: a misspecified information</span>
-<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>environment or an incorrect conduct assumption biases the deep parameters and, with</span>
-<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>them, every counterfactual. The discipline of the field is to state each assumption</span>
-<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>explicitly, to test those that are testable, and to flag the counterfactuals that</span>
-<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>hinge on the rest.</span>
-<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a><span class="fu">### Counterfactuals: the Reason to Pay the Price</span></span>
-<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a>The justification for the structural apparatus is the counterfactual. Once</span>
-<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\theta}$ is in hand, the analyst re-solves the model under a policy that</span>
-<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a>was never implemented and reads off the predicted outcome—*what would sales have</span>
-<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a>been at a price we never charged?* or *what compensation plan maximizes profit?*</span>
-<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a>@gowrisankaran2020framework provide a framework for exactly this kind of policy</span>
-<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a>evaluation, and the counterfactual logic is what separates a structural paper from a</span>
-<span id="cb3-151"><a href="#cb3-151" aria-hidden="true" tabindex="-1"></a>descriptive one. The validity of a counterfactual is conditional on two things: the</span>
-<span id="cb3-152"><a href="#cb3-152" aria-hidden="true" tabindex="-1"></a>parameters are policy invariant (the Lucas-critique requirement), and the new policy</span>
-<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a>lies within the class the model can represent. A model estimated under linear</span>
-<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a>pricing cannot credibly simulate nonlinear tariffs; a static model cannot simulate a</span>
-<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a>policy whose whole point is to change dynamic incentives. Stating the admissible</span>
-<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a>counterfactual class is therefore part of specifying the model, not an afterthought.</span>
-<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a><span class="fu">## A First Structural Model: Demand and Supply {#sec-sm-demand-supply}</span></span>
-<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a>The simplest model that exhibits the structural way of thinking is linear</span>
-<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a>simultaneous supply and demand. It is worth working through in full because it</span>
-<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a>already contains the central econometric problem of the entire field—the endogeneity</span>
-<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a>of price—and the standard solution.</span>
-<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>Let quantity demanded and supplied at price $p$ be</span>
-<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a>Q^{d} = \alpha_0 - \alpha_1 p + u^{d}, \qquad</span>
-<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a>Q^{s} = \beta_0 + \beta_1 p + u^{s},</span>
-<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-demand-supply}</span>
-<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>with $\alpha_1, \beta_1 &gt; 0$ and structural shocks $u^{d}, u^{s}$ (a demand shifter</span>
-<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>such as a taste shock; a supply shifter such as an input-cost shock). The</span>
-<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a>*structural* parameters are the slopes $\alpha_1$ (how strongly quantity responds to</span>
-<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a>price along the demand curve) and $\beta_1$ (the analogous supply response); these</span>
-<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>are the policy-invariant objects a manager would want for pricing. Market clearing,</span>
-<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>$Q^{d} = Q^{s}$, is the equilibrium condition, and it determines the observed price</span>
-<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a>p^{\star} = \frac{\alpha_0 - \beta_0 + u^{d} - u^{s}}{\alpha_1 + \beta_1}.</span>
-<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-equilibrium}</span>
-<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a>@eq-sm-equilibrium is the crux. Because equilibrium price depends on the demand</span>
-<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a>shock $u^{d}$, price is **endogenous**: $\mathrm{Cov}(p^{\star}, u^{d}) \neq 0$. A</span>
-<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a>naive regression of observed quantity on observed price does not recover $\alpha_1$;</span>
-<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>it recovers a hybrid of the demand and supply slopes—the textbook simultaneity bias.</span>
-<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>Intuitively, the observed price–quantity pairs are intersections of shifting demand</span>
-<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>and supply curves, so the scatter traces out neither curve. This single fact—that</span>
-<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>prices are set by agents who observe demand conditions the econometrician does</span>
-<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a>not—motivates the instrumental-variable and control-function machinery that</span>
-<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a>pervades structural demand estimation.</span>
-<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a>Identification comes from **exclusion restrictions**: a variable that shifts supply</span>
-<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a>but not demand traces out the demand curve, and vice versa. A cost shifter $z$</span>
-<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a>entering supply but excluded from demand instruments for price in the demand</span>
-<span id="cb3-193"><a href="#cb3-193" aria-hidden="true" tabindex="-1"></a>equation. @montgomery1999estimating exploit precisely this logic to estimate price</span>
-<span id="cb3-194"><a href="#cb3-194" aria-hidden="true" tabindex="-1"></a>elasticities at the store and household level, recovering structural demand slopes</span>
-<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a>that a single-equation regression would contaminate. The simulation below makes the</span>
-<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a>bias concrete and shows that an instrument recovers the truth.</span>
-<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a><span class="in">```{r sm-simultaneity, message=FALSE, warning=FALSE}</span></span>
-<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">29</span>)</span>
-<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a>n  <span class="ot">&lt;-</span> <span class="dv">5000</span></span>
-<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a>a0 <span class="ot">&lt;-</span> <span class="dv">10</span>; a1 <span class="ot">&lt;-</span> <span class="fl">1.5</span>      <span class="co"># demand intercept, slope (truth)</span></span>
-<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a>b0 <span class="ot">&lt;-</span> <span class="dv">2</span>;  b1 <span class="ot">&lt;-</span> <span class="fl">1.0</span>      <span class="co"># supply intercept, slope (truth)</span></span>
-<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a>z  <span class="ot">&lt;-</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">4</span>)     <span class="co"># cost shifter: enters supply, excluded from demand</span></span>
-<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a>ud <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)           <span class="co"># demand shock</span></span>
-<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a>us <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)           <span class="co"># supply shock</span></span>
-<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a><span class="co"># Equilibrium price and quantity (solve Qd = Qs with a cost shifter in supply)</span></span>
-<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a><span class="co"># Qd = a0 - a1 p + ud ;  Qs = b0 + b1 p + g*z + us</span></span>
-<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a>g  <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
-<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a>p  <span class="ot">&lt;-</span> (a0 <span class="sc">-</span> b0 <span class="sc">-</span> g <span class="sc">*</span> z <span class="sc">+</span> ud <span class="sc">-</span> us) <span class="sc">/</span> (a1 <span class="sc">+</span> b1)</span>
-<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a>q  <span class="ot">&lt;-</span> a0 <span class="sc">-</span> a1 <span class="sc">*</span> p <span class="sc">+</span> ud</span>
-<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a><span class="co"># (1) Naive OLS of quantity on price: biased for the demand slope -a1</span></span>
-<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>ols  <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(q <span class="sc">~</span> p))[<span class="st">"p"</span>]</span>
-<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a><span class="co"># (2) Two-stage least squares using the cost shifter z as an instrument</span></span>
-<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a>phat <span class="ot">&lt;-</span> <span class="fu">fitted</span>(<span class="fu">lm</span>(p <span class="sc">~</span> z))</span>
-<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a>iv   <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(q <span class="sc">~</span> phat))[<span class="st">"phat"</span>]</span>
-<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"True demand slope (-a1):      "</span>, <span class="sc">-</span>a1, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"OLS estimate (biased):        "</span>, <span class="fu">round</span>(ols, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"IV / 2SLS estimate (consistent):"</span>, <span class="fu">round</span>(iv, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>The OLS slope is attenuated and unstable; the instrumented slope recovers $-\alpha_1$.</span>
-<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a>This linear example scales, conceptually, all the way to modern differentiated-</span>
-<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a>products demand systems, where the same endogeneity reappears (price correlates with</span>
-<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>unobserved product quality) and is handled with the same idea—cost or competitor-</span>
-<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>based instruments—inside a far richer choice model, to which we now turn.</span>
-<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a><span class="fu">## Estimation: Maximum Likelihood and GMM {#sec-sm-estimation}</span></span>
-<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>Structural parameters are rarely obtained by ordinary least squares. The two</span>
-<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>dominant estimators are maximum likelihood (ML) and the generalized method of</span>
-<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>moments (GMM); the standard graduate references develop both in depth</span>
-<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@greene2003econometric; @cameron2005microeconometrics; @hensher2005applied</span><span class="co">]</span>, and</span>
-<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a>the *Handbook of Econometrics* chapters on the econometric evaluation of policy</span>
-<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a>collect the identification theory [@heckman2007econometric1;</span>
-<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a>@heckman2007econometric; @abbring2007econometric3]. The choice between ML and GMM is</span>
-<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a>chiefly a choice about how much of the data-generating process one is willing to</span>
-<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a>specify.</span>
-<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a>**Maximum likelihood** specifies the full conditional distribution of the data. If</span>
-<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a>the model implies a density $f(y_i \mid \mathbf{x}_i; \boldsymbol{\theta})$, the</span>
-<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a>estimator maximizes the log-likelihood,</span>
-<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a>\hat{\boldsymbol{\theta}}_{\mathrm{ML}}</span>
-<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a>  = \arg\max_{\boldsymbol{\theta}}</span>
-<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a>    \sum_{i=1}^{n} \log f(y_i \mid \mathbf{x}_i; \boldsymbol{\theta}),</span>
-<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-mle}</span>
-<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a>which is efficient when the distributional assumption is correct but inconsistent</span>
-<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a>when it is not. ML is the natural estimator for discrete-choice models, where the</span>
-<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a>choice probabilities *are* the likelihood contributions.</span>
-<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a>**The generalized method of moments** specifies only a set of population moment</span>
-<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a>conditions implied by the theory—typically that the structural error is orthogonal</span>
-<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a>to a vector of instruments $\mathbf{z}_i$,</span>
-<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a>\mathbb{E}<span class="sc">\!</span>\left<span class="co">[</span><span class="ot">\, \mathbf{z}_i \, g(y_i, \mathbf{x}_i; \boldsymbol{\theta}) \,\right</span><span class="co">]</span> = \mathbf{0},</span>
-<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-gmm-moment}</span>
-<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a>where $g(\cdot)$ is the structural residual. GMM minimizes the empirical analog of</span>
-<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a>these moments in a quadratic form,</span>
-<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a>\hat{\boldsymbol{\theta}}_{\mathrm{GMM}}</span>
-<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a>  = \arg\min_{\boldsymbol{\theta}}</span>
-<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a>    \bar{g}_n(\boldsymbol{\theta})^{\top}\, \mathbf{W}\, \bar{g}_n(\boldsymbol{\theta}),</span>
-<span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a>\qquad</span>
-<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a>\bar{g}_n(\boldsymbol{\theta}) = \frac{1}{n}\sum_{i=1}^{n}</span>
-<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a>  \mathbf{z}_i\, g(y_i, \mathbf{x}_i; \boldsymbol{\theta}),</span>
-<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-gmm}</span>
-<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a>with weighting matrix $\mathbf{W}$; the efficient choice sets $\mathbf{W}$ to the</span>
-<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a>inverse of the moment covariance. GMM is the estimator of choice when the analyst</span>
-<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>trusts a few orthogonality conditions (a cost instrument, an equilibrium first-order</span>
-<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a>condition) but does not wish to commit to a full likelihood—exactly the situation in</span>
-<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a>differentiated-products demand, where the famous contraction-mapping estimator</span>
-<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a>inverts market shares to demand shocks and stacks them against instruments in</span>
-<span id="cb3-278"><a href="#cb3-278" aria-hidden="true" tabindex="-1"></a>@eq-sm-gmm. @tbl-sm-mle-gmm contrasts the two.</span>
-<span id="cb3-279"><a href="#cb3-279" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Dimension <span class="pp">|</span> Maximum likelihood <span class="pp">|</span> Generalized method of moments <span class="pp">|</span></span>
-<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Specifies <span class="pp">|</span> Full conditional density of the data <span class="pp">|</span> A set of moment/orthogonality conditions <span class="pp">|</span></span>
-<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Efficiency <span class="pp">|</span> Efficient if the distribution is correct <span class="pp">|</span> Efficient given the chosen moments; generally less than full ML <span class="pp">|</span></span>
-<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Robustness <span class="pp">|</span> Inconsistent under distributional misspecification <span class="pp">|</span> Consistent under far weaker assumptions <span class="pp">|</span></span>
-<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Endogeneity <span class="pp">|</span> Handled via control functions or joint likelihood <span class="pp">|</span> Handled natively through instrument moments <span class="pp">|</span></span>
-<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Typical use <span class="pp">|</span> Discrete choice, dynamic discrete choice <span class="pp">|</span> Demand systems, Euler-equation and conduct models <span class="pp">|</span></span>
-<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Failure mode <span class="pp">|</span> Wrong likelihood $\Rightarrow$ biased everything <span class="pp">|</span> Weak or invalid instruments $\Rightarrow$ weak identification <span class="pp">|</span></span>
-<span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a>: Maximum likelihood versus GMM for structural estimation. {#tbl-sm-mle-gmm}</span>
-<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a><span class="fu">## Discrete Choice as the Workhorse {#sec-sm-discrete-choice}</span></span>
-<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a>A large share of structural marketing models are built on **random-utility discrete</span>
-<span id="cb3-294"><a href="#cb3-294" aria-hidden="true" tabindex="-1"></a>choice**, because most consumer decisions—which brand, which channel, whether to buy</span>
-<span id="cb3-295"><a href="#cb3-295" aria-hidden="true" tabindex="-1"></a>at all—are discrete, and because the framework yields choice probabilities that are</span>
-<span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a>both behaviorally founded and computationally convenient. The reviews by</span>
-<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a>@dube2002structural and @heiss2002structural lay out the family and its estimation;</span>
-<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a>the model below is the canonical entry point.</span>
-<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a>Consumer $i$ choosing among alternatives $j = 1,\dots,J$ derives utility</span>
-<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a>U_{ij} = V_{ij} + \varepsilon_{ij}</span>
-<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a>       = \mathbf{x}_{ij}^{\top}\boldsymbol{\beta} - \alpha p_{ij} + \xi_j + \varepsilon_{ij},</span>
-<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-rum}</span>
-<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a>where $\mathbf{x}_{ij}$ are observed attributes, $p_{ij}$ is price, $\xi_j$ is an</span>
-<span id="cb3-306"><a href="#cb3-306" aria-hidden="true" tabindex="-1"></a>unobserved (to the analyst) product-quality term, and $\varepsilon_{ij}$ is an</span>
-<span id="cb3-307"><a href="#cb3-307" aria-hidden="true" tabindex="-1"></a>idiosyncratic taste shock. The consumer picks $j$ if $U_{ij} \ge U_{ik}$ for all</span>
-<span id="cb3-308"><a href="#cb3-308" aria-hidden="true" tabindex="-1"></a>$k$. When $\varepsilon_{ij}$ is i.i.d. type-I extreme value, the choice</span>
-<span id="cb3-309"><a href="#cb3-309" aria-hidden="true" tabindex="-1"></a>probabilities take the closed-form **multinomial logit**,</span>
-<span id="cb3-310"><a href="#cb3-310" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-311"><a href="#cb3-311" aria-hidden="true" tabindex="-1"></a>P_{ij} = \frac{\exp(V_{ij})}{\sum_{k=1}^{J}\exp(V_{ik})},</span>
-<span id="cb3-312"><a href="#cb3-312" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-logit}</span>
-<span id="cb3-313"><a href="#cb3-313" aria-hidden="true" tabindex="-1"></a>which is the likelihood contribution maximized in @eq-sm-mle. Two structural</span>
-<span id="cb3-314"><a href="#cb3-314" aria-hidden="true" tabindex="-1"></a>warnings travel with @eq-sm-logit. First, the logit imposes **independence of</span>
-<span id="cb3-315"><a href="#cb3-315" aria-hidden="true" tabindex="-1"></a>irrelevant alternatives** (IIA): the relative odds of two alternatives are</span>
-<span id="cb3-316"><a href="#cb3-316" aria-hidden="true" tabindex="-1"></a>unaffected by any third, an implausible substitution pattern that the **nested</span>
-<span id="cb3-317"><a href="#cb3-317" aria-hidden="true" tabindex="-1"></a>logit** of @heiss2002structural relaxes by grouping close substitutes into nests.</span>
-<span id="cb3-318"><a href="#cb3-318" aria-hidden="true" tabindex="-1"></a>Second, the quality term $\xi_j$ is correlated with price (better products are</span>
-<span id="cb3-319"><a href="#cb3-319" aria-hidden="true" tabindex="-1"></a>priced higher), so $\alpha$ is **endogenous**—the same simultaneity as in</span>
-<span id="cb3-320"><a href="#cb3-320" aria-hidden="true" tabindex="-1"></a>@sec-sm-demand-supply, now inside a choice model—and is corrected with cost or</span>
-<span id="cb3-321"><a href="#cb3-321" aria-hidden="true" tabindex="-1"></a>competitor-price instruments.</span>
-<span id="cb3-322"><a href="#cb3-322" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-323"><a href="#cb3-323" aria-hidden="true" tabindex="-1"></a>A practical route to estimation, due to Berry, *inverts* the share equation. With an</span>
-<span id="cb3-324"><a href="#cb3-324" aria-hidden="true" tabindex="-1"></a>outside option $j=0$ whose mean utility is normalized to zero, @eq-sm-logit implies</span>
-<span id="cb3-325"><a href="#cb3-325" aria-hidden="true" tabindex="-1"></a>the linear relation</span>
-<span id="cb3-326"><a href="#cb3-326" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-327"><a href="#cb3-327" aria-hidden="true" tabindex="-1"></a>\ln s_j - \ln s_0 = \mathbf{x}_{j}^{\top}\boldsymbol{\beta} - \alpha p_{j} + \xi_j,</span>
-<span id="cb3-328"><a href="#cb3-328" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-berry-inversion}</span>
-<span id="cb3-329"><a href="#cb3-329" aria-hidden="true" tabindex="-1"></a>so the left-hand side—an observed function of market shares—equals mean utility, and</span>
-<span id="cb3-330"><a href="#cb3-330" aria-hidden="true" tabindex="-1"></a>the demand parameters can be estimated by regressing it on attributes and price. The</span>
-<span id="cb3-331"><a href="#cb3-331" aria-hidden="true" tabindex="-1"></a>example below builds one market of many products, computes the inverted shares of</span>
-<span id="cb3-332"><a href="#cb3-332" aria-hidden="true" tabindex="-1"></a>@eq-sm-berry-inversion, and contrasts a naive regression (which ignores the</span>
-<span id="cb3-333"><a href="#cb3-333" aria-hidden="true" tabindex="-1"></a>correlation between price and $\xi_j$) with a two-stage least-squares estimator that</span>
-<span id="cb3-334"><a href="#cb3-334" aria-hidden="true" tabindex="-1"></a>instruments price with a cost shifter.</span>
-<span id="cb3-335"><a href="#cb3-335" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-336"><a href="#cb3-336" aria-hidden="true" tabindex="-1"></a><span class="in">```{r sm-logit, message=FALSE, warning=FALSE}</span></span>
-<span id="cb3-337"><a href="#cb3-337" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">29</span>)</span>
-<span id="cb3-338"><a href="#cb3-338" aria-hidden="true" tabindex="-1"></a>J    <span class="ot">&lt;-</span> <span class="dv">200</span>; N <span class="ot">&lt;-</span> <span class="fl">4e5</span>               <span class="co"># products in one market; consumers sampled</span></span>
-<span id="cb3-339"><a href="#cb3-339" aria-hidden="true" tabindex="-1"></a>x    <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(J)                    <span class="co"># observed product attribute</span></span>
-<span id="cb3-340"><a href="#cb3-340" aria-hidden="true" tabindex="-1"></a>xi   <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(J)                    <span class="co"># unobserved quality -&gt; source of endogeneity</span></span>
-<span id="cb3-341"><a href="#cb3-341" aria-hidden="true" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">runif</span>(J, <span class="dv">0</span>, <span class="dv">2</span>)             <span class="co"># cost shifter -&gt; instrument for price</span></span>
-<span id="cb3-342"><a href="#cb3-342" aria-hidden="true" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fl">1.0</span>; alpha_true <span class="ot">&lt;-</span> <span class="fl">1.5</span></span>
-<span id="cb3-343"><a href="#cb3-343" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-344"><a href="#cb3-344" aria-hidden="true" tabindex="-1"></a><span class="co"># Price rises in unobserved quality (endogeneity) and in the cost shifter</span></span>
-<span id="cb3-345"><a href="#cb3-345" aria-hidden="true" tabindex="-1"></a>price <span class="ot">&lt;-</span> <span class="fl">1.0</span> <span class="sc">+</span> <span class="fl">0.8</span> <span class="sc">*</span> xi <span class="sc">+</span> cost <span class="sc">+</span> <span class="fu">rnorm</span>(J, <span class="dv">0</span>, <span class="fl">0.3</span>)</span>
-<span id="cb3-346"><a href="#cb3-346" aria-hidden="true" tabindex="-1"></a>delta <span class="ot">&lt;-</span> x <span class="sc">*</span> beta_true <span class="sc">-</span> alpha_true <span class="sc">*</span> price <span class="sc">+</span> xi   <span class="co"># mean utility of products 1..J</span></span>
-<span id="cb3-347"><a href="#cb3-347" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-348"><a href="#cb3-348" aria-hidden="true" tabindex="-1"></a><span class="co"># Logit shares with an outside good (utility 0); add sampling noise via multinomial</span></span>
-<span id="cb3-349"><a href="#cb3-349" aria-hidden="true" tabindex="-1"></a>num    <span class="ot">&lt;-</span> <span class="fu">exp</span>(delta)</span>
-<span id="cb3-350"><a href="#cb3-350" aria-hidden="true" tabindex="-1"></a>s      <span class="ot">&lt;-</span> num <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">sum</span>(num)); s0 <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">sum</span>(num))</span>
-<span id="cb3-351"><a href="#cb3-351" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">rmultinom</span>(<span class="dv">1</span>, N, <span class="fu">c</span>(s0, s))[, <span class="dv">1</span>]</span>
-<span id="cb3-352"><a href="#cb3-352" aria-hidden="true" tabindex="-1"></a>share  <span class="ot">&lt;-</span> counts[<span class="sc">-</span><span class="dv">1</span>] <span class="sc">/</span> N; share0 <span class="ot">&lt;-</span> counts[<span class="dv">1</span>] <span class="sc">/</span> N</span>
-<span id="cb3-353"><a href="#cb3-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-354"><a href="#cb3-354" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">log</span>(share) <span class="sc">-</span> <span class="fu">log</span>(share0)       <span class="co"># Berry inversion: y_j = delta_j</span></span>
-<span id="cb3-355"><a href="#cb3-355" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-356"><a href="#cb3-356" aria-hidden="true" tabindex="-1"></a>ols  <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(y <span class="sc">~</span> x <span class="sc">+</span> price))                 <span class="co"># ignores xi: endogenous, biased</span></span>
-<span id="cb3-357"><a href="#cb3-357" aria-hidden="true" tabindex="-1"></a>phat <span class="ot">&lt;-</span> <span class="fu">fitted</span>(<span class="fu">lm</span>(price <span class="sc">~</span> x <span class="sc">+</span> cost))            <span class="co"># first stage: cost instruments price</span></span>
-<span id="cb3-358"><a href="#cb3-358" aria-hidden="true" tabindex="-1"></a>iv   <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(y <span class="sc">~</span> x <span class="sc">+</span> phat))                  <span class="co"># 2SLS price coefficient</span></span>
-<span id="cb3-359"><a href="#cb3-359" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-360"><a href="#cb3-360" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"True price coef (-alpha):"</span>, <span class="sc">-</span>alpha_true, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-361"><a href="#cb3-361" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Naive logit price coef:  "</span>, <span class="fu">round</span>(ols[<span class="st">"price"</span>], <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-362"><a href="#cb3-362" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"IV logit price coef:     "</span>, <span class="fu">round</span>(iv[<span class="st">"phat"</span>], <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb3-363"><a href="#cb3-363" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-364"><a href="#cb3-364" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-365"><a href="#cb3-365" aria-hidden="true" tabindex="-1"></a>The naive coefficient is badly attenuated toward zero—the unobserved quality $\xi_j$</span>
-<span id="cb3-366"><a href="#cb3-366" aria-hidden="true" tabindex="-1"></a>raises both utility and price, masking the true price sensitivity—while the</span>
-<span id="cb3-367"><a href="#cb3-367" aria-hidden="true" tabindex="-1"></a>instrumented estimate recovers $-\alpha$. This is the lesson that recurs across every</span>
-<span id="cb3-368"><a href="#cb3-368" aria-hidden="true" tabindex="-1"></a>structural demand paper: the price coefficient is the parameter most contaminated by</span>
-<span id="cb3-369"><a href="#cb3-369" aria-hidden="true" tabindex="-1"></a>the unobserved quality term, and a valid instrument is the remedy.</span>
-<span id="cb3-370"><a href="#cb3-370" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-371"><a href="#cb3-371" aria-hidden="true" tabindex="-1"></a><span class="fu">## Dynamics, Learning, and Forward-Looking Agents {#sec-sm-dynamic}</span></span>
-<span id="cb3-372"><a href="#cb3-372" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-373"><a href="#cb3-373" aria-hidden="true" tabindex="-1"></a>Many marketing decisions are intertemporal—when to buy a durable, whether a</span>
-<span id="cb3-374"><a href="#cb3-374" aria-hidden="true" tabindex="-1"></a>salesperson exerts effort today for a bonus tomorrow, how a relationship evolves—and</span>
-<span id="cb3-375"><a href="#cb3-375" aria-hidden="true" tabindex="-1"></a>a static choice model cannot represent them. **Dynamic structural models** treat the</span>
-<span id="cb3-376"><a href="#cb3-376" aria-hidden="true" tabindex="-1"></a>agent as solving a sequential optimization, and they are the technically hardest but</span>
-<span id="cb3-377"><a href="#cb3-377" aria-hidden="true" tabindex="-1"></a>most rewarding members of the family.</span>
-<span id="cb3-378"><a href="#cb3-378" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-379"><a href="#cb3-379" aria-hidden="true" tabindex="-1"></a>The canonical object is a forward-looking agent who, in state $s_t$, chooses action</span>
-<span id="cb3-380"><a href="#cb3-380" aria-hidden="true" tabindex="-1"></a>$a_t$ to maximize the expected present value of a stream of payoffs,</span>
-<span id="cb3-381"><a href="#cb3-381" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-382"><a href="#cb3-382" aria-hidden="true" tabindex="-1"></a>V(s_t) = \max_{a_t}\;</span>
-<span id="cb3-383"><a href="#cb3-383" aria-hidden="true" tabindex="-1"></a>  \Big<span class="sc">\{</span> u(s_t, a_t; \boldsymbol{\theta})</span>
-<span id="cb3-384"><a href="#cb3-384" aria-hidden="true" tabindex="-1"></a><span class="ss">       + </span>\delta\, \mathbb{E}<span class="sc">\!</span>\left<span class="co">[</span><span class="ot">\, V(s_{t+1}) \mid s_t, a_t \,\right</span><span class="co">]</span> \Big<span class="sc">\}</span>,</span>
-<span id="cb3-385"><a href="#cb3-385" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-bellman}</span>
-<span id="cb3-386"><a href="#cb3-386" aria-hidden="true" tabindex="-1"></a>the **Bellman equation**, where $\delta$ is the discount factor, $u(\cdot)$ the</span>
-<span id="cb3-387"><a href="#cb3-387" aria-hidden="true" tabindex="-1"></a>per-period payoff, and the expectation runs over the law of motion of the state.</span>
-<span id="cb3-388"><a href="#cb3-388" aria-hidden="true" tabindex="-1"></a>Estimation recovers the payoff primitives $\boldsymbol{\theta}$ from observed</span>
-<span id="cb3-389"><a href="#cb3-389" aria-hidden="true" tabindex="-1"></a>state–action sequences, typically by nesting the solution of @eq-sm-bellman inside a</span>
-<span id="cb3-390"><a href="#cb3-390" aria-hidden="true" tabindex="-1"></a>likelihood. The substantive range is wide. @allenby1999dynamic model purchase</span>
-<span id="cb3-391"><a href="#cb3-391" aria-hidden="true" tabindex="-1"></a>*timing* in direct marketing as a dynamic decision, recovering when a household will</span>
-<span id="cb3-392"><a href="#cb3-392" aria-hidden="true" tabindex="-1"></a>next buy. @gowrisankaran2012dynamics let consumer preferences evolve and apply the</span>
-<span id="cb3-393"><a href="#cb3-393" aria-hidden="true" tabindex="-1"></a>machinery to durable-goods markets, where today's purchase forecloses tomorrow's.</span>
-<span id="cb3-394"><a href="#cb3-394" aria-hidden="true" tabindex="-1"></a>@hitsch2006empirical study optimal product launch and exit under demand uncertainty,</span>
-<span id="cb3-395"><a href="#cb3-395" aria-hidden="true" tabindex="-1"></a>treating the firm as a forward-looking decision maker learning about an uncertain</span>
-<span id="cb3-396"><a href="#cb3-396" aria-hidden="true" tabindex="-1"></a>market. @netzer2008hidden model the dynamics of customer–firm relationships as a</span>
-<span id="cb3-397"><a href="#cb3-397" aria-hidden="true" tabindex="-1"></a>**hidden Markov** process, in which a latent relationship state migrates over time</span>
-<span id="cb3-398"><a href="#cb3-398" aria-hidden="true" tabindex="-1"></a>and governs observable purchase behavior—a structural account of relationship</span>
-<span id="cb3-399"><a href="#cb3-399" aria-hidden="true" tabindex="-1"></a>"states" rather than a reduced-form churn score.</span>
-<span id="cb3-400"><a href="#cb3-400" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-401"><a href="#cb3-401" aria-hidden="true" tabindex="-1"></a>Forward-looking *firms* appear on the compensation side of the same coin.</span>
-<span id="cb3-402"><a href="#cb3-402" aria-hidden="true" tabindex="-1"></a>@misra2011structural estimate a structural model of sales-force incentives in which</span>
-<span id="cb3-403"><a href="#cb3-403" aria-hidden="true" tabindex="-1"></a>the salesperson chooses unobserved effort given the compensation plan, the firm</span>
-<span id="cb3-404"><a href="#cb3-404" aria-hidden="true" tabindex="-1"></a>designs the plan anticipating that response, and the recovered primitives (the cost</span>
-<span id="cb3-405"><a href="#cb3-405" aria-hidden="true" tabindex="-1"></a>of effort, the agent's risk attitude) support counterfactual plans the firm never</span>
-<span id="cb3-406"><a href="#cb3-406" aria-hidden="true" tabindex="-1"></a>tried—work that @kim2022structural extend to a multitasking sales force allocating</span>
-<span id="cb3-407"><a href="#cb3-407" aria-hidden="true" tabindex="-1"></a>effort across acquisition and retention. On the demand side over the customer</span>
-<span id="cb3-408"><a href="#cb3-408" aria-hidden="true" tabindex="-1"></a>lifecycle, @gupta2006modeling synthesize structural and other models of customer</span>
-<span id="cb3-409"><a href="#cb3-409" aria-hidden="true" tabindex="-1"></a>lifetime value, and @kamakura2005choice embed choice models in customer-relationship</span>
-<span id="cb3-410"><a href="#cb3-410" aria-hidden="true" tabindex="-1"></a>strategy. @fig-sm-taxonomy organizes the marketing applications cited in this</span>
-<span id="cb3-411"><a href="#cb3-411" aria-hidden="true" tabindex="-1"></a>chapter by the decision they model.</span>
-<span id="cb3-412"><a href="#cb3-412" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-415"><a href="#cb3-415" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb3-416"><a href="#cb3-416" aria-hidden="true" tabindex="-1"></a>%%| label: fig-sm-taxonomy</span>
-<span id="cb3-417"><a href="#cb3-417" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">A taxonomy of structural marketing applications by the decision being modeled. Static discrete-choice and demand models sit on the left; dynamic, forward-looking models on the right. Each leaf names a representative study from this chapter.</span><span class="ot">"</span></span>
-<span id="cb3-418"><a href="#cb3-418" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb3-419"><a href="#cb3-419" aria-hidden="true" tabindex="-1"></a>    R[Structural marketing models] --&gt; S[Static]</span>
-<span id="cb3-420"><a href="#cb3-420" aria-hidden="true" tabindex="-1"></a>    R --&gt; D[Dynamic / forward-looking]</span>
-<span id="cb3-421"><a href="#cb3-421" aria-hidden="true" tabindex="-1"></a>    S --&gt; S1[Demand &amp; price elasticity&lt;br/&gt;montgomery1999estimating]</span>
-<span id="cb3-422"><a href="#cb3-422" aria-hidden="true" tabindex="-1"></a>    S --&gt; S2[Discrete choice&lt;br/&gt;dube2002structural · heiss2002structural]</span>
-<span id="cb3-423"><a href="#cb3-423" aria-hidden="true" tabindex="-1"></a>    S --&gt; S3[Competitive conduct&lt;br/&gt;kadiyali2001structural]</span>
-<span id="cb3-424"><a href="#cb3-424" aria-hidden="true" tabindex="-1"></a>    D --&gt; D1[Purchase timing &amp; durables&lt;br/&gt;allenby1999dynamic · gowrisankaran2012dynamics]</span>
-<span id="cb3-425"><a href="#cb3-425" aria-hidden="true" tabindex="-1"></a>    D --&gt; D2[Customer relationships&lt;br/&gt;netzer2008hidden · gupta2006modeling]</span>
-<span id="cb3-426"><a href="#cb3-426" aria-hidden="true" tabindex="-1"></a>    D --&gt; D3[Salesforce incentives&lt;br/&gt;misra2011structural · kim2022structural]</span>
-<span id="cb3-427"><a href="#cb3-427" aria-hidden="true" tabindex="-1"></a>    D --&gt; D4[Product launch &amp; <span class="fu">exit</span>&lt;br/&gt;hitsch2006empirical]</span>
-<span id="cb3-428"><a href="#cb3-428" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-429"><a href="#cb3-429" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-430"><a href="#cb3-430" aria-hidden="true" tabindex="-1"></a>The dynamic apparatus also extends to settings where behavior and content</span>
-<span id="cb3-431"><a href="#cb3-431" aria-hidden="true" tabindex="-1"></a>co-evolve. @goh2013social model the co-evolution of user behavior in social media,</span>
-<span id="cb3-432"><a href="#cb3-432" aria-hidden="true" tabindex="-1"></a>and @rutz2011modeling use a structural model to disentangle the *indirect* effects</span>
-<span id="cb3-433"><a href="#cb3-433" aria-hidden="true" tabindex="-1"></a>of paid search advertising—how a search click today shifts later behavior—an effect</span>
-<span id="cb3-434"><a href="#cb3-434" aria-hidden="true" tabindex="-1"></a>invisible to a single-period attribution model. Price promotions, too, have dynamic</span>
-<span id="cb3-435"><a href="#cb3-435" aria-hidden="true" tabindex="-1"></a>consequences: @elberg2019dynamic study how promotions move purchases across time</span>
-<span id="cb3-436"><a href="#cb3-436" aria-hidden="true" tabindex="-1"></a>rather than merely expanding the category, a stockpiling response that only a</span>
-<span id="cb3-437"><a href="#cb3-437" aria-hidden="true" tabindex="-1"></a>dynamic model represents correctly.</span>
-<span id="cb3-438"><a href="#cb3-438" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-439"><a href="#cb3-439" aria-hidden="true" tabindex="-1"></a><span class="fu">## Identification: What Can and Cannot Be Recovered {#sec-sm-identification}</span></span>
-<span id="cb3-440"><a href="#cb3-440" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-441"><a href="#cb3-441" aria-hidden="true" tabindex="-1"></a>A model is **identified** if distinct parameter values imply distinct distributions</span>
-<span id="cb3-442"><a href="#cb3-442" aria-hidden="true" tabindex="-1"></a>of the observable data; without identification, no estimator—however clever—can</span>
-<span id="cb3-443"><a href="#cb3-443" aria-hidden="true" tabindex="-1"></a>recover the truth, and a perfectly converged optimizer may report a number that the</span>
-<span id="cb3-444"><a href="#cb3-444" aria-hidden="true" tabindex="-1"></a>data do not pin down. Because structural models lean on assumptions for</span>
-<span id="cb3-445"><a href="#cb3-445" aria-hidden="true" tabindex="-1"></a>identification, naming the threats is as important as writing the likelihood.</span>
-<span id="cb3-446"><a href="#cb3-446" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-447"><a href="#cb3-447" aria-hidden="true" tabindex="-1"></a>The first and most pervasive threat is **endogeneity**, already met twice: price is</span>
-<span id="cb3-448"><a href="#cb3-448" aria-hidden="true" tabindex="-1"></a>set by agents who observe demand shocks the analyst does not, so the price</span>
-<span id="cb3-449"><a href="#cb3-449" aria-hidden="true" tabindex="-1"></a>coefficient is identified only through an exclusion restriction—a cost or competitor</span>
-<span id="cb3-450"><a href="#cb3-450" aria-hidden="true" tabindex="-1"></a>instrument that shifts the choice set without entering utility directly. When no</span>
-<span id="cb3-451"><a href="#cb3-451" aria-hidden="true" tabindex="-1"></a>valid instrument exists, the elasticity is not identified, full stop.</span>
-<span id="cb3-452"><a href="#cb3-452" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-453"><a href="#cb3-453" aria-hidden="true" tabindex="-1"></a>The second is **functional-form dependence**. In a static logit the substitution</span>
-<span id="cb3-454"><a href="#cb3-454" aria-hidden="true" tabindex="-1"></a>pattern is dictated by the IIA assumption rather than estimated, so a counterfactual</span>
-<span id="cb3-455"><a href="#cb3-455" aria-hidden="true" tabindex="-1"></a>that turns on cross-elasticities is identified by assumption, not by data; relaxing</span>
-<span id="cb3-456"><a href="#cb3-456" aria-hidden="true" tabindex="-1"></a>to nested or random-coefficient logit buys realism at the cost of additional</span>
-<span id="cb3-457"><a href="#cb3-457" aria-hidden="true" tabindex="-1"></a>parameters that themselves require variation to identify.</span>
-<span id="cb3-458"><a href="#cb3-458" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-459"><a href="#cb3-459" aria-hidden="true" tabindex="-1"></a>The third is the **discount factor** in dynamic models. The forward-looking payoff</span>
-<span id="cb3-460"><a href="#cb3-460" aria-hidden="true" tabindex="-1"></a>in @eq-sm-bellman and the per-period payoff are notoriously hard to separate: a</span>
-<span id="cb3-461"><a href="#cb3-461" aria-hidden="true" tabindex="-1"></a>patient agent with low effort costs can mimic an impatient agent with high effort</span>
-<span id="cb3-462"><a href="#cb3-462" aria-hidden="true" tabindex="-1"></a>costs, so $\delta$ is typically *fixed* rather than estimated, with the</span>
-<span id="cb3-463"><a href="#cb3-463" aria-hidden="true" tabindex="-1"></a>counterfactual's credibility contingent on that choice.</span>
-<span id="cb3-464"><a href="#cb3-464" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-465"><a href="#cb3-465" aria-hidden="true" tabindex="-1"></a>The fourth is the **equilibrium and conduct assumption**: inferring competitive</span>
-<span id="cb3-466"><a href="#cb3-466" aria-hidden="true" tabindex="-1"></a>conduct from price–quantity comovement <span class="co">[</span><span class="ot">@kadiyali2001structural</span><span class="co">]</span> identifies conduct</span>
-<span id="cb3-467"><a href="#cb3-467" aria-hidden="true" tabindex="-1"></a>only if the maintained equilibrium concept is correct, and a misspecified conduct</span>
-<span id="cb3-468"><a href="#cb3-468" aria-hidden="true" tabindex="-1"></a>parameter contaminates the recovered costs.</span>
-<span id="cb3-469"><a href="#cb3-469" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-470"><a href="#cb3-470" aria-hidden="true" tabindex="-1"></a>The pattern across all four is the same and is worth internalizing as the chapter's</span>
-<span id="cb3-471"><a href="#cb3-471" aria-hidden="true" tabindex="-1"></a>governing principle: structural identification trades *data variation* for</span>
-<span id="cb3-472"><a href="#cb3-472" aria-hidden="true" tabindex="-1"></a>*assumptions*, and every counterfactual inherits the assumptions that identified the</span>
-<span id="cb3-473"><a href="#cb3-473" aria-hidden="true" tabindex="-1"></a>parameters it uses. The honest structural paper, accordingly, reports which results</span>
-<span id="cb3-474"><a href="#cb3-474" aria-hidden="true" tabindex="-1"></a>are robust to weakening which assumption—and the practitioner reading one should ask,</span>
-<span id="cb3-475"><a href="#cb3-475" aria-hidden="true" tabindex="-1"></a>of every headline number, *what assumption is this resting on?*</span>
-<span id="cb3-476"><a href="#cb3-476" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-477"><a href="#cb3-477" aria-hidden="true" tabindex="-1"></a><span class="fu">## Getting Started</span></span>
-<span id="cb3-478"><a href="#cb3-478" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-479"><a href="#cb3-479" aria-hidden="true" tabindex="-1"></a>For readers building toward this literature, the graduate econometrics texts of</span>
-<span id="cb3-480"><a href="#cb3-480" aria-hidden="true" tabindex="-1"></a>@greene2003econometric and @cameron2005microeconometrics supply the estimation</span>
-<span id="cb3-481"><a href="#cb3-481" aria-hidden="true" tabindex="-1"></a>foundations; @hensher2005applied is the standard reference for the discrete-choice</span>
-<span id="cb3-482"><a href="#cb3-482" aria-hidden="true" tabindex="-1"></a>models that anchor most marketing applications; @diamantopoulos2013quantitative</span>
-<span id="cb3-483"><a href="#cb3-483" aria-hidden="true" tabindex="-1"></a>surveys quantitative modeling in marketing more broadly; and the *Handbook of</span>
-<span id="cb3-484"><a href="#cb3-484" aria-hidden="true" tabindex="-1"></a>Econometrics* policy-evaluation chapters [@heckman2007econometric1;</span>
-<span id="cb3-485"><a href="#cb3-485" aria-hidden="true" tabindex="-1"></a>@heckman2007econometric; @abbring2007econometric3] connect structural estimation to</span>
-<span id="cb3-486"><a href="#cb3-486" aria-hidden="true" tabindex="-1"></a>the identification of treatment effects. A productive path is to reproduce a linear</span>
-<span id="cb3-487"><a href="#cb3-487" aria-hidden="true" tabindex="-1"></a>demand-and-supply system (@sec-sm-demand-supply), then a logit with endogenous price</span>
-<span id="cb3-488"><a href="#cb3-488" aria-hidden="true" tabindex="-1"></a>(@sec-sm-discrete-choice), before attempting a dynamic model—each step adds one</span>
-<span id="cb3-489"><a href="#cb3-489" aria-hidden="true" tabindex="-1"></a>layer of structure, and the endogeneity intuition learned in the first carries</span>
-<span id="cb3-490"><a href="#cb3-490" aria-hidden="true" tabindex="-1"></a>unchanged into the last.</span>
-<span id="cb3-491"><a href="#cb3-491" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-492"><a href="#cb3-492" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
-<span id="cb3-493"><a href="#cb3-493" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-494"><a href="#cb3-494" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A model is **structural** when its parameters are economic primitives—tastes,</span>
-<span id="cb3-495"><a href="#cb3-495" aria-hidden="true" tabindex="-1"></a>  costs, information, conduct—and are therefore policy invariant; the payoff is</span>
-<span id="cb3-496"><a href="#cb3-496" aria-hidden="true" tabindex="-1"></a>  counterfactual simulation of policies never observed (@eq-sm-structural).</span>
-<span id="cb3-497"><a href="#cb3-497" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Structural modeling and causal inference are complements: causal estimates</span>
-<span id="cb3-498"><a href="#cb3-498" aria-hidden="true" tabindex="-1"></a>  discipline structural models, and structural reasoning locates the endogeneity a</span>
-<span id="cb3-499"><a href="#cb3-499" aria-hidden="true" tabindex="-1"></a>  causal design must address.</span>
-<span id="cb3-500"><a href="#cb3-500" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Endogeneity of price** is the central econometric problem, visible already in</span>
-<span id="cb3-501"><a href="#cb3-501" aria-hidden="true" tabindex="-1"></a>  linear supply and demand (@eq-sm-equilibrium) and recurring inside discrete-choice</span>
-<span id="cb3-502"><a href="#cb3-502" aria-hidden="true" tabindex="-1"></a>  demand; it is resolved only by a credible exclusion restriction.</span>
-<span id="cb3-503"><a href="#cb3-503" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MLE** (full likelihood, efficient if correct) and **GMM** (moment conditions,</span>
-<span id="cb3-504"><a href="#cb3-504" aria-hidden="true" tabindex="-1"></a>  robust) are the two workhorse estimators; the choice is about how much of the</span>
-<span id="cb3-505"><a href="#cb3-505" aria-hidden="true" tabindex="-1"></a>  data-generating process one is willing to specify (@tbl-sm-mle-gmm).</span>
-<span id="cb3-506"><a href="#cb3-506" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Dynamic** models recover forward-looking primitives via the Bellman equation</span>
-<span id="cb3-507"><a href="#cb3-507" aria-hidden="true" tabindex="-1"></a>  (@eq-sm-bellman) but face hard identification of the discount factor.</span>
-<span id="cb3-508"><a href="#cb3-508" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Every counterfactual inherits the assumptions that identified its parameters; the</span>
-<span id="cb3-509"><a href="#cb3-509" aria-hidden="true" tabindex="-1"></a>  credible structural paper reports which conclusions survive weakening which</span>
-<span id="cb3-510"><a href="#cb3-510" aria-hidden="true" tabindex="-1"></a>  assumption (@sec-sm-identification).</span>
+<div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Structural Models {#sec-structural-models}</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>A *structural model* is an empirical model whose parameters are the primitives of an</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>economic theory: the preferences of consumers, the technologies and costs of firms,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>the information agents hold, and the rules of the game they play. Rather than fit a</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>flexible function from covariates to an outcome, the analyst writes down how agents</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>*decide*—typically as the solution to an optimization problem under an equilibrium</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>concept—and then estimates the deep parameters that rationalize the observed data.</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>The payoff is that those parameters are, by construction, invariant to the policies</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>the analyst wants to study, so the model can answer questions about worlds that were</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>never observed: a price never charged, a product never launched, a compensation plan</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>never offered.</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>This is a different ambition from prediction or even from causal inference. A</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>reduced-form analysis asks *what is the effect of X on Y?* and answers it, ideally,</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>with a research design that isolates exogenous variation. A structural analysis asks</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>*how does the system work?*—and, having recovered the mechanism, can simulate the</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>effect of any intervention the mechanism admits, including ones for which no</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>experiment or natural experiment exists. The cost of that generality is steep:</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>structural models impose strong assumptions (functional forms, equilibrium, the</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>information environment), and when those assumptions are wrong the conclusions are</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>wrong in ways that are hard to detect. Much of the craft lies in choosing</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>assumptions that buy identification without buying bias, and in being honest about</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>which results lean on which assumptions.</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>This chapter develops the structural approach for a reader who already understands</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>regression and causal inference and wants to see what changes when economic theory</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>is moved from the discussion section into the likelihood. We proceed from intuition</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>to formalism: first the anatomy of a structural model and its relationship to</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>causal inference (@sec-sm-vs-causal); then a worked supply-and-demand example that</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>exposes the endogeneity problem at the heart of the field (@sec-sm-demand-supply);</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>then the two workhorse estimators—maximum likelihood and the generalized method of</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>moments—and the discrete-choice and dynamic models that dominate marketing</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>applications (@sec-sm-estimation through @sec-sm-dynamic); and finally the</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>identification threats that decide whether any of it can be believed</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>(@sec-sm-identification). Throughout, the running theme is the one stated above:</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>structural parameters are valuable precisely to the extent that they are policy</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>invariant, and they are policy invariant only to the extent that the model is</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>correct.</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## What Makes a Model "Structural" {#sec-sm-vs-causal}</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>The defining feature of a structural model is that its parameters have an</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>interpretation *outside* the data-generating environment in which they were</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>estimated. @chintagunta2006structural, in a field review, characterize structural</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>modeling as the practice of using economic theory to discipline the specification of</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>an empirical model so that the estimated coefficients correspond to taste,</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>technology, or strategic primitives rather than to environment-specific</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>correlations. The distinction matters most when the goal is counterfactual: a</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>demand elasticity estimated as a structural taste parameter can be carried into a</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>pricing simulation, whereas a regression slope estimated in one price regime carries</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>no guarantee of stability when the regime changes.</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>It is useful to state the contrast formally. Suppose an outcome $y$ is generated by</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>agents who choose actions to maximize an objective indexed by a structural parameter</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>vector $\boldsymbol{\theta}$ (e.g., utility weights, marginal costs) given a state</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>$\mathbf{s}$ and a policy $\mathbf{p}$ (prices, assortment, incentives):</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>y = m(\mathbf{s}, \mathbf{p}; \boldsymbol{\theta}) + \varepsilon ,</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-structural}</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>where $m(\cdot)$ is the *decision rule*—the mapping from states and policy to</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>behavior implied by the agent's optimization and the market equilibrium. A</span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>reduced-form analysis estimates a projection of $y$ on $(\mathbf{s},\mathbf{p})$</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>that is valid only on the support and policy regime observed. A structural analysis</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>estimates $\boldsymbol{\theta}$, then *re-solves* @eq-sm-structural under a new</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>policy $\mathbf{p}'$ to predict $y' = m(\mathbf{s}, \mathbf{p}';</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>\boldsymbol{\theta})$. The structural object is reusable; the reduced-form object,</span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>strictly, is not.</span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Causal inference estimates the effect of a treatment that occurred; structural</span></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; modeling estimates the mechanism that would produce the effect of a treatment that</span></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; did not. The first is a statement about a realized intervention, the second a</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; statement about a class of interventions the model can simulate.</span></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>The two traditions are complements rather than rivals, and the modern literature</span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>treats them as such. Credible causal estimates discipline structural models—a</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>quasi-experimental demand elasticity is a moment a structural demand system should</span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>reproduce—and structural reasoning, in turn, tells the causal analyst *where* the</span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>endogeneity is and *what* would constitute a valid instrument. @conlon2013demand</span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>illustrate the round trip: they build a structural demand model to handle</span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>endogenous product availability (stockouts that are correlated with demand shocks)</span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>and then use the structural estimates to run counterfactuals that no reduced-form</span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>design could deliver. The remainder of this section makes the three pillars of any</span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>structural exercise—behavioral assumptions, equilibrium, and counterfactuals—precise</span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>before we turn to estimation.</span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>@fig-sm-pipeline summarizes the workflow that distinguishes the structural pipeline</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>from a reduced-form one.</span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>%%| label: fig-sm-pipeline</span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">The structural modeling pipeline. Economic theory specifies agents' objectives; optimization and an equilibrium concept yield a decision rule whose deep parameters are estimated by MLE or GMM; the estimated rule is then re-solved under new policies for counterfactual analysis. The dashed path is the reduced-form alternative, which stops at an environment-specific association.</span><span class="ot">"</span></span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>    A[Economic theory:&lt;br/&gt;preferences, costs,&lt;br/&gt;information, game] --&gt; B[Agent optimization&lt;br/&gt;+ equilibrium concept]</span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[<span class="ot">"</span><span class="st">Decision rule&lt;br/&gt;m(s, p; θ)</span><span class="ot">"</span>]</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[Estimation:&lt;br/&gt;MLE / GMM&lt;br/&gt;recover θ]</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[Re-solve under&lt;br/&gt;new policy p′]</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>    E --&gt; F[Counterfactual /&lt;br/&gt;policy simulation]</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>    G[(Observed data)] -.-&gt;|reduced form| H[Environment-specific&lt;br/&gt;association]</span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>    G --&gt; D</span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a><span class="fu">### Behavioral and Equilibrium Assumptions</span></span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>Structural models earn their counterfactual power by committing to assumptions of</span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a>four kinds, and the credibility of any application rests on how defensible those</span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>commitments are.</span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>The first is **functional form**: the shape of utility, demand, or cost. Is demand</span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a>linear in price, or constant-elasticity? Is utility linear in attributes, or does it</span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a>exhibit diminishing marginal utility? These choices are not innocuous, because the</span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a>counterfactual extrapolates along the assumed curvature.</span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>The second is the **decision protocol**: the rule by which agents map information to</span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a>actions. The canonical assumption is utility maximization—each consumer chooses the</span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a>alternative delivering the highest utility—but the model must also say whether agents</span>
+<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a>are myopic or forward looking, risk neutral or risk averse, and whether they learn.</span>
+<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a>The third is the **information environment**. Do consumers know all product</span>
+<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a>attributes when choosing, or do they face uncertainty and update beliefs?</span>
+<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a>@erdem2008impact, for instance, build a model in which advertising influences price</span>
+<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a>sensitivity precisely *because* consumers are uncertain about quality in experience-</span>
+<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a>good markets and advertising conveys information; the substantive conclusion is</span>
+<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a>inseparable from the informational assumption.</span>
+<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a>The fourth is the **equilibrium concept**. In a market model the analyst must say how</span>
+<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a>agents' choices are mutually consistent: that the market clears, or that firms play a</span>
+<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a>Nash equilibrium in prices, or that a dynamic game is in Markov-perfect equilibrium.</span>
+<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a>@kadiyali2001structural review how equilibrium assumptions let the analyst infer</span>
+<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a>unobserved competitive conduct—whether firms behave more collusively or more</span>
+<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a>competitively than Bertrand—from the comovement of prices and quantities, an</span>
+<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a>inference impossible without the equilibrium restriction.</span>
+<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a>These assumptions are what make the model *tractable and estimable*, and they are</span>
+<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a>simultaneously the model's principal vulnerability: a misspecified information</span>
+<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a>environment or an incorrect conduct assumption biases the deep parameters and, with</span>
+<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a>them, every counterfactual. The discipline of the field is to state each assumption</span>
+<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a>explicitly, to test those that are testable, and to flag the counterfactuals that</span>
+<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a>hinge on the rest.</span>
+<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a><span class="fu">### Counterfactuals: the Reason to Pay the Price</span></span>
+<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a>The justification for the structural apparatus is the counterfactual. Once</span>
+<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\theta}$ is in hand, the analyst re-solves the model under a policy that</span>
+<span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a>was never implemented and reads off the predicted outcome—*what would sales have</span>
+<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a>been at a price we never charged?* or *what compensation plan maximizes profit?*</span>
+<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a>@gowrisankaran2020framework provide a framework for exactly this kind of policy</span>
+<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a>evaluation, and the counterfactual logic is what separates a structural paper from a</span>
+<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a>descriptive one. The validity of a counterfactual is conditional on two things: the</span>
+<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a>parameters are policy invariant (the Lucas-critique requirement), and the new policy</span>
+<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a>lies within the class the model can represent. A model estimated under linear</span>
+<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a>pricing cannot credibly simulate nonlinear tariffs; a static model cannot simulate a</span>
+<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a>policy whose whole point is to change dynamic incentives. Stating the admissible</span>
+<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a>counterfactual class is therefore part of specifying the model, not an afterthought.</span>
+<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a><span class="fu">## A First Structural Model: Demand and Supply {#sec-sm-demand-supply}</span></span>
+<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a>The simplest model that exhibits the structural way of thinking is linear</span>
+<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a>simultaneous supply and demand. It is worth working through in full because it</span>
+<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a>already contains the central econometric problem of the entire field—the endogeneity</span>
+<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a>of price—and the standard solution.</span>
+<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a>Let quantity demanded and supplied at price $p$ be</span>
+<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a>Q^{d} = \alpha_0 - \alpha_1 p + u^{d}, \qquad</span>
+<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a>Q^{s} = \beta_0 + \beta_1 p + u^{s},</span>
+<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-demand-supply}</span>
+<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a>with $\alpha_1, \beta_1 &gt; 0$ and structural shocks $u^{d}, u^{s}$ (a demand shifter</span>
+<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a>such as a taste shock; a supply shifter such as an input-cost shock). The</span>
+<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a>*structural* parameters are the slopes $\alpha_1$ (how strongly quantity responds to</span>
+<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a>price along the demand curve) and $\beta_1$ (the analogous supply response); these</span>
+<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a>are the policy-invariant objects a manager would want for pricing. Market clearing,</span>
+<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a>$Q^{d} = Q^{s}$, is the equilibrium condition, and it determines the observed price</span>
+<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a>p^{\star} = \frac{\alpha_0 - \beta_0 + u^{d} - u^{s}}{\alpha_1 + \beta_1}.</span>
+<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-equilibrium}</span>
+<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a>@eq-sm-equilibrium is the crux. Because equilibrium price depends on the demand</span>
+<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a>shock $u^{d}$, price is **endogenous**: $\mathrm{Cov}(p^{\star}, u^{d}) \neq 0$. A</span>
+<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a>naive regression of observed quantity on observed price does not recover $\alpha_1$;</span>
+<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a>it recovers a hybrid of the demand and supply slopes—the textbook simultaneity bias.</span>
+<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a>Intuitively, the observed price–quantity pairs are intersections of shifting demand</span>
+<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a>and supply curves, so the scatter traces out neither curve. This single fact—that</span>
+<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a>prices are set by agents who observe demand conditions the econometrician does</span>
+<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a>not—motivates the instrumental-variable and control-function machinery that</span>
+<span id="cb4-188"><a href="#cb4-188" aria-hidden="true" tabindex="-1"></a>pervades structural demand estimation.</span>
+<span id="cb4-189"><a href="#cb4-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-190"><a href="#cb4-190" aria-hidden="true" tabindex="-1"></a>Identification comes from **exclusion restrictions**: a variable that shifts supply</span>
+<span id="cb4-191"><a href="#cb4-191" aria-hidden="true" tabindex="-1"></a>but not demand traces out the demand curve, and vice versa. A cost shifter $z$</span>
+<span id="cb4-192"><a href="#cb4-192" aria-hidden="true" tabindex="-1"></a>entering supply but excluded from demand instruments for price in the demand</span>
+<span id="cb4-193"><a href="#cb4-193" aria-hidden="true" tabindex="-1"></a>equation. @montgomery1999estimating exploit precisely this logic to estimate price</span>
+<span id="cb4-194"><a href="#cb4-194" aria-hidden="true" tabindex="-1"></a>elasticities at the store and household level, recovering structural demand slopes</span>
+<span id="cb4-195"><a href="#cb4-195" aria-hidden="true" tabindex="-1"></a>that a single-equation regression would contaminate. The simulation below makes the</span>
+<span id="cb4-196"><a href="#cb4-196" aria-hidden="true" tabindex="-1"></a>bias concrete and shows that an instrument recovers the truth.</span>
+<span id="cb4-197"><a href="#cb4-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-198"><a href="#cb4-198" aria-hidden="true" tabindex="-1"></a><span class="in">```{r sm-simultaneity, message=FALSE, warning=FALSE}</span></span>
+<span id="cb4-199"><a href="#cb4-199" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">29</span>)</span>
+<span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a>n  <span class="ot">&lt;-</span> <span class="dv">5000</span></span>
+<span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a>a0 <span class="ot">&lt;-</span> <span class="dv">10</span>; a1 <span class="ot">&lt;-</span> <span class="fl">1.5</span>      <span class="co"># demand intercept, slope (truth)</span></span>
+<span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a>b0 <span class="ot">&lt;-</span> <span class="dv">2</span>;  b1 <span class="ot">&lt;-</span> <span class="fl">1.0</span>      <span class="co"># supply intercept, slope (truth)</span></span>
+<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a>z  <span class="ot">&lt;-</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">4</span>)     <span class="co"># cost shifter: enters supply, excluded from demand</span></span>
+<span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a>ud <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)           <span class="co"># demand shock</span></span>
+<span id="cb4-206"><a href="#cb4-206" aria-hidden="true" tabindex="-1"></a>us <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n)           <span class="co"># supply shock</span></span>
+<span id="cb4-207"><a href="#cb4-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-208"><a href="#cb4-208" aria-hidden="true" tabindex="-1"></a><span class="co"># Equilibrium price and quantity (solve Qd = Qs with a cost shifter in supply)</span></span>
+<span id="cb4-209"><a href="#cb4-209" aria-hidden="true" tabindex="-1"></a><span class="co"># Qd = a0 - a1 p + ud ;  Qs = b0 + b1 p + g*z + us</span></span>
+<span id="cb4-210"><a href="#cb4-210" aria-hidden="true" tabindex="-1"></a>g  <span class="ot">&lt;-</span> <span class="fl">1.2</span></span>
+<span id="cb4-211"><a href="#cb4-211" aria-hidden="true" tabindex="-1"></a>p  <span class="ot">&lt;-</span> (a0 <span class="sc">-</span> b0 <span class="sc">-</span> g <span class="sc">*</span> z <span class="sc">+</span> ud <span class="sc">-</span> us) <span class="sc">/</span> (a1 <span class="sc">+</span> b1)</span>
+<span id="cb4-212"><a href="#cb4-212" aria-hidden="true" tabindex="-1"></a>q  <span class="ot">&lt;-</span> a0 <span class="sc">-</span> a1 <span class="sc">*</span> p <span class="sc">+</span> ud</span>
+<span id="cb4-213"><a href="#cb4-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-214"><a href="#cb4-214" aria-hidden="true" tabindex="-1"></a><span class="co"># (1) Naive OLS of quantity on price: biased for the demand slope -a1</span></span>
+<span id="cb4-215"><a href="#cb4-215" aria-hidden="true" tabindex="-1"></a>ols  <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(q <span class="sc">~</span> p))[<span class="st">"p"</span>]</span>
+<span id="cb4-216"><a href="#cb4-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-217"><a href="#cb4-217" aria-hidden="true" tabindex="-1"></a><span class="co"># (2) Two-stage least squares using the cost shifter z as an instrument</span></span>
+<span id="cb4-218"><a href="#cb4-218" aria-hidden="true" tabindex="-1"></a>phat <span class="ot">&lt;-</span> <span class="fu">fitted</span>(<span class="fu">lm</span>(p <span class="sc">~</span> z))</span>
+<span id="cb4-219"><a href="#cb4-219" aria-hidden="true" tabindex="-1"></a>iv   <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(q <span class="sc">~</span> phat))[<span class="st">"phat"</span>]</span>
+<span id="cb4-220"><a href="#cb4-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-221"><a href="#cb4-221" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"True demand slope (-a1):      "</span>, <span class="sc">-</span>a1, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-222"><a href="#cb4-222" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"OLS estimate (biased):        "</span>, <span class="fu">round</span>(ols, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"IV / 2SLS estimate (consistent):"</span>, <span class="fu">round</span>(iv, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a>The OLS slope is attenuated and unstable; the instrumented slope recovers $-\alpha_1$.</span>
+<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a>This linear example scales, conceptually, all the way to modern differentiated-</span>
+<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a>products demand systems, where the same endogeneity reappears (price correlates with</span>
+<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a>unobserved product quality) and is handled with the same idea—cost or competitor-</span>
+<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a>based instruments—inside a far richer choice model, to which we now turn.</span>
+<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a><span class="fu">## Estimation: Maximum Likelihood and GMM {#sec-sm-estimation}</span></span>
+<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a>Structural parameters are rarely obtained by ordinary least squares. The two</span>
+<span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a>dominant estimators are maximum likelihood (ML) and the generalized method of</span>
+<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a>moments (GMM); the standard graduate references develop both in depth</span>
+<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@greene2003econometric; @cameron2005microeconometrics; @hensher2005applied</span><span class="co">]</span>, and</span>
+<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a>the *Handbook of Econometrics* chapters on the econometric evaluation of policy</span>
+<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a>collect the identification theory [@heckman2007econometric1;</span>
+<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a>@heckman2007econometric; @abbring2007econometric3]. The choice between ML and GMM is</span>
+<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a>chiefly a choice about how much of the data-generating process one is willing to</span>
+<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a>specify.</span>
+<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a>**Maximum likelihood** specifies the full conditional distribution of the data. If</span>
+<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a>the model implies a density $f(y_i \mid \mathbf{x}_i; \boldsymbol{\theta})$, the</span>
+<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a>estimator maximizes the log-likelihood,</span>
+<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a>\hat{\boldsymbol{\theta}}_{\mathrm{ML}}</span>
+<span id="cb4-249"><a href="#cb4-249" aria-hidden="true" tabindex="-1"></a>  = \arg\max_{\boldsymbol{\theta}}</span>
+<span id="cb4-250"><a href="#cb4-250" aria-hidden="true" tabindex="-1"></a>    \sum_{i=1}^{n} \log f(y_i \mid \mathbf{x}_i; \boldsymbol{\theta}),</span>
+<span id="cb4-251"><a href="#cb4-251" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-mle}</span>
+<span id="cb4-252"><a href="#cb4-252" aria-hidden="true" tabindex="-1"></a>which is efficient when the distributional assumption is correct but inconsistent</span>
+<span id="cb4-253"><a href="#cb4-253" aria-hidden="true" tabindex="-1"></a>when it is not. ML is the natural estimator for discrete-choice models, where the</span>
+<span id="cb4-254"><a href="#cb4-254" aria-hidden="true" tabindex="-1"></a>choice probabilities *are* the likelihood contributions.</span>
+<span id="cb4-255"><a href="#cb4-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-256"><a href="#cb4-256" aria-hidden="true" tabindex="-1"></a>**The generalized method of moments** specifies only a set of population moment</span>
+<span id="cb4-257"><a href="#cb4-257" aria-hidden="true" tabindex="-1"></a>conditions implied by the theory—typically that the structural error is orthogonal</span>
+<span id="cb4-258"><a href="#cb4-258" aria-hidden="true" tabindex="-1"></a>to a vector of instruments $\mathbf{z}_i$,</span>
+<span id="cb4-259"><a href="#cb4-259" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-260"><a href="#cb4-260" aria-hidden="true" tabindex="-1"></a>\mathbb{E}<span class="sc">\!</span>\left<span class="co">[</span><span class="ot">\, \mathbf{z}_i \, g(y_i, \mathbf{x}_i; \boldsymbol{\theta}) \,\right</span><span class="co">]</span> = \mathbf{0},</span>
+<span id="cb4-261"><a href="#cb4-261" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-gmm-moment}</span>
+<span id="cb4-262"><a href="#cb4-262" aria-hidden="true" tabindex="-1"></a>where $g(\cdot)$ is the structural residual. GMM minimizes the empirical analog of</span>
+<span id="cb4-263"><a href="#cb4-263" aria-hidden="true" tabindex="-1"></a>these moments in a quadratic form,</span>
+<span id="cb4-264"><a href="#cb4-264" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-265"><a href="#cb4-265" aria-hidden="true" tabindex="-1"></a>\hat{\boldsymbol{\theta}}_{\mathrm{GMM}}</span>
+<span id="cb4-266"><a href="#cb4-266" aria-hidden="true" tabindex="-1"></a>  = \arg\min_{\boldsymbol{\theta}}</span>
+<span id="cb4-267"><a href="#cb4-267" aria-hidden="true" tabindex="-1"></a>    \bar{g}_n(\boldsymbol{\theta})^{\top}\, \mathbf{W}\, \bar{g}_n(\boldsymbol{\theta}),</span>
+<span id="cb4-268"><a href="#cb4-268" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb4-269"><a href="#cb4-269" aria-hidden="true" tabindex="-1"></a>\bar{g}_n(\boldsymbol{\theta}) = \frac{1}{n}\sum_{i=1}^{n}</span>
+<span id="cb4-270"><a href="#cb4-270" aria-hidden="true" tabindex="-1"></a>  \mathbf{z}_i\, g(y_i, \mathbf{x}_i; \boldsymbol{\theta}),</span>
+<span id="cb4-271"><a href="#cb4-271" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-gmm}</span>
+<span id="cb4-272"><a href="#cb4-272" aria-hidden="true" tabindex="-1"></a>with weighting matrix $\mathbf{W}$; the efficient choice sets $\mathbf{W}$ to the</span>
+<span id="cb4-273"><a href="#cb4-273" aria-hidden="true" tabindex="-1"></a>inverse of the moment covariance. GMM is the estimator of choice when the analyst</span>
+<span id="cb4-274"><a href="#cb4-274" aria-hidden="true" tabindex="-1"></a>trusts a few orthogonality conditions (a cost instrument, an equilibrium first-order</span>
+<span id="cb4-275"><a href="#cb4-275" aria-hidden="true" tabindex="-1"></a>condition) but does not wish to commit to a full likelihood—exactly the situation in</span>
+<span id="cb4-276"><a href="#cb4-276" aria-hidden="true" tabindex="-1"></a>differentiated-products demand, where the famous contraction-mapping estimator</span>
+<span id="cb4-277"><a href="#cb4-277" aria-hidden="true" tabindex="-1"></a>inverts market shares to demand shocks and stacks them against instruments in</span>
+<span id="cb4-278"><a href="#cb4-278" aria-hidden="true" tabindex="-1"></a>@eq-sm-gmm. @tbl-sm-mle-gmm contrasts the two.</span>
+<span id="cb4-279"><a href="#cb4-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-280"><a href="#cb4-280" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Dimension <span class="pp">|</span> Maximum likelihood <span class="pp">|</span> Generalized method of moments <span class="pp">|</span></span>
+<span id="cb4-281"><a href="#cb4-281" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb4-282"><a href="#cb4-282" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Specifies <span class="pp">|</span> Full conditional density of the data <span class="pp">|</span> A set of moment/orthogonality conditions <span class="pp">|</span></span>
+<span id="cb4-283"><a href="#cb4-283" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Efficiency <span class="pp">|</span> Efficient if the distribution is correct <span class="pp">|</span> Efficient given the chosen moments; generally less than full ML <span class="pp">|</span></span>
+<span id="cb4-284"><a href="#cb4-284" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Robustness <span class="pp">|</span> Inconsistent under distributional misspecification <span class="pp">|</span> Consistent under far weaker assumptions <span class="pp">|</span></span>
+<span id="cb4-285"><a href="#cb4-285" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Endogeneity <span class="pp">|</span> Handled via control functions or joint likelihood <span class="pp">|</span> Handled natively through instrument moments <span class="pp">|</span></span>
+<span id="cb4-286"><a href="#cb4-286" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Typical use <span class="pp">|</span> Discrete choice, dynamic discrete choice <span class="pp">|</span> Demand systems, Euler-equation and conduct models <span class="pp">|</span></span>
+<span id="cb4-287"><a href="#cb4-287" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Failure mode <span class="pp">|</span> Wrong likelihood $\Rightarrow$ biased everything <span class="pp">|</span> Weak or invalid instruments $\Rightarrow$ weak identification <span class="pp">|</span></span>
+<span id="cb4-288"><a href="#cb4-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-289"><a href="#cb4-289" aria-hidden="true" tabindex="-1"></a>: Maximum likelihood versus GMM for structural estimation. {#tbl-sm-mle-gmm}</span>
+<span id="cb4-290"><a href="#cb4-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-291"><a href="#cb4-291" aria-hidden="true" tabindex="-1"></a><span class="fu">## Discrete Choice as the Workhorse {#sec-sm-discrete-choice}</span></span>
+<span id="cb4-292"><a href="#cb4-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-293"><a href="#cb4-293" aria-hidden="true" tabindex="-1"></a>A large share of structural marketing models are built on **random-utility discrete</span>
+<span id="cb4-294"><a href="#cb4-294" aria-hidden="true" tabindex="-1"></a>choice**, because most consumer decisions—which brand, which channel, whether to buy</span>
+<span id="cb4-295"><a href="#cb4-295" aria-hidden="true" tabindex="-1"></a>at all—are discrete, and because the framework yields choice probabilities that are</span>
+<span id="cb4-296"><a href="#cb4-296" aria-hidden="true" tabindex="-1"></a>both behaviorally founded and computationally convenient. The reviews by</span>
+<span id="cb4-297"><a href="#cb4-297" aria-hidden="true" tabindex="-1"></a>@dube2002structural and @heiss2002structural lay out the family and its estimation;</span>
+<span id="cb4-298"><a href="#cb4-298" aria-hidden="true" tabindex="-1"></a>the model below is the canonical entry point.</span>
+<span id="cb4-299"><a href="#cb4-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-300"><a href="#cb4-300" aria-hidden="true" tabindex="-1"></a>Consumer $i$ choosing among alternatives $j = 1,\dots,J$ derives utility</span>
+<span id="cb4-301"><a href="#cb4-301" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-302"><a href="#cb4-302" aria-hidden="true" tabindex="-1"></a>U_{ij} = V_{ij} + \varepsilon_{ij}</span>
+<span id="cb4-303"><a href="#cb4-303" aria-hidden="true" tabindex="-1"></a>       = \mathbf{x}_{ij}^{\top}\boldsymbol{\beta} - \alpha p_{ij} + \xi_j + \varepsilon_{ij},</span>
+<span id="cb4-304"><a href="#cb4-304" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-rum}</span>
+<span id="cb4-305"><a href="#cb4-305" aria-hidden="true" tabindex="-1"></a>where $\mathbf{x}_{ij}$ are observed attributes, $p_{ij}$ is price, $\xi_j$ is an</span>
+<span id="cb4-306"><a href="#cb4-306" aria-hidden="true" tabindex="-1"></a>unobserved (to the analyst) product-quality term, and $\varepsilon_{ij}$ is an</span>
+<span id="cb4-307"><a href="#cb4-307" aria-hidden="true" tabindex="-1"></a>idiosyncratic taste shock. The consumer picks $j$ if $U_{ij} \ge U_{ik}$ for all</span>
+<span id="cb4-308"><a href="#cb4-308" aria-hidden="true" tabindex="-1"></a>$k$. When $\varepsilon_{ij}$ is i.i.d. type-I extreme value, the choice</span>
+<span id="cb4-309"><a href="#cb4-309" aria-hidden="true" tabindex="-1"></a>probabilities take the closed-form **multinomial logit**,</span>
+<span id="cb4-310"><a href="#cb4-310" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-311"><a href="#cb4-311" aria-hidden="true" tabindex="-1"></a>P_{ij} = \frac{\exp(V_{ij})}{\sum_{k=1}^{J}\exp(V_{ik})},</span>
+<span id="cb4-312"><a href="#cb4-312" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-logit}</span>
+<span id="cb4-313"><a href="#cb4-313" aria-hidden="true" tabindex="-1"></a>which is the likelihood contribution maximized in @eq-sm-mle. Two structural</span>
+<span id="cb4-314"><a href="#cb4-314" aria-hidden="true" tabindex="-1"></a>warnings travel with @eq-sm-logit. First, the logit imposes **independence of</span>
+<span id="cb4-315"><a href="#cb4-315" aria-hidden="true" tabindex="-1"></a>irrelevant alternatives** (IIA): the relative odds of two alternatives are</span>
+<span id="cb4-316"><a href="#cb4-316" aria-hidden="true" tabindex="-1"></a>unaffected by any third, an implausible substitution pattern that the **nested</span>
+<span id="cb4-317"><a href="#cb4-317" aria-hidden="true" tabindex="-1"></a>logit** of @heiss2002structural relaxes by grouping close substitutes into nests.</span>
+<span id="cb4-318"><a href="#cb4-318" aria-hidden="true" tabindex="-1"></a>Second, the quality term $\xi_j$ is correlated with price (better products are</span>
+<span id="cb4-319"><a href="#cb4-319" aria-hidden="true" tabindex="-1"></a>priced higher), so $\alpha$ is **endogenous**—the same simultaneity as in</span>
+<span id="cb4-320"><a href="#cb4-320" aria-hidden="true" tabindex="-1"></a>@sec-sm-demand-supply, now inside a choice model—and is corrected with cost or</span>
+<span id="cb4-321"><a href="#cb4-321" aria-hidden="true" tabindex="-1"></a>competitor-price instruments.</span>
+<span id="cb4-322"><a href="#cb4-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-323"><a href="#cb4-323" aria-hidden="true" tabindex="-1"></a>A practical route to estimation, due to Berry, *inverts* the share equation. With an</span>
+<span id="cb4-324"><a href="#cb4-324" aria-hidden="true" tabindex="-1"></a>outside option $j=0$ whose mean utility is normalized to zero, @eq-sm-logit implies</span>
+<span id="cb4-325"><a href="#cb4-325" aria-hidden="true" tabindex="-1"></a>the linear relation</span>
+<span id="cb4-326"><a href="#cb4-326" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-327"><a href="#cb4-327" aria-hidden="true" tabindex="-1"></a>\ln s_j - \ln s_0 = \mathbf{x}_{j}^{\top}\boldsymbol{\beta} - \alpha p_{j} + \xi_j,</span>
+<span id="cb4-328"><a href="#cb4-328" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-berry-inversion}</span>
+<span id="cb4-329"><a href="#cb4-329" aria-hidden="true" tabindex="-1"></a>so the left-hand side—an observed function of market shares—equals mean utility, and</span>
+<span id="cb4-330"><a href="#cb4-330" aria-hidden="true" tabindex="-1"></a>the demand parameters can be estimated by regressing it on attributes and price. The</span>
+<span id="cb4-331"><a href="#cb4-331" aria-hidden="true" tabindex="-1"></a>example below builds one market of many products, computes the inverted shares of</span>
+<span id="cb4-332"><a href="#cb4-332" aria-hidden="true" tabindex="-1"></a>@eq-sm-berry-inversion, and contrasts a naive regression (which ignores the</span>
+<span id="cb4-333"><a href="#cb4-333" aria-hidden="true" tabindex="-1"></a>correlation between price and $\xi_j$) with a two-stage least-squares estimator that</span>
+<span id="cb4-334"><a href="#cb4-334" aria-hidden="true" tabindex="-1"></a>instruments price with a cost shifter.</span>
+<span id="cb4-335"><a href="#cb4-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-336"><a href="#cb4-336" aria-hidden="true" tabindex="-1"></a><span class="in">```{r sm-logit, message=FALSE, warning=FALSE}</span></span>
+<span id="cb4-337"><a href="#cb4-337" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">29</span>)</span>
+<span id="cb4-338"><a href="#cb4-338" aria-hidden="true" tabindex="-1"></a>J    <span class="ot">&lt;-</span> <span class="dv">200</span>; N <span class="ot">&lt;-</span> <span class="fl">4e5</span>               <span class="co"># products in one market; consumers sampled</span></span>
+<span id="cb4-339"><a href="#cb4-339" aria-hidden="true" tabindex="-1"></a>x    <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(J)                    <span class="co"># observed product attribute</span></span>
+<span id="cb4-340"><a href="#cb4-340" aria-hidden="true" tabindex="-1"></a>xi   <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(J)                    <span class="co"># unobserved quality -&gt; source of endogeneity</span></span>
+<span id="cb4-341"><a href="#cb4-341" aria-hidden="true" tabindex="-1"></a>cost <span class="ot">&lt;-</span> <span class="fu">runif</span>(J, <span class="dv">0</span>, <span class="dv">2</span>)             <span class="co"># cost shifter -&gt; instrument for price</span></span>
+<span id="cb4-342"><a href="#cb4-342" aria-hidden="true" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fl">1.0</span>; alpha_true <span class="ot">&lt;-</span> <span class="fl">1.5</span></span>
+<span id="cb4-343"><a href="#cb4-343" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-344"><a href="#cb4-344" aria-hidden="true" tabindex="-1"></a><span class="co"># Price rises in unobserved quality (endogeneity) and in the cost shifter</span></span>
+<span id="cb4-345"><a href="#cb4-345" aria-hidden="true" tabindex="-1"></a>price <span class="ot">&lt;-</span> <span class="fl">1.0</span> <span class="sc">+</span> <span class="fl">0.8</span> <span class="sc">*</span> xi <span class="sc">+</span> cost <span class="sc">+</span> <span class="fu">rnorm</span>(J, <span class="dv">0</span>, <span class="fl">0.3</span>)</span>
+<span id="cb4-346"><a href="#cb4-346" aria-hidden="true" tabindex="-1"></a>delta <span class="ot">&lt;-</span> x <span class="sc">*</span> beta_true <span class="sc">-</span> alpha_true <span class="sc">*</span> price <span class="sc">+</span> xi   <span class="co"># mean utility of products 1..J</span></span>
+<span id="cb4-347"><a href="#cb4-347" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-348"><a href="#cb4-348" aria-hidden="true" tabindex="-1"></a><span class="co"># Logit shares with an outside good (utility 0); add sampling noise via multinomial</span></span>
+<span id="cb4-349"><a href="#cb4-349" aria-hidden="true" tabindex="-1"></a>num    <span class="ot">&lt;-</span> <span class="fu">exp</span>(delta)</span>
+<span id="cb4-350"><a href="#cb4-350" aria-hidden="true" tabindex="-1"></a>s      <span class="ot">&lt;-</span> num <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">sum</span>(num)); s0 <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">sum</span>(num))</span>
+<span id="cb4-351"><a href="#cb4-351" aria-hidden="true" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">rmultinom</span>(<span class="dv">1</span>, N, <span class="fu">c</span>(s0, s))[, <span class="dv">1</span>]</span>
+<span id="cb4-352"><a href="#cb4-352" aria-hidden="true" tabindex="-1"></a>share  <span class="ot">&lt;-</span> counts[<span class="sc">-</span><span class="dv">1</span>] <span class="sc">/</span> N; share0 <span class="ot">&lt;-</span> counts[<span class="dv">1</span>] <span class="sc">/</span> N</span>
+<span id="cb4-353"><a href="#cb4-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-354"><a href="#cb4-354" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">log</span>(share) <span class="sc">-</span> <span class="fu">log</span>(share0)       <span class="co"># Berry inversion: y_j = delta_j</span></span>
+<span id="cb4-355"><a href="#cb4-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-356"><a href="#cb4-356" aria-hidden="true" tabindex="-1"></a>ols  <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(y <span class="sc">~</span> x <span class="sc">+</span> price))                 <span class="co"># ignores xi: endogenous, biased</span></span>
+<span id="cb4-357"><a href="#cb4-357" aria-hidden="true" tabindex="-1"></a>phat <span class="ot">&lt;-</span> <span class="fu">fitted</span>(<span class="fu">lm</span>(price <span class="sc">~</span> x <span class="sc">+</span> cost))            <span class="co"># first stage: cost instruments price</span></span>
+<span id="cb4-358"><a href="#cb4-358" aria-hidden="true" tabindex="-1"></a>iv   <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(y <span class="sc">~</span> x <span class="sc">+</span> phat))                  <span class="co"># 2SLS price coefficient</span></span>
+<span id="cb4-359"><a href="#cb4-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-360"><a href="#cb4-360" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"True price coef (-alpha):"</span>, <span class="sc">-</span>alpha_true, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-361"><a href="#cb4-361" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Naive logit price coef:  "</span>, <span class="fu">round</span>(ols[<span class="st">"price"</span>], <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-362"><a href="#cb4-362" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"IV logit price coef:     "</span>, <span class="fu">round</span>(iv[<span class="st">"phat"</span>], <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-363"><a href="#cb4-363" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-364"><a href="#cb4-364" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-365"><a href="#cb4-365" aria-hidden="true" tabindex="-1"></a>The naive coefficient is badly attenuated toward zero—the unobserved quality $\xi_j$</span>
+<span id="cb4-366"><a href="#cb4-366" aria-hidden="true" tabindex="-1"></a>raises both utility and price, masking the true price sensitivity—while the</span>
+<span id="cb4-367"><a href="#cb4-367" aria-hidden="true" tabindex="-1"></a>instrumented estimate recovers $-\alpha$. This is the lesson that recurs across every</span>
+<span id="cb4-368"><a href="#cb4-368" aria-hidden="true" tabindex="-1"></a>structural demand paper: the price coefficient is the parameter most contaminated by</span>
+<span id="cb4-369"><a href="#cb4-369" aria-hidden="true" tabindex="-1"></a>the unobserved quality term, and a valid instrument is the remedy.</span>
+<span id="cb4-370"><a href="#cb4-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-371"><a href="#cb4-371" aria-hidden="true" tabindex="-1"></a><span class="fu">### From Estimated Demand to Optimal Design: The Exact Share-of-Choice Problem {#sec-sm-socpd}</span></span>
+<span id="cb4-372"><a href="#cb4-372" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-373"><a href="#cb4-373" aria-hidden="true" tabindex="-1"></a>Everything so far has been about *estimating* the logit—recovering $\boldsymbol\beta$</span>
+<span id="cb4-374"><a href="#cb4-374" aria-hidden="true" tabindex="-1"></a>and $\alpha$ from observed choices. The mirror-image question is *prescriptive*: given</span>
+<span id="cb4-375"><a href="#cb4-375" aria-hidden="true" tabindex="-1"></a>the estimated logit, which product should the firm build? This is the **share-of-choice</span>
+<span id="cb4-376"><a href="#cb4-376" aria-hidden="true" tabindex="-1"></a>product design (SOCPD)** problem, and it is where a demand estimate earns its keep,</span>
+<span id="cb4-377"><a href="#cb4-377" aria-hidden="true" tabindex="-1"></a>because the same partworths recovered from choice-based conjoint (@sec-conjoint) become</span>
+<span id="cb4-378"><a href="#cb4-378" aria-hidden="true" tabindex="-1"></a>the input to a design optimization. Encode a product as a binary attribute vector</span>
+<span id="cb4-379"><a href="#cb4-379" aria-hidden="true" tabindex="-1"></a>$\mathbf{x}\in<span class="sc">\{</span>0,1<span class="sc">\}</span>^{n}$ (each feature present or absent, each level chosen or not).</span>
+<span id="cb4-380"><a href="#cb4-380" aria-hidden="true" tabindex="-1"></a>With $K$ customer types of weight $\lambda_k$ and partworths $\boldsymbol\beta_k$, each</span>
+<span id="cb4-381"><a href="#cb4-381" aria-hidden="true" tabindex="-1"></a>type buys the focal product against an outside option of utility zero with the</span>
+<span id="cb4-382"><a href="#cb4-382" aria-hidden="true" tabindex="-1"></a>binary-logit probability of @eq-sm-logit, and the firm chooses the design that maximizes</span>
+<span id="cb4-383"><a href="#cb4-383" aria-hidden="true" tabindex="-1"></a>their weighted sum,</span>
+<span id="cb4-384"><a href="#cb4-384" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-385"><a href="#cb4-385" aria-hidden="true" tabindex="-1"></a>\max_{\mathbf{x}\in<span class="sc">\{</span>0,1<span class="sc">\}</span>^{n}}\;</span>
+<span id="cb4-386"><a href="#cb4-386" aria-hidden="true" tabindex="-1"></a>f(\mathbf{x}) \;=\; \sum_{k=1}^{K} \lambda_k\,</span>
+<span id="cb4-387"><a href="#cb4-387" aria-hidden="true" tabindex="-1"></a>\frac{\exp(\boldsymbol\beta_k^{\top}\mathbf{x})}{1+\exp(\boldsymbol\beta_k^{\top}\mathbf{x})}.</span>
+<span id="cb4-388"><a href="#cb4-388" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-socpd}</span>
+<span id="cb4-389"><a href="#cb4-389" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-390"><a href="#cb4-390" aria-hidden="true" tabindex="-1"></a>The objective looks benign and is anything but. Each summand is a logistic *sigmoid*,</span>
+<span id="cb4-391"><a href="#cb4-391" aria-hidden="true" tabindex="-1"></a>and a sum of sigmoids is **not concave**, so the continuous relaxation carries multiple</span>
+<span id="cb4-392"><a href="#cb4-392" aria-hidden="true" tabindex="-1"></a>local optima and a gradient climb or a greedy attribute-flip has no optimality</span>
+<span id="cb4-393"><a href="#cb4-393" aria-hidden="true" tabindex="-1"></a>guarantee; the binary $\mathbf{x}$ then layers a combinatorial search over $2^{n}$</span>
+<span id="cb4-394"><a href="#cb4-394" aria-hidden="true" tabindex="-1"></a>designs on top. @akchen2026logit show the difficulty is intrinsic rather than an</span>
+<span id="cb4-395"><a href="#cb4-395" aria-hidden="true" tabindex="-1"></a>artifact of weak algorithms: the logit SOCPD is **NP-hard even with only two customer</span>
+<span id="cb4-396"><a href="#cb4-396" aria-hidden="true" tabindex="-1"></a>types**, and NP-hard even to *approximate* within a nontrivial factor, so no</span>
+<span id="cb4-397"><a href="#cb4-397" aria-hidden="true" tabindex="-1"></a>polynomial-time method can promise a near-optimal design in general.</span>
+<span id="cb4-398"><a href="#cb4-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-399"><a href="#cb4-399" aria-hidden="true" tabindex="-1"></a>Their contribution is that, the hardness notwithstanding, the problem admits an *exact*</span>
+<span id="cb4-400"><a href="#cb4-400" aria-hidden="true" tabindex="-1"></a>reformulation. Exploiting the convexity latent in the log-sum-exp structure of the</span>
+<span id="cb4-401"><a href="#cb4-401" aria-hidden="true" tabindex="-1"></a>logit, they recast @eq-sm-socpd as a **mixed-integer convex program**—concretely a</span>
+<span id="cb4-402"><a href="#cb4-402" aria-hidden="true" tabindex="-1"></a>mixed-integer *exponential-cone* program, given in three formulations of increasing</span>
+<span id="cb4-403"><a href="#cb4-403" aria-hidden="true" tabindex="-1"></a>tightness—that modern conic solvers drive to *provable* optimality, or to a certified</span>
+<span id="cb4-404"><a href="#cb4-404" aria-hidden="true" tabindex="-1"></a>optimality gap, on instances far larger than enumeration could reach, and with higher</span>
+<span id="cb4-405"><a href="#cb4-405" aria-hidden="true" tabindex="-1"></a>realized share than the share-of-choice heuristics and branch-and-price schemes that</span>
+<span id="cb4-406"><a href="#cb4-406" aria-hidden="true" tabindex="-1"></a>preceded them. The lesson for the structural modeler is that the logit is not only an</span>
+<span id="cb4-407"><a href="#cb4-407" aria-hidden="true" tabindex="-1"></a>estimation object but an optimization primitive: the same $\exp(V)/(1+\exp(V))$ that</span>
+<span id="cb4-408"><a href="#cb4-408" aria-hidden="true" tabindex="-1"></a>makes shares tractable to *compute* is what makes them convex-representable and hence</span>
+<span id="cb4-409"><a href="#cb4-409" aria-hidden="true" tabindex="-1"></a>exactly *optimizable*. The brute-force enumeration below makes the objective—and the</span>
+<span id="cb4-410"><a href="#cb4-410" aria-hidden="true" tabindex="-1"></a>wall it runs into—concrete on a ten-attribute instance; the exact conic method is what</span>
+<span id="cb4-411"><a href="#cb4-411" aria-hidden="true" tabindex="-1"></a>carries the identical objective to the dozens of attributes a real design space spans.</span>
+<span id="cb4-412"><a href="#cb4-412" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-413"><a href="#cb4-413" aria-hidden="true" tabindex="-1"></a><span class="in">```{r sm-socpd, message=FALSE, warning=FALSE}</span></span>
+<span id="cb4-414"><a href="#cb4-414" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">29</span>)</span>
+<span id="cb4-415"><a href="#cb4-415" aria-hidden="true" tabindex="-1"></a>n_attr <span class="ot">&lt;-</span> <span class="dv">10</span>; K <span class="ot">&lt;-</span> <span class="dv">5</span>                     <span class="co"># 10 binary attributes -&gt; 2^10 designs; 5 segments</span></span>
+<span id="cb4-416"><a href="#cb4-416" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span> <span class="sc">/</span> K, K)                  <span class="co"># segment weights</span></span>
+<span id="cb4-417"><a href="#cb4-417" aria-hidden="true" tabindex="-1"></a>beta   <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(K <span class="sc">*</span> n_attr, <span class="dv">0</span>, <span class="fl">1.2</span>), K, n_attr)   <span class="co"># partworths by segment</span></span>
+<span id="cb4-418"><a href="#cb4-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-419"><a href="#cb4-419" aria-hidden="true" tabindex="-1"></a>designs <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">expand.grid</span>(<span class="fu">rep</span>(<span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)), n_attr)))  <span class="co"># every 2^10 design</span></span>
+<span id="cb4-420"><a href="#cb4-420" aria-hidden="true" tabindex="-1"></a>share   <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(<span class="fu">plogis</span>(designs <span class="sc">%*%</span> <span class="fu">t</span>(beta)) <span class="sc">%*%</span> lambda)   <span class="co"># share of choice, eq. sm-socpd</span></span>
+<span id="cb4-421"><a href="#cb4-421" aria-hidden="true" tabindex="-1"></a>best    <span class="ot">&lt;-</span> <span class="fu">which.max</span>(share)</span>
+<span id="cb4-422"><a href="#cb4-422" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-423"><a href="#cb4-423" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Attributes: %d    Designs enumerated: %d    Optimal share-of-choice: %.3f</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb4-424"><a href="#cb4-424" aria-hidden="true" tabindex="-1"></a>            n_attr, <span class="fu">nrow</span>(designs), share[best]))</span>
+<span id="cb4-425"><a href="#cb4-425" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Optimal design (attribute on/off):"</span>, designs[best, ], <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-426"><a href="#cb4-426" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"At 30 attributes, the same brute force would face %.3g candidate designs.</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb4-427"><a href="#cb4-427" aria-hidden="true" tabindex="-1"></a>            <span class="dv">2</span><span class="sc">^</span><span class="dv">30</span>))</span>
+<span id="cb4-428"><a href="#cb4-428" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-429"><a href="#cb4-429" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-430"><a href="#cb4-430" aria-hidden="true" tabindex="-1"></a>Ten attributes enumerate in a blink; thirty would face over a billion designs, and the</span>
+<span id="cb4-431"><a href="#cb4-431" aria-hidden="true" tabindex="-1"></a>non-concavity means the shortcuts that tame smooth problems do not apply. That gap</span>
+<span id="cb4-432"><a href="#cb4-432" aria-hidden="true" tabindex="-1"></a>between a toy instance and a real one is exactly what @akchen2026logit close—turning a</span>
+<span id="cb4-433"><a href="#cb4-433" aria-hidden="true" tabindex="-1"></a>provably hard design problem into one a solver can certify—and it is the reason the</span>
+<span id="cb4-434"><a href="#cb4-434" aria-hidden="true" tabindex="-1"></a>humble logit of @eq-sm-logit reaches past demand estimation into optimal product design.</span>
+<span id="cb4-435"><a href="#cb4-435" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-436"><a href="#cb4-436" aria-hidden="true" tabindex="-1"></a><span class="fu">## Dynamics, Learning, and Forward-Looking Agents {#sec-sm-dynamic}</span></span>
+<span id="cb4-437"><a href="#cb4-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-438"><a href="#cb4-438" aria-hidden="true" tabindex="-1"></a>Many marketing decisions are intertemporal—when to buy a durable, whether a</span>
+<span id="cb4-439"><a href="#cb4-439" aria-hidden="true" tabindex="-1"></a>salesperson exerts effort today for a bonus tomorrow, how a relationship evolves—and</span>
+<span id="cb4-440"><a href="#cb4-440" aria-hidden="true" tabindex="-1"></a>a static choice model cannot represent them. **Dynamic structural models** treat the</span>
+<span id="cb4-441"><a href="#cb4-441" aria-hidden="true" tabindex="-1"></a>agent as solving a sequential optimization, and they are the technically hardest but</span>
+<span id="cb4-442"><a href="#cb4-442" aria-hidden="true" tabindex="-1"></a>most rewarding members of the family.</span>
+<span id="cb4-443"><a href="#cb4-443" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-444"><a href="#cb4-444" aria-hidden="true" tabindex="-1"></a>The canonical object is a forward-looking agent who, in state $s_t$, chooses action</span>
+<span id="cb4-445"><a href="#cb4-445" aria-hidden="true" tabindex="-1"></a>$a_t$ to maximize the expected present value of a stream of payoffs,</span>
+<span id="cb4-446"><a href="#cb4-446" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-447"><a href="#cb4-447" aria-hidden="true" tabindex="-1"></a>V(s_t) = \max_{a_t}\;</span>
+<span id="cb4-448"><a href="#cb4-448" aria-hidden="true" tabindex="-1"></a>  \Big<span class="sc">\{</span> u(s_t, a_t; \boldsymbol{\theta})</span>
+<span id="cb4-449"><a href="#cb4-449" aria-hidden="true" tabindex="-1"></a><span class="ss">       + </span>\delta\, \mathbb{E}<span class="sc">\!</span>\left<span class="co">[</span><span class="ot">\, V(s_{t+1}) \mid s_t, a_t \,\right</span><span class="co">]</span> \Big<span class="sc">\}</span>,</span>
+<span id="cb4-450"><a href="#cb4-450" aria-hidden="true" tabindex="-1"></a>$$ {#eq-sm-bellman}</span>
+<span id="cb4-451"><a href="#cb4-451" aria-hidden="true" tabindex="-1"></a>the **Bellman equation**, where $\delta$ is the discount factor, $u(\cdot)$ the</span>
+<span id="cb4-452"><a href="#cb4-452" aria-hidden="true" tabindex="-1"></a>per-period payoff, and the expectation runs over the law of motion of the state.</span>
+<span id="cb4-453"><a href="#cb4-453" aria-hidden="true" tabindex="-1"></a>Estimation recovers the payoff primitives $\boldsymbol{\theta}$ from observed</span>
+<span id="cb4-454"><a href="#cb4-454" aria-hidden="true" tabindex="-1"></a>state–action sequences, typically by nesting the solution of @eq-sm-bellman inside a</span>
+<span id="cb4-455"><a href="#cb4-455" aria-hidden="true" tabindex="-1"></a>likelihood. The substantive range is wide. @allenby1999dynamic model purchase</span>
+<span id="cb4-456"><a href="#cb4-456" aria-hidden="true" tabindex="-1"></a>*timing* in direct marketing as a dynamic decision, recovering when a household will</span>
+<span id="cb4-457"><a href="#cb4-457" aria-hidden="true" tabindex="-1"></a>next buy. @gowrisankaran2012dynamics let consumer preferences evolve and apply the</span>
+<span id="cb4-458"><a href="#cb4-458" aria-hidden="true" tabindex="-1"></a>machinery to durable-goods markets, where today's purchase forecloses tomorrow's.</span>
+<span id="cb4-459"><a href="#cb4-459" aria-hidden="true" tabindex="-1"></a>@hitsch2006empirical study optimal product launch and exit under demand uncertainty,</span>
+<span id="cb4-460"><a href="#cb4-460" aria-hidden="true" tabindex="-1"></a>treating the firm as a forward-looking decision maker learning about an uncertain</span>
+<span id="cb4-461"><a href="#cb4-461" aria-hidden="true" tabindex="-1"></a>market. @netzer2008hidden model the dynamics of customer–firm relationships as a</span>
+<span id="cb4-462"><a href="#cb4-462" aria-hidden="true" tabindex="-1"></a>**hidden Markov** process, in which a latent relationship state migrates over time</span>
+<span id="cb4-463"><a href="#cb4-463" aria-hidden="true" tabindex="-1"></a>and governs observable purchase behavior—a structural account of relationship</span>
+<span id="cb4-464"><a href="#cb4-464" aria-hidden="true" tabindex="-1"></a>"states" rather than a reduced-form churn score.</span>
+<span id="cb4-465"><a href="#cb4-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-466"><a href="#cb4-466" aria-hidden="true" tabindex="-1"></a>Forward-looking *firms* appear on the compensation side of the same coin.</span>
+<span id="cb4-467"><a href="#cb4-467" aria-hidden="true" tabindex="-1"></a>@misra2011structural estimate a structural model of sales-force incentives in which</span>
+<span id="cb4-468"><a href="#cb4-468" aria-hidden="true" tabindex="-1"></a>the salesperson chooses unobserved effort given the compensation plan, the firm</span>
+<span id="cb4-469"><a href="#cb4-469" aria-hidden="true" tabindex="-1"></a>designs the plan anticipating that response, and the recovered primitives (the cost</span>
+<span id="cb4-470"><a href="#cb4-470" aria-hidden="true" tabindex="-1"></a>of effort, the agent's risk attitude) support counterfactual plans the firm never</span>
+<span id="cb4-471"><a href="#cb4-471" aria-hidden="true" tabindex="-1"></a>tried—work that @kim2022structural extend to a multitasking sales force allocating</span>
+<span id="cb4-472"><a href="#cb4-472" aria-hidden="true" tabindex="-1"></a>effort across acquisition and retention. On the demand side over the customer</span>
+<span id="cb4-473"><a href="#cb4-473" aria-hidden="true" tabindex="-1"></a>lifecycle, @gupta2006modeling synthesize structural and other models of customer</span>
+<span id="cb4-474"><a href="#cb4-474" aria-hidden="true" tabindex="-1"></a>lifetime value, and @kamakura2005choice embed choice models in customer-relationship</span>
+<span id="cb4-475"><a href="#cb4-475" aria-hidden="true" tabindex="-1"></a>strategy. @fig-sm-taxonomy organizes the marketing applications cited in this</span>
+<span id="cb4-476"><a href="#cb4-476" aria-hidden="true" tabindex="-1"></a>chapter by the decision they model.</span>
+<span id="cb4-477"><a href="#cb4-477" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-480"><a href="#cb4-480" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb4-481"><a href="#cb4-481" aria-hidden="true" tabindex="-1"></a>%%| label: fig-sm-taxonomy</span>
+<span id="cb4-482"><a href="#cb4-482" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">A taxonomy of structural marketing applications by the decision being modeled. Static discrete-choice and demand models sit on the left; dynamic, forward-looking models on the right. Each leaf names a representative study from this chapter.</span><span class="ot">"</span></span>
+<span id="cb4-483"><a href="#cb4-483" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb4-484"><a href="#cb4-484" aria-hidden="true" tabindex="-1"></a>    R[Structural marketing models] --&gt; S[Static]</span>
+<span id="cb4-485"><a href="#cb4-485" aria-hidden="true" tabindex="-1"></a>    R --&gt; D[Dynamic / forward-looking]</span>
+<span id="cb4-486"><a href="#cb4-486" aria-hidden="true" tabindex="-1"></a>    S --&gt; S1[Demand &amp; price elasticity&lt;br/&gt;montgomery1999estimating]</span>
+<span id="cb4-487"><a href="#cb4-487" aria-hidden="true" tabindex="-1"></a>    S --&gt; S2[Discrete choice&lt;br/&gt;dube2002structural · heiss2002structural]</span>
+<span id="cb4-488"><a href="#cb4-488" aria-hidden="true" tabindex="-1"></a>    S --&gt; S3[Competitive conduct&lt;br/&gt;kadiyali2001structural]</span>
+<span id="cb4-489"><a href="#cb4-489" aria-hidden="true" tabindex="-1"></a>    D --&gt; D1[Purchase timing &amp; durables&lt;br/&gt;allenby1999dynamic · gowrisankaran2012dynamics]</span>
+<span id="cb4-490"><a href="#cb4-490" aria-hidden="true" tabindex="-1"></a>    D --&gt; D2[Customer relationships&lt;br/&gt;netzer2008hidden · gupta2006modeling]</span>
+<span id="cb4-491"><a href="#cb4-491" aria-hidden="true" tabindex="-1"></a>    D --&gt; D3[Salesforce incentives&lt;br/&gt;misra2011structural · kim2022structural]</span>
+<span id="cb4-492"><a href="#cb4-492" aria-hidden="true" tabindex="-1"></a>    D --&gt; D4[Product launch &amp; <span class="fu">exit</span>&lt;br/&gt;hitsch2006empirical]</span>
+<span id="cb4-493"><a href="#cb4-493" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-494"><a href="#cb4-494" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-495"><a href="#cb4-495" aria-hidden="true" tabindex="-1"></a>The dynamic apparatus also extends to settings where behavior and content</span>
+<span id="cb4-496"><a href="#cb4-496" aria-hidden="true" tabindex="-1"></a>co-evolve. @goh2013social model the co-evolution of user behavior in social media,</span>
+<span id="cb4-497"><a href="#cb4-497" aria-hidden="true" tabindex="-1"></a>and @rutz2011modeling use a structural model to disentangle the *indirect* effects</span>
+<span id="cb4-498"><a href="#cb4-498" aria-hidden="true" tabindex="-1"></a>of paid search advertising—how a search click today shifts later behavior—an effect</span>
+<span id="cb4-499"><a href="#cb4-499" aria-hidden="true" tabindex="-1"></a>invisible to a single-period attribution model. Price promotions, too, have dynamic</span>
+<span id="cb4-500"><a href="#cb4-500" aria-hidden="true" tabindex="-1"></a>consequences: @elberg2019dynamic study how promotions move purchases across time</span>
+<span id="cb4-501"><a href="#cb4-501" aria-hidden="true" tabindex="-1"></a>rather than merely expanding the category, a stockpiling response that only a</span>
+<span id="cb4-502"><a href="#cb4-502" aria-hidden="true" tabindex="-1"></a>dynamic model represents correctly.</span>
+<span id="cb4-503"><a href="#cb4-503" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-504"><a href="#cb4-504" aria-hidden="true" tabindex="-1"></a><span class="fu">## Identification: What Can and Cannot Be Recovered {#sec-sm-identification}</span></span>
+<span id="cb4-505"><a href="#cb4-505" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-506"><a href="#cb4-506" aria-hidden="true" tabindex="-1"></a>A model is **identified** if distinct parameter values imply distinct distributions</span>
+<span id="cb4-507"><a href="#cb4-507" aria-hidden="true" tabindex="-1"></a>of the observable data; without identification, no estimator—however clever—can</span>
+<span id="cb4-508"><a href="#cb4-508" aria-hidden="true" tabindex="-1"></a>recover the truth, and a perfectly converged optimizer may report a number that the</span>
+<span id="cb4-509"><a href="#cb4-509" aria-hidden="true" tabindex="-1"></a>data do not pin down. Because structural models lean on assumptions for</span>
+<span id="cb4-510"><a href="#cb4-510" aria-hidden="true" tabindex="-1"></a>identification, naming the threats is as important as writing the likelihood.</span>
+<span id="cb4-511"><a href="#cb4-511" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-512"><a href="#cb4-512" aria-hidden="true" tabindex="-1"></a>The first and most pervasive threat is **endogeneity**, already met twice: price is</span>
+<span id="cb4-513"><a href="#cb4-513" aria-hidden="true" tabindex="-1"></a>set by agents who observe demand shocks the analyst does not, so the price</span>
+<span id="cb4-514"><a href="#cb4-514" aria-hidden="true" tabindex="-1"></a>coefficient is identified only through an exclusion restriction—a cost or competitor</span>
+<span id="cb4-515"><a href="#cb4-515" aria-hidden="true" tabindex="-1"></a>instrument that shifts the choice set without entering utility directly. When no</span>
+<span id="cb4-516"><a href="#cb4-516" aria-hidden="true" tabindex="-1"></a>valid instrument exists, the elasticity is not identified, full stop.</span>
+<span id="cb4-517"><a href="#cb4-517" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-518"><a href="#cb4-518" aria-hidden="true" tabindex="-1"></a>The second is **functional-form dependence**. In a static logit the substitution</span>
+<span id="cb4-519"><a href="#cb4-519" aria-hidden="true" tabindex="-1"></a>pattern is dictated by the IIA assumption rather than estimated, so a counterfactual</span>
+<span id="cb4-520"><a href="#cb4-520" aria-hidden="true" tabindex="-1"></a>that turns on cross-elasticities is identified by assumption, not by data; relaxing</span>
+<span id="cb4-521"><a href="#cb4-521" aria-hidden="true" tabindex="-1"></a>to nested or random-coefficient logit buys realism at the cost of additional</span>
+<span id="cb4-522"><a href="#cb4-522" aria-hidden="true" tabindex="-1"></a>parameters that themselves require variation to identify.</span>
+<span id="cb4-523"><a href="#cb4-523" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-524"><a href="#cb4-524" aria-hidden="true" tabindex="-1"></a>The third is the **discount factor** in dynamic models. The forward-looking payoff</span>
+<span id="cb4-525"><a href="#cb4-525" aria-hidden="true" tabindex="-1"></a>in @eq-sm-bellman and the per-period payoff are notoriously hard to separate: a</span>
+<span id="cb4-526"><a href="#cb4-526" aria-hidden="true" tabindex="-1"></a>patient agent with low effort costs can mimic an impatient agent with high effort</span>
+<span id="cb4-527"><a href="#cb4-527" aria-hidden="true" tabindex="-1"></a>costs, so $\delta$ is typically *fixed* rather than estimated, with the</span>
+<span id="cb4-528"><a href="#cb4-528" aria-hidden="true" tabindex="-1"></a>counterfactual's credibility contingent on that choice.</span>
+<span id="cb4-529"><a href="#cb4-529" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-530"><a href="#cb4-530" aria-hidden="true" tabindex="-1"></a>The fourth is the **equilibrium and conduct assumption**: inferring competitive</span>
+<span id="cb4-531"><a href="#cb4-531" aria-hidden="true" tabindex="-1"></a>conduct from price–quantity comovement <span class="co">[</span><span class="ot">@kadiyali2001structural</span><span class="co">]</span> identifies conduct</span>
+<span id="cb4-532"><a href="#cb4-532" aria-hidden="true" tabindex="-1"></a>only if the maintained equilibrium concept is correct, and a misspecified conduct</span>
+<span id="cb4-533"><a href="#cb4-533" aria-hidden="true" tabindex="-1"></a>parameter contaminates the recovered costs.</span>
+<span id="cb4-534"><a href="#cb4-534" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-535"><a href="#cb4-535" aria-hidden="true" tabindex="-1"></a>The pattern across all four is the same and is worth internalizing as the chapter's</span>
+<span id="cb4-536"><a href="#cb4-536" aria-hidden="true" tabindex="-1"></a>governing principle: structural identification trades *data variation* for</span>
+<span id="cb4-537"><a href="#cb4-537" aria-hidden="true" tabindex="-1"></a>*assumptions*, and every counterfactual inherits the assumptions that identified the</span>
+<span id="cb4-538"><a href="#cb4-538" aria-hidden="true" tabindex="-1"></a>parameters it uses. The honest structural paper, accordingly, reports which results</span>
+<span id="cb4-539"><a href="#cb4-539" aria-hidden="true" tabindex="-1"></a>are robust to weakening which assumption—and the practitioner reading one should ask,</span>
+<span id="cb4-540"><a href="#cb4-540" aria-hidden="true" tabindex="-1"></a>of every headline number, *what assumption is this resting on?*</span>
+<span id="cb4-541"><a href="#cb4-541" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-542"><a href="#cb4-542" aria-hidden="true" tabindex="-1"></a><span class="fu">## Getting Started</span></span>
+<span id="cb4-543"><a href="#cb4-543" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-544"><a href="#cb4-544" aria-hidden="true" tabindex="-1"></a>For readers building toward this literature, the graduate econometrics texts of</span>
+<span id="cb4-545"><a href="#cb4-545" aria-hidden="true" tabindex="-1"></a>@greene2003econometric and @cameron2005microeconometrics supply the estimation</span>
+<span id="cb4-546"><a href="#cb4-546" aria-hidden="true" tabindex="-1"></a>foundations; @hensher2005applied is the standard reference for the discrete-choice</span>
+<span id="cb4-547"><a href="#cb4-547" aria-hidden="true" tabindex="-1"></a>models that anchor most marketing applications; @diamantopoulos2013quantitative</span>
+<span id="cb4-548"><a href="#cb4-548" aria-hidden="true" tabindex="-1"></a>surveys quantitative modeling in marketing more broadly; and the *Handbook of</span>
+<span id="cb4-549"><a href="#cb4-549" aria-hidden="true" tabindex="-1"></a>Econometrics* policy-evaluation chapters [@heckman2007econometric1;</span>
+<span id="cb4-550"><a href="#cb4-550" aria-hidden="true" tabindex="-1"></a>@heckman2007econometric; @abbring2007econometric3] connect structural estimation to</span>
+<span id="cb4-551"><a href="#cb4-551" aria-hidden="true" tabindex="-1"></a>the identification of treatment effects. A productive path is to reproduce a linear</span>
+<span id="cb4-552"><a href="#cb4-552" aria-hidden="true" tabindex="-1"></a>demand-and-supply system (@sec-sm-demand-supply), then a logit with endogenous price</span>
+<span id="cb4-553"><a href="#cb4-553" aria-hidden="true" tabindex="-1"></a>(@sec-sm-discrete-choice), before attempting a dynamic model—each step adds one</span>
+<span id="cb4-554"><a href="#cb4-554" aria-hidden="true" tabindex="-1"></a>layer of structure, and the endogeneity intuition learned in the first carries</span>
+<span id="cb4-555"><a href="#cb4-555" aria-hidden="true" tabindex="-1"></a>unchanged into the last.</span>
+<span id="cb4-556"><a href="#cb4-556" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-557"><a href="#cb4-557" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb4-558"><a href="#cb4-558" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-559"><a href="#cb4-559" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A model is **structural** when its parameters are economic primitives—tastes,</span>
+<span id="cb4-560"><a href="#cb4-560" aria-hidden="true" tabindex="-1"></a>  costs, information, conduct—and are therefore policy invariant; the payoff is</span>
+<span id="cb4-561"><a href="#cb4-561" aria-hidden="true" tabindex="-1"></a>  counterfactual simulation of policies never observed (@eq-sm-structural).</span>
+<span id="cb4-562"><a href="#cb4-562" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Structural modeling and causal inference are complements: causal estimates</span>
+<span id="cb4-563"><a href="#cb4-563" aria-hidden="true" tabindex="-1"></a>  discipline structural models, and structural reasoning locates the endogeneity a</span>
+<span id="cb4-564"><a href="#cb4-564" aria-hidden="true" tabindex="-1"></a>  causal design must address.</span>
+<span id="cb4-565"><a href="#cb4-565" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Endogeneity of price** is the central econometric problem, visible already in</span>
+<span id="cb4-566"><a href="#cb4-566" aria-hidden="true" tabindex="-1"></a>  linear supply and demand (@eq-sm-equilibrium) and recurring inside discrete-choice</span>
+<span id="cb4-567"><a href="#cb4-567" aria-hidden="true" tabindex="-1"></a>  demand; it is resolved only by a credible exclusion restriction.</span>
+<span id="cb4-568"><a href="#cb4-568" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MLE** (full likelihood, efficient if correct) and **GMM** (moment conditions,</span>
+<span id="cb4-569"><a href="#cb4-569" aria-hidden="true" tabindex="-1"></a>  robust) are the two workhorse estimators; the choice is about how much of the</span>
+<span id="cb4-570"><a href="#cb4-570" aria-hidden="true" tabindex="-1"></a>  data-generating process one is willing to specify (@tbl-sm-mle-gmm).</span>
+<span id="cb4-571"><a href="#cb4-571" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Dynamic** models recover forward-looking primitives via the Bellman equation</span>
+<span id="cb4-572"><a href="#cb4-572" aria-hidden="true" tabindex="-1"></a>  (@eq-sm-bellman) but face hard identification of the discount factor.</span>
+<span id="cb4-573"><a href="#cb4-573" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Every counterfactual inherits the assumptions that identified its parameters; the</span>
+<span id="cb4-574"><a href="#cb4-574" aria-hidden="true" tabindex="-1"></a>  credible structural paper reports which conclusions survive weakening which</span>
+<span id="cb4-575"><a href="#cb4-575" aria-hidden="true" tabindex="-1"></a>  assumption (@sec-sm-identification).</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

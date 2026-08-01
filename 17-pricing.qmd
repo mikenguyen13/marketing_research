@@ -553,7 +553,17 @@ of the total. **Anchoring** [@tversky1974] supplies the third: an external refer
 9-ending) sets the standard against which the focal price is judged, and insufficient
 adjustment away from that anchor moves willingness to pay. Anchoring and reference-price
 formation are two views of the same comparison machinery that the reference-dependent
-demand model in @sec-reference-prices makes precise.
+demand model in @sec-reference-prices makes precise. Half a century of evidence
+confirms the phenomenon is real and large but far from indiscriminate: meta-analyzing
+more than 2,600 effect sizes, @schley2026anchoring put the core high-versus-low-anchor
+effect at a large Hedges' $g \approx 0.83$ that survives aggressive correction for
+publication bias, yet one sharply bounded by *relevance*—incidental or arbitrary
+anchors (a random number, a figure borrowed from an unrelated dimension) move judgment
+far less than informative ones, and incentives and debiasing shrink it further. The
+managerial reading for pricing is exact: a *credible* reference—a plausible regular
+price, a manufacturer's suggested price, a first offer that can be defended as
+computed—anchors willingness to pay, whereas the folklore that any arbitrary number
+will do is precisely the case the evidence does not support.
 
 A fourth theory governs the intertemporal side of pricing. **Hyperbolic
 discounting**, the present-biased finding that near-term costs and benefits are
@@ -679,6 +689,108 @@ revenue management. Both are now studied structurally on transaction data
 consumers** who anticipate price paths: when buyers expect a clearance, they delay,
 and the firm's optimal path must account for strategic waiting—the durable-goods
 monopolist's commitment problem.
+
+### Contextual Bandits: Estimation, Regret, and High-Dimensional Assortment-Pricing {#sec-contextual-bandits}
+
+The demand-learning problem is the canonical **contextual bandit**. Each period a context
+$\mathbf{x}_t$ (customer and market features) arrives; the firm picks an action
+$\mathbf{a}$ (a price, an assortment) from an available set; it observes a reward
+(revenue) that is a noisy function of $\mathbf{x}_t$ and $\mathbf{a}$; and it seeks to
+minimize **regret**, the cumulative revenue gap against an oracle that knew the reward
+function from the start. Exploration (try informative actions to learn the function) and
+exploitation (bank revenue under the current estimate) are the two ends the firm must
+balance, and two recent results sharpen how.
+
+The first is a clarifying equivalence. @he2026estimation show that in a linear contextual
+bandit, **regret and estimation error are two sides of one coin**. Accurate estimation of
+the reward parameters is *sufficient* for low regret—a Cauchy–Schwarz bound turns a good
+estimate into good decisions—and, less obviously, *necessary*: any low-regret algorithm
+can be turned into an accurate estimator, so a regret lower bound is at bottom an
+estimation lower bound. The payoff is that the whole statistical toolbox for estimation
+lower bounds (Cramér–Rao, minimax) transfers to bandits, yielding new or tighter regret
+bounds. The simulation below runs LinUCB on a linear bandit and tracks both quantities:
+regret stays sublinear while the estimation error decays, and the two move together
+round by round.
+
+```{r pricing-linucb, message=FALSE, warning=FALSE}
+#| label: fig-pricing-linucb
+#| fig-cap: "A linear contextual bandit (LinUCB). Left: cumulative regret grows
+#|   sublinearly and flattens as the reward parameters are learned. Right: the parameter
+#|   estimation error decays. The two are linked—rounds with larger estimation error
+#|   incur larger regret—which is the equivalence @he2026estimation formalize."
+set.seed(17)
+d <- 6; K <- 10; T <- 3000; alpha <- 0.5
+theta_star <- rnorm(d)
+A <- diag(d); b <- rep(0, d)                       # ridge sufficient statistics
+cum_regret <- numeric(T); est_err <- numeric(T)
+for (t in 1:T) {
+  X    <- matrix(rnorm(K * d), K, d)               # K candidate arms this round
+  Ainv <- solve(A); th <- Ainv %*% b
+  ucb  <- as.numeric(X %*% th) + alpha * sqrt(rowSums((X %*% Ainv) * X))
+  a    <- which.max(ucb)
+  mu   <- as.numeric(X %*% theta_star)             # true mean rewards
+  r    <- mu[a] + rnorm(1, 0, 0.3)
+  A <- A + tcrossprod(X[a, ]); b <- b + r * X[a, ]
+  cum_regret[t] <- (if (t > 1) cum_regret[t - 1] else 0) + (max(mu) - mu[a])
+  est_err[t]    <- sqrt(sum((th - theta_star)^2))
+}
+op <- par(mfrow = c(1, 2), mar = c(4, 4, 1, 1))
+plot(cum_regret, type = "l", lwd = 2, xlab = "Round t", ylab = "Cumulative regret")
+plot(est_err, type = "l", lwd = 2, col = "firebrick", xlab = "Round t",
+     ylab = "Estimation error  ||theta_hat - theta*||")
+par(op)
+cat(sprintf("Cumulative regret over %d rounds: %.1f (sublinear)\n", T, cum_regret[T]))
+cat(sprintf("Corr(per-round regret, estimation error): %.2f\n",
+            cor(diff(cum_regret), est_err[-T])))
+```
+
+The second result scales the idea to real pricing, which is **doubly high-dimensional**:
+both the context (many customer features) and the action (which of many products, at
+which prices—a *joint* assortment-pricing decision) live in high-dimensional spaces, so
+the reward's context-by-action interaction matrix $\boldsymbol\Theta$ has far too many
+entries to estimate from a firm's data. @cai2026doubly make it tractable and interpretable
+by assuming $\boldsymbol\Theta$ is **low-rank**—a handful of latent factors summarize how
+customer types map onto product-and-price configurations. A low-rank matrix estimator
+inside an explore/exploit loop earns provable regret, and on real assortment-pricing data
+(an instant-noodles manufacturer, a beauty startup) delivers at least threefold revenue or
+profit gains, with the latent factors readable as interpretable segments. The replication
+contrasts the low-rank estimator with naive full least squares in exactly this regime.
+
+```{r pricing-lowrank-bandit, message=FALSE, warning=FALSE}
+set.seed(18)
+p <- 25; q <- 25; r <- 2; K <- 40                   # doubly high-dim: 625 interactions
+U <- matrix(rnorm(p * r), p, r); V <- matrix(rnorm(q * r), q, r)
+Theta_star <- U %*% t(V)                             # rank-2 truth (latent factors)
+actions    <- matrix(rnorm(K * q), K, q)             # candidate assortment-price configs
+
+T0   <- 700                                          # exploration budget ~ #parameters
+Xexp <- matrix(rnorm(T0 * p), T0, p)
+Aexp <- actions[sample.int(K, T0, replace = TRUE), ]
+y    <- rowSums((Xexp %*% Theta_star) * Aexp) + rnorm(T0, 0, 1.5)   # reward = x' Theta a
+Phi  <- t(vapply(1:T0, function(i) as.numeric(outer(Xexp[i, ], Aexp[i, ])), numeric(p * q)))
+Theta_full <- matrix(solve(crossprod(Phi) + 1e-3 * diag(p * q), crossprod(Phi, y)), p, q)
+sv         <- svd(Theta_full)                        # low-rank denoising: truncate to rank r
+Theta_lr   <- sv$u[, 1:r] %*% diag(sv$d[1:r]) %*% t(sv$v[, 1:r])
+
+# Greedy revenue of each estimate's policy on fresh contexts, vs the oracle
+eval_rev <- function(Th) mean(vapply(1:2000, function(i) {
+  x <- rnorm(p); a <- which.max(actions %*% (t(Th) %*% x))
+  as.numeric(t(x) %*% Theta_star %*% actions[a, ])
+}, 0))
+rev_oracle <- eval_rev(Theta_star)
+cat(sprintf("Mean revenue  oracle %.1f | low-rank %.1f | full-LS %.1f\n",
+            rev_oracle, eval_rev(Theta_lr), eval_rev(Theta_full)))
+cat(sprintf("Estimation error ||Theta_hat - Theta*||_F : low-rank %.1f | full-LS %.1f\n",
+            sqrt(sum((Theta_lr - Theta_star)^2)), sqrt(sum((Theta_full - Theta_star)^2))))
+```
+
+The low-rank estimator recovers $\boldsymbol\Theta^{*}$ several times more accurately than
+full least squares and captures essentially all of the oracle's revenue, while the naive
+estimator—drowning in the $p \times q$ interaction parameters the doubly-high-dimensional
+problem creates—leaves money on the table. The two papers are complements: @he2026estimation
+establishes that in bandit pricing the statistical problem *is* the decision problem, and
+@cai2026doubly supplies the structure—low rank—that makes the estimation, and hence the
+pricing, learnable when both sides of the interaction are high-dimensional.
 
 ### Personalized Pricing and the Value of Data
 

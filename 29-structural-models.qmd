@@ -366,6 +366,71 @@ instrumented estimate recovers $-\alpha$. This is the lesson that recurs across 
 structural demand paper: the price coefficient is the parameter most contaminated by
 the unobserved quality term, and a valid instrument is the remedy.
 
+### From Estimated Demand to Optimal Design: The Exact Share-of-Choice Problem {#sec-sm-socpd}
+
+Everything so far has been about *estimating* the logit—recovering $\boldsymbol\beta$
+and $\alpha$ from observed choices. The mirror-image question is *prescriptive*: given
+the estimated logit, which product should the firm build? This is the **share-of-choice
+product design (SOCPD)** problem, and it is where a demand estimate earns its keep,
+because the same partworths recovered from choice-based conjoint (@sec-conjoint) become
+the input to a design optimization. Encode a product as a binary attribute vector
+$\mathbf{x}\in\{0,1\}^{n}$ (each feature present or absent, each level chosen or not).
+With $K$ customer types of weight $\lambda_k$ and partworths $\boldsymbol\beta_k$, each
+type buys the focal product against an outside option of utility zero with the
+binary-logit probability of @eq-sm-logit, and the firm chooses the design that maximizes
+their weighted sum,
+$$
+\max_{\mathbf{x}\in\{0,1\}^{n}}\;
+f(\mathbf{x}) \;=\; \sum_{k=1}^{K} \lambda_k\,
+\frac{\exp(\boldsymbol\beta_k^{\top}\mathbf{x})}{1+\exp(\boldsymbol\beta_k^{\top}\mathbf{x})}.
+$$ {#eq-sm-socpd}
+
+The objective looks benign and is anything but. Each summand is a logistic *sigmoid*,
+and a sum of sigmoids is **not concave**, so the continuous relaxation carries multiple
+local optima and a gradient climb or a greedy attribute-flip has no optimality
+guarantee; the binary $\mathbf{x}$ then layers a combinatorial search over $2^{n}$
+designs on top. @akchen2026logit show the difficulty is intrinsic rather than an
+artifact of weak algorithms: the logit SOCPD is **NP-hard even with only two customer
+types**, and NP-hard even to *approximate* within a nontrivial factor, so no
+polynomial-time method can promise a near-optimal design in general.
+
+Their contribution is that, the hardness notwithstanding, the problem admits an *exact*
+reformulation. Exploiting the convexity latent in the log-sum-exp structure of the
+logit, they recast @eq-sm-socpd as a **mixed-integer convex program**—concretely a
+mixed-integer *exponential-cone* program, given in three formulations of increasing
+tightness—that modern conic solvers drive to *provable* optimality, or to a certified
+optimality gap, on instances far larger than enumeration could reach, and with higher
+realized share than the share-of-choice heuristics and branch-and-price schemes that
+preceded them. The lesson for the structural modeler is that the logit is not only an
+estimation object but an optimization primitive: the same $\exp(V)/(1+\exp(V))$ that
+makes shares tractable to *compute* is what makes them convex-representable and hence
+exactly *optimizable*. The brute-force enumeration below makes the objective—and the
+wall it runs into—concrete on a ten-attribute instance; the exact conic method is what
+carries the identical objective to the dozens of attributes a real design space spans.
+
+```{r sm-socpd, message=FALSE, warning=FALSE}
+set.seed(29)
+n_attr <- 10; K <- 5                     # 10 binary attributes -> 2^10 designs; 5 segments
+lambda <- rep(1 / K, K)                  # segment weights
+beta   <- matrix(rnorm(K * n_attr, 0, 1.2), K, n_attr)   # partworths by segment
+
+designs <- as.matrix(expand.grid(rep(list(c(0, 1)), n_attr)))  # every 2^10 design
+share   <- as.vector(plogis(designs %*% t(beta)) %*% lambda)   # share of choice, eq. sm-socpd
+best    <- which.max(share)
+
+cat(sprintf("Attributes: %d    Designs enumerated: %d    Optimal share-of-choice: %.3f\n",
+            n_attr, nrow(designs), share[best]))
+cat("Optimal design (attribute on/off):", designs[best, ], "\n")
+cat(sprintf("At 30 attributes, the same brute force would face %.3g candidate designs.\n",
+            2^30))
+```
+
+Ten attributes enumerate in a blink; thirty would face over a billion designs, and the
+non-concavity means the shortcuts that tame smooth problems do not apply. That gap
+between a toy instance and a real one is exactly what @akchen2026logit close—turning a
+provably hard design problem into one a solver can certify—and it is the reason the
+humble logit of @eq-sm-logit reaches past demand estimation into optimal product design.
+
 ## Dynamics, Learning, and Forward-Looking Agents {#sec-sm-dynamic}
 
 Many marketing decisions are intertemporal—when to buy a durable, whether a
