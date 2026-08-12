@@ -1281,6 +1281,398 @@ legend("topleft", bty = "n", lwd = 2, lty = c(1, 2),
        legend = c("treated market", "synthetic control"))
 ```
 
+## Causal Prediction for Novel Unstructured Treatments {#sec-causal-prediction-unstructured}
+
+Every design to this point shares a premise so basic it is rarely stated: the
+treatment whose effect we want has *already been administered to someone*. The
+missing-data problem of @eq-switching is that we do not observe unit $i$ under the
+other arm—but some unit was observed under that arm, and the design's job is to
+find it. Generative AI breaks this premise. When a language model drafts a subject
+line that no customer has ever received, the manager is asking for
+$\mathbb{E}[Y_i(c)]$ at a treatment value $c$ that appears *nowhere* in the data.
+No amount of randomization in the historical record identifies it, because the
+historical record contains no unit assigned to $c$.
+
+This is the problem @ellickson2026evaluating formalize as **causal prediction**:
+using the causal relationship between content features and outcomes, learned from
+content the firm *has* deployed, to forecast the outcome of content it has not.
+The setting is now the common one. Generative AI has made content creation nearly
+free, which expands the option set far faster than the firm's capacity to test it;
+selecting what to launch becomes a decision under uncertainty rather than a
+creative exercise. The contribution that matters methodologically is not the
+prediction model but the **screen**: a criterion that separates novel content
+close enough to the historical record for prediction to be trustworthy from
+content so novel that only an experiment will do.
+
+### Setup and Notation {#sec-cp-setup}
+
+Let unit $i$ receive **content** $C_i \in \mathcal{C}$, where $\mathcal{C}$ is a
+space of unstructured objects—email copy, an image, a video script. This
+generalizes the binary $D_i$ of @sec-causal-potential-outcomes to a treatment that
+is neither binary nor low-dimensional. Potential outcomes are indexed by content,
+$Y_i(c)$ for $c \in \mathcal{C}$, and the observed outcome obeys the analogue of
+@eq-switching, $Y_i = Y_i(C_i)$. Write $\mathbf{X}_i$ for the audience covariates
+that drive both which content a unit was sent and how it responds.
+
+A pretrained language model supplies an **embedding** $\phi: \mathcal{C} \to
+\mathbb{R}^p$, and we write $\mathbf{e}_i = \phi(C_i)$. In application $p$ is in
+the hundreds or thousands; in what follows, and in practice, one works with the
+leading principal components of the embedding.
+
+The estimand is not a contrast between two arms but the **mean outcome under a
+content value**,
+
+$$
+\mu(c) = \mathbb{E}\!\left[Y_i(c)\right],
+$$ {#eq-cp-estimand}
+
+the average response had the entire audience received content $c$. Managerial
+questions are contrasts built from it: $\mu(c^\star) - \mu(c_0)$ compares a
+proposed campaign against the incumbent, and $\arg\max_{c \in \mathcal{A}}
+\mu(c)$ selects from a set $\mathcal{A}$ of AI-generated candidates. Naming the
+estimand does the same work here as everywhere in this chapter, and it exposes
+immediately what is hard: $\mu(c^\star)$ is a counterfactual mean at a treatment
+value with no observations attached to it.
+
+### Assumptions {#sec-cp-assumptions}
+
+Three assumptions carry the identification, and they fail in different ways.
+
+**Assumption 1 (Representation sufficiency).** Content affects outcomes only
+through its embedding:
+
+$$
+Y_i(c) = g\!\left(\phi(c), \mathbf{X}_i, \varepsilon_i\right)
+\quad\text{for all } c \in \mathcal{C}.
+$$ {#eq-cp-a1}
+
+Substantively: the embedding retains everything about the content that moves
+response. This is an assumption about the *encoder*, not about the design, and it
+is the one most easily overlooked. It fails when a decisive feature is squeezed
+out of the representation—an embedder that normalizes numerals away will map "20%
+off" and "50% off" to nearly the same vector, and no downstream estimator can
+recover a distinction the representation has already discarded.
+
+**Assumption 2 (Unconfounded content assignment).** Given covariates, which
+content a unit received is independent of how it would have responded to any
+content:
+
+$$
+\left\{Y_i(c)\right\}_{c \in \mathcal{C}} \;\perp\; C_i \;\big|\; \mathbf{X}_i .
+$$ {#eq-cp-a2}
+
+This is the selection-on-observables condition of @sec-causal-week03, restated for
+an unstructured treatment. It is plausible in the email setting precisely because
+campaign–audience allocation is executed by recorded rules; it fails when
+managers chose copy on the basis of a demand signal they observed and the analyst
+does not.
+
+**Assumption 3 (Embedding overlap).** For the target content $c^\star$, the
+embedding lies in the support of historical embeddings, with positive conditional
+density:
+
+$$
+f\!\left(\phi(c^\star) \mid \mathbf{X}_i = \mathbf{x}\right) > 0
+\quad \text{for } \mathbf{x} \text{ in the support of } \mathbf{X}_i .
+$$ {#eq-cp-a3}
+
+This is **positivity for unstructured treatments**, the direct analogue of the
+overlap condition $0 < \Pr(D_i = 1 \mid \mathbf{X}_i) < 1$ stated in
+@sec-causal-potential-outcomes. It is the assumption generative AI attacks
+directly: the whole appeal of a generative model is that it proposes content
+unlike what came before, and the further it ventures, the more surely
+@eq-cp-a3 fails. Assumption 3 is also the only one of the three that is
+*checkable from data*, which is what makes the screen possible.
+
+### Identification {#sec-cp-identification}
+
+Under @eq-cp-a1–@eq-cp-a3 the estimand is recovered from the observed
+distribution. Let $m(\mathbf{e}, \mathbf{x}) = \mathbb{E}[Y_i \mid \mathbf{e}_i =
+\mathbf{e}, \mathbf{X}_i = \mathbf{x}]$ be the observable regression of outcome on
+embedding and covariates. Then
+
+$$
+\begin{aligned}
+\mu(c^\star)
+&= \mathbb{E}_{\mathbf{X}}\!\left[\mathbb{E}\!\left(Y_i(c^\star) \mid \mathbf{X}_i\right)\right]
+&& \text{(law of iterated expectations)}\\[2pt]
+&= \mathbb{E}_{\mathbf{X}}\!\left[\mathbb{E}\!\left(Y_i(c^\star) \mid \mathbf{X}_i,\, C_i = c^\star\right)\right]
+&& \text{(Assumption 2)}\\[2pt]
+&= \mathbb{E}_{\mathbf{X}}\!\left[\mathbb{E}\!\left(Y_i \mid \mathbf{X}_i,\, C_i = c^\star\right)\right]
+&& \text{(consistency, } Y_i = Y_i(C_i))\\[2pt]
+&= \mathbb{E}_{\mathbf{X}}\!\left[m\!\left(\phi(c^\star), \mathbf{X}_i\right)\right]
+&& \text{(Assumption 1).}
+\end{aligned}
+$$ {#eq-cp-ident}
+
+Assumption 3 does not appear as a line in @eq-cp-ident; it is what makes the third
+line *meaningful*. The conditional expectation $\mathbb{E}[Y_i \mid \mathbf{X}_i,
+C_i = c^\star]$ is a feature of the observed data only where the conditioning
+event has positive probability. Where it does not, $m$ evaluated at
+$\phi(c^\star)$ is not an estimate of anything in the data—it is whatever the
+functional form of the fitted model happens to return.
+
+The consequence is visible in the error decomposition. For a fitted $\hat m$ built
+on $n$ observations,
+
+$$
+\hat\mu(c^\star) - \mu(c^\star)
+= \underbrace{\mathbb{E}_{\mathbf{X}}\!\left[\hat m - \bar m\right]}_{\text{estimation error} \;=\; O_p(n^{-1/2})}
+\;+\;
+\underbrace{\mathbb{E}_{\mathbf{X}}\!\left[\bar m - m\right]}_{\text{extrapolation bias}},
+$$ {#eq-cp-decomp}
+
+where $\bar m$ denotes the best approximation to $m$ attainable by the fitted
+model class *on the support of the historical embeddings*. The first term is
+ordinary sampling noise and vanishes at the usual rate. The second does not shrink
+with $n$ at all. **More data does not fix extrapolation**, because the extra
+observations arrive in the region where content has already been deployed and say
+nothing about the region where it has not. This is the formal content of the
+paper's warning, and it is why the answer is a screen rather than a bigger model
+or a bigger sample.
+
+### The Support Screen {#sec-cp-screen}
+
+Because Assumption 3 is checkable, the framework attaches a reliability threshold
+to every candidate. @ellickson2026evaluating implement this as rejection sampling
+against the historical content distribution; the operational content is a distance
+to the historical support and a cutoff calibrated on the history itself.
+
+Let $\bar{\mathbf{e}}$ and $\mathbf{S}$ be the mean and covariance of the
+historical campaign embeddings, and define the distance
+
+$$
+d(c) = \sqrt{\left(\phi(c) - \bar{\mathbf{e}}\right)^{\!\top} \mathbf{S}^{-1} \left(\phi(c) - \bar{\mathbf{e}}\right)} .
+$$ {#eq-cp-dist}
+
+Set the threshold $\kappa$ to a high quantile of $d$ *evaluated on the historical
+embeddings themselves*—the $95$th percentile below—and accept a candidate for
+causal prediction if $d(c^\star) \le \kappa$. Calibrating on the history is what
+gives $\kappa$ its meaning: it asks whether the new content is more unusual than
+the firm's own past content already was.
+
+The rule partitions the candidate set into two managerially distinct piles.
+Candidates that pass are evaluated by prediction, at no experimental cost.
+Candidates that fail are not condemned—they may well be the best ideas in the
+set—but their value is *unknown*, and the correct response is to route them to a
+holdout experiment rather than to trust a number the data cannot support. The
+screen therefore converts an unanswerable question ("is this model's extrapolation
+right?") into an answerable one ("is this candidate inside the region where the
+model has been disciplined by data?").
+
+*Intuition.* A regression fitted to a firm's past campaigns is a **local
+approximation**: it is accurate over the range of content the firm has actually
+run, because that is where the residuals were minimized, and it is unconstrained
+outside it, because nothing there entered the loss. Any smooth surface looks
+roughly linear when viewed through a narrow window, so a model can fit the history
+beautifully and still be badly wrong about content just beyond it. Worse, the
+failure is asymmetric in exactly the direction that hurts: a manager searching for
+the highest predicted candidate is searching, in effect, for the point where the
+model's optimism is largest, and optimism grows fastest where the data are
+thinnest. Screening on distance to the historical support is a way of refusing to
+let the search leave the region where the model earned its credibility.
+
+### Simulation {#sec-cp-simulation}
+
+The simulation below makes the argument concrete and, critically, compares the
+screened estimator against the approach the rest of this chapter would suggest:
+fit a flexible outcome model on the historical data and predict. A firm has run
+$J = 34$ campaigns across $N = 10{,}200$ customers. Content assignment is
+confounded—campaigns are routed to high-value customers on the basis of a content
+feature—so @eq-cp-a2 is satisfied only after conditioning on $\mathbf{X}_i$. The
+true response is **inverted-U in novelty**: content far from the firm's house
+style performs *worse*, through audience mismatch, spam filtering, and brand
+incongruity. Generative AI then proposes $800$ candidates, half drawn from the
+house style and half deliberately more adventurous.
+
+```{r causal-prediction-sim}
+#| echo: true
+#| message: false
+#| warning: false
+#| label: tbl-causal-prediction
+#| tbl-cap: "Causal prediction for novel content. Candidates accepted by the support screen are predicted with near-zero bias; candidates outside the historical support are not, and the error does not shrink with sample size. Nominal intervals are optimistic even inside the support, and badly so when content is treated as varying across users rather than across the 34 campaigns."
+set.seed(20260812)
+
+p <- 5; J <- 34; nj <- 300          # embedding dims, campaigns, users/campaign
+sd_hist <- c(1.00, 0.80, 0.55, 0.35, 0.25)   # the firm's "house style"
+E_hist  <- matrix(rnorm(J * p), J, p) %*% diag(sd_hist)
+
+# Audience, and CONFOUNDED assignment: managers route campaigns whose first
+# embedding coordinate is high to high-value customers (Gumbel-max = logit).
+N <- J * nj
+X <- rnorm(N)
+util <- 1.2 * outer(X, E_hist[, 1]) -
+  matrix(0.5 * rowSums(E_hist^2), N, J, byrow = TRUE)
+camp <- max.col(util - log(-log(matrix(runif(N * J), N, J))))
+Ei <- E_hist[camp, , drop = FALSE]
+
+# Response is inverted-U in novelty: content far from the house style does
+# WORSE (audience mismatch, spam filters, brand incongruity).
+beta <- c(0.90, -0.60, 0.40, 0.25, -0.20)
+gamma <- 0.50; delta <- 0.40; rho <- 0.06
+m_true <- function(Emat, Xvec)
+  as.numeric(2 + Emat %*% beta + gamma * Xvec + delta * Xvec * Emat[, 1] -
+               rho * rowSums(Emat^2)^2)
+Y <- m_true(Ei, X) + rnorm(N, sd = 1)
+
+# Outcome model: flexible, but a LOCAL approximation to the true surface.
+dat <- data.frame(Y = Y, X = X, Ei); names(dat)[3:(2 + p)] <- paste0("e", 1:p)
+form <- Y ~ e1 + e2 + e3 + e4 + e5 + X + X:e1 + I(e1^2) + I(e2^2)
+fit <- lm(form, data = dat)
+
+# Content varies across J = 34 campaigns, not N = 10,200 users: cluster.
+Xd <- model.matrix(fit); r <- residuals(fit); bread <- solve(crossprod(Xd))
+meat <- matrix(0, ncol(Xd), ncol(Xd))
+for (j in unique(camp)) {
+  s <- colSums(Xd[camp == j, , drop = FALSE] * r[camp == j])
+  meat <- meat + tcrossprod(s)
+}
+V_cr <- bread %*% meat %*% bread * (J / (J - 1)); V_iid <- vcov(fit)
+
+# Every term is linear in X, so averaging the design row over the audience is
+# exactly the design row evaluated at mean(X). Same for the true surface.
+xbar <- mean(X)
+row_of <- function(e) {
+  nd <- data.frame(Y = 0, X = xbar, matrix(e, 1, p))
+  names(nd)[3:(2 + p)] <- paste0("e", 1:p)
+  model.matrix(form, data = nd)[1, ]
+}
+mu_true <- function(e) m_true(matrix(e, 1, p), xbar)
+
+# Generative AI proposes 800 candidates: half in the house style, half novel.
+K <- 400
+Cand <- rbind(matrix(rnorm(K * p), K, p) %*% diag(sd_hist),
+              matrix(rnorm(K * p), K, p) %*% diag(sd_hist * 2.6))
+
+# The support screen (eq-cp-dist): Mahalanobis distance to the historical
+# embeddings, threshold calibrated on the historical embeddings themselves.
+ctr <- colMeans(E_hist); S <- cov(E_hist)
+kappa  <- quantile(sqrt(mahalanobis(E_hist, ctr, S)), 0.95)
+accept <- sqrt(mahalanobis(Cand, ctr, S)) <= kappa
+
+A <- t(apply(Cand, 1, row_of))
+est <- as.numeric(A %*% coef(fit))
+se_cr <- sqrt(rowSums((A %*% V_cr) * A)); se_iid <- sqrt(rowSums((A %*% V_iid) * A))
+truth <- apply(Cand, 1, mu_true); err <- est - truth
+cov_of <- function(se) (truth >= est - 1.96 * se) & (truth <= est + 1.96 * se)
+c_iid <- cov_of(se_iid); c_cr <- cov_of(se_cr)
+
+summ <- function(idx, lab)
+  data.frame(Candidates = lab, n = sum(idx), Bias = round(mean(err[idx]), 3),
+             RMSE = round(sqrt(mean(err[idx]^2)), 3),
+             `Cov. iid` = round(mean(c_iid[idx]), 3),
+             `Cov. clustered` = round(mean(c_cr[idx]), 3), check.names = FALSE)
+knitr::kable(rbind(summ(accept, "Accepted by screen"),
+                   summ(!accept, "Rejected by screen"),
+                   summ(rep(TRUE, 2 * K), "All (no screen)")),
+             align = "lrrrrr")
+```
+
+The screen is doing nearly all of the work. Among accepted candidates the
+prediction is essentially unbiased and its RMSE is small; among rejected
+candidates the model over-predicts by an enormous margin, because the fitted
+quadratic keeps rising into a region where the true surface has turned down. That
+over-prediction is not noise—it is the second term of @eq-cp-decomp, and it would
+survive any increase in $n$.
+
+The consequence for the decision, rather than the estimate, is what a manager
+should care about, and it is sharper still.
+
+```{r causal-prediction-policy}
+#| echo: true
+#| message: false
+#| warning: false
+cat(sprintf("kappa = %.2f | accept rate %.1f%% | mean SE among accepted: iid %.3f, clustered %.3f\n",
+            kappa, 100 * mean(accept), mean(se_iid[accept]), mean(se_cr[accept])))
+
+oracle <- max(truth)
+ns <- truth[which.max(est)]
+sc <- truth[which(accept)[which.max(est[accept])]]
+cat(sprintf("Deploy the top-predicted candidate:\n  oracle   %.3f\n  no screen %.3f (regret %.3f)\n  screened  %.3f (regret %.3f)\n",
+            oracle, ns, oracle - ns, sc, oracle - sc))
+
+# Failure case: the embedding omits a feature that drives response (A1 fails).
+omega <- 1.5; u_hist <- rnorm(J)
+dat$Y2 <- m_true(Ei, X) + omega * u_hist[camp] + rnorm(N, sd = 1)
+fit2 <- lm(update(form, Y2 ~ .), data = dat)
+err2 <- as.numeric(A %*% coef(fit2)) - (truth + omega * rnorm(2 * K))
+cat(sprintf("A1 violated: accepted-set RMSE %.3f (was %.3f); accept rate unchanged at %.1f%%\n",
+            sqrt(mean(err2[accept]^2)), sqrt(mean(err[accept]^2)), 100 * mean(accept)))
+```
+
+Three results deserve to be read carefully.
+
+**The screen converts a catastrophic decision into a near-optimal one.** Selecting
+the highest-predicted candidate without screening deploys content whose true mean
+response is far *below* the incumbent, because the search maximizes the model's
+optimism and optimism peaks outside the support. Screening first, then maximizing,
+lands within a fraction of the oracle. The gain comes from *declining to rank*
+candidates the data cannot speak to, not from predicting them better.
+
+**Nominal intervals are optimistic even inside the support, and the conventional
+standard error is not close.** Treating the $10{,}200$ customers as independent
+observations of content produces standard errors around $0.035$ and coverage near
+$11\%$. But content varies across $34$ campaigns, not $10{,}200$ customers;
+clustering at the campaign level multiplies the standard error roughly fourfold
+and lifts coverage substantially. Even then coverage falls well short of $95\%$,
+and the reason is instructive: inside the support the dominant error is no longer
+sampling noise but the *approximation error* of the outcome model, which a
+sampling-based interval does not price at all. The screen makes the point estimate
+trustworthy; it does not make the nominal interval honest. Reported uncertainty for
+a causal prediction should be treated as a lower bound.
+
+**The screen protects against Assumption 3, and only Assumption 3.** In the final
+block a content feature that drives response—say the depth of the offer—is absent
+from the embedding, violating @eq-cp-a1. The accept rate is unchanged, because the
+screen examines only where a candidate sits in embedding space, and by
+construction the omitted feature is not in that space. RMSE among the *accepted*
+candidates rises more than fourfold. A representation that discards a decisive
+feature produces candidates that look reassuringly familiar and are predicted
+wrongly anyway, and no support diagnostic will raise an alarm.
+
+The simulation demonstrates that a support screen is what separates causal
+prediction from extrapolation dressed as inference: it removes essentially all of
+the bias and nearly all of the regret from selecting AI-generated content, while
+leaving untouched both the honesty of the reported interval and the adequacy of
+the representation itself.
+
+### Replication {#sec-cp-replication}
+
+@ellickson2026evaluating validate the framework on a large-scale email marketing
+application—$3.3$ million observations across $34$ campaigns—reporting improved
+out-of-sample prediction and improved real-world deployment performance relative
+to standard approaches, and using the framework to guide generation toward
+higher-performing content. That data is proprietary and is not reproduced here;
+the simulation above establishes the mechanism rather than the magnitudes, and the
+published effect sizes should be read from the paper.
+
+### Practical Guidance and Pitfalls {#sec-cp-practice}
+
+Use causal prediction when the firm has a reasonable stock of deployed content
+with recorded outcomes, when the content-to-audience allocation rule is observed,
+and when the candidate set is too large to test exhaustively. Do not use it as a
+substitute for experimentation on genuinely novel creative: the screen exists
+precisely to identify the cases where an experiment is the only honest answer, and
+a framework that accepts every candidate has been miscalibrated. In R the
+components are ordinary—an embedding obtained from a pretrained model through an
+API, `lm()` or `grf` for the outcome surface, `mahalanobis()` or a density-ratio
+classifier for the screen, and campaign-level clustered or bootstrap standard
+errors. The computational cost sits almost entirely in embedding the corpus once.
+
+Four pitfalls recur. First, **calibrating the threshold on the candidates rather
+than the history**, which lets an adventurous generation round redefine what counts
+as normal. Second, **clustering at the wrong level**: content is a
+campaign-level treatment, and user-level standard errors will understate
+uncertainty by a large factor no matter how many users are observed. Third,
+**re-using the screen as a search objective**—optimizing for candidates that sit
+closest to the historical mean produces safe, derivative content and forecloses
+the upside that motivated generative AI in the first place; the screen is a filter
+on what can be *evaluated*, not a definition of what is *good*. Fourth,
+**treating the embedding as neutral**: it is a measurement instrument with its own
+validity question (@sec-aiml-representation-measurement), and Assumption 1 is an
+assumption about that instrument, invisible to every diagnostic that operates
+downstream of it.
+
 ## Choosing a Design
 
 No design dominates; each buys identification with a different assumption, and the
@@ -1439,6 +1831,13 @@ foundational/frontier marking as the load-bearing pedagogical device.
 - Name the estimand before choosing a method, probe the identifying assumption with
   its diagnostic, and triangulate across designs whose assumptions fail for
   different reasons.
+- When the treatment is unstructured content that has never been deployed—the
+  situation generative AI creates—identification additionally requires that the
+  candidate lie inside the support of content the firm has already run
+  (@eq-cp-a3). Extrapolation bias does not shrink with sample size
+  (@eq-cp-decomp), so the remedy is a support screen that routes out-of-support
+  candidates to experimentation rather than a larger model or more data
+  [@ellickson2026evaluating].
 
 ## Further Reading
 
