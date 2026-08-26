@@ -702,6 +702,14 @@ The contours in @fig-clv-palive are the iso-value intuition of @fader2005rfmclv 
 concrete: customers with very different recency-frequency histories can share the same
 P(alive), and therefore the same future value.
 
+This section is a working tour of the BTYD family, not a full treatment of it.
+@sec-cba develops the same models from primitives, derives the likelihood, and takes
+up the extension that matters most in practice and is invisible here: making the
+purchase and attrition rates functions of *time-varying* covariates such as seasonality
+and marketing contact, which @bachmann2021tvc achieve while preserving a closed-form
+maximum likelihood. That chapter also maps the customer-base-analysis literature across
+the top marketing and economics journals.
+
 ## Econometric and Hierarchical-Bayes CLV {#sec-clv-econometric}
 
 Where BTYD models are deliberately covariate-light, the econometric tradition predicts
@@ -979,6 +987,191 @@ marketing action, not its level, and recovering that derivative requires experim
 quasi-experimental variation rather than the historical correlation between spend and
 value.
 
+## Where the Customer Came From: Adoption Pathways and Incremental CLV {#sec-clv-pathways}
+
+The uplift logic of @sec-clv-causal has a close cousin that production CLV systems almost
+never implement: the *reason* a customer entered a more valuable state is itself a
+predictor of what that state is worth. The canonical case is channel adoption. Two decades
+of multichannel research establish that customers who buy across several of a retailer's
+channels spend more than single-channel customers, and firms routinely convert that
+regularity into a business case for promotions designed to push offline shoppers online.
+The regularity, however, is estimated on a pooled population of adopters, and pooling
+assumes that an adopter is an adopter regardless of what moved them.
+
+@biswas2026channel test that assumption with transaction-level data from one of the
+largest Brazilian pet-supplies retailers (200+ stores plus a website and app, 63 months
+from January 2019 through March 2024) and reject it. They define a **channel adoption
+pathway** as the circumstance under which a previously offline-only customer first buys
+online, and compare three externally induced pathways against organic adoption:
+
+- **A macro-environmental shock**: first online purchase during the March--April 2020
+  COVID-19 lockdown, benchmarked against customers who adopted organically in
+  January--February 2020.
+- **A time-limited promotion**: adoption on the single-day Black Friday sale of
+  29 November 2019, benchmarked against organic adopters from the preceding two weeks.
+- **A loyalty-program launch**: customers who first went online to activate the program in
+  the app during August--September 2023, benchmarked against organic adopters from
+  June--July 2023.
+
+Two difference-in-differences specifications carry the argument, both with customer and
+time fixed effects. The first compares adopters with never-adopting offline-only
+customers,
+$$
+y_{it} \;=\; \gamma_i + \eta_t + \beta_0 \,\mathbb{I}\{\text{Post}_t\}\times
+\mathbb{I}\{\text{Adopter}_i\} + \beta_1' x_{it} + \varepsilon_{it},
+$$ {#eq-clv-pathway-did1}
+
+and the second compares *event* adopters with *organic* adopters, so that the coefficient
+of interest differences out the generic value of going multichannel and isolates the
+pathway,
+$$
+y_{it} \;=\; \gamma_i + \eta_t + \beta_2 \,\mathbb{I}\{\text{Event\_Adopter}_i\}\times
+\mathbb{I}\{\text{Post}_t\} + \beta_3' x_{it} + \varepsilon_{it}.
+$$ {#eq-clv-pathway-did2}
+
+These pathways are not randomized: firms can encourage adoption, but customers choose. The
+estimand is therefore an ATT for the customers who actually adopted through each pathway,
+which is the managerially relevant quantity precisely because the promotion is the thing
+the firm controls and the adoption is not.
+
+Against offline-only customers, @eq-clv-pathway-did1 reproduces the familiar result for
+every pathway: monthly spend rises 30.6% (COVID), 16.7% (Black Friday), and 18.6%
+(loyalty), with profit up 24.3%, 11.7%, and 11.0%. Against organic adopters,
+@eq-clv-pathway-did2 pulls the pathways apart. COVID adopters spend statistically
+indistinguishably from organic adopters ($-3.10$ masked currency units, $p = 0.63$) but
+keep 6.98 percentage points more of their post-adoption spend offline, a gap concentrated
+among older customers and consistent with habit persistence and consumer inertia. Black
+Friday and loyalty adopters spend materially *less* than organic adopters ($-69.88$ MCU,
+$-14.2\%$ of their pre-adoption baseline; and $-53.22$ MCU, $-9.2\%$), with event-study
+paths that spike in the adoption month and fall below trend afterward: forward buying, the
+same demand-pulling mechanism that makes trade promotions look better in the promoted week
+than over the quarter (@sec-pricing).
+
+### Pathway-aware incremental CLV {#sec-clv-pathway-clv}
+
+The consequence for CLV follows mechanically from the perpetuity of @eq-clv-naive once the
+ATT is treated as the incremental monthly profit and the retention rate is estimated by
+pathway. For adopter cohort $s$ with monthly ATT on profit $\text{ATT}_s$, monthly
+retention $r_s$, and monthly cost of capital $i$,
+$$
+\text{Incremental CLV}_s \;=\; \sum_{t=1}^{\infty}
+\frac{\text{ATT}_s \, r_s^{\,t}}{(1+i)^t}
+\;=\; \text{ATT}_s \, \frac{r_s}{1 + i - r_s},
+$$ {#eq-clv-pathway-value}
+
+with $i = 1.15^{1/12} - 1 = 1.17\%$ from the retailer's 15% annual WACC. The comparison
+that matters is between a **pooled** forecast, which estimates one incremental CLV for all
+adopters of a given event window, and a **pathway-aware** forecast estimated on the event
+adopters alone. @tbl-clv-pathway reproduces that comparison from the published ATT and
+retention inputs.
+
+```{r clv-pathway}
+#| message: false
+i_month <- 1.15^(1 / 12) - 1        # 15% annual WACC -> monthly cost of capital
+
+pathways <- tribble(
+  ~event,             ~att_event, ~att_pooled, ~ret_event, ~ret_pooled,
+  "COVID-19",             39.780,      37.370,      0.656,       0.654,
+  "Black Friday",          7.813,      18.440,      0.621,       0.633,
+  "Loyalty Program",       2.986,      18.410,      0.625,       0.565)
+
+inc_clv <- function(att, r, i = i_month) att * r / (1 + i - r)
+
+pathways <- pathways |>
+  mutate(clv_event  = inc_clv(att_event,  ret_event),
+         clv_pooled = inc_clv(att_pooled, ret_pooled),
+         bias_pct   = 100 * (clv_event - clv_pooled) / clv_pooled)
+```
+
+```{r clv-pathway-tbl}
+#| echo: false
+#| label: tbl-clv-pathway
+#| tbl-cap: "Incremental CLV relative to offline-only customers, in masked currency units, computed from @eq-clv-pathway-value with the published ATT and monthly retention inputs of @biswas2026channel. Pooling event with organic adopters overstates the value of promotion-induced adoption by 60% (Black Friday) and 79% (loyalty program), and understates COVID-induced adoption by about 7%."
+knitr::kable(
+  pathways |> transmute(Event = event,
+                        `ATT (event)`      = att_event,
+                        `ATT (pooled)`     = att_pooled,
+                        `Retention (event)`  = ret_event,
+                        `Retention (pooled)` = ret_pooled,
+                        `CLV (event)`      = round(clv_event, 3),
+                        `CLV (pooled)`     = round(clv_pooled, 3),
+                        `Bias (%)`         = round(bias_pct, 1)),
+  align = "lrrrrrrr")
+```
+
+The arithmetic is unforgiving. A pooled forecast values a Black Friday adopter at 30.8 MCU
+when the pathway-aware figure is 12.4, and a loyalty adopter at 23.3 when the pathway-aware
+figure is 4.8. (The reproduction is exact to within the rounding of the discount rate: the
+published COVID figures are 73.486 and 68.332 against 73.361 and 68.323 here, a difference
+of under 0.2% that does not touch any of the reported percentage biases.) The bias runs the other way for the COVID cohort, whose greater offline
+persistence is *profitable* at this retailer because its offline margins are higher, a
+sign that does not travel: @biswas2026channel note evidence that 69% of US multichannel
+retailers price identically online and offline and only 22% price offline higher, so the
+same inertia would be value-neutral or value-destroying elsewhere.
+
+The same inputs govern promotion evaluation. With per-customer campaign cost
+$\text{Cost}_c$ and monthly incremental profit $\text{ATT}^{\text{profit}}_{c,g}$ for
+benchmark group $g$, the $T$-month ROI and the breakeven horizon are
+$$
+\text{ROI}_{c,g}(T) = \frac{T \times \text{ATT}^{\text{profit}}_{c,g} - \text{Cost}_c}
+{\text{Cost}_c},
+\qquad
+\text{Breakeven}_{c,g} = \frac{\text{Cost}_c}{\text{ATT}^{\text{profit}}_{c,g}}.
+$$ {#eq-clv-pathway-breakeven}
+
+```{r clv-pathway-breakeven}
+#| message: false
+promos <- tribble(
+  ~promotion,          ~cost,  ~att_organic, ~att_event,
+  "Black Friday",     299.18,        23.570,      7.813,
+  "Loyalty Program",  100.00,        18.550,      2.986) |>
+  mutate(be_naive   = cost / att_organic,     # organic adopters as the benchmark
+         be_pathway = cost / att_event,       # actual induced adopters
+         ratio      = be_pathway / be_naive)
+```
+
+```{r clv-pathway-breakeven-tbl}
+#| echo: false
+#| label: tbl-clv-pathway-breakeven
+#| tbl-cap: "Breakeven horizons for two promotions designed to induce online adoption, from @eq-clv-pathway-breakeven. Benchmarking against organic adopters makes each campaign appear to recover its cost three to six times faster than the pathway-aware estimate implies."
+knitr::kable(
+  promos |> transmute(Promotion = promotion,
+                      `Cost/adopter (MCU)` = cost,
+                      `ATT organic` = att_organic,
+                      `ATT event`   = att_event,
+                      `Breakeven, naive (mo)`   = round(be_naive, 2),
+                      `Breakeven, pathway (mo)` = round(be_pathway, 2),
+                      `Ratio` = round(ratio, 1)),
+  align = "lrrrrrr")
+```
+
+A Black Friday campaign that appears to pay for itself in 13 months takes 39; a loyalty
+program that appears to pay back in 5.4 months takes 33.5. Note what the error is *not*:
+it is not that the promotions fail to move customers online, nor that induced adopters are
+worthless relative to never-adopters. It is that the benchmark group was wrong. Using
+historical organic adopters to forecast the value of promotion-induced adopters imports
+the self-selection of people who were already ready to shop online into the business case
+for paying people who were not.
+
+Three cautions belong with the result. First, the authors' own HonestDiD sensitivity
+analysis [@rambachan2023credible] is weakest for the loyalty-program estimate, so that row
+is best read as the direction and rough magnitude of the bias rather than a point estimate;
+the Black Friday calculation is more robust. Second, the estimates are ATTs from one
+retailer in one country and one frequently purchased category, and about a quarter of
+in-store transactions cannot be linked to a customer ID (a share that is stable across the
+observation window, which is why it is unlikely to drive the contrasts). Third, the
+substantive conclusions survive doubly robust DiD, propensity-score matching, and IPW
+[@santanna2020drdid], log and hurdle specifications, and alternative cohort windows, which
+is the right robustness portfolio for a design whose treatment is self-selected.
+
+For practice, the implication is a small change to a standard pipeline with a large effect
+on budgets: tag every customer with the pathway by which they entered their current state,
+estimate incremental CLV separately by pathway, and set pathway-specific caps on what the
+firm will pay to induce the transition. @sec-online-environments treats the channel side of
+the same question, and @sec-pricing treats the forward-buying mechanism that makes
+promotion-induced adoption look better in the promoted period than over the horizon that
+matters.
+
 ## Adjacent and Related Constructs {#sec-clv-adjacent}
 
 CLV sits at the center of a constellation of constructs, summarized in
@@ -1012,6 +1205,26 @@ CLV tracks market capitalization. The most direct realization of this idea is
 *customer-based corporate valuation* (CBCV), which values a public company from disclosed
 customer metrics: for contractual subscription firms [@mccarthy2017] and, using a BTYD
 model fit to disclosed transaction data, for non-contractual firms [@mccarthyfader2018].
+
+Two questions sit just outside this table but govern whether any of it is actionable.
+The first is **what actually moves retention**, since CLV is only a lever if its
+inputs respond to marketing. The evidence on loyalty programs is more equivocal than
+practice assumes: @lewis2004influenceloyalty finds real but modest effects once
+short-term promotions are controlled for, and @breugelmans2012impactitem shows that an
+item-based program shifts *which* items are bought more reliably than it shifts how
+much. @evanschitzky2008customerequity decompose customer equity into its value, brand,
+and relationship drivers and test which of them forecasts future sales, which is the
+empirical counterpart to the framework above; @griffith2006driverslocal supplies the
+local-merchant analogue where the relationship rather than the program does the work.
+The second question is **how customers reach the firm in the first place**:
+@bowman2001managingcustomer show that customer-initiated contacts carry information
+the firm's own outbound records do not, and are a materially different input to the
+value calculation than firm-initiated ones.
+
+A methodological note for readers estimating these constructs from survey data:
+@haenlein2009empiricalcompariso compare covariance-based and variance-based structural
+equation estimators on exactly this class of model and set out when the choice changes
+the substantive conclusion rather than merely the standard errors.
 
 Two constructs widen the definition of customer value beyond the focal customer's own
 purchases. *Customer referral value* extends it to the customers a person brings in,
@@ -1278,7 +1491,8 @@ marketing-finance interface developed in @sec-marketing-finance.
 - In non-contractual settings, buy-till-you-die models (Pareto/NBD, BG/NBD) plus the
   Gamma-Gamma spend model infer a probability-alive and a monetary pLTV from
   recency-frequency-monetary data alone (@fig-clv-palive), and agree across the
-  `CLVTools` and `BTYD` implementations.
+  `CLVTools` and `BTYD` implementations. @sec-cba takes this family apart, adds
+  time-varying covariates, and surveys its literature.
 - The machine-learning frontier decomposes pLTV into a churn head and a spend head
   (two-stage, or a joint ZILN loss), trading the parsimony of probability models for
   covariates and nonlinearity; "methods matter" only insofar as accuracy gains move

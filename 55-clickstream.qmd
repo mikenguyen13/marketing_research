@@ -650,6 +650,36 @@ than a single average transition matrix, sequence clustering surfaces a *heterog
 population* of navigation styles, which is the empirical reality of behavioral data and
 the starting point for segmentation, targeting, and personalized intervention.
 
+### From Session Types to Usage Trajectories {#sec-click-trajectories}
+
+Nothing in the sequence-analysis machinery requires the unit of time to be a session. Run
+the same logic over months instead of minutes, with *features of a product* rather than
+pages as the state space, and it answers a question the session-level view cannot: what
+happens to a customer's usage *after* adoption, once the novelty and the onboarding
+campaign are spent. @fang2026postadoption do exactly this with longitudinal feature-level
+logs from a mobile banking app, and their framing is worth importing. Usage is decomposed
+into **intensity**—frequency and depth—and **length**, and the population resolves into
+five distinct longitudinal trajectories, among them *expanders*, who progressively recruit
+new features, and *maximizers*, who drive one feature set hard. Those trajectory
+memberships are not descriptive curiosities: they predict new-feature adoption,
+willingness to pay, loyalty, and even security compliance, which makes the trajectory,
+rather than the usage level, the actionable segmentation variable.
+
+The methodological lesson is about what clustering can and cannot deliver. A trajectory
+typology is a *taxonomy*; it names the paths without explaining why users travel them.
+The authors get to mechanism by triangulating the logs with surveys and qualitative
+evidence, arriving at three processes that drive movement along a path—**evaluation-driven
+entry**, in which early use is a deliberate test; **habit-driven stabilization**, in which
+repetition converts evaluation into routine and usage flattens; and **need-driven
+disruption and re-evaluation**, in which a change in circumstances reopens a settled
+routine. Behavioral logs are dense but mute about intent, so a purely computational
+pipeline can recover the five shapes and still be silent on which of the three mechanisms
+produced a given flattening—and the managerial response to a habituated user differs
+completely from the response to one whose needs have just changed. This is the
+mixed-methods complement to @sec-click-sequence, and the dynamic counterpart to the
+engagement constructs of @sec-engagement: engagement is a developmental path, not a level
+to be maximized.
+
 ## Deep Sequence Models {#sec-click-deep}
 
 The classical methods above impose structure: a Markov chain assumes limited memory, and
@@ -816,6 +846,37 @@ redistributed, so public replication packages are rare; the methods, not the dat
 the transferable artifact, consistent with the unstructured-data program's emphasis on
 validated, reproducible measurement [@balducci2018unstructured].
 :::
+
+
+### The offline clickstream {#sec-click-offline}
+
+Everything in this chapter assumes the log exists. Physical retail is the large
+domain where it does not: a store sees transactions, but not the browsing path,
+dwell, hesitation, and abandonment that make a clickstream informative in the first
+place. @li2026videoanalytics close that gap directly, building what they call an
+**offline clickstream** out of in-store security-camera footage.
+
+The pipeline is a stack of computer-vision components rather than a single model:
+person re-identification to hold a shopper's identity across cameras, trajectory
+reconstruction to recover the path, pose estimation to capture product interaction
+and body language, and vision-language models to read the scene. The output is the
+data structure of @sec-click-structure—a time-ordered sequence of events per
+visit—recovered from pixels instead of from server logs, and it feeds a
+transformer-based purchase-prediction model of the kind treated in
+@sec-click-deep. Against demographic and contextual benchmarks, prediction improves
+by up to 79% on their key metrics, and simulating five real-time targeting policies
+gives a 13.1% profit lift for a persuadability-based policy over no targeting.
+
+Two cautions travel with the result. The first is that a persuadability policy is a
+causal object being served by a predictive pipeline: targeting the shoppers most
+movable, rather than those most likely to buy, requires an uplift estimand
+(@sec-ai-ml), and the gain reported is a simulation under the model rather
+than a field-measured lift. The second is that the sensing itself is the intervention
+the shopper did not consent to in the way a website visitor consents to cookies.
+The authors describe the design as privacy-conscious, and the substantive point for
+this chapter is that the privacy constraints of @sec-privacy bind on the *collection*
+step here, not on the modeling step—which is a different regulatory surface from the
+one online clickstream work has learned to navigate.
 
 ## Frontier and Extensions {#sec-click-frontier}
 

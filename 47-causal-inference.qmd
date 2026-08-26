@@ -299,8 +299,18 @@ is introduced in the DiD discussion at @sec-causal-did.
   [doi:10.1016/j.jeconom.2023.03.008](https://doi.org/10.1016/j.jeconom.2023.03.008)
   — **[R]** the synthesis/decision guide assigned as the week's anchor.
 
+- Liu, Q., Jiang, S., Qiu, L. & Huo, B. (2026). "Platform Competition and Adoption
+  Heterogeneity: How Dockless Bike Sharing Shapes Urban Air Quality." *Production and
+  Operations Management*.
+  [doi:10.1177/10591478261472202](https://doi.org/10.1177/10591478261472202) — **[F]**
+  an applied stacked-DiD design over a staggered two-firm rollout, in which the average
+  effect is entirely driven by one market structure (worked through at
+  @sec-platform-entry-externality).
+
 **Debate.** Which robust estimator, when? Is the efficient imputation estimator's
-stronger modeling worth it? How much published DiD work is invalidated?
+stronger modeling worth it? How much published DiD work is invalidated? When a
+staggered rollout involves two competing entrants, is the estimand of interest the
+effect of entry, or the effect of the market structure that entry produces?
 
 ### Week 7 — Regression Discontinuity Designs {#sec-causal-week07}
 
@@ -890,6 +900,33 @@ face?"—and often the honest answer is to redesign the test (larger, geo-based,
 focused on an intermediate outcome) rather than to trust an underpowered or
 observational number.
 
+### Policy Lotteries and the Estimand You Actually Want {#sec-causal-policy-lottery}
+
+Not every randomization is run by a researcher. Governments allocate scarce rights by
+lottery—visas, permits, school seats, subsidy slots—and those lotteries are experiments
+whose treatment is a *policy*, which is often the treatment a decision-maker cares about
+and rarely the one a study estimates. @clemens2026lowskill make the distinction sharply.
+The dominant identification strategy in their literature instruments for immigrant
+presence with historical settlement patterns, which identifies a local average treatment
+effect of varying immigrant *supply* regardless of current demand. The policy question is
+different: what happens when a quota binds on firms that want to hire *now*? That is a
+policy-relevant treatment effect, and it is recovered by the quota's own randomization—the
+H-2B visa lottery—rather than by an instrument built from history.
+
+Three features of the design are worth importing into marketing work whenever an
+allocation rule contains randomness. The randomization is at the level of the
+decision-making unit (the firm), not the individual, so the estimates speak to firm-level
+adjustment rather than to worker-level exposure. Hypotheses, subsample tests, and
+predicted signs were committed to a **pre-analysis plan** before data collection, which
+converts the heterogeneity analysis from exploration into a test. And the outcome data
+come from a purpose-built survey of winners and losers rather than from whatever
+administrative file happened to exist, with prespecified checks on item and global
+nonresponse. Marketing has more of these opportunities than it uses: oversubscribed beta
+programs, capacity-rationed loyalty perks, lotteried event invitations, and regulator-run
+license allocations all embed randomization that a firm can exploit without running an
+experiment of its own. @sec-sw-decomposition treats the same paper as a template for
+writing up a mechanism rather than an average.
+
 ## Difference-in-Differences {#sec-causal-did}
 
 When randomization is impossible—a competitor enters a market, a regulator changes
@@ -1189,6 +1226,82 @@ predr <- predict(rd_fit, data.frame(D = 1, points = gr))
 lines(gl, predl, lwd = 3); lines(gr, predr, lwd = 3)
 ```
 
+### Boundary Discontinuities: When the Running Variable Is a Place {#sec-causal-rd-boundary}
+
+The loyalty-points example has a running variable that each unit carries as a
+number. A large and growing class of designs replaces it with **geography**: the
+treatment changes at an administrative line—a state border, a school-district
+boundary, a media-market edge, a judicial-circuit line—and units are compared
+according to which side of the line they fall on. These are **boundary** (or
+spatial, or geographic) **discontinuity** designs, and they follow the same
+identification logic as @eq-47-rd with the running variable replaced by signed
+distance to the boundary.
+
+The appeal is that economic geography is continuous and administrative geography
+is not. Two adjacent counties share a labor market, weather, commuting patterns,
+input prices, and regional demand shocks. If a policy, a tax, a regulation, or a
+legal regime switches on at the line between them, the pair supplies a comparison
+in which nearly everything except the treatment is held fixed by proximity. In
+practice the estimator is usually not a single local linear fit but a
+**contiguous-pair** regression: each treated unit is matched to the unit it
+physically borders, and pair fixed effects absorb the shared local conditions.
+
+@canayaz2026judges is a clean instance. Federal appellate circuits partition the
+United States, and their boundaries cut through continuous economic geography.
+Comparing a county's small business count to that of the county it borders, when
+the two sit in different circuits, the authors find that a one-standard-deviation
+shift toward less probusiness judicial ideology predicts a 1% reduction in firm
+count—an effect that operates through the exit of young firms rather than through
+relocation. The substantive reading is developed in @sec-ent-legal.
+
+The setting also illustrates why a *static* cross-border comparison would not have
+sufficed. Federal circuits are built from whole states, so every circuit boundary
+is also a state boundary and carries the entire apparatus of state tax, licensing,
+and incorporation law with it. What makes the design work is that the treatment
+moves *along a fixed boundary over time*: circuit ideology turns over as judges
+are appointed and replaced for reasons unconnected to any one county's economy, so
+a county-pair effect absorbs the permanent differences between the two states and
+identification comes from within-pair change. The residual threat is not static
+state policy but state policy that *changes* in a way correlated with the timing
+of judicial turnover—a much narrower claim to have to rule out, and the general
+lesson for any boundary design whose treatment has a time dimension.
+
+**What breaks identification here is different from what breaks a score-based
+RD.** Manipulation of the running variable, the fatal threat in @sec-causal-rd, is
+mostly irrelevant: a firm cannot nudge its county across a circuit line, and the
+paper's finding that the effect runs through exit rather than relocation is
+itself evidence that sorting is not driving it. Three other threats take its
+place, and they are the ones to interrogate.
+
+- **Coincident boundaries.** The identifying assumption is that *only* the
+  treatment changes at the line. Administrative boundaries are notoriously
+  nested: judicial circuits largely follow state lines, and state lines also
+  carry tax rates, licensing rules, minimum wages, incorporation law, and
+  Medicaid eligibility. A discontinuity estimated at such a line recovers the
+  effect of the *bundle*, not of the component the researcher has in mind.
+  Boundaries that cut *within* states, or variation in the treatment's intensity
+  over time along a fixed boundary, are the standard escapes.
+- **Spillovers across the line.** RD assumes the untreated side reveals the
+  treated side's counterfactual. Adjacency makes that assumption harder, not
+  easier: workers commute, customers cross, and firms on the control side may be
+  affected by the treatment through exactly the proximity that makes them a good
+  comparison. A treatment effect that leaks across the boundary biases the
+  estimate toward zero.
+- **Boundary endogeneity and sample size.** Some boundaries were drawn *because*
+  of a pre-existing economic difference, which violates continuity at the moment
+  of drawing. And because only units near the line are usable, effective sample
+  size falls sharply with the bandwidth; standard errors must also be clustered
+  in a way that respects spatial correlation, since neighboring units'
+  disturbances are not independent.
+
+For marketing, the natural applications sit where a firm's decision environment
+switches at a line the customer does not perceive: designated market areas for
+advertising exposure, state-level privacy and advertising-disclosure regimes
+(@sec-privacy), sales-tax nexus rules for e-commerce, and franchise or
+distribution territories. In each case the design's credibility rests on the same
+question—what *else* changes at that boundary—rather than on any statistical
+diagnostic.
+
 ## Synthetic Control {#sec-causal-scm}
 
 Difference-in-differences needs a control group whose untreated trend matches the
@@ -1281,6 +1394,347 @@ legend("topleft", bty = "n", lwd = 2, lty = c(1, 2),
        legend = c("treated market", "synthetic control"))
 ```
 
+## Mechanism: Causal Mediation and Moderated Mediation {#sec-causal-mediation}
+
+Every design above answers the same question: what did $D$ do to $Y$. None of them
+answers the question a referee asks next, which is *through what*. Mechanism is not
+a refinement of the total effect; it is a separate identification problem with its
+own estimand and its own assumption, and the assumption is not one that
+randomizing $D$ can supply. This section states the estimand, states the
+assumption, and then works through what a credible pathway argument looks like in
+practice—because the interesting craft question is not how to compute a mediation
+model but how to defend one.
+
+### The Estimand: Effects That Route Through a Mediator {#sec-causal-mediation-estimand}
+
+Let $M_i$ be a post-treatment variable on the hypothesized pathway and write the
+outcome as a function of both the treatment and the mediator, $Y_i(d, m)$. The
+mediator itself responds to treatment, $M_i(d)$, so the observed outcome is
+$Y_i(D_i, M_i(D_i))$. Two effects follow. The **average causal mediation effect**
+(ACME, or indirect effect) holds treatment fixed and moves the mediator to the
+value it would have taken under each arm,
+
+$$
+\delta_i(d) \;=\; Y_i\!\left(d, M_i(1)\right) - Y_i\!\left(d, M_i(0)\right),
+$$ {#eq-acme}
+
+while the **average direct effect** holds the mediator fixed and moves the
+treatment,
+
+$$
+\zeta_i(d) \;=\; Y_i\!\left(1, M_i(d)\right) - Y_i\!\left(0, M_i(d)\right).
+$$ {#eq-ade}
+
+The two decompose the total effect exactly, $\tau_i = \delta_i(d) + \zeta_i(1-d)$
+for either $d$, which is the sense in which mediation "accounts for" a share of the
+effect.
+
+The critical feature of @eq-acme is easy to miss. The quantity
+$Y_i(d, M_i(1-d))$ is a **cross-world** counterfactual: it asks what would have
+happened had the unit received one treatment while its mediator took the value it
+would have taken under the *other*. No experiment, however well run, realizes that
+state for anybody. This is why mediation is harder than it looks in a path diagram,
+and why its identifying assumption cannot be reduced to a design feature.
+
+### Sequential Ignorability, and Why Randomizing $D$ Is Not Enough {#sec-causal-mediation-assumptions}
+
+Identification of @eq-acme and @eq-ade from observed data rests on **sequential
+ignorability** [@imai2010identification; @imai2010general], a pair of conditions
+given pre-treatment covariates $X_i$:
+
+$$
+\{Y_i(d', m),\, M_i(d)\} \perp\!\!\!\perp D_i \mid X_i = x,
+$$ {#eq-seq-ign-1}
+
+$$
+Y_i(d', m) \perp\!\!\!\perp M_i(d) \mid D_i = d,\, X_i = x .
+$$ {#eq-seq-ign-2}
+
+@eq-seq-ign-1 is the familiar unconfoundedness of the treatment, and a randomized
+trial delivers it for free. @eq-seq-ign-2 is not. It says that *conditional on
+treatment and pre-treatment covariates, the mediator is as good as randomly
+assigned with respect to the outcome*—no unmeasured common cause of $M$ and $Y$,
+and no post-treatment confounder of the mediator–outcome link. Randomizing $D$ does
+nothing for it, because the mediator is chosen, produced, or realized after
+assignment. A field experiment with a beautifully clean total effect can have a
+completely unidentified mechanism, and this is the single most common
+overclaim in applied mediation work [@bullock2010mechanism].
+
+The classical three-regression procedure [@baron1986moderator]—regress $M$ on $D$,
+regress $Y$ on $D$, regress $Y$ on $D$ and $M$, and multiply or difference
+coefficients—is a *statistical* decomposition. It acquires causal meaning only
+under @eq-seq-ign-1–@eq-seq-ign-2, and the product-of-coefficients form additionally
+assumes **no treatment–mediator interaction**. When that interaction exists,
+$\delta(1) \neq \delta(0)$ and there is no single "indirect effect" to report. The
+potential-outcomes formulation makes both the assumption and the interaction
+explicit, which is the reason to prefer it even when the arithmetic ends up
+similar.
+
+**Moderated mediation** adds a variable $W$ that changes the size of the pathway
+itself, so the estimand becomes $\delta(d; w)$ and the object of interest is the
+contrast $\delta(d; w_1) - \delta(d; w_0)$ [@preacher2007moderated]. Used carelessly
+this is a fishing device: with two moderators and two mediators there are many
+contrasts and one of them will be significant. Used well, it is the strongest
+observational evidence a pathway argument can have, because a moderator that is
+*predicted by the mechanism* to shut the pathway off converts a correlational story
+into a falsifiable one.
+
+### How a Pathway Argument Is Actually Built {#sec-causal-mediation-craft}
+
+A paper that claims a mechanism is making three claims, not one, and the credible
+papers defend each separately rather than letting a single structural equation
+carry all of them.
+
+1. **The $D \to M$ link.** Treatment moves the mediator. This link inherits
+   whatever design identifies the total effect, so it is usually the easiest to
+   defend.
+2. **The $M \to Y$ link.** The mediator moves the outcome. This is where
+   @eq-seq-ign-2 bites, and it almost never comes free: the mediator is typically a
+   decision, and decisions respond to the same unobservables that drive the
+   outcome. Confounding by indication—the treatment is given to those who most
+   need it—is the canonical form in operational and clinical settings.
+3. **The exclusion of the residual direct path.** Whatever is left over is
+   attributed to "everything else," so the interpretation of $\delta$ depends on
+   having enumerated the alternatives.
+
+Four devices do the real work of defending these claims, and they are worth naming
+because they generalize far beyond any one paper.
+
+**Manipulate the mediator, not just the treatment.** The cleanest fix is a design
+that randomizes $M$ directly, or a *parallel* or *crossover* encouragement design
+that varies the mediator independently of treatment [@imai2013experimental]. This
+buys identification of a mechanism at the price of a stronger consistency
+assumption: the manipulated mediator must be the same object as the naturally
+occurring one.
+
+**Find a condition that switches the mechanism off.** If the proposed pathway is
+real, there should exist a subpopulation, period, or regime in which it *cannot*
+operate—and the effect should vanish there. A predicted null under a
+mechanism-off condition is far more informative than another significant
+coefficient, because rival explanations do not generally predict it. This is
+moderated mediation used as a falsification test rather than as a search.
+
+**Argue the direction of the bias.** When @eq-seq-ign-2 fails, ask which way. If
+the plausible confounding pushes *against* the estimate—if the sickest patients
+are the most likely to receive the treatment whose protective effect you are
+estimating—then the observed estimate is a conservative bound, and saying so
+converts an admitted weakness into an argument.
+
+**Report where the result breaks, not that it is robust.** A sensitivity analysis
+for mediation parameterizes the violation of @eq-seq-ign-2 by the correlation
+$\rho$ between the mediator and outcome errors and reports the $\rho^\*$ at which
+the ACME crosses zero [@imai2010identification]. The number is interpretable: a
+result that survives only up to $\rho = 0.05$ is fragile, one that survives to
+$\rho = 0.4$ is not, and the comparison to the explanatory power of *observed*
+covariates gives the reader a yardstick.
+
+### A Worked Reading: Diagnostic Bias as an Upstream Process Defect {#sec-causal-mediation-oximetry}
+
+@zhang2026pulse is a compact example of all four devices, and it is worth reading
+as a *design* rather than as a healthcare result. Pulse oximetry estimates blood
+oxygen saturation from light absorption, and it systematically **overestimates**
+saturation in patients with darker skin pigmentation—a measurement bias documented
+clinically by @sjoding2020racial. The paper's move is to treat that bias not as a
+device-calibration problem but as an **upstream process defect** whose consequences
+propagate through the clinical decision it feeds, and to trace the resulting chain
+with a moderated mediation framework on patient-level ICU data from MIMIC-IV.
+
+The chain runs: race $\to$ a biased saturation reading under peripheral-oximetry
+($\mathrm{SpO}_2$) monitoring $\to$ undertreatment with supplemental oxygen $\to$
+unplanned within-hospitalization ICU readmission $\to$ downstream capacity
+consumption. The reported magnitudes are, in the authors' estimates: under
+$\mathrm{SpO}_2$-only monitoring, Black patients are **5.2 percentage points** less
+likely than White patients to receive supplemental oxygen; oxygen delivery reduces
+the probability of unplanned ICU readmission by **4.8 percentage points**, a 37%
+relative reduction; and, in a separate operational-load analysis by OLS, ICU
+bounce-backs are associated with an **86% increase** in remaining hospital length
+of stay.
+
+The design's load-bearing element is none of those numbers. It is the use of
+arterial oxygen saturation ($\mathrm{SaO}_2$) measurement—the accurate,
+invasive reading—as a **quasi-intervention that switches the mechanism off**. If
+the disparity in oxygen therapy is produced by the *device's* measurement error,
+then supplying the clinician with an accurate reading should eliminate it; if it is
+produced by something else—clinician bias operating directly on race, differential
+comorbidity, differential unit assignment—an accurate saturation reading has no
+particular reason to remove it. The authors report that with $\mathrm{SaO}_2$
+available, the racial disparity in oxygen therapy attenuates to statistically
+indistinguishable from zero. That is the predicted null under the mechanism-off
+condition, and it is the sentence the causal claim actually rests on.
+
+Notice what the moderator is doing structurally. $W = 1\{\mathrm{SaO}_2\text{
+available}\}$ is not a garden-variety interaction hunting for heterogeneity. It is
+a *theoretical* moderator: the mechanism names it in advance, predicts the sign,
+and predicts the magnitude (zero). @eq-acme evaluated at $W=1$ versus $W=0$ is
+therefore a test rather than a description, and the contrast
+$\delta(d; 1) - \delta(d; 0)$ is the paper's real estimate.
+
+### Where the Argument Is Still Vulnerable {#sec-causal-mediation-strengthen}
+
+Reading a design this way is only useful if it also exposes what would break it.
+Six issues apply to the ICU case and, with the nouns changed, to most observational
+mediation work in marketing and operations.
+
+**The first link has no manipulable cause.** Race is not assignable, so $\delta$
+evaluated on it is a **disparity decomposition**, not the average causal effect of a
+treatment. The honest statement is that *conditional on observed clinical state*,
+patients differ in the probability of receiving oxygen, and that the gap closes
+when the measurement improves. The causal weight sits on the $M \to Y$ link and on
+the moderator contrast, not on the first arrow. Papers that blur this invite an
+objection they cannot answer.
+
+**The moderator is chosen by the same clinicians whose behavior is the outcome.**
+An arterial blood gas is ordered, not assigned. It is ordered for patients who are
+sicker, less stable, or already a source of concern, so the $\mathrm{SaO}_2$
+subsample is selected on precisely the dimensions that drive treatment. The
+attenuation could therefore reflect *who* gets an arterial reading rather than
+*what the reading tells the clinician*. Strengthening this would mean comparing
+within severity strata with explicit balance diagnostics, instrumenting the
+ordering decision with something that shifts it for non-clinical reasons (unit
+protocol differences, lab turnaround, shift staffing, time of day), or exploiting
+within-patient timing: the same patient's treatment decisions before and after the
+first arterial reading, with patient fixed effects absorbing the selection that
+determined who was drawn at all.
+
+**Confounding by indication runs through the second link.** Supplemental oxygen is
+given to patients who look hypoxemic, and looking hypoxemic predicts readmission.
+That biases the protective estimate *toward zero*, which is the direction that
+helps: an estimate that survives a bias pushing against it is a lower bound, and
+the argument is stronger stated that way than as a robustness claim.
+
+**The mediator is a bundle.** "Received supplemental oxygen" collapses device, flow
+rate, timing, and duration into a binary. Under multiple versions of the mediator,
+the ACME is a composite over whatever mix of versions the population happens to
+realize, and the consistency half of the potential-outcomes setup is doing quiet
+work. A dose or timing measure would sharpen the estimand.
+
+**The sharpest test is not the binary race indicator.** The physics of the bias
+predicts *where* it should be worst: at low true saturation, where occult
+hypoxemia, a normal-looking $\mathrm{SpO}_2$ over a genuinely low $\mathrm{SaO}_2$,
+is concentrated. A design that predicts and finds a steeper disparity in exactly
+that region, and none where readings are unambiguous, is harder to explain away
+than an average gap, because rival explanations do not predict the gradient.
+
+**A placebo pathway is available and cheap.** An outcome that clinical oxygenation
+should not affect, or a treatment decision that does not read the oximeter, should
+show no disparity under $\mathrm{SpO}_2$-only monitoring. Reporting that null costs
+one table and forecloses a large class of alternatives.
+
+None of this is a complaint about the paper; it is the standard by which the design
+should be graded, and the design meets a good part of it. The transferable lesson
+for marketing research is the structure: when the antecedent of interest is an
+attribute rather than a lever, move the causal burden downstream to links you can
+defend, and find the condition under which your mechanism is *supposed* to
+disappear.
+
+### Sensitivity and the Mechanism-Off Contrast in Practice {#sec-causal-mediation-sim}
+
+The simulation below makes both points concrete. It generates a chain
+$D \to M \to Y$ with an *unobserved* confounder $U$ of the mediator-outcome link,
+so @eq-seq-ign-2 fails by construction and the naive product-of-coefficients
+estimate of the ACME is biased. It then does two things a careful paper does:
+sweeps the assumed confounding strength to find where the conclusion flips, and
+computes the mechanism-off contrast in a regime where the $D \to M$ path is shut
+down by design.
+
+```{r mediation-sensitivity-sim, message=FALSE, warning=FALSE}
+set.seed(47)
+
+n <- 8000
+
+# --- Structural parameters ---------------------------------------------------
+a_true <- 0.40   # D -> M
+b_true <- 0.50   # M -> Y
+c_true <- 0.15   # D -> Y (direct)
+gam_M  <- 0.60   # U -> M   (unobserved mediator-outcome confounder)
+gam_Y  <- 0.70   # U -> Y
+
+D <- rbinom(n, 1, 0.5)
+U <- rnorm(n)                                  # never observed by the analyst
+M <- a_true * D + gam_M * U + rnorm(n)
+Y <- c_true * D + b_true * M + gam_Y * U + rnorm(n)
+
+# --- Naive mediation: the Baron-Kenny product, ignoring U --------------------
+a_hat <- unname(coef(lm(M ~ D))["D"])
+b_hat <- unname(coef(lm(Y ~ D + M))["M"])
+
+c(truth = a_true * b_true, naive = round(a_hat * b_hat, 3))
+```
+
+The naive estimate is inflated because the mediator coefficient absorbs the effect
+of $U$ on $Y$. The analyst cannot see $U$, but can ask how much mediator-outcome
+confounding would be needed to overturn the conclusion. Parameterize the violation
+by the residual correlation $\rho$ and re-solve for the mediator slope under each
+assumed value.
+
+```{r mediation-rho-sweep, message=FALSE, warning=FALSE}
+m_fit <- lm(M ~ D)
+y_fit <- lm(Y ~ D + M)
+s_m   <- summary(m_fit)$sigma
+s_y   <- summary(y_fit)$sigma
+
+# Under an assumed error correlation rho, the mediator slope loses the part of
+# the M-Y association that rho already explains.
+rho_grid <- seq(0, 1, by = 0.02)
+acme_rho <- vapply(rho_grid, function(r) {
+  b_adj <- unname(coef(y_fit)["M"]) - r * s_y / s_m
+  a_hat * b_adj
+}, numeric(1))
+
+k        <- which.min(abs(acme_rho))
+rho_star <- rho_grid[k]
+c(rho_star = rho_star, acme_at_rho_star = round(acme_rho[k], 4))
+```
+
+```{r}
+#| label: fig-mediation-sensitivity
+#| fig-cap: "Sensitivity of the estimated indirect effect to unmeasured mediator-outcome confounding. The correlation at which the estimate crosses zero is the number a reader should be given, in place of a robustness assertion."
+plot(rho_grid, acme_rho, type = "l", lwd = 2, col = "#4477aa",
+     xlab = "rho (mediator-outcome error correlation)",
+     ylab = "estimated ACME")
+abline(h = 0, lty = 2)
+abline(v = rho_star, lty = 3, col = "#bb5566")
+text(rho_star, max(acme_rho) * 0.9,
+     labels = paste0("rho* = ", rho_star), pos = 4)
+```
+
+In this configuration the indirect effect survives until $\rho$ is large, on the
+order of 0.8, so the conclusion is not fragile to modest mediator-outcome
+confounding. That is a claim a reader can check against the explanatory power of
+the *observed* covariates: if no measured covariate comes close to a residual
+correlation of 0.8, an unmeasured one probably does not either. "The results are
+robust" carries none of this information.
+
+The mechanism-off contrast is a different kind of evidence. Suppose a regime $W=1$
+in which the treatment can no longer move the mediator, because accurate
+information replaces the biased signal, while everything else about the population
+is held fixed. The indirect effect should vanish there, and the contrast across
+regimes is the quantity the argument turns on.
+
+```{r mediation-mechanism-off, message=FALSE, warning=FALSE}
+W  <- rbinom(n, 1, 0.5)                    # 1 = accurate reading available
+# The D -> M path operates only when the biased signal is the clinician's input.
+M2 <- a_true * D * (1 - W) + gam_M * U + rnorm(n)
+Y2 <- c_true * D + b_true * M2 + gam_Y * U + rnorm(n)
+
+indirect_by_regime <- vapply(c(0, 1), function(w) {
+  idx <- W == w
+  a_w <- coef(lm(M2[idx] ~ D[idx]))[2]
+  b_w <- coef(lm(Y2[idx] ~ D[idx] + M2[idx]))[3]
+  unname(a_w * b_w)
+}, numeric(1))
+
+names(indirect_by_regime) <- c("mechanism on (W=0)", "mechanism off (W=1)")
+round(indirect_by_regime, 3)
+```
+
+The estimate under $W=1$ is near zero while the estimate under $W=0$ is not, and
+the gap between them is what a rival explanation must also reproduce. Both halves
+matter: the sensitivity sweep tells the reader how much unmeasured confounding the
+level result can absorb, and the mechanism-off contrast tells the reader whether
+the proposed channel, rather than some other channel correlated with it, is the one
+carrying the effect.
+
 ## Choosing a Design
 
 No design dominates; each buys identification with a different assumption, and the
@@ -1296,23 +1750,28 @@ comparison below summarizes the trade-offs.
 designs <- data.frame(
   Design = c("Randomized / A-B test", "Difference-in-differences",
              "Instrumental variables", "Regression discontinuity",
+             "Boundary discontinuity",
              "Synthetic control"),
   Estimand = c("ATE", "ATT", "LATE (compliers)",
-               "Local effect at cutoff", "ATT (one unit)"),
+               "Local effect at cutoff", "Local effect at boundary",
+               "ATT (one unit)"),
   `Key assumption` = c("Random assignment",
                        "Parallel trends",
                        "Exclusion + relevance",
                        "Continuity at cutoff",
+                       "Only treatment changes at line",
                        "Donors match pre-trend"),
   Diagnostic = c("Balance / power checks",
                  "Pre-trend (event study)",
                  "First-stage F; over-ID",
                  "McCrary density; covariate jumps",
+                 "Coincident-boundary audit",
                  "Pre-fit; placebo permutation"),
   `What breaks it` = c("Interference; peeking",
                        "Differential shocks; staggering",
                        "Weak / invalid instrument",
                        "Manipulation of running var.",
+                       "Bundled policies; cross-line spillovers",
                        "Poor pre-fit; spillovers"),
   check.names = FALSE
 )
@@ -1325,7 +1784,9 @@ pricing, firms increasingly hold out geographies or randomize at the user level
 precisely because the observational alternatives are so unreliable [@gordon2019].
 Second, when an experiment is infeasible, **match the design to the source of
 exogenous variation**: a sharp eligibility rule invites RD, a staggered rollout
-invites DiD, a single large treated entity invites SCM, and a credible supply-side
+invites DiD, a jurisdictional boundary cutting through common economic geography
+invites a boundary discontinuity (@sec-causal-rd-boundary), a single large treated
+entity invites SCM, and a credible supply-side
 shifter invites IV. Third, **triangulate**: where two designs with different
 assumptions point to the same answer, the causal claim is far more credible than
 any single estimate, because the assumptions fail for different reasons.
@@ -1436,9 +1897,28 @@ foundational/frontier marking as the load-bearing pedagogical device.
   assumption—DiD/ATT under parallel trends, IV/LATE under exclusion, RD under
   continuity, SCM/ATT under donor pre-fit—and each has a named diagnostic and a
   named failure mode (@tbl-designs).
+- **Boundary discontinuities** replace the running variable with a location: units
+  on either side of an administrative line share economic geography but not the
+  treatment (@sec-causal-rd-boundary). Manipulation is rarely the threat; *coincident*
+  boundaries are, because administrative lines arrive bundled with tax, licensing,
+  and regulatory changes, and adjacency invites spillovers across the line
+  [@canayaz2026judges].
 - Name the estimand before choosing a method, probe the identifying assumption with
   its diagnostic, and triangulate across designs whose assumptions fail for
   different reasons.
+- **Mechanism is a separate identification problem.** The indirect effect
+  (@eq-acme) is defined by a cross-world counterfactual, so it requires sequential
+  ignorability (@eq-seq-ign-1–@eq-seq-ign-2), and randomizing the treatment
+  supplies only the first half [@imai2010identification; @bullock2010mechanism]. A clean
+  total effect does not buy a clean mechanism.
+- A pathway argument is defended by **manipulating the mediator, finding a
+  condition that switches the mechanism off, signing the direction of the residual
+  bias, and reporting the confounding strength at which the conclusion flips**—not
+  by adding a third regression. @zhang2026pulse is a compact example: pulse-oximetry
+  measurement bias is traced from race to undertreatment to unplanned ICU
+  readmission, with the availability of an accurate arterial reading serving as the
+  moderator under which the disparity is predicted—and found—to vanish
+  (@sec-causal-mediation-oximetry).
 
 ## Further Reading
 
@@ -1452,15 +1932,59 @@ product characteristics, the differentiated-products literature is the entry poi
 over observational inference is most directly accessible through the large-scale
 experimental comparisons cited above [@lewis2011; @Lewis_2015; @gordon2019], and the
 dynamics of advertising response that complicate any single-window estimate are
-treated in @sec-advertising.
+treated in @sec-advertising. On boundary discontinuities, @canayaz2026judges is a
+compact worked example—contiguous-county comparisons across federal judicial
+circuits, with the exit-versus-relocation decomposition that shows what the design
+can separate; its substantive reading is in @sec-ent-legal.
 
-<!-- CITE-NEEDED: Neyman-Rubin / Rubin causal model foundational potential-outcomes references -->
-<!-- CITE-NEEDED: Angrist-Imbens LATE / compliers identification -->
-<!-- CITE-NEEDED: Card-Krueger or Bertrand-Duflo-Mullainathan difference-in-differences inference -->
-<!-- CITE-NEEDED: Goodman-Bacon / Callaway-Sant'Anna staggered DiD with heterogeneous effects -->
-<!-- CITE-NEEDED: staiger-stock / stock-yogo weak instruments F-statistic -->
-<!-- CITE-NEEDED: Imbens-Lemieux / Lee-Lemieux regression discontinuity practical guide -->
-<!-- CITE-NEEDED: McCrary density manipulation test for RD -->
-<!-- CITE-NEEDED: Abadie-Diamond-Hainmueller synthetic control method -->
-<!-- CITE-NEEDED: marketing pricing field experiment exemplar (e.g., online price experimentation) -->
-<!-- CITE-NEEDED: sequential testing / always-valid p-values for online experiments (peeking) -->
+On mechanism, the classical procedure and its vocabulary come from
+@baron1986moderator, and the potential-outcomes reconstruction that gives the
+indirect effect a causal definition, an identifying assumption, and a sensitivity
+analysis is developed in @imai2010identification and @imai2010general;
+@imai2013experimental sets out the experimental designs—parallel, crossover,
+encouragement—that identify a mechanism rather than assume one. @bullock2010mechanism is
+the sharpest short statement of why a randomized treatment does not buy a
+randomized mediator. For the moderated-mediation estimand and the conditional
+indirect effect, see @preacher2007moderated. @zhang2026pulse is the worked design
+read in @sec-causal-mediation-oximetry, and the underlying clinical measurement
+bias is documented in @sjoding2020racial.
+
+The primary sources behind each design are worth reading in the order the chapter
+develops them. The potential-outcomes framework itself is @rubin1974estimatincausal,
+which is where the notation of this chapter originates and where the stability
+assumption that everything else leans on is first made explicit. For instrumental
+variables, @imbens1994identificestimatio and @angrist1996identificcausal establish
+that an instrument identifies a local average treatment effect defined on compliers
+rather than the population average — the single most misread result in applied work
+— and the weak-instrument diagnostics that decide whether that identification is
+worth anything come from @staiger1997instrumenvariables.
+
+Difference-in-differences has two separate literatures a reader must not conflate.
+The inference problem — serially correlated outcomes making conventional standard
+errors far too small — is @bertrand2004muchshould, and the design's canonical
+application is @cardkrueger1994minimumwage. The *identification* problem under
+staggered adoption is newer and more damaging: with treatment timing varying across
+units and effects varying over time, the two-way fixed-effects estimator averages
+some comparisons with negative weights and can return an estimate of the wrong sign
+[@goodmanbacon2021differencdifferenc], which is why the group-time estimators of
+@callaway2021did should now be the default rather than the robustness check.
+
+For regression discontinuity, @imbens2008regressiodiscontin and
+@lee2010regressiodiscontin are the practical guides — bandwidth choice, polynomial
+order, covariate balance — and @mccrary2008manipulatrunning supplies the density
+test that decides whether units sorted across the threshold, which is the assumption
+the whole design rests on. When no discontinuity and no natural comparison group
+exist, the synthetic-control construction of @abadie2010syntheticcontrol builds a
+weighted comparison unit from a donor pool, with the pre-treatment fit serving as
+its own diagnostic.
+
+On the experimental side, the marketing field's cleanest demonstrations that
+observational advertising estimates diverge sharply from experimental ones are
+@Gordon_2017 and its follow-on @Gordon_2019, while @Shapiro_2018 shows how little
+survives when the same design is replicated across hundreds of brands rather than
+one. For pricing specifically, @anderson2003priceendings remains the model of a
+field experiment that isolates a single design parameter. Finally, anyone running
+continuously monitored online experiments should understand why repeatedly checking
+a fixed-horizon test inflates the false-positive rate well beyond its nominal level,
+and adopt a sequential or always-valid procedure instead — the peeking problem is
+not a rare edge case but the default behavior of most experimentation dashboards.

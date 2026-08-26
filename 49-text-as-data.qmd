@@ -410,6 +410,36 @@ is praise for a thriller and damnation for a car. The defensible use of a lexico
 a transparent, validated baseline whose biases are *bounded*, not as a black box whose
 output is taken at face value.
 
+### Tone Is Not the Measure: Weighting by Attention {#sec-49-tone-attention}
+
+A subtler design error than any of the lexicon's compositional failures is treating
+the *tone* of a corpus as the construct of interest. Tone is an intensity, not a
+quantity: coverage that is uniformly damning about a subject nobody is reading moves
+nothing. The construct that acts on behavior is closer to tone weighted by how much
+was said.
+
+@liu2026media make this concrete and show what it buys. They ask whether U.S. media
+sentiment about foreign countries shapes domestic investors' international asset
+allocation, using flows into country-specific mutual funds as the demand proxy.
+Their sentiment measure is explicitly the **interaction of negative tone with media
+attention**, and it is that interaction—not tone alone—that predicts reduced flows
+into funds targeting the covered country. The measurement decision is the finding's
+precondition: a country can be written about harshly and rarely, or neutrally and
+constantly, and only the product distinguishes the cases that matter.
+
+Two further moves are worth copying. First, they separate the part of sentiment
+that tracks the target country's economic fundamentals from the part that does not,
+and show the relationship survives on the residual—which is what converts "media
+covary with flows" into "media narratives shape flows," since fundamentals would
+otherwise drive both. This is the text-as-data version of the confound problem
+raised in @sec-49-sentiment: a sentiment score computed from news is downstream of
+the world the news describes, and a design that does not partial out the world is
+measuring the world. Second, for the causal claim they use *The Wall Street
+Journal*'s acquisition by News Corp as a shock to editorial tone that is plausibly
+unrelated to the fundamentals of any particular covered country. An ownership change
+is a useful class of instrument for text-based measures generally: it moves the
+generating process for the text while leaving the underlying phenomenon alone.
+
 ### Supervised and Model-Based Sentiment {#sec-supervised-sentiment}
 
 When labeled data exist—star ratings as a proxy, or human-coded sentiment—a *supervised*
@@ -572,6 +602,144 @@ measure. (For the LLM/API specifics—model selection, prompting, and structured
 mechanics—the appropriate provider documentation should be consulted; this chapter
 treats LLMs as measurement instruments, not as an engineering topic.)
 
+## Text as Treatment: Causal Prediction for Novel Content {#sec-tad-causal-prediction}
+
+Everything so far has treated text as a *measurement* of something—sentiment, topic,
+intent. A different and harder use treats text as the *treatment*: the subject line, the
+ad copy, the product description is the intervention whose effect on behavior the firm
+wants to know. Generative models make this problem acute rather than easier. When a team
+can produce two thousand candidate subject lines in an afternoon, creation stops being the
+bottleneck and *selection* becomes the managerial problem: which of these should be sent,
+given that only a handful can be tested?
+
+@ellickson2026unstructured formalize the task as **causal prediction**. The object to be
+learned is a response surface mapping a representation of content to an outcome, estimated
+so that it carries a causal interpretation for content that has never been deployed. Their
+framework has three moving parts, and each answers a distinct failure mode.
+
+**Representation.** Previously deployed content is embedded with a pretrained large
+language model, so that the treatment lives in a continuous space in which "similar
+copy" means "nearby vector" rather than "shares keywords." This is the same move as
+@sec-representation, but the embedding now indexes a treatment arm rather than a document
+to be classified. The lineage runs through @ellickson2023dml, who use double machine
+learning to recover the effects of individual *components* of targeted digital promotions
+rather than of a campaign as a whole.
+
+**Identification.** Historical campaigns were not randomly assigned to customers: better
+copy tends to have been sent to better-responding segments, and content choices correlate
+with season, product, and targeting rules. A response surface fit to raw historical
+outcomes therefore inherits that confounding. The framework's estimation stage is built to
+recover the causal relation between content features and outcomes given the observed
+assignment process, not the raw conditional mean.
+
+**Extrapolation control.** This is the part with no counterpart in ordinary predictive
+modeling. A fitted surface will happily score a candidate that looks nothing like anything
+the firm has ever sent; the number it returns is an extrapolation dressed as a prediction.
+The authors screen candidates with a *rejection-sampling* procedure: proposals from the
+generative model are accepted only when they are close enough to the historical content
+distribution for the surface to be informative, and the acceptance threshold is explicitly
+a statement about how much resemblance to past campaigns is enough. Content that fails the
+screen is not condemned as bad—it is routed to direct experimentation, because that is the
+only instrument that can evaluate it. In a large-scale email application (3.3 million
+observations across 34 campaigns), the framework improved both out-of-sample prediction
+and realized deployment performance relative to standard approaches, and supported
+*outcome-guided* generation: generating candidates, scoring them, and keeping the ones the
+data can vouch for.
+
+The mechanics are worth seeing in miniature. Below, content lives in a two-dimensional
+embedding space; the true causal response surface is nonlinear; the historical deployment
+log covers only part of the space (a firm that has always written in one voice); and a
+generative model proposes candidates drawn from a much wider region. We fit the surface on
+history, then compare prediction error for accepted versus rejected proposals under a
+simple support screen (distance to the $k$ nearest historical embeddings).
+
+```{r tad-causal-prediction}
+#| message: false
+#| warning: false
+set.seed(11)
+
+# --- True causal response surface over a 2-D "embedding" of copy ---------------
+# Dimension 1 ~ concreteness, dimension 2 ~ urgency; the truth is nonlinear and
+# interactive, which is why a locally fit surface cannot be trusted far from data.
+truth <- function(z1, z2) 0.9 * z1 - 0.4 * z1^2 + 0.6 * z2 * z1 - 0.3 * z2
+
+# --- Historical deployment log: the firm has only ever written in one register --
+n_hist <- 400
+deployed <- data.frame(z1 = rnorm(n_hist, 0.3, 0.45),
+                   z2 = rnorm(n_hist, 0.2, 0.40))
+deployed$y <- truth(deployed$z1, deployed$z2) + rnorm(n_hist, 0, 0.25)
+
+# --- Response surface fit on history (quadratic; a stand-in for the ML stage) ---
+surface <- lm(y ~ poly(z1, 2, raw = TRUE) * poly(z2, 2, raw = TRUE), data = deployed)
+
+# --- Generative proposals: far wider than anything the firm has sent ------------
+n_new <- 600
+prop <- data.frame(z1 = runif(n_new, -2.5, 2.5), z2 = runif(n_new, -2.5, 2.5))
+
+# --- Support screen: mean distance to the k nearest historical embeddings -------
+k <- 10
+knn_dist <- function(pt, ref, k) {
+  d <- sqrt((ref$z1 - pt[1])^2 + (ref$z2 - pt[2])^2)
+  mean(sort(d)[1:k])
+}
+prop$support <- apply(prop[, c("z1", "z2")], 1, knn_dist, ref = deployed, k = k)
+
+# Accept a proposal only if it is no further from the historical cloud than the
+# historical points are from each other (the 95th percentile of within-sample
+# k-NN distance is the acceptance threshold).
+hist_support <- apply(deployed[, c("z1", "z2")], 1, knn_dist, ref = deployed, k = k + 1)
+threshold    <- quantile(hist_support, 0.95)
+prop$accept  <- prop$support <= threshold
+
+# --- How wrong is the surface, inside vs. outside its support? ------------------
+prop$yhat <- predict(surface, newdata = prop)
+prop$ytrue <- truth(prop$z1, prop$z2)
+prop$abserr <- abs(prop$yhat - prop$ytrue)
+
+rmse <- function(x) sqrt(mean(x^2))
+cat(sprintf("Accepted %d of %d proposals (%.0f%%)\n",
+            sum(prop$accept), n_new, 100 * mean(prop$accept)))
+cat(sprintf("RMSE, accepted proposals : %.3f\n",
+            rmse(prop$yhat[prop$accept] - prop$ytrue[prop$accept])))
+cat(sprintf("RMSE, rejected proposals : %.3f\n",
+            rmse(prop$yhat[!prop$accept] - prop$ytrue[!prop$accept])))
+```
+
+```{r tad-causal-prediction-fig}
+#| echo: false
+#| label: fig-tad-rejection
+#| fig-cap: "Rejection sampling as extrapolation control. Grey points are the historical content the response surface was fit on. Candidate copy generated by an LLM is accepted (blue) when it lies within the support of that history and rejected (red) otherwise; rejected candidates are where the fitted surface's error explodes, and where an experiment—not a prediction—is the right instrument."
+#| message: false
+#| warning: false
+library(ggplot2)
+ggplot() +
+  geom_point(data = prop, aes(z1, z2, colour = accept, size = abserr), alpha = 0.55) +
+  geom_point(data = deployed, aes(z1, z2), colour = "grey35", size = 0.7, alpha = 0.8) +
+  scale_colour_manual(values = c(`TRUE` = "#4e79a7", `FALSE` = "#e15759"),
+                      labels = c(`TRUE` = "accepted", `FALSE` = "rejected"),
+                      name = NULL) +
+  scale_size_continuous(range = c(0.3, 3.2), name = "|prediction error|") +
+  labs(x = "embedding dimension 1", y = "embedding dimension 2") +
+  theme_minimal()
+```
+
+The simulation reproduces the framework's central claim in the cheapest possible setting:
+error inside the support is small and roughly homoskedastic, while error outside it is
+several times larger and grows with distance, even though the fitted model reports no
+distress in either region. @fig-tad-rejection makes the geography visible. The
+managerial reading is that a content-scoring model should return one of two answers—a
+prediction, or a referral to experimentation—and that the boundary between them is an
+estimable quantity rather than a matter of taste.
+
+Two caveats travel with this class of method. The support screen protects against
+extrapolation in the *representation*, not against a change in the world: a surface fit on
+last year's campaigns can be well-supported and still stale if seasonality, competition,
+or the audience has moved. And embedding-space proximity is a proxy for
+"similar treatment," so the screen inherits whatever the embedding model does and does not
+encode—two subject lines with identical embeddings but different offer terms are not
+interchangeable treatments. @sec-tad-pitfalls develops the general version of this
+warning; @sec-ai-ml places the framework in the wider generative-AI stack.
+
 ## Marketing Applications {#sec-tad-applications}
 
 The methods above are general; their value is in what they let a marketer measure.
@@ -609,6 +777,21 @@ This is the natural home of LLM extraction (@sec-llm-extraction): a transcript i
 the kind of long, unstructured document from which a prompted model can pull a structured
 record—intent, objections raised, resolution, sentiment trajectory—that no fixed lexicon
 or bag-of-words could recover.
+
+Cutting across all three settings is a use of text that deserves separating out: the text
+measure as a **dependent variable** in a causal design. When @borwankar2026chatgpt ask what
+happened to Stack Overflow after it banned ChatGPT-generated content, the outcomes are
+NLP-derived properties of the posts themselves—length, linguistic complexity,
+positivity—differenced against a control subreddit (@sec-platform-governance). The design
+is standard; what is not standard is that the outcome is *estimated* rather than observed,
+and that changes the threat model. A generated outcome inherits every bias of the
+instrument that produced it, and the bias only needs to move *with the treatment timing* to
+masquerade as an effect: a lexicon that scores newer slang differently, a hosted classifier
+silently revised mid-panel, a tokenizer that handles code blocks differently as posts get
+longer. The discipline is to freeze the measurement pipeline over the full study window,
+version and log it, and validate it on a hand-coded sample drawn from *both* the pre and
+post periods—so that any drift in the instrument is measured rather than absorbed into the
+treatment effect.
 
 ## Pitfalls and Identification {#sec-tad-pitfalls}
 

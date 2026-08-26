@@ -92,7 +92,7 @@ directly—are preferred to regressions on summed scores when reliability is mod
 by a factor $k$ as $\rho_k = k\rho_1 / [1 + (k-1)\rho_1]$, where $\rho_1$ is the
 reliability of the original test. It assumes the added items are *parallel*—equal
 true-score loadings and equal error variances—an assumption formative indicators
-violate by construction. <!-- CITE-NEEDED: Spearman 1910 / Brown 1910 prophecy formula -->
+violate by construction. The prophecy formula is due independently to @spearman1910correlation and @brown1910someexperimental.
 
 ## Reflective versus Formative Measurement
 
@@ -223,8 +223,8 @@ construct inside an estimable structural-equation model [@diamantopoulos2013quan
 It also clarifies a common error: estimating @eq-30-formative by ordinary least squares
 treats $\eta$ as observed and conflates the formative weights with a regression of an
 *index* on its parts, discarding the disturbance and the very latency that motivated
-the construct. <!-- CITE-NEEDED: Jarvis, MacKenzie & Podsakoff 2003 on misspecification of formative vs reflective constructs -->
-<!-- CITE-NEEDED: Bollen & Lennox 1991 conventional wisdom on measurement -->
+the construct. @jarvis2003critical audited the published record and found a large share of constructs modeled in the wrong direction.
+The argument that the choice is substantive rather than statistical is made in @bollen1991conventional.
 
 ### Why Misspecification Is Costly
 
@@ -237,7 +237,7 @@ reflective construct formatively throws away the error structure that
 work show the resulting structural-coefficient bias can be large and of either sign,
 which is why the direction-of-causality decision belongs at the *start* of scale
 development, justified on conceptual grounds, not discovered after the data are in.
-<!-- CITE-NEEDED: MacKenzie, Podsakoff & Jarvis 2005 on measurement-model misspecification consequences -->
+@mackenzie2005problemmeasureme quantify the damage: misspecifying the direction of measurement biases structural parameters substantially, and in either direction.
 
 ## Scale Development
 
@@ -251,14 +251,16 @@ a formative construct diverges.
 1. **Construct definition and domain specification.** State precisely what the
    construct is and is not, its conceptual boundaries, and—critically—the *direction
    of measurement* (@tbl-refl-form). This step decides everything downstream and
-   cannot be repaired later by statistics. <!-- CITE-NEEDED: Churchill 1979 paradigm for developing marketing measures -->
+   cannot be repaired later by statistics. The sequence is @churchill1979paradigmdevelopin, still the field.s reference procedure.
 2. **Item generation.** Draft a large pool of candidate items spanning the domain,
    from theory, qualitative interviews, and existing scales. For reflective
    constructs the pool should oversample each facet (items are replaceable); for
    formative constructs the pool must *exhaust* the facets (each is constitutive).
 3. **Content validity / expert judging.** Have domain experts rate each item's
    relevance and representativeness, retaining items with high agreement. This is a
-   qualitative check that no statistic substitutes for.
+   qualitative check that no *reliability* statistic substitutes for, and in practice
+   it is the stage most often skipped, because recruiting and paying qualified
+   judges is expensive (@sec-ms-content-validity).
 4. **Purification on a calibration sample.** Collect data and trim items. For
    reflective scales, drop items with low item–total correlations or weak loadings
    and inspect exploratory factor structure for dimensionality. For formative
@@ -291,6 +293,79 @@ flowchart TB
   D -. weak items .-> B
 ```
 
+### Content Validity, and Why It Is the Step That Gets Skipped {#sec-ms-content-validity}
+
+Step 3 of the pipeline is the one most likely to go missing from a published
+paper. Content validity asks three questions that no downstream statistic can
+answer: whether each item actually *corresponds* to the construct it is assigned
+to, whether it stays *distinct* from neighboring constructs, and whether the item
+set *covers* the construct's content domain rather than crowding into one facet.
+Coefficient $\alpha$ is silent on all three. A set of near-paraphrases of a single
+facet will show superb internal consistency while badly under-representing the
+domain, and an item that belongs to an adjacent construct will load happily on the
+focal factor if the two constructs are correlated.
+
+The reason the step is skipped is economic rather than intellectual. Doing it
+properly means recruiting subject-matter experts, giving them a definition and a
+rating protocol, collecting and reconciling their judgments, and paying for all of
+it—before a single respondent has been surveyed. For a doctoral student, that is a
+cost incurred at the point in the project with the least funding and the least
+certainty of payoff.
+
+It is worth reading a few scales that did the work, because the published record of
+a well-executed development is more instructive than any checklist. The
+consumer-self-confidence scale is a useful model of conceptualization preceding item
+generation, with a multi-dimensional structure argued before it is estimated
+[@hardesty2001selfconfidenc]; the centrality-of-visual-product-aesthetics scale shows
+how an individual-difference construct is bounded against its neighbors
+[@arnold2003individuadifferenc]; and the CRM-process measure demonstrates the same
+discipline applied to an organizational rather than an individual construct
+[@krafft2004customerrelations]. On the theory side, the constructive view of
+preference — that respondents build an answer at the moment of asking rather than
+retrieving a stored one [@luce1998constructchoice], and that what they build depends
+on the regulatory orientation the task activates [@wang2006regulatorfocus] — is the
+best available explanation for why item wording and scale format do as much work as
+they do.
+
+@pillet2026rater attack that cost directly. Their **RATER** system (a *replicable
+approach to expert ratings*) is a free web-based tool (`contval.org`) that
+scores a candidate item's correspondence to its intended construct, its
+distinctness from other constructs, and the item set's coverage of the content
+domain. Two models sit behind it: RATER$_\text{C}$ and RATER$_\text{D}$, built on
+BERT and GPT architectures and trained on psychometric scales harvested from
+2,443 journal articles across eight disciplines. Six studies evaluate accuracy,
+reliability, and usefulness, and the authors' claim is deliberately bounded—the
+system *augments* scale development rather than replacing the expert panel.
+
+That boundary is the part to take seriously, and it follows from what the training
+data is. The models learned from scales as they appear in the published literature,
+which means they encode the field's *existing* conventions about which items belong
+to which construct. Three consequences follow for anyone using such a tool.
+
+- **It is strongest exactly where you need it least.** For a mature construct with
+  a dense published record, the system has abundant signal—and you already had
+  established scales to borrow from. For the genuinely novel construct, where
+  content validation matters most, the training distribution is thinnest.
+- **It reproduces the literature's errors along with its judgments.** If a
+  construct has been chronically conflated with a neighbor across the published
+  corpus—the engagement family in @sec-engagement is the standing
+  example—a model trained on that corpus will treat the conflation as the correct
+  answer and score a *correctly* discriminating item as a poor fit.
+- **A high score is convergent evidence, not a validity certificate.** It says the
+  item resembles items that experts in the corpus assigned to similar constructs.
+  That is a genuine piece of evidence and a weak one; it is not the causal account
+  of why the construct should drive the response that @borsboom2004concept demands.
+
+Used with those limits in view, the practical value is real and specific. The
+sensible workflow is to run a *large* item pool through the system during step 2,
+use the correspondence and distinctness scores to triage—flagging items that
+straddle two constructs and facets of the domain with no items at all—and then
+spend the scarce expert-panel budget on the flagged subset rather than on the whole
+pool. That is a reallocation of an expensive resource, which is a more defensible
+use of the tool than treating its output as the validation itself. Reviewers, whose
+own content-validity assessment is currently an unaided reading of an item table,
+gain a comparable screening device.
+
 ## Reliability and Validity {#sec-reliability-validity}
 
 A scale must be both **reliable** (low error variance) and **valid** (measures the
@@ -321,7 +396,7 @@ is preferred because it does not assume equal loadings. Both assume a *reflectiv
 unidimensional model; **neither is meaningful for a formative index**, where the
 items are not expected to covary. Conventional thresholds put acceptable internal
 consistency at roughly $0.70$ and above, though the number is a heuristic, not a law.
-<!-- CITE-NEEDED: Cronbach 1951 coefficient alpha -->
+Coefficient alpha is @cronbach1951coefficiealpha.
 
 ### Convergent and Discriminant Validity
 
@@ -517,7 +592,22 @@ separate the measurement of constructs psychologically or temporally;
 counterbalance item order; protect respondent anonymity to blunt social desirability;
 and write items to reduce ambiguity and common scale anchoring. Separating the source
 of the predictor from the source of the outcome severs the $M$ that links them in
-@eq-cmb-bias and is the single most effective remedy. <!-- CITE-NEEDED: Podsakoff, MacKenzie, Lee & Podsakoff 2003 common method biases -->
+@eq-cmb-bias and is the single most effective remedy. The procedural and statistical
+remedies are catalogued in @podsakoff2003commonmethod.
+
+Two design choices deserve separate mention because they are made early and are
+rarely revisited. The first is **scale format**: the number of response categories,
+whether they are fully or partially labeled, and whether a midpoint is offered all
+change the response-style variance the instrument absorbs, and the effects are
+systematic rather than idiosyncratic [@weijters2010ratingscale]. The second is
+**reverse-worded items**, long recommended as an acquiescence remedy. The evidence is
+that they introduce a method factor of their own, and that the problem is worse in
+cross-cultural samples where the reversal is not read as the researcher intends
+[@wong2003reverseworded]. Both problems are amplified by cross-national response
+styles — acquiescence, extreme responding, and midpoint avoidance vary systematically
+across countries, so an uncorrected cross-country comparison partly measures response
+style rather than the construct [@baumgartner2001responsestyles]; the invariance
+machinery of @steenkamp1998 is the standard defense.
 
 **Statistical** remedies detect or partial out the method factor after the fact, and
 none is a substitute for good design. Harman's single-factor test—loading all items
@@ -586,6 +676,14 @@ statistical partialling as a fallback.
   sensitivity for detecting discriminant validity failures in variance-based SEM;
   **HTMT** and **HTMT2** are the current recommended criteria, with thresholds
   below 0.85 indicating acceptable discriminant validity [@henseler2015; @roemer2021].
+- **Content validity is the step most often skipped**, for cost reasons rather
+  than doubts about its value, and no reliability statistic covers for its
+  absence: a set of paraphrases of one facet has excellent $lpha$ and terrible
+  domain coverage. AI-augmented tools such as RATER [@pillet2026rater] score item
+  correspondence, distinctness, and domain coverage from a corpus of published
+  scales, which makes them a **triage device for allocating expert-panel effort**
+  rather than a substitute for it—and weakest precisely for the novel constructs
+  where content validation matters most (@sec-ms-content-validity).
 - **Common-method bias** arises when one instrument supplies both predictor and
   outcome (@eq-cmb-bias); the strongest remedy is procedural—separate the sources—not
   a post-hoc statistical patch.
@@ -601,7 +699,10 @@ and @edwards2010 examines the construct-validity consequences of the choice.
 @fornell1981a remains the reference for convergent and discriminant validity with
 unobservable variables; @henseler2015 introduced HTMT as the preferred discriminant
 validity criterion for variance-based SEM and @roemer2021 refined it to HTMT2.
-@mackenzie1986 is the standard reference for method effects in marketing
+On content validation, @pillet2026rater document the RATER system and the six
+studies evaluating it; read it alongside @borsboom2004concept, whose causal
+criterion for validity marks the limit of what a corpus-trained scorer can
+establish. @mackenzie1986 is the standard reference for method effects in marketing
 measurement. The branding constructs whose measurement models are actively contested—brand
 love [@batra2012; @bagozzi2016] and authenticity [@morhart2015; @nunes2021]—are
 treated substantively in @sec-branding.

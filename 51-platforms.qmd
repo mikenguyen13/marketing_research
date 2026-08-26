@@ -21,9 +21,9 @@ chicken-and-egg launch problem, how to govern the interactions that occur on the
 platform—follow directly from the externality structure. The economics is due in
 large part to the two-sided-market theory of Rochet and Tirole, and to the
 platform-pricing analyses of Parker–Van Alstyne and of Armstrong, who worked out the
-structure logic;<!-- CITE-NEEDED: Rochet & Tirole two-sided markets (2003 JEEA; 2006 RAND); Parker & Van Alstyne (2005 Mgmt Sci); Armstrong (2006 RAND) --> the
+price-structure logic [@rochet2003platformcompetiti; @rochet2006sidedmarkets; @parker2005sidednetwork; @armstrong2006competitisided]; the
 strategic machinery traces to the network-effects literature begun by @katz1985network
-and its companion analyses of standards and compatibility.<!-- CITE-NEEDED: Katz & Shapiro technology adoption / network externalities and compatibility -->
+and its companion analyses of standards and compatibility [@katz1986technologadoption; @katz1994systemscompetiti].
 
 The chapter proceeds from the inside out. It begins with the raw force that
 distinguishes platforms—**network effects** and their cross-side cousins—and defines
@@ -63,7 +63,15 @@ and the platform sits between them internalizing both. Crucially, cross-side eff
 need not be symmetric in sign or magnitude. In media markets the effect can be
 *negative* in one direction—viewers dislike advertisers even as advertisers value
 viewers—so a television network or a search engine maximizes by restraining the ad
-side to protect the audience side.<!-- CITE-NEEDED: Rochet & Tirole, negative cross-side (advertiser-audience) externality in media platforms --> Within-side effects can likewise be
+side to protect the audience side [@rochet2006sidedmarkets]. Television is the case
+where this has been estimated rather than assumed: modeling viewing and advertising
+demand jointly, @wilbur2008sidedempirical finds viewers are roughly twice as
+ad-averse as advertisers are viewer-hungry, so the profit-maximizing network carries
+materially less advertising than a one-sided reading of the ad market would imply.
+Where exactly the boundary of a multi-sided platform lies is itself contested, and
+the distinction between a platform and a reseller who simply buys and re-sells turns
+on which side retains control rights rather than on the pattern of externalities
+[@hagiu2015multisided]. Within-side effects can likewise be
 negative: more merchants on a marketplace intensifies competition among them, and
 more drivers on a ride app thins each driver's earnings.
 
@@ -74,7 +82,7 @@ A landmark statement frames the construct:
 > side by an equal amount; in other words, the price structure matters, and platforms
 > must design it so as to bring both sides on board.
 >
-> --- after Rochet and Tirole's characterization of two-sided markets<!-- CITE-NEEDED: Rochet & Tirole (2006), "Two-sided markets: a progress report," RAND J. Econ. -->
+> --- after Rochet and Tirole's characterization of two-sided markets [@rochet2006sidedmarkets]
 
 The italicized claim—that the *structure* of prices, not merely their level, affects
 volume—is what separates a two-sided market from an ordinary one and is the source of
@@ -128,7 +136,7 @@ $$
 $$ {#eq-rochet-tirole}
 
 so that the ratio of prices across sides is inversely related to the ratio of
-elasticities.<!-- CITE-NEEDED: Rochet & Tirole (2003, 2006), the inverse-elasticity price-structure condition --> The intuition is sharp and is the central
+elasticities [@rochet2003platformcompetiti; @rochet2006sidedmarkets]. The intuition is sharp and is the central
 takeaway of the entire pricing literature: **the side that is more elastic—more
 reluctant to join, more price-sensitive, more easily lost to an outside option—pays
 less, and the side that values the interaction more inelastically pays more.** The
@@ -138,13 +146,13 @@ revenue forgone from subsidizing them.
 
 Two forces refine this. First, the *strength of the cross-side externality* each side
 exerts pulls price the other way: a side that confers a large benefit on the other
-side should be subsidized to bring it on board, independent of its own elasticity.<!-- CITE-NEEDED: Armstrong (2006), "Competition in two-sided markets," RAND J. Econ. --> A platform thus subsidizes the side that is either very
+side should be subsidized to bring it on board, independent of its own elasticity [@armstrong2006competitisided]. A platform thus subsidizes the side that is either very
 price-sensitive *or* very valuable to the opposite side—often the same side (consumers
 are both fickle and the reason advertisers pay). Second, whether users **single-home**
 (join one platform) or **multihome** (join several) reshapes the markup: when one side
 multihomes and the other single-homes, the platform holds a *competitive bottleneck*
 over access to the single-homing side and extracts rents from the multihoming side, a
-result we return to under platform competition.<!-- CITE-NEEDED: Armstrong (2006), competitive bottleneck under single-homing/multihoming -->
+result we return to under platform competition [@armstrong2006competitisided].
 
 ### What the Structure Implies
 
@@ -204,6 +212,146 @@ flowchart LR
     P -. "p_B (money side)" .-> B
 ```
 
+### Beyond Two Tiers: Ad Load and Fee as a Screening Menu {#sec-platform-gas}
+
+@eq-rochet-tirole treats each side as facing a single price. Content platforms
+increasingly do not: Netflix, Spotify, and YouTube fund the same catalogue through
+some mix of subscription fees and advertising, and the mix is offered to viewers
+as a *choice*. That turns the price-structure problem into a **mechanism design**
+problem, and specifically into the screening problem of @sec-pricing—a menu whose
+options must satisfy incentive compatibility because the platform cannot observe
+which viewer is which.
+
+The two-dimensional type is what makes the setting distinctive. A viewer is
+characterized by how much the content is worth to them *and* by how much
+advertising annoys them, and those two are not the same trait. The instrument has
+two dimensions to match: an ad load and a fee. @gutt2026gas formalize the general
+version—the **generalized ad-supported subscription** (GAS) mechanism, a menu
+offering a continuum of (ad intensity, fee) combinations, which nests today's
+ad-only, subscription-only, and two-tier "free-with-ads versus paid-ad-free"
+models as special cases and is implementable as a slider or a short finite menu.
+
+Their result is the one worth carrying into practice. GAS is revenue-optimal
+within this broad class, but *the familiar two-tier menu is often nearly optimal*.
+Calibrating to a video-on-demand setting with an incentive-compatible
+willingness-to-pay survey, they find GAS raises revenue by 148% over ad-only, 20%
+over subscription-only, and **1.8%** over the two-tier menu. The first two numbers
+say the mix matters enormously; the third says the fine-grained menu mostly does
+not. They also show that advertising-intensity caps of the kind the EU Digital
+Services Act and Digital Fairness Act contemplate, and competitive pressure, both
+shrink coverage of low-value viewers and push platforms toward less ad-intensive
+offerings.
+
+The simulation below builds the menu from scratch by incentive compatibility—
+viewers self-select, the platform never observes types—and grows it greedily one
+option at a time.
+
+```{r platform-gas-menu}
+set.seed(11)
+N <- 4000
+theta <- rlnorm(N, log(11), 0.55)   # $/month value of the content to a viewer
+gamma <- rlnorm(N, log(1.1), 0.70)  # $ disutility per unit of ad load
+A <- 8; adrev <- 1.25               # max ad load; platform ad revenue per unit
+
+# Every (ad load, fee) pair the platform could put on a menu, and what one taker
+# of that option is worth to the platform.
+grid <- expand.grid(a = seq(0, A, by = 1), f = seq(0, 30, by = 1))
+grid$yield <- grid$f + adrev * grid$a
+
+# Consumers self-select: each takes the option maximizing theta - gamma*a - f,
+# and abstains if the best option leaves negative surplus. This is the incentive-
+# compatibility constraint doing its work -- the platform never sees (theta, gamma).
+rev_of <- function(rows) {
+  S <- matrix(theta, N, length(rows)) - outer(gamma, grid$a[rows]) -
+       matrix(grid$f[rows], N, length(rows), byrow = TRUE)
+  k <- max.col(cbind(0, S), ties.method = "first"); t <- k > 1
+  c(rev = sum(grid$yield[rows][k[t] - 1]) / N, cover = mean(t))
+}
+
+# Greedily grow the menu one option at a time; the plateau is the whole point.
+grow <- function(pool, steps = 4) {
+  chosen <- integer(0); out <- NULL
+  for (s in seq_len(steps)) {
+    cand <- setdiff(pool, chosen)
+    g <- vapply(cand, function(x) rev_of(c(chosen, x))["rev"], numeric(1))
+    chosen <- c(chosen, cand[which.max(g)]); out <- rbind(out, rev_of(chosen))
+  }
+  list(path = out, menu = grid[chosen, c("a", "f")])
+}
+
+all_opts <- seq_len(nrow(grid))
+ad_only  <- rev_of(which(grid$a == A & grid$f == 0))
+sub_only <- {
+  paid <- which(grid$a == 0)
+  rev_of(paid[which.max(vapply(paid, function(g) rev_of(g)["rev"], numeric(1)))])
+}
+two_tier <- {
+  free <- which(grid$a == A & grid$f == 0); paid <- which(grid$a == 0)
+  b <- paid[which.max(vapply(paid, function(g) rev_of(c(free, g))["rev"], numeric(1)))]
+  rev_of(c(free, b))
+}
+gas <- grow(all_opts)
+
+tab <- rbind(`ad-only` = ad_only, `subscription-only` = sub_only, `two-tier` = two_tier,
+             `GAS (2 options)` = gas$path[2, ], `GAS (3 options)` = gas$path[3, ],
+             `GAS (4 options)` = gas$path[4, ])
+tab <- cbind(tab, `gain over two-tier %` = 100 * (tab[, "rev"] / two_tier["rev"] - 1))
+round(tab, 3)
+```
+
+The ordering reproduces theirs. Moving from either single-instrument mechanism to
+a two-option menu is worth roughly twenty percent; moving from the two-option menu
+to a richer one is worth about one percent, and the greedy path flattens
+immediately—the third and fourth options add nothing, because two options already
+separate the types that are separable. The reason the two-tier menu does so well
+is that the incentive-compatibility constraints bind in one direction only: a
+viewer who tolerates ads must not be tempted by the ad-free tier, and one cheap
+option plus one clean option is nearly enough to arrange that.
+
+Regulation acts on the menu by deleting its high-ad options, which is a different
+intervention from capping the price.
+
+```{r platform-gas-cap}
+# A regulatory cap on advertising intensity (the EU Digital Services Act
+# direction of travel) removes the high-ad options from the menu entirely.
+capped <- grow(which(grid$a <= 3))
+rbind(uncapped = gas$path[2, ], `ad load capped at 3` = capped$path[2, ])
+cat("\nOptimal menu, uncapped (ad load, fee):\n");  print(gas$menu[1:2, ])
+cat("\nOptimal menu, capped   (ad load, fee):\n");  print(capped$menu[1:2, ])
+```
+
+The cap costs revenue, as intended, but it also trims coverage: the option that
+served the most ad-tolerant, lowest-willingness-to-pay viewers is the one removed,
+and the replacement asks them for cash they were self-selecting away from. That is
+the distributional footnote to any advertising cap, and it is invisible in an
+analysis that looks only at the average ad load.
+### Release Scheduling as a Complement to the Menu {#sec-platform-release}
+
+The GAS menu governs the *terms* on which content is consumed. A content platform
+also chooses the *schedule*, and that decision turns out to be a distinct lever on
+the same catalogue. @zhao2026serialized study a digital platform for serialized
+content—books released chapter by chapter—and ask whether the platform should drop
+all chapters at once or meter them out.
+
+The two obvious answers each capture half of the mechanism. Simultaneous release
+enables **binge consumption**, which is what hooks a reader on a title.
+Sequential release forces **return visits**, and a return visit is the occasion on
+which a reader discovers some *other* title in the catalogue. Framed that way,
+bingeing and exploration look like substitutes: every hour spent finishing one
+book is an hour not spent browsing.
+
+The paper's result is that a hybrid schedule makes them complements. Revenue is
+maximized when roughly the first half of a book's chapters are released
+simultaneously and the remainder sequentially. The simultaneous block does the
+hooking; the sequential tail converts that attachment into repeated visits, and
+the visits do the exploring. The managerial reading is that release policy is a
+portfolio instrument rather than a title-level one—the schedule for any single
+book is being chosen for what it does to consumption of the *rest* of the
+catalogue, which is why a title-by-title optimization gets it wrong. It is the
+same logic that makes the price structure of @eq-rochet-tirole a structure rather
+than a set of independent prices.
+
+
 ## The Chicken-and-Egg Problem
 
 Cross-side externalities that drive a mature platform's profits are a curse at launch.
@@ -247,6 +395,160 @@ joining user must bridge—either by directly buying participation, by removing 
 cross-side dependence at launch, or by shrinking the critical mass needed for the
 first viable interactions.
 
+## Designing the First Interaction: Fulfillment on a Co-Creation Platform {#sec-platform-fulfillment}
+
+The launch tactics above buy participation with money, scope, or geography. A cheaper
+lever sits inside the first session itself: *what the visitor is allowed to see before
+being asked to commit*. This margin has become sharp on **generative-AI
+content-generation platforms**, where a visitor types a prompt and the platform returns
+a poster, a portrait, a song. The technology's headline virtue is immediacy—but
+immediacy is also what the platform gives away for free, and a visitor who has already
+received the thing has no reason to register for it.
+
+@jiang2026fulfillment name the design variable **fulfillment**: how much of the
+co-created output is revealed before the registration wall. Their theory, built on the
+value-co-creation tradition [@vargo2004], is that fulfillment moves two motivational
+states in *opposite* directions. **Value-in-use** is the visitor's recognition that
+their own input shaped the output—it rises with fulfillment, because you cannot see
+your fingerprints on something you have not seen. **Curiosity** is anticipatory
+motivation, and by the information-gap account [@loewenstein1994curiosity] it exists
+only while the experience remains perceptually open; a full reveal closes the gap and
+extinguishes it. Since registration needs both, the optimum is interior: **partial
+fulfillment**, which reveals enough to prove the visitor's contribution mattered while
+withholding enough to leave something worth coming back for.
+
+A randomized field experiment on a live platform, with a follow-up online study,
+bears this out: partial fulfillment beats both full and no fulfillment on registration.
+The design also crosses fulfillment with how the registration prompt is **framed**, and
+finds a substitution: loss framing—emphasizing what the visitor forfeits by not
+registering—lifts registration on average, but the lift attenuates under full
+fulfillment, because a visitor holding the finished artifact has little left to lose.
+Formal mediation shows why the interior optimum wins. Both partial and full fulfillment
+raise value-in-use, so that pathway alone would prescribe showing everything; only
+partial fulfillment sustains curiosity, and it is the joint activation of the two
+that carries the effect. The advantage persists past the registration event into
+subsequent engagement and return visits, and it appears only when the visitor
+genuinely co-produced the output—fulfillment is not a generic teaser mechanic but a
+lever on *co-creation*, which is why it grows with output quality rather than
+substituting for it.
+
+```{mermaid}
+%%| label: fig-fulfillment-pathways
+%%| fig-cap: "Why the optimum is interior. Value-in-use is increasing in how much of the co-created output is revealed; curiosity is single-peaked, because a full reveal closes the information gap. Registration needs both, so partial fulfillment dominates the corners."
+flowchart LR
+    N["No reveal\n(nothing shown)"]
+    P["Partial reveal\n(some output shown)"]
+    F["Full reveal\n(all output shown)"]
+    V["Value-in-use:\n'my input shaped this'"]
+    C["Curiosity:\nexperience stays open"]
+    R["Registration,\nthen return visits"]
+    N -- "low" --> V
+    P -- "high" --> V
+    F -- "highest" --> V
+    N -- "moderate" --> C
+    P -- "highest" --> C
+    F -- "extinguished" --> C
+    V --> R
+    C --> R
+```
+
+The replication reconstructs the experiment: a three-by-two randomization of
+fulfillment against message framing, two latent pathways with the curvature the theory
+predicts, a binary registration outcome, and a post-registration return count. It
+recovers the arm ranking, tests the framing substitution, and decomposes the
+partial-versus-full gap into its two pathways with a bootstrap.
+
+```{r platform-fulfillment, message=FALSE, warning=FALSE}
+set.seed(1200)
+n <- 9000
+
+# --- 3 x 2 randomization: how much of the co-created output is revealed
+#     before registration, crossed with how the registration prompt is framed.
+fulf  <- factor(sample(c("none", "partial", "full"), n, TRUE),
+                levels = c("none", "partial", "full"))
+frame <- factor(sample(c("gain", "loss"), n, TRUE), levels = c("gain", "loss"))
+
+# --- Two motivational pathways, moving in opposite directions ----------------
+# Value-in-use rises with what you can see: proof your prompt shaped the output.
+mu_viu <- c(none = 0.15, partial = 0.70, full = 0.85)[as.character(fulf)]
+# Curiosity needs the experience to stay perceptually open: a full reveal closes it.
+mu_cur <- c(none = 0.45, partial = 0.75, full = 0.20)[as.character(fulf)]
+viu <- mu_viu + rnorm(n, 0, 0.35)
+cur <- mu_cur + rnorm(n, 0, 0.35)
+
+# --- Registration ------------------------------------------------------------
+b_viu <- 1.30; b_cur <- 1.10
+loss  <- as.integer(frame == "loss")
+full  <- as.integer(fulf == "full")
+eta   <- -1.20 + b_viu * viu + b_cur * cur +
+          0.35 * loss - 0.30 * loss * full   # loss framing substitutes for a full reveal
+reg   <- rbinom(n, 1, plogis(eta))
+
+# Post-registration return behavior, driven by the same experiential state.
+returns <- rpois(n, exp(-0.3 + 0.9 * viu + 0.6 * cur)) * reg
+
+d <- data.frame(fulf, frame, viu, cur, reg, returns)
+
+# --- (1) Registration by arm -------------------------------------------------
+tab <- round(100 * tapply(d$reg, list(d$fulf, d$frame), mean), 1)
+
+# --- (2) Main effect of fulfillment, and the framing interaction -------------
+m_main <- lm(reg ~ fulf, data = d)
+m_int  <- lm(reg ~ fulf * frame, data = d)
+
+# --- (3) Parallel-mediator decomposition of partial vs. full -----------------
+paths <- function(dd) {
+  b  <- coef(lm(reg ~ viu + cur + fulf, data = dd))
+  ap <- with(dd, c(mean(viu[fulf == "partial"]) - mean(viu[fulf == "full"]),
+                   mean(cur[fulf == "partial"]) - mean(cur[fulf == "full"])))
+  c(viu = unname(ap[1] * b["viu"]), curiosity = unname(ap[2] * b["cur"]))
+}
+bt <- replicate(400, paths(d[sample.int(n, n, TRUE), ]))
+ci <- apply(bt, 1, quantile, c(0.025, 0.975))
+
+cat("Registration rate (%) by fulfillment x framing\n"); print(tab); cat("\n")
+cat(sprintf("Partial vs. none  : %+.1f pp\n", 100 * coef(m_main)["fulfpartial"]))
+cat(sprintf("Full    vs. none  : %+.1f pp\n", 100 * coef(m_main)["fulffull"]))
+cat(sprintf("Partial vs. full  : %+.1f pp\n\n",
+            100 * (coef(m_main)["fulfpartial"] - coef(m_main)["fulffull"])))
+cat(sprintf("Loss-framing lift -- no reveal      : %+.1f pp\n",
+            100 * coef(m_int)["frameloss"]))
+cat(sprintf("Loss-framing lift -- partial reveal : %+.1f pp\n",
+            100 * (coef(m_int)["frameloss"] + coef(m_int)["fulfpartial:frameloss"])))
+cat(sprintf("Loss-framing lift -- full reveal    : %+.1f pp  (substitution)\n",
+            100 * (coef(m_int)["frameloss"] + coef(m_int)["fulffull:frameloss"])))
+cat("\nWhy partial beats full -- decomposition of the partial-vs-full gap:\n")
+cat(sprintf("  via value-in-use : %+.1f pp  [%+.1f, %+.1f]\n",
+            100 * mean(bt["viu", ]), 100 * ci[1, "viu"], 100 * ci[2, "viu"]))
+cat(sprintf("  via curiosity    : %+.1f pp  [%+.1f, %+.1f]\n",
+            100 * mean(bt["curiosity", ]), 100 * ci[1, "curiosity"], 100 * ci[2, "curiosity"]))
+cat(sprintf("\nReturn visits per 100 arrivals: none %.0f, partial %.0f, full %.0f\n",
+            100 * mean(d$returns[d$fulf == "none"]),
+            100 * mean(d$returns[d$fulf == "partial"]),
+            100 * mean(d$returns[d$fulf == "full"])))
+```
+
+The decomposition is the part worth dwelling on. Judged on value-in-use alone, the
+partial arm is *behind*—it shows less, so visitors are less certain their prompt
+mattered—and a platform that optimized that single mediator would reveal everything.
+The curiosity pathway more than repays the deficit, and it does so only in the interior
+arm. This is the general hazard of single-mediator reasoning about experience design:
+when two pathways respond to the same lever with opposite curvature, the sign of the
+total effect is not recoverable from either one, and a mediation analysis that
+instruments only the pathway the designer finds intuitive will prescribe a corner
+solution.
+
+Two boundaries deserve emphasis before the tactic is generalized. The effect is a
+property of **co-creation**, not of withholding: it appears when the visitor's own
+input shaped the output and strengthens with output quality, so a platform that
+throttles a mediocre generator is not running this experiment—it is degrading the
+product. And the framing interaction is a warning about stacking persuasion levers. A
+loss-framed prompt and a full reveal are partial substitutes, so a team that A/B-tests
+copy and reveal policy independently will double-count their gains and be surprised
+when the combined launch underperforms the sum of its tests. The general point recurs
+in @sec-platform-governance: platform design levers interact, and the interaction is
+usually substitution rather than complementarity.
+
 ## Tipping, Critical Mass, and Multihoming
 
 Network effects make platform markets prone to **tipping**: once one platform's
@@ -278,7 +580,7 @@ practitioners frequently overlook:
 
 1. **Multihoming.** If users cheaply join several platforms at once, no single
    platform monopolizes access to them, the winner-take-all force weakens, and the
-   market sustains multiple platforms in equilibrium.<!-- CITE-NEEDED: Armstrong (2006), multihoming weakens tipping --> Tipping
+   market sustains multiple platforms in equilibrium [@armstrong2006competitisided]. Tipping
    requires that at least one side predominantly **single-homes**. Drivers and riders
    who run several apps simultaneously are the reason ride-hailing has not tipped to a
    single platform in most cities, despite strong cross-side effects.
@@ -309,7 +611,7 @@ manufacturing is to a product firm—the locus where value is actually produced 
 destroyed—and it is the lever that makes an aggressive price structure (@sec-platforms)
 sustainable by ensuring subsidized participants are genuine.
 
-Three governance problems recur.
+Six governance problems recur.
 
 **Quality and adverse selection.** Open access invites low-quality participants whose
 presence imposes a negative cross-side externality (counterfeit sellers, bad drivers,
@@ -321,14 +623,160 @@ and responded to changes the information they convey. Hotels that begin respondi
 reviews gain in average rating but receive fewer, longer negative reviews thereafter,
 as dissatisfied users self-censor unjustified complaints under anticipated scrutiny
 [@proserpio2017]—a reminder that governance interventions change participant behavior,
-not merely measure it. <!-- CITE-NEEDED: platform reputation/feedback system design and its effect on transaction volume (e.g., online marketplace reputation) -->
+not merely measure it. The design question is old enough to have its own literature: the earliest systematic treatment of online feedback mechanisms already framed reputation as an engineered institution with identifiable failure modes rather than a naturally occurring signal [@dellarocas2003digitizatword].
+
+**Matching technology and where its costs land.** The platform's search and
+filtering machinery is a governance instrument, not a neutral convenience: it
+decides which counterparties a participant ever sees, and therefore which
+interactions are possible at all. Its usual justification is efficiency—cheaper
+matching for the side doing the searching—and the usual evaluation stops at that
+stage. @barach2026filtering ran the evaluation past it. In a randomized field
+experiment on a large online labor market, employers given candidate filters
+interviewed 3.4 percent fewer applicants, which is the intended saving. But
+filters work by sorting on commonly preferred, easily observable attributes, so
+every employer using them converges on the same shortlist. Using a machine-learning
+proxy for quality unobservable to the employer, the interviewed pool thinned at
+both ends—28.9 percent fewer low-quality applicants and 36.9 percent fewer
+high-quality ones—and among employers who actually used the filters, offers were
+8.9 percent more likely to be rejected and contracted wages 2.5 percent higher.
+The screening cost the tool removed reappeared as bargaining power on the other
+side of the market.
+
+Two implications matter for platform design. First, a matching feature has a
+cross-side externality of its own: concentrating demand on a visible subset of
+supply raises that subset's outside options and depresses the discoverability of
+everyone else, which is a governance choice about who gets liquidity, not a
+retrieval optimization. Second, an efficiency metric measured at one stage of a
+multi-stage transaction is not a welfare metric for the transaction. The same
+caution applies to any ranking, recommendation, or filter that a marketplace ships
+as a search improvement—the question is always whether the saved cost was
+eliminated or relocated (@sec-policy-spillovers).
+
+**Which objective the ranking serves.** @barach2026filtering show that a matching
+tool can relocate cost rather than remove it. @greminger2026ranking asks the prior
+question the platform has to answer before it ships any ranking at all: *what is
+the ranking maximizing?* A marketplace can rank to maximize its own take
+(commissions or markups), the number of transactions, or consumer welfare, and
+these need not agree. The descriptive half of the paper shows that lower-priced
+and higher-utility alternatives gain disproportionate demand from being ranked
+higher—which implies that promoting them raises transactions and consumer surplus
+while plausibly *lowering* commission revenue, since commissions scale with price.
+That is the trade-off in its intuitive form, and it is the reason regulators treat
+ranking as a competition-policy object.
+
+The paper's contribution is to price the trade-off rather than assert it. It
+estimates a structural demand model in which consumers search and discover
+products—so a product's rank changes whether it is *seen*, not merely how
+attractive it looks—and then constructs the optimal ranking under each objective
+separately. The result is a negative one, and more useful for it: all three
+objective-specific rankings improve on both a neutral benchmark and the platform's
+status quo along *all three* metrics at once, and the differences among them are
+small. The binding constraint is not that revenue and welfare pull apart; it is
+that the status quo is leaving value on the table for everyone.
+
+The simulation below reproduces the structure of that argument: position governs
+discovery, three objectives imply three different orderings, and the three
+orderings nonetheless land close together and well above the incumbent.
+
+```{r platform-ranking-objectives}
+set.seed(2026)
+J <- 12; N <- 6000; commission <- 0.15
+p <- round(runif(J, 40, 95))                   # prices: moderate dispersion
+q <- rnorm(J, 0, 2.0)                          # match quality: wider dispersion
+alpha <- rlnorm(N, log(0.035), 0.55)           # heterogeneous price sensitivity
+V <- matrix(q, N, J, byrow = TRUE) - outer(alpha, p)
+
+# Common random numbers: fix the taste shocks and the discovery draws once, so
+# that comparing two rankings compares the rankings and not the noise.
+gum <- function(n, m) -log(-log(matrix(runif(n * m), n, m)))
+E <- gum(N, J); E0 <- 1.0 + gum(N, 1); U <- matrix(runif(N * J), N, J)
+
+# Position governs DISCOVERY: rank r is examined with probability 0.85^(r-1).
+# Rank changes what a consumer sees, not what it is worth once seen.
+outcomes <- function(ord) {
+  rk <- integer(J); rk[ord] <- seq_len(J)
+  u <- V + E; u[U >= rep(0.85^(rk - 1), each = N)] <- -Inf
+  k <- max.col(cbind(E0, u), ties.method = "first")   # column 1 = no purchase
+  b <- k > 1; j <- k[b] - 1
+  c(revenue = commission * sum(p[j]) / N,
+    transactions = mean(b),
+    welfare = sum(u[cbind(which(b), j)]) / N)
+}
+
+# Build each objective's ranking greedily, slot by slot: fill position 1 with
+# whichever product maximizes the objective there, then position 2, and so on.
+greedy <- function(obj) {
+  rem <- seq_len(J); ord <- integer(0)
+  for (s in seq_len(J)) {
+    sc <- vapply(rem, function(x) outcomes(c(ord, x, rem[rem != x]))[obj], numeric(1))
+    pick <- rem[which.max(sc)]
+    ord <- c(ord, pick); rem <- rem[rem != pick]
+  }
+  ord
+}
+
+legacy <- q + rnorm(J, 0, 2.5)     # status quo: a stale relevance score
+rankings <- list(
+  `max revenue`      = greedy("revenue"),
+  `max transactions` = greedy("transactions"),
+  `max welfare`      = greedy("welfare"),
+  `neutral (random)` = sample(J),
+  `status quo`       = order(legacy, decreasing = TRUE))
+
+round(t(sapply(rankings, outcomes)), 3)
+```
+
+Read the table by column. Each objective-specific ranking does best, or ties, on
+its own column—but every one of them dominates both the neutral benchmark and the
+status quo on *all three* columns at once, and the spread across the top three
+rows is tiny next to the gap between them and the bottom two. A platform arguing
+that it cannot promote cheaper or better-matched listings without sacrificing
+revenue is, on this evidence, describing a constraint it has not tested.
+
+Two caveats keep the exercise honest. The first is that the result is calibration-
+dependent in an interpretable way: here match quality is more dispersed than price,
+so the products that convert best are not systematically the cheapest, and the
+objectives largely agree about which products belong at the top. Widen the price
+distribution relative to the quality distribution and a genuine revenue-versus-
+welfare tension reappears. The paper's contribution is that in its data the first
+regime is the one that obtains—which is an empirical finding, not a theorem. The
+second is the caution from @barach2026filtering: these are equilibrium-free
+counterfactuals in which sellers do not reprice in response to the new ranking,
+which is exactly the margin on which the relocated-cost story operated.
+
+
+**Who actually sets the rules.** Everything above treats governance as something
+the platform does *to* its participants. @huber2026counterorchestration document
+the return channel. Tracing fifteen years of Apple's iOS ecosystem (2009–2024),
+they show how large complementors—Spotify, Epic Games—forced changes to rules
+including the commission structure and the anti-steering provisions, not through
+market channels, which were closed to them, but through **nonmarket** ones:
+public advocacy, litigation, and coalition-building.
+
+They identify three mechanisms by which these "complementor giants" orchestrate
+change. They create public occasions for other stakeholders to voice grievances;
+they generate *confluence* across grievances that were separately too small to
+matter; and they render the underlying tension salient enough that regulators,
+media, users, other developers, and eventually the platform owner itself respond
+in ways that legitimize the challenge. The pressure is cumulative rather than
+episodic, which is why a fifteen-year window is the right unit of observation and
+a single dispute is not.
+
+Two things follow. For a complementor in a concentrated platform market,
+bargaining power is built outside the market before it can be exercised inside
+it—a strategic capability that looks nothing like the pricing and product levers
+this chapter has otherwise been about. For a regulator, the finding points away
+from prescribing platform-owner conduct directly and toward strengthening the
+conditions under which complementors can advocate for themselves, which is a much
+lighter-touch instrument than rule-writing and does not require the regulator to
+know the efficient rule in advance.
 
 **The platform's own role as competitor.** A platform that both hosts third-party
 sellers and sells its own products faces a conflict: data on third-party demand can be
 used to enter their niches, and ranking algorithms can be tilted toward house
 products. This **self-preferencing** problem trades short-run platform profit against
 long-run participation incentives, because sellers who fear expropriation invest less
-or exit. <!-- CITE-NEEDED: platform self-preferencing / dual role of marketplace as host and competitor -->
+or exit. The empirical record on Amazon shows the platform entering exactly the product spaces where third-party sellers had demonstrated demand, which is the sharpest available evidence that the conflict is real rather than hypothetical [@zhu2018competingcomplemen]; the theoretical counterpart shows when a search-neutrality rule raises or lowers welfare once the platform internalizes both roles [@zou2021].
 
 **Openness versus control.** A platform chooses how *open* to be—how freely third
 parties may build on it, transact, and access its users. More openness recruits more
@@ -336,7 +784,58 @@ complementors and accelerates indirect network effects; more control protects qu
 captures more value, and guards the core experience. The choice is not binary but a
 governance gradient, and the optimal point shifts over the life cycle: openness to
 bootstrap the network early, selective control to monetize and protect quality once the
-network is established. <!-- CITE-NEEDED: platform openness vs. control trade-off; platform boundary/governance choices -->
+network is established.  [@boudreau2010openplatform]
+
+**Provenance of contributions.** Generative AI adds a governance problem the reputation
+machinery was never designed for: a contribution can now be cheap, fluent, plausible, and
+not the contributor's own knowledge, which corrodes the signal that a knowledge platform
+exists to aggregate. Stack Overflow's December 2022 prohibition on ChatGPT-generated
+questions and answers is the natural experiment, and @borwankar2026chatgpt read it with a
+difference-in-differences design against the AskProgramming subreddit as a control.
+The results split cleanly along the openness–control gradient. On the *quality* side, answers
+after the restriction became longer, more linguistically complex, and more positive in
+tone, and they drew more upvotes—the community judged them better. On the *volume* side,
+both questions and answers posted fell, and first-time contributors declined; questions
+themselves were unaffected, which localizes the effect to the answering side where the
+policy bit. A ban on synthetic contributions, in other words, bought quality with
+participation, exactly the trade the governance gradient predicts.
+
+Two features make the evidence unusually credible for a platform-policy study. The first
+is replication under an independent shock: Italy's temporary nationwide ChatGPT ban
+removes the tool without any platform rule changing, and reproduces the pattern, which
+rules out explanations resting on Stack Overflow's announcement rather than on AI
+availability. The second is a mechanism test—a scenario-based experiment with 440
+participants—yielding direct evidence of **compensatory knowledge signaling**: barred
+from the tool, contributors invest in demonstrating human expertise. That mechanism is
+what a purely aggregate DiD cannot deliver, and it matters managerially, because a rule
+that works by changing what contributors want to signal will not survive a change in what
+the audience finds impressive.
+
+**Policy as stance signal.** The Stack Overflow case treats a rule as a constraint on
+contributions, but a rule is also an *announcement*, and the announcement can move
+participation on its own. @huang2026stances isolate that channel with two natural
+experiments of opposite sign on leading Chinese visual-arts platforms. Lofter launched
+its own AI image generator—a pro-AI stance—and creator activity **fell**. Graffiti
+Kingdom prohibited AI-generated artwork—an anti-AI stance—and creator activity
+**rose**. Neither movement is what a tool-features story predicts: adding a free
+generator lowers the cost of producing on Lofter, and banning a technique removes an
+option on Graffiti Kingdom. What the two experiments share is the stance the policy
+communicated—about AI's role on the platform, about the platform's commitment to human
+creators, and about the competitive environment those creators expect to face—and
+multiple lines of evidence in the paper point to that signal rather than to the
+mechanics of the tool or the enforcement.
+
+The heterogeneity connects the result back to the price-structure and tipping logic of
+this chapter. Reductions on Lofter were largest among higher-popularity,
+multi-homing, and AI-averse creators: the creators with the most to lose from
+synthetic substitutes, and—crucially—the ones already holding an outside option, since
+multihoming (@sec-platforms) is what converts a discouraging signal into an exit rather
+than a grumble. Analysis of creator posts names the concerns doing the work: replacement
+risk, perceived low quality, and copyright infringement. For a platform whose subsidized
+side *is* the human creator base, this makes a generative-AI product decision inseparable
+from a governance decision. The feature is priced by the side that must interpret it, and
+a launch communicated as augmenting creators is a different governance act from the same
+launch communicated as substituting for them.
 
 ## Platform Competition
 
@@ -349,7 +848,7 @@ platform is a monopoly gatekeeper over its single-homing users, because reaching
 requires joining *that* platform. Competing platforms then compete fiercely for the
 single-homing side (often subsidizing it heavily) and extract rents from the
 multihoming side, which has no choice but to join all platforms to reach all of the
-single-homing users.<!-- CITE-NEEDED: Armstrong (2006), competitive-bottleneck rent extraction from the multihoming side --> This explains why advertisers (who multihome
+single-homing users [@armstrong2006competitisided]. This explains why advertisers (who multihome
 across media) pay, while audiences (who often single-home their attention) are
 courted.
 
@@ -359,7 +858,7 @@ to enter without solving the chicken-and-egg problem from scratch. Platform comp
 is therefore frequently *cross-market* rather than within a narrowly defined product
 market—a messaging app entering payments, a search engine entering maps—and an
 incumbent's most dangerous rival is often a large platform from a neighboring market
-rather than a direct entrant. <!-- CITE-NEEDED: platform envelopment / coring as a competitive strategy -->
+rather than a direct entrant.  [@eisenmann2011platformenvelopme]
 
 **Compatibility and standards.** Competing platforms choose whether to be
 **compatible**—to let their networks interconnect (as banks share an ATM network) or
@@ -370,7 +869,124 @@ risks splitting the market. The strategic choice of compatibility is thus a choi
 about *whether to compete on network size at all*, and the firm with the larger
 installed base typically prefers incompatibility (to press its advantage) while the
 smaller prefers compatibility (to neutralize it)—the classic asymmetry of standards
-wars [@katz1985network].<!-- CITE-NEEDED: Katz & Shapiro (1986), standards/compatibility wars and the large-base-prefers-incompatibility asymmetry -->
+wars [@katz1985network; @katz1986technologadoption].
+
+### Market Structure and the Realized Externality {#sec-platform-entry-externality}
+
+The three results above concern how competition splits rents. A fourth question, less
+studied and often more consequential for policy, is how competition changes the *size of
+the thing the platform does to the world outside it*. Platforms are routinely justified by
+their externalities—ride-hailing reduces drunk driving, home-sharing spreads tourist
+spending, bike sharing displaces short car trips—but those externalities are produced by
+*usage*, not by the existence of an app. Between service availability and realized
+externality sits adoption, and adoption depends on supply.
+
+@liu2026platform put that chain to a test with the staggered rollout of the two largest
+dockless bike-sharing platforms, Ofo and Mobike, across Chinese cities, using a stacked
+difference-in-differences design with air quality as the outcome. The twin-platform
+setting buys two analyses from one rollout. Treating the two firms as a single provider,
+entry improves urban air quality by 3.82%, a 3.13-point reduction in the Air Quality
+Index. Distinguishing market structure changes the picture: **dual-platform entry reduces
+AQI by 6.47 points—more than twice the pooled estimate—while single-platform entry has no
+statistically significant effect at all.** The heterogeneity analysis lines up with the
+demand-side story: improvements are larger in cities with more domestic migrants, larger
+well-educated populations, denser public transit, and better bike-lane infrastructure, and
+smaller where the terrain is steep or rainfall frequent.
+
+The mechanism is supply-side and cuts against the reflex that rivalry dissipates a
+platform's value. Dockless fleets are capacity-constrained: the binding constraint on a
+short trip is whether a usable bike is within a short walk of the origin. A second
+platform does not split a fixed network the way a second social network splits an
+audience; it adds bikes, densifies coverage, and lowers the expected walk, pushing
+adoption past the level at which mode substitution actually happens. Multihoming is
+nearly free (two apps, no switching cost, no content to migrate), so the two networks are
+substitutes in the *user's* choice but complements in the *city's* realized service level.
+The general condition is worth stating because it travels: when a platform's externality
+depends on density of physical availability, and users multihome at near-zero cost,
+competition can be complementary at the level of the outcome society cares about even
+while it is rivalrous at the level of firm profit.
+
+The design deserves as much attention as the finding. A pooled treatment indicator would
+have reported a modest average effect and missed that the entire effect lives in
+dual-entry cities. The chapter's earlier warning about network-effect estimation has a
+counterpart here: **an average treatment effect estimated across heterogeneous market
+structures is not the effect of the treatment in any market**. The template generalizes to
+marketing settings with two rivals entering markets at different times—delivery apps,
+streaming services, retail-media networks—wherever a researcher can code not only *when*
+entry happened but *how many* platforms were present afterward.
+
+Stacking is what makes the estimation honest under staggered timing. Rather than a single
+two-way fixed-effects regression—which, with staggered adoption and heterogeneous effects,
+uses already-treated units as controls and can return a weighted average with negative
+weights—the analyst builds one clean sub-experiment per entry event, each with its own
+treated cohort and not-yet-treated controls, then stacks them and estimates with
+event-by-cohort fixed effects [@cengiz2019minimum; @callaway2021did]. The simulation below
+reproduces both the estimation and the aggregation trap.
+
+```{r platform-stacked-did}
+#| message: false
+#| warning: false
+set.seed(51)
+
+# --- Staggered entry across 180 cities, 24 periods ----------------------------
+# A third of cities never get a platform; a third get one; a third get two.
+n_city <- 180; n_per <- 24
+structure_type <- rep(c("never", "single", "dual"), each = n_city / 3)
+entry <- ifelse(structure_type == "never", Inf,
+                sample(8:16, n_city, replace = TRUE))
+
+# True effects: single entry does essentially nothing to the outcome;
+# dual entry (denser fleet) moves it. AQI is coded so NEGATIVE = cleaner air.
+tau <- c(never = 0, single = -0.4, dual = -6.5)
+
+panel <- expand.grid(city = 1:n_city, period = 1:n_per)
+panel$type   <- structure_type[panel$city]
+panel$entry  <- entry[panel$city]
+panel$post   <- as.integer(panel$period >= panel$entry)
+panel$aqi    <- 100 + rnorm(n_city, 0, 8)[panel$city] +      # city level
+                0.6 * panel$period +                          # common trend
+                tau[panel$type] * panel$post +
+                rnorm(nrow(panel), 0, 4)
+
+# --- (1) Pooled TWFE: one indicator for "a platform is present" ----------------
+pooled <- lm(aqi ~ post + factor(city) + factor(period), data = panel)
+
+# --- (2) Stacked DiD: one clean sub-experiment per entry cohort ---------------
+# For each entry period g, keep cohort-g cities plus not-yet-treated cities,
+# in a window around g; stack with cohort-specific fixed effects.
+cohorts <- sort(unique(entry[is.finite(entry)]))
+stack <- do.call(rbind, lapply(cohorts, function(g) {
+  keep <- subset(panel,
+                 period >= g - 4 & period <= g + 4 &
+                 (entry == g | entry > g + 4))
+  keep$treat  <- as.integer(keep$entry == g)
+  keep$after  <- as.integer(keep$period >= g)
+  keep$cohort <- g
+  keep
+}))
+stack$cell <- interaction(stack$cohort, stack$city, drop = TRUE)
+stack$time <- interaction(stack$cohort, stack$period, drop = TRUE)
+
+stacked_pooled <- lm(aqi ~ treat:after + cell + time, data = stack)
+
+# --- (3) Stacked DiD with market structure ------------------------------------
+stack$dual   <- as.integer(stack$type == "dual")
+stacked_type <- lm(aqi ~ treat:after + treat:after:dual + cell + time, data = stack)
+
+cat(sprintf("True effect      : single %.2f | dual %.2f\n", tau["single"], tau["dual"]))
+cat(sprintf("Pooled TWFE      : %.2f (one 'platform present' indicator)\n",
+            coef(pooled)["post"]))
+cat(sprintf("Stacked, pooled  : %.2f\n", coef(stacked_pooled)["treat:after"]))
+cat(sprintf("Stacked, single  : %.2f\n", coef(stacked_type)["treat:after"]))
+cat(sprintf("Stacked, dual    : %.2f\n",
+            coef(stacked_type)["treat:after"] + coef(stacked_type)["treat:after:dual"]))
+```
+
+The pooled specifications recover something like the average of a null effect and a large
+one—a number that describes no city in the sample—while the structure-interacted stack
+separates them. That is the estimation counterpart of the substantive claim: the
+externality is not a property of the service being available, it is a property of the
+market structure that determines how much of the service is actually used.
 
 ## Measuring Network Effects
 
@@ -424,7 +1040,7 @@ within a discrete-choice demand model in the tradition of @berry1995. The payoff
 fully specified model that supports counterfactuals (what if the platform changed its
 price structure?); the cost is that identification now rests on the full set of
 functional-form and distributional assumptions, and misspecification of the network
-term contaminates every counterfactual. <!-- CITE-NEEDED: structural estimation of indirect network effects in a two-sided market (e.g., videogames / payment cards) -->
+term contaminates every counterfactual.  [@nair2004empiricalindirect; @rysman2004competitibetween]
 
 *Natural experiments and panel variation.* A discrete shock that adds or removes
 participation on one side—an entry, an exit, a regulatory ban, a platform policy
@@ -558,12 +1174,20 @@ accrues.
 - Cross-side effects create the **chicken-and-egg** launch problem: the empty market is
   always an equilibrium, and platforms escape it by subsidizing a side, going
   standalone-useful first, or igniting density in a narrow micromarket.
+- The **first session** is a design lever, not just a funnel. On generative-AI
+  co-creation platforms, @jiang2026fulfillment show that *partial* fulfillment—
+  revealing some but not all of the co-created output before the registration wall—
+  beats both full and no reveal, because value-in-use rises with disclosure while
+  curiosity is single-peaked (@sec-platform-fulfillment). Loss-framed prompts and a
+  full reveal are substitutes, so the levers cannot be A/B-tested independently.
 - Network effects create a *tendency* to **tip**, but **multihoming**,
   differentiation, and congestion determine whether it is realized—"network effects
   imply winner-take-all" is a half-truth.
 - **Governance** (reputation systems, self-preferencing restraint, openness/control) is
   where platform value is produced and is what makes an aggressive price structure
-  sustainable.
+  sustainable. Generative AI adds a provenance problem and a *signaling* one: an AI
+  policy is read as a stance on human contributors, and the announcement moves
+  participation on its own [@borwankar2026chatgpt; @huang2026stances].
 - **Measuring** a network effect requires confronting the simultaneity of the two
   sides; an estimate that ignores it is an upper bound, recoverable only with a valid
   side-specific instrument, a structural model, or a credible natural experiment.
@@ -571,8 +1195,8 @@ accrues.
 ## Further Reading
 
 The two-sided market was formalized by Rochet and Tirole, with complementary pricing
-treatments by Parker–Van Alstyne and by Armstrong;<!-- CITE-NEEDED: Rochet & Tirole (2003 JEEA, 2006 RAND); Parker & Van Alstyne (2005 Mgmt Sci); Armstrong (2006 RAND) --> the network-effects
-foundations are due to @katz1985network and the Katz–Shapiro work on standards.<!-- CITE-NEEDED: Katz & Shapiro (1986, 1994) on compatibility and systems competition --> The
+treatments by Parker–Van Alstyne and by Armstrong [@rochet2003platformcompetiti; @rochet2006sidedmarkets; @parker2005sidednetwork; @armstrong2006competitisided]; the network-effects
+foundations are due to @katz1985network and the Katz–Shapiro work on standards [@katz1986technologadoption; @katz1994systemscompetiti]. The
 platform-competition and business-model literature is surveyed in
 @casadesus2015competing, and the economics of digital platforms more broadly in
 @goldfarb2022 and @tucker2019digital. Multiproduct and bundling considerations

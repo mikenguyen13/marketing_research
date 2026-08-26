@@ -1,0 +1,1220 @@
+# Customer-Base Analysis and Latent Attrition Models {#sec-cba}
+
+@sec-clv treated customer lifetime value as a managerial quantity: a number that
+allocates acquisition budget, prices a loyalty program, and, aggregated, tracks
+shareholder value. It surveyed four traditions for producing that number and showed
+each one working. This chapter goes down one level, into the tradition that has the
+longest run of published theory behind it and the smallest data appetite in front of
+it: *customer-base analysis*, the problem of inferring who in a customer base is still
+a customer at all.
+
+The distinction is not pedantic. In a contractual business, attrition is an observed
+event with a date attached; churn is a dependent variable and the modeling problem is
+a survival problem of a familiar kind. In a *non-contractual* business, which is most
+retail, most hospitality, most e-commerce and most direct marketing, nobody resigns.
+A customer who has not bought in four months may have defected, or may be between
+trips. There is no dependent variable to regress, because the event of interest is
+never recorded. Customer-base analysis is the family of models that solves this by
+refusing to observe attrition and modeling it as latent: the customer buys at some
+rate while "alive," dies at an unobserved moment, and everything the analyst wants
+(the probability the customer is still active, the transactions to expect next year,
+the discounted residual value) is recovered as a posterior quantity from the shape of
+the purchase history alone.
+
+That family has been remarkably productive and remarkably static in one specific way.
+From @paretonbd1987 through the closed-form simplifications of the 2000s, the models
+took as input three numbers per customer, frequency, recency, and observation length,
+and nothing else. They took nothing else because the closed forms that made them
+attractive did not survive contact with covariates. A model that cannot see that a
+customer was mailed a catalogue in week 30, or that weeks 46 through 52 are the high
+season, cannot tell a marketer whether the catalogue worked, and pays for that
+blindness in predictive accuracy on exactly the periods a marketer cares about.
+
+The organizing paper of this chapter closes that gap. @bachmann2021tvc extend the
+Pareto/NBD so that both the purchase rate and the attrition rate are functions of
+covariates that *change over time*, while preserving the closed-form maximum
+likelihood solution that made the original model deployable. The extension is not a
+reparameterization; it changes what the sufficient statistics are (the exact timing of
+every transaction now matters, not just the last one), what the managerial expressions
+mean (a finite-horizon discounted transaction count replaces the infinite-horizon
+one), and what the model can be asked (whether a marketing action raises purchasing
+and churn simultaneously becomes a testable restriction). We develop the mathematics
+from primitives, replicate the estimation on the retail data that ships with the
+authors' own software, and then place the whole enterprise in its literature, journal
+by journal, across marketing and economics.
+
+## What Customer-Base Analysis Asks {#sec-cba-questions}
+
+### Four Quadrants, One Hard Cell {#sec-cba-quadrants}
+
+Two binary features of a business decide which model class is even admissible, and
+the taxonomy is worth restating because it is the single most common source of
+misapplied CLV models in practice.
+
+The first feature is whether attrition is *observed*. In a contractual setting,
+subscriptions, insurance, telecom postpaid, B2B licensing, the customer must act to
+end the relationship, and the firm records the act. In a non-contractual setting,
+retail, e-commerce, restaurants, catalogue, most consumer packaged goods, the customer
+simply stops, silently.
+
+The second feature is whether transactions can occur at *any* moment (continuous) or
+only at discrete opportunities (discrete): a charity that solicits once a year, a
+season-ticket renewal, a monthly billing cycle.
+
+```{r cba-taxonomy}
+#| label: tbl-cba-taxonomy
+#| tbl-cap: "Which model class is admissible. The top-right cell is customer-base analysis proper: attrition is unobserved and time is continuous, so a latent-attrition model is not one option among several but the only way to define the estimand."
+#| echo: false
+#| message: false
+library(tibble)
+library(knitr)
+
+tibble(
+  `Transaction opportunity` = c("Continuous", "Discrete"),
+  `Contractual (attrition observed)` = c(
+    "Survival / hazard models; sBG on renewal cohorts. Example: mobile postpaid.",
+    "Discrete-time survival; shifted-beta-geometric. Example: annual subscription."),
+  `Non-contractual (attrition latent)` = c(
+    "Pareto/NBD, BG/NBD, Pareto/GGG and covariate extensions. Example: apparel retail.",
+    "BG/BB. Example: annual charity appeal.")
+) |>
+  kable()
+```
+
+Only the right-hand column is customer-base analysis. In the left-hand column the
+analyst has a labelled event and can reach for the entire apparatus of duration
+econometrics; in the right-hand column there is no label, and the models below exist
+to manufacture a posterior belief where the label should have been.
+
+### The Managerial Expressions {#sec-cba-expressions}
+
+Whatever the model, four quantities are asked of it, and the rest of the chapter is
+about how each is computed. Let $\mathcal{F}$ denote everything observed about a
+customer. For the Pareto/NBD this will be $\mathcal{F} = \{x, t_x, T\}$: the number of
+repeat transactions, the time of the last one, and the length of the observation
+window.
+
+1. **P(alive)**, the posterior probability the customer had not yet churned at $T$.
+2. **CET**, the *conditional expected transactions* $E(X(T, T+t) \mid \mathcal{F})$
+   over a finite horizon of length $t$.
+3. **DERT**, the *discounted expected residual transactions*, which is CET's
+   infinite-horizon, discounted analogue.
+4. **Expected spend per transaction** $E(m \mid \mathcal{F})$, supplied by a separate
+   model.
+
+Following @gupta2006modeling and the general formulation used in the software
+literature [@meierer2026clvtools], value is the discounted integral of cash flow
+weighted by the probability of still being alive to generate it,
+
+$$
+E(CLV \mid \mathcal{F}) = \int_{T}^{\infty} E[V(t) \mid \mathcal{F}]\, S(t \mid \mathcal{F})\, d(t)\, dt ,
+$$ {#eq-cba-clv-integral}
+
+where $S(t \mid \mathcal{F})$ is the survivor function and $d(t)$ the discount factor.
+Under the standard assumption that spend per transaction is independent of transaction
+timing, cash flow factors out and @eq-cba-clv-integral collapses to a product of a
+transaction quantity and a monetary quantity,
+
+$$
+DERT = \int_{T}^{\infty} \lambda(t)\, S(t \mid \mathcal{F})\, d(t)\, dt ,
+\qquad
+E(CLV \mid \mathcal{F}) = E(m \mid \mathcal{F}) \cdot DERT .
+$$ {#eq-cba-dert}
+
+This factorization is what lets the field maintain two separate literatures, one on
+latent attrition and one on spend, and bolt them together at the end. It is also the
+first assumption to interrogate when a CLV number looks wrong: heavy buyers who spend
+differently per basket break it, and @glady2015unveiling document exactly that
+dependence between timing, spending and dropout.
+
+## The Pareto/NBD from Primitives {#sec-cba-pnbd}
+
+@paretonbd1987 is the origin model and still the reference point against which
+everything in this chapter is measured. It is built from four assumptions, two per
+process, and the whole of its closed-form machinery follows mechanically from them.
+
+**Attrition.** A customer's unobserved lifetime $\omega$ is exponential with rate
+$\mu$,
+
+$$
+f(\omega \mid \mu) = \mu e^{-\mu \omega} ,
+$$ {#eq-cba-life}
+
+and $\mu$ is Gamma-distributed across the population with shape $s$ and scale $\beta$,
+
+$$
+g(\mu) = \frac{\beta^{s} \mu^{s-1} e^{-\mu\beta}}{\Gamma(s)} .
+$$ {#eq-cba-gammamu}
+
+Mixing @eq-cba-life over @eq-cba-gammamu gives the lifetime of a randomly chosen
+customer as a Pareto distribution of the second kind, which is where half the model's
+name comes from:
+
+$$
+f(\omega) = \int_{0}^{\infty} f(\omega \mid \mu) g(\mu)\, d\mu
+          = \frac{s}{\beta}\left(\frac{\beta}{\beta+\omega}\right)^{s+1} .
+$$ {#eq-cba-pareto2}
+
+**Purchasing.** While alive, the customer buys according to a Poisson process with
+rate $\lambda$, so that
+
+$$
+P(X(t) = x \mid \lambda,\, t < \omega) = \frac{(\lambda t)^{x} e^{-\lambda t}}{x!},
+\qquad x = 0, 1, 2, \dots
+$$ {#eq-cba-poisson}
+
+and $\lambda$ is Gamma-distributed with shape $r$ and scale $\alpha$,
+
+$$
+g(\lambda) = \frac{\alpha^{r} \lambda^{r-1} e^{-\lambda\alpha}}{\Gamma(r)} .
+$$ {#eq-cba-gammalambda}
+
+Mixing @eq-cba-poisson over @eq-cba-gammalambda yields the negative binomial
+distribution, the other half of the name:
+
+$$
+P(X(t) = x \mid t < \omega) = \frac{\Gamma(r+x)}{\Gamma(r)\,x!}
+  \left(\frac{\alpha}{\alpha+t}\right)^{r}\left(\frac{t}{\alpha+t}\right)^{x} .
+$$ {#eq-cba-nbd}
+
+**The individual likelihood.** A customer observed to time $T$ with $x$ repeat
+transactions, the last at $t_x$, is in one of two states: still alive ($\omega > T$),
+or dead at some $\omega \in (t_x, T]$. Conditional on being alive throughout, the
+likelihood is the product of exponential inter-transaction densities and the survivor
+term, $\lambda^{x} e^{-\lambda T}$; conditional on dying at $\omega$, it is
+$\lambda^{x} e^{-\lambda \omega}$. Weighting the two branches by their probabilities
+and integrating out the death time gives
+
+$$
+\begin{aligned}
+L(\lambda, \mu \mid x, t_x, T)
+&= \lambda^{x} e^{-\lambda T} P(\omega > T \mid \mu)
+ + \int_{t_x}^{T} \lambda^{x} e^{-\lambda\omega} f(\omega \mid \mu)\, d\omega \\
+&= \frac{\lambda^{x}\mu}{\lambda+\mu} e^{-(\lambda+\mu)t_x}
+ + \frac{\lambda^{x+1}}{\lambda+\mu} e^{-(\lambda+\mu)T} .
+\end{aligned}
+$$ {#eq-cba-indlik}
+
+Marginalizing @eq-cba-indlik over the two Gamma mixing distributions produces a
+closed-form expression in $(r, \alpha, s, \beta)$ involving the Gaussian
+hypergeometric function, and the four parameters are estimated by maximizing
+
+$$
+\sum_{i=1}^{N} \log L(r, \alpha, s, \beta \mid x_i, t_{x_i}, T_i) .
+$$ {#eq-cba-loglik}
+
+Two features of @eq-cba-indlik deserve emphasis because both are lost in the extension
+of @sec-cba-bmn.
+
+### Why Recency and Frequency Are Sufficient {#sec-cba-sufficiency}
+
+Notice what does *not* appear in @eq-cba-indlik: the timing of transactions
+$t_1, \dots, t_{x-1}$. Only $t_x$ survives. This is a consequence of the memoryless
+property of the exponential inter-arrival times, and it is the reason the entire
+literature summarizes a customer by the triple $(x, t_x, T)$. The practical payoff is
+enormous, a firm with ten million customers stores three numbers each, and it is why
+these models scale to customer bases where a hierarchical Bayes alternative would not.
+The interpretive payoff is the *iso-value curve* of @fader2005rfmclv: customers with
+different histories but the same $(x, t_x)$ have identical predicted futures, which
+turns the recency-frequency grid of practitioner RFM scoring into a model-implied
+object rather than a heuristic one.
+
+The intuition behind the posterior is worth stating in words, because it is what makes
+these models feel like inference rather than curve-fitting. Frequency and recency
+carry opposite signals. Many purchases raise the estimate of $\lambda$, which raises
+value; but many purchases *also* mean that a long recent silence is more surprising,
+which raises the posterior probability of death. A customer who bought twenty times
+and has been quiet for six months is in worse shape than one who bought twice and has
+been quiet for six months, because for the frequent buyer six months of silence is
+many missed opportunities and for the infrequent buyer it is barely one. The models
+formalize precisely this trade-off, and it is not something an RFM score computed by
+hand gets right.
+
+Ratifying the point, @wubben2008heuristics find that simple managerial heuristics
+(a hiatus rule: "a customer is dead if they have not bought in $h$ periods") often
+match the probability models for aggregate-level predictions, while
+@zhang2015clumpiness show that adding *clumpiness*, the degree to which purchases
+arrive in bursts, to recency-frequency-monetary information improves individual-level
+prediction. Both results are about the same thing: how much of a purchase history the
+$(x, t_x, T)$ summary throws away.
+
+### The Model Zoo {#sec-cba-zoo}
+
+The Pareto/NBD's inconvenience is computational: the hypergeometric functions in its
+marginal likelihood are fragile to optimize. Most of the subsequent literature can be
+read as trading one distributional assumption for tractability or for realism.
+
+```{r cba-zoo}
+#| label: tbl-cba-zoo
+#| tbl-cap: "The latent-attrition model family. Each row swaps a distributional assumption of the Pareto/NBD for tractability, realism, or covariate capability. The right column is the reason the swap was made."
+#| echo: false
+#| message: false
+library(tibble)
+library(knitr)
+
+tibble(
+  Model = c("Pareto/NBD", "BG/NBD", "MBG/NBD", "BG/BB", "Pareto/GGG",
+            "GGom/NBD", "HB Pareto/NBD", "Pareto/NBD + dyn. cov.",
+            "HMM", "Bayesian nonparametric", "Changepoint"),
+  `Attrition process` = c(
+    "Exponential / Gamma", "Geometric after each buy / Beta",
+    "Geometric incl. at time 0 / Beta", "Beta-Bernoulli (discrete)",
+    "Exponential / Gamma", "Gompertz / Gamma", "Exponential / lognormal",
+    "Exp. with time-varying rate / Gamma", "Markov states",
+    "Exponential / nonparametric", "Exponential / Gamma"),
+  `Transaction process` = c(
+    "Poisson / Gamma", "Poisson / Gamma", "Poisson / Gamma",
+    "Beta-binomial (discrete)", "Gamma-timing (regularity) / Gamma",
+    "Poisson / Gamma", "Poisson / lognormal",
+    "Poisson with time-varying rate / Gamma", "State-dependent",
+    "Poisson / nonparametric", "Poisson / Gamma"),
+  `Bought what` = c(
+    "The reference specification",
+    "Removes hypergeometrics; near-identical fit",
+    "Fixes BG/NBD's inability to let zero-repeaters die",
+    "Correct estimand when opportunities are discrete",
+    "Uses inter-purchase regularity, not just recency",
+    "Non-monotone (rising then falling) hazard of death",
+    "Individual-level covariates and correlated processes",
+    "Time-varying covariates with closed-form MLE",
+    "Relationship states with transitions, not one death",
+    "Drops the Gamma prior; visualizes the fitted heterogeneity",
+    "Structural breaks that hit whole acquisition cohorts"),
+  Source = c("@paretonbd1987", "@fader2005bgnbd", "@batislam2007",
+             "@faderhardieshang2010", "@platzerreutterer2016",
+             "@bemmaorglady2012", "@abe2009", "@bachmann2021tvc",
+             "@netzer2008hmm", "@dewansari2018", "@gopalakrishnan2017changepoint")
+) |>
+  kable()
+```
+
+Three of these rows carry lessons that recur later. @fader2005bgnbd's BG/NBD buys its
+tractability with a structural quirk: because dropout is a coin flip taken *after a
+purchase*, a customer who never repeats can never die, which @batislam2007 correct in
+the MBG/NBD by allowing dropout at time zero. @jerath2011death generalize the death
+process itself, showing that "death" in these models is a modeling convention with
+consequences for how quickly value is written off. And @bemmaorglady2012's
+Gamma-Gompertz/NBD replaces the exponential lifetime with a Gompertz one so that the
+hazard of dying can rise and then fall, a shape the exponential cannot produce; the
+subsequent comment by @adler2023comment on that paper's estimation is a useful
+reminder that closed forms in this literature are not always as closed as they look.
+
+Alongside the timing models sits the spend model. The de facto standard is the
+Gamma-Gamma of @colombojiang1999 and @fader2005rfmclv. With $\bar z = \sum_{i=1}^{x} z_i / x$
+the observed average transaction value, spend per transaction is Gamma with shape $p$
+and rate $\nu$, $\nu$ is itself Gamma with shape $q$ and scale $\gamma$ across
+customers, and the marginal density of $\bar z$ given $x$ is
+
+$$
+f(\bar z \mid p, q, \gamma; x) = \frac{1}{\bar z\, B(px, q)}
+  \left(\frac{\gamma}{\gamma + x\bar z}\right)^{q}
+  \left(\frac{x \bar z}{\gamma + x \bar z}\right)^{px} ,
+$$ {#eq-cba-gg}
+
+with $B(\cdot,\cdot)$ the Beta function. Note what @eq-cba-gg does not contain: time.
+The spend model is stationary by construction, and no published covariate extension of
+it was implemented at the time of writing [@meierer2026clvtools]. Everything this
+chapter says about covariates applies to the timing side only, which is a real
+limitation when the marketing action being evaluated is a discount.
+
+## The Covariate Problem {#sec-cba-covariates}
+
+Two motivations push against the covariate-free tradition, and they are worth keeping
+separate because they impose different standards of proof.
+
+The first is *prediction*. Gamma heterogeneity is a black box: it concedes that
+customers differ and declines to say how. If some of that dispersion is explained by
+observables (acquisition channel, gender, region, tenure), moving it out of the mixing
+distribution and into a systematic component should sharpen individual-level forecasts,
+which is where the Pareto/NBD is weakest.
+
+The second is *inference*. A firm that mails a catalogue wants to know what the
+catalogue did. This is a causal question dressed as a modeling one, and the covariate
+coefficient answers it only under an exogeneity assumption that the firm's own
+targeting rule usually violates. We return to this in @sec-cba-pitfalls; it is the
+single largest threat to the interpretation of these models, and the literature is
+candid about it [@shugan2004endogeneity; @ebbes2011holdout].
+
+### Time-Invariant Covariates {#sec-cba-static}
+
+The time-invariant extension, due to @faderhardie2007covariates, scales the two
+latent rates multiplicatively:
+$\lambda = \lambda_0 \exp(\boldsymbol{\gamma}_{purch}' \mathbf{x}^{P})$ and
+$\mu = \mu_0 \exp(\boldsymbol{\gamma}_{attr}' \mathbf{x}^{A})$, with $\lambda_0$ and
+$\mu_0$ retaining their Gamma priors. Because the covariates are constants, the whole
+construction is a reparameterization: each customer's $\alpha$ and $\beta$ are simply
+rescaled, and the closed-form likelihood survives untouched. The coefficients are
+semi-elasticities of the two rates [@gupta1991interpurchase]: a one-unit change in a
+component of $\mathbf{x}^{P}$ multiplies the average purchase rate by
+$\exp(\gamma_{purch})$, and for a covariate entered in logs the coefficient reads
+directly as a rate elasticity.
+
+### Why Time-Varying Is Different {#sec-cba-why-dynamic}
+
+Time-varying covariates break that convenience, and it is worth being precise about
+where. The literature groups them into two kinds [@platzerreutterer2016]: *seasonality*,
+which typically moves every customer at once (holidays, paydays, school terms), and
+*marketing activity*, which is often customer-specific (a catalogue mailed to this
+person in week 30).
+
+There is a direct antecedent worth naming, because @bachmann2021tvc's claim to novelty
+is narrower than it first appears. @schweidelknox2013 had already brought direct
+marketing activity into a latent attrition model, and @vanoestknox2011 had brought
+complaints in. What was missing was a *general* treatment of arbitrary time-varying
+covariates in the continuous-time Pareto/NBD that preserves the closed-form maximum
+likelihood, and that is the gap being closed.
+
+Once $\lambda$ is a function of time, three things fail simultaneously.
+
+Inter-transaction times are no longer identically distributed, so the exponential
+memorylessness that collapsed the history to $(x, t_x, T)$ is gone: the distribution of
+the gap between purchases $j-1$ and $j$ depends on *when* purchase $j-1$ happened,
+because that determines which covariate values were in force. The sufficient statistic
+becomes the full vector $\mathbf{t} = (t_1, \dots, t_x)$.
+
+The attrition density is no longer exponential either. It now depends on the entire
+covariate path up to the death time, not on a single rate.
+
+And the infinite-horizon integral in @eq-cba-dert becomes undefined in practice,
+because it presumes knowledge of $\lambda(t)$ for all future $t$, which is exactly what
+a firm does not have for a covariate like "was a catalogue mailed."
+
+@bachmann2021tvc resolve all three, and the resolution is the substance of this
+chapter.
+
+## Time-Varying Contextual Factors {#sec-cba-bmn}
+
+### Specification {#sec-cba-bmn-spec}
+
+Let $\mathbf{x}^{P}(s)$ and $\mathbf{x}^{A}(s)$ be functions mapping a time point $s$
+to the covariate vectors relevant to the purchase and attrition processes at that
+moment. These are individual-level functions; the customer subscript is suppressed.
+The key parameterization is that they are *piecewise constant* on a grid of equidistant
+intervals (a week, say), returning the value $\mathbf{x}^{P}_k$ of the interval $k$
+containing $s$. The discretization is a property of the covariate data, not of the
+processes: the transaction and attrition processes remain continuous-time, and the
+intervals can be made arbitrarily fine.
+
+The two rates then become
+
+$$
+\lambda(t) = \lambda_0 \exp\!\big(\boldsymbol{\gamma}_{purch}' \mathbf{x}^{P}(t)\big),
+\qquad
+\mu(t) = \mu_0 \exp\!\big(\boldsymbol{\gamma}_{attr}' \mathbf{x}^{A}(t)\big),
+$$ {#eq-cba-tvrates}
+
+with $\lambda_0 \sim \text{Gamma}(r, \alpha)$ and $\mu_0 \sim \text{Gamma}(s, \beta)$
+exactly as in @eq-cba-gammalambda and @eq-cba-gammamu. All the heterogeneity machinery
+of the original model is retained; what changes is that each customer's rate is now a
+step function in time rather than a constant.
+
+The purchase process becomes a *non-homogeneous* Poisson process. The number of
+transactions in an interval $(s_1, s_2]$ is
+
+$$
+P\big(X(s_1, s_2) = x \mid \lambda(t)\big) = \frac{[\Lambda(s_1, s_2)]^{x}}{x!}
+  \exp[-\Lambda(s_1, s_2)],
+\qquad
+\Lambda(s_1, s_2) = \int_{s_1}^{s_2} \lambda(s)\, ds .
+$$ {#eq-cba-nhpp}
+
+The attrition density is driven by the cumulative hazard along the covariate path,
+
+$$
+f\big(\omega \mid \mu(t)\big) = \mu(\omega) \exp[-M(\omega)],
+\qquad
+M(\omega) = \int_{0}^{\omega} \mu(s)\, ds .
+$$ {#eq-cba-tvdeath}
+
+Because $\lambda(\cdot)$ and $\mu(\cdot)$ are piecewise constant, both integrals are
+finite sums of rectangles, which is the entire trick: $\Lambda$ and $M$ are available
+in closed form interval by interval, so the awkward objects in @eq-cba-nhpp and
+@eq-cba-tvdeath never require numerical integration.
+
+### The Likelihood {#sec-cba-bmn-lik}
+
+Combining the two processes gives an individual likelihood
+
+$$
+L\big(\alpha, r, \beta, s, \boldsymbol{\gamma}_{purch}, \boldsymbol{\gamma}_{attr}
+  \mid \mathbf{X}^{P}, \mathbf{X}^{A}, x, \mathbf{t}, T\big),
+$$ {#eq-cba-tvlik}
+
+where the covariate histories enter as the full sequences
+$\mathbf{X}^{P} = (\mathbf{x}^{P}_1, \dots, \mathbf{x}^{P}_{k_T})$ and
+$\mathbf{X}^{A} = (\mathbf{x}^{A}_1, \dots, \mathbf{x}^{A}_{k_T})$ over the $k_T$
+intervals covering the observation window.
+
+The structural result of @bachmann2021tvc is that @eq-cba-tvlik remains *closed form*.
+It is a sum of terms each of which has the same functional shape as the standard
+Pareto/NBD likelihood @eq-cba-indlik, evaluated on a single covariate interval. The
+customer's death, if it occurred, happened in exactly one interval; conditioning on
+which interval that was, the rates are constant within it, and the standard algebra
+applies. Summing over the intervals in which death could have occurred, weighted by
+the probability of surviving to each, reassembles the likelihood. No simulation, no
+data augmentation, no MCMC: the model is still maximum likelihood, and it still runs on
+a laptop for a customer base in the millions.
+
+The price is the one flagged in @sec-cba-why-dynamic: the likelihood now contains
+$\mathbf{t} = (t_1, \dots, t_x)$, every transaction date, not just the last. Recency is
+no longer sufficient. Data storage grows from three numbers per customer to a full
+transaction log plus a covariate panel with one row per customer-period, and estimation
+time grows with it, from seconds to minutes on the data in @sec-cba-replication.
+
+### DECT, Not DERT {#sec-cba-bmn-dect}
+
+The managerial expressions change in one visible way. DERT in @eq-cba-dert integrates
+to infinity, which under @eq-cba-tvrates would require the analyst to assert covariate
+values for all future time. @bachmann2021tvc therefore define the *discounted expected
+conditional transactions* (DECT), the same discounted quantity over a **finite** horizon
+for which covariate paths are actually available. Software reports DECT in place of
+DERT whenever a model carries time-varying covariates [@meierer2026clvtools], and the
+substitution is not cosmetic: DECT is bounded by the horizon and will generally be
+smaller than the DERT the same customer would have been assigned by a covariate-free
+model. Comparing a covariate model's CLV to a base model's CLV without noticing this
+substitution is a live way to produce a spurious "the covariates destroyed value"
+finding.
+
+### Nesting and What Identifies the Coefficients {#sec-cba-bmn-nesting}
+
+The specification nests cleanly. Set $\boldsymbol{\gamma}_{purch} =
+\boldsymbol{\gamma}_{attr} = \mathbf{0}$ and @eq-cba-tvlik returns the standard
+Pareto/NBD; hold the covariates constant across all intervals and it returns the
+time-invariant extension of @sec-cba-static. Model comparison is therefore a likelihood
+ratio test on nested specifications, and the AIC/BIC ordering across the three is
+interpretable.
+
+Identification of $\boldsymbol{\gamma}_{purch}$ comes from *within-customer, over-time*
+variation: whether this customer's purchases cluster in the intervals when the
+covariate was high. Identification of $\boldsymbol{\gamma}_{attr}$ is more delicate and
+comes from the timing of the *last* observed transaction relative to the covariate
+path, since the model must attribute a long silence either to a low purchase rate or to
+death. This asymmetry is why the attrition coefficients in @sec-cba-replication are
+estimated far less precisely than the transaction coefficients, and why practitioners
+who care mainly about prediction sometimes include covariates only in the purchase
+process, halving the parameter count for most of the accuracy gain.
+
+## Advanced Extensions {#sec-cba-advanced}
+
+### Correlated Processes {#sec-cba-sarmanov}
+
+Every model so far assumes $\lambda \perp \mu$: how often a customer buys tells you
+nothing about how quickly they will churn. That is a strong claim, and
+@glady2015unveiling reject it empirically. The Sarmanov family provides a tractable
+dependence structure, writing the joint density as the independent product plus a
+correction term built from the same univariate densities:
+
+$$
+\begin{aligned}
+g(\lambda, \mu \mid \alpha, r, \beta, s, m)
+&= g(\lambda \mid r, \alpha)\, g(\mu \mid s, \beta) \\
+&\quad + m \left(\frac{\alpha}{1+\alpha}\right)^{r}\left(\frac{\beta}{1+\beta}\right)^{s}
+ \big[g(\lambda \mid r, \alpha+1) - g(\lambda \mid r, \alpha)\big]
+ \big[g(\mu \mid s, \beta+1) - g(\mu \mid s, \beta)\big] .
+\end{aligned}
+$$ {#eq-cba-sarmanov}
+
+The mechanism is transparent once you see that $g(\lambda \mid r, \alpha+1)$ is smaller
+than $g(\lambda \mid r, \alpha)$ for large $\lambda$, so each bracket is negative in the
+upper tail and the product is positive there. A positive $m$ therefore piles density
+where both rates are high or both are low. Because @eq-cba-sarmanov is a linear
+combination of independent-case densities, the correlated likelihood is a linear
+combination of independent-case *likelihoods*: writing $\tilde L(\alpha, \beta)$ for the
+uncorrelated likelihood,
+
+$$
+\begin{aligned}
+L(\alpha, r, \beta, s, m \mid x, t, T) &= \tilde L(\alpha, \beta)
+ + m \left(\frac{\alpha}{1+\alpha}\right)^{r}\left(\frac{\beta}{1+\beta}\right)^{s} \\
+&\quad \times \big[\tilde L(\alpha+1, \beta+1) - \tilde L(\alpha+1, \beta)
+ - \tilde L(\alpha, \beta+1) + \tilde L(\alpha, \beta)\big] .
+\end{aligned}
+$$ {#eq-cba-sarmanov-lik}
+
+The parameter $m$ is not itself a correlation; the implied correlation is
+
+$$
+p_m = m\, \frac{\sqrt{r}}{1+\alpha}\left(\frac{\alpha}{1+\alpha}\right)^{r}
+        \frac{\sqrt{s}}{1+\beta}\left(\frac{\beta}{1+\beta}\right)^{s} .
+$$ {#eq-cba-sarmanov-corr}
+
+A positive $p_m$ says heavy buyers churn faster, which is the empirically common sign
+in categories where high frequency signals a short, intense relationship rather than
+loyalty.
+
+### Regularization and Equality Constraints {#sec-cba-reg}
+
+Two further devices matter once covariate counts grow. Placing Gaussian priors
+$\boldsymbol{\gamma}_{purch} \sim N(0, 1/\lambda_1^{reg} I)$ and
+$\boldsymbol{\gamma}_{attr} \sim N(0, 1/\lambda_2^{reg} I)$ turns estimation into the
+penalized problem
+
+$$
+\arg\max \sum_{i=1}^{n} L\big(\cdot \mid \mathbf{X}^{P}_i, \mathbf{X}^{A}_i, x_i,
+  \mathbf{t}_i, T_i\big)
+ - \lambda_1^{reg}\|\boldsymbol{\gamma}_{purch}\|^{2}
+ - \lambda_2^{reg}\|\boldsymbol{\gamma}_{attr}\|^{2} ,
+$$ {#eq-cba-reg}
+
+an $L_2$ penalty that stabilizes an otherwise ill-conditioned optimization. (The symbol
+$\lambda^{reg}$ here is a regularization weight and has nothing to do with the purchase
+rate $\lambda$; the collision is unfortunate and standard.)
+
+The second device is inferentially more interesting. Imposing
+
+$$
+\boldsymbol{\gamma}_{purch} \equiv \boldsymbol{\gamma}_{attr}
+$$ {#eq-cba-constraint}
+
+for a covariate present in both processes forces the optimizer to use one coefficient
+for both. The constrained model is a valid null against which a likelihood ratio test
+asks a genuinely managerial question: *does this marketing activity affect purchasing
+and churning differently?* A campaign that lifts transactions while also accelerating
+attrition is a campaign that borrows from the future, and @eq-cba-constraint is how the
+model is made to answer whether that is happening.
+
+```{mermaid}
+%%| label: fig-cba-structure
+%%| fig-cap: "The generative structure of a covariate-extended latent attrition model. The two shaded inserts are what @bachmann2021tvc add: multiplicative, time-indexed scaling of both latent rates. The spending process remains stationary and covariate-free, which bounds what the model can say about price and promotion."
+flowchart TB
+  L0["Purchase heterogeneity<br/>lambda_0 ~ Gamma(r, alpha)"] --> LT
+  CP["Time-varying covariates<br/>lambda(t) = lambda_0 x exp(gamma_purch' x_P(t))"] --> LT
+  M0["Attrition heterogeneity<br/>mu_0 ~ Gamma(s, beta)"] --> MT
+  CA["Time-varying covariates<br/>mu(t) = mu_0 x exp(gamma_attr' x_A(t))"] --> MT
+  MT["Attrition rate path mu(t)"] --> W["Unobserved lifetime<br/>omega ~ Exp with cumulative hazard M(omega)"]
+  LT["Purchase rate path lambda(t)"] --> B["Purchases t_j ~ non-homogeneous<br/>Poisson on (0, omega]"]
+  W --> B
+  B --> DT["CET and DECT<br/>(finite horizon)"]
+  S0["Spending heterogeneity<br/>nu ~ Gamma(q, gamma)"] --> SP["Spend z_j ~ Gamma(p, nu)<br/>stationary, no covariates"]
+  SP --> ES["Expected spend per transaction"]
+  DT --> CLV["Predicted CLV = DECT x E(m)"]
+  ES --> CLV
+```
+
+## Replication: An Apparel Retailer's Acquisition Cohort {#sec-cba-replication}
+
+Everything above is now estimated on real transaction data. We use the apparel retailer
+data that ships with `CLVTools` [@clvtoolspkg], the package written by the authors of
+@bachmann2021tvc, which is also the running case study in their software paper
+[@meierer2026clvtools]. Using their data and their implementation makes this a genuine
+replication: the coefficients reported below can be checked against the published ones.
+
+### The Data {#sec-cba-data}
+
+`apparelTrans` is a single acquisition cohort, all 600 customers made their first
+purchase on 2005-01-02, observed for six years. `apparelStaticCov` carries two
+time-invariant covariates (gender, acquisition channel) and `apparelDynCov` carries a
+weekly `High.Season` indicator alongside repeated copies of the time-invariant ones,
+because the dynamic-covariate interface requires one row per customer-week.
+
+```{r cba-setup}
+#| label: cba-setup
+#| message: false
+#| warning: false
+library(CLVTools)
+library(data.table)
+library(dplyr)
+library(knitr)
+
+data("apparelTrans")
+data("apparelStaticCov")
+data("apparelDynCov")
+data("apparelDynCovFuture")
+
+head(apparelTrans, 3)
+head(apparelDynCov, 3)
+```
+
+We split the history into a 104-week estimation period and leave everything after it as
+holdout. That split is a modelling decision with real content: @sec-cba-pitfalls returns
+to why two years, rather than one, is the right default when seasonality is present.
+
+```{r cba-clvdata}
+#| label: cba-clvdata
+#| message: false
+#| warning: false
+clv.apparel <- clvdata(apparelTrans, date.format = "ymd", time.unit = "week",
+                       estimation.split = 104,
+                       name.id = "Id", name.date = "Date", name.price = "Price")
+summary(clv.apparel)
+```
+
+The summary reports the number that governs everything downstream: 35.5% of the cohort
+are *zero repeaters*, customers who bought once and never returned. A latent-attrition
+model has to place those customers somewhere, and the choice of death process
+(@sec-cba-zoo) is largely a fight over how fast to write them off.
+
+### Baseline: Pareto/NBD and Gamma-Gamma {#sec-cba-repl-base}
+
+```{r cba-base}
+#| label: cba-base
+#| message: false
+#| warning: false
+est.pnbd <- latentAttrition(family = pnbd, data = clv.apparel, verbose = FALSE)
+round(coef(est.pnbd), 4)
+
+est.gg <- spending(family = gg, data = clv.apparel, verbose = FALSE)
+round(coef(est.gg), 3)
+```
+
+These reproduce the published estimates exactly: $r = 1.4490$, $\alpha = 48.6361$,
+$s = 0.5613$, $\beta = 46.8844$ for the timing model and $p = 3.099$, $q = 5.654$,
+$\gamma = 56.504$ for the spend model [@meierer2026clvtools]. The ratios are the
+interpretable quantities: $r/\alpha \approx 0.030$ is the average customer's weekly
+purchase rate and $s/\beta \approx 0.012$ the average weekly attrition rate.
+
+Resist the temptation to invert that second number into a mean lifetime. The reciprocal
+$\beta/s \approx 84$ weeks is a convenient scale but it is not $E[\omega]$: the mean of
+the Pareto II lifetime distribution in @eq-cba-pareto2 is $\beta/(s-1)$, which for
+$s = 0.5613 < 1$ does not exist. The fitted mixture puts enough mass near $\mu = 0$ that
+the population contains effectively immortal customers, which is the formal version of
+the caution in @schmittleinpeterson1994 about long estimation windows and is a standing
+reason to report DERT or DECT, which are discounted and therefore finite, rather than an
+expected lifetime.
+
+### Adding Time-Invariant Covariates {#sec-cba-repl-static}
+
+The formula interface takes a two-part right-hand side with no dependent variable,
+because the dependent variables ($x_i$, $t_{x_i}$, $T_i$) are derived from the
+transaction log rather than supplied. The part before the `|` selects covariates for the
+*attrition* process, the part after for the *purchase* process.
+
+```{r cba-static}
+#| label: cba-static
+#| message: false
+#| warning: false
+clv.static <- SetStaticCovariates(
+  clv.data = clv.apparel,
+  data.cov.life  = apparelStaticCov, data.cov.trans = apparelStaticCov,
+  names.cov.life = c("Gender", "Channel"),
+  names.cov.trans = c("Gender", "Channel"),
+  name.id = "Id")
+
+est.static <- latentAttrition(formula = ~ Gender + Channel | Gender + Channel,
+                              family = pnbd, data = clv.static, verbose = FALSE)
+summary(est.static)
+```
+
+The coefficients are rate multipliers on the log scale. Female customers (coded 1) have
+a purchase rate $\exp(0.2859) \approx 1.33$ times that of male customers, and
+customers acquired offline (coded 1) purchase about $\exp(0.6241) \approx 1.87$ times as
+often, but their attrition rate is $\exp(0.7907) \approx 2.20$ times higher: they buy
+more and leave sooner. That pattern, an acquisition channel that looks excellent on
+frequency and mediocre on retention, is exactly the kind of finding a covariate-free
+model cannot produce, and it changes what the retailer should pay for an offline
+acquisition.
+
+Note that the four base parameters $r, \alpha, s, \beta$ are reported without $z$- or
+$p$-values. They are constrained strictly positive, so the null $\theta = 0$ lies
+outside the admissible parameter space and a Wald test against it is meaningless. The
+software reports `NA` rather than a misleading number.
+
+### Adding Time-Varying Covariates {#sec-cba-repl-dynamic}
+
+The dynamic-covariate data must supply a value for every customer in every period, and
+the time unit of the covariate panel must match the time unit of the transaction object.
+Estimation is materially more expensive, so we disable the Hessian (and therefore the
+KKT checks and standard errors) as the authors recommend for a first pass.
+
+```{r cba-dynamic}
+#| label: cba-dynamic
+#| message: false
+#| warning: false
+clv.mixed <- SetDynamicCovariates(
+  clv.data = clv.apparel,
+  data.cov.life  = apparelDynCov, data.cov.trans = apparelDynCov,
+  names.cov.life = c("High.Season", "Gender", "Channel"),
+  names.cov.trans = c("High.Season", "Gender", "Channel"),
+  name.id = "Id", name.date = "Cov.Date")
+
+est.mixed <- latentAttrition(
+  formula = ~ Gender + Channel + High.Season | Gender + Channel + High.Season,
+  family = pnbd, data = clv.mixed, verbose = FALSE,
+  optimx.args = list(hessian = FALSE, control = list(kkt = FALSE)))
+
+round(coef(est.mixed), 4)
+```
+
+The high-season coefficient on the transaction process is the headline. Purchasing runs
+at roughly $\exp(0.72) \approx 2.05$ times its base rate in high-season weeks. The
+corresponding attrition coefficient is large and negative, which reads as customers
+being far less likely to lapse during the season, but this is the coefficient the
+identification argument in @sec-cba-bmn-nesting warns about: it is pinned down by the
+timing of last observed transactions relative to the seasonal calendar, and it should be
+treated as a nuisance parameter absorbing seasonal structure rather than as an estimate
+of a seasonal retention effect.
+
+### Does Any of It Help Out of Sample? {#sec-cba-repl-holdout}
+
+The three models are nested, so the fair comparison is out-of-sample accuracy on the
+holdout period. The metric must be built on CET, the finite-horizon conditional expected
+transactions, because DERT and DECT incorporate discounting and cannot be compared
+against a raw observed count.
+
+```{r cba-holdout}
+#| label: tbl-cba-holdout
+#| tbl-cap: "Out-of-sample accuracy on the 207-week holdout period, in transactions per customer. Each row is a nested restriction of the row below it. Time-varying covariates cut mean absolute error by roughly nine percent relative to the covariate-free Pareto/NBD; time-invariant covariates alone buy almost nothing."
+#| message: false
+#| warning: false
+mae  <- function(x, y) mean(abs(x - y))
+rmse <- function(x, y) sqrt(mean((x - y)^2))
+
+acc <- function(fit, label) {
+  p <- predict(fit, verbose = FALSE)
+  data.frame(Model = label,
+             MAE  = mae(p$CET, p$actual.x),
+             RMSE = rmse(p$CET, p$actual.x))
+}
+
+bind_rows(
+  acc(est.pnbd,  "Pareto/NBD, no covariates"),
+  acc(est.static, "+ time-invariant covariates"),
+  acc(est.mixed,  "+ time-varying covariates")
+) |>
+  mutate(across(where(is.numeric), \(z) round(z, 4))) |>
+  kable()
+```
+
+The published comparison reports MAE of 2.0395, 2.0069 and 1.8578 and RMSE of 3.3294,
+3.2768 and 3.2536 for the three specifications [@meierer2026clvtools]. Our
+time-invariant and time-varying rows match to all four decimals; the covariate-free row
+differs in the fourth (2.0396 against 2.0395), a consequence of the optimizer's stopping
+tolerance rather than of the model.
+
+Two things are worth reading off @tbl-cba-holdout. First, the gain is real but modest,
+about nine percent of MAE, which is a useful calibration against the enthusiasm the
+covariate literature sometimes generates. Second, essentially all of it comes from the
+*time-varying* covariate; the time-invariant ones move MAE by 1.6%. The seasonal
+indicator is doing the work, and it is doing it because it lets the model attribute a
+purchase-free stretch to a low season rather than to death. That is precisely the
+confusion between "quiet" and "dead" that latent-attrition modelling exists to manage,
+and the covariate is telling the model when to stop worrying.
+
+The tracking plot makes the mechanism visible: the covariate-free model can only
+produce a smooth decay, while the seasonal model tracks the spikes.
+
+```{r cba-tracking}
+#| label: fig-cba-tracking
+#| fig-cap: "Weekly repeat transactions, actual versus fitted, for the three nested specifications. The dashed line marks the end of the estimation period. Only the model with the time-varying seasonal covariate can produce the peaks; the other two can only trend."
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 4.5
+plot(est.pnbd, which = "tracking", cumulative = FALSE, verbose = FALSE,
+     other.models = list(est.static, est.mixed),
+     label = c("No covariates", "Time-invariant", "Time-invariant & -varying"))
+```
+
+### Testing a Restriction: Equality Constraints {#sec-cba-repl-constraints}
+
+@eq-cba-constraint says a covariate can be forced to carry the same coefficient in both
+processes. Fitting the constrained model and comparing log-likelihoods gives a
+likelihood ratio test of whether the covariate acts differently on buying and on
+leaving.
+
+```{r cba-constraint}
+#| label: cba-constraint
+#| message: false
+#| warning: false
+est.constr <- latentAttrition(
+  formula = ~ . | ., names.cov.constr = "Gender",
+  family = pnbd, data = clv.mixed, verbose = FALSE,
+  optimx.args = list(hessian = FALSE, control = list(kkt = FALSE)))
+
+lr <- 2 * (as.numeric(logLik(est.mixed)) - as.numeric(logLik(est.constr)))
+data.frame(
+  Model = c("Unconstrained", "Gender constrained equal across processes"),
+  logLik = round(c(as.numeric(logLik(est.mixed)), as.numeric(logLik(est.constr))), 3),
+  k = c(length(coef(est.mixed)), length(coef(est.constr)))) |>
+  kable()
+
+cat(sprintf("LR statistic = %.3f on 1 df, p = %.3f\n", lr, pchisq(lr, 1, lower.tail = FALSE)))
+```
+
+The restriction is rejected: forcing gender to act identically on buying and on leaving
+costs about 7.4 log-likelihood points, an LR statistic near 14.8 on one degree of
+freedom ($p \approx 0.0001$). Substantively that is the static-covariate finding of @sec-cba-repl-static
+restated as a test, since gender raised the purchase rate and lowered the attrition
+rate there. The restriction, not the parameter, is the interesting object. Applied to a
+marketing covariate rather than a demographic one, the same test asks whether a campaign
+buys transactions at the cost of accelerated attrition, and answers it inside the model
+that generated the CLV number rather than in a separate regression.
+
+### Correlated Processes in the Data {#sec-cba-repl-cor}
+
+@eq-cba-sarmanov-lik is available as a switch. Fitting the covariate-free model with
+the Sarmanov correlation turned on adds one parameter, reported directly on the
+correlation scale via @eq-cba-sarmanov-corr.
+
+```{r cba-cor}
+#| label: cba-cor
+#| message: false
+#| warning: false
+est.cor <- latentAttrition(family = pnbd, data = clv.apparel,
+                           use.cor = TRUE, verbose = FALSE)
+round(coef(est.cor), 4)
+```
+
+The estimated correlation is essentially zero for this cohort, so purchase frequency
+carries no information about churn propensity here beyond what recency already conveys.
+Note, though, how much the attrition parameters move ($s$ and $\beta$ both fall
+sharply) once the correlation parameter is free: the likelihood surface is flat in a
+direction that trades attrition heterogeneity against dependence. This is the usual
+outcome in applied work, and it is why practitioners often skip the correlation
+parameter, but the flatness itself is a warning about how precisely the attrition side
+of these models is identified at all.
+
+### Predicting Past the End of the Data {#sec-cba-repl-future}
+
+Here the time-varying model imposes a requirement no other model in this chapter does.
+To predict forward, the analyst must supply covariate values *for the entire prediction
+horizon*. This is why so few time-varying covariates are usable in production: a firm
+does not know next quarter's catalogue schedule at the moment of estimation. Seasonality
+is the honourable exception, because holidays and school terms are known in advance,
+and it is not a coincidence that the seasonal indicator is the covariate that earns its
+keep in @tbl-cba-holdout.
+
+`apparelDynCovFuture` extends the covariate panel roughly two years beyond the last
+recorded purchase. Note that the fitted model is *not* re-estimated; the extended
+covariate panel is passed to `predict()` as new data.
+
+```{r cba-future}
+#| label: cba-future
+#| message: false
+#| warning: false
+clv.full <- clvdata(apparelTrans, date.format = "ymd", time.unit = "week",
+                    estimation.split = NULL,
+                    name.id = "Id", name.date = "Date", name.price = "Price")
+
+covs.all <- rbind(apparelDynCov, apparelDynCovFuture)
+
+clv.full.cov <- SetDynamicCovariates(
+  clv.data = clv.full,
+  data.cov.life = covs.all, data.cov.trans = covs.all,
+  names.cov.life = c("High.Season", "Gender", "Channel"),
+  names.cov.trans = c("High.Season", "Gender", "Channel"),
+  name.id = "Id", name.date = "Cov.Date")
+
+pred.future <- predict(est.mixed, newdata = clv.full.cov,
+                       predict.spending = est.gg,
+                       prediction.end = 60,
+                       continuous.discount.factor = log(1.075) / 52,
+                       verbose = FALSE)
+
+as.data.frame(pred.future) |>
+  head(6) |>
+  mutate(across(where(is.numeric), \(z) round(z, 3))) |>
+  kable()
+```
+
+Two conventions in that call are worth spelling out. The discount factor is continuous
+and expressed per time unit: for a discrete annual rate $d$ and $k$ periods per year,
+$\delta_k = \ln(1+d)/k$, so a 7.5% annual rate on weekly data is $\ln(1.075)/52$. And
+the returned value column is a *period* CLV rather than an infinite-horizon one, because
+DECT has replaced DERT (@sec-cba-bmn-dect).
+
+## What Breaks {#sec-cba-pitfalls}
+
+The models above are easy to fit and easy to misinterpret. Six failure modes account
+for most of the damage.
+
+**Endogenous covariates.** The coefficient on "was mailed a catalogue" is a causal
+effect only if mailing was as good as random. It never is: firms mail the customers a
+scoring model says will respond, so the covariate is a function of the same latent
+$\lambda$ the model is trying to estimate, and the coefficient absorbs the targeting
+rule. @bachmann2021tvc address this directly with instrumental variables; where
+instruments are unavailable, internal-instrument methods exist [@gui2023rendo], and the
+control-function tradition [@riversvuong1988; @wooldridge2015control] supplies the
+general machinery. @shugan2004endogeneity is the standing warning for marketing
+generally; @hruschka2010catalog and @schroderhruschka2016 work the specific catalogue
+case.
+
+**Holdout validation does not rescue you.** The natural defence, "my covariate model
+predicts better out of sample, so the coefficient must be right," is invalid.
+@ebbes2011holdout show formally that holdout performance does not discriminate between
+an endogenous and an exogenous specification: the endogenous model can predict better
+*because* the endogeneity encodes information about the firm's targeting. Prediction and
+identification are separate claims requiring separate evidence, and @tbl-cba-holdout
+licenses only the first.
+
+**Cohort construction.** These models assume a homogeneous-enough population. The
+standard defence is to fit per acquisition cohort, which is why `apparelTrans` is a
+single cohort. Recommendations on minimum cohort size cluster in the 750-1,600 range,
+though smaller samples of 250-500 have been found workable, and covariates offer an
+alternative to splitting: cohort dummies inside one model preserve sample size while
+absorbing cohort effects [@meierer2026clvtools]. @faderhardieross2022 argue for merging
+old cohorts once the distinctions stop being managerially interesting.
+
+**Estimation window.** The window must be at least as long as the average interpurchase
+time, and should be extended to 24 months when seasonality is present, so that the
+seasonal covariate has more than one cycle to be identified from. Yet
+@schmittleinpeterson1994 caution in the other direction: with very long histories,
+Bayesian updating drives some customers' $\mu$ toward zero and produces unrealistically
+immortal customers. There is no universally right window, which is an argument for
+reporting sensitivity to it.
+
+**The first transaction.** By convention these models discard the first purchase and
+model repeat behaviour, because the first purchase defines cohort membership rather than
+ongoing behaviour. But if a separate signup event exists (a loyalty enrolment, a free
+trial), cohort membership can be defined by that instead, and the first purchase counted.
+The spending model follows a different convention again, excluding the first transaction
+by default because initial baskets are atypical, which means a CLV built by multiplying
+*all* expected transactions by a repeat-only spend estimate is internally inconsistent.
+
+**Computational and data cost.** The dynamic-covariate model on this 600-customer cohort
+takes on the order of a minute where the covariate-free model takes under a second, and
+requires a covariate panel with one row per customer-period rather than three numbers per
+customer. It also defaults to Nelder-Mead rather than L-BFGS-B, because the surface is
+harder. At production scale this is the difference between a nightly job and a weekly one.
+
+## The Literature, Journal by Journal {#sec-cba-journals}
+
+Customer-base analysis is unusual among marketing topics in having a clearly dominant
+home journal and a clearly delineated set of neighbours. What follows maps the terrain
+by venue, because the venue determines what a contribution has to look like.
+
+```{r cba-journals}
+#| label: tbl-cba-journals
+#| tbl-cap: "Where customer-base analysis is published and what each venue rewards. The 'contribution that clears the bar' column is the practical statement of each journal's revealed preference, inferred from the exemplar papers listed."
+#| echo: false
+#| message: false
+library(tibble)
+library(knitr)
+
+tibble(
+  Venue = c("Marketing Science", "Journal of Marketing Research", "Journal of Marketing",
+            "Management Science", "Quantitative Marketing and Economics",
+            "Int. J. of Research in Marketing", "Economics journals",
+            "Statistics / OR / software"),
+  `Contribution that clears the bar` = c(
+    "A new stochastic process, or a generalization that nests the incumbent and beats it out of sample",
+    "A substantive marketing finding, often experimental or valuation-oriented, where the model is instrumental",
+    "Managerial consequence: what the customer base is worth and what to do about it",
+    "Methodological generality; models of firm-level or multi-service dynamics",
+    "Structural or econometric identification of customer dynamics",
+    "Focused extensions and applications; strong on complaint and service behaviour",
+    "Customer base as a firm asset; state dependence and switching costs",
+    "Estimation, computation, and reproducible implementation"),
+  Exemplars = c(
+    "@fader2005bgnbd, @jerath2011death, @schweidelknox2013, @platzerreutterer2016, @bachmann2021tvc",
+    "@fader2005rfmclv, @braun2015transaction, @ascarza2018futility, @mccarthyfader2018",
+    "@reinartzkumar2000, @reinartzkumar2003, @wubben2008heuristics, @mccarthy2017",
+    "@paretonbd1987, @borle2008clvmeasurement, @schweidel2011portfolio, @bemmaorglady2012",
+    "@donkers2007clv, @singh2009framework, @erdem2003pricedynamics",
+    "@vanoestknox2011, @glady2015unveiling",
+    "@heckmansinger1984, @klemperer1987switching, @dube2010statedependence, @gouriorudanko2014",
+    "@hausman1984countdata, @gui2023rendo, @meierer2026clvtools")
+) |>
+  kable()
+```
+
+### Marketing Science {#sec-cba-mksc}
+
+*Marketing Science* is where the model class lives. The pattern of a successful paper is
+consistent across four decades: take the incumbent specification, identify an assumption
+that is doing unexamined work, replace it, show the new model nests the old one, and
+demonstrate out-of-sample improvement on several data sets.
+
+The chain runs from @fader2005bgnbd (replace the Pareto death process with a
+beta-geometric one to remove the hypergeometric functions) through
+@faderhardieshang2010 (BG/BB for discrete transaction opportunities), @jerath2011death
+(generalize the death process itself), @platzerreutterer2016 (exploit inter-purchase
+regularity, not just recency, via a Gamma timing process), @gopalakrishnan2017changepoint
+(cohort-level changepoints), @dewansari2018 (replace the Gamma prior with a Bayesian
+nonparametric one and make the fitted heterogeneity visible rather than assumed) and
+@bachmann2021tvc (time-varying covariates). Adjacent to
+the timing models are the relationship-state models: @netzer2008hmm's hidden Markov
+model replaces "one irreversible death" with transitions among latent relationship
+states, and @schwartz2014modelselection ask the meta-question of which model class a
+database's characteristics should select.
+
+The covariate thread specifically runs @schweidelknox2013 (direct marketing activity in
+a latent attrition model) into @bachmann2021tvc, and the "what counts as death" thread
+runs @braunschweidel2011causes (customers can churn for several distinct reasons, and
+collapsing them loses information) alongside @jerath2011death. On the contractual side,
+@faderhardie2010contractual is the standing demonstration that ignoring heterogeneity
+biases customer-base valuation even where attrition *is* observed, and
+@ascarzahardie2013usage model usage and churn jointly rather than treating usage as an
+exogenous predictor of it.
+
+The journal has also hosted the field's self-criticism. @abe2009's hierarchical Bayes
+Pareto/NBD showed what the closed forms were giving up; @ebbes2011holdout undermined
+holdout validation as a defence against endogeneity; @ascarza2018goodbye showed that
+"silent" attrition and stated attrition are different processes;
+@schmittlein1985nbdrobust asked, unusually early, *why* the NBD works at all, and found
+its robustness came from properties that survive violations of its own assumptions.
+More recently @xia2019rbm brought conditional restricted Boltzmann machines to shopping
+patterns, which is the machine-learning frontier arriving in the model class's home
+journal.
+
+### Journal of Marketing Research {#sec-cba-jmr}
+
+*JMR* takes customer-base analysis when the modelling serves a substantive or
+experimental claim. @fader2005rfmclv's iso-value curves connected the academic model to
+practitioner RFM. @braun2015transaction showed that *what* was bought, not just when,
+carries valuation information. @ascarza2018futility's retention-futility result, that
+targeting the highest-risk customers can be ineffective because risk and persuadability
+are different quantities, is a JMR-style intervention: it changes what a manager should
+do with a churn model's output. @mccarthyfader2018 pushed customer-base analysis into
+corporate valuation for publicly traded non-contractual firms. @ascarza2016perils is
+the cautionary field experiment: a proactive churn-prevention campaign built on a churn
+model's output *raised* churn, because the intervention itself drew attention to a
+decision the customer had not been making. On the prediction side, @neslin2006churn's
+tournament and @lemmenscroux2006's bagging-and-boosting comparison set the
+machine-learning benchmark, and @dew2020gaussianprocess brought Gaussian-process
+heterogeneity to bear. The tournament genre has its own history: the
+@malthouse2009competition modeling competition and the empirical generalizations
+assembled by @blattberg2009clvgeneralizations are the closest this field has to an
+agreed scoreboard.
+
+### Journal of Marketing {#sec-cba-jm}
+
+*JM* asks what the customer base means for the firm. @reinartzkumar2000 and
+@reinartzkumar2003 established, against considerable prior belief, that long-life
+customers are not reliably more profitable. @wubben2008heuristics asked whether the
+academic machinery beats a hiatus heuristic, and found the answer to be "often not, at
+the aggregate level," a genuinely uncomfortable result the field has had to absorb.
+@mccarthy2017 valued subscription businesses from publicly disclosed customer data,
+@knoxvanoest2014 examined complaint and recovery through a customer-base lens, and
+@hanssenspauwels2016 situated the whole enterprise in the demonstrating-marketing-value
+agenda.
+
+### Management Science {#sec-cba-mnsc}
+
+*Management Science* published @paretonbd1987 itself and continues to take the
+methodologically general papers. @borle2008clvmeasurement models the three processes
+jointly rather than sequentially; @schweidel2011portfolio handles customers who hold
+evolving portfolios of services rather than a single relationship; @bemmaorglady2012
+introduces the Gamma-Gompertz/NBD, with @adler2023comment as a published corrective on
+its estimation. The venue's revealed preference is for models whose generality extends
+past a single marketing application.
+
+### Quantitative Marketing and Economics, and IJRM {#sec-cba-qme}
+
+*QME* is the natural home for identification-forward treatments. @donkers2007clv ran a
+competing-models horse race for CLV in insurance; @singh2009framework built a general
+framework for estimating CLV when lifetimes are unobserved; @erdem2003pricedynamics is
+the structural-dynamics reference point for how forward-looking consumers respond to
+price uncertainty, which is the demand-side counterpart to a latent attrition process.
+*IJRM* takes focused, well-executed extensions: @vanoestknox2011 extends the BG/NBD to
+model purchases and complaints jointly, and @glady2015unveiling establishes the
+dependence between timing, spending and dropout that the standard factorization
+@eq-cba-dert assumes away.
+
+### Economics {#sec-cba-econ}
+
+The economics literature has no "customer-base analysis" label, but it owns three of the
+components and a fourth question the marketing literature mostly does not ask.
+
+The first component is *duration modelling with unobserved heterogeneity*.
+@heckmansinger1984's method for minimizing the impact of distributional assumptions in
+duration models is the canonical statement of the problem the Gamma mixing distribution
+solves by assumption: mixing distributions are weakly identified, and conclusions about
+duration dependence are sensitive to them. Any claim that "attrition hazard rises with
+tenure" made from a Pareto/NBD should be read against this.
+
+The second is *count-data econometrics*. @hausman1984countdata established the Poisson
+and negative-binomial panel machinery, including the fixed-effects treatments that the
+marketing models replace with a Gamma prior. The NBD half of the Pareto/NBD is exactly
+this literature's workhorse, arrived at independently.
+
+The third is *state dependence versus heterogeneity*, the identification problem that
+sits underneath every claim a latent-attrition model makes. @dube2010statedependence
+separate true state dependence from persistent heterogeneity in consumer inertia, and
+@dube2009switchingcosts examine whether the resulting switching costs soften competition,
+building on @klemperer1987switching. The parallel to customer-base analysis is exact: a
+long silence is either a low-$\lambda$ type (heterogeneity) or a changed state (death),
+and the model's assignment of one versus the other is an identification claim, not a
+measurement.
+
+The fourth is the question marketing rarely asks: what is a customer base *worth as a
+capital asset to the firm*, and how does accumulating one shape firm behaviour?
+@gouriorudanko2014 model customer capital explicitly, showing how the costly, slow
+accumulation of a customer base explains investment and firm dynamics that a
+frictionless demand model cannot. @foster2008reallocation supply the empirical
+counterpart, separating physical productivity from demand-side fundamentals and finding
+that survival and growth track the latter: young producers are not less efficient so
+much as less known, and what they are accumulating is a customer base. This is the
+strongest available argument that the CLV construct belongs in economics and not only in
+marketing, and it is nearly absent from the marketing citation graph.
+
+### Statistics, OR, and Software {#sec-cba-stats}
+
+@allenby1999timing brought purchase-timing models into *JASA*;
+@morrisonschmittlein1988 in *JBES* asked when generalizing the NBD is worth the effort,
+a question the field would benefit from asking more often. @jeuland1980multibrand in
+*Operations Research* is an early compound-process ancestor. On the software side,
+@meierer2026clvtools documents `CLVTools` and @gui2023rendo documents `REndo`'s
+internal-instrument methods; and @ni2012ismsdata is a database submission, a publication
+genre that exists because model comparison in this literature is bottlenecked on data
+access rather than on ideas. Reproducible implementation is a real
+contribution in this literature precisely because the likelihoods are intricate and the
+optimization is fragile.
+
+### Open Problems {#sec-cba-open}
+
+Four gaps are visible from the material above and each is a viable project.
+
+*Covariates in the spending model.* @eq-cba-gg is stationary and covariate-free, so no
+model in this chapter can say what a discount does to basket size. Working papers exist;
+a published, closed-form treatment does not.
+
+*Aleatoric uncertainty in the predictions.* Bootstrapping the fitted model gives
+confidence intervals on parameters (epistemic uncertainty), not predictive intervals on
+outcomes. A customer-level predictive distribution rather than a point estimate would
+change how these numbers are used in targeting.
+
+*Endogeneity as a default, not a robustness check.* The identification tools exist
+[@gui2023rendo; @wooldridge2015control] but are bolted on. A latent-attrition model with
+an integrated control function would make the causal claim available rather than
+aspirational.
+
+*Reconciling the two literatures on firm value.* @mccarthyfader2018 value firms from
+customer data; @gouriorudanko2014 model customer capital from firm data. Neither cites
+the other. A paper that reconciles the marketing bottom-up valuation with the
+macroeconomic customer-capital stock would have an unusually wide audience.
+
+## Key Takeaways {#sec-cba-takeaways}
+
+- Customer-base analysis is defined by what it *cannot* observe. In non-contractual
+  settings attrition is never recorded, so it is modeled as a latent event, and the
+  estimand is a posterior belief rather than a measured outcome (@tbl-cba-taxonomy).
+- The Pareto/NBD's power comes from its sufficiency result: exponential memorylessness
+  collapses an entire purchase history into $(x, t_x, T)$ (@eq-cba-indlik), which is why
+  it scales to millions of customers and why RFM scoring is a shadow of it.
+- Frequency and recency pull in opposite directions. Many purchases raise the estimated
+  purchase rate but also make a given silence more damning, and the models formalize a
+  trade-off that hand-built RFM scores get wrong.
+- @bachmann2021tvc make both latent rates functions of time-varying covariates
+  (@eq-cba-tvrates) while keeping a closed-form maximum likelihood. The cost is that
+  recency is no longer sufficient: every transaction date enters the likelihood, and
+  storage and estimation cost rise accordingly.
+- Because future covariate paths are unknown, the infinite-horizon DERT is replaced by
+  the finite-horizon DECT. Comparing a covariate model's CLV to a base model's without
+  accounting for that substitution manufactures a spurious result.
+- On the replication data, time-varying covariates cut holdout MAE by about nine percent
+  and time-invariant covariates by under two (@tbl-cba-holdout). Almost all the gain comes
+  from letting the model attribute a quiet stretch to a low season instead of to death.
+- Better holdout prediction is not evidence of a valid causal coefficient
+  [@ebbes2011holdout]. Marketing covariates are chosen by the firm's own targeting rule,
+  and the coefficient absorbs it unless an instrument or control function is supplied.
+- The equality constraint (@eq-cba-constraint) turns the model into a hypothesis test:
+  whether a marketing activity raises purchasing and attrition differently, that is,
+  whether a campaign is borrowing from the future.
+- The economics literature owns three of the components (duration heterogeneity, count
+  data, state dependence versus heterogeneity) and one question marketing has not
+  claimed: the customer base as a capital asset shaping firm dynamics
+  [@gouriorudanko2014; @foster2008reallocation].
+
+## Further Reading {#sec-cba-further}
+
+Start with @faderhardie2009probmodels for the tutorial-level view of the whole family
+and @paretonbd1987 for the original derivation. @bachmann2021tvc is the organizing paper
+of this chapter and its appendices carry the likelihood derivations compressed in
+@sec-cba-bmn-lik; @meierer2026clvtools is the companion software paper and the practical
+route into the code. @faderhardieross2022 is the least mathematical and most useful book
+on what to *do* with a customer base once you can describe it. For the criticism,
+@wubben2008heuristics and @ebbes2011holdout are the two papers most likely to change how
+a practitioner reads their own results. @ascarza2018retentionreview surveys the
+retention-management literature that consumes these models' output, and @sec-clv places
+the whole enterprise in the broader CLV context.

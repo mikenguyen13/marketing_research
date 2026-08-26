@@ -162,7 +162,7 @@ with learning rate $\nu \in (0,1]$. Boosting reduces bias and variance jointly a
 typically tops leaderboards on tabular data, at the cost of more careful tuning to
 avoid overfitting (the number of trees becomes a regularization parameter set by
 validation). The worked example below builds a churn classifier and—critically—shows
-how to validate it honestly. <!-- CITE-NEEDED: gradient boosting / random forests canonical reference (Breiman; Friedman) not in allowlist -->
+how to validate it honestly. The two workhorses of that toolkit are @breiman2001randomforests, which averages decorrelated trees to cut variance, and @friedman2001greedyfunction, which fits them sequentially to the residual and so cuts bias instead.
 
 ```{r aiml-churn, message=FALSE, warning=FALSE}
 set.seed(48)
@@ -344,7 +344,7 @@ where $\mathbf{p}_u, \mathbf{q}_i \in \mathbb{R}^K$ are the learned user and ite
 factors, $b_u, b_i, \mu$ are bias terms, and the sum runs only over *observed*
 entries $\mathcal{K}$. The $K$ latent dimensions are discovered, not specified, and
 often correspond to interpretable axes of taste. The regularizer is essential
-because $\mathbf{R}$ is extremely sparse. <!-- CITE-NEEDED: matrix factorization for recommender systems (Koren, Bell, Volinsky) not in allowlist -->
+because $\mathbf{R}$ is extremely sparse. The standard remedy is to factor the sparse matrix into low-rank user and item embeddings, the approach that won the Netflix Prize and remains the baseline against which newer recommenders are measured [@koren2009matrixfactoriza].
 
 Three structural problems define the research frontier and the deployment risk.
 The **cold-start** problem—no data for new users or items—forces a fallback to
@@ -528,7 +528,7 @@ layer by layer—and the data scanned in mini-batches (stochastic gradient desce
 Depth matters because composition lets the network build features from features:
 early layers learn simple patterns, later layers compose them into abstractions, so
 the network learns its own representation rather than relying on hand-engineered
-features. <!-- CITE-NEEDED: foundational deep learning reference (LeCun, Bengio, Hinton) not in allowlist -->
+features. The general case for learned rather than hand-engineered representations is set out in @lecun2015deeplearning.
 
 The marketing payoff is largest where the data are *unstructured*—precisely the
 domains where hand-engineering features is hopeless. Convolutional networks read
@@ -539,7 +539,7 @@ recovering survey-consistent perceptions in near real time, and image content
 systematically shapes engagement [@Li_2019]. Recurrent and, later, attention-based
 architectures read sequences—text, clickstreams, purchase histories—turning the
 unstructured trace of customer behavior into predictive features
-[@martin2017data]. <!-- CITE-NEEDED: deep sequence/representation models for clickstream and text in marketing -->. The price of this expressive power is steep:
+[@martin2017data]. The price of this expressive power is steep:
 deep models are data-hungry, computationally expensive, prone to overfitting without
 heavy regularization (dropout, early stopping, weight decay), and—most relevant to
 this chapter—they are *opaque*, which makes them excellent predictors and poor
@@ -551,6 +551,47 @@ For tabular marketing data of modest size, it bears emphasizing that deep learni
 usually does *not* beat gradient-boosted trees; the deep-learning advantage is
 specific to large, unstructured, high-signal data. Choosing a neural network for a
 50-feature churn table is a common and avoidable error.
+
+### Representations as Measurement Instruments {#sec-aiml-representation-measurement}
+
+The warning just issued—that learned representations make poor instruments of
+inference—needs a companion, because a growing and distinctly different line of work
+uses the representation as the *measurement itself*, and does so legitimately. The
+distinction is worth stating precisely. Reading a network's internal activations as an
+*explanation* of why it predicted what it did is the error. Constructing an embedding
+space whose **geometry operationalizes a construct the researcher has defined in
+advance**, then validating that geometry against outcomes, is measurement, and it is
+subject to the ordinary rules of construct validity (@sec-measurement-scales) rather
+than to the interpretability critique.
+
+Two recent studies show the pattern and its payoff. @sozuer2026recipe embed recipe
+ingredients from co-occurrence across more than 57,000 recipes and read two
+prespecified quantities out of the resulting geometry—the internal **coherence** among
+an idea's components and the **uniqueness** of those components for the category—then
+show that coherence raises popularity, trial, and post-trial evaluation, while unique
+ingredients *lower* trial but *raise* ratings among those who try. The construct is
+creativity; the embedding is the instrument; and the validation is that the measure
+predicts outcomes it was not fit to. @sikdar2026artwork fuse structured listing
+attributes, images, and text to price novice artwork on Etsy, and pair the price model
+with a time-to-sale hazard model so that the output is a decision rather than a
+coefficient (@sec-mmf-artpricing).
+
+Three features recur and are worth naming as a template. The construct is **defined
+before the model is fit**, so the embedding is asked a specific question rather than
+mined for whatever it will yield. The measure is **validated against downstream
+outcomes** that were not part of its construction. And both studies end not in a table
+of coefficients but in a **tool**—a generative recipe assistant, a price
+recommender—that hands a decision-maker a concrete action. That last move is what most
+distinguishes this line from conventional predictive modeling, and it is where the
+prediction–inference distinction becomes genuinely productive rather than merely
+cautionary: the goal was never inference, so the opacity objection loses its force,
+while the construct-validity obligation remains fully in place.
+
+The same pattern carries a standing risk. Because the representation is estimated, any
+regression that uses it as a covariate faces the **generated-regressor** problem
+(@sec-image-econometrics), and because the artifacts being embedded are *chosen* by
+firms and creators, the features are correlated with unobserved sophistication. Neither
+study can escape this, and both are appropriately associational in their language.
 
 ## Large Language Models
 
@@ -575,7 +616,7 @@ $$
 $$ {#eq-aiml-attn}
 where $\mathbf{Q},\mathbf{K},\mathbf{V}$ are linear projections of the input sequence
 and $d_k$ is the key dimension. This mechanism, stacked and scaled, is what lets the
-model condition each word on the entire context. <!-- CITE-NEEDED: transformer architecture (Vaswani et al., "Attention Is All You Need") not in allowlist -->
+model condition each word on the entire context. The architecture that made this practical at scale is the transformer [@vaswani2017attention], which replaces recurrence with attention and so lets every position attend to every other in one step.
 
 Three properties demand discipline when LLMs are used as research instruments.
 First, **hallucination**: an LLM optimizes for plausible continuations, not truth,
@@ -762,6 +803,190 @@ is the deliverable—a channel comparison, an elasticity, a lift—that the disp
 parameter becomes load-bearing. Overdispersion is an inference bug, not a prediction
 bug, which is why it is invisible to a leaderboard and fatal to a claim.
 
+## Disclosure and the Producer Side of Generative AI {#sec-aiml-disclosure}
+
+Return to the LLM's *generator* role, and to the policy instrument that has grown up
+around it. Regulators increasingly require that generative-AI involvement in creative
+work be **disclosed**—a label attached to the artifact, or a content credential
+travelling with it—on the theory that audiences deserve to know what they are looking
+at. The research question this invites is an evaluation question: does a label change
+how an image, an ad, or a piece of copy is judged? Nearly all of the evidence answers
+that question, and it holds the artifact fixed while randomizing the label.
+
+@jussupow2026disclosure show that this design misses most of the effect, because the
+label reaches the *producer* first. In two nested mixed-methods experiments in which
+participants collaborate with a text-to-image tool under different disclosure regimes,
+creators who merely *anticipate* that their AI use will be disclosed change how they
+work: the majority **withdraw from the creative process**, handing generation over to
+the model rather than iterating with it. The mechanism the authors theorize, from
+Goffman's account of impression management, is not embarrassment about using AI but a
+threat to *validation as a creative self*—creators expect that the label will keep the
+audience from recognizing their own creative agency, so the agency stops being worth
+investing. The artifacts that result predominantly reflect computational rather than
+human creativity, and audiences perceive and downgrade them accordingly, label or no
+label. The authors name this the **indirect disclosure effect**, and its policy sting
+is precise: a transparency rule intended to protect human creative agency can erode it
+*before any audience ever sees the disclosure*.
+
+Two lessons generalize past the creative setting. The first is a **research-design**
+lesson with the structure of a general-equilibrium critique: when an intervention is
+announced in advance, the artifact under evaluation is itself an outcome of the
+intervention, so an experiment that randomizes labels across fixed stimuli estimates a
+partial effect and can get the sign of the policy wrong. Anything that alters what
+producers anticipate—AI labels, provenance metadata, review-verification badges, algorithmic
+transparency requirements (@sec-privacy)—requires a design that lets production
+respond. The second is a **measurement** lesson: the operative variable is a
+*second-order belief*, what the creator expects the audience to infer, which is
+neither the creator's own attitude toward AI nor the audience's actual reaction, and
+which must be measured as its own construct (@sec-measurement-scales) rather than
+assumed from either endpoint. Firms deploying generative tools internally face the same
+mechanism in miniature: an attribution policy that marks AI-assisted work will shift
+not only how that work is received but how much of themselves employees put into it.
+
+The same producer-side logic scales up from the individual creator to the platform that
+hosts them. @huang2026stances study two opposite-signed policy shocks on Chinese
+visual-arts platforms—one platform launching its own AI image generator, another
+prohibiting AI-generated artwork—and find creator activity falling in the first case and
+rising in the second. As with disclosure, the operative variable is an expectation rather
+than a feature: creators read the policy as a statement about AI's role, about the
+platform's commitment to human work, and about the competition their work will face, with
+the largest pullback among popular, multi-homing, and AI-averse creators. Put beside
+@jussupow2026disclosure, the pair delimits the producer-side response to generative AI at
+two levels—what a creator does *within* a task when a label is coming, and whether the
+creator shows up at all when a platform declares a stance. Neither effect is visible to a
+design that holds the artifact, or the creator population, fixed; the platform-governance
+reading of the same evidence is developed in @sec-platform-governance.
+
+### Replication: what a label-only design cannot see {#sec-aiml-disclosure-replication}
+
+The claim that the standard design is biased is worth making precise rather than
+asserting, because the bias has a definite structure and a measurable size. Write the
+regime as $D \in \{0,1\}$—whether the creator knows in advance that the artifact will
+carry a disclosure label. The regime reaches the audience's rating $Y$ through two
+routes. The **direct** route is the label itself, seen at evaluation time. The
+**indirect** route runs through production: $D$ raises the creator's second-order
+belief $B$ that the audience will not recognize their agency, $B$ triggers withdrawal
+from the collaboration, withdrawal lowers the human creative content $H$ of the
+artifact, and $H$ is what the audience actually rewards.
+
+```{mermaid}
+%%| label: fig-indirect-disclosure
+%%| fig-cap: "The indirect disclosure effect. A label-only experiment randomizes the dashed arrow while holding the artifact fixed, so it estimates the direct path alone. The producer-side chain is realized before the audience ever sees the label, and it is the larger of the two."
+flowchart LR
+    D["Anticipated disclosure\n(regime announced to creator)"]
+    B["Second-order belief:\n'they will not see my agency'"]
+    W["Withdrawal from\nthe collaboration"]
+    H["Human creative content\nof the artifact"]
+    Y["Audience evaluation"]
+    L["Disclosure label\nshown at evaluation"]
+    D --> B --> W --> H --> Y
+    D --> L
+    L -. "direct path (all a label-only design sees)" .-> Y
+```
+
+The simulation below instantiates that chain with a modest direct label penalty and a
+withdrawal response calibrated to the paper's qualitative finding—a minority of
+creators hand generation over to the model when nothing will be disclosed, a majority
+when disclosure is anticipated. It then runs the two designs side by side on the same
+population: the conventional experiment, which draws artifacts from the no-disclosure
+regime and randomizes only the label; and the regime comparison, which lets production
+respond. A third contrast strips the label from the audience entirely, to check whether
+the artifact is already worse on its own.
+
+```{r aiml-indirect-disclosure, message=FALSE, warning=FALSE}
+set.seed(951)
+n <- 3000
+
+# --- Producer stage: creators randomized to ANTICIPATED disclosure ------------
+disc <- rbinom(n, 1, 0.5)                       # will my AI use be labeled?
+
+# Second-order belief: "the audience will not recognize my creative agency."
+belief <- 1.0 * disc + rnorm(n, 0, 1)
+
+# Withdrawal: accept the model's output instead of iterating with it.
+withdraw <- rbinom(n, 1, plogis(-0.7 + 1.2 * belief))
+
+# Creative involvement, and the human creativity it puts into the artifact.
+iters <- pmax(0, rnorm(n, 6 - 3 * withdraw - 0.8 * belief, 1.5))
+human <- 0.35 * iters + rnorm(n, 0, 1)          # human-creativity content
+
+# --- Audience stage: rating responds to the artifact AND to the label --------
+b_human <- 0.55     # audiences reward human creative content
+b_label <- -0.25    # direct penalty from seeing the label
+rate <- function(h, lab) 3.2 + b_human * h + b_label * lab + rnorm(length(h), 0, 1)
+
+# (a) The standard label-only design: hold artifacts fixed at what creators make
+#     when no disclosure is anticipated, then randomize the label.
+pool  <- human[disc == 0]
+lab_r <- rbinom(length(pool), 1, 0.5)
+d_lab <- data.frame(y = rate(pool, lab_r), lab = lab_r)
+est_labelonly <- coef(lm(y ~ lab, data = d_lab))["lab"]
+
+# (b) The policy-relevant contrast: artifacts are produced under the regime and
+#     then carry its label.
+y_regime  <- rate(human, disc)
+est_total <- coef(lm(y_regime ~ disc))["disc"]
+
+# (c) Blind the audience to the label: is the artifact itself already worse?
+y_blind   <- rate(human, rep(0, n))
+est_blind <- coef(lm(y_blind ~ disc))["disc"]
+
+# --- Decomposition: how much of the total runs through production? -----------
+decomp <- function(idx) {
+  h <- human[idx]; d <- disc[idx]
+  fit <- lm(rate(h, d) ~ h + d)
+  dh  <- mean(h[d == 1]) - mean(h[d == 0])            # regime -> artifact
+  c(indirect = unname(dh * coef(fit)["h"]),           # artifact -> rating
+    direct   = unname(coef(fit)["d"]))
+}
+boot <- replicate(400, decomp(sample.int(n, n, replace = TRUE)))
+ci   <- apply(boot, 1, quantile, c(0.025, 0.975))
+
+cat(sprintf("Withdrawal rate, no disclosure anticipated  : %.0f%%\n",
+            100 * mean(withdraw[disc == 0])))
+cat(sprintf("Withdrawal rate, disclosure anticipated     : %.0f%%\n",
+            100 * mean(withdraw[disc == 1])))
+cat(sprintf("Creative iterations, control vs. disclosure : %.2f vs %.2f\n\n",
+            mean(iters[disc == 0]), mean(iters[disc == 1])))
+cat(sprintf("Label-only design (artifacts held fixed)    : %+.3f\n", est_labelonly))
+cat(sprintf("Regime effect on rating (label + response)  : %+.3f\n", est_total))
+cat(sprintf("Regime effect with the label hidden         : %+.3f\n\n", est_blind))
+cat(sprintf("  producer-side (indirect) path : %+.3f  [%+.3f, %+.3f]\n",
+            mean(boot["indirect", ]), ci[1, "indirect"], ci[2, "indirect"]))
+cat(sprintf("  audience-side (direct) path   : %+.3f  [%+.3f, %+.3f]\n",
+            mean(boot["direct", ]), ci[1, "direct"], ci[2, "direct"]))
+cat(sprintf("  share of the total a label-only design cannot see : %.0f%%\n",
+            100 * mean(boot["indirect", ]) / est_total))
+```
+
+The label-only experiment is not *wrong*; it is answering a different question,
+correctly. It recovers the direct penalty—what a label does to the perception of a
+fixed artifact—and misses roughly half of the effect of the policy, because the other
+half was realized upstream when creators, anticipating the label, stopped putting
+themselves into the work. The blinded contrast is the diagnostic that makes this
+visible: artifacts produced under an anticipated-disclosure regime rate lower *even
+when the audience never sees a label*, which cannot happen if the label operates only
+at the point of evaluation.
+
+The structure generalizes to any intervention whose existence is known to the party
+generating the outcome, which is most of marketing regulation and a great deal of
+platform policy. Verified-review badges, provenance metadata, algorithmic-transparency
+notices, and internal attribution rules all share the shape: announce the rule and the
+stimulus itself becomes endogenous. The design implication is that the randomization
+must be assigned at the level of the *regime*, before production, not at the level of
+the artifact after it—and that the second-order belief, what the producer expects the
+audience to infer, has to be measured as its own construct
+(@sec-measurement-scales) rather than backed out from either side's behavior.
+
+The producer-side response is not always a cost. Where an anticipated label makes
+creators withdraw, a well-designed first interaction makes users lean in:
+@jiang2026fulfillment show on a generative-AI co-creation platform that revealing
+*part* of the co-created output before the registration wall raises both the user's
+sense that their input mattered and their curiosity about what remains, and so
+raises registration and return visits (@sec-platform-fulfillment). The same
+mechanism—what the human expects the interaction to say about their own
+contribution—runs in both cases; only the sign of the design changes.
+
 ## Machine Learning Across the Marketing Funnel
 
 The methods above are not siloed by funnel stage; the same supervised, unsupervised,
@@ -787,7 +1012,7 @@ in different clothes. A look-alike model predicts who *resembles* a converter, b
 whether advertising to them *causes* incremental conversion is a question only a
 holdout experiment answers. A churn model predicts who *will* leave, but the right
 retention action depends on who will leave *because of, or despite,* the
-intervention—an uplift, not a prediction, problem. <!-- CITE-NEEDED: Ascarza (2018, JMR) on retention-targeting / uplift; churn-prediction-vs-uplift distinction --> The funnel view
+intervention—an uplift, not a prediction, problem. @ascarza2018futility makes the point with unusual force: in two field experiments, targeting the customers a churn model ranked as highest-risk was no better than random, because risk of leaving and responsiveness to an intervention are different quantities and the industry standard optimizes the wrong one. The funnel view
 is useful precisely because it keeps surfacing the boundary the chapter is built
 around.
 
@@ -913,7 +1138,7 @@ classifier is perfect. There is no single "fair" model; there is a choice among
 incompatible fairness criteria, and that choice is normative, not technical. The
 worked example audits a scorer for *disparate impact*—whether selection rates differ
 across groups—and shows that proxy features carry bias even when the protected
-attribute is excluded. <!-- CITE-NEEDED: algorithmic fairness foundations (Barocas, Hardt, Narayanan; Kleinberg et al. impossibility) not in allowlist -->
+attribute is excluded. The impossibility results are worth confronting directly: except in degenerate cases, calibration within groups and equal false-positive and false-negative rates across groups cannot all hold at once, so a fairness criterion is a choice among incompatible goods rather than a box to tick [@kleinberg2017humandecisions].
 
 ```{r aiml-fairness, message=FALSE, warning=FALSE}
 set.seed(48)
@@ -949,6 +1174,290 @@ feature list, and remediation (reweighting, constrained optimization, post-hoc
 threshold adjustment by group) is an explicit, auditable design choice with its own
 trade-offs against accuracy and against other fairness criteria.
 
+
+#### When the fairness policy needs the attribute it is not allowed to demand {#sec-aiml-parity-disclosure}
+
+The audit above assumes the protected attribute is *known* to the analyst even when
+it is excluded from the model. In recommendation settings it frequently is not. A
+firm that wants to commit to **accuracy parity**—consistent recommendation quality
+across demographic groups—generally has to rely on consumers disclosing their
+identity voluntarily, and that turns the fairness policy into a game rather than a
+constraint.
+
+@smith2026fairai model it as one. Digital platforms recommending video, music, and
+news deliver systematically worse recommendations to some consumer groups, and a
+parity commitment is the natural remedy; but consumers choose whether to disclose,
+the firm chooses what to recommend, and the firm also chooses how much to invest in
+the AI's learning. Their game-theoretic model puts all three in one system, and it is
+worth being clear about why they cannot be separated. Disclosure is what makes parity
+enforceable, and it is also what determines the training data the firm's learning
+investment operates on, so a consumer's disclosure decision is partly a decision
+about how good the firm's model will become for people like them—while the firm's
+parity commitment changes the payoff to disclosing in the first place. The
+equilibrium characterization of that system is the paper's contribution and is left
+to it here.
+
+The methodological point for this chapter is that the impossibility results above
+are stated for a *given* dataset with group membership observed. Once group
+membership is elicited rather than observed, the feasible set is endogenous to the
+policy, and a parity rule that looks costless in an audit can be undermined or
+amplified by who chooses to be counted. Any marketing team designing an
+accuracy-parity commitment should treat the disclosure margin as a first-order
+design variable rather than a data-collection detail.
+
+## Deploying Marketing AI: The Operations Interface {#sec-aiml-operations}
+
+Read the three pitfalls again and a pattern emerges: none of them is fixed by a better
+estimator. Leakage is a failure of pipeline discipline, drift is a failure of
+monitoring and refresh cadence, and unfairness is a failure of specification and
+audit. They are *operations* problems attached to a statistical object, and the
+literature that studies them systematically is operations management rather than
+machine learning. @dai2026aiops organize that literature into a triadic framework
+whose three pillars translate cleanly onto marketing.
+
+The first pillar, **AI for operations**, asks where AI improves an operational
+process—in their vocabulary the design–procure–produce–deliver chain, in marketing the
+campaign chain of targeting, creative generation, bidding, and service delivery. This
+is the pillar the chapter has occupied so far, and its discipline is the one already
+insisted upon: performance claims are empirical and context-dependent, so AI may
+improve a task, leave it unchanged, or introduce new frictions, and the burden is on
+measurement rather than assumption. The second pillar, **operations for AI**, inverts
+the lens: the AI system is itself something produced and operated, so the tools built
+for factories—workflow design, capacity management, statistical process control,
+lot-sizing, continuous improvement—apply to the model lifecycle. The third pillar,
+**human–AI interaction**, holds that the value realized is mediated by whether the
+humans in the loop trust, override, or rubber-stamp the system, which makes interface
+design, incentives, and supervisory capacity part of the estimator's performance.
+@fig-aiml-pillars situates the three and their dependencies.
+
+```{mermaid}
+%%| label: fig-aiml-pillars
+%%| fig-cap: "The three pillars of the AI-operations interface, translated to marketing. Deployed applications (left) create lifecycle demands that operations discipline must absorb (right); both pass through the human interface (bottom) that determines whether model output becomes a decision. Adapted from the framework in Dai and Swaminathan (2026)."
+flowchart TB
+  A["AI FOR MARKETING<br/>Targeting, creative generation,<br/>bidding, recommendation,<br/>service delivery"]
+  B["MARKETING OPS FOR AI<br/>Data pipelines, retraining cadence,<br/>drift monitoring, audit,<br/>governance"]
+  C["HUMAN-AI INTERACTION<br/>Trust calibration, override policy,<br/>supervisory capacity,<br/>accountability"]
+  A -->|"generates lifecycle<br/>demands"| B
+  B -->|"sustains deployable<br/>models"| A
+  A -->|"output must be<br/>acted on"| C
+  C -->|"adoption, overrides,<br/>and labeled feedback"| B
+  B -->|"explanations, alerts,<br/>and thresholds"| C
+```
+
+### The model pipeline as a production line {#sec-aiml-mlops}
+
+The productive analogy is exact enough to borrow results, not merely vocabulary. Data
+are inventory, subject to quality inspection at receipt; training is production, with
+each pass a lot whose size trades off setup against holding cost; deployment is
+service delivery under a latency service-level agreement; and monitoring with
+retraining is continuous improvement. The claim carrying the most weight for a
+marketing analytics team is the one about *cadence*, because it is where practice most
+often defaults to habit ("we retrain quarterly") rather than to a decision.
+
+Formalize the lot-sizing analogy that @dai2026aiops draw. Let $K$ denote the fixed
+cost of one refresh cycle—compute, validation, review, and the risk of a bad
+deployment—and let staleness damage accrue at rate $c_d$ per period, so that a model
+$a$ periods old costs $c_d a$ in foregone margin relative to a freshly fitted one.
+Over a refresh cycle of length $T$, average cost per period is
+$$
+C(T) \;=\; \frac{K}{T} \;+\; \frac{c_d\,(T-1)}{2},
+$$ {#eq-aiml-cadence}
+whose minimizer is the economic-order-quantity square root,
+$$
+T^\* \;=\; \sqrt{\frac{2K}{c_d}}.
+$$ {#eq-aiml-cadence-opt}
+
+Two consequences follow that are not obvious from the machine-learning side. First,
+optimal cadence is *flat* near the optimum and scales with the square root of the cost
+ratio: halving the cost of a retraining cycle shortens the optimal interval by only
+about 30%, so the case for automating the pipeline rests on reliability and on the
+option to respond to shocks, not on the arithmetic of cadence alone. Second, the whole
+calculation presumes a *constant* drift rate, which marketing violates—drift arrives
+in regime breaks (a competitor's launch, a platform policy change, a seasonal
+discontinuity) rather than as a steady trickle. Under lumpy drift a fixed schedule is
+dominated by a *triggered* policy that retrains on a monitoring signal, which is the
+operational content of the monitoring advice in @sec-aiml-drift.
+
+```{r aiml-retrain-cadence, message=FALSE, warning=FALSE}
+set.seed(4826)
+
+weeks <- 520
+K     <- 40      # fixed cost of one refresh cycle (compute + validation + review)
+
+# Weekly margin lost to staleness. Most weeks the world moves slowly; ~4% of weeks
+# bring a regime break (competitor launch, platform policy change, seasonal shift)
+# that pushes the deployed model away from the world far faster.
+regime_break <- rbinom(weeks, 1, 0.04)
+drift <- ifelse(regime_break == 1, rgamma(weeks, 2, 0.4), rgamma(weeks, 2, 4))
+
+# A model of age a costs the accumulated drift since its last refresh.
+cost_scheduled <- function(T) {
+  age <- (seq_len(weeks) - 1) %% T                 # weeks since last refresh
+  dmg <- ave(drift, cumsum(age == 0), FUN = cumsum)
+  (sum(dmg) + K * ceiling(weeks / T)) / weeks
+}
+
+grid   <- 2:52
+c_sched <- vapply(grid, cost_scheduled, numeric(1))
+T_best  <- grid[which.min(c_sched)]
+T_eoq   <- sqrt(2 * K / mean(drift))               # Eq. for T* at the average drift rate
+
+# Triggered policy: refresh when a noisily monitored staleness measure crosses h.
+cost_triggered <- function(h) {
+  acc <- 0; dmg <- 0; n <- 0
+  for (t in seq_len(weeks)) {
+    acc <- acc + drift[t]
+    dmg <- dmg + acc
+    if (acc + rnorm(1, 0, 0.3) > h) { acc <- 0; n <- n + 1 }   # monitor is imperfect
+  }
+  (dmg + K * n) / weeks
+}
+h_grid  <- seq(1, 40, by = 1)
+c_trig  <- vapply(h_grid, cost_triggered, numeric(1))
+
+cat("EOQ cadence at average drift:  ", round(T_eoq, 1), "weeks\n")
+cat("Best fixed schedule:            every", T_best, "weeks,",
+    "cost", round(min(c_sched), 2), "\n")
+cat("Best triggered policy:          threshold", h_grid[which.min(c_trig)], ",",
+    "cost", round(min(c_trig), 2), "\n")
+cat("Cost reduction from monitoring:",
+    paste0(round(100 * (min(c_sched) - min(c_trig)) / min(c_sched), 1), "%\n"))
+```
+
+The square-root formula lands close to the best fixed schedule, which is the point of
+carrying it: it gives an order-of-magnitude answer from two quantities a team can
+estimate—what a refresh costs and how fast holdout performance decays—without a
+simulation. The triggered policy then buys a further reduction precisely because drift
+is lumpy: it spends refreshes when the world moves and withholds them when it does
+not. The managerial reading is that monitoring infrastructure is not overhead attached
+to the model but a substitute for retraining capacity, and the exchange rate between
+them is estimable.
+
+The same lens rehabilitates a practice the machine-learning literature treats as
+hygiene. Statistical process control asks whether a monitored series is *in control*,
+and drift detection is that question asked of a model: an alarm is an out-of-control
+signal, and the specification problem is choosing which characteristics to chart.
+Accuracy alone is inadequate, because a marketing model can hold its aggregate hit
+rate while its false-positive rate on a segment, its latency at the tail, or its
+calibration in a new channel deteriorates. The discipline @dai2026aiops describe as a
+"Six Sigma for AI"—define the failure modes, measure baseline rates, analyze root
+causes, improve, and control through ongoing monitoring—is the manufacturing version
+of the validation habits urged in @sec-aiml-drift, with the addition that the metric
+set is chosen *before* deployment and charted continuously rather than reconstructed
+after a complaint.
+
+### Human supervision is a capacity constraint {#sec-aiml-fanout}
+
+The pillar that most often goes unmodeled is the human one, and it has a capacity that
+can be written down. Define the **neglect time** $T_N$ as how long an automated agent
+runs unattended before its performance degrades, and the **interaction time** $T_I$ as
+how long a human needs to review and resolve one exception. The **fan-out**
+$$
+F \;=\; \frac{T_N}{T_I}
+$$ {#eq-aiml-fanout}
+is the number of agents one operator can effectively supervise [@dai2026aiops]. Treat
+the reviewer as a server and exceptions as arrivals and the constraint becomes a
+queueing one: with arrival rate $\lambda$, service rate $\mu = 1/T_I$, and $k$
+reviewers, stability requires $\rho = \lambda/(k\mu) < 1$, and because waiting times
+explode as $\rho \to 1$, practice targets $\rho \lesssim 0.7$ to leave headroom for
+alert storms.
+
+```{r aiml-fanout, message=FALSE, warning=FALSE}
+# A marketing-operations review desk supervising autonomous agents (campaign
+# generation, bid adjustment, creative approval, escalation triage).
+T_N <- 6.0      # hours an agent runs unattended before quality degrades
+T_I <- 0.4      # hours to review and resolve one exception
+
+fan_out <- T_N / T_I                     # agents one reviewer can hold (Eq. for F)
+lambda  <- 1 / T_N                       # exceptions per agent-hour
+mu      <- 1 / T_I                       # reviews per reviewer-hour
+k       <- 2                             # reviewers on shift
+
+agents <- c(10, 15, 20, 25, 30)
+rho    <- agents * lambda / (k * mu)
+
+cat("Fan-out per reviewer:", fan_out, "agents\n")
+data.frame(
+  agents,
+  rho      = round(rho, 2),
+  stable   = ifelse(rho < 1, "yes", "NO"),
+  headroom = ifelse(rho <= 0.7, "buffered", "at risk")
+)
+```
+
+The table makes the design levers concrete. A desk of two reviewers is stable up to
+thirty agents only in the knife-edge sense; it is *robust* to roughly twenty, and the
+way to supervise more is not to hire linearly but to raise $T_N$ (better agents,
+narrower autonomy, batched or escalated alerts so that only $m$ concurrent anomalies
+interrupt) or to cut $T_I$ (pre-filled context, one-click rollback, interfaces that do
+not impose extraneous cognitive load).
+
+Getting this wrong produces the two failure modes that bracket the human–AI literature.
+Overload the desk and review degrades to rubber-stamping—**automation bias**, the
+tendency to accept algorithmic recommendations without the scrutiny that justified
+deploying a human reviewer at all. Under-deliver on reliability and the opposite
+appears: **algorithm aversion**, the documented tendency to abandon a statistically
+superior algorithm after seeing it err once, even when the human alternative errs more
+often [@dietvorst2015]. Both are miscalibrations of trust rather than preferences
+about automation, which is why the remedies are operational: calibrated exposure
+through parallel human-and-model pilots, explanations that expose the drivers of a
+recommendation rather than post hoc rationalizations, and interpretable models where
+the stakes make opacity untenable. The design objective is that reliance should track
+the model's actual conditional accuracy—high where it is reliable, low where it is
+not—and neither uniform deference nor uniform suspicion achieves that.
+
+### Supervision assumes an independent supervisor {#sec-aiml-anchoring}
+
+@eq-aiml-fanout counts reviewers. It says nothing about whether a reviewer who *is*
+looking is still exercising independent judgment, and that assumption turns out to be
+the fragile one.
+
+@lakhiwal2026transparency study algorithmically evaluated asynchronous video
+interviews—a hiring process in which an AI scores recorded candidate responses—and
+manipulate how *transparent* the system is about what the algorithm does. The two
+sides of the interaction move in opposite directions. For the people being evaluated,
+transparency helped: it reduced stress and reduced impression management, and
+interview performance improved. For the human evaluators, transparency did something
+else. When AI-generated scores were visible, evaluators **anchored on them and
+discounted their own judgment**—even though the scores could not, in fact,
+discriminate honest from deceptive candidates.
+
+That pairing is the finding worth carrying. Transparency is normally argued for as a
+remedy for automation's opacity, and on the subject side it behaves like one. On the
+supervisor side, showing the score is not neutral disclosure: it is an anchor, and it
+substitutes for the judgment the supervisor was retained to supply. A review desk
+staffed to a comfortable $\rho$ can therefore still be a rubber stamp, and the audit
+that would detect it has to compare reviewer decisions against ground truth rather
+than against agreement rates with the model—agreement is exactly what anchoring
+produces. Where the human is the control on the model, the interface should surface
+the *evidence* rather than the *verdict*, and the model's output should arrive after
+the human's, not before it.
+
+### The flywheel makes today's policy tomorrow's training data {#sec-aiml-flywheel}
+
+One feedback loop deserves separate statement because it changes the objective
+function. Adoption of a model generates data, the data improve the model, and the
+improvement drives further adoption—the **AI flywheel** whose contracting and pricing
+implications @gurkan2022flywheel formalize. For marketing the implication is sharper
+than for most settings, because the firm's action *is* the sampling design: a
+targeting policy determines who is exposed and therefore whose responses are observed,
+and a pricing policy determines which price points are ever sampled. A myopically
+revenue-optimal policy is therefore generically suboptimal as a data-collection
+policy, and the gap is the exploration term that bandit and adaptive-experimentation
+methods (@sec-pricing) exist to price. This is the same feedback that
+@sec-aiml-drift flags as a source of drift, seen from the design side rather than the
+diagnostic side, and it supplies the affirmative case for the randomized holdout: the
+holdout is not a tax on revenue but the mechanism that keeps the training distribution
+from being fully determined by the model's own past decisions.
+
+The synthesis @dai2026aiops offer is worth stating plainly, because it cuts against
+the way AI initiatives are usually justified internally. Stalled pilots and degrading
+models are typically diagnosed as model-quality problems and answered with better
+models; the operations reading is that they are usually symptoms of brittle pipelines,
+unclear ownership, weak monitoring, and unsupervisable autonomy. The complementarity
+runs both ways—AI expands the set of feasible marketing decisions, and operations
+discipline determines which of those decisions survive contact with deployment.
+
 ## From Prediction to Decision: Causal Machine Learning
 
 The chapter's organizing distinction has a constructive resolution. The right way to
@@ -965,7 +1474,61 @@ customers—the *uplift* that retention and targeting decisions actually require
 distinct from the *level* a churn model predicts. These methods, developed in the
 causal-inference chapters, are the principled bridge from machine learning's
 predictive power to the causal questions marketing decisions pose, and they are where
-the field's frontier is moving [@varian2016]. <!-- CITE-NEEDED: double/debiased ML (Chernozhukov et al.) and causal forests (Wager & Athey; Athey & Imbens) not in allowlist -->
+the field's frontier is moving [@varian2016]. Two developments define that frontier. Double/debiased machine learning uses flexible first-stage predictions with cross-fitting and an orthogonalized moment so that regularization bias in the nuisance functions does not contaminate the treatment-effect estimate [@chernozhukov2018doubledebiased]. Causal forests adapt the same trees to estimate heterogeneous effects with valid confidence intervals rather than point predictions [@wager2018estimatioinference; @athey2016recursivepartition].
+
+The generative turn adds a version of this problem that the causal-ML toolkit was not
+built for: the treatment itself is now cheap to manufacture. When a model can write two
+thousand candidate emails, the constraint moves from creation to *selection*, and
+selection requires predicting the effect of copy that has never been deployed.
+@ellickson2026unstructured build the response surface for exactly this—embedding past
+content with a pretrained LLM, estimating how its features causally relate to outcomes in
+the spirit of the component-effect estimates of @ellickson2023dml, and then screening
+AI-generated candidates by rejection sampling so that the model refuses to score content
+lying outside the support of what the firm has actually run. In a 3.3-million-observation
+email application spanning 34 campaigns, the framework improved both held-out prediction
+and deployed performance. The design principle generalizes past text: any
+decision system that scores novel machine-generated artifacts needs an explicit
+in-support / out-of-support boundary, because the alternative is a confident
+extrapolation with no error bar attached to its confidence. @sec-tad-causal-prediction
+develops the framework with a runnable illustration of the screen.
+
+## What Firm-Level Adoption Data Say About AI and Jobs {#sec-aiml-adoption-jobs}
+
+The most-asked question about this technology—does adopting it cost jobs?—has been hard
+to answer because adoption itself was unmeasured. The dominant empirical strategy assigns
+firms or workers an *exposure* score from occupational task content
+[@brynjolfsson2025genai], which varies across jobs but cannot distinguish a firm that
+adopted AI from an identical firm that did not.
+
+@kharazian2026ai attack the measurement problem directly by linking observed corporate
+card and bill-pay records identifying payments to AI vendors with monthly workforce
+records for 21,559 US firms. Adoption is dated by first observed AI payment, and intensity
+is measured by AI spend per employee per month; the preferred design compares adopters
+against firms in the same intensity tercile that have *not yet* adopted, using the
+Callaway–Sant'Anna doubly robust estimator with sector fixed effects
+[@callaway2021did; @santanna2020drdid]. Over the 24 months after adoption, low-intensity
+adopters show no detectable headcount change ($-0.006$ log points), while high-intensity
+adopters grow total headcount by 0.097 log points (about 10.2%) and entry-level headcount
+by 0.113 (about 12.0%), with gains spread across sales, administration, engineering, and
+customer service and concentrated, so far, in the Information sector (about 13.4%). The
+event-study path is a learning curve rather than a jump: essentially nothing in the
+adoption month, 0.071 by month 6, 0.188 by month 12, 0.277 by month 18.
+
+Three things make this worth reading closely, and one makes it worth reading carefully.
+It replaces a proxy with an observed behavior, which is the highest-leverage move
+available in most measurement-constrained literatures. It puts the identification burden
+where it belongs, on *when* firms adopt rather than on whether they could have, and it
+reports pre-period diagnostic flags alongside every estimate rather than only for the
+headline. And it declines the tempting comparison: adopters versus never-adopters yields
+larger effects (12.6% for high intensity) but fails 8 of 11 pre-period checks, and the
+authors report it as a completeness exercise rather than as the result. The caution is
+that this is industry research, not peer-reviewed work, on a sample of firms that use one
+payments platform and are visible to one workforce-data vendor—selected toward younger,
+technology-intensive companies—and that the design identifies the effect of adoption
+*timing* among eventual adopters, not the effect of AI on the labor market as a whole.
+Read against @sec-clv-pathways, the two studies make the same methodological point from
+opposite substantive corners: who took an action, and when, is not a nuisance to be
+differenced away but the variable that determines what the action was worth.
 
 ## Key Takeaways
 
@@ -991,6 +1554,11 @@ the field's frontier is moving [@varian2016]. <!-- CITE-NEEDED: double/debiased 
   assumption violations, not bugs: validate inside the fold and forward in time,
   monitor and retrain against a moving world, and measure fairness on outcomes because
   proxies encode protected attributes even when those attributes are excluded.
+- Deployment is an **operations** problem, not a modeling one: the model pipeline is a
+  production line whose refresh cadence obeys a lot-sizing trade-off
+  (@eq-aiml-cadence-opt), whose monitoring is statistical process control, and whose
+  human reviewers have a finite fan-out (@eq-aiml-fanout) that bounds how much
+  autonomy can safely be deployed [@dai2026aiops].
 - The constructive resolution is **causal machine learning**, which embeds flexible
   learners inside design-based estimators to recover the *uplift* that marketing
   decisions require.

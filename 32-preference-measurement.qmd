@@ -276,7 +276,14 @@ g(\boldsymbol{\beta}\mid\boldsymbol{\theta})\,d\boldsymbol{\beta}.
 $$ {#eq-mixed-logit}
 
 Mixed logit relaxes IIA and accommodates flexible substitution, at the cost of a
-likelihood with no closed form that must be simulated. In marketing the dominant route to
+likelihood with no closed form that must be simulated. A further extension brings
+attitudes and perceptions inside the model rather than treating them as covariates:
+**hybrid choice models** join a latent-variable measurement model to the choice model
+and estimate both jointly, so that psychometric indicators inform the utility
+parameters without being mistaken for exogenous regressors
+[@benakiva2002hybridchoice]. The cost is a substantially harder estimation problem
+and a stronger set of identifying assumptions, which is why the approach remains
+more common in transport demand than in marketing. In marketing the dominant route to
 @eq-mixed-logit is **hierarchical Bayes** (HB): a Gaussian (or richer) population prior
 $\boldsymbol{\beta}_i \sim \mathcal{N}(\bar{\boldsymbol{\beta}}, \boldsymbol{\Sigma})$ is
 placed over individual partworths, and Markov chain Monte Carlo recovers a full posterior
@@ -395,6 +402,16 @@ The first task is to reduce a full factorial to an estimable fractional design w
 columns remain (near-)orthogonal. The example below specifies a four-attribute product and
 extracts an orthogonal fraction, then verifies that the selected profiles are mutually
 near-uncorrelated—the property that keeps partworths independently identified.
+
+Orthogonality is necessary but not sufficient for a *choice* design. @huber1996importancutility
+add a criterion specific to choice-based conjoint: **utility balance**, the property
+that alternatives within a choice set have similar predicted utilities. A set
+containing one obviously dominant option is orthogonal but uninformative, because
+almost every respondent picks the same profile and the choice reveals little about
+where the indifference boundaries lie. Efficient choice designs therefore trade a
+little orthogonality for sets whose outcome is genuinely uncertain — which is also
+why an efficient design depends on prior beliefs about the partworths, and is
+sequentially improvable as those beliefs sharpen.
 
 ```{r conjoint-design}
 #| message: false

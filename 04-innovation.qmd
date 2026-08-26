@@ -349,6 +349,176 @@ inference honest on sparse data. Diffusion logic, it turns out, describes the ma
 of marketing infrastructure as readily as the adoption of the products that flow
 through it.
 
+## Earned Media and the Local Diffusion of a Green Innovation {#sec-innovation-news-diffusion}
+
+Bass and its descendants put the diffusion mechanism inside the consumer population:
+imitation is contagion among adopters. For a great many products that is only half the
+story, because the consumer cannot adopt until a local business decides to *carry* the
+thing. Plant-based meat is the clean case. A household's willingness to try an
+Impossible burger is irrelevant in a county where no restaurant puts one on the menu,
+so the object to be explained is a **supply-side adoption decision** by thousands of
+small, independent merchants—each of whom faces a fixed cost of menu redesign,
+supplier onboarding, and staff training, and each of whom is guessing at local demand.
+
+@xu2026food study exactly this margin for plant-based ("impossible") meat over
+2015–2019, and their first contribution is a measurement one. There is no registry of
+which restaurants and stores carry the product, so they construct a location-specific
+adoption metric from the merchants' *own social-media announcements*—the post that says
+the burger is now on the menu—which turns an unobservable rollout into a
+county-quarter panel. The substantive question is then whether **local news coverage**
+of the product causes these merchants to adopt it.
+
+The obstacle is that coverage is not assigned at random. Editors write about what their
+audience already cares about, so a county with latent enthusiasm for green food
+generates both more column inches and more adoption; and once a few restaurants adopt,
+that itself becomes local news. Coverage and adoption are jointly determined by an
+unobserved local taste, and reverse causality runs alongside it. The authors' answer is
+to instrument coverage with **quasi-random variation in county-quarter news production
+across topics**. Local news space is a rivalrous resource: an outlet has a fixed number
+of slots per quarter, so a flood of unrelated newsworthy events crowds the focal topic
+out, while the producer's own national news flow pushes it in. This is the
+news-crowd-out logic of @eisensee2007news, refined to the county-quarter-topic cell and
+resting on the local-press-supply tradition of @snyder2010press. The topic decomposition
+is what makes the exclusion restriction credible: the identifying variation comes
+predominantly from news about the **producer's financials**—funding rounds, valuations,
+earnings—which is generated in corporate boardrooms and financial markets, not by
+editorial interest in the county's food scene, and which has no plausible direct channel
+to a local restaurateur's menu except through the coverage itself.
+
+```{mermaid}
+%%| label: fig-news-adoption-id
+%%| fig-cap: "Identifying the effect of local news on local adoption. The unobserved local taste for green food (dashed) confounds coverage and adoption in both directions. The two news-supply shifters enter only through coverage: the producer's national financial news flow, scaled by the county's press capacity, and crowd-out from rival topics competing for the same finite news hole."
+flowchart LR
+    F["Producer's national\nfinancial news flow\n(funding, valuations, earnings)"]
+    O["County press capacity\n(outlets, newsroom size)"]
+    X["Rival-topic news pressure\n(crowd-out of the news hole)"]
+    N["Local coverage of\nthe green product"]
+    A["Local merchant adoption\n(menu / shelf announcements)"]
+    T["Unobserved local\ntaste for green food"]
+    L["County ideology\n(liberal vote share)"]
+    F --> N
+    O --> N
+    X -- "crowds out" --> N
+    N --> A
+    T -. "confound" .-> N
+    T -. "confound" .-> A
+    A -. "reverse causality" .-> N
+    L -- "moderates" --> A
+```
+
+Three results carry beyond the setting. First, local coverage does raise adoption by
+restaurants and stores, and the magnitude is of the same order as what packaged-goods
+firms buy with television advertising—except that it is *earned*, which reframes public
+relations from a reputational function into a distribution-building one. Second, the
+effect is markedly stronger in **liberal-leaning counties**. Green-product diffusion is
+therefore spatially sorted by ideology and not only by the usual income and density
+gradients, echoing the finding that political identity conditions the appeal of
+environmental attributes even when the private economics are held fixed
+[@gromet2013ideology]. A national average effect is a weighted mixture over a
+politically partitioned map, and a rollout plan built on that average will
+systematically over-invest in one half of the country and under-invest in the other.
+Third—and this is the methodological payoff—**the topic composition of news is
+information, not nuisance**. Decomposing coverage by topic told the authors which slice
+of the variation was doing the identifying work, and that slice is the one whose
+exclusion restriction can be argued from institutional detail.
+
+The replication below builds the confound deliberately, then removes it. A panel of
+counties over twenty quarters carries an unobserved green-taste shock that raises both
+coverage and adoption; coverage is additionally moved by two supply-side shifters that
+have no business in the adoption equation. Ordinary least squares with county and
+quarter fixed effects cannot rescue the estimate—the confound varies *within* county
+over time—while two-stage least squares on the news-supply instruments recovers the
+truth. The last block interacts the endogenous regressor with county ideology, using
+interacted instruments, to recover the political moderation.
+
+```{r innovation-news-iv, message=FALSE, warning=FALSE}
+set.seed(404)
+library(fixest)
+
+# --- A county-quarter panel of local-business adoption ------------------------
+n_cty <- 400; n_qtr <- 20
+cty <- rep(seq_len(n_cty), each = n_qtr)
+qtr <- rep(seq_len(n_qtr), times = n_cty)
+N   <- n_cty * n_qtr
+
+# County traits, both time-invariant: liberal vote share and local press capacity.
+lib     <- rep(plogis(rnorm(n_cty, 0, 0.8)), each = n_qtr)
+outlets <- rep(exp(rnorm(n_cty, 0, 0.5)), each = n_qtr)
+
+# Two exogenous shifters of local news SUPPLY, neither of which belongs in the
+# adoption equation:
+#  (1) the producer's national financial news flow (funding rounds, earnings),
+#      which reaches a county in proportion to its press capacity;
+#  (2) crowd-out -- unrelated topics competing for the same county-quarter news hole.
+fin_national <- rep(rnorm(n_qtr, 0, 1), times = n_cty)
+z_fin   <- scale(log(outlets) * fin_national)[, 1]
+z_crowd <- scale(rgamma(N, shape = 2, scale = 1))[, 1]
+
+# The confound: unobserved local taste for green food, which moves BOTH the
+# editor's willingness to cover the product AND the merchant's willingness to stock it.
+taste <- 0.6 * scale(lib)[, 1] + rnorm(N, 0, 1)
+
+# Observed local coverage of the product: the endogenous regressor.
+news <- 0.75 * z_fin - 0.35 * z_crowd + 0.50 * taste + rnorm(N, 0, 0.5)
+
+# Adoption: local restaurants and stores announcing the product this quarter.
+beta_main <- 0.25   # true average effect of coverage
+beta_lib  <- 0.60   # true extra effect per unit of (demeaned) liberal share
+alpha_c   <- rep(rnorm(n_cty, 0, 0.7), each = n_qtr)
+tau_t     <- rep(rnorm(n_qtr, 0, 0.4), times = n_cty)
+lib_c     <- lib - mean(lib)
+adopt <- (beta_main + beta_lib * lib_c) * news +
+         alpha_c + tau_t + 0.8 * taste + rnorm(N, 0, 0.8)
+
+d <- data.frame(adopt, news, lib_c, z_fin, z_crowd, cty, qtr)
+
+# --- (1) OLS with county and quarter fixed effects: still confounded ----------
+m_ols <- feols(adopt ~ news | cty + qtr, data = d)
+
+# --- (2) 2SLS: instrument coverage with the two news-supply shifters ----------
+m_iv <- feols(adopt ~ 1 | cty + qtr | news ~ z_fin + z_crowd, data = d)
+
+# --- (3) Which instrument does the identifying work? --------------------------
+Fstat   <- function(m) fitstat(m, "wf")$wf$stat
+f_fin   <- feols(news ~ z_fin   | cty + qtr, data = d)
+f_crowd <- feols(news ~ z_crowd | cty + qtr, data = d)
+
+# --- (4) Ideology heterogeneity: two endogenous terms, two interacted instruments
+m_het <- feols(adopt ~ 1 | cty + qtr |
+                 news + news:lib_c ~ z_fin + z_crowd + z_fin:lib_c + z_crowd:lib_c,
+               data = d)
+
+cat(sprintf("True average effect of coverage        : %.3f\n", beta_main))
+cat(sprintf("OLS, county + quarter FE               : %.3f\n", coef(m_ols)["news"]))
+cat(sprintf("2SLS, news-supply instruments          : %.3f  (SE %.3f)\n",
+            coef(m_iv)["fit_news"], se(m_iv)["fit_news"]))
+cat(sprintf("First-stage F -- producer financials   : %.0f\n", Fstat(f_fin)))
+cat(sprintf("First-stage F -- rival-topic crowd-out : %.0f\n", Fstat(f_crowd)))
+cat(sprintf("True ideology interaction              : %.3f\n", beta_lib))
+cat(sprintf("2SLS ideology interaction              : %.3f  (SE %.3f)\n",
+            coef(m_het)["fit_news:lib_c"], se(m_het)["fit_news:lib_c"]))
+```
+
+Fixed effects absorb the level of a county's enthusiasm and the national trajectory of
+the category, and they still leave the OLS coefficient at roughly twice the truth,
+because the taste shock that drives coverage moves quarter by quarter inside the county.
+Two-stage least squares on the two news-supply shifters lands on the true parameter, and
+the first-stage diagnostics reproduce the paper's finding that producer-financial news
+carries the identification: it is by far the stronger instrument, and it is also the one
+whose exclusion restriction survives an institutional argument. The interacted
+specification then recovers the ideology moderation, which is the practical output—it
+converts a single national elasticity into a map.
+
+Two cautions travel with the design. The instruments are only as good as the claim that
+national corporate news reaches a county solely through the local news hole; if the same
+funding round moves the *supplier's* wholesale terms or the parent chain's national menu
+policy, the exclusion restriction fails and no first-stage F will reveal it. And because
+the estimate is a local average treatment effect, it is identified off merchants whose
+adoption decision is responsive to coverage—plausibly the undecided middle, not the
+committed early adopters that a Bass model's innovation parameter is meant to capture.
+The two frameworks are complements: @sec-innovation-theory characterizes the shape of
+the curve, this design identifies what moves it.
+
 ## Measuring Innovation {#sec-innovation-measure}
 
 Innovation has no natural unit, so every empirical claim about it rests on a
@@ -465,6 +635,19 @@ a familiar ground—and it turns the embedding from a descriptive gauge into a d
 the authors build a generator that proposes adding, dropping, or swapping an ingredient
 to move a recipe toward that balanced-creativity frontier.
 
+The measurement move here—define a construct, operationalize it as a geometric property
+of a learned embedding, validate it against outcomes it was not fit to, and end in a tool
+rather than a coefficient—recurs across the creator economy. Its pricing counterpart is
+@sikdar2026artwork, who fuse a listing's structured attributes, photographs, and text to
+tell a novice artist what to charge and how long the work will take to sell
+(@sec-mmf-artpricing). Both study creators without institutional credentials, both let a
+learned representation stand in for the expert judgment such creators cannot buy, and
+both are careful to remain associational: the creator chooses the artifact and its
+description jointly, so the representation is entangled with the unobserved skill that
+also drives success. The general statement of that template, and the conditions under
+which reading a representation is measurement rather than the interpretability error,
+is in @sec-aiml-representation-measurement.
+
 ## New Product Development
 
 A diffusion curve and a patent count describe innovation from the outside. Inside
@@ -525,6 +708,25 @@ by consumers' perception of the developer's commitment to ongoing improvement an
 moderated by product familiarity. Disclosure, in other words, is itself a marketing
 instrument.
 
+Co-creation has a demand-side counterpart that the firm-side literature sometimes
+skips: whether consumers actually value the output. @schreier2006valueincrement
+measures the willingness-to-pay increment for mass-customized over standard products
+and finds it substantial but heterogeneous, which is what makes customization a
+segmentation decision rather than a universal upgrade. Where the firm solicits ideas
+rather than configurations, the design of the solicitation dominates the volume of
+it: @toubia2006ideageneratio shows that incentive schemes rewarding *others'* use of
+an idea, rather than the idea itself, raise both the quantity and the creativity of
+what is submitted.
+
+Two comparative studies bound how far any of this generalizes.
+@parry1997crossnational compare NPD practices across nations and find the
+practice–performance links are not invariant, and @nijssen2006exploringproduct show
+that product and service innovation differ enough in their antecedents that a single
+NPD framework applied to both will mis-specify one of them. On the organizational
+antecedent, @kim1998marketorientati ask whether the market orientation–performance
+link is mediated by innovation rather than direct — the answer largely determining
+whether a firm should invest in listening or in building.
+
 On the demand-sensing side, @kim2016brand challenge the static view of consumer
 co-creation. Their concept of **brand-embedded interaction**—dynamic, personalized
 engagement that steers consumers toward ideas satisfying both their own needs and
@@ -576,6 +778,35 @@ scoping mindset** conditions which markets an innovation reaches: ambiguity
 commercialization failure, whereas ambiguity *acceptance* fosters an upstream
 orientation that uncovers viable market spaces.
 
+
+### Generative AI in the Front End: Effort Saved Is Not Creativity Gained {#sec-innovation-genai-ideation}
+
+The front end of the funnel above is where generative AI has been adopted fastest,
+on the reasoning that turning a vague idea into a developed concept is laborious and
+the labor can be offloaded. @gordetzki2026ideation test that reasoning and find it
+backwards in an instructive way.
+
+In an online experiment, 276 participants refined ideas for an innovation challenge
+either alone, with AI-generated *text*, or with AI-generated *images*. Image-based
+support did what it was supposed to do on the effort margin: it significantly reduced
+effort relative to both working alone and text-based support. It also produced ideas
+that were **18% less creative** than those from the more effortful text-based
+support. The explanation is about what each format leaves undone. An image specifies
+every detail of a concept, and a fully specified concept leaves the human nothing to
+complete. Text leaves gaps, and filling gaps is effortful precisely because it is
+generative. The effect is moderated by how far the idea has already been developed:
+textual input helps most when the concept is already mature, because there is enough
+structure for the human's completions to attach to.
+
+The result should be read as a claim about **agency configuration** rather than about
+model quality—the question is how much of the concretization work the tool takes over,
+not how good the tool is. That reframing matters for NPD practice because it makes the
+design variable something a manager controls. It also supplies a caution for the
+measurement discussion in @sec-innovation-measure: an ideation tool evaluated on
+throughput or on time-to-concept will score the image condition best, and an
+evaluation restricted to those metrics would recommend exactly the configuration that
+degrades the output the process exists to produce.
+
 ## Organizational Determinants of Innovation
 
 Beyond the project and the boardroom lies the question of which *organizational*
@@ -625,6 +856,66 @@ prominent firms and scientists. The instrument is what makes the learning claim
 *causal* rather than merely correlational: firms that attend more conferences differ
 in unobservable ways from those that do not, and direct flights break that
 confound.
+
+### Opening the Boundary: Open-Source Product Development
+
+The franchising and conference channels move knowledge *toward* a firm that still owns
+the development process. **Open-source product development** dissolves that ownership:
+the firm builds its product in public on a social coding platform such as GitHub, and
+outside volunteers commit code alongside its own employees. Whether that openness pays
+is a question about the firm's income statement, not about community goodwill, and
+@singh2026opensource answer it with a panel of 977 U.S. high-tech firms observed from
+2001 to 2025. Firms that adopt open-source product development realize, on average, a
+**4–5% increase in gross margin**, an estimate that survives staggered
+difference-in-differences, generalized synthetic control, instrumental-variable, and
+dynamic-panel specifications (@sec-causal-inference)—four designs with different
+identifying assumptions converging on the same magnitude, which is what makes the
+result hard to dismiss as an artifact of any one of them.
+
+The interesting content is in the mechanism and its limits. Framing open source as
+**distributed knowledge integration** in the knowledge-based view of the firm, the
+authors decompose more than 323,000 project-level contributions across over 44,000
+repositories into *internal employee* and *external volunteer* sources, and show that
+**labor productivity** partially mediates the margin effect: outside expertise enlarges
+the pool of specialized knowledge applied to the product without a commensurate rise in
+the wage bill. But the mediated path is not always positive. The indirect effect turns
+discernibly positive only past a **threshold of roughly 35% external volunteer
+contribution**—below it, the firm is paying the coordination and review costs of
+openness without importing enough outside knowledge to cover them. A configurational
+analysis then adds a second condition: R&D intensity is present in *every*
+high-profitability configuration, the absorptive capacity required to metabolize
+externally sourced knowledge. That is the same conditional logic as the acquisitions
+literature above, in a different guise—openness, like acquisition, is not an average
+effect but a complementarity, and a firm without internal R&D has no organ with which
+to digest what the crowd contributes.
+
+### Inventor Job Security and the Direction of Invention
+
+Organizational arrangements shape not only how much a firm invents but *what kind*
+of invention it gets, and the mechanism can run through a single employment term.
+The intuitive prediction is that protecting inventors from dismissal buys
+exploration: an inventor who cannot be fired for a failed project has the safety
+net that risky, distant search requires. @wehrheim2026paradox test that prediction
+against the staggered adoption of wrongful-discharge laws across U.S. states
+between 1980 and 1999, using matched employer–employee data built from patent
+records and a difference-in-differences design on the cross-state timing. The
+prediction fails, and the reason is instructive. Job security does not primarily
+change an inventor's tolerance for failure; it changes the expected length of the
+relationship, and a longer expected tenure raises the return to investing in
+*firm-specific* technological knowledge over generally portable knowledge. Under
+stronger protection, inventors produced patents drawing more heavily on their own
+firm's technologies, less novel by the backward-citation logic of
+@sec-innovation-measure, and of higher private value to the employer.
+
+The result is a clean case of the private–social wedge that runs through this
+chapter's measurement discussion. Every outcome improved from the employer's
+ledger; the novelty of the technological frontier did not. It also sharpens what
+"organizational determinant" means. The wrongful-discharge laws were labor policy,
+written about dismissal and evaluated on employment, and their measurable
+consequence landed on the composition of the patent stock—an untargeted margin of
+exactly the kind @sec-policy-spillovers is about. A firm that wants exploration
+from a protected workforce has to buy it with something other than protection,
+because protection is an incentive to specialize.
 
 ### Dominance, Radicalness, and the Competition–Innovation Curve
 
@@ -712,6 +1003,12 @@ partially offset the predictable post-IPO innovation slump by investing in it.
   ($p$) and imitation ($q$); its parameters are weakly identified before the sales
   peak, and successive-generation extensions [@Chandrasekaran_2020] are needed when
   substitution, not saturation, drives an incumbent's decline.
+- Diffusion often turns on a **supply-side** adoption decision by local merchants,
+  not only on consumer contagion. @xu2026food show that local news coverage causes
+  restaurants and stores to adopt plant-based meat, identifying the effect from
+  quasi-random county-quarter news production across topics
+  (@sec-innovation-news-diffusion); the effect is larger in liberal-leaning counties,
+  so a national average masks a politically sorted map.
 - Patent **citations** are the field's default innovation measure: backward
   citations proxy (inverse) novelty and are available *ex ante*, while forward
   citations proxy importance but accrue *ex post* and require truncation

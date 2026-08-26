@@ -1059,6 +1059,524 @@ direct substitution among options but also the externality each side confers on 
 other, which is why competition and entry in multi-sided markets can have welfare
 effects that single-sided intuition gets backwards.
 
+## Vertical Relations and Negotiated Wholesale Prices {#sec-io-bargaining}
+
+Every supply-side model so far has taken each firm's marginal cost $c_j$ as an
+exogenous primitive to be recovered from a pricing first-order condition
+(@eq-bertrand-foc). In a distribution channel that premise is wrong in a way that
+matters. A grocery retailer's marginal cost of a national brand is a **wholesale price
+negotiated bilaterally with the manufacturer**, and it moves when anything that
+changes either side's outside option changes—an entrant, a patent expiry, a new
+private label on the retailer's own shelf. Treating $w_j$ as a technological constant
+throws away exactly the variation a channel study is about.
+
+The textbook alternative is not much better. The classical channel model makes the
+manufacturer a Stackelberg leader who posts $w_j$ and lets the retailer respond, which
+produces double marginalization and assigns *all* channel power to the upstream firm
+by assumption. Real negotiations are neither take-it-or-leave-it nor costlessly
+efficient, and the position of a given pair on that spectrum is precisely what an
+empirical channel study wants to measure. The **Nash-in-Nash** framework introduced in
+passing above is the workhorse that makes channel power an estimated parameter rather
+than a modelling assumption. @horn1988bilateral supplies the original bilateral-
+monopoly formulation, @collardwexler2019nash supplies the non-cooperative
+microfoundation, @draganska2010larger brings it into marketing to measure who captures
+the channel margin in German coffee, and @ellickson2026private uses it to answer a
+question the reduced-form literature could not: *how much* of a retailer's gain from
+launching a private label comes from the private label's own margin, and how much from
+the improved terms it wins on the national brands it still carries.
+
+### Setup and Notation {#sec-io-nn-setup}
+
+A single retailer sells $J$ differentiated products, one from each upstream supplier
+$j = 1, \dots, J$, to a unit mass of consumers. Demand $q_j(\mathbf{p})$ comes from
+the discrete-choice system estimated in @sec-io-berry: with mean utilities
+$\delta_j$ (@eq-blp-mean-utility) and price coefficient $\alpha$, logit shares are
+$q_j(\mathbf{p}) = \exp(\delta_j - \alpha p_j) / [1 + \sum_k \exp(\delta_k - \alpha p_k)]$.
+Supplier $j$ produces at constant marginal cost $c_j$ and sells to the retailer at the
+**linear wholesale price** $w_j$; the retailer incurs an additional handling cost
+$c^R_j$ and sets the retail price $p_j$. Profits are
+
+$$
+\Pi^R(\mathbf{p}; \mathbf{w}) = \sum_{j} (p_j - w_j - c^R_j)\, q_j(\mathbf{p}),
+\qquad
+\Pi^S_j(\mathbf{p}; \mathbf{w}) = (w_j - c_j)\, q_j(\mathbf{p}).
+$$ {#eq-nn-profits}
+
+The retailer is a multiproduct monopolist over its own shelf, so its pricing
+first-order condition is @eq-monopoly-foc applied to all $J$ products with $w_j + c^R_j$
+in place of $c_j$. In matrix form, with $\Omega_{jk} \equiv -\partial q_k / \partial p_j$,
+the retail equilibrium given $\mathbf{w}$ solves
+
+$$
+\mathbf{p}^*(\mathbf{w}) = \mathbf{w} + \mathbf{c}^R + \Omega^{-1}\mathbf{q}.
+$$ {#eq-nn-retail-foc}
+
+Two derived objects carry all the economics. The **gains from trade** on agreement $j$
+are what each side would lose if that one negotiation broke down,
+
+$$
+G^R_j(\mathbf{w}) = \Pi^R\!\left(\mathbf{p}^*(\mathbf{w}); \mathbf{w}\right) - \Pi^R_{-j}(\mathbf{w}_{-j}),
+\qquad
+G^S_j(\mathbf{w}) = \Pi^S_j\!\left(\mathbf{p}^*(\mathbf{w}); \mathbf{w}\right) - \underline{\pi}_j,
+$$ {#eq-nn-gft}
+
+where $\Pi^R_{-j}$ is the retailer's profit when product $j$ is off the shelf and all
+remaining retail prices are **re-optimised**, and $\underline{\pi}_j$ is the supplier's
+outside option (normalised to zero when the retailer is its only route to market).
+The second object is the **effective quantity response to a wholesale price**,
+
+$$
+\Gamma_j \equiv \frac{d\, q_j}{d\, w_j}
+= \sum_{k} \frac{\partial q_j}{\partial p_k}\,\frac{\partial p^*_k(\mathbf{w})}{\partial w_j} \;<\; 0,
+$$ {#eq-nn-gamma}
+
+which is *not* the own-price slope $\partial q_j / \partial p_j$: it is that slope
+composed with the retailer's pass-through matrix from @eq-cpt. Confusing the two is the
+most common arithmetic error in applied bargaining work.
+
+### Assumptions {#sec-io-nn-assumptions}
+
+**Assumption 1 (Two-stage timing).** Wholesale prices are agreed in stage one; the
+retailer then sets $\mathbf{p}$ in stage two taking $\mathbf{w}$ as given, so realised
+prices satisfy @eq-nn-retail-foc. *Substantively:* contracts are signed before the
+pricing period and are not renegotiated within it. Violated by trade deals struck
+mid-period in response to a competitor's promotion.
+
+**Assumption 2 (Nash-in-Nash / passive beliefs).** Each pair $(R, j)$ chooses $w_j$ to
+maximise the generalised Nash product of the two sides' gains from trade, taking all
+*other* agreements $\mathbf{w}_{-j}$ as given and unchanged:
+
+$$
+w_j^* \;=\; \arg\max_{w_j}\;
+\left[G^R_j(\mathbf{w})\right]^{\lambda_j}
+\left[G^S_j(\mathbf{w})\right]^{1-\lambda_j},
+\qquad \lambda_j \in (0,1).
+$$ {#eq-nn-objective}
+
+*Substantively:* a buyer who is renegotiating with one supplier does not infer from
+that conversation anything about what its rivals are being offered. @collardwexler2019nash
+show this is the limit of a non-cooperative alternating-offers game with simultaneous,
+non-observable bilateral negotiations. Violated when a supplier can credibly threaten
+to punish the retailer in *other* categories, or when most-favoured-nation clauses link
+the agreements.
+
+**Assumption 3 (Disagreement removes only the focal product).** If $(R,j)$ fails to
+agree, product $j$ alone leaves the shelf; every other agreement stands and the
+retailer re-optimises $\mathbf{p}_{-j}$. *Substantively:* the threat is delisting one
+SKU or brand, not the end of the trading relationship. Violated by all-or-nothing
+category-captain arrangements and by settings where a breakdown triggers renegotiation
+of the surviving contracts.
+
+**Assumption 4 (Linear wholesale prices).** The transfer is $w_j q_j$ with no fixed
+fee, slotting allowance, or quantity discount. *Substantively:* the per-unit invoice
+price is the whole contract. This is the assumption most likely to fail in grocery, and
+@sec-io-nn-failure shows what it costs.
+
+### The Estimating Equation and Its Derivation {#sec-io-nn-derivation}
+
+Take logs of @eq-nn-objective and differentiate in $w_j$:
+
+$$
+\lambda_j\, \frac{\partial G^R_j / \partial w_j}{G^R_j}
+\;+\;
+(1-\lambda_j)\, \frac{\partial G^S_j / \partial w_j}{G^S_j}
+\;=\; 0 .
+$$ {#eq-nn-foc}
+
+The retailer's derivative collapses by an **envelope argument**. Total profit at the
+optimum is $\Pi^R(\mathbf{p}^*(\mathbf{w}); \mathbf{w})$, so
+
+$$
+\frac{d}{d w_j}\Pi^R\!\left(\mathbf{p}^*(\mathbf{w}); \mathbf{w}\right)
+= \underbrace{\sum_k \frac{\partial \Pi^R}{\partial p_k}\frac{\partial p^*_k}{\partial w_j}}_{=\,0 \text{ by @eq-nn-retail-foc}}
+\;+\; \frac{\partial \Pi^R}{\partial w_j}
+\;=\; -\,q_j .
+$$ {#eq-nn-envelope}
+
+Each term in the first sum vanishes because $\mathbf{p}^*$ solves the retailer's own
+first-order conditions; the only surviving effect of a wholesale-price increase is the
+mechanical one, an extra dollar paid on each of the $q_j$ units already sold. Because
+the disagreement profit $\Pi^R_{-j}$ does not depend on $w_j$, @eq-nn-gft gives
+$\partial G^R_j / \partial w_j = -q_j$ exactly.
+
+The supplier's derivative does *not* collapse, because the supplier does not choose
+$\mathbf{p}$: writing $\mu_j \equiv w_j - c_j$ for the wholesale margin,
+
+$$
+\frac{\partial G^S_j}{\partial w_j} = q_j + \mu_j \Gamma_j .
+$$ {#eq-nn-supplier-deriv}
+
+Substituting @eq-nn-envelope and @eq-nn-supplier-deriv into @eq-nn-foc, using
+$G^S_j = \mu_j q_j$, and solving for the margin yields the **bargaining-augmented
+markup equation**
+
+$$
+\mu_j \;=\; w_j - c_j \;=\;
+\frac{q_j}{\;-\Gamma_j \;+\; \dfrac{\lambda_j}{1-\lambda_j}\cdot\dfrac{q_j^{\,2}}{G^R_j}\;} .
+$$ {#eq-nn-markup}
+
+This single equation is the supply-side analogue of @eq-bertrand-foc for a negotiated
+input, and it is what makes the framework empirically useful: given demand estimates
+(which deliver $q_j$ and $\Gamma_j$) and an observed wholesale price, it maps a value
+of $\lambda_j$ into a marginal cost $c_j$, or a known $c_j$ into a $\lambda_j$.
+
+Two limits confirm that @eq-nn-markup nests what the book already teaches. As
+$\lambda_j \to 0$ the second term in the denominator vanishes and
+$\mu_j = q_j / (-\Gamma_j)$, which is exactly the first-order condition of a
+manufacturer that posts $w_j$ unilaterally and anticipates the retailer's response—the
+Stackelberg channel model, with its double marginalization. As $\lambda_j \to 1$ the
+second term diverges and $\mu_j \to 0$, so $w_j \to c_j$: the retailer buys at marginal
+cost and the channel replicates the vertically integrated outcome. The bargaining
+weight is the estimable parameter that interpolates between the two textbook cases.
+
+The comparative static that drives @ellickson2026private falls straight out of
+@eq-nn-markup. Anything that raises the retailer's disagreement profit $\Pi^R_{-j}$—a
+private label that keeps earning when a national brand is delisted—*lowers* $G^R_j$,
+which *raises* $q_j^2/G^R_j$, which *lowers* $\mu_j$. A better outside option buys
+better terms on the products you still carry. This is the "indirect" channel the paper
+isolates, and it is invisible to any model that treats $w_j$ as a cost parameter.
+
+### Intuition {#sec-io-nn-intuition}
+
+Strip the algebra away and the bargain is a fight over a fixed pie whose *size* the
+per-unit price itself distorts. Raising $w_j$ transfers surplus to the supplier
+one-for-one on the units sold (the $q_j$ term), but it also raises the retail price and
+shrinks the units (the $\mu_j \Gamma_j$ term), so the supplier's own gain is
+concave in $w_j$. The retailer's loss, by contrast, is *linear* in $w_j$ at the margin,
+because the retailer re-optimises prices and the envelope theorem kills the second-order
+effect. Bargaining weight decides where on that trade-off the pair lands. What makes
+the outcome estimable is that the two sides' gains from trade are *observable functions
+of the demand system*: $G^R_j$ is computable by simply re-solving the retail pricing
+problem with product $j$ deleted, which is why credible identification of $\lambda_j$
+demands variation that shifts outside options rather than variation that shifts costs.
+
+### Simulation {#sec-io-nn-simulation}
+
+The simulation below builds a channel with one retailer and two national-brand
+suppliers, solves the Nash-in-Nash fixed point exactly, and asks three questions: does
+$\lambda$ really interpolate between the two textbook channel models; what does an
+analyst lose by imposing the posted-price model the book teaches when the truth is a
+negotiation; and how does a private label change the terms on the national brands.
+
+```{r io-nn-setup, message=FALSE, warning=FALSE}
+set.seed(35201)
+alpha <- 1.5   # price coefficient; unit mass of consumers, so profits are per-consumer
+
+shares <- function(p, delta) { v <- exp(delta - alpha * p); v / (1 + sum(v)) }
+
+# Retail stage: multiproduct-monopoly FOC, p = w + cR + Omega^{-1} q   (eq-nn-retail-foc)
+retail_prices <- function(w, delta, cR, tol = 1e-12, maxit = 1000) {
+  p <- w + cR + 1 / alpha
+  for (i in seq_len(maxit)) {
+    q  <- shares(p, delta)
+    Om <- -alpha * outer(q, q); diag(Om) <- alpha * q * (1 - q)
+    p_new <- w + cR + solve(Om, q)
+    if (max(abs(p_new - p)) < tol) { p <- p_new; break }
+    p <- 0.5 * p + 0.5 * p_new          # damped iteration
+  }
+  p
+}
+retail_profit <- function(w, delta, cR) {
+  p <- retail_prices(w, delta, cR); q <- shares(p, delta)
+  sum((p - w - cR) * q)
+}
+# Disagreement (Assumption 3): product j leaves, survivors are re-priced.
+# reoptimise = FALSE is the shortcut examined in the failure analysis below.
+retail_profit_drop <- function(j, w, delta, cR, reoptimise = TRUE) {
+  keep <- setdiff(seq_along(w), j)
+  if (reoptimise) return(retail_profit(w[keep], delta[keep], cR[keep]))
+  p <- retail_prices(w, delta, cR)
+  sum((p[keep] - w[keep] - cR[keep]) * shares(p[keep], delta[keep]))
+}
+# Gamma_j = dq_j/dw_j through retail pass-through   (eq-nn-gamma)
+Gamma <- function(j, w, delta, cR, h = 1e-5) {
+  wp <- w; wp[j] <- w[j] + h; wl <- w; wl[j] <- w[j] - h
+  (shares(retail_prices(wp, delta, cR), delta)[j] -
+   shares(retail_prices(wl, delta, cR), delta)[j]) / (2 * h)
+}
+# Log-Nash-product FOC   (eq-nn-foc)
+nash_foc <- function(j, w, delta, cR, cS, lam, reoptimise = TRUE) {
+  q  <- shares(retail_prices(w, delta, cR), delta)
+  gR <- retail_profit(w, delta, cR) - retail_profit_drop(j, w, delta, cR, reoptimise)
+  mu <- w[j] - cS[j]; gS <- mu * q[j]
+  if (gR <= 1e-10 || gS <= 1e-10) return(NA_real_)
+  lam[j] * (-q[j]) / gR + (1 - lam[j]) * (q[j] + mu * Gamma(j, w, delta, cR)) / gS
+}
+# Nash-in-Nash equilibrium: solve each bilateral FOC taking w_{-j} as given (Assumption 2)
+nash_in_nash <- function(delta, cR, cS, lam, reoptimise = TRUE,
+                         fixed = NULL, w_fixed = NULL, tol = 1e-10, maxit = 400) {
+  w <- cS + 0.5
+  if (!is.null(fixed)) w[fixed] <- w_fixed
+  free <- setdiff(seq_along(w), fixed)
+  for (it in seq_len(maxit)) {
+    w_old <- w
+    for (j in free) {
+      f <- function(x) { ww <- w; ww[j] <- x; nash_foc(j, ww, delta, cR, cS, lam, reoptimise) }
+      lo <- cS[j] + 1e-4; hi <- cS[j] + 8
+      flo <- f(lo); fhi <- f(hi)
+      while ((is.na(fhi) || flo * fhi > 0) && hi > lo + 1e-3) {
+        hi <- lo + 0.6 * (hi - lo); fhi <- f(hi)
+      }
+      if (is.na(flo) || is.na(fhi) || flo * fhi > 0) next
+      w[j] <- uniroot(f, c(lo, hi), tol = 1e-12)$root
+    }
+    if (max(abs(w - w_old)) < tol) break
+  }
+  w
+}
+cons_surplus <- function(p, delta) log(1 + sum(exp(delta - alpha * p))) / alpha
+
+delta <- c(4.0, 3.6)      # mean utilities of the two national brands
+cS    <- c(1.00, 0.90)    # supplier marginal costs
+cR    <- c(0.20, 0.20)    # retailer handling costs
+```
+
+The envelope result @eq-nn-envelope is not an approximation, and it is cheap to verify
+numerically before relying on it.
+
+```{r io-nn-envelope, message=FALSE, warning=FALSE}
+w5 <- nash_in_nash(delta, cR, cS, rep(0.5, 2)); h <- 1e-5
+wp <- w5; wp[1] <- w5[1] + h
+wl <- w5; wl[1] <- w5[1] - h
+c(numeric = (retail_profit(wp, delta, cR) - retail_profit(wl, delta, cR)) / (2 * h),
+  minus_q = -shares(retail_prices(w5, delta, cR), delta)[1])
+```
+
+**Does $\lambda$ interpolate between the textbook models?** @tbl-nn-lambda traces the
+equilibrium across bargaining weights, with the vertically integrated benchmark in the
+last row.
+
+```{r io-nn-lambda, message=FALSE, warning=FALSE}
+#| label: tbl-nn-lambda
+#| tbl-cap: "Nash-in-Nash equilibrium as the retailer's bargaining weight rises. The lambda = 0.01 row reproduces the manufacturer-Stackelberg channel; the final row is the vertically integrated benchmark. Channel profit is the sum of retailer and supplier profit, and the gap between it and the integrated benchmark is the double-marginalization loss."
+tab_lambda <- do.call(rbind, lapply(c(0.01, 0.25, 0.50, 0.75, 0.99), function(L) {
+  w <- nash_in_nash(delta, cR, cS, rep(L, 2))
+  p <- retail_prices(w, delta, cR); q <- shares(p, delta)
+  data.frame(lambda = L, w_NB1 = w[1], p_NB1 = p[1],
+             pi_R = sum((p - w - cR) * q), pi_S = sum((w - cS) * q),
+             channel = sum((p - cS - cR) * q), CS = cons_surplus(p, delta))
+}))
+p_vi <- retail_prices(cS, delta, cR); q_vi <- shares(p_vi, delta)
+tab_lambda <- rbind(tab_lambda,
+  data.frame(lambda = NA, w_NB1 = cS[1], p_NB1 = p_vi[1],
+             pi_R = sum((p_vi - cS - cR) * q_vi), pi_S = 0,
+             channel = sum((p_vi - cS - cR) * q_vi), CS = cons_surplus(p_vi, delta)))
+knitr::kable(round(tab_lambda, 4), align = "r")
+```
+
+The two limits derived above appear exactly. At $\lambda = 0.01$ the wholesale price is
+2.010 and channel profit 0.855; at $\lambda = 0.99$ the wholesale price is 1.009 against
+a marginal cost of 1.00 and channel profit is 0.949, indistinguishable from the
+integrated benchmark. Roughly 9.9% of attainable channel profit is destroyed by conduct
+alone at the manufacturer-power extreme, and consumer surplus is 41% lower there
+(0.348 versus 0.590) even though costs, preferences, and the number of products are
+identical throughout. Channel power is not a distributional detail; it is an efficiency
+parameter.
+
+**What does imposing the posted-price model cost?** This is the comparison that
+matters for practice, because the posted-price model is what @eq-bertrand-foc delivers
+if an analyst treats $w_j$ as an observed cost and never models the negotiation.
+Inverting @eq-nn-markup at an *assumed* $\lambda_a$ recovers a supplier marginal cost;
+@tbl-nn-misspec sets $\lambda_a = 0$ and varies the truth.
+
+```{r io-nn-misspec, message=FALSE, warning=FALSE}
+#| label: tbl-nn-misspec
+#| tbl-cap: "Recovering supplier marginal cost for national brand 1 under an assumed bargaining weight of zero (the posted-price channel model) when the truth is a negotiation. dp_true and dp_assumed are the retail price change predicted by the true and the misspecified model for a 25% supplier cost shock."
+recover_c <- function(j, w, delta, cR, lam_a) {           # invert eq-nn-markup for c_j
+  q  <- shares(retail_prices(w, delta, cR), delta)[j]
+  G  <- Gamma(j, w, delta, cR)
+  gR <- retail_profit(w, delta, cR) - retail_profit_drop(j, w, delta, cR)
+  w[j] - q / (-G + (lam_a / (1 - lam_a)) * q^2 / gR)
+}
+tab_mis <- do.call(rbind, lapply(c(0.10, 0.30, 0.50, 0.70, 0.90), function(Lt) {
+  w  <- nash_in_nash(delta, cR, cS, rep(Lt, 2))
+  cS_hat <- sapply(1:2, function(j) recover_c(j, w, delta, cR, 1e-6))   # assume lambda = 0
+  shock  <- 1.25
+  p_true <- retail_prices(nash_in_nash(delta, cR, cS * shock, rep(Lt, 2)), delta, cR)[1]
+  w_base <- nash_in_nash(delta, cR, cS_hat, rep(1e-6, 2))
+  p_mis  <- retail_prices(nash_in_nash(delta, cR, cS_hat * shock, rep(1e-6, 2)), delta, cR)[1]
+  data.frame(lambda_true = Lt, c_true = cS[1], c_hat = cS_hat[1],
+             bias_pct = 100 * (cS_hat[1] - cS[1]) / cS[1],
+             dp_true = p_true - retail_prices(w, delta, cR)[1],
+             dp_assumed = p_mis - retail_prices(w_base, delta, cR)[1])
+}))
+knitr::kable(round(tab_mis, 4), align = "r")
+c(RMSE_assumed_lambda0 = sqrt(mean((tab_mis$c_hat - tab_mis$c_true)^2)))
+```
+
+The damage is severe and systematic. At a true $\lambda = 0.5$ the recovered supplier
+marginal cost is 0.353 against a truth of 1.00, a 64.7% understatement; the RMSE across
+the grid is 0.733 on a cost of 1.00, against exactly zero when the correct $\lambda$ is
+imposed. The mechanism is transparent from @eq-nn-markup: a negotiated wholesale price
+is *lower* than a posted one, and a model that insists the supplier was a monopolist
+must explain the low price by attributing a low cost to the supplier. At
+$\lambda_{\text{true}} = 0.9$ the recovered cost is **negative** ($-0.137$), which is a
+useful diagnostic in real work—negative implied costs in a channel study are usually
+evidence of imposed conduct that is too manufacturer-favourable, not of subsidised
+production.
+
+The counterfactual columns show why this is not merely a labelling problem. For a 25%
+supplier cost shock at $\lambda_{\text{true}} = 0.5$, the true model predicts national
+brand 1's retail price rises by 0.124; the misspecified model predicts 0.037, understating
+pass-through by a factor of 3.4. At $\lambda_{\text{true}} = 0.9$ the misspecified model
+predicts a price *decrease* of 0.013—the sign is wrong—because a 25% increase applied to
+a negative recovered cost moves it further below zero. Conduct misspecification does not
+wash out of a counterfactual; it propagates through it.
+
+**What does a private label do?** @ellickson2026private decompose the retailer's gain
+from a private label into a direct margin effect and an indirect bargaining effect. The
+decomposition is reproducible here by solving the three-product channel twice: once with
+the national-brand wholesale prices frozen at their pre-entry values (direct effect only)
+and once with everything renegotiated (total effect).
+
+```{r io-nn-privatelabel, message=FALSE, warning=FALSE}
+#| label: tbl-nn-privatelabel
+#| tbl-cap: "Private-label entry with national-brand bargaining weight fixed at 0.5. dw_NB1 is the change in national brand 1's negotiated wholesale price relative to the no-private-label equilibrium. The indirect gain is the part of the retailer's profit increase that comes from renegotiated national-brand terms rather than from the private label's own margin."
+lamNB <- 0.5
+w0    <- nash_in_nash(delta, cR, cS, rep(lamNB, 2))
+p0    <- retail_prices(w0, delta, cR)
+base  <- sum((p0 - w0 - cR) * shares(p0, delta))
+
+delta3 <- c(delta, 2.8); cS3 <- c(cS, 0.70); cR3 <- c(cR, 0.20)
+tab_pl <- do.call(rbind, lapply(c(0.30, 0.50, 0.70, 0.90), function(Lpl) {
+  lam3 <- c(lamNB, lamNB, Lpl)
+  w_d  <- nash_in_nash(delta3, cR3, cS3, lam3, fixed = 1:2, w_fixed = w0)  # NB terms frozen
+  p_d  <- retail_prices(w_d, delta3, cR3)
+  pi_d <- sum((p_d - w_d - cR3) * shares(p_d, delta3))
+  w_f  <- nash_in_nash(delta3, cR3, cS3, lam3)                            # all renegotiated
+  p_f  <- retail_prices(w_f, delta3, cR3)
+  pi_f <- sum((p_f - w_f - cR3) * shares(p_f, delta3))
+  data.frame(lambda_PL = Lpl, w_PL = w_f[3], w_NB1 = w_f[1], dw_NB1 = w_f[1] - w0[1],
+             gain_total = pi_f - base, gain_direct = pi_d - base,
+             gain_indirect = pi_f - pi_d,
+             indirect_pct = 100 * (pi_f - pi_d) / (pi_f - base))
+}))
+knitr::kable(round(tab_pl, 4), align = "r")
+```
+
+Both of @ellickson2026private's headline patterns reproduce. First, entry improves the
+terms on the products the retailer still carries: national brand 1's wholesale price
+falls by 0.041 at $\lambda_{PL} = 0.5$, purely because the retailer now loses less when
+it threatens to delist. Second, the retailer's total gain rises monotonically in its
+bargaining position against the *private-label supplier*—from 0.089 at
+$\lambda_{PL} = 0.30$ to 0.158 at $\lambda_{PL} = 0.90$, a 78% difference driven entirely
+by supply-side arrangements that a demand-side analysis cannot see. The indirect channel
+is a minority of the gain but not a rounding error: 14.3% of the retailer's profit
+increase at $\lambda_{PL} = 0.5$, or 0.0154 on a base of 0.688. Its *share* falls as
+$\lambda_{PL}$ rises even though its level rises, because a cheaper private label grows
+the direct margin faster than it grows the threat value.
+
+### When the Assumptions Fail {#sec-io-nn-failure}
+
+Two of the four assumptions are worth stress-testing, and they fail very differently.
+
+```{r io-nn-failure, message=FALSE, warning=FALSE}
+#| label: tbl-nn-failure
+#| tbl-cap: "Two assumption failures. Panel A: the retailer's disagreement payoff computed without re-pricing the surviving products (Assumption 3 shortcut). Panel B: a share phi of the supplier's rent is paid as a fixed fee rather than a per-unit margin, violating Assumption 4; the linear-wholesale-price estimator is applied anyway. True lambda is 0.5 in Panel B."
+recover_lambda <- function(j, w, delta, cR, cS, reoptimise = TRUE) {
+  q  <- shares(retail_prices(w, delta, cR), delta)[j]
+  G  <- Gamma(j, w, delta, cR); mu <- w[j] - cS[j]
+  gR <- retail_profit(w, delta, cR) - retail_profit_drop(j, w, delta, cR, reoptimise)
+  A  <- -q / gR; B <- (q + mu * G) / (mu * q)
+  B / (B - A)
+}
+panelA <- do.call(rbind, lapply(c(0.10, 0.30, 0.50, 0.70, 0.90), function(Lt) {
+  w <- nash_in_nash(delta, cR, cS, rep(Lt, 2))
+  data.frame(panel = "A: no re-pricing", setting = Lt, lambda_true = Lt,
+             lambda_hat = recover_lambda(1, w, delta, cR, cS, reoptimise = FALSE))
+}))
+mu_star <- nash_in_nash(delta, cR, cS, rep(0.5, 2)) - cS
+panelB <- do.call(rbind, lapply(c(0, 0.25, 0.50, 0.75, 0.95), function(phi) {
+  w_obs <- cS + (1 - phi) * mu_star     # share phi of the rent moved into a fixed fee
+  data.frame(panel = "B: two-part tariff", setting = phi, lambda_true = 0.5,
+             lambda_hat = recover_lambda(1, w_obs, delta, cR, cS))
+}))
+out <- rbind(panelA, panelB)
+out$bias <- out$lambda_hat - out$lambda_true
+out[, 2:5] <- round(out[, 2:5], 4)
+knitr::kable(out, align = "r", row.names = FALSE)
+c(RMSE_panelA = sqrt(mean((panelA$lambda_hat - panelA$lambda_true)^2)),
+  RMSE_panelB = sqrt(mean((panelB$lambda_hat - panelB$lambda_true)^2)))
+```
+
+**Assumption 3 bends.** Computing $\Pi^R_{-j}$ without re-pricing the survivors—a
+shortcut that saves one equilibrium solve per negotiation and is common in applied
+code—biases $\hat\lambda$ upward by 0.004 to 0.016, an RMSE of 0.0117 on a parameter
+bounded in $[0,1]$. The direction is predictable: skipping the re-optimisation
+understates the disagreement profit, overstates the retailer's gains from trade, and so
+attributes more of the observed wholesale discount to retailer power. The magnitude is
+small enough that the shortcut is defensible in a first pass and indefensible in a
+published estimate.
+
+**Assumption 4 breaks.** Moving the supplier's rent from a per-unit margin into a fixed
+fee leaves the *total* transfer and the split of surplus untouched, but drives the
+observed per-unit price toward marginal cost. The linear-wholesale-price estimator reads
+that as retailer power and nothing else: at $\phi = 0.95$ it returns
+$\hat\lambda = 0.973$ against a truth of 0.5, a bias of 0.473 on a $[0,1]$ parameter, and
+in the limit $\phi \to 1$ it returns $\hat\lambda \to 1$ for *every* true split. This is
+not a precision problem that more data fixes—it is a failure of identification, and it is
+why credible applications either observe contract terms directly or argue explicitly that
+linear pricing describes the institution.
+
+**What the simulation demonstrates:** the bargaining weight is the parameter that decides
+whether a channel behaves like a Stackelberg manufacturer or a vertically integrated
+firm; imposing the former when the truth lies between them understates supplier marginal
+costs by up to 114%—far enough to drive the recovered cost below zero—and gets the sign
+of a cost-shock counterfactual wrong; a private
+label raises retailer profit both directly and by cheapening the national brands the
+retailer still stocks; and the whole apparatus rests on linear pricing, which is the one
+assumption whose failure destroys identification rather than merely degrading precision.
+
+### Replication and Practical Guidance {#sec-io-nn-practice}
+
+**Replication.** @ellickson2026private's estimates cannot be reproduced here. The paper
+combines retailer scanner data with proprietary information on the *identity* of
+private-label manufacturers—the feature that lets it measure disagreement payoffs
+directly—and neither input is public. The simulation above reproduces the paper's
+qualitative decomposition and comparative statics on synthetic data; the magnitudes are
+not comparable to its published tables and should not be read as such.
+@draganska2010larger use commercially available German coffee scanner data and report
+bargaining weights that vary substantially across manufacturer–retailer pairs, which is
+the closest public-data analogue.
+
+**Estimation in practice.** The pipeline is nested three deep: a retail-equilibrium
+solve (@eq-nn-retail-foc) inside a bargaining fixed point (@eq-nn-foc) inside the GMM
+objective that also estimates demand. Cost grows with the number of *negotiations*
+rather than products, because every $G^R_j$ requires an additional retail solve with
+product $j$ deleted—so a category with 40 SKUs from 12 suppliers needs 13 equilibrium
+solves per bargaining iteration, not 41. Estimate demand first and hold it fixed;
+there is no R package for the supply side, so the bargaining solver is written by hand
+(the ~60 lines above are the whole method), while demand estimation goes through
+`PyBLP` in Python or a hand-rolled GMM routine in R.
+
+**Identification.** $\lambda_j$ and $c_j$ are not separately identified from a single
+cross-section of wholesale prices: @eq-nn-markup is one equation in two unknowns per
+product. Applications break the tie with variation that shifts *disagreement payoffs*
+while holding costs fixed—@ellickson2026private uses a patent expiry that coincided with
+private-label entry, @grennan2013price uses staggered adoption of a competing medical
+device, @crawford2012welfare uses channel carriage disputes. Cost-shifting instruments,
+the workhorse of @sec-io-berry, are the wrong instrument here: they identify demand, not
+conduct.
+
+**Pitfalls.**
+
+1. **Using $\partial q_j/\partial p_j$ where @eq-nn-gamma calls for $\Gamma_j$.** The
+   correct object composes the demand slope with retail pass-through and is
+   substantially smaller in magnitude; substituting the raw slope inflates the implied
+   supplier markup.
+2. **Fixed fees and slotting allowances.** See @sec-io-nn-failure. If the institution
+   uses two-part tariffs, the per-unit price is close to marginal cost by construction
+   and carries almost no information about the split.
+3. **Treating a private label as just another product.** Its effect on the shelf runs
+   through the *threat point*, not only through substitution. A demand-side model that
+   adds a product and holds $\mathbf{w}$ fixed recovers 86% of the retailer's gain in
+   @tbl-nn-privatelabel and misses the rest entirely.
+4. **Reading $\lambda_j$ as a preference or a personality.** It is a reduced-form summary
+   of an unmodelled negotiation protocol. @collardwexler2019nash show it maps to the
+   probability of making the offer in an alternating-offers game, which means it can
+   shift with the institutional environment and should not be held fixed across a
+   counterfactual that changes that environment.
+
 ## Structural Applications in Marketing {#sec-io-applications}
 
 The discrete-choice and dynamic-pricing apparatus underwrites a body of empirical

@@ -431,6 +431,166 @@ between a toy instance and a real one is exactly what @akchen2026logit close—t
 provably hard design problem into one a solver can certify—and it is the reason the
 humble logit of @eq-sm-logit reaches past demand estimation into optimal product design.
 
+### Permutation Invariance and Deep Demand Estimation {#sec-sm-perminv}
+
+Every model so far has bought tractability with a functional-form commitment, and the
+commitment shows up as a *substitution pattern*. The logit's IIA is the crudest case;
+nested logit fixes the nests in advance; random coefficients let the data choose how
+much correlation to allow, but only within the family the analyst wrote down. The
+substitution matrix, which is the object every counterfactual in this chapter runs
+through, is therefore an assumption at least as much as a finding.
+
+The alternative is to estimate the **choice function** itself. Let $\mathbf{z}_j$
+collect product $j$'s characteristics (attributes, price, and unobserved quality), and
+write market shares as
+$$
+s_j = \sigma_j(\mathbf{z}_1, \dots, \mathbf{z}_J),
+$$ {#eq-sm-choicefun}
+with no parametric restriction on $\sigma$. Estimating $\sigma$ nonparametrically is
+hopeless as stated: its argument is the entire market, so the dimension grows with $J$
+and the curse of dimensionality bites immediately. @singh2026permutation supply the
+restriction that rescues it, and it is an economic restriction rather than a
+computational trick. A choice function should not depend on the *labels* we assign
+alternatives: relabeling the products permutes the shares correspondingly and changes
+nothing else, so for any permutation $\pi$,
+$$
+\sigma_{\pi(j)}\!\left(\mathbf{z}_{\pi(1)},\dots,\mathbf{z}_{\pi(J)}\right)
+  = \sigma_j(\mathbf{z}_1,\dots,\mathbf{z}_J).
+$$ {#eq-sm-perm}
+This **permutation invariance** is not an approximation—it is a property every choice
+model in this chapter already satisfies—and it has a strong consequence. Any such
+function can be written in the sum-decomposable form
+$$
+s_j = f\!\Big(\mathbf{z}_j,\ \textstyle\sum_{k=1}^{J} g(\mathbf{z}_k)\Big),
+$$ {#eq-sm-deepsets}
+in which rivals influence $j$ only through a *pooled summary* $\sum_k g(\mathbf{z}_k)$
+that discards their order. The logit is the special case $g(\mathbf{z}) = \exp(v(\mathbf{z}))$
+with $f(\mathbf{z}, m) = \exp(v(\mathbf{z}))/(1+m)$: @eq-sm-logit is @eq-sm-deepsets with
+particular $f$ and $g$ chosen a priori. The estimation strategy follows immediately—
+parameterize $f$ and $g$ as neural networks and learn them. The curse of dimensionality
+is broken because $g$ maps *one* product's characteristics, not the whole market, so the
+input dimension no longer grows with $J$.
+
+Two features make this a demand estimator rather than a demand predictor, which is the
+distinction @sec-cdem-week13 puts on trial. First, the framework extends to **endogenous
+features**: price still correlates with unobserved quality, and a flexible functional
+form does nothing to fix that, so instruments enter as they do in @eq-sm-berry-inversion.
+Second, the authors supply a formal **inference** procedure, so the deliverable is a
+confidence interval on an elasticity rather than an out-of-sample fit statistic. Applied
+to the automobile data of @berry1995, the estimator returns own- and cross-price
+elasticities in line with what the structural literature reports—a validation that
+matters precisely because a flexible model *could* have fit shares well while implying
+nonsense elasticities.
+
+The chunk below makes the restriction earn its keep on a market where IIA is false by
+construction: two consumer segments with opposite brand tastes, so substitution within a
+segment is far stronger than across. It compares the true cross-price elasticities with
+three estimators—a logit, a flexible specification whose rivals enter through pooled
+sums as in @eq-sm-deepsets, and an equally flexible specification whose rivals enter by
+their *position in the data file*.
+
+```{r sm-perminv, message=FALSE, warning=FALSE}
+set.seed(2029)
+Tm <- 600; J <- 4                       # markets; inside goods per market
+grpv <- c("A", "A", "B", "B")           # each product's segment: the source of non-IIA substitution
+X  <- matrix(rnorm(Tm * J), Tm, J)      # observed quality
+P  <- matrix(runif(Tm * J, 1, 3), Tm, J)
+Ai <- matrix(grpv == "A", Tm, J, byrow = TRUE)
+
+# TRUTH: two consumer types with opposite segment tastes, so a price rise on a
+# same-segment rival diverts far more demand than one on a cross-segment rival.
+true_shares <- function(Pm, Xm = X, Am = Ai) {
+  s <- function(V) { E <- exp(V); E / (1 + rowSums(E)) }   # outside good normalized
+  0.5 * s(Xm - 1.5 * Pm + 2 * Am) + 0.5 * s(Xm - 1.5 * Pm + 2 * (!Am))
+}
+
+# d ln s_j / d ln p_k for every (market, j, k), by numerical perturbation
+elast <- function(fn, Pm, dl = 1e-4) {
+  base <- log(fn(Pm)); out <- array(0, c(nrow(Pm), J, J))
+  for (k in 1:J) { P2 <- Pm; P2[, k] <- Pm[, k] * (1 + dl)
+                   out[, , k] <- (log(fn(P2)) - base) / dl }
+  out
+}
+# average cross-elasticity, split by whether the rival is in the same segment
+cross <- function(E, gv) {
+  s <- d <- numeric(0)
+  for (j in 1:J) for (k in 1:J) if (j != k)
+    if (gv[j] == gv[k]) s <- c(s, mean(E[, j, k])) else d <- c(d, mean(E[, j, k]))
+  c(same = mean(s), diff = mean(d))
+}
+
+fit_all <- function(cols) {                 # cols = an arbitrary labeling of the products
+  Xm <- X[, cols]; Pm <- P[, cols]; Am <- Ai[, cols]; gv <- grpv[cols]
+  S  <- true_shares(Pm, Xm, Am); y <- as.vector(log(S) - log(1 - rowSums(S)))
+
+  # (1) LOGIT: rivals enter only through the market's own normalization -> IIA
+  fitL <- lm(y ~ xo + po, data.frame(xo = as.vector(Xm), po = as.vector(Pm)))
+  sh_logit <- function(Q) {
+    D <- matrix(cbind(1, as.vector(Xm), as.vector(Q)) %*% coef(fitL), nrow(Q), J)
+    E <- exp(D); E / (1 + rowSums(E)) }
+
+  # (2) PERMUTATION-INVARIANT: rivals enter through pooled sums, as in eq-sm-deepsets
+  sym <- function(Q) data.frame(
+    xo = as.vector(Xm), po = as.vector(Q), ga = as.vector(Am) * 1,
+    rpa = as.vector(matrix(rowSums(Q  * Am),  nrow(Q), J) - Q  * Am),
+    rpb = as.vector(matrix(rowSums(Q  * !Am), nrow(Q), J) - Q  * !Am),
+    rxa = as.vector(matrix(rowSums(Xm * Am),  nrow(Q), J) - Xm * Am),
+    rxb = as.vector(matrix(rowSums(Xm * !Am), nrow(Q), J) - Xm * !Am))
+  fitS <- lm(y ~ (xo + po + rpa + rpb + rxa + rxb) * ga, sym(Pm))
+  sh_sym <- function(Q) { D <- matrix(predict(fitS, sym(Q)), nrow(Q), J)
+                          E <- exp(D); E / (1 + rowSums(E)) }
+
+  # (3) ORDER-DEPENDENT: equally flexible, but rivals enter by storage position
+  cyc <- function(M, r) M[, ((seq_len(J) + r - 1) %% J) + 1, drop = FALSE]
+  ord <- function(Q) data.frame(
+    xo = as.vector(Xm), po = as.vector(Q), ga = as.vector(Am) * 1,
+    rp1 = as.vector(cyc(Q, 1)),  rp2 = as.vector(cyc(Q, 2)),  rp3 = as.vector(cyc(Q, 3)),
+    rx1 = as.vector(cyc(Xm, 1)), rx2 = as.vector(cyc(Xm, 2)), rx3 = as.vector(cyc(Xm, 3)))
+  fitO <- lm(y ~ (xo + po + rp1 + rp2 + rp3 + rx1 + rx2 + rx3) * ga, ord(Pm))
+  sh_ord <- function(Q) { D <- matrix(predict(fitO, ord(Q)), nrow(Q), J)
+                          E <- exp(D); E / (1 + rowSums(E)) }
+
+  rbind(truth     = cross(elast(function(Q) true_shares(Q, Xm, Am), Pm), gv),
+        logit     = cross(elast(sh_logit, Pm), gv),
+        invariant = cross(elast(sh_sym,   Pm), gv),
+        ordered   = cross(elast(sh_ord,   Pm), gv))
+}
+
+a <- fit_all(1:J)                    # one labeling of the products
+b <- fit_all(c(2, 4, 1, 3))          # the SAME data, products relabeled
+
+out <- cbind(a, b); colnames(out) <- c("same-seg", "diff-seg",
+                                       "same-seg (relabeled)", "diff-seg (relabeled)")
+print(round(out, 3))
+cat(sprintf("\nIIA gap (same - diff):  truth %.3f | logit %.3f | invariant %.3f\n",
+            a["truth", "same"] - a["truth", "diff"],
+            a["logit", "same"] - a["logit", "diff"],
+            a["invariant", "same"] - a["invariant", "diff"]))
+cat(sprintf("Largest shift under relabeling: invariant %.4f | ordered %.4f\n",
+            max(abs(a["invariant", ] - b["invariant", ])),
+            max(abs(a["ordered", ]   - b["ordered", ]))))
+```
+
+Three results, in order of importance. The logit reports the *same* cross-elasticity for
+every rival—the IIA straitjacket, visible as an exactly zero gap between same-segment and
+cross-segment substitution where the truth has a large one. The permutation-invariant
+specification, using nothing but pooled sums of rivals' characteristics, recovers the
+asymmetry: same-segment rivals divert several times the demand that cross-segment rivals
+do, as they should. And the order-dependent specification—identical in flexibility,
+differing only in that rivals enter by position rather than through a symmetric
+summary—gives one answer under the original labeling and a *different* answer after the
+products are relabeled, while the invariant estimator's numbers do not move at all.
+
+That last comparison is the whole argument for @eq-sm-perm. The order-dependent model is
+not merely less accurate; it is answering a question that has no economic content,
+because the ordering of rows in a data file is a bookkeeping convention and no
+counterfactual may depend on it. Under the second labeling it happens to land on the
+right answer, for the worst possible reason: that labeling accidentally aligns rival
+position with segment membership. Imposing invariance is what converts a flexible
+function approximator into an estimator of demand—the same lesson as the exclusion
+restriction in @eq-sm-berry-inversion, one level up. Structure is not the price you pay
+for tractability; it is what makes the output mean something.
+
 ## Dynamics, Learning, and Forward-Looking Agents {#sec-sm-dynamic}
 
 Many marketing decisions are intertemporal—when to buy a durable, whether a

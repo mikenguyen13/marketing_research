@@ -482,6 +482,154 @@ opaque than a hand-built one, which raises rather than lowers the validation bur
 convenience of zero-shot measurement is real, but it does not exempt the measure from
 the requirement that it actually measure what it claims to.
 
+### Fusion for Price Setting in a Novice Market {#sec-mmf-artpricing}
+
+The applications surveyed above all predict an outcome the firm observes. A harder and
+more useful case is one where the quantity of interest is a *decision the seller has to
+make*, and where the seller has none of the apparatus that normally makes the decision
+tractable. @sikdar2026artwork study exactly that: the pricing of artwork by **novice
+artists** on Etsy—sellers who operate as microenterprises, who have no auction history,
+no gallery representation, and no critical reputation to anchor a price, and for whom the
+available online tools offer little beyond cost-plus arithmetic. The artwork is, in the
+authors' framing, neither a Picasso nor a Leonardo da Vinci; the hedonic scaffolding
+built for the mature art market has nothing to attach to.
+
+What makes the setting a natural fusion problem is that the listing itself carries the
+missing information across three modalities at once. There are **structured** attributes
+(dimensions, medium, shipping and return terms, whether personalization is offered), a
+set of **images** of the work, and a **textual** description written by the artist. None
+of these is sufficient. The structured fields omit what the work looks like; the image
+omits the terms of sale; the text omits both but carries the artist's claims about
+provenance and process. @tbl-mmf-artstudies lays out how the paper's three studies
+decompose the problem.
+
+| Stage | Model | What it establishes |
+|---|---|---|
+| Structured baseline | Hedonic regression on listing attributes | Which observable terms of sale move price, and how much of price a conventional hedonic specification can explain at all |
+| Multimodal fusion | Deep model fusing structured, visual, and textual features | Whether the image and the description carry price-relevant signal *beyond* the structured fields |
+| Time to sale | Cox proportional hazards | Whether a price is merely predicted or actually *clears*—separating what a work lists for from how long it sits |
+
+: The three-stage architecture of the novice-artwork pricing study {#tbl-mmf-artstudies}
+
+The substantive result cuts against the intuition that an unknown market is priced on
+craft alone. The strongest price predictors group into **artist authenticity** (a
+certificate of authenticity, most visibly), **customer service** (shipping terms,
+returns, whether the piece can be personalized), and **art style** (genre). The first of
+these is the signal that organizes the mature art market, reappearing in a market of
+newcomers; the second has no counterpart in the mature market at all. Novice art
+platforms, in other words, are not miniature Sotheby's. They inherit the
+authenticity-and-reputation logic of the established market while overlaying the
+service-and-fulfillment logic of ordinary e-commerce, and a model that captures only one
+of those two logics misprices systematically.
+
+The third stage is what turns the exercise from prediction into pricing advice, and it is
+the part most often skipped. A model that predicts *selling price* answers only half the
+seller's question, because any price can be made to look right if the work is allowed to
+sit indefinitely. Estimating **time to sale** alongside it closes the loop: higher artist
+reputation is associated with faster sales, while discounting is associated with *longer*
+time on the market—a correlation that should give pause to anyone whose instinct in a
+slow market is to cut price. The authors build the two predictions into a **price
+recommender** that returns an expected price and an expected time to sell together,
+which is the form the advice has to take to be actionable.
+
+Two connections are worth drawing. First, the caution about **endogeneity of the
+artifact** stated just above applies here with unusual clarity: the artist chooses the
+photograph, writes the description, and sets the return policy jointly with the price,
+so the fused features and the price are co-determined by the same unobserved seller
+sophistication. The paper's language is consistently associational, and that restraint is
+the correct reading of what a fusion model on observational listing data can support.
+Second, this is the pricing-side counterpart to the creativity measurement of
+@sec-innovation-creativity-embeddings: @sozuer2026recipe read fit and novelty out of an
+ingredient embedding to explain why some recipes succeed, @sikdar2026artwork read price
+and time-to-sale out of a fused listing representation to tell a novice what to charge,
+and both end by turning the learned representation into a **tool that hands the creator a
+concrete next action** rather than a coefficient. That is a recognizable frontier pattern:
+representation learning used less to test a hypothesis than to instrument a decision that
+the creator was previously making blind.
+
+#### A Stylized Fusion-versus-Hedonic Demonstration {#sec-mmf-art-demo}
+
+The following is a stylized construction in the spirit of the paper's first two stages,
+not a replication of its estimates: we do not have the Etsy listings, and the point is to
+show the *shape* of the comparison. Structured attributes and two blocks of encoder-like
+features (standing in for an image embedding and a description embedding) jointly
+generate a log price. We then ask what a hedonic regression on the structured fields
+alone recovers, and what is added by admitting the two learned blocks.
+
+```{r mmf-art-setup, message=FALSE, warning=FALSE}
+set.seed(581)
+suppressMessages(library(glmnet))
+
+n <- 1200                   # listings
+
+# Structured listing attributes, as an Etsy-style form would collect them.
+area        <- rlnorm(n, meanlog = 5.6, sdlog = 0.5)   # square inches
+certificate <- rbinom(n, 1, 0.35)                      # certificate of authenticity
+free_ship   <- rbinom(n, 1, 0.45)
+returns_ok  <- rbinom(n, 1, 0.40)
+personalize <- rbinom(n, 1, 0.25)
+genre       <- factor(sample(c("abstract", "landscape", "portrait", "still_life"),
+                             n, replace = TRUE))
+
+# Two encoder-like blocks. Within each block features are correlated (as real
+# embeddings are); only a few directions actually carry price signal.
+make_block <- function(d, loading) {
+  z <- rnorm(n)
+  L <- rnorm(d, sd = loading)
+  outer(z, L) + matrix(rnorm(n * d), n, d)
+}
+X_img <- make_block(12, loading = 0.9)   # stands in for a vision-encoder embedding
+X_txt <- make_block(16, loading = 0.9)   # stands in for a description embedding
+colnames(X_img) <- paste0("img", seq_len(ncol(X_img)))
+colnames(X_txt) <- paste0("txt", seq_len(ncol(X_txt)))
+
+# Log price depends on structured terms AND on a few embedding directions:
+# the visual character of the work and the framing of its description.
+log_price <- 3.0 +
+  0.45 * log(area) +
+  0.30 * certificate +          # authenticity commands a premium
+  0.12 * free_ship +
+  0.10 * returns_ok +
+  0.18 * personalize +          # customer-service features, as in the paper
+  0.20 * (genre == "portrait") +
+  0.35 * X_img[, 1] - 0.22 * X_img[, 4] +
+  0.28 * X_txt[, 2] + 0.19 * X_txt[, 7] +
+  rnorm(n, sd = 0.45)
+```
+
+The comparison is then a matter of holding the estimation method fixed and varying only
+what the model is allowed to see. Both models are cross-validated lasso; only the design
+matrix differs.
+
+```{r mmf-art-compare}
+train <- sample(n, size = floor(0.7 * n))
+test  <- setdiff(seq_len(n), train)
+
+X_str <- model.matrix(~ log(area) + certificate + free_ship +
+                        returns_ok + personalize + genre)[, -1]
+X_fused <- cbind(X_str, X_img, X_txt)   # structured + both encoder blocks
+
+fit_eval <- function(X) {
+  cv  <- cv.glmnet(X[train, ], log_price[train], alpha = 1)
+  pr  <- as.numeric(predict(cv, newx = X[test, ], s = "lambda.min"))
+  c(RMSE = sqrt(mean((log_price[test] - pr)^2)),
+    R2   = 1 - sum((log_price[test] - pr)^2) /
+               sum((log_price[test] - mean(log_price[train]))^2))
+}
+
+round(rbind(`Hedonic (structured only)`        = fit_eval(X_str),
+            `Fused (structured + image + text)` = fit_eval(X_fused)), 3)
+```
+
+The fused model wins here by construction—we built the image and text signal into the
+price—and that is precisely the point to be careful about. The demonstration shows what
+the comparison *looks like* when fusion genuinely helps; it cannot establish that it
+helps in any real listing market. What licenses that claim in the paper is the same
+comparison run on actual Etsy data, where the structured fields are whatever Etsy chose
+to collect and the embeddings are whatever the encoders happen to encode. The
+generated-regressor and construct-validity cautions of the preceding subsection are the
+standing conditions on reading any such gain.
+
 ## Industry and Production Practice {#sec-mmf-production}
 
 Operationalizing multimodal fusion at scale is as much an engineering problem as a
@@ -529,8 +677,12 @@ and Hugging Face models for text, torchvision/`timm` backbones for images (the R
 reference code accompanies @he2016resnet), and open multimodal models—plus a vector store
 for retrieval. Survey and taxonomy: @baltrusaitis2019multimodal. The empirical marketing
 fusion studies cited here (@yang2024engagement, @wen2026livestream, @xu2024multimodal,
-@xu2024memf, @dzyabura2023images) rely on proprietary platform or firm data and rarely ship
-public packages; verify any code/data link on the article page rather than assuming one.
+@xu2024memf, @dzyabura2023images, @sikdar2026artwork) rely on proprietary, platform, or
+scraped listing data and rarely ship public packages; verify any code/data link on the
+article page rather than assuming one. The artwork-pricing demonstration in
+@sec-mmf-art-demo is stylized simulation, not a replication of published estimates. For a
+public artifact from the companion creativity study, @sozuer2026recipe ship their
+generative recipe tool at <http://recipecreativity.com/>.
 :::
 
 ## The Representation Throughline {#sec-mmf-throughline}
