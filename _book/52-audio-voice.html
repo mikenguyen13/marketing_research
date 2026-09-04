@@ -1133,6 +1133,7 @@ Replication resources: voice analytics
 <p>The acoustic-prosodic channel carries information that the words do not. The same sentence, “that’s just great,” can be sincere or sarcastic (<a href="07-sarcasm.html" class="quarto-xref"><span>Chapter 46</span></a>), and the difference lives almost entirely in pitch, timing, and voice quality rather than in the lexical content. <em>Prosody</em>, the melody and rhythm of speech, comprises the <span class="math inline">\(f_0\)</span> contour, the loudness contour, speaking rate and pausing, and voice quality. These are the features the demonstration above extracted, and they are the substrate of vocal emotion.</p>
 <p>The scientific anchor is Scherer (2003, <em>Speech Communication</em>, doi:10.1016/S0167-6393(02)00084-5), whose review of vocal emotion communication lays out both the production side (how emotions systematically modulate acoustic parameters: anger raises and broadens pitch and energy, sadness lowers and narrows them, and so on) and the recognition side (how listeners decode those parameters). This is the theory that licenses treating acoustic features as measures of an emotional construct rather than as arbitrary numbers. On the engineering side, <em>speech emotion recognition</em> (SER) builds classifiers that map acoustic features to emotion labels. El Ayadi, Kamel, and Karray (2011, <em>Pattern Recognition</em>, doi:10.1016/j.patcog.2010.09.020) survey the classic pipeline (hand-engineered prosodic, spectral, and voice-quality features feeding a classifier) and the recurring difficulties: emotion is continuous and context-dependent, labeled datasets are small and often acted rather than spontaneous, and accuracy degrades sharply when a model trained on one corpus or language meets another. Modern SER replaces or augments the hand-engineered features with learned audio embeddings of the wav2vec family, but the validity problems the survey names (label quality, acted-versus-spontaneous mismatch, cross-corpus generalization) are exactly the construct-validity concerns (<a href="02-construct-vs-variable.html" class="quarto-xref"><span>Chapter 3</span></a>) that this book insists on, and they do not disappear when the feature extractor becomes a neural network.</p>
 <p>Prosody also carries persuasion, not only emotion. Zoghaib (2019, <em>Recherche et Applications en Marketing</em>, doi:10.1177/2051570719828687) manipulates a speaker’s voice along acoustic dimensions and finds that lower-pitched, smoother (less rough), and duller (less bright) voices are the more persuasive, with effects that interact with speaker gender. This is a direct demonstration that the very features the demonstration computed, <span class="math inline">\(f_0\)</span> level and spectral centroid and voice-quality roughness, are not bookkeeping quantities but marketing-relevant levers that shape consumer response to the same words. The managerial reading is that a brand choosing a spokesperson, a voice actor for an ad, or a timbre for a synthesized assistant is choosing a persuasion parameter, and that choice can now be measured acoustically rather than left to intuition.</p>
+<p>Prosody is also <em>dynamic</em>, and treating it as a fixed speaker trait discards most of what it carries. <span class="citation" data-cites="balducci2026leads">Balducci, Marinova, and Singh (<a href="#ref-balducci2026leads" role="doc-biblioref">2026</a>)</span> analyze 783 B2B prospecting calls (11,566 speaking turns) with vocal intensity, speech rate, and pitch entered as <strong>paralinguistic acts</strong> alongside what the salesperson said, mediated by a turn-level measure of the lead’s receptivity. The interactions with position in the call are the point: speaking faster is roughly neutral early in a conversation and reduces receptivity by 8.26% later in the same one. The same acoustic feature, computed the same way, therefore has no single effect to estimate—only an effect conditional on when in the episode it occurs. For feature engineering this argues against the per-utterance summary the demonstration above produced (a mean of each coefficient across frames) as the default aggregation for conversational audio: collapsing a call to one vector is exactly the operation that averages an early gain against a late penalty. Keep the turn as the row, and let position in the conversation be a covariate rather than something integrated out.</p>
 <p>The discipline’s standing caution applies with force here. Acoustic-emotion features are generated regressors, and the model that generates them was trained on data whose emotional labels, speaker demographics, and recording conditions may differ systematically from the marketing setting of interest. A vocal-frustration score that is more accurate for some accents than others, or for studio audio than for telephone audio, injects a bias that can correlate with the outcome. The remedy is the one used throughout this part: validate the generated feature against human judgment on a held-out sample from the target domain before trusting it in a downstream model.</p>
 </section><section id="sec-audio-music" class="level2" data-number="48.5"><h2 data-number="48.5" class="anchored" data-anchor-id="sec-audio-music">
 <span class="header-section-number">48.5</span> Music and Sonic Branding</h2>
@@ -1180,6 +1181,9 @@ Figure&nbsp;48.3: A production speech-analytics pipeline. Voice-activity detecti
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-balducci2018unstructured" class="csl-entry" role="listitem">
 Balducci, Bitty, and Detelina Marinova. 2018. <span>“Unstructured Data in Marketing.”</span> <em>Journal of the Academy of Marketing Science</em> 46 (4): 557–90. <a href="https://doi.org/10.1007/s11747-018-0581-x">https://doi.org/10.1007/s11747-018-0581-x</a>.
+</div>
+<div id="ref-balducci2026leads" class="csl-entry" role="listitem">
+Balducci, Bitty, Detelina Marinova, and Jagdip Singh. 2026. <span>“Ready to Convert? How to Talk with Sales Leads.”</span> <em>Journal of Marketing Research</em>. <a href="https://doi.org/10.1177/00222437261481444">https://doi.org/10.1177/00222437261481444</a>.
 </div>
 <div id="ref-balducci2025audio" class="csl-entry" role="listitem">
 Balducci, Bitty, Bin Pang, Lingshu Hu, Can Li, Wenbo Wang, Yi Shang, Detelina Marinova, and Matt Gordon. 2025. <span>“Leveraging Audio Data: A Guide to Understanding Customer-Firm Conversations.”</span> <em>Marketing Letters</em> 37 (1). <a href="https://doi.org/10.1007/s11002-025-09797-z">https://doi.org/10.1007/s11002-025-09797-z</a>.
@@ -2180,150 +2184,164 @@ Packard, Grant, and Jonah Berger. 2021. <span>“How Concrete Language Shapes Cu
 <span id="cb9-497"><a href="#cb9-497" aria-hidden="true" tabindex="-1"></a>assistant is choosing a persuasion parameter, and that choice can now be measured</span>
 <span id="cb9-498"><a href="#cb9-498" aria-hidden="true" tabindex="-1"></a>acoustically rather than left to intuition.</span>
 <span id="cb9-499"><a href="#cb9-499" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-500"><a href="#cb9-500" aria-hidden="true" tabindex="-1"></a>The discipline's standing caution applies with force here. Acoustic-emotion</span>
-<span id="cb9-501"><a href="#cb9-501" aria-hidden="true" tabindex="-1"></a>features are generated regressors, and the model that generates them was trained on</span>
-<span id="cb9-502"><a href="#cb9-502" aria-hidden="true" tabindex="-1"></a>data whose emotional labels, speaker demographics, and recording conditions may</span>
-<span id="cb9-503"><a href="#cb9-503" aria-hidden="true" tabindex="-1"></a>differ systematically from the marketing setting of interest. A vocal-frustration</span>
-<span id="cb9-504"><a href="#cb9-504" aria-hidden="true" tabindex="-1"></a>score that is more accurate for some accents than others, or for studio audio than</span>
-<span id="cb9-505"><a href="#cb9-505" aria-hidden="true" tabindex="-1"></a>for telephone audio, injects a bias that can correlate with the outcome. The</span>
-<span id="cb9-506"><a href="#cb9-506" aria-hidden="true" tabindex="-1"></a>remedy is the one used throughout this part: validate the generated feature against</span>
-<span id="cb9-507"><a href="#cb9-507" aria-hidden="true" tabindex="-1"></a>human judgment on a held-out sample from the target domain before trusting it in a</span>
-<span id="cb9-508"><a href="#cb9-508" aria-hidden="true" tabindex="-1"></a>downstream model.</span>
-<span id="cb9-509"><a href="#cb9-509" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-510"><a href="#cb9-510" aria-hidden="true" tabindex="-1"></a><span class="fu">## Music and Sonic Branding {#sec-audio-music}</span></span>
-<span id="cb9-511"><a href="#cb9-511" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-512"><a href="#cb9-512" aria-hidden="true" tabindex="-1"></a>Music is the oldest and most developed thread in audio-as-marketing, and the</span>
-<span id="cb9-513"><a href="#cb9-513" aria-hidden="true" tabindex="-1"></a>research is unusually clear that music in advertising is not decoration but a</span>
-<span id="cb9-514"><a href="#cb9-514" aria-hidden="true" tabindex="-1"></a>processing variable. Hecker (1984, *Psychology &amp; Marketing*,</span>
-<span id="cb9-515"><a href="#cb9-515" aria-hidden="true" tabindex="-1"></a>doi:10.1002/mar.4220010303) gives the early statement of music's role in</span>
-<span id="cb9-516"><a href="#cb9-516" aria-hidden="true" tabindex="-1"></a>advertising effect. The empirical core comes from a sequence of careful studies.</span>
-<span id="cb9-517"><a href="#cb9-517" aria-hidden="true" tabindex="-1"></a>Milliman (1982, *Journal of Marketing*, doi:10.1177/002224298204600313) shows in a</span>
-<span id="cb9-518"><a href="#cb9-518" aria-hidden="true" tabindex="-1"></a>field setting that the tempo of background music changes the pace at which</span>
-<span id="cb9-519"><a href="#cb9-519" aria-hidden="true" tabindex="-1"></a>supermarket shoppers move and, with it, sales volume: slow music slows shoppers and</span>
-<span id="cb9-520"><a href="#cb9-520" aria-hidden="true" tabindex="-1"></a>raises spending. North, Hargreaves, and McKendrick (1999, *Journal of Applied</span>
-<span id="cb9-521"><a href="#cb9-521" aria-hidden="true" tabindex="-1"></a>Psychology*, doi:10.1037/0021-9010.84.2.271) demonstrate that the *style* of</span>
-<span id="cb9-522"><a href="#cb9-522" aria-hidden="true" tabindex="-1"></a>in-store music biases product choice, with French music lifting French wine sales</span>
-<span id="cb9-523"><a href="#cb9-523" aria-hidden="true" tabindex="-1"></a>and German music lifting German wine sales, an effect operating largely outside</span>
-<span id="cb9-524"><a href="#cb9-524" aria-hidden="true" tabindex="-1"></a>shoppers' awareness. For advertising specifically, Kellaris and Cox (1989,</span>
-<span id="cb9-525"><a href="#cb9-525" aria-hidden="true" tabindex="-1"></a>*Journal of Consumer Research*, doi:10.1086/209199) reassess earlier claims about</span>
-<span id="cb9-526"><a href="#cb9-526" aria-hidden="true" tabindex="-1"></a>background music and persuasion, and Kellaris, Cox, and Cox (1993, *Journal of</span>
-<span id="cb9-527"><a href="#cb9-527" aria-hidden="true" tabindex="-1"></a>Marketing*, doi:10.1177/002224299305700409) provide the contingency account that</span>
-<span id="cb9-528"><a href="#cb9-528" aria-hidden="true" tabindex="-1"></a>organizes the field: music helps message reception when its attention-gaining</span>
-<span id="cb9-529"><a href="#cb9-529" aria-hidden="true" tabindex="-1"></a>properties and its congruency with the message work together, and can hurt when</span>
-<span id="cb9-530"><a href="#cb9-530" aria-hidden="true" tabindex="-1"></a>they conflict. The lesson is that music's effect is moderated by fit, not uniformly</span>
-<span id="cb9-531"><a href="#cb9-531" aria-hidden="true" tabindex="-1"></a>positive, which is exactly why measuring musical content matters.</span>
-<span id="cb9-532"><a href="#cb9-532" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-533"><a href="#cb9-533" aria-hidden="true" tabindex="-1"></a>Measuring that content is the province of *music information retrieval* (MIR), which</span>
-<span id="cb9-534"><a href="#cb9-534" aria-hidden="true" tabindex="-1"></a>extracts tempo and beat, key and mode (major versus minor, a strong correlate of</span>
-<span id="cb9-535"><a href="#cb9-535" aria-hidden="true" tabindex="-1"></a>happy versus sad), timbre via the same MFCCs used for speech, and learned</span>
-<span id="cb9-536"><a href="#cb9-536" aria-hidden="true" tabindex="-1"></a>embeddings of valence and arousal. These features let a researcher characterize the</span>
-<span id="cb9-537"><a href="#cb9-537" aria-hidden="true" tabindex="-1"></a>music in thousands of ads or podcast segments and relate it to recall, attitude,</span>
-<span id="cb9-538"><a href="#cb9-538" aria-hidden="true" tabindex="-1"></a>and sales at a scale the classic studies could not reach. The bridge from the</span>
-<span id="cb9-539"><a href="#cb9-539" aria-hidden="true" tabindex="-1"></a>classic effects literature to MIR-based measurement at scale is one of the more</span>
-<span id="cb9-540"><a href="#cb9-540" aria-hidden="true" tabindex="-1"></a>tractable open opportunities in the modality.</span>
-<span id="cb9-541"><a href="#cb9-541" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-542"><a href="#cb9-542" aria-hidden="true" tabindex="-1"></a>Sonic branding extends music's logic from the spot to the brand. Zoghaib,</span>
-<span id="cb9-543"><a href="#cb9-543" aria-hidden="true" tabindex="-1"></a>Luffarelli, and Feiereisen (2023, *Psychology &amp; Marketing*,</span>
-<span id="cb9-544"><a href="#cb9-544" aria-hidden="true" tabindex="-1"></a>doi:10.1002/mar.21875) show that structural properties of a brand's music, an</span>
-<span id="cb9-545"><a href="#cb9-545" aria-hidden="true" tabindex="-1"></a>irregular melodic contour and an unstable tonality, raise perceived brand</span>
-<span id="cb9-546"><a href="#cb9-546" aria-hidden="true" tabindex="-1"></a>innovativeness and brand evaluations, with processing difficulty as the mechanism.</span>
-<span id="cb9-547"><a href="#cb9-547" aria-hidden="true" tabindex="-1"></a>This connects sonic branding to the same aesthetic-complexity logic that governs</span>
-<span id="cb9-548"><a href="#cb9-548" aria-hidden="true" tabindex="-1"></a>visual branding in @sec-image-processing: a moderate, productive difficulty in</span>
-<span id="cb9-549"><a href="#cb9-549" aria-hidden="true" tabindex="-1"></a>processing a stimulus can enhance rather than diminish response. The sound logo, the</span>
-<span id="cb9-550"><a href="#cb9-550" aria-hidden="true" tabindex="-1"></a>brand voice, and the scoring of a brand's content are, on this evidence, designable</span>
-<span id="cb9-551"><a href="#cb9-551" aria-hidden="true" tabindex="-1"></a>assets whose acoustic properties carry measurable equity.</span>
-<span id="cb9-552"><a href="#cb9-552" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-553"><a href="#cb9-553" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#sec-audio-practice}</span></span>
-<span id="cb9-554"><a href="#cb9-554" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-555"><a href="#cb9-555" aria-hidden="true" tabindex="-1"></a>Bringing audio analysis into a working marketing organization confronts a set of</span>
-<span id="cb9-556"><a href="#cb9-556" aria-hidden="true" tabindex="-1"></a>realities the academic framing can understate.</span>
-<span id="cb9-557"><a href="#cb9-557" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-558"><a href="#cb9-558" aria-hidden="true" tabindex="-1"></a>The first is *data access and consent*. Call recordings, voice-assistant logs, and</span>
-<span id="cb9-559"><a href="#cb9-559" aria-hidden="true" tabindex="-1"></a>any audio containing identifiable voices are sensitive personal data. The human</span>
-<span id="cb9-560"><a href="#cb9-560" aria-hidden="true" tabindex="-1"></a>voice is a biometric identifier, and many jurisdictions regulate it specifically;</span>
-<span id="cb9-561"><a href="#cb9-561" aria-hidden="true" tabindex="-1"></a>two-party-consent recording laws, the need for a lawful basis to process voice</span>
-<span id="cb9-562"><a href="#cb9-562" aria-hidden="true" tabindex="-1"></a>data, and rules on automated decision-making all constrain what can be collected</span>
-<span id="cb9-563"><a href="#cb9-563" aria-hidden="true" tabindex="-1"></a>and modeled. The privacy and governance considerations of @sec-privacy are not an</span>
-<span id="cb9-564"><a href="#cb9-564" aria-hidden="true" tabindex="-1"></a>afterthought for audio but a precondition for it, and they shape the dataset before</span>
-<span id="cb9-565"><a href="#cb9-565" aria-hidden="true" tabindex="-1"></a>any feature is extracted.</span>
+<span id="cb9-500"><a href="#cb9-500" aria-hidden="true" tabindex="-1"></a>Prosody is also *dynamic*, and treating it as a fixed speaker trait discards most of</span>
+<span id="cb9-501"><a href="#cb9-501" aria-hidden="true" tabindex="-1"></a>what it carries. @balducci2026leads analyze 783 B2B prospecting calls (11,566 speaking</span>
+<span id="cb9-502"><a href="#cb9-502" aria-hidden="true" tabindex="-1"></a>turns) with vocal intensity, speech rate, and pitch entered as **paralinguistic acts**</span>
+<span id="cb9-503"><a href="#cb9-503" aria-hidden="true" tabindex="-1"></a>alongside what the salesperson said, mediated by a turn-level measure of the lead's</span>
+<span id="cb9-504"><a href="#cb9-504" aria-hidden="true" tabindex="-1"></a>receptivity. The interactions with position in the call are the point: speaking faster</span>
+<span id="cb9-505"><a href="#cb9-505" aria-hidden="true" tabindex="-1"></a>is roughly neutral early in a conversation and reduces receptivity by 8.26% later in the</span>
+<span id="cb9-506"><a href="#cb9-506" aria-hidden="true" tabindex="-1"></a>same one. The same acoustic feature, computed the same way, therefore has no single</span>
+<span id="cb9-507"><a href="#cb9-507" aria-hidden="true" tabindex="-1"></a>effect to estimate—only an effect conditional on when in the episode it occurs. For</span>
+<span id="cb9-508"><a href="#cb9-508" aria-hidden="true" tabindex="-1"></a>feature engineering this argues against the per-utterance summary the demonstration</span>
+<span id="cb9-509"><a href="#cb9-509" aria-hidden="true" tabindex="-1"></a>above produced (a mean of each coefficient across frames) as the default aggregation</span>
+<span id="cb9-510"><a href="#cb9-510" aria-hidden="true" tabindex="-1"></a>for conversational audio: collapsing a call to one vector is exactly the operation that</span>
+<span id="cb9-511"><a href="#cb9-511" aria-hidden="true" tabindex="-1"></a>averages an early gain against a late penalty. Keep the turn as the row, and let</span>
+<span id="cb9-512"><a href="#cb9-512" aria-hidden="true" tabindex="-1"></a>position in the conversation be a covariate rather than something integrated out.</span>
+<span id="cb9-513"><a href="#cb9-513" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-514"><a href="#cb9-514" aria-hidden="true" tabindex="-1"></a>The discipline's standing caution applies with force here. Acoustic-emotion</span>
+<span id="cb9-515"><a href="#cb9-515" aria-hidden="true" tabindex="-1"></a>features are generated regressors, and the model that generates them was trained on</span>
+<span id="cb9-516"><a href="#cb9-516" aria-hidden="true" tabindex="-1"></a>data whose emotional labels, speaker demographics, and recording conditions may</span>
+<span id="cb9-517"><a href="#cb9-517" aria-hidden="true" tabindex="-1"></a>differ systematically from the marketing setting of interest. A vocal-frustration</span>
+<span id="cb9-518"><a href="#cb9-518" aria-hidden="true" tabindex="-1"></a>score that is more accurate for some accents than others, or for studio audio than</span>
+<span id="cb9-519"><a href="#cb9-519" aria-hidden="true" tabindex="-1"></a>for telephone audio, injects a bias that can correlate with the outcome. The</span>
+<span id="cb9-520"><a href="#cb9-520" aria-hidden="true" tabindex="-1"></a>remedy is the one used throughout this part: validate the generated feature against</span>
+<span id="cb9-521"><a href="#cb9-521" aria-hidden="true" tabindex="-1"></a>human judgment on a held-out sample from the target domain before trusting it in a</span>
+<span id="cb9-522"><a href="#cb9-522" aria-hidden="true" tabindex="-1"></a>downstream model.</span>
+<span id="cb9-523"><a href="#cb9-523" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-524"><a href="#cb9-524" aria-hidden="true" tabindex="-1"></a><span class="fu">## Music and Sonic Branding {#sec-audio-music}</span></span>
+<span id="cb9-525"><a href="#cb9-525" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-526"><a href="#cb9-526" aria-hidden="true" tabindex="-1"></a>Music is the oldest and most developed thread in audio-as-marketing, and the</span>
+<span id="cb9-527"><a href="#cb9-527" aria-hidden="true" tabindex="-1"></a>research is unusually clear that music in advertising is not decoration but a</span>
+<span id="cb9-528"><a href="#cb9-528" aria-hidden="true" tabindex="-1"></a>processing variable. Hecker (1984, *Psychology &amp; Marketing*,</span>
+<span id="cb9-529"><a href="#cb9-529" aria-hidden="true" tabindex="-1"></a>doi:10.1002/mar.4220010303) gives the early statement of music's role in</span>
+<span id="cb9-530"><a href="#cb9-530" aria-hidden="true" tabindex="-1"></a>advertising effect. The empirical core comes from a sequence of careful studies.</span>
+<span id="cb9-531"><a href="#cb9-531" aria-hidden="true" tabindex="-1"></a>Milliman (1982, *Journal of Marketing*, doi:10.1177/002224298204600313) shows in a</span>
+<span id="cb9-532"><a href="#cb9-532" aria-hidden="true" tabindex="-1"></a>field setting that the tempo of background music changes the pace at which</span>
+<span id="cb9-533"><a href="#cb9-533" aria-hidden="true" tabindex="-1"></a>supermarket shoppers move and, with it, sales volume: slow music slows shoppers and</span>
+<span id="cb9-534"><a href="#cb9-534" aria-hidden="true" tabindex="-1"></a>raises spending. North, Hargreaves, and McKendrick (1999, *Journal of Applied</span>
+<span id="cb9-535"><a href="#cb9-535" aria-hidden="true" tabindex="-1"></a>Psychology*, doi:10.1037/0021-9010.84.2.271) demonstrate that the *style* of</span>
+<span id="cb9-536"><a href="#cb9-536" aria-hidden="true" tabindex="-1"></a>in-store music biases product choice, with French music lifting French wine sales</span>
+<span id="cb9-537"><a href="#cb9-537" aria-hidden="true" tabindex="-1"></a>and German music lifting German wine sales, an effect operating largely outside</span>
+<span id="cb9-538"><a href="#cb9-538" aria-hidden="true" tabindex="-1"></a>shoppers' awareness. For advertising specifically, Kellaris and Cox (1989,</span>
+<span id="cb9-539"><a href="#cb9-539" aria-hidden="true" tabindex="-1"></a>*Journal of Consumer Research*, doi:10.1086/209199) reassess earlier claims about</span>
+<span id="cb9-540"><a href="#cb9-540" aria-hidden="true" tabindex="-1"></a>background music and persuasion, and Kellaris, Cox, and Cox (1993, *Journal of</span>
+<span id="cb9-541"><a href="#cb9-541" aria-hidden="true" tabindex="-1"></a>Marketing*, doi:10.1177/002224299305700409) provide the contingency account that</span>
+<span id="cb9-542"><a href="#cb9-542" aria-hidden="true" tabindex="-1"></a>organizes the field: music helps message reception when its attention-gaining</span>
+<span id="cb9-543"><a href="#cb9-543" aria-hidden="true" tabindex="-1"></a>properties and its congruency with the message work together, and can hurt when</span>
+<span id="cb9-544"><a href="#cb9-544" aria-hidden="true" tabindex="-1"></a>they conflict. The lesson is that music's effect is moderated by fit, not uniformly</span>
+<span id="cb9-545"><a href="#cb9-545" aria-hidden="true" tabindex="-1"></a>positive, which is exactly why measuring musical content matters.</span>
+<span id="cb9-546"><a href="#cb9-546" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-547"><a href="#cb9-547" aria-hidden="true" tabindex="-1"></a>Measuring that content is the province of *music information retrieval* (MIR), which</span>
+<span id="cb9-548"><a href="#cb9-548" aria-hidden="true" tabindex="-1"></a>extracts tempo and beat, key and mode (major versus minor, a strong correlate of</span>
+<span id="cb9-549"><a href="#cb9-549" aria-hidden="true" tabindex="-1"></a>happy versus sad), timbre via the same MFCCs used for speech, and learned</span>
+<span id="cb9-550"><a href="#cb9-550" aria-hidden="true" tabindex="-1"></a>embeddings of valence and arousal. These features let a researcher characterize the</span>
+<span id="cb9-551"><a href="#cb9-551" aria-hidden="true" tabindex="-1"></a>music in thousands of ads or podcast segments and relate it to recall, attitude,</span>
+<span id="cb9-552"><a href="#cb9-552" aria-hidden="true" tabindex="-1"></a>and sales at a scale the classic studies could not reach. The bridge from the</span>
+<span id="cb9-553"><a href="#cb9-553" aria-hidden="true" tabindex="-1"></a>classic effects literature to MIR-based measurement at scale is one of the more</span>
+<span id="cb9-554"><a href="#cb9-554" aria-hidden="true" tabindex="-1"></a>tractable open opportunities in the modality.</span>
+<span id="cb9-555"><a href="#cb9-555" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-556"><a href="#cb9-556" aria-hidden="true" tabindex="-1"></a>Sonic branding extends music's logic from the spot to the brand. Zoghaib,</span>
+<span id="cb9-557"><a href="#cb9-557" aria-hidden="true" tabindex="-1"></a>Luffarelli, and Feiereisen (2023, *Psychology &amp; Marketing*,</span>
+<span id="cb9-558"><a href="#cb9-558" aria-hidden="true" tabindex="-1"></a>doi:10.1002/mar.21875) show that structural properties of a brand's music, an</span>
+<span id="cb9-559"><a href="#cb9-559" aria-hidden="true" tabindex="-1"></a>irregular melodic contour and an unstable tonality, raise perceived brand</span>
+<span id="cb9-560"><a href="#cb9-560" aria-hidden="true" tabindex="-1"></a>innovativeness and brand evaluations, with processing difficulty as the mechanism.</span>
+<span id="cb9-561"><a href="#cb9-561" aria-hidden="true" tabindex="-1"></a>This connects sonic branding to the same aesthetic-complexity logic that governs</span>
+<span id="cb9-562"><a href="#cb9-562" aria-hidden="true" tabindex="-1"></a>visual branding in @sec-image-processing: a moderate, productive difficulty in</span>
+<span id="cb9-563"><a href="#cb9-563" aria-hidden="true" tabindex="-1"></a>processing a stimulus can enhance rather than diminish response. The sound logo, the</span>
+<span id="cb9-564"><a href="#cb9-564" aria-hidden="true" tabindex="-1"></a>brand voice, and the scoring of a brand's content are, on this evidence, designable</span>
+<span id="cb9-565"><a href="#cb9-565" aria-hidden="true" tabindex="-1"></a>assets whose acoustic properties carry measurable equity.</span>
 <span id="cb9-566"><a href="#cb9-566" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-567"><a href="#cb9-567" aria-hidden="true" tabindex="-1"></a>The second is *audio quality and channel effects*. Telephone audio is band-limited</span>
-<span id="cb9-568"><a href="#cb9-568" aria-hidden="true" tabindex="-1"></a>to roughly 300 to 3400 Hz and compressed by lossy codecs; far-field smart-speaker</span>
-<span id="cb9-569"><a href="#cb9-569" aria-hidden="true" tabindex="-1"></a>audio carries room reverberation and background noise; podcast audio is studio-clean</span>
-<span id="cb9-570"><a href="#cb9-570" aria-hidden="true" tabindex="-1"></a>but heavily processed. These channel differences alter the very features a model</span>
-<span id="cb9-571"><a href="#cb9-571" aria-hidden="true" tabindex="-1"></a>relies on, so a pitch or emotion model trained on one channel can fail on another.</span>
-<span id="cb9-572"><a href="#cb9-572" aria-hidden="true" tabindex="-1"></a>Robust practice fixes the sampling rate and channel, applies consistent</span>
-<span id="cb9-573"><a href="#cb9-573" aria-hidden="true" tabindex="-1"></a>preprocessing (resampling, normalization, optional noise reduction), and validates</span>
-<span id="cb9-574"><a href="#cb9-574" aria-hidden="true" tabindex="-1"></a>within the channel of deployment.</span>
-<span id="cb9-575"><a href="#cb9-575" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-576"><a href="#cb9-576" aria-hidden="true" tabindex="-1"></a>The third is the *pipeline architecture* that the chapter has advocated throughout,</span>
-<span id="cb9-577"><a href="#cb9-577" aria-hidden="true" tabindex="-1"></a>now stated as engineering. A production system typically runs voice-activity</span>
-<span id="cb9-578"><a href="#cb9-578" aria-hidden="true" tabindex="-1"></a>detection to find speech, diarization to separate speakers, ASR to transcribe, and</span>
-<span id="cb9-579"><a href="#cb9-579" aria-hidden="true" tabindex="-1"></a>a parallel acoustic-feature extractor for prosody and emotion, then fuses the</span>
-<span id="cb9-580"><a href="#cb9-580" aria-hidden="true" tabindex="-1"></a>lexical and paralinguistic streams for the downstream task. Each stage is a model</span>
-<span id="cb9-581"><a href="#cb9-581" aria-hidden="true" tabindex="-1"></a>with its own error rate, and those errors compound, so monitoring and human spot-</span>
-<span id="cb9-582"><a href="#cb9-582" aria-hidden="true" tabindex="-1"></a>checking at each stage are not optional. @fig-aud-prod sets out these stages in</span>
-<span id="cb9-583"><a href="#cb9-583" aria-hidden="true" tabindex="-1"></a>sequence, each a model whose error feeds the next.</span>
-<span id="cb9-584"><a href="#cb9-584" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-587"><a href="#cb9-587" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb9-588"><a href="#cb9-588" aria-hidden="true" tabindex="-1"></a>%%| label: fig-aud-prod</span>
-<span id="cb9-589"><a href="#cb9-589" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">A production speech-analytics pipeline. Voice-activity detection and diarization precede parallel transcription and acoustic-feature extraction, whose lexical and paralinguistic streams are fused for the downstream task. Each stage is a model whose errors compound.</span><span class="ot">"</span></span>
-<span id="cb9-590"><a href="#cb9-590" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb9-591"><a href="#cb9-591" aria-hidden="true" tabindex="-1"></a>  VAD[<span class="ot">"</span><span class="st">Voice-activity&lt;br/&gt;detection</span><span class="ot">"</span>] --&gt; DIA[<span class="ot">"</span><span class="st">Speaker&lt;br/&gt;diarization</span><span class="ot">"</span>]</span>
-<span id="cb9-592"><a href="#cb9-592" aria-hidden="true" tabindex="-1"></a>  DIA --&gt; ASR[<span class="ot">"</span><span class="st">ASR&lt;br/&gt;(transcribe)</span><span class="ot">"</span>]</span>
-<span id="cb9-593"><a href="#cb9-593" aria-hidden="true" tabindex="-1"></a>  DIA --&gt; AFE[<span class="ot">"</span><span class="st">Acoustic-feature&lt;br/&gt;extractor (prosody, emotion)</span><span class="ot">"</span>]</span>
-<span id="cb9-594"><a href="#cb9-594" aria-hidden="true" tabindex="-1"></a>  ASR --&gt; LEX[<span class="ot">"</span><span class="st">Lexical stream</span><span class="ot">"</span>]</span>
-<span id="cb9-595"><a href="#cb9-595" aria-hidden="true" tabindex="-1"></a>  AFE --&gt; PAR[<span class="ot">"</span><span class="st">Paralinguistic stream</span><span class="ot">"</span>]</span>
-<span id="cb9-596"><a href="#cb9-596" aria-hidden="true" tabindex="-1"></a>  LEX --&gt; FUS[<span class="ot">"</span><span class="st">Fusion</span><span class="ot">"</span>]</span>
-<span id="cb9-597"><a href="#cb9-597" aria-hidden="true" tabindex="-1"></a>  PAR --&gt; FUS</span>
-<span id="cb9-598"><a href="#cb9-598" aria-hidden="true" tabindex="-1"></a>  FUS --&gt; DWN[<span class="ot">"</span><span class="st">Downstream task</span><span class="ot">"</span>]</span>
-<span id="cb9-599"><a href="#cb9-599" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-600"><a href="#cb9-600" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-601"><a href="#cb9-601" aria-hidden="true" tabindex="-1"></a>The fourth is *build-versus-buy*. A mature ecosystem of commercial speech-to-text,</span>
-<span id="cb9-602"><a href="#cb9-602" aria-hidden="true" tabindex="-1"></a>diarization, and emotion APIs (from the major cloud providers and specialized</span>
-<span id="cb9-603"><a href="#cb9-603" aria-hidden="true" tabindex="-1"></a>vendors) makes it unnecessary to train ASR from scratch, while open-source models</span>
-<span id="cb9-604"><a href="#cb9-604" aria-hidden="true" tabindex="-1"></a>(Whisper, wav2vec 2.0) and toolkits (<span class="in">`librosa`</span> and <span class="in">`pyAudioAnalysis`</span> in Python,</span>
-<span id="cb9-605"><a href="#cb9-605" aria-hidden="true" tabindex="-1"></a><span class="in">`openSMILE`</span> for standardized acoustic feature sets, and <span class="in">`tuneR`</span> and <span class="in">`seewave`</span> in R</span>
-<span id="cb9-606"><a href="#cb9-606" aria-hidden="true" tabindex="-1"></a>for the signal-processing primitives demonstrated above) make a transparent,</span>
-<span id="cb9-607"><a href="#cb9-607" aria-hidden="true" tabindex="-1"></a>auditable in-house pipeline feasible. The choice turns on data sensitivity (a</span>
-<span id="cb9-608"><a href="#cb9-608" aria-hidden="true" tabindex="-1"></a>regulated voice corpus may not leave the premises), the need for auditability in a</span>
-<span id="cb9-609"><a href="#cb9-609" aria-hidden="true" tabindex="-1"></a>research setting, and cost at scale. For the construct-validity reasons this book</span>
-<span id="cb9-610"><a href="#cb9-610" aria-hidden="true" tabindex="-1"></a>stresses, a research pipeline benefits from the transparency of open tooling even</span>
-<span id="cb9-611"><a href="#cb9-611" aria-hidden="true" tabindex="-1"></a>when a commercial API would be more accurate out of the box.</span>
-<span id="cb9-612"><a href="#cb9-612" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-613"><a href="#cb9-613" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#sec-audio-frontier}</span></span>
+<span id="cb9-567"><a href="#cb9-567" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#sec-audio-practice}</span></span>
+<span id="cb9-568"><a href="#cb9-568" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-569"><a href="#cb9-569" aria-hidden="true" tabindex="-1"></a>Bringing audio analysis into a working marketing organization confronts a set of</span>
+<span id="cb9-570"><a href="#cb9-570" aria-hidden="true" tabindex="-1"></a>realities the academic framing can understate.</span>
+<span id="cb9-571"><a href="#cb9-571" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-572"><a href="#cb9-572" aria-hidden="true" tabindex="-1"></a>The first is *data access and consent*. Call recordings, voice-assistant logs, and</span>
+<span id="cb9-573"><a href="#cb9-573" aria-hidden="true" tabindex="-1"></a>any audio containing identifiable voices are sensitive personal data. The human</span>
+<span id="cb9-574"><a href="#cb9-574" aria-hidden="true" tabindex="-1"></a>voice is a biometric identifier, and many jurisdictions regulate it specifically;</span>
+<span id="cb9-575"><a href="#cb9-575" aria-hidden="true" tabindex="-1"></a>two-party-consent recording laws, the need for a lawful basis to process voice</span>
+<span id="cb9-576"><a href="#cb9-576" aria-hidden="true" tabindex="-1"></a>data, and rules on automated decision-making all constrain what can be collected</span>
+<span id="cb9-577"><a href="#cb9-577" aria-hidden="true" tabindex="-1"></a>and modeled. The privacy and governance considerations of @sec-privacy are not an</span>
+<span id="cb9-578"><a href="#cb9-578" aria-hidden="true" tabindex="-1"></a>afterthought for audio but a precondition for it, and they shape the dataset before</span>
+<span id="cb9-579"><a href="#cb9-579" aria-hidden="true" tabindex="-1"></a>any feature is extracted.</span>
+<span id="cb9-580"><a href="#cb9-580" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-581"><a href="#cb9-581" aria-hidden="true" tabindex="-1"></a>The second is *audio quality and channel effects*. Telephone audio is band-limited</span>
+<span id="cb9-582"><a href="#cb9-582" aria-hidden="true" tabindex="-1"></a>to roughly 300 to 3400 Hz and compressed by lossy codecs; far-field smart-speaker</span>
+<span id="cb9-583"><a href="#cb9-583" aria-hidden="true" tabindex="-1"></a>audio carries room reverberation and background noise; podcast audio is studio-clean</span>
+<span id="cb9-584"><a href="#cb9-584" aria-hidden="true" tabindex="-1"></a>but heavily processed. These channel differences alter the very features a model</span>
+<span id="cb9-585"><a href="#cb9-585" aria-hidden="true" tabindex="-1"></a>relies on, so a pitch or emotion model trained on one channel can fail on another.</span>
+<span id="cb9-586"><a href="#cb9-586" aria-hidden="true" tabindex="-1"></a>Robust practice fixes the sampling rate and channel, applies consistent</span>
+<span id="cb9-587"><a href="#cb9-587" aria-hidden="true" tabindex="-1"></a>preprocessing (resampling, normalization, optional noise reduction), and validates</span>
+<span id="cb9-588"><a href="#cb9-588" aria-hidden="true" tabindex="-1"></a>within the channel of deployment.</span>
+<span id="cb9-589"><a href="#cb9-589" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-590"><a href="#cb9-590" aria-hidden="true" tabindex="-1"></a>The third is the *pipeline architecture* that the chapter has advocated throughout,</span>
+<span id="cb9-591"><a href="#cb9-591" aria-hidden="true" tabindex="-1"></a>now stated as engineering. A production system typically runs voice-activity</span>
+<span id="cb9-592"><a href="#cb9-592" aria-hidden="true" tabindex="-1"></a>detection to find speech, diarization to separate speakers, ASR to transcribe, and</span>
+<span id="cb9-593"><a href="#cb9-593" aria-hidden="true" tabindex="-1"></a>a parallel acoustic-feature extractor for prosody and emotion, then fuses the</span>
+<span id="cb9-594"><a href="#cb9-594" aria-hidden="true" tabindex="-1"></a>lexical and paralinguistic streams for the downstream task. Each stage is a model</span>
+<span id="cb9-595"><a href="#cb9-595" aria-hidden="true" tabindex="-1"></a>with its own error rate, and those errors compound, so monitoring and human spot-</span>
+<span id="cb9-596"><a href="#cb9-596" aria-hidden="true" tabindex="-1"></a>checking at each stage are not optional. @fig-aud-prod sets out these stages in</span>
+<span id="cb9-597"><a href="#cb9-597" aria-hidden="true" tabindex="-1"></a>sequence, each a model whose error feeds the next.</span>
+<span id="cb9-598"><a href="#cb9-598" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-601"><a href="#cb9-601" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb9-602"><a href="#cb9-602" aria-hidden="true" tabindex="-1"></a>%%| label: fig-aud-prod</span>
+<span id="cb9-603"><a href="#cb9-603" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">A production speech-analytics pipeline. Voice-activity detection and diarization precede parallel transcription and acoustic-feature extraction, whose lexical and paralinguistic streams are fused for the downstream task. Each stage is a model whose errors compound.</span><span class="ot">"</span></span>
+<span id="cb9-604"><a href="#cb9-604" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb9-605"><a href="#cb9-605" aria-hidden="true" tabindex="-1"></a>  VAD[<span class="ot">"</span><span class="st">Voice-activity&lt;br/&gt;detection</span><span class="ot">"</span>] --&gt; DIA[<span class="ot">"</span><span class="st">Speaker&lt;br/&gt;diarization</span><span class="ot">"</span>]</span>
+<span id="cb9-606"><a href="#cb9-606" aria-hidden="true" tabindex="-1"></a>  DIA --&gt; ASR[<span class="ot">"</span><span class="st">ASR&lt;br/&gt;(transcribe)</span><span class="ot">"</span>]</span>
+<span id="cb9-607"><a href="#cb9-607" aria-hidden="true" tabindex="-1"></a>  DIA --&gt; AFE[<span class="ot">"</span><span class="st">Acoustic-feature&lt;br/&gt;extractor (prosody, emotion)</span><span class="ot">"</span>]</span>
+<span id="cb9-608"><a href="#cb9-608" aria-hidden="true" tabindex="-1"></a>  ASR --&gt; LEX[<span class="ot">"</span><span class="st">Lexical stream</span><span class="ot">"</span>]</span>
+<span id="cb9-609"><a href="#cb9-609" aria-hidden="true" tabindex="-1"></a>  AFE --&gt; PAR[<span class="ot">"</span><span class="st">Paralinguistic stream</span><span class="ot">"</span>]</span>
+<span id="cb9-610"><a href="#cb9-610" aria-hidden="true" tabindex="-1"></a>  LEX --&gt; FUS[<span class="ot">"</span><span class="st">Fusion</span><span class="ot">"</span>]</span>
+<span id="cb9-611"><a href="#cb9-611" aria-hidden="true" tabindex="-1"></a>  PAR --&gt; FUS</span>
+<span id="cb9-612"><a href="#cb9-612" aria-hidden="true" tabindex="-1"></a>  FUS --&gt; DWN[<span class="ot">"</span><span class="st">Downstream task</span><span class="ot">"</span>]</span>
+<span id="cb9-613"><a href="#cb9-613" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb9-614"><a href="#cb9-614" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-615"><a href="#cb9-615" aria-hidden="true" tabindex="-1"></a>Audio is the youngest of the well-developed marketing data modalities, and several</span>
-<span id="cb9-616"><a href="#cb9-616" aria-hidden="true" tabindex="-1"></a>frontiers are visible. The first is *self-supervised audio foundation models*. Just</span>
-<span id="cb9-617"><a href="#cb9-617" aria-hidden="true" tabindex="-1"></a>as wav2vec 2.0 learns speech representations from unlabeled audio and Whisper</span>
-<span id="cb9-618"><a href="#cb9-618" aria-hidden="true" tabindex="-1"></a>learns robust transcription from weak supervision at scale, general-purpose audio</span>
-<span id="cb9-619"><a href="#cb9-619" aria-hidden="true" tabindex="-1"></a>embeddings increasingly provide a single representation that supports emotion,</span>
-<span id="cb9-620"><a href="#cb9-620" aria-hidden="true" tabindex="-1"></a>speaker, and content tasks with light fine-tuning, lowering the barrier to</span>
-<span id="cb9-621"><a href="#cb9-621" aria-hidden="true" tabindex="-1"></a>acoustic measurement in marketing much as pretrained image and text models did for</span>
-<span id="cb9-622"><a href="#cb9-622" aria-hidden="true" tabindex="-1"></a>those modalities. The second is *multimodal fusion*, the natural endpoint of this</span>
-<span id="cb9-623"><a href="#cb9-623" aria-hidden="true" tabindex="-1"></a>part: a podcast ad, a TikTok video (@sec-text-as-data and the image and video</span>
-<span id="cb9-624"><a href="#cb9-624" aria-hidden="true" tabindex="-1"></a>threads), or a live-commerce stream is simultaneously audio, speech, on-screen</span>
-<span id="cb9-625"><a href="#cb9-625" aria-hidden="true" tabindex="-1"></a>text, and image, and the acoustic features developed here are one stream to be</span>
-<span id="cb9-626"><a href="#cb9-626" aria-hidden="true" tabindex="-1"></a>fused with the others rather than analyzed alone. The third is *generative and</span>
-<span id="cb9-627"><a href="#cb9-627" aria-hidden="true" tabindex="-1"></a>synthetic voice*: text-to-speech has become good enough that brands synthesize</span>
-<span id="cb9-628"><a href="#cb9-628" aria-hidden="true" tabindex="-1"></a>spokesperson voices and personalize audio at scale, which turns voice from a</span>
-<span id="cb9-629"><a href="#cb9-629" aria-hidden="true" tabindex="-1"></a>measured variable into a designed one and raises fresh questions of authenticity,</span>
-<span id="cb9-630"><a href="#cb9-630" aria-hidden="true" tabindex="-1"></a>disclosure, and consumer trust. The fourth is the still-open *call-analytics</span>
-<span id="cb9-631"><a href="#cb9-631" aria-hidden="true" tabindex="-1"></a>opportunity* flagged at the start: the service and sales voice channel remains</span>
-<span id="cb9-632"><a href="#cb9-632" aria-hidden="true" tabindex="-1"></a>comparatively under-studied in top-tier marketing research, and a credible</span>
-<span id="cb9-633"><a href="#cb9-633" aria-hidden="true" tabindex="-1"></a>identification strategy applied to acoustic call features at scale is among the</span>
-<span id="cb9-634"><a href="#cb9-634" aria-hidden="true" tabindex="-1"></a>clearer contributions the modality invites.</span>
-<span id="cb9-635"><a href="#cb9-635" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-636"><a href="#cb9-636" aria-hidden="true" tabindex="-1"></a>The synthesizing survey of machine learning and AI in marketing by Ma and Sun</span>
-<span id="cb9-637"><a href="#cb9-637" aria-hidden="true" tabindex="-1"></a>(2020, *International Journal of Research in Marketing*,</span>
-<span id="cb9-638"><a href="#cb9-638" aria-hidden="true" tabindex="-1"></a>doi:10.1016/j.ijresmar.2020.04.005) situates audio within the broader move to</span>
-<span id="cb9-639"><a href="#cb9-639" aria-hidden="true" tabindex="-1"></a>connect computational representations of unstructured data to human marketing</span>
-<span id="cb9-640"><a href="#cb9-640" aria-hidden="true" tabindex="-1"></a>insight, and it is the right place to read this chapter's modality back into the</span>
-<span id="cb9-641"><a href="#cb9-641" aria-hidden="true" tabindex="-1"></a>whole. The consistent thread, from the MFCCs of 1980 to the foundation models of</span>
-<span id="cb9-642"><a href="#cb9-642" aria-hidden="true" tabindex="-1"></a>today, is the one this part repeats for every modality: a sound becomes a learned,</span>
-<span id="cb9-643"><a href="#cb9-643" aria-hidden="true" tabindex="-1"></a>lossy feature vector; that vector is a generated regressor; and the marketing</span>
-<span id="cb9-644"><a href="#cb9-644" aria-hidden="true" tabindex="-1"></a>payoff comes from separating what is said from how it is said, then defending both</span>
-<span id="cb9-645"><a href="#cb9-645" aria-hidden="true" tabindex="-1"></a>measurements before trusting either.</span>
+<span id="cb9-615"><a href="#cb9-615" aria-hidden="true" tabindex="-1"></a>The fourth is *build-versus-buy*. A mature ecosystem of commercial speech-to-text,</span>
+<span id="cb9-616"><a href="#cb9-616" aria-hidden="true" tabindex="-1"></a>diarization, and emotion APIs (from the major cloud providers and specialized</span>
+<span id="cb9-617"><a href="#cb9-617" aria-hidden="true" tabindex="-1"></a>vendors) makes it unnecessary to train ASR from scratch, while open-source models</span>
+<span id="cb9-618"><a href="#cb9-618" aria-hidden="true" tabindex="-1"></a>(Whisper, wav2vec 2.0) and toolkits (<span class="in">`librosa`</span> and <span class="in">`pyAudioAnalysis`</span> in Python,</span>
+<span id="cb9-619"><a href="#cb9-619" aria-hidden="true" tabindex="-1"></a><span class="in">`openSMILE`</span> for standardized acoustic feature sets, and <span class="in">`tuneR`</span> and <span class="in">`seewave`</span> in R</span>
+<span id="cb9-620"><a href="#cb9-620" aria-hidden="true" tabindex="-1"></a>for the signal-processing primitives demonstrated above) make a transparent,</span>
+<span id="cb9-621"><a href="#cb9-621" aria-hidden="true" tabindex="-1"></a>auditable in-house pipeline feasible. The choice turns on data sensitivity (a</span>
+<span id="cb9-622"><a href="#cb9-622" aria-hidden="true" tabindex="-1"></a>regulated voice corpus may not leave the premises), the need for auditability in a</span>
+<span id="cb9-623"><a href="#cb9-623" aria-hidden="true" tabindex="-1"></a>research setting, and cost at scale. For the construct-validity reasons this book</span>
+<span id="cb9-624"><a href="#cb9-624" aria-hidden="true" tabindex="-1"></a>stresses, a research pipeline benefits from the transparency of open tooling even</span>
+<span id="cb9-625"><a href="#cb9-625" aria-hidden="true" tabindex="-1"></a>when a commercial API would be more accurate out of the box.</span>
+<span id="cb9-626"><a href="#cb9-626" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-627"><a href="#cb9-627" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#sec-audio-frontier}</span></span>
+<span id="cb9-628"><a href="#cb9-628" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-629"><a href="#cb9-629" aria-hidden="true" tabindex="-1"></a>Audio is the youngest of the well-developed marketing data modalities, and several</span>
+<span id="cb9-630"><a href="#cb9-630" aria-hidden="true" tabindex="-1"></a>frontiers are visible. The first is *self-supervised audio foundation models*. Just</span>
+<span id="cb9-631"><a href="#cb9-631" aria-hidden="true" tabindex="-1"></a>as wav2vec 2.0 learns speech representations from unlabeled audio and Whisper</span>
+<span id="cb9-632"><a href="#cb9-632" aria-hidden="true" tabindex="-1"></a>learns robust transcription from weak supervision at scale, general-purpose audio</span>
+<span id="cb9-633"><a href="#cb9-633" aria-hidden="true" tabindex="-1"></a>embeddings increasingly provide a single representation that supports emotion,</span>
+<span id="cb9-634"><a href="#cb9-634" aria-hidden="true" tabindex="-1"></a>speaker, and content tasks with light fine-tuning, lowering the barrier to</span>
+<span id="cb9-635"><a href="#cb9-635" aria-hidden="true" tabindex="-1"></a>acoustic measurement in marketing much as pretrained image and text models did for</span>
+<span id="cb9-636"><a href="#cb9-636" aria-hidden="true" tabindex="-1"></a>those modalities. The second is *multimodal fusion*, the natural endpoint of this</span>
+<span id="cb9-637"><a href="#cb9-637" aria-hidden="true" tabindex="-1"></a>part: a podcast ad, a TikTok video (@sec-text-as-data and the image and video</span>
+<span id="cb9-638"><a href="#cb9-638" aria-hidden="true" tabindex="-1"></a>threads), or a live-commerce stream is simultaneously audio, speech, on-screen</span>
+<span id="cb9-639"><a href="#cb9-639" aria-hidden="true" tabindex="-1"></a>text, and image, and the acoustic features developed here are one stream to be</span>
+<span id="cb9-640"><a href="#cb9-640" aria-hidden="true" tabindex="-1"></a>fused with the others rather than analyzed alone. The third is *generative and</span>
+<span id="cb9-641"><a href="#cb9-641" aria-hidden="true" tabindex="-1"></a>synthetic voice*: text-to-speech has become good enough that brands synthesize</span>
+<span id="cb9-642"><a href="#cb9-642" aria-hidden="true" tabindex="-1"></a>spokesperson voices and personalize audio at scale, which turns voice from a</span>
+<span id="cb9-643"><a href="#cb9-643" aria-hidden="true" tabindex="-1"></a>measured variable into a designed one and raises fresh questions of authenticity,</span>
+<span id="cb9-644"><a href="#cb9-644" aria-hidden="true" tabindex="-1"></a>disclosure, and consumer trust. The fourth is the still-open *call-analytics</span>
+<span id="cb9-645"><a href="#cb9-645" aria-hidden="true" tabindex="-1"></a>opportunity* flagged at the start: the service and sales voice channel remains</span>
+<span id="cb9-646"><a href="#cb9-646" aria-hidden="true" tabindex="-1"></a>comparatively under-studied in top-tier marketing research, and a credible</span>
+<span id="cb9-647"><a href="#cb9-647" aria-hidden="true" tabindex="-1"></a>identification strategy applied to acoustic call features at scale is among the</span>
+<span id="cb9-648"><a href="#cb9-648" aria-hidden="true" tabindex="-1"></a>clearer contributions the modality invites.</span>
+<span id="cb9-649"><a href="#cb9-649" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-650"><a href="#cb9-650" aria-hidden="true" tabindex="-1"></a>The synthesizing survey of machine learning and AI in marketing by Ma and Sun</span>
+<span id="cb9-651"><a href="#cb9-651" aria-hidden="true" tabindex="-1"></a>(2020, *International Journal of Research in Marketing*,</span>
+<span id="cb9-652"><a href="#cb9-652" aria-hidden="true" tabindex="-1"></a>doi:10.1016/j.ijresmar.2020.04.005) situates audio within the broader move to</span>
+<span id="cb9-653"><a href="#cb9-653" aria-hidden="true" tabindex="-1"></a>connect computational representations of unstructured data to human marketing</span>
+<span id="cb9-654"><a href="#cb9-654" aria-hidden="true" tabindex="-1"></a>insight, and it is the right place to read this chapter's modality back into the</span>
+<span id="cb9-655"><a href="#cb9-655" aria-hidden="true" tabindex="-1"></a>whole. The consistent thread, from the MFCCs of 1980 to the foundation models of</span>
+<span id="cb9-656"><a href="#cb9-656" aria-hidden="true" tabindex="-1"></a>today, is the one this part repeats for every modality: a sound becomes a learned,</span>
+<span id="cb9-657"><a href="#cb9-657" aria-hidden="true" tabindex="-1"></a>lossy feature vector; that vector is a generated regressor; and the marketing</span>
+<span id="cb9-658"><a href="#cb9-658" aria-hidden="true" tabindex="-1"></a>payoff comes from separating what is said from how it is said, then defending both</span>
+<span id="cb9-659"><a href="#cb9-659" aria-hidden="true" tabindex="-1"></a>measurements before trusting either.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

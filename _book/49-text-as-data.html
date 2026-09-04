@@ -1265,6 +1265,7 @@ Figure&nbsp;45.3: Rejection sampling as extrapolation control. Grey points are t
 <p><strong>Social media</strong> supplies a continuous, unsolicited signal of brand health that firms mine for “social listening” <span class="citation" data-cites="schweidel2014listening">(<a href="#ref-schweidel2014listening" role="doc-biblioref">Schweidel and Moe 2014</a>)</span>. The text is short, noisy, and laden with slang, sarcasm, and emoji, which strains lexicon methods and rewards context-aware representations. The constructs of interest go beyond valence to <em>emotion</em> and <em>stance</em>—how aroused, how powerful, how aligned the writer is toward the brand <span class="citation" data-cites="hartmann2021power">(<a href="#ref-hartmann2021power" role="doc-biblioref">Hartmann et al. 2021</a>)</span>—and to network-mediated diffusion, where <em>what</em> and <em>how</em> something is said shapes whether it spreads (<a href="06-virality.html" class="quarto-xref"><span>Chapter 29</span></a>; <span class="citation" data-cites="packard2016">Packard, Gershoff, and Wooten (<a href="#ref-packard2016" role="doc-biblioref">2016</a>)</span>). Social text also feeds back into measurement of constructs treated elsewhere: blog and post text predict and explain marketing outcomes <span class="citation" data-cites="gopinath2013blogs gopinath2014investigating">(<a href="#ref-gopinath2013blogs" role="doc-biblioref">Gopinath, Chintagunta, and Venkataraman 2013</a>; <a href="#ref-gopinath2014investigating" role="doc-biblioref">Gopinath, Thomas, and Krishnamurthi 2014</a>)</span>, and user-generated images extend text measurement into the visual channel <span class="citation" data-cites="liu2020">(<a href="#ref-liu2020" role="doc-biblioref">L. Liu, Dzyabura, and Mizik 2020</a>)</span>.</p>
 <p><strong>Calls and conversations</strong>—sales calls, service interactions, support chats—are the frontier, because they are long, dyadic, and rich in the dynamics of persuasion and emotion that static reviews lack. Transcribed and analyzed at scale, they let a firm measure how a frontline agent’s language drives outcomes, where in a conversation sentiment turns, and which conversational moves resolve a complaint—linking directly to the frontline-service and salesperson-value constructs of <a href="18-service.html" class="quarto-xref"><span>Chapter 21</span></a> and <a href="12-sales.html" class="quarto-xref"><span>Chapter 14</span></a>. This is the natural home of LLM extraction (<a href="#sec-llm-extraction" class="quarto-xref"><span>Section 45.6</span></a>): a transcript is exactly the kind of long, unstructured document from which a prompted model can pull a structured record—intent, objections raised, resolution, sentiment trajectory—that no fixed lexicon or bag-of-words could recover.</p>
 <p>Cutting across all three settings is a use of text that deserves separating out: the text measure as a <strong>dependent variable</strong> in a causal design. When <span class="citation" data-cites="borwankar2026chatgpt">Borwankar et al. (<a href="#ref-borwankar2026chatgpt" role="doc-biblioref">2026</a>)</span> ask what happened to Stack Overflow after it banned ChatGPT-generated content, the outcomes are NLP-derived properties of the posts themselves—length, linguistic complexity, positivity—differenced against a control subreddit (<a href="51-platforms.html#sec-platform-governance" class="quarto-xref"><span>Section 68.6</span></a>). The design is standard; what is not standard is that the outcome is <em>estimated</em> rather than observed, and that changes the threat model. A generated outcome inherits every bias of the instrument that produced it, and the bias only needs to move <em>with the treatment timing</em> to masquerade as an effect: a lexicon that scores newer slang differently, a hosted classifier silently revised mid-panel, a tokenizer that handles code blocks differently as posts get longer. The discipline is to freeze the measurement pipeline over the full study window, version and log it, and validate it on a hand-coded sample drawn from <em>both</em> the pre and post periods—so that any drift in the instrument is measured rather than absorbed into the treatment effect.</p>
+<p>A second cross-cutting use runs the other way, treating the black-box representation as a <em>yardstick for theory</em> rather than as a substitute for it. <span class="citation" data-cites="aka2026slogans">Aka and McCoy (<a href="#ref-aka2026slogans" role="doc-biblioref">2026</a>)</span> predict the memorability of brand slogans—separately for recognition and for cued brand recall—from two competing feature sets: the memorability factors a systematic review extracts from the published literature, operationalized with NLP and human ratings, and raw text embeddings of the slogans themselves. The comparison is the design. Whatever accuracy the embeddings buy <em>beyond</em> the literature-derived factors estimates how much of the phenomenon the accumulated theory has failed to name, converting an uninterpretable representation into a measurement of a literature’s incompleteness. The same audit is available anywhere a research stream has produced a list of proposed textual drivers—ad copy, review helpfulness, email subject lines, headline virality—and never established that the list is exhaustive. Two conditions make it credible: the embedding and the theory-derived features must be evaluated on the <em>same</em> held-out data with the same target, and the gap must be interpreted as an upper bound on what is missing rather than as a discovery, since an embedding that outperforms will not say what it knows. Naming the residual is a separate act of theorizing, and one this design sets up rather than performs.</p>
 </section><section id="sec-tad-pitfalls" class="level2" data-number="45.9"><h2 data-number="45.9" class="anchored" data-anchor-id="sec-tad-pitfalls">
 <span class="header-section-number">45.9</span> Pitfalls and Identification</h2>
 <p>Text-as-data inherits every threat to validity that afflicts measurement, plus several of its own. Naming them is the precondition for credible inference.</p>
@@ -1275,6 +1276,8 @@ Figure&nbsp;45.3: Rejection sampling as extrapolation control. Grey points are t
 </section><section id="sec-tad-takeaways" class="level2" data-number="45.10"><h2 data-number="45.10" class="anchored" data-anchor-id="sec-tad-takeaways">
 <span class="header-section-number">45.10</span> Key Takeaways</h2>
 <ul>
+<li>
+<strong>An embedding can audit a literature, not just beat it.</strong> Scoring theory-derived features against raw embeddings on the same held-out target turns the accuracy gap into an estimate of how much of a phenomenon the published drivers fail to name—demonstrated for slogan memorability across recognition and cued brand recall <span class="citation" data-cites="aka2026slogans">(<a href="#ref-aka2026slogans" role="doc-biblioref">Aka and McCoy 2026</a>)</span>. The gap is an upper bound on what is missing, not a discovery: the embedding will not say what it knows.</li>
 <li>
 <strong>Representation is the first and most consequential choice.</strong> Bag-of-words and TF-IDF are transparent but order- and context-blind (<a href="#eq-bow" class="quarto-xref">Equation&nbsp;<span>45.1</span></a>, <a href="#eq-tfidf" class="quarto-xref">Equation&nbsp;<span>45.2</span></a>); embeddings capture context at the cost of interpretability (<a href="#sec-embeddings" class="quarto-xref"><span>Section 45.2.4</span></a>). Match the representation to the construct, not to fashion.</li>
 <li>
@@ -1293,6 +1296,9 @@ Figure&nbsp;45.3: Rejection sampling as extrapolation control. Grey points are t
 <!-- -->
 
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-aka2026slogans" class="csl-entry" role="listitem">
+Aka, Ada, and John McCoy. 2026. <span>“Predicting the Memorability of Brand Slogans.”</span> <em>Journal of Marketing Research</em>. <a href="https://doi.org/10.1177/00222437261481110">https://doi.org/10.1177/00222437261481110</a>.
+</div>
 <div id="ref-ananthakrishnan2025book" class="csl-entry" role="listitem">
 Ananthakrishnan, Uttara M, Naveen Basavaraj, Sabari Rajan Karmegam, Ananya Sen, and Michael D Smith. 2025. <span>“Book Bans in American Libraries: Impact of Politics on Inclusive Content Consumption.”</span> <em>Marketing Science</em>.
 </div>
@@ -2636,65 +2642,89 @@ Weaver, Warren, Claude E Shannon, et al. 1963. <em>The Mathematical Theory of Co
 <span id="cb6-799"><a href="#cb6-799" aria-hidden="true" tabindex="-1"></a>post periods—so that any drift in the instrument is measured rather than absorbed into the</span>
 <span id="cb6-800"><a href="#cb6-800" aria-hidden="true" tabindex="-1"></a>treatment effect.</span>
 <span id="cb6-801"><a href="#cb6-801" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-802"><a href="#cb6-802" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification {#sec-tad-pitfalls}</span></span>
-<span id="cb6-803"><a href="#cb6-803" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-804"><a href="#cb6-804" aria-hidden="true" tabindex="-1"></a>Text-as-data inherits every threat to validity that afflicts measurement, plus several</span>
-<span id="cb6-805"><a href="#cb6-805" aria-hidden="true" tabindex="-1"></a>of its own. Naming them is the precondition for credible inference.</span>
-<span id="cb6-806"><a href="#cb6-806" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-807"><a href="#cb6-807" aria-hidden="true" tabindex="-1"></a>The deepest is that **the representation is an identifying assumption**. A bag-of-words</span>
-<span id="cb6-808"><a href="#cb6-808" aria-hidden="true" tabindex="-1"></a>*cannot* represent negation or sarcasm, so any inference from it about valence is</span>
-<span id="cb6-809"><a href="#cb6-809" aria-hidden="true" tabindex="-1"></a>conditional on those phenomena being rare or randomly distributed—an assumption that is</span>
-<span id="cb6-810"><a href="#cb6-810" aria-hidden="true" tabindex="-1"></a>often false and rarely tested (@sec-sarcasm). The choice of representation is therefore</span>
-<span id="cb6-811"><a href="#cb6-811" aria-hidden="true" tabindex="-1"></a>not a tuning detail but a substantive claim about what the text means.</span>
-<span id="cb6-812"><a href="#cb6-812" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-813"><a href="#cb6-813" aria-hidden="true" tabindex="-1"></a>A second hazard is **selection in who writes**. The corpus is generated by people who</span>
-<span id="cb6-814"><a href="#cb6-814" aria-hidden="true" tabindex="-1"></a>chose to review, post, or call, and that selection is correlated with the outcome:</span>
-<span id="cb6-815"><a href="#cb6-815" aria-hidden="true" tabindex="-1"></a>reviewers are disproportionately the delighted and the furious, producing the well-known</span>
-<span id="cb6-816"><a href="#cb6-816" aria-hidden="true" tabindex="-1"></a>J-shaped ratings distribution, and social-media posters are not a random sample of</span>
-<span id="cb6-817"><a href="#cb6-817" aria-hidden="true" tabindex="-1"></a>customers. Text measured on a selected sample estimates the sentiment of *writers*, not</span>
-<span id="cb6-818"><a href="#cb6-818" aria-hidden="true" tabindex="-1"></a>of *customers*, and the gap is a bias, not noise. Methods that debias the poster</span>
-<span id="cb6-819"><a href="#cb6-819" aria-hidden="true" tabindex="-1"></a>population are the appropriate response, not a larger but equally selected corpus.</span>
-<span id="cb6-820"><a href="#cb6-820" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-821"><a href="#cb6-821" aria-hidden="true" tabindex="-1"></a>A third is **endogeneity in downstream regressions**. When a text-derived measure—topic</span>
-<span id="cb6-822"><a href="#cb6-822" aria-hidden="true" tabindex="-1"></a>share, sentiment, an LLM-extracted field—is used as a regressor explaining sales or firm</span>
-<span id="cb6-823"><a href="#cb6-823" aria-hidden="true" tabindex="-1"></a>value, it is a *generated regressor* measured with error and often correlated with</span>
-<span id="cb6-824"><a href="#cb6-824" aria-hidden="true" tabindex="-1"></a>omitted drivers. Plugging $\hat{s}_i$ into a regression as if it were observed</span>
-<span id="cb6-825"><a href="#cb6-825" aria-hidden="true" tabindex="-1"></a>understates standard errors and can bias coefficients; the measurement model and the</span>
-<span id="cb6-826"><a href="#cb6-826" aria-hidden="true" tabindex="-1"></a>outcome model should be treated as one system, and the error in the text measure</span>
-<span id="cb6-827"><a href="#cb6-827" aria-hidden="true" tabindex="-1"></a>propagated. The marketing-finance and metrics chapters (@sec-marketing-finance,</span>
-<span id="cb6-828"><a href="#cb6-828" aria-hidden="true" tabindex="-1"></a>@sec-metrics) develop the downstream inference that text measures feed.</span>
-<span id="cb6-829"><a href="#cb6-829" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-830"><a href="#cb6-830" aria-hidden="true" tabindex="-1"></a>Finally, **validation is not optional and is not a formality**. Every text measure—</span>
-<span id="cb6-831"><a href="#cb6-831" aria-hidden="true" tabindex="-1"></a>lexicon score, topic label, classifier output, LLM extraction—is a claim about an</span>
-<span id="cb6-832"><a href="#cb6-832" aria-hidden="true" tabindex="-1"></a>unobserved construct and must be validated against human-coded ground truth on a sample,</span>
-<span id="cb6-833"><a href="#cb6-833" aria-hidden="true" tabindex="-1"></a>with an explicit reliability statistic, before it enters an analysis (@sec-annotation).</span>
-<span id="cb6-834"><a href="#cb6-834" aria-hidden="true" tabindex="-1"></a>A pipeline that reports its accuracy on the data it was tuned on, or that never compares</span>
-<span id="cb6-835"><a href="#cb6-835" aria-hidden="true" tabindex="-1"></a>its output to human judgment at all, has produced numbers, not measurements. The</span>
-<span id="cb6-836"><a href="#cb6-836" aria-hidden="true" tabindex="-1"></a>discipline that distinguishes text-as-data from text mining is precisely this insistence</span>
-<span id="cb6-837"><a href="#cb6-837" aria-hidden="true" tabindex="-1"></a>that a column of model output earn the status of data.</span>
+<span id="cb6-802"><a href="#cb6-802" aria-hidden="true" tabindex="-1"></a>A second cross-cutting use runs the other way, treating the black-box representation as</span>
+<span id="cb6-803"><a href="#cb6-803" aria-hidden="true" tabindex="-1"></a>a *yardstick for theory* rather than as a substitute for it. @aka2026slogans predict the</span>
+<span id="cb6-804"><a href="#cb6-804" aria-hidden="true" tabindex="-1"></a>memorability of brand slogans—separately for recognition and for cued brand recall—from</span>
+<span id="cb6-805"><a href="#cb6-805" aria-hidden="true" tabindex="-1"></a>two competing feature sets: the memorability factors a systematic review extracts from</span>
+<span id="cb6-806"><a href="#cb6-806" aria-hidden="true" tabindex="-1"></a>the published literature, operationalized with NLP and human ratings, and raw text</span>
+<span id="cb6-807"><a href="#cb6-807" aria-hidden="true" tabindex="-1"></a>embeddings of the slogans themselves. The comparison is the design. Whatever accuracy</span>
+<span id="cb6-808"><a href="#cb6-808" aria-hidden="true" tabindex="-1"></a>the embeddings buy *beyond* the literature-derived factors estimates how much of the</span>
+<span id="cb6-809"><a href="#cb6-809" aria-hidden="true" tabindex="-1"></a>phenomenon the accumulated theory has failed to name, converting an uninterpretable</span>
+<span id="cb6-810"><a href="#cb6-810" aria-hidden="true" tabindex="-1"></a>representation into a measurement of a literature's incompleteness. The same audit is</span>
+<span id="cb6-811"><a href="#cb6-811" aria-hidden="true" tabindex="-1"></a>available anywhere a research stream has produced a list of proposed textual drivers—ad</span>
+<span id="cb6-812"><a href="#cb6-812" aria-hidden="true" tabindex="-1"></a>copy, review helpfulness, email subject lines, headline virality—and never established</span>
+<span id="cb6-813"><a href="#cb6-813" aria-hidden="true" tabindex="-1"></a>that the list is exhaustive. Two conditions make it credible: the embedding and the</span>
+<span id="cb6-814"><a href="#cb6-814" aria-hidden="true" tabindex="-1"></a>theory-derived features must be evaluated on the *same* held-out data with the same</span>
+<span id="cb6-815"><a href="#cb6-815" aria-hidden="true" tabindex="-1"></a>target, and the gap must be interpreted as an upper bound on what is missing rather than</span>
+<span id="cb6-816"><a href="#cb6-816" aria-hidden="true" tabindex="-1"></a>as a discovery, since an embedding that outperforms will not say what it knows. Naming</span>
+<span id="cb6-817"><a href="#cb6-817" aria-hidden="true" tabindex="-1"></a>the residual is a separate act of theorizing, and one this design sets up rather than</span>
+<span id="cb6-818"><a href="#cb6-818" aria-hidden="true" tabindex="-1"></a>performs.</span>
+<span id="cb6-819"><a href="#cb6-819" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-820"><a href="#cb6-820" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification {#sec-tad-pitfalls}</span></span>
+<span id="cb6-821"><a href="#cb6-821" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-822"><a href="#cb6-822" aria-hidden="true" tabindex="-1"></a>Text-as-data inherits every threat to validity that afflicts measurement, plus several</span>
+<span id="cb6-823"><a href="#cb6-823" aria-hidden="true" tabindex="-1"></a>of its own. Naming them is the precondition for credible inference.</span>
+<span id="cb6-824"><a href="#cb6-824" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-825"><a href="#cb6-825" aria-hidden="true" tabindex="-1"></a>The deepest is that **the representation is an identifying assumption**. A bag-of-words</span>
+<span id="cb6-826"><a href="#cb6-826" aria-hidden="true" tabindex="-1"></a>*cannot* represent negation or sarcasm, so any inference from it about valence is</span>
+<span id="cb6-827"><a href="#cb6-827" aria-hidden="true" tabindex="-1"></a>conditional on those phenomena being rare or randomly distributed—an assumption that is</span>
+<span id="cb6-828"><a href="#cb6-828" aria-hidden="true" tabindex="-1"></a>often false and rarely tested (@sec-sarcasm). The choice of representation is therefore</span>
+<span id="cb6-829"><a href="#cb6-829" aria-hidden="true" tabindex="-1"></a>not a tuning detail but a substantive claim about what the text means.</span>
+<span id="cb6-830"><a href="#cb6-830" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-831"><a href="#cb6-831" aria-hidden="true" tabindex="-1"></a>A second hazard is **selection in who writes**. The corpus is generated by people who</span>
+<span id="cb6-832"><a href="#cb6-832" aria-hidden="true" tabindex="-1"></a>chose to review, post, or call, and that selection is correlated with the outcome:</span>
+<span id="cb6-833"><a href="#cb6-833" aria-hidden="true" tabindex="-1"></a>reviewers are disproportionately the delighted and the furious, producing the well-known</span>
+<span id="cb6-834"><a href="#cb6-834" aria-hidden="true" tabindex="-1"></a>J-shaped ratings distribution, and social-media posters are not a random sample of</span>
+<span id="cb6-835"><a href="#cb6-835" aria-hidden="true" tabindex="-1"></a>customers. Text measured on a selected sample estimates the sentiment of *writers*, not</span>
+<span id="cb6-836"><a href="#cb6-836" aria-hidden="true" tabindex="-1"></a>of *customers*, and the gap is a bias, not noise. Methods that debias the poster</span>
+<span id="cb6-837"><a href="#cb6-837" aria-hidden="true" tabindex="-1"></a>population are the appropriate response, not a larger but equally selected corpus.</span>
 <span id="cb6-838"><a href="#cb6-838" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-839"><a href="#cb6-839" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways {#sec-tad-takeaways}</span></span>
-<span id="cb6-840"><a href="#cb6-840" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-841"><a href="#cb6-841" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Representation is the first and most consequential choice.** Bag-of-words and TF-IDF</span>
-<span id="cb6-842"><a href="#cb6-842" aria-hidden="true" tabindex="-1"></a>  are transparent but order- and context-blind (@eq-bow, @eq-tfidf); embeddings capture</span>
-<span id="cb6-843"><a href="#cb6-843" aria-hidden="true" tabindex="-1"></a>  context at the cost of interpretability (@sec-embeddings). Match the representation to</span>
-<span id="cb6-844"><a href="#cb6-844" aria-hidden="true" tabindex="-1"></a>  the construct, not to fashion.</span>
-<span id="cb6-845"><a href="#cb6-845" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Topic models discover structure but do not name it.** LDA's outputs are</span>
-<span id="cb6-846"><a href="#cb6-846" aria-hidden="true" tabindex="-1"></a>  distributions an analyst must interpret and validate; $K$ and the priors are</span>
-<span id="cb6-847"><a href="#cb6-847" aria-hidden="true" tabindex="-1"></a>  researcher choices, not data, and the solution is sensitive to them (@sec-lda).</span>
-<span id="cb6-848"><a href="#cb6-848" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sentiment, emotion, and stance are distinct constructs.** Lexicons are auditable but</span>
-<span id="cb6-849"><a href="#cb6-849" aria-hidden="true" tabindex="-1"></a>  cannot represent negation or sarcasm, biasing estimates in a *signed* way</span>
-<span id="cb6-850"><a href="#cb6-850" aria-hidden="true" tabindex="-1"></a>  (@sec-lexicon, @sec-sarcasm); decide which construct, at which level, validated how,</span>
-<span id="cb6-851"><a href="#cb6-851" aria-hidden="true" tabindex="-1"></a>  before scoring.</span>
-<span id="cb6-852"><a href="#cb6-852" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Supervised classification lives or dies by honest evaluation.** Under class</span>
-<span id="cb6-853"><a href="#cb6-853" aria-hidden="true" tabindex="-1"></a>  imbalance, report precision, recall, and F1, guard against leakage, and validate</span>
-<span id="cb6-854"><a href="#cb6-854" aria-hidden="true" tabindex="-1"></a>  out-of-distribution (@sec-classification-validity).</span>
-<span id="cb6-855"><a href="#cb6-855" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**LLMs are powerful, cheap annotators—and unvalidated classifiers until proven</span>
-<span id="cb6-856"><a href="#cb6-856" aria-hidden="true" tabindex="-1"></a>  otherwise.** Hallucination, prompt sensitivity, and contamination make validation</span>
-<span id="cb6-857"><a href="#cb6-857" aria-hidden="true" tabindex="-1"></a>  *more* necessary, not less (@sec-llm-extraction).</span>
-<span id="cb6-858"><a href="#cb6-858" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Selection, generated-regressor error, and validation against ground truth** are the</span>
-<span id="cb6-859"><a href="#cb6-859" aria-hidden="true" tabindex="-1"></a>  identification frontier; text measured on who chose to write estimates writers, not</span>
-<span id="cb6-860"><a href="#cb6-860" aria-hidden="true" tabindex="-1"></a>  customers (@sec-tad-pitfalls).</span>
+<span id="cb6-839"><a href="#cb6-839" aria-hidden="true" tabindex="-1"></a>A third is **endogeneity in downstream regressions**. When a text-derived measure—topic</span>
+<span id="cb6-840"><a href="#cb6-840" aria-hidden="true" tabindex="-1"></a>share, sentiment, an LLM-extracted field—is used as a regressor explaining sales or firm</span>
+<span id="cb6-841"><a href="#cb6-841" aria-hidden="true" tabindex="-1"></a>value, it is a *generated regressor* measured with error and often correlated with</span>
+<span id="cb6-842"><a href="#cb6-842" aria-hidden="true" tabindex="-1"></a>omitted drivers. Plugging $\hat{s}_i$ into a regression as if it were observed</span>
+<span id="cb6-843"><a href="#cb6-843" aria-hidden="true" tabindex="-1"></a>understates standard errors and can bias coefficients; the measurement model and the</span>
+<span id="cb6-844"><a href="#cb6-844" aria-hidden="true" tabindex="-1"></a>outcome model should be treated as one system, and the error in the text measure</span>
+<span id="cb6-845"><a href="#cb6-845" aria-hidden="true" tabindex="-1"></a>propagated. The marketing-finance and metrics chapters (@sec-marketing-finance,</span>
+<span id="cb6-846"><a href="#cb6-846" aria-hidden="true" tabindex="-1"></a>@sec-metrics) develop the downstream inference that text measures feed.</span>
+<span id="cb6-847"><a href="#cb6-847" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-848"><a href="#cb6-848" aria-hidden="true" tabindex="-1"></a>Finally, **validation is not optional and is not a formality**. Every text measure—</span>
+<span id="cb6-849"><a href="#cb6-849" aria-hidden="true" tabindex="-1"></a>lexicon score, topic label, classifier output, LLM extraction—is a claim about an</span>
+<span id="cb6-850"><a href="#cb6-850" aria-hidden="true" tabindex="-1"></a>unobserved construct and must be validated against human-coded ground truth on a sample,</span>
+<span id="cb6-851"><a href="#cb6-851" aria-hidden="true" tabindex="-1"></a>with an explicit reliability statistic, before it enters an analysis (@sec-annotation).</span>
+<span id="cb6-852"><a href="#cb6-852" aria-hidden="true" tabindex="-1"></a>A pipeline that reports its accuracy on the data it was tuned on, or that never compares</span>
+<span id="cb6-853"><a href="#cb6-853" aria-hidden="true" tabindex="-1"></a>its output to human judgment at all, has produced numbers, not measurements. The</span>
+<span id="cb6-854"><a href="#cb6-854" aria-hidden="true" tabindex="-1"></a>discipline that distinguishes text-as-data from text mining is precisely this insistence</span>
+<span id="cb6-855"><a href="#cb6-855" aria-hidden="true" tabindex="-1"></a>that a column of model output earn the status of data.</span>
+<span id="cb6-856"><a href="#cb6-856" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-857"><a href="#cb6-857" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways {#sec-tad-takeaways}</span></span>
+<span id="cb6-858"><a href="#cb6-858" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-859"><a href="#cb6-859" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**An embedding can audit a literature, not just beat it.** Scoring theory-derived</span>
+<span id="cb6-860"><a href="#cb6-860" aria-hidden="true" tabindex="-1"></a>  features against raw embeddings on the same held-out target turns the accuracy gap into</span>
+<span id="cb6-861"><a href="#cb6-861" aria-hidden="true" tabindex="-1"></a>  an estimate of how much of a phenomenon the published drivers fail to name—demonstrated</span>
+<span id="cb6-862"><a href="#cb6-862" aria-hidden="true" tabindex="-1"></a>  for slogan memorability across recognition and cued brand recall <span class="co">[</span><span class="ot">@aka2026slogans</span><span class="co">]</span>. The</span>
+<span id="cb6-863"><a href="#cb6-863" aria-hidden="true" tabindex="-1"></a>  gap is an upper bound on what is missing, not a discovery: the embedding will not say</span>
+<span id="cb6-864"><a href="#cb6-864" aria-hidden="true" tabindex="-1"></a>  what it knows.</span>
+<span id="cb6-865"><a href="#cb6-865" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Representation is the first and most consequential choice.** Bag-of-words and TF-IDF</span>
+<span id="cb6-866"><a href="#cb6-866" aria-hidden="true" tabindex="-1"></a>  are transparent but order- and context-blind (@eq-bow, @eq-tfidf); embeddings capture</span>
+<span id="cb6-867"><a href="#cb6-867" aria-hidden="true" tabindex="-1"></a>  context at the cost of interpretability (@sec-embeddings). Match the representation to</span>
+<span id="cb6-868"><a href="#cb6-868" aria-hidden="true" tabindex="-1"></a>  the construct, not to fashion.</span>
+<span id="cb6-869"><a href="#cb6-869" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Topic models discover structure but do not name it.** LDA's outputs are</span>
+<span id="cb6-870"><a href="#cb6-870" aria-hidden="true" tabindex="-1"></a>  distributions an analyst must interpret and validate; $K$ and the priors are</span>
+<span id="cb6-871"><a href="#cb6-871" aria-hidden="true" tabindex="-1"></a>  researcher choices, not data, and the solution is sensitive to them (@sec-lda).</span>
+<span id="cb6-872"><a href="#cb6-872" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sentiment, emotion, and stance are distinct constructs.** Lexicons are auditable but</span>
+<span id="cb6-873"><a href="#cb6-873" aria-hidden="true" tabindex="-1"></a>  cannot represent negation or sarcasm, biasing estimates in a *signed* way</span>
+<span id="cb6-874"><a href="#cb6-874" aria-hidden="true" tabindex="-1"></a>  (@sec-lexicon, @sec-sarcasm); decide which construct, at which level, validated how,</span>
+<span id="cb6-875"><a href="#cb6-875" aria-hidden="true" tabindex="-1"></a>  before scoring.</span>
+<span id="cb6-876"><a href="#cb6-876" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Supervised classification lives or dies by honest evaluation.** Under class</span>
+<span id="cb6-877"><a href="#cb6-877" aria-hidden="true" tabindex="-1"></a>  imbalance, report precision, recall, and F1, guard against leakage, and validate</span>
+<span id="cb6-878"><a href="#cb6-878" aria-hidden="true" tabindex="-1"></a>  out-of-distribution (@sec-classification-validity).</span>
+<span id="cb6-879"><a href="#cb6-879" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**LLMs are powerful, cheap annotators—and unvalidated classifiers until proven</span>
+<span id="cb6-880"><a href="#cb6-880" aria-hidden="true" tabindex="-1"></a>  otherwise.** Hallucination, prompt sensitivity, and contamination make validation</span>
+<span id="cb6-881"><a href="#cb6-881" aria-hidden="true" tabindex="-1"></a>  *more* necessary, not less (@sec-llm-extraction).</span>
+<span id="cb6-882"><a href="#cb6-882" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Selection, generated-regressor error, and validation against ground truth** are the</span>
+<span id="cb6-883"><a href="#cb6-883" aria-hidden="true" tabindex="-1"></a>  identification frontier; text measured on who chose to write estimates writers, not</span>
+<span id="cb6-884"><a href="#cb6-884" aria-hidden="true" tabindex="-1"></a>  customers (@sec-tad-pitfalls).</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
