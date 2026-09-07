@@ -1192,6 +1192,36 @@ threshold adjustment by group) is an explicit, auditable design choice with its 
 trade-offs against accuracy and against other fairness criteria.
 
 
+#### Generative Models and the Housing-Price Gap {#sec-aiml-genai-housing}
+
+The audit above and the literature behind it establish a discouraging pair of facts:
+human decision makers price houses in minority-dominant neighborhoods below otherwise
+comparable houses in white-dominant ones, and conventional predictive models trained
+on that history reproduce the gap, including models built specifically to correct it.
+Both the human and the standard algorithmic remedy are compromised, which makes the
+behavior of a *generative* model an open question rather than a foregone conclusion.
+
+@tanlamai2026housing put it to a test on 284,749 U.S. properties, comparing
+AI-generated with human-generated prices for the same homes, and find that generative
+AI *reduces* the discrimination gap. The result runs against the intuition the
+preceding pages build—a model trained on a corpus of human text and human transactions
+would seem the last place to look for relief from human bias—and the paper devotes a
+mechanism section to why it holds rather than resting on the headline. (The published
+version is paywalled and the preprint sits on SSRN, which is inaccessible from this
+machine; the account here rests on the published abstract, so treat the mechanism as
+named rather than described.)
+
+Two cautions apply before anyone reads this as a remedy. First, "reduces the gap" is a
+statement about one outcome under one comparison, not a fairness certificate: the
+impossibility result above still binds, and a model that narrows a price gap may move
+some other criterion in the wrong direction. Second, the finding is a property of a
+model-in-context—these properties, this market, this vintage of model—and generative
+systems are retrained often enough that a result of this kind carries a shelf life
+that a coefficient in a stable data-generating process does not. What the paper
+establishes is that the *sign* is not predictable from first principles, which is
+precisely why the question needed an experiment rather than an argument. Its framing
+is treated as a writing model in @sec-sw-open-question.
+
 #### When the fairness policy needs the attribute it is not allowed to demand {#sec-aiml-parity-disclosure}
 
 The audit above assumes the protected attribute is *known* to the analyst even when
@@ -1547,6 +1577,54 @@ Read against @sec-clv-pathways, the two studies make the same methodological poi
 opposite substantive corners: who took an action, and when, is not a nuisance to be
 differenced away but the variable that determines what the action was worth.
 
+### Headcount Is Not the Only Margin: Skill Deprioritization {#sec-aiml-skill-deprioritization}
+
+Counting heads answers one question. @devigili2026skill ask a different and arguably
+more informative one: not how many people firms hire after generative AI arrives, but
+*which capabilities they stop asking for*. The distinction matters because the two
+margins can move in opposite directions—a firm can grow its headcount while
+systematically retiring demand for particular skills—and a study that observes only
+the first will report "no effect" on a labor market that is being reorganized.
+
+The theoretical move is to classify skills by the organizing function they perform
+rather than by occupation. Drawing on a taxonomy of **organizing skills**—task
+division, task allocation, information provision, reward distribution, and exception
+management—and a queuing-theory model of organizing efficiency, the authors predict
+which functions a technology that retrieves data, performs analysis, and conveys
+information will substitute for first. Generative AI, on this account, complements
+workers who *rely* on those activities and substitutes for workers who *perform*
+them, so demand should fall selectively rather than uniformly.
+
+Empirically they use the release of ChatGPT as an exogenous shock and track hiring
+demand for 1,820 publicly listed U.S. firms across a ±12-month window around it. Demand
+declines significantly for monitoring (reward distribution), operational exception
+handling, and task division, with information provision also falling. Task allocation
+and conflict resolution are comparatively stable, which the authors read as the
+residue of work that still requires human judgment. The declines intensify after the
+release of GPT-4, evidence that capability improvements—not merely the novelty of the
+category—drive the adaptation.
+
+Read against @kharazian2026ai the two papers are complements rather than rivals.
+Adoption can raise total headcount while the composition of what those people are
+hired to do shifts underneath, and the honest summary of the current evidence is that
+the employment-level question and the skill-mix question have different answers. Three
+cautions apply to this one specifically. Hiring demand is a measure of *intended
+marginal* hires, not of employment, and firms can deprioritize a skill in postings long
+before—or without ever—reducing the stock of people who hold it. A ±12-month window
+around a single shock is short for a claim about organizational adaptation, which the
+authors themselves frame as early evidence. And "deprioritization" is a revealed
+preference on the demand side; it says what firms believe the technology can absorb,
+not what it can actually do well, and those have diverged before.
+
+The marketing relevance is direct and uncomfortable. The functions showing the
+sharpest declines—monitoring, exception handling, and information provision—are the
+substance of a great deal of marketing operations work: campaign quality assurance,
+service escalation (@sec-service), and the reporting layer that
+@sec-metrics is about. If that reading holds, the durable roles are the ones the
+paper finds stable, allocation and conflict resolution, which are judgment tasks
+about *what should be done* rather than execution tasks about *doing it*. (The
+published article is paywalled; this account rests on its abstract.)
+
 ## Key Takeaways
 
 - The **prediction–inference distinction** (@eq-aiml-dgp) is the organizing idea:
@@ -1579,3 +1657,10 @@ differenced away but the variable that determines what the action was worth.
 - The constructive resolution is **causal machine learning**, which embeds flexible
   learners inside design-based estimators to recover the *uplift* that marketing
   decisions require.
+- **Employment level and skill mix are different margins.** Firm-level adoption data
+  show high-intensity adopters growing headcount [@kharazian2026ai], while hiring-demand
+  data show firms selectively retiring demand for monitoring, exception handling, and
+  information provision—the organizing skills generative AI most directly substitutes
+  for—with allocation and conflict resolution comparatively stable
+  [@devigili2026skill]. Both can be true, and marketing operations sits squarely in the
+  deprioritized set (@sec-aiml-skill-deprioritization).

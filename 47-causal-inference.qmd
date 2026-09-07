@@ -1645,6 +1645,89 @@ attribute rather than a lever, move the causal burden downstream to links you ca
 defend, and find the condition under which your mechanism is *supposed* to
 disappear.
 
+### A Second Reading: Moderated Mediation on Firm Panel Data {#sec-causal-mediation-firm-panel}
+
+The oximetry study runs the machinery on patients. @singh2026opensource run it on
+firms, and the contrast is instructive because the identification problem changes
+shape when the unit is an organization observed annually rather than a patient
+observed once. The substantive result—open-source product development raises gross
+margin about 4–5%—is discussed in @sec-innovation. What concerns us here is the
+*second* stage of their design, which is a textbook-clean instance of a first-stage
+moderated mediation and repays reading as a template.
+
+The chain is open-source development intensity ($OSDI$) $\to$ labor productivity
+$\to$ gross margin, with the *volunteer contribution ratio* ($VCR$, the external
+share of observed contributions to a firm's repositories) moderating the first
+link. Estimation is by generalized structural equation modeling, so every path is
+fit simultaneously, with 5,000 bootstrap replications for the indirect effects. The
+paths come back as follows: the interaction $OSDI \times VCR$ on labor productivity
+is 0.069 (0.025); labor productivity on gross margin is 0.196 (0.013); and the
+direct $OSDI \to$ gross margin path survives at 0.011 (0.003), which is what makes
+the mediation *partial*.
+
+**Which path the moderator sits on is the theoretical claim.** This is the first
+lesson and the most frequently botched. Their theory says external contributors are
+what convert a GitHub presence into genuine knowledge integration, so the
+moderator belongs on the $D \to M$ path—Model 7 in the taxonomy of @hayes2017
+—and nowhere else. Putting $VCR$ on the $M \to Y$ path instead (Model 14) would
+assert something different and, here, implausible: that the rate at which
+productivity converts into margin depends on who wrote the code. The numbered Hayes
+models are not a menu to be searched; each one is a distinct hypothesis, and the
+paper should say in words which link the moderator is claimed to govern before any
+model is fit.
+
+**Report the index, not the ±1 SD table.** Their conditional indirect effects are
+$-0.001$ (n.s.) at one SD below the mean $VCR$, $0.002$ at the mean, and $0.005$
+($p<0.01$) at one SD above. It is tempting to stop there and say the mechanism
+"works at high external engagement but not at low." That inference is invalid on its
+own terms, because a difference in significance is not a significant difference. The
+quantity that tests the actual claim is the **index of moderated mediation**—the
+slope of the indirect effect with respect to the moderator—which they report as
+$\omega = 0.014$ ($p<0.01$). Without the index, a ±1 SD table is a display, not a
+test.
+
+**Constituent terms in an interaction model are conditional effects, not main
+effects.** Their base model (no interaction) has $VCR \to$ labor productivity at
+0.103 ($p<0.05$); in the full model the same coefficient is $-0.003$ and
+insignificant. Nothing disappeared. In the full model that coefficient is the effect
+of $VCR$ *at $OSDI = 0$*, a firm with no open-source development at all, which is
+both a different quantity and one estimated off the edge of the data. Papers lose
+referees on this point, and the fix is to say which quantity is being reported and,
+where the variables are not centered, to say that too.
+
+**A threshold recovered from a continuous interaction is an estimate.** Plotting the
+conditional indirect effect across the full range of $VCR$ shows it crossing zero at
+roughly 35% external contribution, which is a genuinely useful number—it separates
+firms using GitHub as a development tool from firms running a community. The authors
+label it "a sample-specific point at which the labor-productivity pathway becomes
+positive and statistically discernible, not as a universal managerial cutoff," and
+that sentence is the model to copy. A crossover point is a function of estimated
+coefficients and carries their sampling error; reporting it as a managerial rule
+launders an interval into a decision boundary.
+
+**Partial mediation is a claim about what you did not model.** The surviving direct
+path is not a residual to be waved at. @singh2026opensource enumerate the specific
+alternatives it might carry—community governance, licensing-driven value capture,
+signaling to investors—and concede the direct effect may run through them. That is
+the honest form of the third claim in @sec-causal-mediation-craft: name the
+candidates for "everything else," because the interpretation of $\delta$ is only as
+good as that enumeration.
+
+**Finally, notice where the identification actually stops.** Stage 1 of their design
+is causally serious: staggered difference-in-differences [@callaway2021did], the
+de Chaisemartin–D'Haultfœuille estimator, generalized synthetic control, an
+instrument built from industry peer adoption, and Arellano–Bond and Blundell–Bond
+dynamic panels, all converging on 4–5%. None of that machinery carries over to the
+mediation stage, which is estimated on adopters with year fixed effects and
+controls. The $D \to M$ link inherits some of the design's credibility; the
+$M \to Y$ link—labor productivity to gross margin—is an association between two
+outcomes a firm produces jointly, and @eq-seq-ign-2 is doing uncompensated work
+there. This is not a criticism peculiar to this paper; it is the normal state of
+mediation analysis in firm panels, and the reason the chapter insists that
+randomizing $D$ does not identify a mechanism. A paper in this shape should say
+plainly that its identification strength declines from stage to stage rather than
+presenting all three stages in one confident register.
+
 ### Sensitivity and the Mechanism-Off Contrast in Practice {#sec-causal-mediation-sim}
 
 The simulation below makes both points concrete. It generates a chain
@@ -1937,6 +2020,14 @@ foundational/frontier marking as the load-bearing pedagogical device.
   readmission, with the availability of an accurate arterial reading serving as the
   moderator under which the disparity is predicted—and found—to vanish
   (@sec-causal-mediation-oximetry).
+- In a **moderated mediation**, the path the moderator sits on *is* the hypothesis:
+  Model 7 (moderating $D \to M$) and Model 14 (moderating $M \to Y$) assert different
+  theories and are not interchangeable [@hayes2017]. Test the claim with the **index
+  of moderated mediation**, not with a table of conditional effects at ±1 SD, because
+  a difference in significance is not a significant difference; read constituent
+  terms in the interaction model as conditional effects at moderator zero; and treat
+  any crossover threshold as an estimate with sampling error rather than a managerial
+  cutoff (@sec-causal-mediation-firm-panel).
 
 ## Further Reading
 

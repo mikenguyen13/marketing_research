@@ -113,6 +113,118 @@ library(irr)        # agree, kappa2, kappam.fleiss, kappam.light, kripp.alpha, i
 library(DescTools)  # KendallW, ICC, CohenKappa with CIs
 ```
 
+## A Third Tradition: Set-Theoretic Configurational Analysis {#sec-qual-fsqca}
+
+Between the two traditions above sits a third that borrows from each and is usually
+taught in neither. **Qualitative comparative analysis** (QCA), and its fuzzy-set
+variant **fsQCA**, is formal and algorithmic like content analysis, but
+case-oriented like interpretive work: it treats each case as a *whole*—a
+configuration of conditions that hang together—rather than as a bundle of variables
+whose contributions can be separated. It has become common in strategy and
+information systems, and it appears in this book wherever the argument is about
+complementarity (@sec-ms-unique-ate, @sec-innovation), so it is worth setting out
+properly.
+
+### What regression assumes that configurational analysis does not
+
+A regression coefficient reports the average marginal contribution of one variable
+holding the others fixed. Embedded in that sentence are two assumptions that are
+substantive claims, not technical conveniences:
+
+- **Unifinality.** There is one path to the outcome, and cases differ only in how far
+  along it they sit. A positive coefficient says "more of $X$, more of $Y$," for
+  everyone.
+- **Causal symmetry.** The explanation of the outcome's *absence* is the negation of
+  the explanation of its presence. If high $X$ produces high $Y$, low $X$ produces
+  low $Y$.
+
+Configurational analysis denies both, and does so as its motivating premise.
+**Equifinality** is the possibility that several genuinely different combinations of
+conditions each reliably produce the outcome. **Causal asymmetry** is the possibility
+that the recipe for failure is not the mirror image of the recipe for success—that,
+say, R&D matters enormously for the winners and is simply irrelevant among the
+losers, who fail for an unrelated reason. Where those possibilities are real, an
+interaction term is the wrong repair: interactions still estimate an average, still
+assume symmetry, and exhaust their degrees of freedom after two or three terms, while
+a configuration may involve six or eight conditions at once.
+
+### The procedure
+
+1. **Choose conditions from theory, not from a correlation table.** fsQCA examines
+   $2^{k}$ combinations of $k$ conditions, so $k$ is kept small—typically four to
+   eight—and each condition must have a stated reason to be there.
+2. **Calibrate each condition into a fuzzy set.** This is the step with no
+   regression analogue and the one that carries the most researcher discretion. Each
+   raw variable is mapped onto membership in $[0,1]$ by fixing three substantive
+   anchors: full membership, full non-membership, and the crossover point of maximum
+   ambiguity at 0.5. Calibration is an act of *interpretation*—it declares what
+   counts as a high-R&D firm—and it should be justified from theory or external
+   benchmarks rather than from sample quantiles, which merely relabel the data's own
+   dispersion.
+3. **Build the truth table.** Each of the $2^{k}$ rows is a logically possible
+   configuration; cases distribute across rows by their membership scores.
+4. **Apply frequency and consistency thresholds.** Rows with too few cases are
+   dropped as empirically irrelevant; rows whose consistency falls below a cutoff
+   (conventionally 0.80) are treated as not sufficient for the outcome.
+5. **Minimize.** A Boolean minimization algorithm reduces the surviving rows to the
+   shortest expressions that cover them, which are the reported configurations.
+6. **Report consistency and coverage for every configuration, and run the analysis
+   twice**—once for the outcome and once for its negation—because under causal
+   asymmetry the second is not implied by the first.
+
+The two reported statistics answer different questions and are routinely confused.
+**Consistency** measures how nearly a configuration is a *subset* of the outcome:
+among cases with high membership in this configuration, how reliably is the outcome
+also present? It is the sufficiency claim. **Coverage** measures how much of the
+outcome's membership a configuration accounts for: its empirical weight. Coverage is
+emphatically not $R^{2}$—configurations overlap, raw coverages do not partition
+anything, and a coverage of 0.29 does not mean 29% of variance explained.
+
+### A worked reading
+
+@singh2026opensource supply a clean example as the third stage of their open-source
+study (@sec-innovation). Having established an average effect and then a mechanism,
+they ask under which resource profiles the mechanism pays, with eight conditions:
+open-source development intensity, volunteer contribution ratio, capital, labor, R&D,
+firm size, market share, and industry concentration. R&D, capital, and labor are
+normalized by revenue so that the conditions are intensities rather than sizes, and
+the panel is collapsed to three-year post-adoption averages so each firm enters as
+one case—a necessary move, since QCA has no notion of a repeated observation.
+
+Five configurations reach high profitability and four reach low, with consistencies
+from 0.944 to 0.979 and raw coverages from 0.166 to 0.353. Three readings follow, and
+each is of a type regression could not have produced:
+
+- **A near-necessary condition.** R&D intensity is present in all five
+  high-profitability configurations. No single coefficient states this; it is a
+  claim about every path at once, and it is what licenses their absorptive-capacity
+  interpretation—external knowledge pays only for firms equipped to absorb it.
+- **Equifinality made visible.** High external contribution appears in
+  configurations 2 and 4 but is *absent* from 1, 3, and 5, where high internal labor
+  intensity appears instead. Two different business models reach the same margin: one
+  mobilizes a community, the other staffs an integration core. A regression would have
+  averaged these into a single muted volunteer-share coefficient and reported the
+  wrong story about both.
+- **Asymmetry.** Open-source intensity is absent from all four low-profitability
+  configurations, and capital intensity is present in all four while being absent from
+  four of the five high-profitability ones. The losers are not the winners run
+  backwards; they are asset-heavy firms in concentrated industries, which is a
+  different account rather than a negative sign.
+
+### What the method does not deliver
+
+fsQCA establishes set-theoretic *sufficiency within a sample*. It is not a causal
+design: there is no counterfactual, no assignment mechanism, and nothing that rules
+out a confounder common to a configuration and the outcome. Nor does it generalize by
+construction, since both calibration anchors and the frequency threshold are tied to
+the sample at hand. The right role for it is the one @singh2026opensource give it—the
+boundary-condition stage of a paper whose causal claim was established by other means
+(@sec-sw-emb)—and the wrong role is as a substitute for identification when the data
+will not support a design. Reported that way, it answers a question the other two
+traditions in this chapter cannot: not how reliably cases can be labeled, and not
+what a case means, but which combinations of conditions actually travel together with
+the outcome.
+
 ## The Chance-Correction Problem
 
 Every chance-corrected agreement coefficient in this chapter is a special case
@@ -573,6 +685,13 @@ make the interpretation correct.
 - Inter-rater reliability is the methodological hinge of qualitative coding and of
   every human-labeled "ground truth" used to validate text- and image-mining
   models (@sec-measurement-scales).
+- A **third tradition** is formal but case-oriented: fuzzy-set QCA asks which
+  *combinations* of conditions are sufficient for an outcome, assuming neither
+  unifinality nor causal symmetry—the two assumptions a regression coefficient makes
+  silently. Calibration into fuzzy sets is the interpretive act; consistency measures
+  sufficiency and coverage measures empirical weight, and coverage is not $R^2$. It
+  describes set-theoretic sufficiency in a sample, not causation
+  [@singh2026opensource] (@sec-qual-fsqca).
 - Raw percent agreement is uninterpretable because it credits agreement expected
   from category base rates; all defensible coefficients chance-correct via
   @eq-chance-correction.

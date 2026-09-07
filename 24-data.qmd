@@ -593,6 +593,53 @@ the need to propagate the first-stage uncertainty are treated in
 way to recover coarse demographic structure; used naively, it manufactures
 measurement error correlated with name origin.
 
+### Scaling the Inference: An Open Firm-Level Diversity Panel {#sec-data-odd}
+
+The classifier in @eq-name-bayes is usually run on a few thousand names for one
+study. @wang2026diversity run it on a population and publish the result. The
+**Organizational Diversity Database** covers 466,626 U.S. firms from 2003 to 2023,
+built by collecting 570 million publicly available LinkedIn profiles—including more
+than 220 million profile photos—inferring each user's race and gender from the photo
+and the name, and aggregating to the *firm–occupation–year* cell. Each cell reports
+gender composition, racial composition, and, unusually for a demographic panel,
+promotion and turnover rates *by* race and gender. The data are released publicly
+through a registration portal, with a data dictionary and a methodology document.
+
+For a marketing researcher the appeal is that it supplies a firm-level covariate that
+was previously available only for the small set of firms filing EEO-1 reports or
+voluntarily disclosing. Workforce composition can now be joined to the WRDS
+financials of @sec-data-wrds, to brand and advertising measures, or to the
+marketing–finance outcomes of @sec-marketing-finance, which makes questions such as
+whether a firm's diversity claims are matched by its salesforce, or whether
+composition moves before or after a public commitment, into panel questions rather
+than case studies.
+
+The cautions are the ones this section has already stated, and aggregation does not
+retire them. Adding a photo to the name gives the classifier a second signal, but the
+output is still a posterior, not a label, and a share computed from posteriors is a
+sum of classification probabilities rather than a headcount. If the classifier's
+error rate varies by group—the standard finding for both name-frequency and
+face-based inference—then the error in a firm's measured composition is correlated
+with the composition being measured, which is the one failure mode averaging cannot
+fix. The promotion and turnover rates are more exposed still, because a rate by race
+is a ratio of two classified quantities and inherits error from both. A second issue
+is specific to the source: LinkedIn is a self-selected roster whose coverage varies
+by occupation, firm size, region, and year, rising steeply across the sample period,
+so a measured composition is the composition of a firm's *LinkedIn-visible*
+workforce, and a time trend in composition partly tracks a time trend in who joined
+the platform. Occupation and year fixed effects absorb the common part of that
+drift; they do not absorb differential coverage growth across groups.
+
+None of this argues against using the database—it argues for using it as
+@sec-data-pitfalls prescribes. Name the estimand (the firm's actual workforce
+composition), name the observable (a probabilistic classification of its
+platform-visible workforce), and carry the gap as a modeling problem: report
+composition as an interval where the methodology document supplies validation rates,
+prefer within-firm changes to cross-firm levels, and treat any coefficient on
+inferred composition as a generated-regressor estimate that needs its first-stage
+uncertainty propagated (@sec-measurement-scales). (The published paper is paywalled;
+this account rests on its abstract and the public data portal.)
+
 ## Pitfalls and Identification {#sec-data-pitfalls}
 
 The sources in this chapter differ in unit, frequency, and provenance, but the
@@ -636,6 +683,13 @@ tractable once it is made explicit, and ruinous when it is not.
 - **Name-based demographics are posteriors, not labels.** They follow a Bayesian
   name-frequency classifier (@eq-name-bayes) whose error is correlated with name
   origin and must be propagated downstream (@sec-data-names).
+- **Population-scale inference does not retire the caveat.** The Organizational
+  Diversity Database supplies race and gender composition, promotion, and turnover for
+  466,626 U.S. firms at the firm–occupation–year level, inferred from 570 million
+  LinkedIn profiles and their photos [@wang2026diversity]; because classifier error
+  varies by group and LinkedIn coverage varies by occupation and year, the measured
+  quantity is a probabilistic classification of a platform-visible workforce
+  (@sec-data-odd).
 - **Respect the platform contract.** Owner-private metrics require OAuth, public
   ones a key (@tbl-youtube-apis); honor rate limits and prefer official endpoints
   over brittle scrapers.

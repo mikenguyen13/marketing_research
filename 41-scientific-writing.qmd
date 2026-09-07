@@ -229,6 +229,62 @@ which the result is *most surprising* rather than the one in which it is *most
 defensible*; surprise attracts an editor's eye but invites reviewers who hold the
 strongest priors against the claim.
 
+### Setting Up a Question Whose Answer Is Not Already Known {#sec-sw-open-question}
+
+The framing trap above has a constructive counterpart. A paper is read when its
+question is genuinely open—when a well-informed reader, having finished the
+introduction, could not confidently guess the result. Most manuscripts fail this test
+in the first two pages, and the usual reason is that they motivate with a *gap* rather
+than a *question*. "Prior work has not examined $X$" tells the reader that something
+is missing, invites the reply that it may be missing for good reason, and quietly
+promises that $X$ will turn out to matter. Everyone knows how that paper ends.
+
+The strongest available move is to assemble two established literatures that imply
+*opposite* answers, or that block the two obvious remedies, and then let the data
+adjudicate. @tanlamai2026housing is a compact instance, and it is worth reading as a
+piece of construction rather than for its result (@sec-aiml-genai-housing).
+
+The setup takes two moves. First, decades of evidence establish that houses in
+white-dominant neighborhoods sell above otherwise-similar houses in minority-dominant
+neighborhoods, and the literature attributes the gap to *human* bias. The implied
+remedy—take the human out of the loop—is the reader's own next thought, which is
+exactly why the second move lands: recent work shows the gap is not fixed by
+conventional AI models, including those designed specifically to address
+discrimination. *Machine* bias closes the escape route that human bias opened.
+
+With both remedies blocked, "what does a generative model do here?" becomes a
+question a reader cannot answer from the armchair. A case runs each way. Generative
+models are trained on human-produced text and should inherit human bias; they are also
+statistical predictors and should inherit the proxy encoding that defeats conventional
+models. Yet they represent a property differently than a hedonic regression over
+neighborhood features does, and it is not obvious that the same proxies survive that
+representation. The paper reports that generative AI *narrows* the gap—and the finding
+is interesting only because the framing made both directions live beforehand.
+
+Three rules generalize from this.
+
+**Both branches must be publishable before you know which one you have.** Write the
+question so that each answer is a contribution, ideally as an explicit pair: *if the
+gap narrows, then $X$; if it widens, then $Y$*. If only one branch is a paper, the
+introduction is doing advocacy, and reviewers detect this even when they cannot name
+it. This is also the honest form of the framing: it is what you would have
+pre-registered.
+
+**A counter-intuitive result raises the evidentiary bar rather than lowering it.**
+Surprise is not a contribution by itself; it is a debt. The reader's first hypothesis
+is that something is wrong with the measurement, so a paper of this shape owes a
+mechanism section, and owes it as a real analysis rather than a paragraph of
+speculation (@sec-causal-mediation, @sec-sw-emb). Papers that lead with a surprising
+headline and defer the mechanism to "future research" are the ones that fail to
+replicate.
+
+**The two literatures must be summarized in terms their own authors would accept.**
+The move degrades into a straw man the moment either position is flattened to make the
+opposition sharper. The workable test: write your one-sentence characterization of
+each literature, and ask whether a proponent would sign it. If either would object,
+the tension you have constructed is between caricatures, and a referee drawn from that
+literature will be the one to say so.
+
 ## The Descriptive Paper {#sec-sw-descriptive}
 
 The template assumed so far—theory, hypotheses, identification, test—is not the
@@ -698,6 +754,90 @@ observation that would change its estimated share. If no such observation exists
 channel is not identified and the decomposition should be presented as an interpretation
 rather than a result.
 
+## The Effect–Mechanism–Boundary Paper {#sec-sw-emb}
+
+A fourth architecture is now common enough in empirical strategy, marketing, and
+information systems to be worth naming, because students imitate its surface without
+understanding why it holds together. The paper establishes an effect, then explains
+it, then bounds it—three stages that answer, in order, *whether*, *how*, and *for
+whom*. @singh2026opensource is a well-built specimen and the running example here;
+its substance is discussed in @sec-innovation.
+
+**Stage 1 establishes the effect.** Firms adopting open-source product development
+gained 4–5% in gross margin, estimated with staggered difference-in-differences and
+replicated under a second DID estimator, generalized synthetic control, an
+instrumental variable, and two dynamic panel estimators (@sec-causal-inference).
+
+**Stage 2 explains it.** A moderated mediation model routes the effect through labor
+productivity and shows the pathway is switched on by external contributor
+participation (@sec-causal-mediation-firm-panel).
+
+**Stage 3 bounds it.** A configurational analysis identifies the resource profiles
+under which the gains actually appear, finding R&D intensity in every
+high-profitability configuration (@sec-qual-fsqca).
+
+### Why the stages are ordered, and why the method changes
+
+The ordering is not stylistic. Each stage exists to answer the objection the previous
+one provokes, which is the same architectural logic as the five-move template in
+@sec-pwm-template. A reader shown a 4–5% margin gain immediately asks *through what*,
+and a reader given a mediation pathway immediately asks *for which firms*. Reversing
+the order strands the reader: a mechanism for an effect not yet established is a
+story about nothing, and a boundary condition on an unexplained effect is a
+subgroup table.
+
+The subtler point, and the one students miss, is that **the method changes at every
+stage because the question changes.** Quasi-experimental estimators answer a
+counterfactual question about an average. Structural equation modeling answers a
+question about a pathway's composition. Set-theoretic analysis answers a question
+about which combinations of conditions travel with the outcome. Running one technique
+through all three stages is a category error—a mediation model cannot establish an
+average effect against selection, and a difference-in-differences cannot represent
+equifinality. When a manuscript uses the same estimator throughout and merely adds
+interaction terms, it usually has one stage wearing three hats.
+
+Robustness follows the same principle: **put it where the identification is
+weakest.** Their Stage 1 carries six estimators because that is where the causal
+claim lives. Stage 2 gets a base-versus-full model comparison on AIC and BIC, a
+5,000-replication bootstrap, and a second operationalization of the moderator. Stage 3
+gets consistency thresholds and a separate analysis of the negated outcome. A uniform
+robustness appendix applied indiscriminately to all three signals that the author has
+not thought about which claim is actually fragile.
+
+### The honesty requirement
+
+The architecture has a built-in temptation, and resisting it is what separates the
+good version from the imitation. **Identification strength declines across the
+stages.** Stage 1 can be genuinely causal. Stage 2's mediator-to-outcome link
+usually is not, because nothing randomized the mediator (@sec-causal-mediation-assumptions).
+Stage 3 is set-theoretic description within a sample. A paper that presents all three
+in the same confident register is overclaiming, and a careful referee will say so.
+The fix costs one sentence per stage, stating what the design does and does not
+support, and it buys the credibility the rest of the paper spends.
+
+::: {.callout-tip}
+## Is your Stage 2 load-bearing?
+
+The diagnostic for whether the later stages are contributions or decoration: **would
+a null there have changed the paper?** In the running example it would. Without the
+mediation result, the 4–5% is a fact with no account of itself, equally consistent
+with cost arbitrage—firms getting free labor—which the authors explicitly rule out
+by showing that value accrues to firms with R&D rather than to firms with low
+internal capacity. Without the configurational stage, the paper would recommend open
+source to everyone, and its actual finding is that it pays only for firms able to
+absorb what the community sends. If you cannot say what a null at Stage 2 or 3 would
+have meant, those stages are robustness checks with ambitions, and a referee will
+read them that way.
+:::
+
+When adapting this architecture, the marketing translation is usually
+straightforward: an adoption or policy shock supplies Stage 1, a mediator the field
+already measures well—satisfaction, salience, search effort, salesforce
+productivity—supplies Stage 2, and the firm or customer heterogeneity the field
+argues about supplies Stage 3. The binding constraint is almost always Stage 2,
+because the mediator must be measured on the same units and at a frequency that lets
+it sit causally between the shock and the outcome.
+
 ## The Front End {#sec-sw-front-end}
 
 The front end—title, abstract, and introduction—is the part of the paper most
@@ -1029,10 +1169,25 @@ localizes a broken arrow that the author can no longer see.
 - A paper is a **reconstructed argument**, not a lab diary: the order of exposition
   is engineered for the reader, and each section answers exactly one question with
   its own default verb tense (@tbl-sw-sections).
+- The **effect–mechanism–boundary** architecture answers *whether*, *how*, and *for
+  whom* in that order, and the method must change at each stage because the question
+  does—quasi-experimental for the average effect, structural equations for the
+  pathway, set-theoretic for the configurations (@sec-sw-emb). Put the robustness
+  where identification is weakest, and state plainly that identification strength
+  declines from stage to stage. The test of whether the later stages are contributions
+  rather than decoration is whether a null there would have changed the paper
+  [@singh2026opensource].
 - The argument is a chain of claims the reader may refuse to grant
   (@eq-sw-chain); a paper fails at its **weakest arrow**, and most "low
   contribution" rejections are in fact broken arrows—a filled gap or a design that
   cannot license the conclusion.
+- Motivate with a **question, not a gap**. The strongest setup assembles two
+  established literatures that imply opposite answers, or that block both obvious
+  remedies, so that no informed reader can guess the result—human bias and machine
+  bias doing exactly that in @tanlamai2026housing (@sec-sw-open-question). Write it so
+  both branches are publishable before you know which one you have; remember that a
+  counter-intuitive finding raises the evidentiary bar and obligates a real mechanism
+  section; and state each literature's position in terms its own authors would sign.
 - A contribution is the warranted increment to knowledge $\Delta\mathcal{K}$
   (@eq-sw-contribution); it must be **novel, valid, and important**, and the
   top-4 bar that rises is importance. State the most general claim the evidence

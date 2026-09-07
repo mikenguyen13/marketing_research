@@ -377,7 +377,7 @@ separated from a single cross-section: the regressors reflect each other. Manski
 result is a statement that the data, not merely the estimator, are uninformative about
 the decomposition without further structure.
 
-Two routes restore identification. The first is **experimental**: randomize the
+Three routes restore identification. The first is **experimental**: randomize the
 treatment that is supposed to spread, breaking the link between a node's exposure and
 its pre-existing similarity to its neighbors. The cleanest marketing demonstrations are
 randomized field experiments. @aral2011creating randomized viral product-design features inside
@@ -414,12 +414,28 @@ drives observed clustering. @peng2018 exploited *network overlap*, the extent to
 two users share common friends, to study content sharing, a structural feature that
 itself shapes diffusion.
 
-@fig-net-identification shows why the naive reading fails and how the two routes
+A third route matches on the *content* that travels rather than on the nodes. When the
+object of transmission is a discrete, datable item—a paper, a design, a piece of
+code—one can sometimes find near-duplicates of it and ask which version a given actor
+picked up. @arts2026harnessing do this at the scale of the U.S. patent record,
+identifying **paper twins**, pairs of scientific papers reporting nearly identical
+findings published at nearly the same time by independent academic teams, and asking
+which twin a corporate patent cites. Because the twins carry the same knowledge with
+the same commercial value at the same moment, the quality of the idea cannot explain
+the choice, and what remains is the citing inventor's social distance to each set of
+authors—which turns out to matter only within two degrees of separation. The design is
+the network analogue of a matched pair: rather than randomizing the tie or instrumenting
+it, it holds the transmitted content fixed and lets the tie vary. Its scope condition is
+that twins must exist and be findable, which is why it appears in science and patenting,
+where the corpus is large enough that near-simultaneous duplicate discovery is common,
+rather than in consumer settings where the adopted object is rarely duplicated.
+
+@fig-net-identification shows why the naive reading fails and how the three routes
 restore identification.
 
 ```{mermaid}
 %%| label: fig-net-identification
-%%| fig-cap: "The identification problem for social influence. Contagion, homophily, and common external shocks all produce the same observed clustering, the reflection problem blocks their separation from a single cross-section, and only randomization or architecture-based structure recovers identified contagion."
+%%| fig-cap: "The identification problem for social influence. Contagion, homophily, and common external shocks all produce the same observed clustering, the reflection problem blocks their separation from a single cross-section, and only randomization, architecture-based structure, or a content-matched comparison recovers identified contagion."
 flowchart LR
   CO["Contagion<br/>(influence)"] --> OB["Observed clustering<br/>(adoption correlated across ties)"]
   HO["Homophily<br/>(selection on similarity)"] --> OB
@@ -427,8 +443,10 @@ flowchart LR
   OB --> RP["Reflection problem<br/>(not separable from a single cross-section)"]
   RP --> EX["Randomized experiment"]
   RP --> STR["Observational with structure<br/>(architecture-based instrument)"]
+  RP --> CM["Content-matched comparison<br/>(near-duplicate transmitted objects)"]
   EX --> ID["Identified contagion<br/>(justifies seeding)"]
   STR --> ID
+  CM --> ID
 ```
 
 The discipline this section imposes is non-negotiable. A centrality score, a community
