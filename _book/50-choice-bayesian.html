@@ -1230,6 +1230,24 @@ Figure&nbsp;44.4: The Bayesian workflow for choice models. Prior and likelihood 
 <p><strong>Topic.</strong> Hierarchical (multilevel) Bayesian models of consumer heterogeneity; shrinkage; individual-level posteriors for targeting.</p>
 <p><strong>Subtopics.</strong> The hierarchical normal prior over individual coefficients; random-effects logit/probit; borrowing strength; the value of individual-level inference; scale-usage and related nuisance heterogeneity.</p>
 <p><strong>Methods.</strong> Two-stage Gibbs for hierarchical logit/probit; posterior summaries at the individual level.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Controversy: does distributed MCMC actually scale hierarchical Bayes?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Hierarchical Bayes is computationally expensive, and the obvious remedy—split the data across machines, run chains in parallel, recombine—turns out to be subtle enough to have produced a published dispute worth reading alongside the method.</p>
+<p><strong>2020.</strong> <span class="citation" data-cites="bumbaca2020scalable">Bumbaca, Misra, and Rossi (<a href="#ref-bumbaca2020scalable" role="doc-biblioref">2020</a>)</span> propose a distributed MCMC procedure for Bayesian hierarchical models, aimed squarely at the target-marketing problem this week develops: individual-level posteriors for very large panels.</p>
+<p><strong>2024.</strong> <span class="citation" data-cites="braun2024commentary">Braun (<a href="#ref-braun2024commentary" role="doc-biblioref">2024</a>)</span> revisits the approach in a commentary, four years after publication.</p>
+<p><strong>2025.</strong> <span class="citation" data-cites="bumbaca2025reply">Bumbaca, Misra, and Rossi (<a href="#ref-bumbaca2025reply" role="doc-biblioref">2025</a>)</span> reply, in two pages, in the same journal.</p>
+<p>Read the exchange rather than a summary of it — the substance is technical and the disagreement is about conditions under which the approximation holds, which is exactly the kind of thing a summary flattens. The reason it belongs in this chapter is that the question is not academic for anyone doing targeting at scale: the whole value of the hierarchical model here is the <em>individual-level</em> posterior (<a href="#sec-cb-week-7" class="quarto-xref"><span>Section 44.1.7</span></a>), and any distributed scheme that recombines chains has to preserve that, not merely the population-level parameters. If you plan to run one of these procedures, the commentary is a list of the things to check.</p>
+<p>This is also a good example of the genre described in <a href="42-review-process.html#sec-cred-public-argument" class="quarto-xref"><span>Section 76.8.5</span></a>: a methods paper, a challenge years later, a short reply, and no adjudication by the journal. The reader does the adjudicating.</p>
+</div>
+</div>
 <p>The mixing distribution <span class="math inline">\(g(\boldsymbol{\beta}\mid\boldsymbol{\theta})\)</span> of <a href="#eq-mixedlogit" class="quarto-xref">Equation&nbsp;<span>44.8</span></a> is where heterogeneity lives, and treating it carefully is what separates a model that merely fits aggregate shares from one that supports targeting, segmentation, and individual-level prediction. The Bayesian hierarchy is the natural language for this. The key obstacle is that each consumer supplies only a handful of choices, far too few to estimate an individual taste vector <span class="math inline">\(\boldsymbol{\beta}_n\)</span> on its own. The hierarchical model solves this by <em>borrowing strength</em>: it assumes individuals are drawn from a common population distribution and lets each person’s estimate shrink toward the population mean by an amount governed by how informative that person’s own data are. A three-level specification makes this concrete:</p>
 <p><span id="eq-hierarchy"><span class="math display">\[
 \begin{aligned}
@@ -1714,6 +1732,15 @@ Berry, Steven, James Levinsohn, and Ariel Pakes. 1995a. <span>“Automobile Pric
 </div>
 <div id="ref-blei2017variational" class="csl-entry" role="listitem">
 Blei, David M., Alp Kucukelbir, and Jon D. McAuliffe. 2017. <span>“Variational Inference: A Review for Statisticians.”</span> <em>Journal of the American Statistical Association</em> 112 (518): 859–77. <a href="https://doi.org/10.1080/01621459.2017.1285773">https://doi.org/10.1080/01621459.2017.1285773</a>.
+</div>
+<div id="ref-braun2024commentary" class="csl-entry" role="listitem">
+Braun, Michael. 2024. <span>“Commentary: Revisiting Scalable Targeted Marketing with Distributed Markov Chain Monte Carlo.”</span> <em>Journal of Marketing Research</em> 62 (3): 466–69. <a href="https://doi.org/10.1177/00222437241255307">https://doi.org/10.1177/00222437241255307</a>.
+</div>
+<div id="ref-bumbaca2020scalable" class="csl-entry" role="listitem">
+Bumbaca, Federico, Sanjog Misra, and Peter E. Rossi. 2020. <span>“Scalable Target Marketing: Distributed Markov Chain Monte Carlo for Bayesian Hierarchical Models.”</span> <em>Journal of Marketing Research</em> 57 (6): 999–1018. <a href="https://doi.org/10.1177/0022243720952410">https://doi.org/10.1177/0022243720952410</a>.
+</div>
+<div id="ref-bumbaca2025reply" class="csl-entry" role="listitem">
+———. 2025. <span>“Reply: <span>‘Revisiting Scalable Target Marketing’</span>.”</span> <em>Journal of Marketing Research</em> 62 (3): 470–71. <a href="https://doi.org/10.1177/00222437251330558">https://doi.org/10.1177/00222437251330558</a>.
 </div>
 <div id="ref-carpenter2017stan" class="csl-entry" role="listitem">
 Carpenter, Bob, Andrew Gelman, Matthew D. Hoffman, Daniel Lee, Ben Goodrich, Michael Betancourt, Marcus A. Brubaker, Jiqiang Guo, Peter Li, and Allen Riddell. 2017. <span>“Stan: A Probabilistic Programming Language.”</span> <em>Journal of Statistical Software</em> 76 (1): 1–32. <a href="https://doi.org/10.18637/jss.v076.i01">https://doi.org/10.18637/jss.v076.i01</a>.
@@ -2811,553 +2838,583 @@ Yang, Sha, and Greg M. Allenby. 2003. <span>“Modeling Interdependent Consumer 
 <span id="cb7-537"><a href="#cb7-537" aria-hidden="true" tabindex="-1"></a>**Methods.** Two-stage Gibbs for hierarchical logit/probit; posterior summaries at</span>
 <span id="cb7-538"><a href="#cb7-538" aria-hidden="true" tabindex="-1"></a>the individual level.</span>
 <span id="cb7-539"><a href="#cb7-539" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-540"><a href="#cb7-540" aria-hidden="true" tabindex="-1"></a>The mixing distribution $g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$ of</span>
-<span id="cb7-541"><a href="#cb7-541" aria-hidden="true" tabindex="-1"></a>@eq-mixedlogit is where heterogeneity lives, and treating it carefully is what</span>
-<span id="cb7-542"><a href="#cb7-542" aria-hidden="true" tabindex="-1"></a>separates a model that merely fits aggregate shares from one that supports targeting,</span>
-<span id="cb7-543"><a href="#cb7-543" aria-hidden="true" tabindex="-1"></a>segmentation, and individual-level prediction. The Bayesian hierarchy is the natural</span>
-<span id="cb7-544"><a href="#cb7-544" aria-hidden="true" tabindex="-1"></a>language for this. The key obstacle is that each consumer supplies only a handful of</span>
-<span id="cb7-545"><a href="#cb7-545" aria-hidden="true" tabindex="-1"></a>choices, far too few to estimate an individual taste vector $\boldsymbol{\beta}_n$ on</span>
-<span id="cb7-546"><a href="#cb7-546" aria-hidden="true" tabindex="-1"></a>its own. The hierarchical model solves this by *borrowing strength*: it assumes</span>
-<span id="cb7-547"><a href="#cb7-547" aria-hidden="true" tabindex="-1"></a>individuals are drawn from a common population distribution and lets each person's</span>
-<span id="cb7-548"><a href="#cb7-548" aria-hidden="true" tabindex="-1"></a>estimate shrink toward the population mean by an amount governed by how informative</span>
-<span id="cb7-549"><a href="#cb7-549" aria-hidden="true" tabindex="-1"></a>that person's own data are. A three-level specification makes this concrete:</span>
+<span id="cb7-540"><a href="#cb7-540" aria-hidden="true" tabindex="-1"></a>::: callout-note</span>
+<span id="cb7-541"><a href="#cb7-541" aria-hidden="true" tabindex="-1"></a><span class="fu">## Controversy: does distributed MCMC actually scale hierarchical Bayes?</span></span>
+<span id="cb7-542"><a href="#cb7-542" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-543"><a href="#cb7-543" aria-hidden="true" tabindex="-1"></a>Hierarchical Bayes is computationally expensive, and the obvious remedy—split the data</span>
+<span id="cb7-544"><a href="#cb7-544" aria-hidden="true" tabindex="-1"></a>across machines, run chains in parallel, recombine—turns out to be subtle enough to have</span>
+<span id="cb7-545"><a href="#cb7-545" aria-hidden="true" tabindex="-1"></a>produced a published dispute worth reading alongside the method.</span>
+<span id="cb7-546"><a href="#cb7-546" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-547"><a href="#cb7-547" aria-hidden="true" tabindex="-1"></a>**2020.** @bumbaca2020scalable propose a distributed MCMC procedure for Bayesian</span>
+<span id="cb7-548"><a href="#cb7-548" aria-hidden="true" tabindex="-1"></a>hierarchical models, aimed squarely at the target-marketing problem this week develops:</span>
+<span id="cb7-549"><a href="#cb7-549" aria-hidden="true" tabindex="-1"></a>individual-level posteriors for very large panels.</span>
 <span id="cb7-550"><a href="#cb7-550" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-551"><a href="#cb7-551" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb7-552"><a href="#cb7-552" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
-<span id="cb7-553"><a href="#cb7-553" aria-hidden="true" tabindex="-1"></a>\text{(likelihood)}\quad &amp; y_{ni} \mid \boldsymbol{\beta}_n</span>
-<span id="cb7-554"><a href="#cb7-554" aria-hidden="true" tabindex="-1"></a>   \ \sim\ \text{Logit}\big(\mathbf{x}_{ni}^{\top}\boldsymbol{\beta}_n\big), <span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
-<span id="cb7-555"><a href="#cb7-555" aria-hidden="true" tabindex="-1"></a>\text{(heterogeneity / prior)}\quad &amp; \boldsymbol{\beta}_n</span>
-<span id="cb7-556"><a href="#cb7-556" aria-hidden="true" tabindex="-1"></a>   \ \sim\ \mathcal{N}\big(\bar{\boldsymbol{\beta}},\, \mathbf{V}_\beta\big), <span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
-<span id="cb7-557"><a href="#cb7-557" aria-hidden="true" tabindex="-1"></a>\text{(hyperprior)}\quad &amp; \bar{\boldsymbol{\beta}}</span>
-<span id="cb7-558"><a href="#cb7-558" aria-hidden="true" tabindex="-1"></a>   \ \sim\ \mathcal{N}(\boldsymbol{\mu}_0,\, \mathbf{A}^{-1}), \qquad</span>
-<span id="cb7-559"><a href="#cb7-559" aria-hidden="true" tabindex="-1"></a>   \mathbf{V}_\beta \ \sim\ \text{Inverse-Wishart}(\nu_0, \mathbf{V}_0).</span>
-<span id="cb7-560"><a href="#cb7-560" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
-<span id="cb7-561"><a href="#cb7-561" aria-hidden="true" tabindex="-1"></a>$$ {#eq-hierarchy}</span>
-<span id="cb7-562"><a href="#cb7-562" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-563"><a href="#cb7-563" aria-hidden="true" tabindex="-1"></a>The middle line is exactly the mixing distribution of mixed logit, now read as a</span>
-<span id="cb7-564"><a href="#cb7-564" aria-hidden="true" tabindex="-1"></a>*prior* on each individual's tastes whose parameters</span>
-<span id="cb7-565"><a href="#cb7-565" aria-hidden="true" tabindex="-1"></a>$(\bar{\boldsymbol{\beta}}, \mathbf{V}_\beta)$ are themselves estimated. An</span>
-<span id="cb7-566"><a href="#cb7-566" aria-hidden="true" tabindex="-1"></a>individual with many observations is driven by the first line (their own data); an</span>
-<span id="cb7-567"><a href="#cb7-567" aria-hidden="true" tabindex="-1"></a>individual with few is pulled toward $\bar{\boldsymbol{\beta}}$ by the second. This</span>
-<span id="cb7-568"><a href="#cb7-568" aria-hidden="true" tabindex="-1"></a>shrinkage is not a regularization hack but the optimal pooling of individual and</span>
-<span id="cb7-569"><a href="#cb7-569" aria-hidden="true" tabindex="-1"></a>population information under the model, and it is the reason hierarchical Bayes</span>
-<span id="cb7-570"><a href="#cb7-570" aria-hidden="true" tabindex="-1"></a>recovers usable individual-level estimates from sparse data—the property that made it</span>
-<span id="cb7-571"><a href="#cb7-571" aria-hidden="true" tabindex="-1"></a>the standard estimator for choice-based conjoint and household-level demand</span>
-<span id="cb7-572"><a href="#cb7-572" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@rossi2014; @kamakura2005choice; @allenby1998heterogeneity</span><span class="co">]</span>.</span>
-<span id="cb7-573"><a href="#cb7-573" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-574"><a href="#cb7-574" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb7-575"><a href="#cb7-575" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why Bayesian, not just penalized likelihood?</span></span>
-<span id="cb7-576"><a href="#cb7-576" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-577"><a href="#cb7-577" aria-hidden="true" tabindex="-1"></a>The hierarchical structure could in principle be fit by maximizing a penalized</span>
-<span id="cb7-578"><a href="#cb7-578" aria-hidden="true" tabindex="-1"></a>likelihood (empirical Bayes), and for the population parameters the two agree</span>
-<span id="cb7-579"><a href="#cb7-579" aria-hidden="true" tabindex="-1"></a>asymptotically. The Bayesian apparatus earns its keep on the *individual-level*</span>
-<span id="cb7-580"><a href="#cb7-580" aria-hidden="true" tabindex="-1"></a>posteriors: it delivers a full posterior distribution for each</span>
-<span id="cb7-581"><a href="#cb7-581" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_n$—hence honest uncertainty for targeting decisions—and it</span>
-<span id="cb7-582"><a href="#cb7-582" aria-hidden="true" tabindex="-1"></a>sidesteps the simulated-likelihood maximization that is numerically fragile for</span>
-<span id="cb7-583"><a href="#cb7-583" aria-hidden="true" tabindex="-1"></a>high-dimensional mixing distributions. The cost is the construction and tuning of an</span>
-<span id="cb7-584"><a href="#cb7-584" aria-hidden="true" tabindex="-1"></a>MCMC sampler.</span>
-<span id="cb7-585"><a href="#cb7-585" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb7-586"><a href="#cb7-586" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-587"><a href="#cb7-587" aria-hidden="true" tabindex="-1"></a><span class="fu">#### The MCMC engine</span></span>
-<span id="cb7-588"><a href="#cb7-588" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-589"><a href="#cb7-589" aria-hidden="true" tabindex="-1"></a>MCMC makes the hierarchy in @eq-hierarchy estimable. **Gibbs sampling** cycles</span>
-<span id="cb7-590"><a href="#cb7-590" aria-hidden="true" tabindex="-1"></a>through the parameter blocks. Two of the three conditionals are conjugate and drawn</span>
-<span id="cb7-591"><a href="#cb7-591" aria-hidden="true" tabindex="-1"></a>directly: given the individual $\boldsymbol{\beta}_n$, the population mean</span>
-<span id="cb7-592"><a href="#cb7-592" aria-hidden="true" tabindex="-1"></a>$\bar{\boldsymbol{\beta}}$ has a normal full conditional and the covariance</span>
-<span id="cb7-593"><a href="#cb7-593" aria-hidden="true" tabindex="-1"></a>$\mathbf{V}_\beta$ an inverse-Wishart full conditional—which is precisely why the</span>
-<span id="cb7-594"><a href="#cb7-594" aria-hidden="true" tabindex="-1"></a>normal–inverse-Wishart hyperprior is chosen. **The Metropolis–Hastings step** handles</span>
-<span id="cb7-595"><a href="#cb7-595" aria-hidden="true" tabindex="-1"></a>the non-conjugate individual logit block. A candidate</span>
-<span id="cb7-596"><a href="#cb7-596" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_n^{\star}$ is proposed (commonly by a random walk) and accepted</span>
-<span id="cb7-597"><a href="#cb7-597" aria-hidden="true" tabindex="-1"></a>with probability</span>
-<span id="cb7-598"><a href="#cb7-598" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-599"><a href="#cb7-599" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb7-600"><a href="#cb7-600" aria-hidden="true" tabindex="-1"></a>\alpha = \min<span class="sc">\!</span>\left<span class="sc">\{</span> 1,\ \frac{p(y_n \mid \boldsymbol{\beta}_n^{\star})\,</span>
-<span id="cb7-601"><a href="#cb7-601" aria-hidden="true" tabindex="-1"></a>   \phi(\boldsymbol{\beta}_n^{\star} \mid \bar{\boldsymbol{\beta}}, \mathbf{V}_\beta)}</span>
-<span id="cb7-602"><a href="#cb7-602" aria-hidden="true" tabindex="-1"></a>   {p(y_n \mid \boldsymbol{\beta}_n)\,</span>
-<span id="cb7-603"><a href="#cb7-603" aria-hidden="true" tabindex="-1"></a>   \phi(\boldsymbol{\beta}_n \mid \bar{\boldsymbol{\beta}}, \mathbf{V}_\beta)} \right<span class="sc">\}</span>.</span>
-<span id="cb7-604"><a href="#cb7-604" aria-hidden="true" tabindex="-1"></a>$$ {#eq-mh}</span>
-<span id="cb7-605"><a href="#cb7-605" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-606"><a href="#cb7-606" aria-hidden="true" tabindex="-1"></a>The acceptance ratio depends only on the likelihood and prior, never on the</span>
-<span id="cb7-607"><a href="#cb7-607" aria-hidden="true" tabindex="-1"></a>intractable normalizing constant. For probit and multinomial models, **data</span>
-<span id="cb7-608"><a href="#cb7-608" aria-hidden="true" tabindex="-1"></a>augmentation** restores conjugacy by sampling the latent utilities $U_{nj}$ as</span>
-<span id="cb7-609"><a href="#cb7-609" aria-hidden="true" tabindex="-1"></a>additional unknowns <span class="co">[</span><span class="ot">@chib; @mcculloch1994exactprobit</span><span class="co">]</span>. @fig-gibbs sketches one sweep.</span>
-<span id="cb7-610"><a href="#cb7-610" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-613"><a href="#cb7-613" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb7-614"><a href="#cb7-614" aria-hidden="true" tabindex="-1"></a>%%| label: fig-gibbs</span>
-<span id="cb7-615"><a href="#cb7-615" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">One sweep of a hierarchical-Bayes Gibbs sampler for the choice model in equation (8). Conjugate blocks are drawn directly; the non-conjugate individual coefficients use a Metropolis-Hastings step. The loop repeats for thousands of iterations after burn-in.</span><span class="ot">"</span></span>
-<span id="cb7-616"><a href="#cb7-616" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb7-617"><a href="#cb7-617" aria-hidden="true" tabindex="-1"></a>    S[<span class="ot">"</span><span class="st">Current draw:&lt;br/&gt;beta_n, beta_bar, V_beta</span><span class="ot">"</span>] --&gt; A[<span class="ot">"</span><span class="st">Draw beta_n | rest&lt;br/&gt;(Metropolis-Hastings, eq. 9)</span><span class="ot">"</span>]</span>
-<span id="cb7-618"><a href="#cb7-618" aria-hidden="true" tabindex="-1"></a>    A --&gt; B[<span class="ot">"</span><span class="st">Draw beta_bar | beta_n, V_beta&lt;br/&gt;(Normal, conjugate)</span><span class="ot">"</span>]</span>
-<span id="cb7-619"><a href="#cb7-619" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[<span class="ot">"</span><span class="st">Draw V_beta | beta_n, beta_bar&lt;br/&gt;(Inverse-Wishart, conjugate)</span><span class="ot">"</span>]</span>
-<span id="cb7-620"><a href="#cb7-620" aria-hidden="true" tabindex="-1"></a>    C --&gt; D{<span class="ot">"</span><span class="st">Converged?&lt;br/&gt;(R-hat, trace plots)</span><span class="ot">"</span>}</span>
-<span id="cb7-621"><a href="#cb7-621" aria-hidden="true" tabindex="-1"></a>    D --&gt;|<span class="ot">"</span><span class="st">no</span><span class="ot">"</span>| S</span>
-<span id="cb7-622"><a href="#cb7-622" aria-hidden="true" tabindex="-1"></a>    D --&gt;|<span class="ot">"</span><span class="st">yes</span><span class="ot">"</span>| E[<span class="ot">"</span><span class="st">Retain post-burn-in draws&lt;br/&gt;= posterior sample</span><span class="ot">"</span>]</span>
-<span id="cb7-623"><a href="#cb7-623" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-624"><a href="#cb7-624" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-625"><a href="#cb7-625" aria-hidden="true" tabindex="-1"></a>**Convergence is not automatic and must be checked.** Standard diagnostics are the</span>
-<span id="cb7-626"><a href="#cb7-626" aria-hidden="true" tabindex="-1"></a>trace plot, the potential-scale-reduction factor $\hat R$ across multiple dispersed</span>
-<span id="cb7-627"><a href="#cb7-627" aria-hidden="true" tabindex="-1"></a>chains (values near $1.0$ indicate convergence), and the effective sample size, which</span>
-<span id="cb7-628"><a href="#cb7-628" aria-hidden="true" tabindex="-1"></a>discounts the nominal draw count by autocorrelation <span class="co">[</span><span class="ot">@chintagunta2006structural</span><span class="co">]</span>.</span>
-<span id="cb7-629"><a href="#cb7-629" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-630"><a href="#cb7-630" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Worked example: hierarchical Bayes for brand choice</span></span>
-<span id="cb7-631"><a href="#cb7-631" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-632"><a href="#cb7-632" aria-hidden="true" tabindex="-1"></a>The following self-contained example simulates a choice-based experiment with</span>
-<span id="cb7-633"><a href="#cb7-633" aria-hidden="true" tabindex="-1"></a>heterogeneous consumers, fits a homogeneous logit and a hierarchical-Bayes mixed</span>
-<span id="cb7-634"><a href="#cb7-634" aria-hidden="true" tabindex="-1"></a>logit, and shows that the hierarchical model recovers the individual-level taste</span>
-<span id="cb7-635"><a href="#cb7-635" aria-hidden="true" tabindex="-1"></a>distribution the homogeneous model cannot see.</span>
-<span id="cb7-636"><a href="#cb7-636" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-637"><a href="#cb7-637" aria-hidden="true" tabindex="-1"></a><span class="in">```{r choice-setup, message=FALSE, warning=FALSE}</span></span>
-<span id="cb7-638"><a href="#cb7-638" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">50</span>)</span>
-<span id="cb7-639"><a href="#cb7-639" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-640"><a href="#cb7-640" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Simulate a choice-based conjoint / brand-choice experiment ----</span></span>
-<span id="cb7-641"><a href="#cb7-641" aria-hidden="true" tabindex="-1"></a>n_consumers <span class="ot">&lt;-</span> <span class="dv">200</span>      <span class="co"># decision makers</span></span>
-<span id="cb7-642"><a href="#cb7-642" aria-hidden="true" tabindex="-1"></a>n_tasks     <span class="ot">&lt;-</span> <span class="dv">12</span>       <span class="co"># choice tasks per consumer</span></span>
-<span id="cb7-643"><a href="#cb7-643" aria-hidden="true" tabindex="-1"></a>n_alts      <span class="ot">&lt;-</span> <span class="dv">3</span>        <span class="co"># alternatives per task (brands A, B, C)</span></span>
-<span id="cb7-644"><a href="#cb7-644" aria-hidden="true" tabindex="-1"></a>n_attr      <span class="ot">&lt;-</span> <span class="dv">4</span>        <span class="co"># intercepts for B and C, price, a feature dummy</span></span>
-<span id="cb7-645"><a href="#cb7-645" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-646"><a href="#cb7-646" aria-hidden="true" tabindex="-1"></a><span class="co"># Population (hyper) parameters: mean tastes and heterogeneity covariance</span></span>
-<span id="cb7-647"><a href="#cb7-647" aria-hidden="true" tabindex="-1"></a>beta_bar  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">brandB =</span> <span class="fl">0.8</span>, <span class="at">brandC =</span> <span class="fl">0.4</span>, <span class="at">price =</span> <span class="sc">-</span><span class="fl">1.5</span>, <span class="at">feature =</span> <span class="fl">0.7</span>)</span>
-<span id="cb7-648"><a href="#cb7-648" aria-hidden="true" tabindex="-1"></a>V_beta    <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>))          <span class="co"># taste heterogeneity</span></span>
-<span id="cb7-649"><a href="#cb7-649" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-650"><a href="#cb7-650" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw individual-level tastes from the population distribution</span></span>
-<span id="cb7-651"><a href="#cb7-651" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
-<span id="cb7-652"><a href="#cb7-652" aria-hidden="true" tabindex="-1"></a>beta_i <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(n_consumers, <span class="at">mu =</span> beta_bar, <span class="at">Sigma =</span> V_beta)</span>
-<span id="cb7-653"><a href="#cb7-653" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-654"><a href="#cb7-654" aria-hidden="true" tabindex="-1"></a><span class="co"># Build design matrices and simulate choices under the logit model</span></span>
-<span id="cb7-655"><a href="#cb7-655" aria-hidden="true" tabindex="-1"></a>sim_one <span class="ot">&lt;-</span> <span class="cf">function</span>(b) {</span>
-<span id="cb7-656"><a href="#cb7-656" aria-hidden="true" tabindex="-1"></a>  Y <span class="ot">&lt;-</span> <span class="fu">integer</span>(n_tasks); X_list <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">"list"</span>, n_tasks)</span>
-<span id="cb7-657"><a href="#cb7-657" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(n_tasks)) {</span>
-<span id="cb7-658"><a href="#cb7-658" aria-hidden="true" tabindex="-1"></a>    price   <span class="ot">&lt;-</span> <span class="fu">runif</span>(n_alts, <span class="dv">0</span>, <span class="dv">1</span>)                 <span class="co"># standardized price</span></span>
-<span id="cb7-659"><a href="#cb7-659" aria-hidden="true" tabindex="-1"></a>    feature <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n_alts, <span class="dv">1</span>, <span class="fl">0.5</span>)</span>
-<span id="cb7-660"><a href="#cb7-660" aria-hidden="true" tabindex="-1"></a>    X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">brandB =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>), <span class="at">brandC =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>),</span>
-<span id="cb7-661"><a href="#cb7-661" aria-hidden="true" tabindex="-1"></a>               <span class="at">price =</span> price, <span class="at">feature =</span> feature)</span>
-<span id="cb7-662"><a href="#cb7-662" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(X <span class="sc">%*%</span> b)</span>
-<span id="cb7-663"><a href="#cb7-663" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> <span class="fu">exp</span>(v) <span class="sc">/</span> <span class="fu">sum</span>(<span class="fu">exp</span>(v))</span>
-<span id="cb7-664"><a href="#cb7-664" aria-hidden="true" tabindex="-1"></a>    Y[t] <span class="ot">&lt;-</span> <span class="fu">sample.int</span>(n_alts, <span class="dv">1</span>, <span class="at">prob =</span> p)        <span class="co"># realized choice</span></span>
-<span id="cb7-665"><a href="#cb7-665" aria-hidden="true" tabindex="-1"></a>    X_list[[t]] <span class="ot">&lt;-</span> X</span>
-<span id="cb7-666"><a href="#cb7-666" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-667"><a href="#cb7-667" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">Y =</span> Y, <span class="at">X =</span> X_list)</span>
-<span id="cb7-668"><a href="#cb7-668" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-551"><a href="#cb7-551" aria-hidden="true" tabindex="-1"></a>**2024.** @braun2024commentary revisits the approach in a commentary, four years after</span>
+<span id="cb7-552"><a href="#cb7-552" aria-hidden="true" tabindex="-1"></a>publication.</span>
+<span id="cb7-553"><a href="#cb7-553" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-554"><a href="#cb7-554" aria-hidden="true" tabindex="-1"></a>**2025.** @bumbaca2025reply reply, in two pages, in the same journal.</span>
+<span id="cb7-555"><a href="#cb7-555" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-556"><a href="#cb7-556" aria-hidden="true" tabindex="-1"></a>Read the exchange rather than a summary of it — the substance is technical and the</span>
+<span id="cb7-557"><a href="#cb7-557" aria-hidden="true" tabindex="-1"></a>disagreement is about conditions under which the approximation holds, which is exactly</span>
+<span id="cb7-558"><a href="#cb7-558" aria-hidden="true" tabindex="-1"></a>the kind of thing a summary flattens. The reason it belongs in this chapter is that the</span>
+<span id="cb7-559"><a href="#cb7-559" aria-hidden="true" tabindex="-1"></a>question is not academic for anyone doing targeting at scale: the whole value of the</span>
+<span id="cb7-560"><a href="#cb7-560" aria-hidden="true" tabindex="-1"></a>hierarchical model here is the *individual-level* posterior (@sec-cb-week-7), and any</span>
+<span id="cb7-561"><a href="#cb7-561" aria-hidden="true" tabindex="-1"></a>distributed scheme that recombines chains has to preserve that, not merely the</span>
+<span id="cb7-562"><a href="#cb7-562" aria-hidden="true" tabindex="-1"></a>population-level parameters. If you plan to run one of these procedures, the commentary</span>
+<span id="cb7-563"><a href="#cb7-563" aria-hidden="true" tabindex="-1"></a>is a list of the things to check.</span>
+<span id="cb7-564"><a href="#cb7-564" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-565"><a href="#cb7-565" aria-hidden="true" tabindex="-1"></a>This is also a good example of the genre described in @sec-cred-public-argument: a</span>
+<span id="cb7-566"><a href="#cb7-566" aria-hidden="true" tabindex="-1"></a>methods paper, a challenge years later, a short reply, and no adjudication by the</span>
+<span id="cb7-567"><a href="#cb7-567" aria-hidden="true" tabindex="-1"></a>journal. The reader does the adjudicating.</span>
+<span id="cb7-568"><a href="#cb7-568" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb7-569"><a href="#cb7-569" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-570"><a href="#cb7-570" aria-hidden="true" tabindex="-1"></a>The mixing distribution $g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$ of</span>
+<span id="cb7-571"><a href="#cb7-571" aria-hidden="true" tabindex="-1"></a>@eq-mixedlogit is where heterogeneity lives, and treating it carefully is what</span>
+<span id="cb7-572"><a href="#cb7-572" aria-hidden="true" tabindex="-1"></a>separates a model that merely fits aggregate shares from one that supports targeting,</span>
+<span id="cb7-573"><a href="#cb7-573" aria-hidden="true" tabindex="-1"></a>segmentation, and individual-level prediction. The Bayesian hierarchy is the natural</span>
+<span id="cb7-574"><a href="#cb7-574" aria-hidden="true" tabindex="-1"></a>language for this. The key obstacle is that each consumer supplies only a handful of</span>
+<span id="cb7-575"><a href="#cb7-575" aria-hidden="true" tabindex="-1"></a>choices, far too few to estimate an individual taste vector $\boldsymbol{\beta}_n$ on</span>
+<span id="cb7-576"><a href="#cb7-576" aria-hidden="true" tabindex="-1"></a>its own. The hierarchical model solves this by *borrowing strength*: it assumes</span>
+<span id="cb7-577"><a href="#cb7-577" aria-hidden="true" tabindex="-1"></a>individuals are drawn from a common population distribution and lets each person's</span>
+<span id="cb7-578"><a href="#cb7-578" aria-hidden="true" tabindex="-1"></a>estimate shrink toward the population mean by an amount governed by how informative</span>
+<span id="cb7-579"><a href="#cb7-579" aria-hidden="true" tabindex="-1"></a>that person's own data are. A three-level specification makes this concrete:</span>
+<span id="cb7-580"><a href="#cb7-580" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-581"><a href="#cb7-581" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb7-582"><a href="#cb7-582" aria-hidden="true" tabindex="-1"></a>\begin{aligned}</span>
+<span id="cb7-583"><a href="#cb7-583" aria-hidden="true" tabindex="-1"></a>\text{(likelihood)}\quad &amp; y_{ni} \mid \boldsymbol{\beta}_n</span>
+<span id="cb7-584"><a href="#cb7-584" aria-hidden="true" tabindex="-1"></a>   \ \sim\ \text{Logit}\big(\mathbf{x}_{ni}^{\top}\boldsymbol{\beta}_n\big), <span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
+<span id="cb7-585"><a href="#cb7-585" aria-hidden="true" tabindex="-1"></a>\text{(heterogeneity / prior)}\quad &amp; \boldsymbol{\beta}_n</span>
+<span id="cb7-586"><a href="#cb7-586" aria-hidden="true" tabindex="-1"></a>   \ \sim\ \mathcal{N}\big(\bar{\boldsymbol{\beta}},\, \mathbf{V}_\beta\big), <span class="sc">\\</span><span class="co">[</span><span class="ot">2pt</span><span class="co">]</span></span>
+<span id="cb7-587"><a href="#cb7-587" aria-hidden="true" tabindex="-1"></a>\text{(hyperprior)}\quad &amp; \bar{\boldsymbol{\beta}}</span>
+<span id="cb7-588"><a href="#cb7-588" aria-hidden="true" tabindex="-1"></a>   \ \sim\ \mathcal{N}(\boldsymbol{\mu}_0,\, \mathbf{A}^{-1}), \qquad</span>
+<span id="cb7-589"><a href="#cb7-589" aria-hidden="true" tabindex="-1"></a>   \mathbf{V}_\beta \ \sim\ \text{Inverse-Wishart}(\nu_0, \mathbf{V}_0).</span>
+<span id="cb7-590"><a href="#cb7-590" aria-hidden="true" tabindex="-1"></a>\end{aligned}</span>
+<span id="cb7-591"><a href="#cb7-591" aria-hidden="true" tabindex="-1"></a>$$ {#eq-hierarchy}</span>
+<span id="cb7-592"><a href="#cb7-592" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-593"><a href="#cb7-593" aria-hidden="true" tabindex="-1"></a>The middle line is exactly the mixing distribution of mixed logit, now read as a</span>
+<span id="cb7-594"><a href="#cb7-594" aria-hidden="true" tabindex="-1"></a>*prior* on each individual's tastes whose parameters</span>
+<span id="cb7-595"><a href="#cb7-595" aria-hidden="true" tabindex="-1"></a>$(\bar{\boldsymbol{\beta}}, \mathbf{V}_\beta)$ are themselves estimated. An</span>
+<span id="cb7-596"><a href="#cb7-596" aria-hidden="true" tabindex="-1"></a>individual with many observations is driven by the first line (their own data); an</span>
+<span id="cb7-597"><a href="#cb7-597" aria-hidden="true" tabindex="-1"></a>individual with few is pulled toward $\bar{\boldsymbol{\beta}}$ by the second. This</span>
+<span id="cb7-598"><a href="#cb7-598" aria-hidden="true" tabindex="-1"></a>shrinkage is not a regularization hack but the optimal pooling of individual and</span>
+<span id="cb7-599"><a href="#cb7-599" aria-hidden="true" tabindex="-1"></a>population information under the model, and it is the reason hierarchical Bayes</span>
+<span id="cb7-600"><a href="#cb7-600" aria-hidden="true" tabindex="-1"></a>recovers usable individual-level estimates from sparse data—the property that made it</span>
+<span id="cb7-601"><a href="#cb7-601" aria-hidden="true" tabindex="-1"></a>the standard estimator for choice-based conjoint and household-level demand</span>
+<span id="cb7-602"><a href="#cb7-602" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@rossi2014; @kamakura2005choice; @allenby1998heterogeneity</span><span class="co">]</span>.</span>
+<span id="cb7-603"><a href="#cb7-603" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-604"><a href="#cb7-604" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb7-605"><a href="#cb7-605" aria-hidden="true" tabindex="-1"></a><span class="fu">## Why Bayesian, not just penalized likelihood?</span></span>
+<span id="cb7-606"><a href="#cb7-606" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-607"><a href="#cb7-607" aria-hidden="true" tabindex="-1"></a>The hierarchical structure could in principle be fit by maximizing a penalized</span>
+<span id="cb7-608"><a href="#cb7-608" aria-hidden="true" tabindex="-1"></a>likelihood (empirical Bayes), and for the population parameters the two agree</span>
+<span id="cb7-609"><a href="#cb7-609" aria-hidden="true" tabindex="-1"></a>asymptotically. The Bayesian apparatus earns its keep on the *individual-level*</span>
+<span id="cb7-610"><a href="#cb7-610" aria-hidden="true" tabindex="-1"></a>posteriors: it delivers a full posterior distribution for each</span>
+<span id="cb7-611"><a href="#cb7-611" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_n$—hence honest uncertainty for targeting decisions—and it</span>
+<span id="cb7-612"><a href="#cb7-612" aria-hidden="true" tabindex="-1"></a>sidesteps the simulated-likelihood maximization that is numerically fragile for</span>
+<span id="cb7-613"><a href="#cb7-613" aria-hidden="true" tabindex="-1"></a>high-dimensional mixing distributions. The cost is the construction and tuning of an</span>
+<span id="cb7-614"><a href="#cb7-614" aria-hidden="true" tabindex="-1"></a>MCMC sampler.</span>
+<span id="cb7-615"><a href="#cb7-615" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb7-616"><a href="#cb7-616" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-617"><a href="#cb7-617" aria-hidden="true" tabindex="-1"></a><span class="fu">#### The MCMC engine</span></span>
+<span id="cb7-618"><a href="#cb7-618" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-619"><a href="#cb7-619" aria-hidden="true" tabindex="-1"></a>MCMC makes the hierarchy in @eq-hierarchy estimable. **Gibbs sampling** cycles</span>
+<span id="cb7-620"><a href="#cb7-620" aria-hidden="true" tabindex="-1"></a>through the parameter blocks. Two of the three conditionals are conjugate and drawn</span>
+<span id="cb7-621"><a href="#cb7-621" aria-hidden="true" tabindex="-1"></a>directly: given the individual $\boldsymbol{\beta}_n$, the population mean</span>
+<span id="cb7-622"><a href="#cb7-622" aria-hidden="true" tabindex="-1"></a>$\bar{\boldsymbol{\beta}}$ has a normal full conditional and the covariance</span>
+<span id="cb7-623"><a href="#cb7-623" aria-hidden="true" tabindex="-1"></a>$\mathbf{V}_\beta$ an inverse-Wishart full conditional—which is precisely why the</span>
+<span id="cb7-624"><a href="#cb7-624" aria-hidden="true" tabindex="-1"></a>normal–inverse-Wishart hyperprior is chosen. **The Metropolis–Hastings step** handles</span>
+<span id="cb7-625"><a href="#cb7-625" aria-hidden="true" tabindex="-1"></a>the non-conjugate individual logit block. A candidate</span>
+<span id="cb7-626"><a href="#cb7-626" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_n^{\star}$ is proposed (commonly by a random walk) and accepted</span>
+<span id="cb7-627"><a href="#cb7-627" aria-hidden="true" tabindex="-1"></a>with probability</span>
+<span id="cb7-628"><a href="#cb7-628" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-629"><a href="#cb7-629" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb7-630"><a href="#cb7-630" aria-hidden="true" tabindex="-1"></a>\alpha = \min<span class="sc">\!</span>\left<span class="sc">\{</span> 1,\ \frac{p(y_n \mid \boldsymbol{\beta}_n^{\star})\,</span>
+<span id="cb7-631"><a href="#cb7-631" aria-hidden="true" tabindex="-1"></a>   \phi(\boldsymbol{\beta}_n^{\star} \mid \bar{\boldsymbol{\beta}}, \mathbf{V}_\beta)}</span>
+<span id="cb7-632"><a href="#cb7-632" aria-hidden="true" tabindex="-1"></a>   {p(y_n \mid \boldsymbol{\beta}_n)\,</span>
+<span id="cb7-633"><a href="#cb7-633" aria-hidden="true" tabindex="-1"></a>   \phi(\boldsymbol{\beta}_n \mid \bar{\boldsymbol{\beta}}, \mathbf{V}_\beta)} \right<span class="sc">\}</span>.</span>
+<span id="cb7-634"><a href="#cb7-634" aria-hidden="true" tabindex="-1"></a>$$ {#eq-mh}</span>
+<span id="cb7-635"><a href="#cb7-635" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-636"><a href="#cb7-636" aria-hidden="true" tabindex="-1"></a>The acceptance ratio depends only on the likelihood and prior, never on the</span>
+<span id="cb7-637"><a href="#cb7-637" aria-hidden="true" tabindex="-1"></a>intractable normalizing constant. For probit and multinomial models, **data</span>
+<span id="cb7-638"><a href="#cb7-638" aria-hidden="true" tabindex="-1"></a>augmentation** restores conjugacy by sampling the latent utilities $U_{nj}$ as</span>
+<span id="cb7-639"><a href="#cb7-639" aria-hidden="true" tabindex="-1"></a>additional unknowns <span class="co">[</span><span class="ot">@chib; @mcculloch1994exactprobit</span><span class="co">]</span>. @fig-gibbs sketches one sweep.</span>
+<span id="cb7-640"><a href="#cb7-640" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-643"><a href="#cb7-643" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb7-644"><a href="#cb7-644" aria-hidden="true" tabindex="-1"></a>%%| label: fig-gibbs</span>
+<span id="cb7-645"><a href="#cb7-645" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">One sweep of a hierarchical-Bayes Gibbs sampler for the choice model in equation (8). Conjugate blocks are drawn directly; the non-conjugate individual coefficients use a Metropolis-Hastings step. The loop repeats for thousands of iterations after burn-in.</span><span class="ot">"</span></span>
+<span id="cb7-646"><a href="#cb7-646" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb7-647"><a href="#cb7-647" aria-hidden="true" tabindex="-1"></a>    S[<span class="ot">"</span><span class="st">Current draw:&lt;br/&gt;beta_n, beta_bar, V_beta</span><span class="ot">"</span>] --&gt; A[<span class="ot">"</span><span class="st">Draw beta_n | rest&lt;br/&gt;(Metropolis-Hastings, eq. 9)</span><span class="ot">"</span>]</span>
+<span id="cb7-648"><a href="#cb7-648" aria-hidden="true" tabindex="-1"></a>    A --&gt; B[<span class="ot">"</span><span class="st">Draw beta_bar | beta_n, V_beta&lt;br/&gt;(Normal, conjugate)</span><span class="ot">"</span>]</span>
+<span id="cb7-649"><a href="#cb7-649" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[<span class="ot">"</span><span class="st">Draw V_beta | beta_n, beta_bar&lt;br/&gt;(Inverse-Wishart, conjugate)</span><span class="ot">"</span>]</span>
+<span id="cb7-650"><a href="#cb7-650" aria-hidden="true" tabindex="-1"></a>    C --&gt; D{<span class="ot">"</span><span class="st">Converged?&lt;br/&gt;(R-hat, trace plots)</span><span class="ot">"</span>}</span>
+<span id="cb7-651"><a href="#cb7-651" aria-hidden="true" tabindex="-1"></a>    D --&gt;|<span class="ot">"</span><span class="st">no</span><span class="ot">"</span>| S</span>
+<span id="cb7-652"><a href="#cb7-652" aria-hidden="true" tabindex="-1"></a>    D --&gt;|<span class="ot">"</span><span class="st">yes</span><span class="ot">"</span>| E[<span class="ot">"</span><span class="st">Retain post-burn-in draws&lt;br/&gt;= posterior sample</span><span class="ot">"</span>]</span>
+<span id="cb7-653"><a href="#cb7-653" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb7-654"><a href="#cb7-654" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-655"><a href="#cb7-655" aria-hidden="true" tabindex="-1"></a>**Convergence is not automatic and must be checked.** Standard diagnostics are the</span>
+<span id="cb7-656"><a href="#cb7-656" aria-hidden="true" tabindex="-1"></a>trace plot, the potential-scale-reduction factor $\hat R$ across multiple dispersed</span>
+<span id="cb7-657"><a href="#cb7-657" aria-hidden="true" tabindex="-1"></a>chains (values near $1.0$ indicate convergence), and the effective sample size, which</span>
+<span id="cb7-658"><a href="#cb7-658" aria-hidden="true" tabindex="-1"></a>discounts the nominal draw count by autocorrelation <span class="co">[</span><span class="ot">@chintagunta2006structural</span><span class="co">]</span>.</span>
+<span id="cb7-659"><a href="#cb7-659" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-660"><a href="#cb7-660" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Worked example: hierarchical Bayes for brand choice</span></span>
+<span id="cb7-661"><a href="#cb7-661" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-662"><a href="#cb7-662" aria-hidden="true" tabindex="-1"></a>The following self-contained example simulates a choice-based experiment with</span>
+<span id="cb7-663"><a href="#cb7-663" aria-hidden="true" tabindex="-1"></a>heterogeneous consumers, fits a homogeneous logit and a hierarchical-Bayes mixed</span>
+<span id="cb7-664"><a href="#cb7-664" aria-hidden="true" tabindex="-1"></a>logit, and shows that the hierarchical model recovers the individual-level taste</span>
+<span id="cb7-665"><a href="#cb7-665" aria-hidden="true" tabindex="-1"></a>distribution the homogeneous model cannot see.</span>
+<span id="cb7-666"><a href="#cb7-666" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-667"><a href="#cb7-667" aria-hidden="true" tabindex="-1"></a><span class="in">```{r choice-setup, message=FALSE, warning=FALSE}</span></span>
+<span id="cb7-668"><a href="#cb7-668" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">50</span>)</span>
 <span id="cb7-669"><a href="#cb7-669" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-670"><a href="#cb7-670" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n_consumers), <span class="cf">function</span>(i) <span class="fu">sim_one</span>(beta_i[i, ]))</span>
-<span id="cb7-671"><a href="#cb7-671" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Simulated"</span>, n_consumers, <span class="st">"consumers x"</span>, n_tasks, <span class="st">"tasks.</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb7-672"><a href="#cb7-672" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-673"><a href="#cb7-673" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-674"><a href="#cb7-674" aria-hidden="true" tabindex="-1"></a>A pooled logit that ignores heterogeneity recovers the population *mean* tastes</span>
-<span id="cb7-675"><a href="#cb7-675" aria-hidden="true" tabindex="-1"></a>reasonably but, by construction, says nothing about their spread.</span>
-<span id="cb7-676"><a href="#cb7-676" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-677"><a href="#cb7-677" aria-hidden="true" tabindex="-1"></a><span class="in">```{r pooled-logit, message=FALSE, warning=FALSE}</span></span>
-<span id="cb7-678"><a href="#cb7-678" aria-hidden="true" tabindex="-1"></a><span class="co"># Negative log-likelihood for a homogeneous conditional logit</span></span>
-<span id="cb7-679"><a href="#cb7-679" aria-hidden="true" tabindex="-1"></a>nll_logit <span class="ot">&lt;-</span> <span class="cf">function</span>(b, data) {</span>
-<span id="cb7-680"><a href="#cb7-680" aria-hidden="true" tabindex="-1"></a>  ll <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb7-681"><a href="#cb7-681" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (d <span class="cf">in</span> data) <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_along</span>(d<span class="sc">$</span>Y)) {</span>
-<span id="cb7-682"><a href="#cb7-682" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(d<span class="sc">$</span>X[[t]] <span class="sc">%*%</span> b)</span>
-<span id="cb7-683"><a href="#cb7-683" aria-hidden="true" tabindex="-1"></a>    ll <span class="ot">&lt;-</span> ll <span class="sc">+</span> (v[d<span class="sc">$</span>Y[t]] <span class="sc">-</span> <span class="fu">log</span>(<span class="fu">sum</span>(<span class="fu">exp</span>(v))))</span>
-<span id="cb7-684"><a href="#cb7-684" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-685"><a href="#cb7-685" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span>ll</span>
-<span id="cb7-686"><a href="#cb7-686" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-687"><a href="#cb7-687" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-688"><a href="#cb7-688" aria-hidden="true" tabindex="-1"></a>fit_pooled <span class="ot">&lt;-</span> <span class="fu">optim</span>(<span class="fu">rep</span>(<span class="dv">0</span>, n_attr), nll_logit, <span class="at">data =</span> data,</span>
-<span id="cb7-689"><a href="#cb7-689" aria-hidden="true" tabindex="-1"></a>                    <span class="at">method =</span> <span class="st">"BFGS"</span>)</span>
-<span id="cb7-690"><a href="#cb7-690" aria-hidden="true" tabindex="-1"></a>pooled <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">round</span>(fit_pooled<span class="sc">$</span>par, <span class="dv">3</span>), <span class="fu">names</span>(beta_bar))</span>
-<span id="cb7-691"><a href="#cb7-691" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">true_mean =</span> beta_bar, <span class="at">pooled_logit =</span> pooled)</span>
-<span id="cb7-692"><a href="#cb7-692" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-693"><a href="#cb7-693" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-694"><a href="#cb7-694" aria-hidden="true" tabindex="-1"></a>Now the hierarchical-Bayes mixed logit. The sampler implements exactly the sweep of</span>
-<span id="cb7-695"><a href="#cb7-695" aria-hidden="true" tabindex="-1"></a>@fig-gibbs: a random-walk Metropolis step for each consumer's</span>
-<span id="cb7-696"><a href="#cb7-696" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_n$ (the non-conjugate block, @eq-mh), a conjugate normal draw for</span>
-<span id="cb7-697"><a href="#cb7-697" aria-hidden="true" tabindex="-1"></a>the population mean $\bar{\boldsymbol{\beta}}$, and a conjugate inverse-Wishart draw</span>
-<span id="cb7-698"><a href="#cb7-698" aria-hidden="true" tabindex="-1"></a>for the heterogeneity covariance $\mathbf{V}_\beta$.</span>
+<span id="cb7-670"><a href="#cb7-670" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Simulate a choice-based conjoint / brand-choice experiment ----</span></span>
+<span id="cb7-671"><a href="#cb7-671" aria-hidden="true" tabindex="-1"></a>n_consumers <span class="ot">&lt;-</span> <span class="dv">200</span>      <span class="co"># decision makers</span></span>
+<span id="cb7-672"><a href="#cb7-672" aria-hidden="true" tabindex="-1"></a>n_tasks     <span class="ot">&lt;-</span> <span class="dv">12</span>       <span class="co"># choice tasks per consumer</span></span>
+<span id="cb7-673"><a href="#cb7-673" aria-hidden="true" tabindex="-1"></a>n_alts      <span class="ot">&lt;-</span> <span class="dv">3</span>        <span class="co"># alternatives per task (brands A, B, C)</span></span>
+<span id="cb7-674"><a href="#cb7-674" aria-hidden="true" tabindex="-1"></a>n_attr      <span class="ot">&lt;-</span> <span class="dv">4</span>        <span class="co"># intercepts for B and C, price, a feature dummy</span></span>
+<span id="cb7-675"><a href="#cb7-675" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-676"><a href="#cb7-676" aria-hidden="true" tabindex="-1"></a><span class="co"># Population (hyper) parameters: mean tastes and heterogeneity covariance</span></span>
+<span id="cb7-677"><a href="#cb7-677" aria-hidden="true" tabindex="-1"></a>beta_bar  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">brandB =</span> <span class="fl">0.8</span>, <span class="at">brandC =</span> <span class="fl">0.4</span>, <span class="at">price =</span> <span class="sc">-</span><span class="fl">1.5</span>, <span class="at">feature =</span> <span class="fl">0.7</span>)</span>
+<span id="cb7-678"><a href="#cb7-678" aria-hidden="true" tabindex="-1"></a>V_beta    <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>))          <span class="co"># taste heterogeneity</span></span>
+<span id="cb7-679"><a href="#cb7-679" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-680"><a href="#cb7-680" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw individual-level tastes from the population distribution</span></span>
+<span id="cb7-681"><a href="#cb7-681" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb7-682"><a href="#cb7-682" aria-hidden="true" tabindex="-1"></a>beta_i <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(n_consumers, <span class="at">mu =</span> beta_bar, <span class="at">Sigma =</span> V_beta)</span>
+<span id="cb7-683"><a href="#cb7-683" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-684"><a href="#cb7-684" aria-hidden="true" tabindex="-1"></a><span class="co"># Build design matrices and simulate choices under the logit model</span></span>
+<span id="cb7-685"><a href="#cb7-685" aria-hidden="true" tabindex="-1"></a>sim_one <span class="ot">&lt;-</span> <span class="cf">function</span>(b) {</span>
+<span id="cb7-686"><a href="#cb7-686" aria-hidden="true" tabindex="-1"></a>  Y <span class="ot">&lt;-</span> <span class="fu">integer</span>(n_tasks); X_list <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">"list"</span>, n_tasks)</span>
+<span id="cb7-687"><a href="#cb7-687" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_len</span>(n_tasks)) {</span>
+<span id="cb7-688"><a href="#cb7-688" aria-hidden="true" tabindex="-1"></a>    price   <span class="ot">&lt;-</span> <span class="fu">runif</span>(n_alts, <span class="dv">0</span>, <span class="dv">1</span>)                 <span class="co"># standardized price</span></span>
+<span id="cb7-689"><a href="#cb7-689" aria-hidden="true" tabindex="-1"></a>    feature <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n_alts, <span class="dv">1</span>, <span class="fl">0.5</span>)</span>
+<span id="cb7-690"><a href="#cb7-690" aria-hidden="true" tabindex="-1"></a>    X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">brandB =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>), <span class="at">brandC =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb7-691"><a href="#cb7-691" aria-hidden="true" tabindex="-1"></a>               <span class="at">price =</span> price, <span class="at">feature =</span> feature)</span>
+<span id="cb7-692"><a href="#cb7-692" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(X <span class="sc">%*%</span> b)</span>
+<span id="cb7-693"><a href="#cb7-693" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> <span class="fu">exp</span>(v) <span class="sc">/</span> <span class="fu">sum</span>(<span class="fu">exp</span>(v))</span>
+<span id="cb7-694"><a href="#cb7-694" aria-hidden="true" tabindex="-1"></a>    Y[t] <span class="ot">&lt;-</span> <span class="fu">sample.int</span>(n_alts, <span class="dv">1</span>, <span class="at">prob =</span> p)        <span class="co"># realized choice</span></span>
+<span id="cb7-695"><a href="#cb7-695" aria-hidden="true" tabindex="-1"></a>    X_list[[t]] <span class="ot">&lt;-</span> X</span>
+<span id="cb7-696"><a href="#cb7-696" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-697"><a href="#cb7-697" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">Y =</span> Y, <span class="at">X =</span> X_list)</span>
+<span id="cb7-698"><a href="#cb7-698" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb7-699"><a href="#cb7-699" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-700"><a href="#cb7-700" aria-hidden="true" tabindex="-1"></a><span class="in">```{r hb-mixed-logit, message=FALSE, warning=FALSE}</span></span>
-<span id="cb7-701"><a href="#cb7-701" aria-hidden="true" tabindex="-1"></a><span class="co"># Log individual likelihood + log prior, up to a constant</span></span>
-<span id="cb7-702"><a href="#cb7-702" aria-hidden="true" tabindex="-1"></a>log_post_i <span class="ot">&lt;-</span> <span class="cf">function</span>(b, d, mu, Sig_inv) {</span>
-<span id="cb7-703"><a href="#cb7-703" aria-hidden="true" tabindex="-1"></a>  ll <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb7-704"><a href="#cb7-704" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_along</span>(d<span class="sc">$</span>Y)) {</span>
-<span id="cb7-705"><a href="#cb7-705" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(d<span class="sc">$</span>X[[t]] <span class="sc">%*%</span> b)</span>
-<span id="cb7-706"><a href="#cb7-706" aria-hidden="true" tabindex="-1"></a>    ll <span class="ot">&lt;-</span> ll <span class="sc">+</span> (v[d<span class="sc">$</span>Y[t]] <span class="sc">-</span> <span class="fu">log</span>(<span class="fu">sum</span>(<span class="fu">exp</span>(v))))</span>
-<span id="cb7-707"><a href="#cb7-707" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-708"><a href="#cb7-708" aria-hidden="true" tabindex="-1"></a>  ll <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> <span class="fu">as.numeric</span>(<span class="fu">t</span>(b <span class="sc">-</span> mu) <span class="sc">%*%</span> Sig_inv <span class="sc">%*%</span> (b <span class="sc">-</span> mu))</span>
-<span id="cb7-709"><a href="#cb7-709" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-710"><a href="#cb7-710" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-711"><a href="#cb7-711" aria-hidden="true" tabindex="-1"></a>R <span class="ot">&lt;-</span> <span class="dv">4000</span>; burn <span class="ot">&lt;-</span> <span class="dv">2000</span>; step <span class="ot">&lt;-</span> <span class="fl">0.25</span>          <span class="co"># MCMC controls</span></span>
-<span id="cb7-712"><a href="#cb7-712" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> n_attr</span>
-<span id="cb7-713"><a href="#cb7-713" aria-hidden="true" tabindex="-1"></a>beta_draws <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="dv">0</span>, <span class="at">dim =</span> <span class="fu">c</span>(n_consumers, p),</span>
-<span id="cb7-714"><a href="#cb7-714" aria-hidden="true" tabindex="-1"></a>                    <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="fu">names</span>(beta_bar)))   <span class="co"># current individual betas</span></span>
-<span id="cb7-715"><a href="#cb7-715" aria-hidden="true" tabindex="-1"></a>mu_draw    <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, p)                            <span class="co"># current population mean</span></span>
-<span id="cb7-716"><a href="#cb7-716" aria-hidden="true" tabindex="-1"></a>Sig_draw   <span class="ot">&lt;-</span> <span class="fu">diag</span>(p)                              <span class="co"># current covariance</span></span>
-<span id="cb7-717"><a href="#cb7-717" aria-hidden="true" tabindex="-1"></a>nu0 <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="dv">3</span>; V0 <span class="ot">&lt;-</span> <span class="fu">diag</span>(p) <span class="sc">*</span> nu0                  <span class="co"># inverse-Wishart hyperprior</span></span>
-<span id="cb7-718"><a href="#cb7-718" aria-hidden="true" tabindex="-1"></a>keep_mu <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, R <span class="sc">-</span> burn, p)</span>
-<span id="cb7-719"><a href="#cb7-719" aria-hidden="true" tabindex="-1"></a>keep_V  <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="dv">0</span>, <span class="at">dim =</span> <span class="fu">c</span>(R <span class="sc">-</span> burn, p, p))</span>
-<span id="cb7-720"><a href="#cb7-720" aria-hidden="true" tabindex="-1"></a>acc <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb7-721"><a href="#cb7-721" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-722"><a href="#cb7-722" aria-hidden="true" tabindex="-1"></a>riwish <span class="ot">&lt;-</span> <span class="cf">function</span>(nu, S) {                        <span class="co"># inverse-Wishart draw</span></span>
-<span id="cb7-723"><a href="#cb7-723" aria-hidden="true" tabindex="-1"></a>  L <span class="ot">&lt;-</span> <span class="fu">chol</span>(<span class="fu">solve</span>(S)); k <span class="ot">&lt;-</span> <span class="fu">nrow</span>(S)</span>
-<span id="cb7-724"><a href="#cb7-724" aria-hidden="true" tabindex="-1"></a>  Z <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(nu <span class="sc">*</span> k), nu, k) <span class="sc">%*%</span> <span class="fu">t</span>(L)</span>
-<span id="cb7-725"><a href="#cb7-725" aria-hidden="true" tabindex="-1"></a>  <span class="fu">solve</span>(<span class="fu">crossprod</span>(Z))</span>
-<span id="cb7-726"><a href="#cb7-726" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-727"><a href="#cb7-727" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-728"><a href="#cb7-728" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (r <span class="cf">in</span> <span class="fu">seq_len</span>(R)) {</span>
-<span id="cb7-729"><a href="#cb7-729" aria-hidden="true" tabindex="-1"></a>  Sig_inv <span class="ot">&lt;-</span> <span class="fu">solve</span>(Sig_draw)</span>
-<span id="cb7-730"><a href="#cb7-730" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (1) Metropolis-Hastings update of each consumer's beta</span></span>
-<span id="cb7-731"><a href="#cb7-731" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(n_consumers)) {</span>
-<span id="cb7-732"><a href="#cb7-732" aria-hidden="true" tabindex="-1"></a>    cur <span class="ot">&lt;-</span> beta_draws[i, ]</span>
-<span id="cb7-733"><a href="#cb7-733" aria-hidden="true" tabindex="-1"></a>    prop <span class="ot">&lt;-</span> cur <span class="sc">+</span> <span class="fu">rnorm</span>(p, <span class="dv">0</span>, step)</span>
-<span id="cb7-734"><a href="#cb7-734" aria-hidden="true" tabindex="-1"></a>    la <span class="ot">&lt;-</span> <span class="fu">log_post_i</span>(prop, data[[i]], mu_draw, Sig_inv) <span class="sc">-</span></span>
-<span id="cb7-735"><a href="#cb7-735" aria-hidden="true" tabindex="-1"></a>          <span class="fu">log_post_i</span>(cur,  data[[i]], mu_draw, Sig_inv)</span>
-<span id="cb7-736"><a href="#cb7-736" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">log</span>(<span class="fu">runif</span>(<span class="dv">1</span>)) <span class="sc">&lt;</span> la) { beta_draws[i, ] <span class="ot">&lt;-</span> prop; acc <span class="ot">&lt;-</span> acc <span class="sc">+</span> <span class="dv">1</span> }</span>
+<span id="cb7-700"><a href="#cb7-700" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n_consumers), <span class="cf">function</span>(i) <span class="fu">sim_one</span>(beta_i[i, ]))</span>
+<span id="cb7-701"><a href="#cb7-701" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Simulated"</span>, n_consumers, <span class="st">"consumers x"</span>, n_tasks, <span class="st">"tasks.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb7-702"><a href="#cb7-702" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb7-703"><a href="#cb7-703" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-704"><a href="#cb7-704" aria-hidden="true" tabindex="-1"></a>A pooled logit that ignores heterogeneity recovers the population *mean* tastes</span>
+<span id="cb7-705"><a href="#cb7-705" aria-hidden="true" tabindex="-1"></a>reasonably but, by construction, says nothing about their spread.</span>
+<span id="cb7-706"><a href="#cb7-706" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-707"><a href="#cb7-707" aria-hidden="true" tabindex="-1"></a><span class="in">```{r pooled-logit, message=FALSE, warning=FALSE}</span></span>
+<span id="cb7-708"><a href="#cb7-708" aria-hidden="true" tabindex="-1"></a><span class="co"># Negative log-likelihood for a homogeneous conditional logit</span></span>
+<span id="cb7-709"><a href="#cb7-709" aria-hidden="true" tabindex="-1"></a>nll_logit <span class="ot">&lt;-</span> <span class="cf">function</span>(b, data) {</span>
+<span id="cb7-710"><a href="#cb7-710" aria-hidden="true" tabindex="-1"></a>  ll <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb7-711"><a href="#cb7-711" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (d <span class="cf">in</span> data) <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_along</span>(d<span class="sc">$</span>Y)) {</span>
+<span id="cb7-712"><a href="#cb7-712" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(d<span class="sc">$</span>X[[t]] <span class="sc">%*%</span> b)</span>
+<span id="cb7-713"><a href="#cb7-713" aria-hidden="true" tabindex="-1"></a>    ll <span class="ot">&lt;-</span> ll <span class="sc">+</span> (v[d<span class="sc">$</span>Y[t]] <span class="sc">-</span> <span class="fu">log</span>(<span class="fu">sum</span>(<span class="fu">exp</span>(v))))</span>
+<span id="cb7-714"><a href="#cb7-714" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-715"><a href="#cb7-715" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span>ll</span>
+<span id="cb7-716"><a href="#cb7-716" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-717"><a href="#cb7-717" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-718"><a href="#cb7-718" aria-hidden="true" tabindex="-1"></a>fit_pooled <span class="ot">&lt;-</span> <span class="fu">optim</span>(<span class="fu">rep</span>(<span class="dv">0</span>, n_attr), nll_logit, <span class="at">data =</span> data,</span>
+<span id="cb7-719"><a href="#cb7-719" aria-hidden="true" tabindex="-1"></a>                    <span class="at">method =</span> <span class="st">"BFGS"</span>)</span>
+<span id="cb7-720"><a href="#cb7-720" aria-hidden="true" tabindex="-1"></a>pooled <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">round</span>(fit_pooled<span class="sc">$</span>par, <span class="dv">3</span>), <span class="fu">names</span>(beta_bar))</span>
+<span id="cb7-721"><a href="#cb7-721" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">true_mean =</span> beta_bar, <span class="at">pooled_logit =</span> pooled)</span>
+<span id="cb7-722"><a href="#cb7-722" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb7-723"><a href="#cb7-723" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-724"><a href="#cb7-724" aria-hidden="true" tabindex="-1"></a>Now the hierarchical-Bayes mixed logit. The sampler implements exactly the sweep of</span>
+<span id="cb7-725"><a href="#cb7-725" aria-hidden="true" tabindex="-1"></a>@fig-gibbs: a random-walk Metropolis step for each consumer's</span>
+<span id="cb7-726"><a href="#cb7-726" aria-hidden="true" tabindex="-1"></a>$\boldsymbol{\beta}_n$ (the non-conjugate block, @eq-mh), a conjugate normal draw for</span>
+<span id="cb7-727"><a href="#cb7-727" aria-hidden="true" tabindex="-1"></a>the population mean $\bar{\boldsymbol{\beta}}$, and a conjugate inverse-Wishart draw</span>
+<span id="cb7-728"><a href="#cb7-728" aria-hidden="true" tabindex="-1"></a>for the heterogeneity covariance $\mathbf{V}_\beta$.</span>
+<span id="cb7-729"><a href="#cb7-729" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-730"><a href="#cb7-730" aria-hidden="true" tabindex="-1"></a><span class="in">```{r hb-mixed-logit, message=FALSE, warning=FALSE}</span></span>
+<span id="cb7-731"><a href="#cb7-731" aria-hidden="true" tabindex="-1"></a><span class="co"># Log individual likelihood + log prior, up to a constant</span></span>
+<span id="cb7-732"><a href="#cb7-732" aria-hidden="true" tabindex="-1"></a>log_post_i <span class="ot">&lt;-</span> <span class="cf">function</span>(b, d, mu, Sig_inv) {</span>
+<span id="cb7-733"><a href="#cb7-733" aria-hidden="true" tabindex="-1"></a>  ll <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb7-734"><a href="#cb7-734" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (t <span class="cf">in</span> <span class="fu">seq_along</span>(d<span class="sc">$</span>Y)) {</span>
+<span id="cb7-735"><a href="#cb7-735" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(d<span class="sc">$</span>X[[t]] <span class="sc">%*%</span> b)</span>
+<span id="cb7-736"><a href="#cb7-736" aria-hidden="true" tabindex="-1"></a>    ll <span class="ot">&lt;-</span> ll <span class="sc">+</span> (v[d<span class="sc">$</span>Y[t]] <span class="sc">-</span> <span class="fu">log</span>(<span class="fu">sum</span>(<span class="fu">exp</span>(v))))</span>
 <span id="cb7-737"><a href="#cb7-737" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-738"><a href="#cb7-738" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (2) Conjugate normal draw for population mean</span></span>
-<span id="cb7-739"><a href="#cb7-739" aria-hidden="true" tabindex="-1"></a>  bbar <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(beta_draws)</span>
-<span id="cb7-740"><a href="#cb7-740" aria-hidden="true" tabindex="-1"></a>  Vn   <span class="ot">&lt;-</span> <span class="fu">solve</span>(n_consumers <span class="sc">*</span> Sig_inv <span class="sc">+</span> <span class="fu">diag</span>(p) <span class="sc">*</span> <span class="fl">1e-4</span>)</span>
-<span id="cb7-741"><a href="#cb7-741" aria-hidden="true" tabindex="-1"></a>  mu_draw <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(Vn <span class="sc">%*%</span> (n_consumers <span class="sc">*</span> Sig_inv <span class="sc">%*%</span> bbar) <span class="sc">+</span></span>
-<span id="cb7-742"><a href="#cb7-742" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">t</span>(<span class="fu">chol</span>(Vn)) <span class="sc">%*%</span> <span class="fu">rnorm</span>(p))</span>
-<span id="cb7-743"><a href="#cb7-743" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (3) Conjugate inverse-Wishart draw for covariance</span></span>
-<span id="cb7-744"><a href="#cb7-744" aria-hidden="true" tabindex="-1"></a>  S <span class="ot">&lt;-</span> V0 <span class="sc">+</span> <span class="fu">crossprod</span>(<span class="fu">sweep</span>(beta_draws, <span class="dv">2</span>, mu_draw))</span>
-<span id="cb7-745"><a href="#cb7-745" aria-hidden="true" tabindex="-1"></a>  Sig_draw <span class="ot">&lt;-</span> <span class="fu">riwish</span>(nu0 <span class="sc">+</span> n_consumers, S)</span>
-<span id="cb7-746"><a href="#cb7-746" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (r <span class="sc">&gt;</span> burn) { keep_mu[r <span class="sc">-</span> burn, ] <span class="ot">&lt;-</span> mu_draw; keep_V[r <span class="sc">-</span> burn, , ] <span class="ot">&lt;-</span> Sig_draw }</span>
-<span id="cb7-747"><a href="#cb7-747" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-748"><a href="#cb7-748" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-749"><a href="#cb7-749" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"MH acceptance rate:"</span>, <span class="fu">round</span>(acc <span class="sc">/</span> (R <span class="sc">*</span> n_consumers), <span class="dv">2</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb7-750"><a href="#cb7-750" aria-hidden="true" tabindex="-1"></a>hb_mean <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">round</span>(<span class="fu">colMeans</span>(keep_mu), <span class="dv">3</span>), <span class="fu">names</span>(beta_bar))</span>
-<span id="cb7-751"><a href="#cb7-751" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">true_mean =</span> beta_bar, <span class="at">hb_posterior_mean =</span> hb_mean)</span>
-<span id="cb7-752"><a href="#cb7-752" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-753"><a href="#cb7-753" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-754"><a href="#cb7-754" aria-hidden="true" tabindex="-1"></a>The hierarchical posterior recovers not only the population means but the</span>
-<span id="cb7-755"><a href="#cb7-755" aria-hidden="true" tabindex="-1"></a>*heterogeneity* the pooled model discards—the diagonal of $\mathbf{V}_\beta$, which</span>
-<span id="cb7-756"><a href="#cb7-756" aria-hidden="true" tabindex="-1"></a>quantifies how widely price sensitivity and brand preference vary.</span>
+<span id="cb7-738"><a href="#cb7-738" aria-hidden="true" tabindex="-1"></a>  ll <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> <span class="fu">as.numeric</span>(<span class="fu">t</span>(b <span class="sc">-</span> mu) <span class="sc">%*%</span> Sig_inv <span class="sc">%*%</span> (b <span class="sc">-</span> mu))</span>
+<span id="cb7-739"><a href="#cb7-739" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-740"><a href="#cb7-740" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-741"><a href="#cb7-741" aria-hidden="true" tabindex="-1"></a>R <span class="ot">&lt;-</span> <span class="dv">4000</span>; burn <span class="ot">&lt;-</span> <span class="dv">2000</span>; step <span class="ot">&lt;-</span> <span class="fl">0.25</span>          <span class="co"># MCMC controls</span></span>
+<span id="cb7-742"><a href="#cb7-742" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> n_attr</span>
+<span id="cb7-743"><a href="#cb7-743" aria-hidden="true" tabindex="-1"></a>beta_draws <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="dv">0</span>, <span class="at">dim =</span> <span class="fu">c</span>(n_consumers, p),</span>
+<span id="cb7-744"><a href="#cb7-744" aria-hidden="true" tabindex="-1"></a>                    <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="fu">names</span>(beta_bar)))   <span class="co"># current individual betas</span></span>
+<span id="cb7-745"><a href="#cb7-745" aria-hidden="true" tabindex="-1"></a>mu_draw    <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, p)                            <span class="co"># current population mean</span></span>
+<span id="cb7-746"><a href="#cb7-746" aria-hidden="true" tabindex="-1"></a>Sig_draw   <span class="ot">&lt;-</span> <span class="fu">diag</span>(p)                              <span class="co"># current covariance</span></span>
+<span id="cb7-747"><a href="#cb7-747" aria-hidden="true" tabindex="-1"></a>nu0 <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="dv">3</span>; V0 <span class="ot">&lt;-</span> <span class="fu">diag</span>(p) <span class="sc">*</span> nu0                  <span class="co"># inverse-Wishart hyperprior</span></span>
+<span id="cb7-748"><a href="#cb7-748" aria-hidden="true" tabindex="-1"></a>keep_mu <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, R <span class="sc">-</span> burn, p)</span>
+<span id="cb7-749"><a href="#cb7-749" aria-hidden="true" tabindex="-1"></a>keep_V  <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="dv">0</span>, <span class="at">dim =</span> <span class="fu">c</span>(R <span class="sc">-</span> burn, p, p))</span>
+<span id="cb7-750"><a href="#cb7-750" aria-hidden="true" tabindex="-1"></a>acc <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb7-751"><a href="#cb7-751" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-752"><a href="#cb7-752" aria-hidden="true" tabindex="-1"></a>riwish <span class="ot">&lt;-</span> <span class="cf">function</span>(nu, S) {                        <span class="co"># inverse-Wishart draw</span></span>
+<span id="cb7-753"><a href="#cb7-753" aria-hidden="true" tabindex="-1"></a>  L <span class="ot">&lt;-</span> <span class="fu">chol</span>(<span class="fu">solve</span>(S)); k <span class="ot">&lt;-</span> <span class="fu">nrow</span>(S)</span>
+<span id="cb7-754"><a href="#cb7-754" aria-hidden="true" tabindex="-1"></a>  Z <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(nu <span class="sc">*</span> k), nu, k) <span class="sc">%*%</span> <span class="fu">t</span>(L)</span>
+<span id="cb7-755"><a href="#cb7-755" aria-hidden="true" tabindex="-1"></a>  <span class="fu">solve</span>(<span class="fu">crossprod</span>(Z))</span>
+<span id="cb7-756"><a href="#cb7-756" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb7-757"><a href="#cb7-757" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-758"><a href="#cb7-758" aria-hidden="true" tabindex="-1"></a><span class="in">```{r hb-heterogeneity, message=FALSE, warning=FALSE}</span></span>
-<span id="cb7-759"><a href="#cb7-759" aria-hidden="true" tabindex="-1"></a>post_V_diag <span class="ot">&lt;-</span> <span class="fu">apply</span>(keep_V, <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>), mean)</span>
-<span id="cb7-760"><a href="#cb7-760" aria-hidden="true" tabindex="-1"></a>recovered <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">round</span>(<span class="fu">diag</span>(post_V_diag), <span class="dv">3</span>), <span class="fu">names</span>(beta_bar))</span>
-<span id="cb7-761"><a href="#cb7-761" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">true_variance =</span> <span class="fu">diag</span>(V_beta), <span class="at">hb_recovered =</span> recovered)</span>
-<span id="cb7-762"><a href="#cb7-762" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-763"><a href="#cb7-763" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-764"><a href="#cb7-764" aria-hidden="true" tabindex="-1"></a><span class="in">```{r hb-figure, message=FALSE, warning=FALSE, fig.cap="Posterior distribution of the population mean price coefficient from the hierarchical-Bayes sampler (post-burn-in draws). The dashed line marks the true data-generating value; the spread is genuine posterior uncertainty, not noise."}</span></span>
-<span id="cb7-765"><a href="#cb7-765" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(keep_mu[, <span class="dv">3</span>], <span class="at">breaks =</span> <span class="dv">30</span>, <span class="at">col =</span> <span class="st">"grey80"</span>, <span class="at">border =</span> <span class="st">"white"</span>,</span>
-<span id="cb7-766"><a href="#cb7-766" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Posterior: mean price coefficient"</span>,</span>
-<span id="cb7-767"><a href="#cb7-767" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="fu">expression</span>(<span class="fu">bar</span>(beta)[price]))</span>
-<span id="cb7-768"><a href="#cb7-768" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> beta_bar[<span class="st">"price"</span>], <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span>
-<span id="cb7-769"><a href="#cb7-769" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="fu">mean</span>(keep_mu[, <span class="dv">3</span>]), <span class="at">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb7-770"><a href="#cb7-770" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="fu">c</span>(<span class="st">"true value"</span>, <span class="st">"posterior mean"</span>),</span>
-<span id="cb7-771"><a href="#cb7-771" aria-hidden="true" tabindex="-1"></a>       <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span>
-<span id="cb7-772"><a href="#cb7-772" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-773"><a href="#cb7-773" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-774"><a href="#cb7-774" aria-hidden="true" tabindex="-1"></a>With individual posteriors in hand the analyst can compute a *distribution* of</span>
-<span id="cb7-775"><a href="#cb7-775" aria-hidden="true" tabindex="-1"></a>willingness to pay for the feature—the ratio of the feature coefficient to the</span>
-<span id="cb7-776"><a href="#cb7-776" aria-hidden="true" tabindex="-1"></a>(negated) price coefficient for each consumer—rather than a single number, and can</span>
-<span id="cb7-777"><a href="#cb7-777" aria-hidden="true" tabindex="-1"></a>target the consumers whose posteriors place them above a profitability threshold.</span>
+<span id="cb7-758"><a href="#cb7-758" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (r <span class="cf">in</span> <span class="fu">seq_len</span>(R)) {</span>
+<span id="cb7-759"><a href="#cb7-759" aria-hidden="true" tabindex="-1"></a>  Sig_inv <span class="ot">&lt;-</span> <span class="fu">solve</span>(Sig_draw)</span>
+<span id="cb7-760"><a href="#cb7-760" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (1) Metropolis-Hastings update of each consumer's beta</span></span>
+<span id="cb7-761"><a href="#cb7-761" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(n_consumers)) {</span>
+<span id="cb7-762"><a href="#cb7-762" aria-hidden="true" tabindex="-1"></a>    cur <span class="ot">&lt;-</span> beta_draws[i, ]</span>
+<span id="cb7-763"><a href="#cb7-763" aria-hidden="true" tabindex="-1"></a>    prop <span class="ot">&lt;-</span> cur <span class="sc">+</span> <span class="fu">rnorm</span>(p, <span class="dv">0</span>, step)</span>
+<span id="cb7-764"><a href="#cb7-764" aria-hidden="true" tabindex="-1"></a>    la <span class="ot">&lt;-</span> <span class="fu">log_post_i</span>(prop, data[[i]], mu_draw, Sig_inv) <span class="sc">-</span></span>
+<span id="cb7-765"><a href="#cb7-765" aria-hidden="true" tabindex="-1"></a>          <span class="fu">log_post_i</span>(cur,  data[[i]], mu_draw, Sig_inv)</span>
+<span id="cb7-766"><a href="#cb7-766" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">log</span>(<span class="fu">runif</span>(<span class="dv">1</span>)) <span class="sc">&lt;</span> la) { beta_draws[i, ] <span class="ot">&lt;-</span> prop; acc <span class="ot">&lt;-</span> acc <span class="sc">+</span> <span class="dv">1</span> }</span>
+<span id="cb7-767"><a href="#cb7-767" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-768"><a href="#cb7-768" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (2) Conjugate normal draw for population mean</span></span>
+<span id="cb7-769"><a href="#cb7-769" aria-hidden="true" tabindex="-1"></a>  bbar <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(beta_draws)</span>
+<span id="cb7-770"><a href="#cb7-770" aria-hidden="true" tabindex="-1"></a>  Vn   <span class="ot">&lt;-</span> <span class="fu">solve</span>(n_consumers <span class="sc">*</span> Sig_inv <span class="sc">+</span> <span class="fu">diag</span>(p) <span class="sc">*</span> <span class="fl">1e-4</span>)</span>
+<span id="cb7-771"><a href="#cb7-771" aria-hidden="true" tabindex="-1"></a>  mu_draw <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(Vn <span class="sc">%*%</span> (n_consumers <span class="sc">*</span> Sig_inv <span class="sc">%*%</span> bbar) <span class="sc">+</span></span>
+<span id="cb7-772"><a href="#cb7-772" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">t</span>(<span class="fu">chol</span>(Vn)) <span class="sc">%*%</span> <span class="fu">rnorm</span>(p))</span>
+<span id="cb7-773"><a href="#cb7-773" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (3) Conjugate inverse-Wishart draw for covariance</span></span>
+<span id="cb7-774"><a href="#cb7-774" aria-hidden="true" tabindex="-1"></a>  S <span class="ot">&lt;-</span> V0 <span class="sc">+</span> <span class="fu">crossprod</span>(<span class="fu">sweep</span>(beta_draws, <span class="dv">2</span>, mu_draw))</span>
+<span id="cb7-775"><a href="#cb7-775" aria-hidden="true" tabindex="-1"></a>  Sig_draw <span class="ot">&lt;-</span> <span class="fu">riwish</span>(nu0 <span class="sc">+</span> n_consumers, S)</span>
+<span id="cb7-776"><a href="#cb7-776" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (r <span class="sc">&gt;</span> burn) { keep_mu[r <span class="sc">-</span> burn, ] <span class="ot">&lt;-</span> mu_draw; keep_V[r <span class="sc">-</span> burn, , ] <span class="ot">&lt;-</span> Sig_draw }</span>
+<span id="cb7-777"><a href="#cb7-777" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb7-778"><a href="#cb7-778" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-779"><a href="#cb7-779" aria-hidden="true" tabindex="-1"></a><span class="in">```{r wtp, message=FALSE, warning=FALSE}</span></span>
-<span id="cb7-780"><a href="#cb7-780" aria-hidden="true" tabindex="-1"></a><span class="co"># Willingness to pay for the feature, per consumer (posterior means of beta_i)</span></span>
-<span id="cb7-781"><a href="#cb7-781" aria-hidden="true" tabindex="-1"></a>wtp <span class="ot">&lt;-</span> beta_draws[, <span class="st">"feature"</span>] <span class="sc">/</span> (<span class="sc">-</span>beta_draws[, <span class="st">"price"</span>])</span>
-<span id="cb7-782"><a href="#cb7-782" aria-hidden="true" tabindex="-1"></a>wtp <span class="ot">&lt;-</span> wtp[<span class="fu">is.finite</span>(wtp) <span class="sc">&amp;</span> wtp <span class="sc">&gt;</span> <span class="dv">0</span>]</span>
-<span id="cb7-783"><a href="#cb7-783" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">round</span>(wtp, <span class="dv">2</span>))</span>
-<span id="cb7-784"><a href="#cb7-784" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-785"><a href="#cb7-785" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-786"><a href="#cb7-786" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-779"><a href="#cb7-779" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"MH acceptance rate:"</span>, <span class="fu">round</span>(acc <span class="sc">/</span> (R <span class="sc">*</span> n_consumers), <span class="dv">2</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb7-780"><a href="#cb7-780" aria-hidden="true" tabindex="-1"></a>hb_mean <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">round</span>(<span class="fu">colMeans</span>(keep_mu), <span class="dv">3</span>), <span class="fu">names</span>(beta_bar))</span>
+<span id="cb7-781"><a href="#cb7-781" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">true_mean =</span> beta_bar, <span class="at">hb_posterior_mean =</span> hb_mean)</span>
+<span id="cb7-782"><a href="#cb7-782" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb7-783"><a href="#cb7-783" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-784"><a href="#cb7-784" aria-hidden="true" tabindex="-1"></a>The hierarchical posterior recovers not only the population means but the</span>
+<span id="cb7-785"><a href="#cb7-785" aria-hidden="true" tabindex="-1"></a>*heterogeneity* the pooled model discards—the diagonal of $\mathbf{V}_\beta$, which</span>
+<span id="cb7-786"><a href="#cb7-786" aria-hidden="true" tabindex="-1"></a>quantifies how widely price sensitivity and brand preference vary.</span>
 <span id="cb7-787"><a href="#cb7-787" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-788"><a href="#cb7-788" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@allenby1998heterogeneity — the manifesto for hierarchical-Bayes heterogeneity in</span>
-<span id="cb7-789"><a href="#cb7-789" aria-hidden="true" tabindex="-1"></a>  marketing; argues for individual-level inference over representative-agent models.</span>
-<span id="cb7-790"><a href="#cb7-790" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-791"><a href="#cb7-791" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@rossi1996purchasehistory — the template HB application: individual-level posteriors</span>
-<span id="cb7-792"><a href="#cb7-792" aria-hidden="true" tabindex="-1"></a>  (shrinkage toward the population) raise the value of household data for targeting.</span>
-<span id="cb7-793"><a href="#cb7-793" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-794"><a href="#cb7-794" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@allenby1995reassessing — an early, influential hierarchical choice model showing</span>
-<span id="cb7-795"><a href="#cb7-795" aria-hidden="true" tabindex="-1"></a>  how heterogeneity reshapes substantive conclusions about loyalty and price</span>
-<span id="cb7-796"><a href="#cb7-796" aria-hidden="true" tabindex="-1"></a>  sensitivity. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-797"><a href="#cb7-797" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@rossi2001scaleusage — shows how hierarchical Bayes cleanly removes a pervasive</span>
-<span id="cb7-798"><a href="#cb7-798" aria-hidden="true" tabindex="-1"></a>  nuisance (respondents using rating scales differently); a model template beyond</span>
-<span id="cb7-799"><a href="#cb7-799" aria-hidden="true" tabindex="-1"></a>  choice. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-800"><a href="#cb7-800" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-801"><a href="#cb7-801" aria-hidden="true" tabindex="-1"></a>**Debate.** Continuous (HB) vs. discrete (latent-class/finite-mixture) heterogeneity;</span>
-<span id="cb7-802"><a href="#cb7-802" aria-hidden="true" tabindex="-1"></a>how much structure to put in the upper-level prior; whether individual posteriors are</span>
-<span id="cb7-803"><a href="#cb7-803" aria-hidden="true" tabindex="-1"></a>"real" or regularization artifacts.</span>
-<span id="cb7-804"><a href="#cb7-804" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-805"><a href="#cb7-805" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 8 — Conjoint &amp; preference measurement {#sec-cb-week-8}</span></span>
-<span id="cb7-806"><a href="#cb7-806" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-807"><a href="#cb7-807" aria-hidden="true" tabindex="-1"></a>**Topic.** Choice-based conjoint and preference measurement as the marketing-native</span>
-<span id="cb7-808"><a href="#cb7-808" aria-hidden="true" tabindex="-1"></a>application of HB choice models.</span>
-<span id="cb7-809"><a href="#cb7-809" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-810"><a href="#cb7-810" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Partworth estimation via HB; reduced designs and borrowing strength;</span>
-<span id="cb7-811"><a href="#cb7-811" aria-hidden="true" tabindex="-1"></a>constrained/sign-restricted priors; heterogeneity-distribution choice; adaptive and</span>
-<span id="cb7-812"><a href="#cb7-812" aria-hidden="true" tabindex="-1"></a>efficient design.</span>
-<span id="cb7-813"><a href="#cb7-813" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-814"><a href="#cb7-814" aria-hidden="true" tabindex="-1"></a>**Methods.** HB conjoint estimation; experimental design for choice; holdout</span>
-<span id="cb7-815"><a href="#cb7-815" aria-hidden="true" tabindex="-1"></a>prediction.</span>
-<span id="cb7-816"><a href="#cb7-816" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-817"><a href="#cb7-817" aria-hidden="true" tabindex="-1"></a>The hierarchical estimator of @sec-cb-week-7 is the dominant tool for recovering</span>
-<span id="cb7-818"><a href="#cb7-818" aria-hidden="true" tabindex="-1"></a>individual partworths from conjoint designs in which each respondent answers far</span>
-<span id="cb7-819"><a href="#cb7-819" aria-hidden="true" tabindex="-1"></a>fewer profiles than there are parameters. The normal-mixing assumption is a modeling</span>
-<span id="cb7-820"><a href="#cb7-820" aria-hidden="true" tabindex="-1"></a>choice, not a fact: it cannot represent multimodal tastes (genuine segments), and a</span>
-<span id="cb7-821"><a href="#cb7-821" aria-hidden="true" tabindex="-1"></a>normally distributed price coefficient places positive probability on consumers who</span>
-<span id="cb7-822"><a href="#cb7-822" aria-hidden="true" tabindex="-1"></a>*prefer* higher prices. Remedies include log-normal or sign-constrained coefficients,</span>
-<span id="cb7-823"><a href="#cb7-823" aria-hidden="true" tabindex="-1"></a>finite mixtures of normals for true segments, and—where the analyst doubts any</span>
-<span id="cb7-824"><a href="#cb7-824" aria-hidden="true" tabindex="-1"></a>parametric form—nonparametric mixing. Identification is delicate, so model comparison</span>
-<span id="cb7-825"><a href="#cb7-825" aria-hidden="true" tabindex="-1"></a>and holdout validation (@sec-cb-week-11) are essential rather than ornamental</span>
-<span id="cb7-826"><a href="#cb7-826" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@chintagunta2006structural</span><span class="co">]</span>.</span>
-<span id="cb7-827"><a href="#cb7-827" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-828"><a href="#cb7-828" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
-<span id="cb7-829"><a href="#cb7-829" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-830"><a href="#cb7-830" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@lenk1996hbconjoint — foundational HB conjoint: recovers heterogeneous partworths</span>
-<span id="cb7-831"><a href="#cb7-831" aria-hidden="true" tabindex="-1"></a>  even when each respondent answers far fewer profiles than parameters. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-832"><a href="#cb7-832" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@allenby1995priorknowledge — shows how economically motivated (e.g.,</span>
-<span id="cb7-833"><a href="#cb7-833" aria-hidden="true" tabindex="-1"></a>  sign-constrained) priors improve partworth plausibility and prediction. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-834"><a href="#cb7-834" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@andrews2002hbvsmixture — the standard HB-vs-finite-mixture comparison; ties Week</span>
-<span id="cb7-835"><a href="#cb7-835" aria-hidden="true" tabindex="-1"></a>  7's heterogeneity debate to a concrete conjoint application. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-836"><a href="#cb7-836" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@train2005boundedmixedlogit (see @sec-cb-week-5) — bounded/correlated partworth</span>
-<span id="cb7-837"><a href="#cb7-837" aria-hidden="true" tabindex="-1"></a>  distributions for conjoint. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-838"><a href="#cb7-838" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-839"><a href="#cb7-839" aria-hidden="true" tabindex="-1"></a>**Debate.** Continuous vs. discrete heterogeneity in conjoint; constrained vs.</span>
-<span id="cb7-840"><a href="#cb7-840" aria-hidden="true" tabindex="-1"></a>unconstrained partworths; whether better designs or better priors matter more for</span>
-<span id="cb7-841"><a href="#cb7-841" aria-hidden="true" tabindex="-1"></a>small per-respondent samples.</span>
-<span id="cb7-842"><a href="#cb7-842" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-843"><a href="#cb7-843" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 9 — Aggregate-data demand &amp; integrating out heterogeneity {#sec-cb-week-9}</span></span>
-<span id="cb7-844"><a href="#cb7-844" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-845"><a href="#cb7-845" aria-hidden="true" tabindex="-1"></a>**Topic.** Random-coefficients logit demand from aggregate market shares (BLP); the</span>
-<span id="cb7-846"><a href="#cb7-846" aria-hidden="true" tabindex="-1"></a>Bayesian counterpart; the mechanics of integrating out heterogeneity and endogeneity.</span>
-<span id="cb7-847"><a href="#cb7-847" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-848"><a href="#cb7-848" aria-hidden="true" tabindex="-1"></a>**Subtopics.** The BLP contraction and GMM; the inversion from shares to mean</span>
-<span id="cb7-849"><a href="#cb7-849" aria-hidden="true" tabindex="-1"></a>utilities; instruments and price endogeneity; the Bayesian (Jiang–Manchanda–Rossi)</span>
-<span id="cb7-850"><a href="#cb7-850" aria-hidden="true" tabindex="-1"></a>approach; numerical reliability (MPEC).</span>
-<span id="cb7-851"><a href="#cb7-851" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-852"><a href="#cb7-852" aria-hidden="true" tabindex="-1"></a>**Methods.** GMM with the BLP contraction; MSM; Bayesian estimation from aggregate</span>
-<span id="cb7-853"><a href="#cb7-853" aria-hidden="true" tabindex="-1"></a>data; MPEC reformulation.</span>
-<span id="cb7-854"><a href="#cb7-854" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-855"><a href="#cb7-855" aria-hidden="true" tabindex="-1"></a>When individual choices are unobserved and only market shares are recorded, the</span>
-<span id="cb7-856"><a href="#cb7-856" aria-hidden="true" tabindex="-1"></a>random-coefficients demand system inverts shares to recover mean utilities and</span>
-<span id="cb7-857"><a href="#cb7-857" aria-hidden="true" tabindex="-1"></a>estimates the mixing distribution from share variation across markets</span>
-<span id="cb7-858"><a href="#cb7-858" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@berry1995; @berry1995automobile</span><span class="co">]</span>—the bridge between the consumer-level models of</span>
-<span id="cb7-859"><a href="#cb7-859" aria-hidden="true" tabindex="-1"></a>this chapter and industry-level demand analysis (@sec-marketing-finance), with active</span>
-<span id="cb7-860"><a href="#cb7-860" aria-hidden="true" tabindex="-1"></a>work on practical edge cases such as zero-share products <span class="co">[</span><span class="ot">@dube2021random</span><span class="co">]</span>. The</span>
-<span id="cb7-861"><a href="#cb7-861" aria-hidden="true" tabindex="-1"></a>Bayesian counterpart integrates out heterogeneity from aggregate shares via MCMC.</span>
-<span id="cb7-862"><a href="#cb7-862" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-863"><a href="#cb7-863" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
-<span id="cb7-864"><a href="#cb7-864" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-865"><a href="#cb7-865" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@berry1994discretechoice — introduces the share-inversion that lets discrete-choice</span>
-<span id="cb7-866"><a href="#cb7-866" aria-hidden="true" tabindex="-1"></a>  demand be estimated from aggregate data with endogenous prices. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-867"><a href="#cb7-867" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@berry1995automobile — the canonical BLP random-coefficients aggregate-demand model;</span>
-<span id="cb7-868"><a href="#cb7-868" aria-hidden="true" tabindex="-1"></a>  the reference point for all market-share choice estimation. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-869"><a href="#cb7-869" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@jiang2009bayesianblp — the Bayesian counterpart to BLP; shows how MCMC integrates</span>
-<span id="cb7-870"><a href="#cb7-870" aria-hidden="true" tabindex="-1"></a>  out heterogeneity from aggregate shares. <span class="co">[</span><span class="ot">F → R</span><span class="co">]</span></span>
-<span id="cb7-871"><a href="#cb7-871" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@chintagunta2011discretechoice — the marketing-specific synthesis of the whole</span>
-<span id="cb7-872"><a href="#cb7-872" aria-hidden="true" tabindex="-1"></a>  discrete-choice demand toolkit; the natural anchor/overview citation. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-873"><a href="#cb7-873" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@petrin2002minivan — shows how BLP-style demand plus micro-moments yields</span>
-<span id="cb7-874"><a href="#cb7-874" aria-hidden="true" tabindex="-1"></a>  welfare/counterfactual answers; a model application. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-875"><a href="#cb7-875" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-876"><a href="#cb7-876" aria-hidden="true" tabindex="-1"></a>**Debate.** GMM/BLP vs. Bayesian estimation of the same model; instrument validity</span>
-<span id="cb7-877"><a href="#cb7-877" aria-hidden="true" tabindex="-1"></a>and weak instruments; numerical fragility of the nested contraction (and MPEC as the</span>
-<span id="cb7-878"><a href="#cb7-878" aria-hidden="true" tabindex="-1"></a>fix, Dubé–Fox–Su, <span class="co">[</span><span class="ot">10.3982/ecta8585</span><span class="co">](https://doi.org/10.3982/ecta8585)</span>).</span>
-<span id="cb7-879"><a href="#cb7-879" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-880"><a href="#cb7-880" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 10 — Dynamics &amp; state dependence {#sec-cb-week-10}</span></span>
+<span id="cb7-788"><a href="#cb7-788" aria-hidden="true" tabindex="-1"></a><span class="in">```{r hb-heterogeneity, message=FALSE, warning=FALSE}</span></span>
+<span id="cb7-789"><a href="#cb7-789" aria-hidden="true" tabindex="-1"></a>post_V_diag <span class="ot">&lt;-</span> <span class="fu">apply</span>(keep_V, <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>), mean)</span>
+<span id="cb7-790"><a href="#cb7-790" aria-hidden="true" tabindex="-1"></a>recovered <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">round</span>(<span class="fu">diag</span>(post_V_diag), <span class="dv">3</span>), <span class="fu">names</span>(beta_bar))</span>
+<span id="cb7-791"><a href="#cb7-791" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">true_variance =</span> <span class="fu">diag</span>(V_beta), <span class="at">hb_recovered =</span> recovered)</span>
+<span id="cb7-792"><a href="#cb7-792" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb7-793"><a href="#cb7-793" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-794"><a href="#cb7-794" aria-hidden="true" tabindex="-1"></a><span class="in">```{r hb-figure, message=FALSE, warning=FALSE, fig.cap="Posterior distribution of the population mean price coefficient from the hierarchical-Bayes sampler (post-burn-in draws). The dashed line marks the true data-generating value; the spread is genuine posterior uncertainty, not noise."}</span></span>
+<span id="cb7-795"><a href="#cb7-795" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(keep_mu[, <span class="dv">3</span>], <span class="at">breaks =</span> <span class="dv">30</span>, <span class="at">col =</span> <span class="st">"grey80"</span>, <span class="at">border =</span> <span class="st">"white"</span>,</span>
+<span id="cb7-796"><a href="#cb7-796" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Posterior: mean price coefficient"</span>,</span>
+<span id="cb7-797"><a href="#cb7-797" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="fu">expression</span>(<span class="fu">bar</span>(beta)[price]))</span>
+<span id="cb7-798"><a href="#cb7-798" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> beta_bar[<span class="st">"price"</span>], <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span>
+<span id="cb7-799"><a href="#cb7-799" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="fu">mean</span>(keep_mu[, <span class="dv">3</span>]), <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb7-800"><a href="#cb7-800" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="fu">c</span>(<span class="st">"true value"</span>, <span class="st">"posterior mean"</span>),</span>
+<span id="cb7-801"><a href="#cb7-801" aria-hidden="true" tabindex="-1"></a>       <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>), <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span>
+<span id="cb7-802"><a href="#cb7-802" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb7-803"><a href="#cb7-803" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-804"><a href="#cb7-804" aria-hidden="true" tabindex="-1"></a>With individual posteriors in hand the analyst can compute a *distribution* of</span>
+<span id="cb7-805"><a href="#cb7-805" aria-hidden="true" tabindex="-1"></a>willingness to pay for the feature—the ratio of the feature coefficient to the</span>
+<span id="cb7-806"><a href="#cb7-806" aria-hidden="true" tabindex="-1"></a>(negated) price coefficient for each consumer—rather than a single number, and can</span>
+<span id="cb7-807"><a href="#cb7-807" aria-hidden="true" tabindex="-1"></a>target the consumers whose posteriors place them above a profitability threshold.</span>
+<span id="cb7-808"><a href="#cb7-808" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-809"><a href="#cb7-809" aria-hidden="true" tabindex="-1"></a><span class="in">```{r wtp, message=FALSE, warning=FALSE}</span></span>
+<span id="cb7-810"><a href="#cb7-810" aria-hidden="true" tabindex="-1"></a><span class="co"># Willingness to pay for the feature, per consumer (posterior means of beta_i)</span></span>
+<span id="cb7-811"><a href="#cb7-811" aria-hidden="true" tabindex="-1"></a>wtp <span class="ot">&lt;-</span> beta_draws[, <span class="st">"feature"</span>] <span class="sc">/</span> (<span class="sc">-</span>beta_draws[, <span class="st">"price"</span>])</span>
+<span id="cb7-812"><a href="#cb7-812" aria-hidden="true" tabindex="-1"></a>wtp <span class="ot">&lt;-</span> wtp[<span class="fu">is.finite</span>(wtp) <span class="sc">&amp;</span> wtp <span class="sc">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb7-813"><a href="#cb7-813" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">round</span>(wtp, <span class="dv">2</span>))</span>
+<span id="cb7-814"><a href="#cb7-814" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb7-815"><a href="#cb7-815" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-816"><a href="#cb7-816" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-817"><a href="#cb7-817" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-818"><a href="#cb7-818" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@allenby1998heterogeneity — the manifesto for hierarchical-Bayes heterogeneity in</span>
+<span id="cb7-819"><a href="#cb7-819" aria-hidden="true" tabindex="-1"></a>  marketing; argues for individual-level inference over representative-agent models.</span>
+<span id="cb7-820"><a href="#cb7-820" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-821"><a href="#cb7-821" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@rossi1996purchasehistory — the template HB application: individual-level posteriors</span>
+<span id="cb7-822"><a href="#cb7-822" aria-hidden="true" tabindex="-1"></a>  (shrinkage toward the population) raise the value of household data for targeting.</span>
+<span id="cb7-823"><a href="#cb7-823" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-824"><a href="#cb7-824" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@allenby1995reassessing — an early, influential hierarchical choice model showing</span>
+<span id="cb7-825"><a href="#cb7-825" aria-hidden="true" tabindex="-1"></a>  how heterogeneity reshapes substantive conclusions about loyalty and price</span>
+<span id="cb7-826"><a href="#cb7-826" aria-hidden="true" tabindex="-1"></a>  sensitivity. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-827"><a href="#cb7-827" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@rossi2001scaleusage — shows how hierarchical Bayes cleanly removes a pervasive</span>
+<span id="cb7-828"><a href="#cb7-828" aria-hidden="true" tabindex="-1"></a>  nuisance (respondents using rating scales differently); a model template beyond</span>
+<span id="cb7-829"><a href="#cb7-829" aria-hidden="true" tabindex="-1"></a>  choice. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-830"><a href="#cb7-830" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-831"><a href="#cb7-831" aria-hidden="true" tabindex="-1"></a>**Debate.** Continuous (HB) vs. discrete (latent-class/finite-mixture) heterogeneity;</span>
+<span id="cb7-832"><a href="#cb7-832" aria-hidden="true" tabindex="-1"></a>how much structure to put in the upper-level prior; whether individual posteriors are</span>
+<span id="cb7-833"><a href="#cb7-833" aria-hidden="true" tabindex="-1"></a>"real" or regularization artifacts.</span>
+<span id="cb7-834"><a href="#cb7-834" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-835"><a href="#cb7-835" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 8 — Conjoint &amp; preference measurement {#sec-cb-week-8}</span></span>
+<span id="cb7-836"><a href="#cb7-836" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-837"><a href="#cb7-837" aria-hidden="true" tabindex="-1"></a>**Topic.** Choice-based conjoint and preference measurement as the marketing-native</span>
+<span id="cb7-838"><a href="#cb7-838" aria-hidden="true" tabindex="-1"></a>application of HB choice models.</span>
+<span id="cb7-839"><a href="#cb7-839" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-840"><a href="#cb7-840" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Partworth estimation via HB; reduced designs and borrowing strength;</span>
+<span id="cb7-841"><a href="#cb7-841" aria-hidden="true" tabindex="-1"></a>constrained/sign-restricted priors; heterogeneity-distribution choice; adaptive and</span>
+<span id="cb7-842"><a href="#cb7-842" aria-hidden="true" tabindex="-1"></a>efficient design.</span>
+<span id="cb7-843"><a href="#cb7-843" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-844"><a href="#cb7-844" aria-hidden="true" tabindex="-1"></a>**Methods.** HB conjoint estimation; experimental design for choice; holdout</span>
+<span id="cb7-845"><a href="#cb7-845" aria-hidden="true" tabindex="-1"></a>prediction.</span>
+<span id="cb7-846"><a href="#cb7-846" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-847"><a href="#cb7-847" aria-hidden="true" tabindex="-1"></a>The hierarchical estimator of @sec-cb-week-7 is the dominant tool for recovering</span>
+<span id="cb7-848"><a href="#cb7-848" aria-hidden="true" tabindex="-1"></a>individual partworths from conjoint designs in which each respondent answers far</span>
+<span id="cb7-849"><a href="#cb7-849" aria-hidden="true" tabindex="-1"></a>fewer profiles than there are parameters. The normal-mixing assumption is a modeling</span>
+<span id="cb7-850"><a href="#cb7-850" aria-hidden="true" tabindex="-1"></a>choice, not a fact: it cannot represent multimodal tastes (genuine segments), and a</span>
+<span id="cb7-851"><a href="#cb7-851" aria-hidden="true" tabindex="-1"></a>normally distributed price coefficient places positive probability on consumers who</span>
+<span id="cb7-852"><a href="#cb7-852" aria-hidden="true" tabindex="-1"></a>*prefer* higher prices. Remedies include log-normal or sign-constrained coefficients,</span>
+<span id="cb7-853"><a href="#cb7-853" aria-hidden="true" tabindex="-1"></a>finite mixtures of normals for true segments, and—where the analyst doubts any</span>
+<span id="cb7-854"><a href="#cb7-854" aria-hidden="true" tabindex="-1"></a>parametric form—nonparametric mixing. Identification is delicate, so model comparison</span>
+<span id="cb7-855"><a href="#cb7-855" aria-hidden="true" tabindex="-1"></a>and holdout validation (@sec-cb-week-11) are essential rather than ornamental</span>
+<span id="cb7-856"><a href="#cb7-856" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@chintagunta2006structural</span><span class="co">]</span>.</span>
+<span id="cb7-857"><a href="#cb7-857" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-858"><a href="#cb7-858" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-859"><a href="#cb7-859" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-860"><a href="#cb7-860" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@lenk1996hbconjoint — foundational HB conjoint: recovers heterogeneous partworths</span>
+<span id="cb7-861"><a href="#cb7-861" aria-hidden="true" tabindex="-1"></a>  even when each respondent answers far fewer profiles than parameters. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-862"><a href="#cb7-862" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@allenby1995priorknowledge — shows how economically motivated (e.g.,</span>
+<span id="cb7-863"><a href="#cb7-863" aria-hidden="true" tabindex="-1"></a>  sign-constrained) priors improve partworth plausibility and prediction. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-864"><a href="#cb7-864" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@andrews2002hbvsmixture — the standard HB-vs-finite-mixture comparison; ties Week</span>
+<span id="cb7-865"><a href="#cb7-865" aria-hidden="true" tabindex="-1"></a>  7's heterogeneity debate to a concrete conjoint application. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-866"><a href="#cb7-866" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@train2005boundedmixedlogit (see @sec-cb-week-5) — bounded/correlated partworth</span>
+<span id="cb7-867"><a href="#cb7-867" aria-hidden="true" tabindex="-1"></a>  distributions for conjoint. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-868"><a href="#cb7-868" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-869"><a href="#cb7-869" aria-hidden="true" tabindex="-1"></a>**Debate.** Continuous vs. discrete heterogeneity in conjoint; constrained vs.</span>
+<span id="cb7-870"><a href="#cb7-870" aria-hidden="true" tabindex="-1"></a>unconstrained partworths; whether better designs or better priors matter more for</span>
+<span id="cb7-871"><a href="#cb7-871" aria-hidden="true" tabindex="-1"></a>small per-respondent samples.</span>
+<span id="cb7-872"><a href="#cb7-872" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-873"><a href="#cb7-873" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 9 — Aggregate-data demand &amp; integrating out heterogeneity {#sec-cb-week-9}</span></span>
+<span id="cb7-874"><a href="#cb7-874" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-875"><a href="#cb7-875" aria-hidden="true" tabindex="-1"></a>**Topic.** Random-coefficients logit demand from aggregate market shares (BLP); the</span>
+<span id="cb7-876"><a href="#cb7-876" aria-hidden="true" tabindex="-1"></a>Bayesian counterpart; the mechanics of integrating out heterogeneity and endogeneity.</span>
+<span id="cb7-877"><a href="#cb7-877" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-878"><a href="#cb7-878" aria-hidden="true" tabindex="-1"></a>**Subtopics.** The BLP contraction and GMM; the inversion from shares to mean</span>
+<span id="cb7-879"><a href="#cb7-879" aria-hidden="true" tabindex="-1"></a>utilities; instruments and price endogeneity; the Bayesian (Jiang–Manchanda–Rossi)</span>
+<span id="cb7-880"><a href="#cb7-880" aria-hidden="true" tabindex="-1"></a>approach; numerical reliability (MPEC).</span>
 <span id="cb7-881"><a href="#cb7-881" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-882"><a href="#cb7-882" aria-hidden="true" tabindex="-1"></a>**Topic.** Dynamic choice: Bayesian learning, structural state dependence, and the</span>
-<span id="cb7-883"><a href="#cb7-883" aria-hidden="true" tabindex="-1"></a>central identification problem of distinguishing genuine persistence from unobserved</span>
-<span id="cb7-884"><a href="#cb7-884" aria-hidden="true" tabindex="-1"></a>heterogeneity.</span>
-<span id="cb7-885"><a href="#cb7-885" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-886"><a href="#cb7-886" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Forward-looking vs. myopic consumers; Bayesian learning about brand</span>
-<span id="cb7-887"><a href="#cb7-887" aria-hidden="true" tabindex="-1"></a>attributes; habit/inertia/loyalty; the heterogeneity-vs-state-dependence confound;</span>
-<span id="cb7-888"><a href="#cb7-888" aria-hidden="true" tabindex="-1"></a>the initial-conditions problem.</span>
-<span id="cb7-889"><a href="#cb7-889" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-890"><a href="#cb7-890" aria-hidden="true" tabindex="-1"></a>**Methods.** Dynamic structural estimation; hierarchical Bayes with</span>
-<span id="cb7-891"><a href="#cb7-891" aria-hidden="true" tabindex="-1"></a>autocorrelated/lagged terms; careful identification design.</span>
+<span id="cb7-882"><a href="#cb7-882" aria-hidden="true" tabindex="-1"></a>**Methods.** GMM with the BLP contraction; MSM; Bayesian estimation from aggregate</span>
+<span id="cb7-883"><a href="#cb7-883" aria-hidden="true" tabindex="-1"></a>data; MPEC reformulation.</span>
+<span id="cb7-884"><a href="#cb7-884" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-885"><a href="#cb7-885" aria-hidden="true" tabindex="-1"></a>When individual choices are unobserved and only market shares are recorded, the</span>
+<span id="cb7-886"><a href="#cb7-886" aria-hidden="true" tabindex="-1"></a>random-coefficients demand system inverts shares to recover mean utilities and</span>
+<span id="cb7-887"><a href="#cb7-887" aria-hidden="true" tabindex="-1"></a>estimates the mixing distribution from share variation across markets</span>
+<span id="cb7-888"><a href="#cb7-888" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@berry1995; @berry1995automobile</span><span class="co">]</span>—the bridge between the consumer-level models of</span>
+<span id="cb7-889"><a href="#cb7-889" aria-hidden="true" tabindex="-1"></a>this chapter and industry-level demand analysis (@sec-marketing-finance), with active</span>
+<span id="cb7-890"><a href="#cb7-890" aria-hidden="true" tabindex="-1"></a>work on practical edge cases such as zero-share products <span class="co">[</span><span class="ot">@dube2021random</span><span class="co">]</span>. The</span>
+<span id="cb7-891"><a href="#cb7-891" aria-hidden="true" tabindex="-1"></a>Bayesian counterpart integrates out heterogeneity from aggregate shares via MCMC.</span>
 <span id="cb7-892"><a href="#cb7-892" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-893"><a href="#cb7-893" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
 <span id="cb7-894"><a href="#cb7-894" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-895"><a href="#cb7-895" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@erdem1996learning — the founding consumer-learning choice model: forward-looking</span>
-<span id="cb7-896"><a href="#cb7-896" aria-hidden="true" tabindex="-1"></a>  Bayesian consumers learning brand quality from experience and advertising. <span class="co">[</span><span class="ot">F → R</span><span class="co">]</span></span>
-<span id="cb7-897"><a href="#cb7-897" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@keane1997statedependence — the methodological statement of the</span>
-<span id="cb7-898"><a href="#cb7-898" aria-hidden="true" tabindex="-1"></a>  heterogeneity-vs-state-dependence identification problem; required reading for the</span>
-<span id="cb7-899"><a href="#cb7-899" aria-hidden="true" tabindex="-1"></a>  debate. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-900"><a href="#cb7-900" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Dubé, Hitsch &amp; Rossi (2010), "State Dependence and Alternative Explanations for</span>
-<span id="cb7-901"><a href="#cb7-901" aria-hidden="true" tabindex="-1"></a>  Consumer Inertia," *RAND J. Econ.* 41(3):417–445,</span>
-<span id="cb7-902"><a href="#cb7-902" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">10.1111/j.1756-2171.2010.00106.x</span><span class="co">](https://doi.org/10.1111/j.1756-2171.2010.00106.x)</span></span>
-<span id="cb7-903"><a href="#cb7-903" aria-hidden="true" tabindex="-1"></a>  — the modern resolution isolating genuine state dependence from persistent</span>
-<span id="cb7-904"><a href="#cb7-904" aria-hidden="true" tabindex="-1"></a>  heterogeneity. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
+<span id="cb7-895"><a href="#cb7-895" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@berry1994discretechoice — introduces the share-inversion that lets discrete-choice</span>
+<span id="cb7-896"><a href="#cb7-896" aria-hidden="true" tabindex="-1"></a>  demand be estimated from aggregate data with endogenous prices. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-897"><a href="#cb7-897" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@berry1995automobile — the canonical BLP random-coefficients aggregate-demand model;</span>
+<span id="cb7-898"><a href="#cb7-898" aria-hidden="true" tabindex="-1"></a>  the reference point for all market-share choice estimation. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-899"><a href="#cb7-899" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@jiang2009bayesianblp — the Bayesian counterpart to BLP; shows how MCMC integrates</span>
+<span id="cb7-900"><a href="#cb7-900" aria-hidden="true" tabindex="-1"></a>  out heterogeneity from aggregate shares. <span class="co">[</span><span class="ot">F → R</span><span class="co">]</span></span>
+<span id="cb7-901"><a href="#cb7-901" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@chintagunta2011discretechoice — the marketing-specific synthesis of the whole</span>
+<span id="cb7-902"><a href="#cb7-902" aria-hidden="true" tabindex="-1"></a>  discrete-choice demand toolkit; the natural anchor/overview citation. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-903"><a href="#cb7-903" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@petrin2002minivan — shows how BLP-style demand plus micro-moments yields</span>
+<span id="cb7-904"><a href="#cb7-904" aria-hidden="true" tabindex="-1"></a>  welfare/counterfactual answers; a model application. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
 <span id="cb7-905"><a href="#cb7-905" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-906"><a href="#cb7-906" aria-hidden="true" tabindex="-1"></a>**Debate.** Structural state dependence vs. spurious persistence from heterogeneity;</span>
-<span id="cb7-907"><a href="#cb7-907" aria-hidden="true" tabindex="-1"></a>forward-looking vs. reduced-form dynamics; how much the initial-conditions assumption</span>
-<span id="cb7-908"><a href="#cb7-908" aria-hidden="true" tabindex="-1"></a>drives results.</span>
+<span id="cb7-906"><a href="#cb7-906" aria-hidden="true" tabindex="-1"></a>**Debate.** GMM/BLP vs. Bayesian estimation of the same model; instrument validity</span>
+<span id="cb7-907"><a href="#cb7-907" aria-hidden="true" tabindex="-1"></a>and weak instruments; numerical fragility of the nested contraction (and MPEC as the</span>
+<span id="cb7-908"><a href="#cb7-908" aria-hidden="true" tabindex="-1"></a>fix, Dubé–Fox–Su, <span class="co">[</span><span class="ot">10.3982/ecta8585</span><span class="co">](https://doi.org/10.3982/ecta8585)</span>).</span>
 <span id="cb7-909"><a href="#cb7-909" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-910"><a href="#cb7-910" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 11 — Model comparison: Bayes factors, DIC, WAIC, cross-validation {#sec-cb-week-11}</span></span>
+<span id="cb7-910"><a href="#cb7-910" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 10 — Dynamics &amp; state dependence {#sec-cb-week-10}</span></span>
 <span id="cb7-911"><a href="#cb7-911" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-912"><a href="#cb7-912" aria-hidden="true" tabindex="-1"></a>**Topic.** Comparing and checking Bayesian choice models.</span>
-<span id="cb7-913"><a href="#cb7-913" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-914"><a href="#cb7-914" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Marginal likelihood and Bayes factors; sensitivity to priors</span>
-<span id="cb7-915"><a href="#cb7-915" aria-hidden="true" tabindex="-1"></a>(Lindley/Bartlett paradox); DIC and the effective number of parameters; WAIC;</span>
-<span id="cb7-916"><a href="#cb7-916" aria-hidden="true" tabindex="-1"></a>leave-one-out cross-validation (PSIS-LOO); posterior predictive checks.</span>
-<span id="cb7-917"><a href="#cb7-917" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-918"><a href="#cb7-918" aria-hidden="true" tabindex="-1"></a>**Methods.** Computing marginal likelihoods (Chib's method); DIC/WAIC; LOO; posterior</span>
-<span id="cb7-919"><a href="#cb7-919" aria-hidden="true" tabindex="-1"></a>predictive checking.</span>
-<span id="cb7-920"><a href="#cb7-920" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-921"><a href="#cb7-921" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-912"><a href="#cb7-912" aria-hidden="true" tabindex="-1"></a>**Topic.** Dynamic choice: Bayesian learning, structural state dependence, and the</span>
+<span id="cb7-913"><a href="#cb7-913" aria-hidden="true" tabindex="-1"></a>central identification problem of distinguishing genuine persistence from unobserved</span>
+<span id="cb7-914"><a href="#cb7-914" aria-hidden="true" tabindex="-1"></a>heterogeneity.</span>
+<span id="cb7-915"><a href="#cb7-915" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-916"><a href="#cb7-916" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Forward-looking vs. myopic consumers; Bayesian learning about brand</span>
+<span id="cb7-917"><a href="#cb7-917" aria-hidden="true" tabindex="-1"></a>attributes; habit/inertia/loyalty; the heterogeneity-vs-state-dependence confound;</span>
+<span id="cb7-918"><a href="#cb7-918" aria-hidden="true" tabindex="-1"></a>the initial-conditions problem.</span>
+<span id="cb7-919"><a href="#cb7-919" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-920"><a href="#cb7-920" aria-hidden="true" tabindex="-1"></a>**Methods.** Dynamic structural estimation; hierarchical Bayes with</span>
+<span id="cb7-921"><a href="#cb7-921" aria-hidden="true" tabindex="-1"></a>autocorrelated/lagged terms; careful identification design.</span>
 <span id="cb7-922"><a href="#cb7-922" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-923"><a href="#cb7-923" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@kass1995bayesfactors — the definitive treatment of Bayes factors for model</span>
-<span id="cb7-924"><a href="#cb7-924" aria-hidden="true" tabindex="-1"></a>  comparison; sets up the marginal-likelihood approach and its prior sensitivity. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-925"><a href="#cb7-925" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@spiegelhalter2002dic — introduces DIC and the effective number of parameters; the</span>
-<span id="cb7-926"><a href="#cb7-926" aria-hidden="true" tabindex="-1"></a>  most-used hierarchical-model comparison criterion in applied marketing. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-927"><a href="#cb7-927" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@gelman2014predictiveic — unifies AIC/DIC/WAIC and predictive evaluation; the modern</span>
-<span id="cb7-928"><a href="#cb7-928" aria-hidden="true" tabindex="-1"></a>  conceptual map for choosing a criterion. <span class="co">[</span><span class="ot">F → R</span><span class="co">]</span></span>
-<span id="cb7-929"><a href="#cb7-929" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@vehtari2017loo — the current practical standard (PSIS-LOO + WAIC) with the <span class="in">`loo`</span></span>
-<span id="cb7-930"><a href="#cb7-930" aria-hidden="true" tabindex="-1"></a>  package; what students should actually run today. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
-<span id="cb7-931"><a href="#cb7-931" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-932"><a href="#cb7-932" aria-hidden="true" tabindex="-1"></a>**Debate.** Bayes factors (and prior sensitivity) vs. predictive criteria</span>
-<span id="cb7-933"><a href="#cb7-933" aria-hidden="true" tabindex="-1"></a>(WAIC/LOO); DIC's known pathologies; in-sample fit vs. holdout prediction as the</span>
-<span id="cb7-934"><a href="#cb7-934" aria-hidden="true" tabindex="-1"></a>right target for marketing models.</span>
+<span id="cb7-923"><a href="#cb7-923" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-924"><a href="#cb7-924" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-925"><a href="#cb7-925" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@erdem1996learning — the founding consumer-learning choice model: forward-looking</span>
+<span id="cb7-926"><a href="#cb7-926" aria-hidden="true" tabindex="-1"></a>  Bayesian consumers learning brand quality from experience and advertising. <span class="co">[</span><span class="ot">F → R</span><span class="co">]</span></span>
+<span id="cb7-927"><a href="#cb7-927" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@keane1997statedependence — the methodological statement of the</span>
+<span id="cb7-928"><a href="#cb7-928" aria-hidden="true" tabindex="-1"></a>  heterogeneity-vs-state-dependence identification problem; required reading for the</span>
+<span id="cb7-929"><a href="#cb7-929" aria-hidden="true" tabindex="-1"></a>  debate. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-930"><a href="#cb7-930" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Dubé, Hitsch &amp; Rossi (2010), "State Dependence and Alternative Explanations for</span>
+<span id="cb7-931"><a href="#cb7-931" aria-hidden="true" tabindex="-1"></a>  Consumer Inertia," *RAND J. Econ.* 41(3):417–445,</span>
+<span id="cb7-932"><a href="#cb7-932" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">10.1111/j.1756-2171.2010.00106.x</span><span class="co">](https://doi.org/10.1111/j.1756-2171.2010.00106.x)</span></span>
+<span id="cb7-933"><a href="#cb7-933" aria-hidden="true" tabindex="-1"></a>  — the modern resolution isolating genuine state dependence from persistent</span>
+<span id="cb7-934"><a href="#cb7-934" aria-hidden="true" tabindex="-1"></a>  heterogeneity. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
 <span id="cb7-935"><a href="#cb7-935" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-936"><a href="#cb7-936" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 12 — Hamiltonian Monte Carlo &amp; Stan {#sec-cb-week-12}</span></span>
-<span id="cb7-937"><a href="#cb7-937" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-938"><a href="#cb7-938" aria-hidden="true" tabindex="-1"></a>**Topic.** Gradient-based MCMC and probabilistic programming as the modern default</span>
-<span id="cb7-939"><a href="#cb7-939" aria-hidden="true" tabindex="-1"></a>engine.</span>
-<span id="cb7-940"><a href="#cb7-940" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-941"><a href="#cb7-941" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Why random-walk MH/Gibbs mix poorly in high dimensions; Hamiltonian</span>
-<span id="cb7-942"><a href="#cb7-942" aria-hidden="true" tabindex="-1"></a>dynamics; the No-U-Turn Sampler (NUTS); non-centered parameterization for</span>
-<span id="cb7-943"><a href="#cb7-943" aria-hidden="true" tabindex="-1"></a>hierarchical models; the Stan ecosystem.</span>
-<span id="cb7-944"><a href="#cb7-944" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-945"><a href="#cb7-945" aria-hidden="true" tabindex="-1"></a>**Methods.** Coding a hierarchical choice model in Stan; HMC/NUTS diagnostics</span>
-<span id="cb7-946"><a href="#cb7-946" aria-hidden="true" tabindex="-1"></a>(divergences, energy, R-hat, effective sample size); reparameterization.</span>
+<span id="cb7-936"><a href="#cb7-936" aria-hidden="true" tabindex="-1"></a>**Debate.** Structural state dependence vs. spurious persistence from heterogeneity;</span>
+<span id="cb7-937"><a href="#cb7-937" aria-hidden="true" tabindex="-1"></a>forward-looking vs. reduced-form dynamics; how much the initial-conditions assumption</span>
+<span id="cb7-938"><a href="#cb7-938" aria-hidden="true" tabindex="-1"></a>drives results.</span>
+<span id="cb7-939"><a href="#cb7-939" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-940"><a href="#cb7-940" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 11 — Model comparison: Bayes factors, DIC, WAIC, cross-validation {#sec-cb-week-11}</span></span>
+<span id="cb7-941"><a href="#cb7-941" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-942"><a href="#cb7-942" aria-hidden="true" tabindex="-1"></a>**Topic.** Comparing and checking Bayesian choice models.</span>
+<span id="cb7-943"><a href="#cb7-943" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-944"><a href="#cb7-944" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Marginal likelihood and Bayes factors; sensitivity to priors</span>
+<span id="cb7-945"><a href="#cb7-945" aria-hidden="true" tabindex="-1"></a>(Lindley/Bartlett paradox); DIC and the effective number of parameters; WAIC;</span>
+<span id="cb7-946"><a href="#cb7-946" aria-hidden="true" tabindex="-1"></a>leave-one-out cross-validation (PSIS-LOO); posterior predictive checks.</span>
 <span id="cb7-947"><a href="#cb7-947" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-948"><a href="#cb7-948" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
-<span id="cb7-949"><a href="#cb7-949" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-950"><a href="#cb7-950" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@carpenter2017stan — the reference for Stan; the tool most students will use to fit</span>
-<span id="cb7-951"><a href="#cb7-951" aria-hidden="true" tabindex="-1"></a>  hierarchical choice models going forward. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
-<span id="cb7-952"><a href="#cb7-952" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Hoffman &amp; Gelman (2014), "The No-U-Turn Sampler," *Journal of Machine Learning</span>
-<span id="cb7-953"><a href="#cb7-953" aria-hidden="true" tabindex="-1"></a>  Research* 15:1593–1623 — JMLR, no Crossref DOI; cite by volume/pages. The NUTS</span>
-<span id="cb7-954"><a href="#cb7-954" aria-hidden="true" tabindex="-1"></a>  algorithm underlying Stan's sampler. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
-<span id="cb7-955"><a href="#cb7-955" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Gelman et al. (2013), *Bayesian Data Analysis*, HMC chapter (book) — textbook</span>
-<span id="cb7-956"><a href="#cb7-956" aria-hidden="true" tabindex="-1"></a>  treatment. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-957"><a href="#cb7-957" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-958"><a href="#cb7-958" aria-hidden="true" tabindex="-1"></a>**Debate.** HMC/NUTS vs. problem-specific Gibbs samplers (speed vs. generality); when</span>
-<span id="cb7-959"><a href="#cb7-959" aria-hidden="true" tabindex="-1"></a>divergences signal a real modeling problem vs. a tuning problem; the</span>
-<span id="cb7-960"><a href="#cb7-960" aria-hidden="true" tabindex="-1"></a>centered/non-centered parameterization trade-off in hierarchical models.</span>
+<span id="cb7-948"><a href="#cb7-948" aria-hidden="true" tabindex="-1"></a>**Methods.** Computing marginal likelihoods (Chib's method); DIC/WAIC; LOO; posterior</span>
+<span id="cb7-949"><a href="#cb7-949" aria-hidden="true" tabindex="-1"></a>predictive checking.</span>
+<span id="cb7-950"><a href="#cb7-950" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-951"><a href="#cb7-951" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-952"><a href="#cb7-952" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-953"><a href="#cb7-953" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@kass1995bayesfactors — the definitive treatment of Bayes factors for model</span>
+<span id="cb7-954"><a href="#cb7-954" aria-hidden="true" tabindex="-1"></a>  comparison; sets up the marginal-likelihood approach and its prior sensitivity. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-955"><a href="#cb7-955" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@spiegelhalter2002dic — introduces DIC and the effective number of parameters; the</span>
+<span id="cb7-956"><a href="#cb7-956" aria-hidden="true" tabindex="-1"></a>  most-used hierarchical-model comparison criterion in applied marketing. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-957"><a href="#cb7-957" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@gelman2014predictiveic — unifies AIC/DIC/WAIC and predictive evaluation; the modern</span>
+<span id="cb7-958"><a href="#cb7-958" aria-hidden="true" tabindex="-1"></a>  conceptual map for choosing a criterion. <span class="co">[</span><span class="ot">F → R</span><span class="co">]</span></span>
+<span id="cb7-959"><a href="#cb7-959" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@vehtari2017loo — the current practical standard (PSIS-LOO + WAIC) with the <span class="in">`loo`</span></span>
+<span id="cb7-960"><a href="#cb7-960" aria-hidden="true" tabindex="-1"></a>  package; what students should actually run today. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
 <span id="cb7-961"><a href="#cb7-961" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-962"><a href="#cb7-962" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 13 — Scalable &amp; variational methods {#sec-cb-week-13}</span></span>
-<span id="cb7-963"><a href="#cb7-963" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-964"><a href="#cb7-964" aria-hidden="true" tabindex="-1"></a>**Topic.** Approximate Bayesian inference for large, high-dimensional, sparse</span>
-<span id="cb7-965"><a href="#cb7-965" aria-hidden="true" tabindex="-1"></a>marketing data.</span>
-<span id="cb7-966"><a href="#cb7-966" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-967"><a href="#cb7-967" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Mean-field and structured variational inference; the ELBO; automatic</span>
-<span id="cb7-968"><a href="#cb7-968" aria-hidden="true" tabindex="-1"></a>differentiation variational inference (ADVI); stochastic/streaming variants;</span>
-<span id="cb7-969"><a href="#cb7-969" aria-hidden="true" tabindex="-1"></a>accuracy-vs-speed trade-offs; where VI fails for choice models.</span>
+<span id="cb7-962"><a href="#cb7-962" aria-hidden="true" tabindex="-1"></a>**Debate.** Bayes factors (and prior sensitivity) vs. predictive criteria</span>
+<span id="cb7-963"><a href="#cb7-963" aria-hidden="true" tabindex="-1"></a>(WAIC/LOO); DIC's known pathologies; in-sample fit vs. holdout prediction as the</span>
+<span id="cb7-964"><a href="#cb7-964" aria-hidden="true" tabindex="-1"></a>right target for marketing models.</span>
+<span id="cb7-965"><a href="#cb7-965" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-966"><a href="#cb7-966" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 12 — Hamiltonian Monte Carlo &amp; Stan {#sec-cb-week-12}</span></span>
+<span id="cb7-967"><a href="#cb7-967" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-968"><a href="#cb7-968" aria-hidden="true" tabindex="-1"></a>**Topic.** Gradient-based MCMC and probabilistic programming as the modern default</span>
+<span id="cb7-969"><a href="#cb7-969" aria-hidden="true" tabindex="-1"></a>engine.</span>
 <span id="cb7-970"><a href="#cb7-970" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-971"><a href="#cb7-971" aria-hidden="true" tabindex="-1"></a>**Methods.** Variational inference; ADVI in Stan/PyMC; diagnostics for approximate</span>
-<span id="cb7-972"><a href="#cb7-972" aria-hidden="true" tabindex="-1"></a>posteriors.</span>
-<span id="cb7-973"><a href="#cb7-973" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-974"><a href="#cb7-974" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
-<span id="cb7-975"><a href="#cb7-975" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-976"><a href="#cb7-976" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@blei2017variational — the standard statistician-facing introduction to variational</span>
-<span id="cb7-977"><a href="#cb7-977" aria-hidden="true" tabindex="-1"></a>  inference; the conceptual anchor for the scalable-methods week. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
-<span id="cb7-978"><a href="#cb7-978" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@ansari2003ecustomization — a marketing exemplar of high-dimensional Bayesian</span>
-<span id="cb7-979"><a href="#cb7-979" aria-hidden="true" tabindex="-1"></a>  modeling for personalization at scale; motivates why scalable inference matters. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-980"><a href="#cb7-980" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@yang2003interdependent — a Bayesian spatial-autoregressive choice model; shows how</span>
-<span id="cb7-981"><a href="#cb7-981" aria-hidden="true" tabindex="-1"></a>  richer dependence structures (and the computation they demand) extend the</span>
-<span id="cb7-982"><a href="#cb7-982" aria-hidden="true" tabindex="-1"></a>  hierarchical-choice toolkit. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
-<span id="cb7-983"><a href="#cb7-983" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@carpenter2017stan (see @sec-cb-week-12) — Stan also implements ADVI, the bridge from</span>
-<span id="cb7-984"><a href="#cb7-984" aria-hidden="true" tabindex="-1"></a>  HMC to VI. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
-<span id="cb7-985"><a href="#cb7-985" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-986"><a href="#cb7-986" aria-hidden="true" tabindex="-1"></a>**Debate.** Variational approximation bias vs. MCMC accuracy; whether VI's posterior</span>
-<span id="cb7-987"><a href="#cb7-987" aria-hidden="true" tabindex="-1"></a>uncertainties can be trusted for inference (vs. only point prediction); the</span>
-<span id="cb7-988"><a href="#cb7-988" aria-hidden="true" tabindex="-1"></a>encroachment of ML/deep methods on Bayesian choice modeling.</span>
-<span id="cb7-989"><a href="#cb7-989" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-990"><a href="#cb7-990" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 14 — Synthesis, frontier &amp; research design {#sec-cb-week-14}</span></span>
+<span id="cb7-971"><a href="#cb7-971" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Why random-walk MH/Gibbs mix poorly in high dimensions; Hamiltonian</span>
+<span id="cb7-972"><a href="#cb7-972" aria-hidden="true" tabindex="-1"></a>dynamics; the No-U-Turn Sampler (NUTS); non-centered parameterization for</span>
+<span id="cb7-973"><a href="#cb7-973" aria-hidden="true" tabindex="-1"></a>hierarchical models; the Stan ecosystem.</span>
+<span id="cb7-974"><a href="#cb7-974" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-975"><a href="#cb7-975" aria-hidden="true" tabindex="-1"></a>**Methods.** Coding a hierarchical choice model in Stan; HMC/NUTS diagnostics</span>
+<span id="cb7-976"><a href="#cb7-976" aria-hidden="true" tabindex="-1"></a>(divergences, energy, R-hat, effective sample size); reparameterization.</span>
+<span id="cb7-977"><a href="#cb7-977" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-978"><a href="#cb7-978" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-979"><a href="#cb7-979" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-980"><a href="#cb7-980" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@carpenter2017stan — the reference for Stan; the tool most students will use to fit</span>
+<span id="cb7-981"><a href="#cb7-981" aria-hidden="true" tabindex="-1"></a>  hierarchical choice models going forward. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
+<span id="cb7-982"><a href="#cb7-982" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Hoffman &amp; Gelman (2014), "The No-U-Turn Sampler," *Journal of Machine Learning</span>
+<span id="cb7-983"><a href="#cb7-983" aria-hidden="true" tabindex="-1"></a>  Research* 15:1593–1623 — JMLR, no Crossref DOI; cite by volume/pages. The NUTS</span>
+<span id="cb7-984"><a href="#cb7-984" aria-hidden="true" tabindex="-1"></a>  algorithm underlying Stan's sampler. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
+<span id="cb7-985"><a href="#cb7-985" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Gelman et al. (2013), *Bayesian Data Analysis*, HMC chapter (book) — textbook</span>
+<span id="cb7-986"><a href="#cb7-986" aria-hidden="true" tabindex="-1"></a>  treatment. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-987"><a href="#cb7-987" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-988"><a href="#cb7-988" aria-hidden="true" tabindex="-1"></a>**Debate.** HMC/NUTS vs. problem-specific Gibbs samplers (speed vs. generality); when</span>
+<span id="cb7-989"><a href="#cb7-989" aria-hidden="true" tabindex="-1"></a>divergences signal a real modeling problem vs. a tuning problem; the</span>
+<span id="cb7-990"><a href="#cb7-990" aria-hidden="true" tabindex="-1"></a>centered/non-centered parameterization trade-off in hierarchical models.</span>
 <span id="cb7-991"><a href="#cb7-991" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-992"><a href="#cb7-992" aria-hidden="true" tabindex="-1"></a>**Topic.** Pulling the threads together; designing a choice-modeling research paper;</span>
-<span id="cb7-993"><a href="#cb7-993" aria-hidden="true" tabindex="-1"></a>the open frontier.</span>
-<span id="cb7-994"><a href="#cb7-994" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-995"><a href="#cb7-995" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Matching estimator to question (closed-form vs. simulation vs. MCMC vs.</span>
-<span id="cb7-996"><a href="#cb7-996" aria-hidden="true" tabindex="-1"></a>VI); identification storytelling; replication and reproducibility (<span class="in">`bayesm`</span>, Stan,</span>
-<span id="cb7-997"><a href="#cb7-997" aria-hidden="true" tabindex="-1"></a><span class="in">`loo`</span>); current frontiers—ML/Bayesian hybrids, text/image as choice covariates,</span>
-<span id="cb7-998"><a href="#cb7-998" aria-hidden="true" tabindex="-1"></a>privacy-constrained estimation, scalable personalization.</span>
-<span id="cb7-999"><a href="#cb7-999" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1000"><a href="#cb7-1000" aria-hidden="true" tabindex="-1"></a>**Methods.** Referee report; replication-or-extension project presentation.</span>
-<span id="cb7-1001"><a href="#cb7-1001" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1002"><a href="#cb7-1002" aria-hidden="true" tabindex="-1"></a>The recurring lesson across the semester is that the hard part of choice modeling is</span>
-<span id="cb7-1003"><a href="#cb7-1003" aria-hidden="true" tabindex="-1"></a>rarely the optimizer or the sampler; it is matching the model's substitution</span>
-<span id="cb7-1004"><a href="#cb7-1004" aria-hidden="true" tabindex="-1"></a>structure and heterogeneity to the market and the decision at hand. Revealed-</span>
-<span id="cb7-1005"><a href="#cb7-1005" aria-hidden="true" tabindex="-1"></a>preference data suffer endogeneity (instruments and control functions, with their own</span>
-<span id="cb7-1006"><a href="#cb7-1006" aria-hidden="true" tabindex="-1"></a>pitfalls); stated-preference conjoint avoids price endogeneity by design at the cost</span>
-<span id="cb7-1007"><a href="#cb7-1007" aria-hidden="true" tabindex="-1"></a>of hypothetical bias; aggregate data require the BLP machinery of @sec-cb-week-9. A</span>
-<span id="cb7-1008"><a href="#cb7-1008" aria-hidden="true" tabindex="-1"></a>choice model's in-sample fit is a weak guide—holdout prediction, recovery of known</span>
-<span id="cb7-1009"><a href="#cb7-1009" aria-hidden="true" tabindex="-1"></a>substitution patterns, and evidence that an IIA relaxation changes substantive</span>
-<span id="cb7-1010"><a href="#cb7-1010" aria-hidden="true" tabindex="-1"></a>conclusions are the operative tests <span class="co">[</span><span class="ot">@chintagunta2006structural; @dube2021random</span><span class="co">]</span>.</span>
-<span id="cb7-1011"><a href="#cb7-1011" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1012"><a href="#cb7-1012" aria-hidden="true" tabindex="-1"></a>**Key readings.** Student-selected frontier papers plus the field syntheses already</span>
-<span id="cb7-1013"><a href="#cb7-1013" aria-hidden="true" tabindex="-1"></a>assigned: @allenby1998heterogeneity, @chintagunta2011discretechoice, and the</span>
-<span id="cb7-1014"><a href="#cb7-1014" aria-hidden="true" tabindex="-1"></a>Bayesian-marketing review Rossi &amp; Allenby (2003), *Marketing Science* 22(3):304–328,</span>
-<span id="cb7-1015"><a href="#cb7-1015" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">10.1287/mksc.22.3.304.17739</span><span class="co">](https://doi.org/10.1287/mksc.22.3.304.17739)</span>. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
-<span id="cb7-1016"><a href="#cb7-1016" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1017"><a href="#cb7-1017" aria-hidden="true" tabindex="-1"></a>**Debate.** The whole-course tension: structural/behavioral interpretability vs.</span>
-<span id="cb7-1018"><a href="#cb7-1018" aria-hidden="true" tabindex="-1"></a>predictive flexibility; Bayesian vs. classical estimation of identical models; how</span>
-<span id="cb7-1019"><a href="#cb7-1019" aria-hidden="true" tabindex="-1"></a>much marketing's choice-modeling tradition will be absorbed into machine learning.</span>
-<span id="cb7-1020"><a href="#cb7-1020" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1021"><a href="#cb7-1021" aria-hidden="true" tabindex="-1"></a><span class="fu">## Foundational vs. frontier at a glance {#sec-cb-foundational-frontier}</span></span>
-<span id="cb7-1022"><a href="#cb7-1022" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1023"><a href="#cb7-1023" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Week <span class="pp">|</span> Topic <span class="pp">|</span> Status <span class="pp">|</span></span>
-<span id="cb7-1024"><a href="#cb7-1024" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb7-1025"><a href="#cb7-1025" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> RUM theory <span class="pp">|</span> Foundational <span class="pp">|</span></span>
-<span id="cb7-1026"><a href="#cb7-1026" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 2 <span class="pp">|</span> Logit <span class="pp">|</span> Foundational <span class="pp">|</span></span>
-<span id="cb7-1027"><a href="#cb7-1027" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 3 <span class="pp">|</span> IIA / GEV / nested <span class="pp">|</span> Foundational <span class="pp">|</span></span>
-<span id="cb7-1028"><a href="#cb7-1028" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 4 <span class="pp">|</span> Probit &amp; GHK simulation <span class="pp">|</span> Foundational <span class="pp">|</span></span>
-<span id="cb7-1029"><a href="#cb7-1029" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 5 <span class="pp">|</span> Mixed / random-coefficients logit <span class="pp">|</span> Foundational (bridges to frontier) <span class="pp">|</span></span>
-<span id="cb7-1030"><a href="#cb7-1030" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 6 <span class="pp">|</span> Bayesian foundations &amp; MCMC <span class="pp">|</span> Foundational <span class="pp">|</span></span>
-<span id="cb7-1031"><a href="#cb7-1031" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 7 <span class="pp">|</span> Hierarchical Bayes for heterogeneity <span class="pp">|</span> Foundational (course core) <span class="pp">|</span></span>
-<span id="cb7-1032"><a href="#cb7-1032" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 8 <span class="pp">|</span> Conjoint / preference measurement <span class="pp">|</span> Foundational application; design is frontier <span class="pp">|</span></span>
-<span id="cb7-1033"><a href="#cb7-1033" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 9 <span class="pp">|</span> Aggregate demand / integrating out heterogeneity <span class="pp">|</span> Foundational → frontier <span class="pp">|</span></span>
-<span id="cb7-1034"><a href="#cb7-1034" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 10 <span class="pp">|</span> Dynamics &amp; state dependence <span class="pp">|</span> Foundational → frontier <span class="pp">|</span></span>
-<span id="cb7-1035"><a href="#cb7-1035" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 11 <span class="pp">|</span> Model comparison (Bayes factors / DIC / WAIC / LOO) <span class="pp">|</span> Foundational (LOO/WAIC are the modern frontier) <span class="pp">|</span></span>
-<span id="cb7-1036"><a href="#cb7-1036" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 12 <span class="pp">|</span> HMC / Stan <span class="pp">|</span> Frontier, now standard <span class="pp">|</span></span>
-<span id="cb7-1037"><a href="#cb7-1037" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 13 <span class="pp">|</span> Scalable &amp; variational methods <span class="pp">|</span> Frontier <span class="pp">|</span></span>
-<span id="cb7-1038"><a href="#cb7-1038" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 14 <span class="pp">|</span> Synthesis &amp; research frontier <span class="pp">|</span> Frontier / craft <span class="pp">|</span></span>
-<span id="cb7-1039"><a href="#cb7-1039" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1040"><a href="#cb7-1040" aria-hidden="true" tabindex="-1"></a>Weeks 1–11 are the durable canon a chapter must cover; Weeks 12–14 are where the</span>
-<span id="cb7-1041"><a href="#cb7-1041" aria-hidden="true" tabindex="-1"></a>chapter dates fastest and needs the most active maintenance.</span>
-<span id="cb7-1042"><a href="#cb7-1042" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1043"><a href="#cb7-1043" aria-hidden="true" tabindex="-1"></a><span class="fu">## How this chapter expands {#sec-cb-how-expands}</span></span>
-<span id="cb7-1044"><a href="#cb7-1044" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1045"><a href="#cb7-1045" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Keep the spine fixed, refresh the engine.** Weeks 1–11 (RUM → logit/GEV/probit →</span>
-<span id="cb7-1046"><a href="#cb7-1046" aria-hidden="true" tabindex="-1"></a>   mixed logit → Bayesian/MCMC → HB → conjoint → aggregate demand → dynamics → model</span>
-<span id="cb7-1047"><a href="#cb7-1047" aria-hidden="true" tabindex="-1"></a>   comparison) are stable for a generation. The *computation* weeks (12–13) turn over</span>
-<span id="cb7-1048"><a href="#cb7-1048" aria-hidden="true" tabindex="-1"></a>   fastest; budget for revising them every edition as Stan, PyMC, JAX-based samplers,</span>
-<span id="cb7-1049"><a href="#cb7-1049" aria-hidden="true" tabindex="-1"></a>   and normalizing-flow/amortized VI mature.</span>
-<span id="cb7-1050"><a href="#cb7-1050" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Promote model comparison from afterthought to spine.** WAIC/PSIS-LOO</span>
-<span id="cb7-1051"><a href="#cb7-1051" aria-hidden="true" tabindex="-1"></a>   (@sec-cb-week-11) have already displaced DIC/Bayes factors in practice; future editions</span>
-<span id="cb7-1052"><a href="#cb7-1052" aria-hidden="true" tabindex="-1"></a>   should foreground predictive evaluation and posterior predictive checking.</span>
-<span id="cb7-1053"><a href="#cb7-1053" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Add a dedicated "ML × Bayesian choice" frontier section.** As deep generative</span>
-<span id="cb7-1054"><a href="#cb7-1054" aria-hidden="true" tabindex="-1"></a>   models, embeddings, and amortized inference enter choice modeling, @sec-cb-week-13 will</span>
-<span id="cb7-1055"><a href="#cb7-1055" aria-hidden="true" tabindex="-1"></a>   likely split into (a) classical scalable Bayes (VI) and (b) neural/ML-hybrid choice</span>
-<span id="cb7-1056"><a href="#cb7-1056" aria-hidden="true" tabindex="-1"></a>   models—pending verified, DOI-bearing papers.</span>
-<span id="cb7-1057"><a href="#cb7-1057" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Grow the unstructured-data covariate strand.** Text, image, audio, and video as</span>
-<span id="cb7-1058"><a href="#cb7-1058" aria-hidden="true" tabindex="-1"></a>   inputs to choice increasingly fuse with this seminar; a future section can connect</span>
-<span id="cb7-1059"><a href="#cb7-1059" aria-hidden="true" tabindex="-1"></a>   representation learning to RUM covariates.</span>
-<span id="cb7-1060"><a href="#cb7-1060" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Track the privacy/identification frontier.** Privacy-constrained and</span>
-<span id="cb7-1061"><a href="#cb7-1061" aria-hidden="true" tabindex="-1"></a>   aggregated-data estimation pushes the field back toward the aggregate-demand</span>
-<span id="cb7-1062"><a href="#cb7-1062" aria-hidden="true" tabindex="-1"></a>   methods of @sec-cb-week-9 and differential-privacy-aware Bayes—a natural growth area.</span>
-<span id="cb7-1063"><a href="#cb7-1063" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Maintain the cross-references.** This chapter shares readings with preference</span>
-<span id="cb7-1064"><a href="#cb7-1064" aria-hidden="true" tabindex="-1"></a>   measurement (conjoint) and structural models (BLP, dynamics, MPEC). Keep shared</span>
-<span id="cb7-1065"><a href="#cb7-1065" aria-hidden="true" tabindex="-1"></a>   entries synchronized rather than duplicated, and re-verify DOIs each edition.</span>
-<span id="cb7-1066"><a href="#cb7-1066" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1067"><a href="#cb7-1067" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
-<span id="cb7-1068"><a href="#cb7-1068" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-1069"><a href="#cb7-1069" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Discrete choice rests on **random-utility theory** (@eq-50-rum): consumers maximize</span>
-<span id="cb7-1070"><a href="#cb7-1070" aria-hidden="true" tabindex="-1"></a>  latent utility, only utility *differences* are identified, and the assumed</span>
-<span id="cb7-1071"><a href="#cb7-1071" aria-hidden="true" tabindex="-1"></a>  distribution of the unobserved term determines the model.</span>
-<span id="cb7-1072"><a href="#cb7-1072" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The **conditional logit** (@eq-50-logit) is the closed-form workhorse but imposes</span>
-<span id="cb7-1073"><a href="#cb7-1073" aria-hidden="true" tabindex="-1"></a>  **IIA** (@eq-50-iia)—equal proportional cross-elasticities—which is behaviorally</span>
-<span id="cb7-1074"><a href="#cb7-1074" aria-hidden="true" tabindex="-1"></a>  false whenever alternatives share unobserved attributes (the red-bus/blue-bus</span>
-<span id="cb7-1075"><a href="#cb7-1075" aria-hidden="true" tabindex="-1"></a>  failure).</span>
-<span id="cb7-1076"><a href="#cb7-1076" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Nested logit, probit, and mixed logit** relax IIA by correlating the unobserved</span>
-<span id="cb7-1077"><a href="#cb7-1077" aria-hidden="true" tabindex="-1"></a>  terms; mixed logit (@eq-mixedlogit) is the most flexible and links substitution</span>
-<span id="cb7-1078"><a href="#cb7-1078" aria-hidden="true" tabindex="-1"></a>  structure to **consumer heterogeneity** through a mixing distribution.</span>
-<span id="cb7-1079"><a href="#cb7-1079" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Hierarchical Bayes** (@eq-hierarchy) reads the mixing distribution as a prior and</span>
-<span id="cb7-1080"><a href="#cb7-1080" aria-hidden="true" tabindex="-1"></a>  borrows strength across consumers, recovering usable **individual-level** tastes</span>
-<span id="cb7-1081"><a href="#cb7-1081" aria-hidden="true" tabindex="-1"></a>  from sparse data—the foundation of conjoint partworth estimation and household</span>
-<span id="cb7-1082"><a href="#cb7-1082" aria-hidden="true" tabindex="-1"></a>  targeting.</span>
-<span id="cb7-1083"><a href="#cb7-1083" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MCMC**—Gibbs for the conjugate population parameters, Metropolis–Hastings</span>
-<span id="cb7-1084"><a href="#cb7-1084" aria-hidden="true" tabindex="-1"></a>  (@eq-mh) and data augmentation for the non-conjugate choice likelihood—estimates</span>
-<span id="cb7-1085"><a href="#cb7-1085" aria-hidden="true" tabindex="-1"></a>  the hierarchy, but its draws are credible only after **convergence diagnostics**.</span>
-<span id="cb7-1086"><a href="#cb7-1086" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>In practice the binding constraints are **data structure** (endogeneity in</span>
-<span id="cb7-1087"><a href="#cb7-1087" aria-hidden="true" tabindex="-1"></a>  revealed preference, hypothetical bias in stated preference), the **decision the</span>
-<span id="cb7-1088"><a href="#cb7-1088" aria-hidden="true" tabindex="-1"></a>  model serves**, and **out-of-sample validation**—not the estimation algorithm.</span>
+<span id="cb7-992"><a href="#cb7-992" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 13 — Scalable &amp; variational methods {#sec-cb-week-13}</span></span>
+<span id="cb7-993"><a href="#cb7-993" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-994"><a href="#cb7-994" aria-hidden="true" tabindex="-1"></a>**Topic.** Approximate Bayesian inference for large, high-dimensional, sparse</span>
+<span id="cb7-995"><a href="#cb7-995" aria-hidden="true" tabindex="-1"></a>marketing data.</span>
+<span id="cb7-996"><a href="#cb7-996" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-997"><a href="#cb7-997" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Mean-field and structured variational inference; the ELBO; automatic</span>
+<span id="cb7-998"><a href="#cb7-998" aria-hidden="true" tabindex="-1"></a>differentiation variational inference (ADVI); stochastic/streaming variants;</span>
+<span id="cb7-999"><a href="#cb7-999" aria-hidden="true" tabindex="-1"></a>accuracy-vs-speed trade-offs; where VI fails for choice models.</span>
+<span id="cb7-1000"><a href="#cb7-1000" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1001"><a href="#cb7-1001" aria-hidden="true" tabindex="-1"></a>**Methods.** Variational inference; ADVI in Stan/PyMC; diagnostics for approximate</span>
+<span id="cb7-1002"><a href="#cb7-1002" aria-hidden="true" tabindex="-1"></a>posteriors.</span>
+<span id="cb7-1003"><a href="#cb7-1003" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1004"><a href="#cb7-1004" aria-hidden="true" tabindex="-1"></a>**Key readings.**</span>
+<span id="cb7-1005"><a href="#cb7-1005" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1006"><a href="#cb7-1006" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@blei2017variational — the standard statistician-facing introduction to variational</span>
+<span id="cb7-1007"><a href="#cb7-1007" aria-hidden="true" tabindex="-1"></a>  inference; the conceptual anchor for the scalable-methods week. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
+<span id="cb7-1008"><a href="#cb7-1008" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@ansari2003ecustomization — a marketing exemplar of high-dimensional Bayesian</span>
+<span id="cb7-1009"><a href="#cb7-1009" aria-hidden="true" tabindex="-1"></a>  modeling for personalization at scale; motivates why scalable inference matters. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-1010"><a href="#cb7-1010" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@yang2003interdependent — a Bayesian spatial-autoregressive choice model; shows how</span>
+<span id="cb7-1011"><a href="#cb7-1011" aria-hidden="true" tabindex="-1"></a>  richer dependence structures (and the computation they demand) extend the</span>
+<span id="cb7-1012"><a href="#cb7-1012" aria-hidden="true" tabindex="-1"></a>  hierarchical-choice toolkit. <span class="co">[</span><span class="ot">F</span><span class="co">]</span></span>
+<span id="cb7-1013"><a href="#cb7-1013" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>@carpenter2017stan (see @sec-cb-week-12) — Stan also implements ADVI, the bridge from</span>
+<span id="cb7-1014"><a href="#cb7-1014" aria-hidden="true" tabindex="-1"></a>  HMC to VI. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
+<span id="cb7-1015"><a href="#cb7-1015" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1016"><a href="#cb7-1016" aria-hidden="true" tabindex="-1"></a>**Debate.** Variational approximation bias vs. MCMC accuracy; whether VI's posterior</span>
+<span id="cb7-1017"><a href="#cb7-1017" aria-hidden="true" tabindex="-1"></a>uncertainties can be trusted for inference (vs. only point prediction); the</span>
+<span id="cb7-1018"><a href="#cb7-1018" aria-hidden="true" tabindex="-1"></a>encroachment of ML/deep methods on Bayesian choice modeling.</span>
+<span id="cb7-1019"><a href="#cb7-1019" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1020"><a href="#cb7-1020" aria-hidden="true" tabindex="-1"></a><span class="fu">### Week 14 — Synthesis, frontier &amp; research design {#sec-cb-week-14}</span></span>
+<span id="cb7-1021"><a href="#cb7-1021" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1022"><a href="#cb7-1022" aria-hidden="true" tabindex="-1"></a>**Topic.** Pulling the threads together; designing a choice-modeling research paper;</span>
+<span id="cb7-1023"><a href="#cb7-1023" aria-hidden="true" tabindex="-1"></a>the open frontier.</span>
+<span id="cb7-1024"><a href="#cb7-1024" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1025"><a href="#cb7-1025" aria-hidden="true" tabindex="-1"></a>**Subtopics.** Matching estimator to question (closed-form vs. simulation vs. MCMC vs.</span>
+<span id="cb7-1026"><a href="#cb7-1026" aria-hidden="true" tabindex="-1"></a>VI); identification storytelling; replication and reproducibility (<span class="in">`bayesm`</span>, Stan,</span>
+<span id="cb7-1027"><a href="#cb7-1027" aria-hidden="true" tabindex="-1"></a><span class="in">`loo`</span>); current frontiers—ML/Bayesian hybrids, text/image as choice covariates,</span>
+<span id="cb7-1028"><a href="#cb7-1028" aria-hidden="true" tabindex="-1"></a>privacy-constrained estimation, scalable personalization.</span>
+<span id="cb7-1029"><a href="#cb7-1029" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1030"><a href="#cb7-1030" aria-hidden="true" tabindex="-1"></a>**Methods.** Referee report; replication-or-extension project presentation.</span>
+<span id="cb7-1031"><a href="#cb7-1031" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1032"><a href="#cb7-1032" aria-hidden="true" tabindex="-1"></a>The recurring lesson across the semester is that the hard part of choice modeling is</span>
+<span id="cb7-1033"><a href="#cb7-1033" aria-hidden="true" tabindex="-1"></a>rarely the optimizer or the sampler; it is matching the model's substitution</span>
+<span id="cb7-1034"><a href="#cb7-1034" aria-hidden="true" tabindex="-1"></a>structure and heterogeneity to the market and the decision at hand. Revealed-</span>
+<span id="cb7-1035"><a href="#cb7-1035" aria-hidden="true" tabindex="-1"></a>preference data suffer endogeneity (instruments and control functions, with their own</span>
+<span id="cb7-1036"><a href="#cb7-1036" aria-hidden="true" tabindex="-1"></a>pitfalls); stated-preference conjoint avoids price endogeneity by design at the cost</span>
+<span id="cb7-1037"><a href="#cb7-1037" aria-hidden="true" tabindex="-1"></a>of hypothetical bias; aggregate data require the BLP machinery of @sec-cb-week-9. A</span>
+<span id="cb7-1038"><a href="#cb7-1038" aria-hidden="true" tabindex="-1"></a>choice model's in-sample fit is a weak guide—holdout prediction, recovery of known</span>
+<span id="cb7-1039"><a href="#cb7-1039" aria-hidden="true" tabindex="-1"></a>substitution patterns, and evidence that an IIA relaxation changes substantive</span>
+<span id="cb7-1040"><a href="#cb7-1040" aria-hidden="true" tabindex="-1"></a>conclusions are the operative tests <span class="co">[</span><span class="ot">@chintagunta2006structural; @dube2021random</span><span class="co">]</span>.</span>
+<span id="cb7-1041"><a href="#cb7-1041" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1042"><a href="#cb7-1042" aria-hidden="true" tabindex="-1"></a>**Key readings.** Student-selected frontier papers plus the field syntheses already</span>
+<span id="cb7-1043"><a href="#cb7-1043" aria-hidden="true" tabindex="-1"></a>assigned: @allenby1998heterogeneity, @chintagunta2011discretechoice, and the</span>
+<span id="cb7-1044"><a href="#cb7-1044" aria-hidden="true" tabindex="-1"></a>Bayesian-marketing review Rossi &amp; Allenby (2003), *Marketing Science* 22(3):304–328,</span>
+<span id="cb7-1045"><a href="#cb7-1045" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">10.1287/mksc.22.3.304.17739</span><span class="co">](https://doi.org/10.1287/mksc.22.3.304.17739)</span>. <span class="co">[</span><span class="ot">R</span><span class="co">]</span></span>
+<span id="cb7-1046"><a href="#cb7-1046" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1047"><a href="#cb7-1047" aria-hidden="true" tabindex="-1"></a>**Debate.** The whole-course tension: structural/behavioral interpretability vs.</span>
+<span id="cb7-1048"><a href="#cb7-1048" aria-hidden="true" tabindex="-1"></a>predictive flexibility; Bayesian vs. classical estimation of identical models; how</span>
+<span id="cb7-1049"><a href="#cb7-1049" aria-hidden="true" tabindex="-1"></a>much marketing's choice-modeling tradition will be absorbed into machine learning.</span>
+<span id="cb7-1050"><a href="#cb7-1050" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1051"><a href="#cb7-1051" aria-hidden="true" tabindex="-1"></a><span class="fu">## Foundational vs. frontier at a glance {#sec-cb-foundational-frontier}</span></span>
+<span id="cb7-1052"><a href="#cb7-1052" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1053"><a href="#cb7-1053" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Week <span class="pp">|</span> Topic <span class="pp">|</span> Status <span class="pp">|</span></span>
+<span id="cb7-1054"><a href="#cb7-1054" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb7-1055"><a href="#cb7-1055" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> RUM theory <span class="pp">|</span> Foundational <span class="pp">|</span></span>
+<span id="cb7-1056"><a href="#cb7-1056" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 2 <span class="pp">|</span> Logit <span class="pp">|</span> Foundational <span class="pp">|</span></span>
+<span id="cb7-1057"><a href="#cb7-1057" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 3 <span class="pp">|</span> IIA / GEV / nested <span class="pp">|</span> Foundational <span class="pp">|</span></span>
+<span id="cb7-1058"><a href="#cb7-1058" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 4 <span class="pp">|</span> Probit &amp; GHK simulation <span class="pp">|</span> Foundational <span class="pp">|</span></span>
+<span id="cb7-1059"><a href="#cb7-1059" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 5 <span class="pp">|</span> Mixed / random-coefficients logit <span class="pp">|</span> Foundational (bridges to frontier) <span class="pp">|</span></span>
+<span id="cb7-1060"><a href="#cb7-1060" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 6 <span class="pp">|</span> Bayesian foundations &amp; MCMC <span class="pp">|</span> Foundational <span class="pp">|</span></span>
+<span id="cb7-1061"><a href="#cb7-1061" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 7 <span class="pp">|</span> Hierarchical Bayes for heterogeneity <span class="pp">|</span> Foundational (course core) <span class="pp">|</span></span>
+<span id="cb7-1062"><a href="#cb7-1062" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 8 <span class="pp">|</span> Conjoint / preference measurement <span class="pp">|</span> Foundational application; design is frontier <span class="pp">|</span></span>
+<span id="cb7-1063"><a href="#cb7-1063" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 9 <span class="pp">|</span> Aggregate demand / integrating out heterogeneity <span class="pp">|</span> Foundational → frontier <span class="pp">|</span></span>
+<span id="cb7-1064"><a href="#cb7-1064" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 10 <span class="pp">|</span> Dynamics &amp; state dependence <span class="pp">|</span> Foundational → frontier <span class="pp">|</span></span>
+<span id="cb7-1065"><a href="#cb7-1065" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 11 <span class="pp">|</span> Model comparison (Bayes factors / DIC / WAIC / LOO) <span class="pp">|</span> Foundational (LOO/WAIC are the modern frontier) <span class="pp">|</span></span>
+<span id="cb7-1066"><a href="#cb7-1066" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 12 <span class="pp">|</span> HMC / Stan <span class="pp">|</span> Frontier, now standard <span class="pp">|</span></span>
+<span id="cb7-1067"><a href="#cb7-1067" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 13 <span class="pp">|</span> Scalable &amp; variational methods <span class="pp">|</span> Frontier <span class="pp">|</span></span>
+<span id="cb7-1068"><a href="#cb7-1068" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 14 <span class="pp">|</span> Synthesis &amp; research frontier <span class="pp">|</span> Frontier / craft <span class="pp">|</span></span>
+<span id="cb7-1069"><a href="#cb7-1069" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1070"><a href="#cb7-1070" aria-hidden="true" tabindex="-1"></a>Weeks 1–11 are the durable canon a chapter must cover; Weeks 12–14 are where the</span>
+<span id="cb7-1071"><a href="#cb7-1071" aria-hidden="true" tabindex="-1"></a>chapter dates fastest and needs the most active maintenance.</span>
+<span id="cb7-1072"><a href="#cb7-1072" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1073"><a href="#cb7-1073" aria-hidden="true" tabindex="-1"></a><span class="fu">## How this chapter expands {#sec-cb-how-expands}</span></span>
+<span id="cb7-1074"><a href="#cb7-1074" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1075"><a href="#cb7-1075" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Keep the spine fixed, refresh the engine.** Weeks 1–11 (RUM → logit/GEV/probit →</span>
+<span id="cb7-1076"><a href="#cb7-1076" aria-hidden="true" tabindex="-1"></a>   mixed logit → Bayesian/MCMC → HB → conjoint → aggregate demand → dynamics → model</span>
+<span id="cb7-1077"><a href="#cb7-1077" aria-hidden="true" tabindex="-1"></a>   comparison) are stable for a generation. The *computation* weeks (12–13) turn over</span>
+<span id="cb7-1078"><a href="#cb7-1078" aria-hidden="true" tabindex="-1"></a>   fastest; budget for revising them every edition as Stan, PyMC, JAX-based samplers,</span>
+<span id="cb7-1079"><a href="#cb7-1079" aria-hidden="true" tabindex="-1"></a>   and normalizing-flow/amortized VI mature.</span>
+<span id="cb7-1080"><a href="#cb7-1080" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Promote model comparison from afterthought to spine.** WAIC/PSIS-LOO</span>
+<span id="cb7-1081"><a href="#cb7-1081" aria-hidden="true" tabindex="-1"></a>   (@sec-cb-week-11) have already displaced DIC/Bayes factors in practice; future editions</span>
+<span id="cb7-1082"><a href="#cb7-1082" aria-hidden="true" tabindex="-1"></a>   should foreground predictive evaluation and posterior predictive checking.</span>
+<span id="cb7-1083"><a href="#cb7-1083" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Add a dedicated "ML × Bayesian choice" frontier section.** As deep generative</span>
+<span id="cb7-1084"><a href="#cb7-1084" aria-hidden="true" tabindex="-1"></a>   models, embeddings, and amortized inference enter choice modeling, @sec-cb-week-13 will</span>
+<span id="cb7-1085"><a href="#cb7-1085" aria-hidden="true" tabindex="-1"></a>   likely split into (a) classical scalable Bayes (VI) and (b) neural/ML-hybrid choice</span>
+<span id="cb7-1086"><a href="#cb7-1086" aria-hidden="true" tabindex="-1"></a>   models—pending verified, DOI-bearing papers.</span>
+<span id="cb7-1087"><a href="#cb7-1087" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Grow the unstructured-data covariate strand.** Text, image, audio, and video as</span>
+<span id="cb7-1088"><a href="#cb7-1088" aria-hidden="true" tabindex="-1"></a>   inputs to choice increasingly fuse with this seminar; a future section can connect</span>
+<span id="cb7-1089"><a href="#cb7-1089" aria-hidden="true" tabindex="-1"></a>   representation learning to RUM covariates.</span>
+<span id="cb7-1090"><a href="#cb7-1090" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Track the privacy/identification frontier.** Privacy-constrained and</span>
+<span id="cb7-1091"><a href="#cb7-1091" aria-hidden="true" tabindex="-1"></a>   aggregated-data estimation pushes the field back toward the aggregate-demand</span>
+<span id="cb7-1092"><a href="#cb7-1092" aria-hidden="true" tabindex="-1"></a>   methods of @sec-cb-week-9 and differential-privacy-aware Bayes—a natural growth area.</span>
+<span id="cb7-1093"><a href="#cb7-1093" aria-hidden="true" tabindex="-1"></a><span class="ss">6. </span>**Maintain the cross-references.** This chapter shares readings with preference</span>
+<span id="cb7-1094"><a href="#cb7-1094" aria-hidden="true" tabindex="-1"></a>   measurement (conjoint) and structural models (BLP, dynamics, MPEC). Keep shared</span>
+<span id="cb7-1095"><a href="#cb7-1095" aria-hidden="true" tabindex="-1"></a>   entries synchronized rather than duplicated, and re-verify DOIs each edition.</span>
+<span id="cb7-1096"><a href="#cb7-1096" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1097"><a href="#cb7-1097" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb7-1098"><a href="#cb7-1098" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-1099"><a href="#cb7-1099" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Discrete choice rests on **random-utility theory** (@eq-50-rum): consumers maximize</span>
+<span id="cb7-1100"><a href="#cb7-1100" aria-hidden="true" tabindex="-1"></a>  latent utility, only utility *differences* are identified, and the assumed</span>
+<span id="cb7-1101"><a href="#cb7-1101" aria-hidden="true" tabindex="-1"></a>  distribution of the unobserved term determines the model.</span>
+<span id="cb7-1102"><a href="#cb7-1102" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The **conditional logit** (@eq-50-logit) is the closed-form workhorse but imposes</span>
+<span id="cb7-1103"><a href="#cb7-1103" aria-hidden="true" tabindex="-1"></a>  **IIA** (@eq-50-iia)—equal proportional cross-elasticities—which is behaviorally</span>
+<span id="cb7-1104"><a href="#cb7-1104" aria-hidden="true" tabindex="-1"></a>  false whenever alternatives share unobserved attributes (the red-bus/blue-bus</span>
+<span id="cb7-1105"><a href="#cb7-1105" aria-hidden="true" tabindex="-1"></a>  failure).</span>
+<span id="cb7-1106"><a href="#cb7-1106" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Nested logit, probit, and mixed logit** relax IIA by correlating the unobserved</span>
+<span id="cb7-1107"><a href="#cb7-1107" aria-hidden="true" tabindex="-1"></a>  terms; mixed logit (@eq-mixedlogit) is the most flexible and links substitution</span>
+<span id="cb7-1108"><a href="#cb7-1108" aria-hidden="true" tabindex="-1"></a>  structure to **consumer heterogeneity** through a mixing distribution.</span>
+<span id="cb7-1109"><a href="#cb7-1109" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Hierarchical Bayes** (@eq-hierarchy) reads the mixing distribution as a prior and</span>
+<span id="cb7-1110"><a href="#cb7-1110" aria-hidden="true" tabindex="-1"></a>  borrows strength across consumers, recovering usable **individual-level** tastes</span>
+<span id="cb7-1111"><a href="#cb7-1111" aria-hidden="true" tabindex="-1"></a>  from sparse data—the foundation of conjoint partworth estimation and household</span>
+<span id="cb7-1112"><a href="#cb7-1112" aria-hidden="true" tabindex="-1"></a>  targeting.</span>
+<span id="cb7-1113"><a href="#cb7-1113" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MCMC**—Gibbs for the conjugate population parameters, Metropolis–Hastings</span>
+<span id="cb7-1114"><a href="#cb7-1114" aria-hidden="true" tabindex="-1"></a>  (@eq-mh) and data augmentation for the non-conjugate choice likelihood—estimates</span>
+<span id="cb7-1115"><a href="#cb7-1115" aria-hidden="true" tabindex="-1"></a>  the hierarchy, but its draws are credible only after **convergence diagnostics**.</span>
+<span id="cb7-1116"><a href="#cb7-1116" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>In practice the binding constraints are **data structure** (endogeneity in</span>
+<span id="cb7-1117"><a href="#cb7-1117" aria-hidden="true" tabindex="-1"></a>  revealed preference, hypothetical bias in stated preference), the **decision the</span>
+<span id="cb7-1118"><a href="#cb7-1118" aria-hidden="true" tabindex="-1"></a>  model serves**, and **out-of-sample validation**—not the estimation algorithm.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
