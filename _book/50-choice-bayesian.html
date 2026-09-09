@@ -1310,7 +1310,7 @@ Figure&nbsp;44.5: One sweep of a hierarchical-Bayes Gibbs sampler for the choice
 <span><span class="co">#&gt; pooled_logit  0.738  0.453 -1.244   0.594</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Now the hierarchical-Bayes mixed logit. The sampler implements exactly the sweep of <a href="#fig-gibbs" class="quarto-xref">Figure&nbsp;<span>44.5</span></a>: a random-walk Metropolis step for each consumer’s <span class="math inline">\(\boldsymbol{\beta}_n\)</span> (the non-conjugate block, 2), a conjugate normal draw for the population mean <span class="math inline">\(\bar{\boldsymbol{\beta}}\)</span>, and a conjugate inverse-Wishart draw for the heterogeneity covariance <span class="math inline">\(\mathbf{V}_\beta\)</span>.</p>
+<p>Now the hierarchical-Bayes mixed logit. The sampler implements exactly the sweep of <a href="#fig-gibbs" class="quarto-xref">Figure&nbsp;<span>44.5</span></a>: a random-walk Metropolis step for each consumer’s <span class="math inline">\(\boldsymbol{\beta}_n\)</span> (the non-conjugate block, <a href="#eq-mh" class="quarto-xref">Equation&nbsp;<span>44.10</span></a>), a conjugate normal draw for the population mean <span class="math inline">\(\bar{\boldsymbol{\beta}}\)</span>, and a conjugate inverse-Wishart draw for the heterogeneity covariance <span class="math inline">\(\mathbf{V}_\beta\)</span>.</p>
 <div class="cell" data-layout-align="center">
 <details class="code-fold"><summary>Code</summary><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="co"># Log individual likelihood + log prior, up to a constant</span></span>
 <span><span class="va">log_post_i</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">b</span>, <span class="va">d</span>, <span class="va">mu</span>, <span class="va">Sig_inv</span><span class="op">)</span> <span class="op">{</span></span>
@@ -1421,7 +1421,7 @@ Figure&nbsp;44.5: One sweep of a hierarchical-Bayes Gibbs sampler for the choice
 <p><strong>Topic.</strong> Choice-based conjoint and preference measurement as the marketing-native application of HB choice models.</p>
 <p><strong>Subtopics.</strong> Partworth estimation via HB; reduced designs and borrowing strength; constrained/sign-restricted priors; heterogeneity-distribution choice; adaptive and efficient design.</p>
 <p><strong>Methods.</strong> HB conjoint estimation; experimental design for choice; holdout prediction.</p>
-<p>The hierarchical estimator of <a href="#sec-cb-week-7" class="quarto-xref"><span>Section 44.1.7</span></a> is the dominant tool for recovering individual partworths from conjoint designs in which each respondent answers far fewer profiles than there are parameters. The normal-mixing assumption is a modeling choice, not a fact: it cannot represent multimodal tastes (genuine segments), and a normally distributed price coefficient places positive probability on consumers who <em>prefer</em> higher prices. Remedies include log-normal or sign-constrained coefficients, finite mixtures of normals for true segments, and—where the analyst doubts any parametric form—nonparametric mixing. Identification is delicate, so model comparison and holdout validation (1) are essential rather than ornamental <span class="citation" data-cites="chintagunta2006structural">(<a href="#ref-chintagunta2006structural" role="doc-biblioref">P. Chintagunta et al. 2006</a>)</span>.</p>
+<p>The hierarchical estimator of <a href="#sec-cb-week-7" class="quarto-xref"><span>Section 44.1.7</span></a> is the dominant tool for recovering individual partworths from conjoint designs in which each respondent answers far fewer profiles than there are parameters. The normal-mixing assumption is a modeling choice, not a fact: it cannot represent multimodal tastes (genuine segments), and a normally distributed price coefficient places positive probability on consumers who <em>prefer</em> higher prices. Remedies include log-normal or sign-constrained coefficients, finite mixtures of normals for true segments, and—where the analyst doubts any parametric form—nonparametric mixing. Identification is delicate, so model comparison and holdout validation (<a href="#sec-cb-week-11" class="quarto-xref"><span>Section 44.1.11</span></a>) are essential rather than ornamental <span class="citation" data-cites="chintagunta2006structural">(<a href="#ref-chintagunta2006structural" role="doc-biblioref">P. Chintagunta et al. 2006</a>)</span>.</p>
 <p><strong>Key readings.</strong></p>
 <ul>
 <li>
@@ -1617,10 +1617,7 @@ Figure&nbsp;44.5: One sweep of a hierarchical-Bayes Gibbs sampler for the choice
 <strong>Keep the spine fixed, refresh the engine.</strong> Weeks 1–11 (RUM → logit/GEV/probit → mixed logit → Bayesian/MCMC → HB → conjoint → aggregate demand → dynamics → model comparison) are stable for a generation. The <em>computation</em> weeks (12–13) turn over fastest; budget for revising them every edition as Stan, PyMC, JAX-based samplers, and normalizing-flow/amortized VI mature.</li>
 <li>
 <strong>Promote model comparison from afterthought to spine.</strong> WAIC/PSIS-LOO
-<ol class="example" type="1">
-<li>have already displaced DIC/Bayes factors in practice; future editions should foreground predictive evaluation and posterior predictive checking.</li>
-</ol>
-</li>
+(<a href="#sec-cb-week-11" class="quarto-xref"><span>Section 44.1.11</span></a>) have already displaced DIC/Bayes factors in practice; future editions should foreground predictive evaluation and posterior predictive checking.</li>
 <li>
 <strong>Add a dedicated “ML × Bayesian choice” frontier section.</strong> As deep generative models, embeddings, and amortized inference enter choice modeling, <a href="#sec-cb-week-13" class="quarto-xref"><span>Section 44.1.13</span></a> will likely split into (a) classical scalable Bayes (VI) and (b) neural/ML-hybrid choice models—pending verified, DOI-bearing papers.</li>
 <li>
@@ -1640,10 +1637,7 @@ Figure&nbsp;44.5: One sweep of a hierarchical-Bayes Gibbs sampler for the choice
 <strong>Hierarchical Bayes</strong> (<a href="#eq-hierarchy" class="quarto-xref">Equation&nbsp;<span>44.9</span></a>) reads the mixing distribution as a prior and borrows strength across consumers, recovering usable <strong>individual-level</strong> tastes from sparse data—the foundation of conjoint partworth estimation and household targeting.</li>
 <li>
 <strong>MCMC</strong>—Gibbs for the conjugate population parameters, Metropolis–Hastings
-<ol start="2" class="example" type="1">
-<li>and data augmentation for the non-conjugate choice likelihood—estimates the hierarchy, but its draws are credible only after <strong>convergence diagnostics</strong>.</li>
-</ol>
-</li>
+(<a href="#eq-mh" class="quarto-xref">Equation&nbsp;<span>44.10</span></a>) and data augmentation for the non-conjugate choice likelihood—estimates the hierarchy, but its draws are credible only after <strong>convergence diagnostics</strong>.</li>
 <li>In practice the binding constraints are <strong>data structure</strong> (endogeneity in revealed preference, hypothetical bias in stated preference), the <strong>decision the model serves</strong>, and <strong>out-of-sample validation</strong>—not the estimation algorithm.</li>
 </ul>
 

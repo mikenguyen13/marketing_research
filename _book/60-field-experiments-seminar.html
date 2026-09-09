@@ -116,22 +116,39 @@ gtag('js', new Date());
 gtag('config', 'G-46EBZ61358', { 'anonymize_ip': true});
 </script>
 <!-- schema.org structured data for search engines -->
+
 <script type="application/ld+json">
+
 {
+
   "@context": "https://schema.org",
+
   "@type": "Book",
+
   "name": "Marketing Research",
+
   "url": "https://mike-marketing-research.share.connect.posit.cloud/",
+
   "inLanguage": "en",
+
   "bookFormat": "https://schema.org/EBook",
+
   "description": "A technical and academic treatment of marketing research: constructs, substantive domains, and the methods that connect them, with reproducible R code throughout.",
+
   "author": { "@type": "Person", "name": "Mike Nguyen" },
+
   "publisher": { "@type": "Person", "name": "Mike Nguyen" }
+
 }
+
 </script>
+
 <!-- Search Console verification: paste code and uncomment.
+
      https://search.google.com/search-console -->
+
 <!-- <meta name="google-site-verification" content="PASTE_GOOGLE_CODE"> -->
+
 <script src="site_libs/quarto-diagram/mermaid.min.js"></script>
 <script src="site_libs/quarto-diagram/mermaid-init.js"></script>
 <link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
@@ -1150,14 +1167,14 @@ Figure&nbsp;60.2: The voltage drop from pilot to scale. Each threat named in thi
 = \big(\bar Y_{1,1} - \bar Y_{1,0}\big) - \big(\bar Y_{0,1} - \bar Y_{0,0}\big),
 \tag{60.1}\]</span></span> which removes any time-invariant level difference between the groups (the first subtraction in each term) and any common time trend (the second difference across groups). Equivalently, DiD is estimated by the <strong>two-way fixed-effects</strong> (TWFE) regression <span id="eq-fexp-twfe"><span class="math display">\[
 Y_{it} = \alpha_i + \lambda_t + \tau\, D_{it} + \varepsilon_{it},
-\tag{60.2}\]</span></span> where <span class="math inline">\(\alpha_i\)</span> is a unit fixed effect, <span class="math inline">\(\lambda_t\)</span> a time fixed effect, <span class="math inline">\(D_{it}\in\{0,1\}\)</span> indicates that unit <span class="math inline">\(i\)</span> is treated at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\tau\)</span> is the parameter of interest. In the 2×2 case the OLS estimate of <span class="math inline">\(\tau\)</span> in 1 exactly equals <a href="#eq-fexp-did2x2" class="quarto-xref">Equation&nbsp;<span>60.1</span></a>.</p>
+\tag{60.2}\]</span></span> where <span class="math inline">\(\alpha_i\)</span> is a unit fixed effect, <span class="math inline">\(\lambda_t\)</span> a time fixed effect, <span class="math inline">\(D_{it}\in\{0,1\}\)</span> indicates that unit <span class="math inline">\(i\)</span> is treated at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\tau\)</span> is the parameter of interest. In the 2×2 case the OLS estimate of <span class="math inline">\(\tau\)</span> in <a href="#eq-fexp-twfe" class="quarto-xref">Equation&nbsp;<span>60.2</span></a> exactly equals <a href="#eq-fexp-did2x2" class="quarto-xref">Equation&nbsp;<span>60.1</span></a>.</p>
 <p>Identification rests on the <strong>parallel-trends assumption</strong>. Writing <span class="math inline">\(Y_{it}(0)\)</span> for the potential outcome under no treatment, the assumption is that, absent treatment, the treated and control groups would have evolved in parallel: <span id="eq-fexp-parallel"><span class="math display">\[
 \mathbb{E}\!\left[Y_{i1}(0) - Y_{i0}(0) \mid T=1\right]
 = \mathbb{E}\!\left[Y_{i1}(0) - Y_{i0}(0) \mid T=0\right].
 \tag{60.3}\]</span></span> Parallel trends licenses using the control group’s observed change as the counterfactual change the treated group <em>would have</em> experienced. Under <a href="#eq-fexp-parallel" class="quarto-xref">Equation&nbsp;<span>60.3</span></a>, <span class="math inline">\(\hat\tau_{\text{DiD}}\)</span> is unbiased for the average treatment effect on the treated, <span id="eq-fexp-att"><span class="math display">\[
 \text{ATT} = \mathbb{E}\!\left[Y_{i1}(1) - Y_{i1}(0) \mid T=1\right].
 \tag{60.4}\]</span></span> The assumption is fundamentally untestable—it concerns an unobserved counterfactual—but it is made <em>plausible</em> by inspecting pre-treatment trends and estimating an event-study specification that allows the treatment effect to vary by lead and lag; coefficients on the pre-treatment leads should be statistically indistinguishable from zero if trends were parallel before treatment.</p>
-<p>The modern critique concerns the common case of <strong>staggered adoption</strong>, where units are treated at different times. When 1 is estimated with such data, the single coefficient <span class="math inline">\(\tau\)</span> is not a clean average of treatment effects. The TWFE estimand is a weighted average of all possible 2×2 comparisons, and crucially some of those comparisons use <em>already-treated</em> units as controls for <em>newly-treated</em> ones. When treatment effects are heterogeneous across groups or grow over time, these “forbidden comparisons” enter with <strong>negative weights</strong>, so <span class="math inline">\(\tau\)</span> can be biased—even, in extreme cases, opposite in sign to every unit-level effect <a href="https://doi.org/10.1016/j.jeconom.2021.03.014">doi:10.1016/j.jeconom.2021.03.014</a>. Formally, the Goodman-Bacon decomposition writes the TWFE estimate as <span id="eq-fexp-bacon"><span class="math display">\[
+<p>The modern critique concerns the common case of <strong>staggered adoption</strong>, where units are treated at different times. When <a href="#eq-fexp-twfe" class="quarto-xref">Equation&nbsp;<span>60.2</span></a> is estimated with such data, the single coefficient <span class="math inline">\(\tau\)</span> is not a clean average of treatment effects. The TWFE estimand is a weighted average of all possible 2×2 comparisons, and crucially some of those comparisons use <em>already-treated</em> units as controls for <em>newly-treated</em> ones. When treatment effects are heterogeneous across groups or grow over time, these “forbidden comparisons” enter with <strong>negative weights</strong>, so <span class="math inline">\(\tau\)</span> can be biased—even, in extreme cases, opposite in sign to every unit-level effect <a href="https://doi.org/10.1016/j.jeconom.2021.03.014">doi:10.1016/j.jeconom.2021.03.014</a>. Formally, the Goodman-Bacon decomposition writes the TWFE estimate as <span id="eq-fexp-bacon"><span class="math display">\[
 \hat\tau_{\text{TWFE}} = \sum_{k} s_k\, \hat\tau_k,
 \qquad \sum_k s_k = 1,
 \tag{60.5}\]</span></span> a weighted sum over the distinct 2×2 sub-experiments indexed by <span class="math inline">\(k\)</span>, where some weights <span class="math inline">\(s_k\)</span> attached to already-treated-as-control comparisons can be negative. Heterogeneity-robust estimators repair this by restricting attention to <em>clean</em> comparisons—newly treated units against not-yet-treated controls—and aggregating group-time average treatment effects <span class="math inline">\(\text{ATT}(g,t)\)</span> with non-negative weights <a href="https://doi.org/10.1016/j.jeconom.2020.12.001">doi:10.1016/j.jeconom.2020.12.001</a>; <a href="https://doi.org/10.1016/j.jeconom.2020.09.006">doi:10.1016/j.jeconom.2020.09.006</a>. The lesson generalizes: an estimator is only as credible as the comparison it secretly makes, and a single regression coefficient can hide an unfavorable weighting of the effects it claims to average. <a href="#fig-fex-twfe" class="quarto-xref">Figure&nbsp;<span>60.3</span></a> summarizes the decomposition and its repair.</p>
@@ -1193,9 +1210,7 @@ Figure&nbsp;60.3: The staggered-adoption critique of two-way fixed effects. The 
 <li>The <strong>credibility revolution</strong> reorganized empirical work around design rather than functional form; the 14-week map runs from randomized and field experiments through the quasi-experimental designs (DiD, RD, IV, synthetic control, matching) to the frontier of heterogeneous effects, scaling, and interference <a href="https://doi.org/10.1257/jep.24.2.3">doi:10.1257/jep.24.2.3</a>.</li>
 <li>Experiments overturned observational consensus on <strong>advertising returns</strong>: large field experiments find effects far smaller—and often statistically undetectable—relative to regression and matching estimates <a href="https://doi.org/10.1093/qje/qjv023">doi:10.1093/qje/qjv023</a>; <a href="https://doi.org/10.3982/ecta12423">doi:10.3982/ecta12423</a>.</li>
 <li><strong>Difference-in-differences</strong> identifies the ATT under parallel trends (<a href="#eq-fexp-parallel" class="quarto-xref">Equation&nbsp;<span>60.3</span></a>), but with staggered timing the naive TWFE coefficient
-<ol class="example" type="1">
-<li>is a negatively-weighted mixture of effects (<a href="#eq-fexp-bacon" class="quarto-xref">Equation&nbsp;<span>60.5</span></a>); heterogeneity-robust group-time estimators restore clean comparisons <a href="https://doi.org/10.1016/j.jeconom.2021.03.014">doi:10.1016/j.jeconom.2021.03.014</a>; <a href="https://doi.org/10.1016/j.jeconom.2020.12.001">doi:10.1016/j.jeconom.2020.12.001</a>.</li>
-</ol></li>
+(<a href="#eq-fexp-twfe" class="quarto-xref">Equation&nbsp;<span>60.2</span></a>) is a negatively-weighted mixture of effects (<a href="#eq-fexp-bacon" class="quarto-xref">Equation&nbsp;<span>60.5</span></a>); heterogeneity-robust group-time estimators restore clean comparisons <a href="https://doi.org/10.1016/j.jeconom.2021.03.014">doi:10.1016/j.jeconom.2021.03.014</a>; <a href="https://doi.org/10.1016/j.jeconom.2020.12.001">doi:10.1016/j.jeconom.2020.12.001</a>.</li>
 <li>The field’s hardest open problems are about <strong>external validity</strong>: effects shrink from pilot to scale <a href="https://doi.org/10.3982/ecta18709">doi:10.3982/ecta18709</a>, mechanism is far harder to identify than total effect <a href="https://doi.org/10.1037/a0018933">doi:10.1037/a0018933</a>, and replication disciplines the whole enterprise <a href="https://doi.org/10.1126/science.aac4716">doi:10.1126/science.aac4716</a>.</li>
 <li>This reading map is the doctoral companion to the technical causal-inference chapter (<a href="47-causal-inference.html" class="quarto-xref"><span>Chapter 43</span></a>): the map names the designs, debates, and lineage; the technical chapter supplies the estimators, assumptions, and code.</li>
 </ul>
