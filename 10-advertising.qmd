@@ -521,9 +521,9 @@ autoregressive form,
 
 $$
 s_t = \mu(1-\lambda) + \lambda\, s_{t-1} + \beta\, a_t + \underbrace{\varepsilon_t - \lambda \varepsilon_{t-1}}_{\text{MA(1) error}} .
-$$ {#eq-koyck}
+$$ {#eq-koyck-model}
 
-@eq-koyck is the workhorse of advertising dynamics: a regression of sales on its own
+@eq-koyck-model is the workhorse of advertising dynamics: a regression of sales on its own
 lag and current advertising recovers the carryover $\lambda$ as the coefficient on
 $s_{t-1}$ and the immediate effect $\beta$ as the coefficient on $a_t$, and the
 **long-run multiplier**—the total cumulative effect of a permanent one-unit increase in
@@ -533,7 +533,7 @@ reason instrumental-variables or maximum-likelihood corrections appear throughou
 literature.
 
 A subtler and more consequential problem precedes estimation, however: *at what data
-interval should @eq-koyck be fit?* Scanner systems deliver sales and advertising at
+interval should @eq-koyck-model be fit?* Scanner systems deliver sales and advertising at
 intervals from seconds to months, and the carryover estimate is not invariant to the
 choice. @tellis2006 confront the conventional wisdom directly. It had been "long known
 in marketing and econometrics that temporally aggregated data biases estimates of the
@@ -563,7 +563,7 @@ duration interval." A data interval at or finer than the unit exposure time keep
 successive exposures in separate buckets and so is free of this misattribution.
 
 Crucially, recovering the true microparameters from data at the unit exposure time
-requires the *adjusted* model, not the naïve one. Aggregating @eq-koyck over $K$
+requires the *adjusted* model, not the naïve one. Aggregating @eq-koyck-model over $K$
 microperiods (with the single pulse occurring at position $i$ within each period) yields an
 **extended Koyck model** carrying an *additional* lagged-advertising term,
 
@@ -576,7 +576,7 @@ $$ {#eq-koyck-extended}
 
 from which the true microparameters are recovered as $\lambda = \widehat{\lambda^{K}}^{\,1/K}$
 and $\beta = (\beta_1+\beta_2)(1-\lambda)/(1-\lambda^{K})$. Fitting the *original* Koyck
-@eq-koyck—the same model used on the microdata—to aggregated data omits the $A_{T-1}$ term
+@eq-koyck-model—the same model used on the microdata—to aggregated data omits the $A_{T-1}$ term
 and is exactly the misspecification that produces the classic data-interval bias. The
 following replication of @tellis2006's DGP1 makes both the bias and its repair concrete. A
 daily Koyck process is simulated with a true current effect $\beta = 1$ and a true daily
@@ -863,8 +863,8 @@ not the sophistication of the regression, is what makes the estimate believable.
 - Credibly identified advertising effects are **small, heterogeneous, and often
   unprofitable** at the margin; naïve regressions overstate them because firms target
   favorable conditions [@shapiro2021tv; @Gordon_2017; @Lewis_2015].
-- Advertising's effect is **dynamic**: the geometric distributed lag and its Koyck form
-  (@eq-koyck) split it into a current effect and a carryover, and the **optimal data
+- Advertising's effect is **dynamic**: the geometric distributed lag and its Koyck
+  form (@eq-koyck-model) split it into a current effect and a carryover, and the **optimal data
   interval** for recovering that split is the *unit exposure time*—the largest period
   holding at most one ad pulse—not the interpurchase time; at that interval the *adjusted*
   (extended) Koyck model (@eq-koyck-extended) recovers the true microparameters, finer data
