@@ -529,6 +529,36 @@ inference; scale-usage and related nuisance heterogeneity.
 **Methods.** Two-stage Gibbs for hierarchical logit/probit; posterior summaries at
 the individual level.
 
+::: callout-note
+## Controversy: does distributed MCMC actually scale hierarchical Bayes?
+
+Hierarchical Bayes is computationally expensive, and the obvious remedy—split the data
+across machines, run chains in parallel, recombine—turns out to be subtle enough to have
+produced a published dispute worth reading alongside the method.
+
+**2020.** @bumbaca2020scalable propose a distributed MCMC procedure for Bayesian
+hierarchical models, aimed squarely at the target-marketing problem this week develops:
+individual-level posteriors for very large panels.
+
+**2024.** @braun2024commentary revisits the approach in a commentary, four years after
+publication.
+
+**2025.** @bumbaca2025reply reply, in two pages, in the same journal.
+
+Read the exchange rather than a summary of it — the substance is technical and the
+disagreement is about conditions under which the approximation holds, which is exactly
+the kind of thing a summary flattens. The reason it belongs in this chapter is that the
+question is not academic for anyone doing targeting at scale: the whole value of the
+hierarchical model here is the *individual-level* posterior (@sec-cb-week-7), and any
+distributed scheme that recombines chains has to preserve that, not merely the
+population-level parameters. If you plan to run one of these procedures, the commentary
+is a list of the things to check.
+
+This is also a good example of the genre described in @sec-cred-public-argument: a
+methods paper, a challenge years later, a short reply, and no adjudication by the
+journal. The reader does the adjudicating.
+:::
+
 The mixing distribution $g(\boldsymbol{\beta}\mid\boldsymbol{\theta})$ of
 @eq-mixedlogit is where heterogeneity lives, and treating it carefully is what
 separates a model that merely fits aggregate shares from one that supports targeting,
