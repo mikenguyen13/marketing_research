@@ -1003,6 +1003,200 @@ command. Whether a buyer profits depends on whether it has a use for the asset t
 the seller demonstrably did not, which is once again @barney1988relatedness in a new
 setting.
 
+### Bail: what a failed bid does to the bidder's boundary {#sec-ms-corpdev-bail}
+
+The literature above treats divestiture and acquisition as linked in three ways: a
+firm divests to free resources for a future purchase, to shed the redundant parts of
+a firm it has already bought, or to unwind a combination that underperformed. Each
+of those presumes a deal that closed. @gibbs2026bail add a fourth link that does
+not. A meaningful share of announced deals die between announcement and closing, and
+the authors argue that the death itself reconfigures the bidder's boundary.
+
+The argument runs through resource complementarity. A bidder that announces an
+acquisition has usually committed to a configuration whose value depends on assets
+the target was going to supply, and some of those assets are what the authors call
+**keystone resources**, critical holdings without which other resources already on
+the bidder's books cannot be put to work. When the deal dies, those other holdings
+are *stranded*. They were acquired or retained for a combination that will not
+happen, and the option to unlock them has expired. The prediction is that the bidder
+divests in sectors related to the dead target, and the evidence is consistent with
+it. Bidders become more likely to divest target-related units after a failed bid,
+and the effect is stronger under four conditions the theory names in advance: high
+complementarity between the target's resources and the bidder's, termination
+initiated by the target, a high opportunity cost of the stranded assets, and a focal
+business far from the bidder's core. The reading that unifies them is that "build,
+borrow, buy" is a choice made under an assumption about what the firm will end up
+owning, so the choice set has to be reopened when that assumption fails. The finding
+belongs beside @villalonga2005choice for that reason. Villalonga and McGahan showed
+that the modes are chosen jointly at a point in time. Gibbs and coauthors show that
+the outcome of the chosen mode feeds back into the same choice set later, which makes
+resource reconfiguration a sequential process with an abandonment branch.
+
+#### The identification problem, and what an arbitrage spread buys
+
+The method deserves separate attention, because the design problem here is general
+and the solution is portable. Terminated deals are not a random subsample of
+announced deals. Deals die because financing fell through, because a regulator
+objected, because diligence revealed something, or because the bidder itself cooled
+on the target, and every one of those causes is also a plausible direct cause of
+divestiture. A raw comparison of post-announcement divestiture between failed and
+completed bids therefore measures the effect of whatever killed the deal alongside
+the effect of the deal dying.
+
+The paper's contribution on this front is the matching variable. For a target under
+an announced offer, the **arbitrage spread** is the gap between the offer price and
+the target's spot price after announcement. Under the simplest two-outcome view,
+where the share is worth the offer price if the deal closes and reverts to a
+fall-back price if it breaks, the spread is a monotone function of the market's
+implied probability of completion, adjusted for the expected time to close and the
+required return. Arbitrageurs who commit capital to that spread price the risk of
+failure using everything the market knows about the financing, the regulator, the
+shareholder base, and the two managements. Matching a terminated deal to a completed
+deal with the same spread therefore compares two bids the market judged equally
+likely to die, only one of which then died. The comparison the authors report is the
+stronger three-way version: bidders whose deals failed, bidders whose comparable
+deals closed, and comparable firms with no deal at all. The deal and divestiture
+records come from SDC Platinum and Thomson One over a sample of U.S. public firms
+running from the mid-1980s to 2019, with the post-termination window extended past
+the end of the deal sample. (The published article was paywalled when this was
+written, so the account here rests on the abstract and on the authors' posted
+working-paper version of the same study. Anyone building on the design should read
+the published appendix for the matching tolerances and the exact estimator.)
+
+What this buys is a control variable no researcher-assembled covariate vector can
+reproduce. The coded deal record holds size, hostility, method of payment, and
+acquirer experience. The spread holds the market's posterior given all of that plus
+whatever private and soft information has reached the arbitrage desks. It functions
+as a market-estimated propensity score for termination. The simulation below is the
+identification argument in miniature.
+
+```{r ms-cd-bail-spread, message=FALSE, warning=FALSE}
+set.seed(320)
+
+n <- 20000
+
+# Unobserved deal fragility: shaky financing, a hostile regulator, a reluctant
+# target, a souring bidder. It raises BOTH the chance the deal dies and the
+# chance the bidder sheds target-related assets for reasons of its own.
+fragility <- rnorm(n)
+
+# What a researcher codes from a deal database: size, hostility, method of
+# payment, prior experience. A noisy read on fragility, and the usual controls.
+deal_obs <- fragility + rnorm(n, 0, 1.2)
+
+# Arbitrageurs price fragility far more finely than a deal database records it,
+# so the announced-to-spot spread is a tight read on the market-implied
+# probability that the deal dies.
+p_fail <- plogis(-0.6 + 1.1 * fragility + rnorm(n, 0, 0.25))
+spread <- p_fail
+
+terminated <- rbinom(n, 1, p_fail)
+
+# Linear-probability outcome, so the coefficient is comparable across models.
+tau    <- 0.12                       # the causal effect to be recovered
+p_div  <- 0.15 + tau * terminated + 0.06 * fragility
+divest <- rbinom(n, 1, pmin(pmax(p_div, 0), 1))
+
+strata_of <- function(x) cut(x, breaks = quantile(x, seq(0, 1, 0.05)),
+                             include.lowest = TRUE)
+
+effect_of <- function(fit) unname(coef(fit)["terminated"])
+
+# (1) Terminated versus completed, the comparison the theory invites.
+naive <- effect_of(lm(divest ~ terminated))
+
+# (2) The standard fix: control for what the deal record shows.
+coded <- effect_of(lm(divest ~ terminated + deal_obs))
+
+# (3) Match on the market's own assessment: compare deals the market judged
+#     equally likely to die, one of which then died.
+matched <- effect_of(lm(divest ~ terminated + strata_of(spread)))
+
+# (4) The same design when the spread is a loose proxy, because the fall-back
+#     price, the expected horizon, and arbitrage capital move it too.
+spread_loose  <- p_fail + rnorm(n, 0, 0.18)
+matched_loose <- effect_of(lm(divest ~ terminated + strata_of(spread_loose)))
+
+# (5) The infeasible benchmark: control fragility itself.
+oracle <- effect_of(lm(divest ~ terminated + fragility))
+
+round(c(truth = tau, naive = naive, coded = coded, spread_matched = matched,
+        loose_spread = matched_loose, oracle = oracle), 3)
+```
+
+The naive comparison overstates the effect by more than 40%, the coded deal controls
+remove only part of that, and stratifying on the spread lands on the infeasible
+benchmark that controls fragility directly. Line (4) is the warning. The same design
+run on a spread that tracks the implied probability loosely recovers barely half of
+the correction, because the confounder enters through the residual variation the
+matching variable failed to absorb.
+
+#### Whether the evidence identifies what it claims
+
+It is worth being exact about what class of design this is, since the natural guess
+is an instrument. It is not one. There is no first stage and no exclusion
+restriction. It is a selection-on-observables design built on an unusually
+informative observable, and its validity condition is that realized termination is
+ignorable given the market's ex ante assessment of termination risk. Three issues
+follow, and they set the agenda for anyone extending this.
+
+*The spread is a proxy for the implied probability, and a compound one.* The observed
+spread is jointly determined by the probability of completion, the expected time to
+close, the fall-back price if the deal breaks, and the cost of arbitrage capital at
+that moment. Two deals at the same spread carry the same implied probability only if
+the other three terms agree. Backing out an implied probability under an explicit
+fall-back price, and showing that results survive reasonable alternatives to that
+price, would convert the matching variable from a monotone proxy into the quantity
+the design actually wants. Line (4) of the simulation prices the failure to do so.
+
+*The spread is forward-looking, which is the point and also the cost.* Matching on
+the spread removes exactly the variation in termination the market anticipated, so
+identification rests on the unanticipated residual. That residual is the cleanest
+part of the variation, and it is also a shrinking share of it. A design that matches
+on the market's expectation is therefore trading bias for power, and the standard
+errors should be read with that trade in mind.
+
+*Terminations are heterogeneous in origin, and only some origins are exogenous to
+the bidder.* A deal the bidder walks away from is a decision, plausibly taken by a
+bidder that has already revised its resource plans, so the arrow can run from the
+intended divestiture to the termination. This is where the paper's moderators do
+double duty. The effect is larger when the *target* initiated the termination, which
+is the subset where the failure was not the bidder's choice. A reverse-causation
+story predicts the opposite pattern, since it is bidder-initiated terminations that
+should carry the strongest pre-existing intent to restructure. That the sign of the
+heterogeneity runs against the most natural alternative explanation is the single
+most persuasive piece of evidence in the design, and it is theory-motivated rather
+than a fishing expedition.
+
+#### What a follow-up study in this domain should do
+
+Four extensions follow directly, and they generalize past M&A.
+
+1. *Find an exogenous killer of deals.* Regulatory challenges, court injunctions, and
+   review-timing rules terminate deals for reasons unrelated to the bidder's
+   portfolio plans, and they supply a plausibly exogenous subsample and a candidate
+   instrument. The causal toolkit for this is in @sec-causal-inference. The general
+   point is that the arbitrage spread solves a balancing problem, while an exogenous
+   shock to completion would solve the identification problem outright.
+2. *Do not promote the spread to an instrument.* It is tempting, because it predicts
+   termination strongly and is measured cleanly. It fails the exclusion restriction
+   for the same reason it is a good control: it aggregates information about the
+   bidder's financial condition and the target's quality, both of which move
+   divestiture directly. Its honest use is as a balancing covariate or inside a
+   control function.
+3. *Bound the unmeasured confounding.* A matching design cannot test its own
+   ignorability assumption, but it can report how strong an unmeasured confounder
+   would have to be to overturn the estimate. Sensitivity analysis of that kind is
+   the natural companion to this design and is cheap to run.
+4. *Put a customer variable on the left side.* This is the same hole flagged in
+   @sec-ms-corpdev-gaps. The assets stranded by a dead deal are frequently marketing
+   assets, including a sales force sized for a combined product line, distribution
+   agreements signed in anticipation, brand licenses, and a customer database whose
+   value depended on a merge that never happened. Whether a failed bid is followed by
+   customer defection at the bidder, and whether the divested units are the ones
+   whose customer relationships had already decayed, is measurable with the
+   customer-equity machinery of @sec-clv and has not been asked.
+
 ### The entrepreneurial mirror
 
 Acquisition is one way to assemble a resource bundle; founding a firm is the other,
@@ -1093,7 +1287,9 @@ speed effect would be a genuine contribution to a thirty-year debate.
 *The buyer side of divestiture remains nearly empty.* @laamanen2014 stands close to
 alone, in one industry. What happens to the *customers* of a divested unit, whether
 relationships survive the change of parent, and whether divested-asset buyers select
-on customer quality are all open, and all measurable.
+on customer quality are all open, and all measurable. The same gap applies to the
+failed-bid channel of @sec-ms-corpdev-bail: the assets a dead deal strands are often
+marketing assets, and nobody has followed the customers attached to them.
 
 *Founding-team structure and target quality have never been connected.* @howell2026solo
 establish when solo founding is viable and @agarwal2026startup establish how founder
@@ -1277,6 +1473,14 @@ estimator can and cannot recover from it.
   no reliable mean effect [@king2004meta], while motive reshapes the whole
   *distribution* [@rabier2017], the same distributional logic that governs new-venture
   performance [@agarwal2026startup].
+- A deal that never closes still moves the boundary. After a bid is terminated, the
+  bidder becomes more likely to divest in sectors related to the dead target, because
+  the resources it was holding for that combination are stranded without the target's
+  keystone assets [@gibbs2026bail]. The design that establishes this is worth copying:
+  matching failed with completed bids on the merger arbitrage spread uses the market's
+  own probability of failure as a balancing covariate, which is a market-estimated
+  propensity score and a much better control than anything codeable from a deal
+  database (@sec-ms-corpdev-bail).
 - **The estimand, not the estimator, is where strategy research goes wrong.** A
   well-identified average treatment effect is a population-level parameter, while
   strategic choices are one-shot, nondiversifiable, and interconnected with the firm's
