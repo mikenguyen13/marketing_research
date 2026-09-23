@@ -1,0 +1,1832 @@
+# Deep Structural Models: Replicating the Sequential Search Transformer {#sec-deep-structural}
+
+@sec-structural-models argued that a structural parameter earns its keep by being
+invariant to the policy the analyst wants to study. @sec-ai-ml argued that a deep
+network earns its keep by extracting signal from data too rich for a hand-specified
+functional form. For two decades these two arguments ran on separate tracks. The
+structural modeler wrote down a small parametric utility and defended its
+identification. The machine learner fit a large flexible predictor and defended its
+out-of-sample loss. Each could point at the other's weakness. The structural model
+was too rigid to use a consumer's full behavioral history. The deep model produced no
+object that survived a change in the firm's policy.
+
+This chapter works through a paper that refuses the choice. @song2026sst propose the
+*sequential search transformer* (SST), which embeds the optimal sequential search
+problem of @weitzman1979optimal inside a transformer and trains the whole object
+end to end. The economics supplies the decision rule that maps latent quantities into
+observed clicks and purchases. The network supplies the map from a consumer's
+cross-session history into those latent quantities. Neither component is a wrapper
+around the other. The search model's reservation-utility equation is a differentiable
+layer through which gradients flow into the network's weights. The network's output
+is the economic primitive that the search model requires.
+
+The chapter is a replication, so it is organized as one. @sec-dss-paper states what
+the paper claims. @sec-dss-theory develops the search theory and implements its
+central object, the reservation utility, as code. @sec-dss-architecture assembles the
+architecture. @sec-dss-identification asks what can be recovered from search and
+purchase data when part of the model is a neural network. @sec-dss-likelihood and
+@sec-dss-estimation build the differentiable likelihood and confront the estimation
+problem it creates. @sec-dss-dgp through @sec-dss-ablation run the replication on a
+simulated clickstream whose primitives we know. @sec-dss-policy-rank through
+@sec-dss-policy-cost run the policy experiments. @sec-dss-limits separates what
+replicated from what did not, and @sec-dss-template extracts the template, because
+the reason to study this paper closely is that its architecture generalizes well
+beyond search.
+
+A note on what a replication of this kind can be. The paper's empirical section uses
+proprietary clickstream data from a U.S. e-commerce site, which is not available. A
+replication that cannot touch the data has two honest options. It can restate the
+model and stop, which teaches little. Or it can rebuild the model from the
+specification, generate data from a known process, and ask whether the method does
+what the paper says it does. We take the second route throughout. Every number in
+this chapter comes from code in this chapter, run against a data generating process
+whose true parameters are printed alongside the estimates. Where our results diverge
+from the paper's reported pattern, @sec-dss-limits says so.
+
+The code in this chapter is base R with no package dependencies, and a full execution
+takes roughly ten minutes, most of it in the three estimation runs of
+@sec-dss-prediction and the Monte Carlo of @sec-dss-montecarlo.
+
+## The Paper and Its Claim {#sec-dss-paper}
+
+The abstract of @song2026sst makes four claims. It is worth separating them, because
+they are supported by different kinds of evidence and they replicate to different
+degrees.
+
+**Claim 1, architecture.** Deep learning and sequential search theory can be unified
+into a single end-to-end trainable model. This is a constructive claim. It is
+established by exhibiting the architecture, which we do in @sec-dss-architecture, and
+by showing that the resulting objective is differentiable in every parameter, which
+we verify numerically in @sec-dss-likelihood.
+
+**Claim 2, generalization of the search model.** Unlike existing sequential search
+models, SST models behavior *across* sessions and resolves utility uncertainty
+*sequentially* within a session. The first is about where the pre-search expected
+utility comes from. Classical implementations take it as a linear index in observed
+attributes, estimated within a session
+[@kim2010online; @ursu2018rankings; @ursu2025framework]. SST takes it as the output
+of an attention block over the consumer's past behavior, so preferences are dynamic
+and person-specific. The second is about what happens after a click. In the classical
+model, inspecting item $j$ resolves $j$'s match value and nothing else. In SST, the
+revealed match value of an inspected item updates beliefs about items that resemble
+it, so the reservation utilities of the remaining alternatives move as search
+proceeds.
+
+**Claim 3, identification.** All parameters are identified under the proposed
+framework. @sec-dss-identification takes this apart. The honest version of the claim
+is narrower than it sounds. The narrowing is instructive for anyone building a deep
+structural model.
+
+**Claim 4, performance and policy.** SST beats state-of-the-art deep learning and
+structural benchmarks at predicting searches and purchases. Its policy experiments
+improve recommendations and new-product promotion. This is the claim a
+replication can test most directly, and the one where our results are mixed in a way
+worth reporting.
+
+The intellectual position is worth naming, since it is now a recognizable genre.
+@farrell2021deep gave the inference theory for deep networks used as flexible
+first-stage components. @wei2024neural used networks as *estimators* of structural
+parameters, training a network to invert the mapping from data to parameters.
+@lu2026journeys used a transformer to model customer journeys. SST sits at a
+different point. The network here is none of those. It is the part of the economic
+model that the analyst previously had to guess.
+
+## Sequential Search Theory {#sec-dss-theory}
+
+### The consumer's problem
+
+A consumer faces $J$ alternatives. Alternative $j$ delivers utility
+
+$$
+u_{j} = \delta_{j} + \varepsilon_{j},
+$$ {#eq-dss-util}
+
+where $\delta_{j}$ is known before inspection and $\varepsilon_{j} \sim F$ is a match
+value revealed only by inspecting the item. Inspection is costly, at $c_{j} > 0$.
+The consumer may stop at any point and take the best alternative inspected so far,
+or take an outside option whose utility is normalized to zero.
+
+This is Pandora's box. @weitzman1979optimal shows the optimal policy is an index
+rule. Define the *reservation utility* $z_{j}$ as the value that makes the consumer
+indifferent between inspecting $j$ and stopping:
+
+$$
+c_{j} \;=\; \mathbb{E}\!\left[\max\left(u_{j} - z_{j},\, 0\right)\right]
+       \;=\; \int_{z_{j}}^{\infty} (u - z_{j})\, dF_{j}(u).
+$$ {#eq-dss-resv}
+
+The optimal policy then has three parts.
+
+*Selection.* Inspect alternatives in descending order of $z_{j}$.
+
+*Stopping.* Stop when the best realized utility so far, including the outside option,
+exceeds the highest reservation utility among the alternatives not yet inspected.
+
+*Choice.* Take the inspected alternative with the highest realized utility, provided
+it beats the outside option.
+
+Three features of this rule drive everything that follows. First, the ordering of
+search is governed by $z$, while the final choice is governed by $u$. These are
+different objects. A consumer can rationally inspect an item first and buy a
+different one. Second, search costs enter *only* through $z$, so they are identified
+from stopping behavior and not from choice. Third, $z_j$ is a deterministic,
+monotone function of $\delta_j$ and $c_j$, which is exactly what makes the rule
+differentiable and therefore trainable.
+
+### The reservation-utility layer
+
+With $\varepsilon \sim \mathcal{N}(0, 1)$, write $z_{j} = \delta_{j} + m_{j}$. Then
+@eq-dss-resv reduces to a one-dimensional equation in $m_j$ alone,
+
+$$
+\psi(m_{j}) \;\equiv\; \phi(m_{j}) - m_{j}\bigl(1 - \Phi(m_{j})\bigr) \;=\; c_{j},
+$$ {#eq-dss-psi}
+
+where $\phi$ and $\Phi$ are the standard normal density and distribution function.
+$\psi$ is strictly decreasing, with $\psi(m) \to \infty$ as $m \to -\infty$ and
+$\psi(m) \to 0$ as $m \to \infty$, so @eq-dss-psi has a unique root for any
+$c_j > 0$. Its derivative is unusually clean:
+
+$$
+\psi'(m) \;=\; -\bigl(1 - \Phi(m)\bigr)
+\qquad\Longrightarrow\qquad
+\frac{\partial m_{j}}{\partial c_{j}} \;=\; \frac{-1}{1 - \Phi(m_{j})}.
+$$ {#eq-dss-dmdc}
+
+@eq-dss-dmdc is the hinge of the whole architecture. It says the map from search
+cost to reservation cutoff has an exact, cheap derivative, so the economics can sit
+inside a computational graph as an ordinary layer. Everything downstream of it
+receives gradients.
+
+```{r}
+#| label: dss-resv-layer
+# The Weitzman layer. psi() is the expected gain from inspecting an item whose
+# reservation cutoff is m; resv_m() inverts it; dm_dc() is the exact derivative
+# used in backpropagation.
+
+psi_fun <- function(m) dnorm(m) - m * pnorm(m, lower.tail = FALSE)
+
+resv_m <- function(cc) {                 # solve psi(m) = c, vectorised bisection
+  lo <- rep(-40, length(cc)); hi <- rep(40, length(cc))
+  for (it in 1:80) {
+    mid <- (lo + hi) / 2
+    gt  <- psi_fun(mid) > cc             # psi decreasing: root lies to the right
+    lo  <- ifelse(gt, mid, lo)
+    hi  <- ifelse(gt, hi, mid)
+  }
+  (lo + hi) / 2
+}
+
+dm_dc <- function(m) -1 / pnorm(m, lower.tail = FALSE)
+
+# The inversion is exact to machine precision.
+cc <- c(0.002, 0.02, 0.2)
+cat("search cost        :", cc, "\n")
+cat("reservation cutoff :", round(resv_m(cc), 4), "\n")
+cat("psi(m) recovers c  :", round(psi_fun(resv_m(cc)), 6), "\n")
+```
+
+The shape of this map explains a recurring finding in the empirical search
+literature, that estimated search costs are fragile even when search *behavior* is
+pinned down precisely.
+
+```{r}
+#| label: fig-dss-resv
+#| fig-cap: "The reservation-utility map. Left: the cutoff m as a function of search cost. Right: its derivative. At low search costs the map is nearly flat in m and extremely steep in c, so behaviour identifies the cutoff far more sharply than it identifies the cost that generated it."
+op <- par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2, 1))
+cg <- exp(seq(log(1e-3), log(1), length.out = 300))
+plot(cg, resv_m(cg), type = "l", lwd = 2, log = "x",
+     xlab = "search cost c (log scale)", ylab = expression(m == psi^-1 * (c)),
+     main = "Reservation cutoff")
+plot(cg, abs(dm_dc(resv_m(cg))), type = "l", lwd = 2, log = "xy",
+     xlab = "search cost c (log scale)", ylab = expression(group("|", partialdiff * m / partialdiff * c, "|")),
+     main = "Sensitivity")
+par(op)
+```
+
+### What the classical model leaves unspecified
+
+Empirical implementations of this model set $\delta_{j} = x_{j}'\beta$ and
+$c_{j} = \exp(w_{j}'\gamma)$, with $x$ the attributes visible before a click and $w$
+typically containing the item's position on the page
+[@kim2010online; @ursu2018rankings; @chen2017refinement; @honka2017simultaneous]. The
+linear index is a modeling convenience, and it carries two costs. It cannot use a
+consumer's history, because history is a variable-length sequence and $x_{j}'\beta$
+takes a fixed-length vector. And it holds $\delta_{j}$ fixed within a session, so
+inspecting one item teaches the consumer nothing about any other. SST replaces the
+index with a network and relaxes both restrictions. The theory above is untouched.
+
+## From Theory to Architecture {#sec-dss-architecture}
+
+The SST has three blocks. A cross-session encoder turns a consumer's history into a
+preference state. A within-session block lets resolved uncertainty spill onto
+un-inspected items. The Weitzman layer turns the resulting quantities into
+reservation utilities, which drive the likelihood.
+
+```{mermaid}
+%%| label: fig-dss-arch
+%%| fig-cap: "The sequential search transformer. The left branch is deep learning, the right branch is economics, and they meet at the pre-search index and the search cost. Gradients flow back through the Weitzman layer into every network weight."
+flowchart TB
+  H["Cross-session history:<br/>items the consumer engaged with,<br/>with recency"] --> ATT["Self-attention block<br/>query, keys, values"]
+  ATT --> HS["Preference state h(i,t)"]
+  X["Displayed item attributes"] --> EMB["Item embedding e(i,j)"]
+  EMB --> DELTA
+  HS --> DELTA["Pre-search index<br/>delta = alpha'x + e'h + spillover"]
+  EMB --> SPILL["Within-session attention<br/>over inspected items"]
+  SPILL --> DELTA
+  POS["Slot on the page"] --> COST["Search cost<br/>c = exp(gamma0 + gamma1 * slot)"]
+  COST --> WZ["Weitzman layer<br/>m = psi inverse of c"]
+  DELTA --> Z["Reservation utility<br/>z = delta + m"]
+  WZ --> Z
+  Z --> LIK["Smoothed likelihood of the<br/>observed click order, stopping<br/>point and purchase"]
+  DELTA --> LIK
+```
+
+### Cross-session preference
+
+Let $\mathcal{H}_{it}$ be the items consumer $i$ engaged with before session $t$,
+ordered from most to least recent, with recency $g_{i\ell}$. Each item maps to an
+embedding through a shared linear map of its attributes, $e = W_e x$. Attention over
+the history produces the preference state,
+
+$$
+a_{i\ell} = \frac{\exp\!\bigl( w_q' W_k e_{i\ell} / \sqrt{d} + \rho\, g_{i\ell} \bigr)}
+                 {\sum_{\ell'} \exp\!\bigl( w_q' W_k e_{i\ell'} / \sqrt{d} + \rho\, g_{i\ell'} \bigr)},
+\qquad
+\tilde h_{it} = \sum_{\ell} a_{i\ell}\, W_v e_{i\ell},
+$$ {#eq-dss-attn}
+
+followed by a residual feed-forward block,
+$h_{it} = \tilde h_{it} + W_2\,\mathrm{relu}(W_1 \tilde h_{it})$. The recency term
+$\rho$ is worth keeping explicit. It lets the model learn *how fast tastes drift*, a
+quantity the classical model has no slot for.
+
+Building the embedding from attributes, and not from an item identifier, is a design
+choice with a large payoff later. An item the model has never seen still has an
+embedding, so the architecture extends to products with no history. This is what
+makes the new-product experiment in @sec-dss-policy-newprod possible.
+
+### The pre-search index and within-session learning
+
+For item $j$ displayed in session $t$, after $r-1$ inspections,
+
+$$
+\delta_{ijt}^{(r)} \;=\; \underbrace{\alpha' x_{ijt}}_{\text{attributes}}
+\;+\; \underbrace{e_{ijt}' h_{it}}_{\text{fit to this consumer}}
+\;+\; \underbrace{\lambda \sum_{k \in \mathcal{S}_{r-1}} A_{jk}\, \varepsilon_{k}}_{\text{resolved uncertainty}},
+$$ {#eq-dss-delta}
+
+where $\mathcal{S}_{r-1}$ is the set already inspected and $A_{jk}$ is attention over
+inspected items, $A_{jk} \propto \exp(e_j'e_k/\sqrt{d})$ with $A_{jj}=0$. The third
+term is the paper's sequential resolution of uncertainty. A consumer who opens an
+item and finds it better than expected revises upward the items that resemble it.
+Setting $\lambda = 0$ recovers the classical model exactly, which makes $\lambda$ a
+testable restriction.
+
+One caveat belongs here and not in a footnote. Weitzman's index rule is optimal when
+match values are independent across alternatives. Once inspecting $k$ is informative
+about $j$, the exactly optimal policy is a harder dynamic program and the index rule
+becomes a one-step-ahead approximation. We follow the paper in applying the index
+rule to updated beliefs. The approximation is standard in this literature. Its cost
+is that $\lambda$ should be read as a behavioral parameter of a boundedly rational
+searcher.
+
+### Search cost
+
+Search cost is specified as $c_{ijt} = \exp(\gamma_0 + \gamma_1 \cdot \mathrm{slot}_{jt})$,
+with slot the item's position on the page. Position is excluded from
+@eq-dss-delta. This exclusion is the identifying restriction that the empirical
+search literature has relied on since @kim2010online, and it is an assumption about
+the world, that where an item sits changes how hard it is to inspect without changing
+how much the consumer enjoys owning it. @ursu2018rankings tests it with exogenous
+ranking variation. In a replication we impose it by construction, and
+@sec-dss-identification shows what breaks without it.
+
+## Identification {#sec-dss-identification}
+
+The paper states that all parameters are identified. A deep structural model needs
+this claim stated carefully, because two quite different objects are in play. The
+*structural functions* are $\delta(\cdot)$ and $c(\cdot)$, the maps from observables
+to the pre-search index and the search cost. The *network weights* are the parameters
+of a particular representation of those functions. Only the first is identified in
+any useful sense. That is enough.
+
+### Normalizations
+
+Two normalizations are required and neither is testable. The scale is fixed by
+$\mathrm{Var}(\varepsilon) = 1$, because utility is ordinal and the data contain only
+comparisons. The location is fixed by setting the outside option's utility to zero.
+A third restriction does real work. The researcher-unobserved
+component of the pre-search index, $\eta_{ijt} \sim \mathcal{N}(0, \sigma_\eta^2)$,
+is known to the consumer before inspecting and unknown to the analyst. Without it the
+model predicts a deterministic search order, which the data reject immediately.
+
+### What the data say
+
+Write the observed session as a triple: the ordered set of inspected items, the point
+at which search stopped, and the purchase. Each of the three margins speaks to a
+different part of the model.
+
+**Lemma 1 (choice identifies index differences).** The purchase is the arg-max of
+$u_j = \delta_j + \eta_j + \varepsilon_j$ over the inspected set and the outside
+option. The inspected set is endogenous, because the same $\eta_j$ that raises
+$\delta_j$ also raises $z_j$ and makes item $j$ more likely to be opened. The model
+handles that selection explicitly. The search rule is a known function of $z$, so the joint probability that *this set was inspected and this item
+was bought* is a computable function of $(\delta, m, \sigma_\eta)$. Holding $m$ fixed,
+variation in which items are displayed across sessions moves that probability only
+through the differences $\delta_j - \delta_k$, which identifies $\delta(\cdot)$ up to
+location. This is the discrete-choice argument on a varying choice set
+[@train2009discrete], with the consideration stage modeled as part of the likelihood.
+
+**Lemma 2 (order identifies the ranking of reservation utilities).** The selection
+rule inspects in descending $z$. The probability that $j$ is inspected before $k$ is
+$\Pr(z_j > z_k)$, which depends on the parameters only through
+$(\delta_j - \delta_k) + (m_j - m_k)$ and $\sigma_\eta$. Given $\delta(\cdot)$ from
+Lemma 1, the observed order identifies $m_j - m_k$.
+
+**Lemma 3 (stopping identifies the level).** Search stops when the best realized
+utility exceeds the largest remaining $z$. The distribution of the *number* of
+inspections therefore identifies the level of $m$ relative to the utility
+distribution, which is pinned down by the normalizations.
+
+**Proposition.** Under the two normalizations, a known $F$, and the exclusion of slot
+position from @eq-dss-delta, the functions $\delta(\cdot)$ and $c(\cdot)$ are
+identified from the joint distribution of inspected sets, search order, stopping
+points and purchases. $c$ follows from $m$ because $\psi$ in @eq-dss-psi is strictly
+monotone, so $c = \psi(m)$ is a bijection.
+
+The proof sketch is the three lemmas in sequence: choice fixes $\delta$, order fixes
+differences in $m$ given $\delta$, stopping fixes the level of $m$, and the Weitzman
+map converts $m$ into $c$. @ursu2025framework give the argument for the classical
+model in far more detail, including the role of exclusion restrictions and the
+conditions under which search costs are separately identified from preferences. The
+deep model changes none of the logic. It changes only the class of functions that
+$\delta(\cdot)$ is allowed to live in.
+
+### What is not identified, and why it does not matter
+
+The network weights are not identified. Rotating the embedding space and applying the
+inverse rotation to $W_v$ leaves $e'h$ unchanged, so whole manifolds of weights
+generate the same $\delta$. Nothing that a firm or a researcher wants to know depends
+on which point in that manifold the optimizer lands on. This is the practical content
+of the distinction above. A deep structural model should report the structural
+functions, the elasticities they imply, and the counterfactuals they generate,
+and it should not report a table of network weights with standard errors.
+
+Two failure modes do matter. Without the position exclusion, a shift in $\delta$ and
+an offsetting shift in $m$ leave the search order unchanged, so preferences and search
+costs cannot be separated from ordering data alone. And because $\psi$ is nearly flat
+at small $c$ (@fig-dss-resv), the level of the *cost* is estimated far less precisely
+than the level of the *cutoff*. @sec-dss-montecarlo shows both effects in numbers.
+
+## The Likelihood and Why It Must Be Differentiable {#sec-dss-likelihood}
+
+### The event
+
+Given draws of $\eta$ and $\varepsilon$, the policy is deterministic, so the observed
+session is an event in the space of those draws. Let items be inspected in order
+$s_1, \dots, s_n$, let $\mathcal{U}_r$ be the set not yet inspected at step $r$, and
+let $u^{*}$ be the realized utility of the purchased item, or zero when nothing was
+bought. The event is the intersection of four families of inequalities.
+
+$$
+\begin{aligned}
+\text{(a) selection} \quad & z_{s_r}^{(r)} \ge z_{k}^{(r)} && \forall\, k \in \mathcal{U}_r \setminus \{s_r\},\ r = 1,\dots,n,\\
+\text{(b) continuation} \quad & z_{s_r}^{(r)} > u_{s_t} \ \text{ and } \ z_{s_r}^{(r)} > 0 && \forall\, t < r,\ r = 1,\dots,n,\\
+\text{(c) stopping} \quad & u^{*} \ge z_{k}^{(n+1)} && \forall\, k \in \mathcal{U}_{n+1},\\
+\text{(d) choice} \quad & u^{*} \ge u_{s_t} && \forall\, t \le n .
+\end{aligned}
+$$ {#eq-dss-event}
+
+Writing the event this way, as a product of pairwise comparisons, matters. The
+stopping rule compares a maximum against a maximum, which is not differentiable
+term by term. Conditions (c) and (d) together replace it: the choice condition already
+identifies which inspected item attains the maximum, so the stopping comparison can be
+written against that single item.
+
+### Smoothing
+
+The likelihood of a session is the probability of @eq-dss-event, a high-dimensional
+orthant probability with no closed form. The standard estimator simulates draws and
+counts the fraction satisfying the inequalities, which is a step function of the
+parameters and cannot be differentiated. Replacing each indicator with a logistic
+kernel at temperature $\tau$ gives the smoothed simulated likelihood of
+@mcfadden1989msm,
+
+$$
+\hat \ell_i = \log \frac{1}{S}\sum_{s=1}^{S}
+\prod_{q \in \mathcal{Q}_i} \sigma\!\left( \frac{d_q^{(s)}}{\tau} \right),
+$$ {#eq-dss-smooth}
+
+where $d_q$ runs over the differences in @eq-dss-event. This is the step that makes
+the model *end-to-end trainable*. It is also the step that introduces the estimation
+problem of @sec-dss-estimation, so it belongs in the specification section of a paper
+and not in a footnote about computation.
+
+### Implementation
+
+The functions below implement the network forward pass, @eq-dss-smooth, and its exact
+gradient. The code is longer than the rest of the chapter combined, and it is folded
+by default. Two design points are worth seeing. Draws are held fixed across
+optimization steps, which turns a stochastic objective into a deterministic one.
+And the gradient is analytic throughout, including through the Weitzman layer via
+@eq-dss-dmdc, so no finite differencing is needed anywhere.
+
+```{r}
+#| label: dss-model-code
+# Parameter packing. A "spec" switches the deep components on and off, which is
+# how the ablations in this chapter are built: use_hist = FALSE and
+# use_spill = FALSE reproduces the classical sequential search model exactly.
+
+sst_spec <- function(d_emb = 6L, d_ff = 12L, use_hist = TRUE, use_spill = TRUE,
+                     n_lin = 3L, n_att = 4L) {
+  sh <- list(alpha = c(n_lin, 1L))
+  if (use_hist || use_spill) sh$W_e <- c(d_emb, n_att)
+  if (use_hist) {
+    sh$w_q <- c(d_emb, 1L); sh$W_k <- c(d_emb, d_emb); sh$W_v <- c(d_emb, d_emb)
+    sh$rho <- c(1L, 1L); sh$W1 <- c(d_ff, d_emb); sh$W2 <- c(d_emb, d_ff)
+  }
+  sh$gam <- c(2L, 1L)
+  if (use_spill) sh$lam <- c(1L, 1L)
+  sh$lsig <- c(1L, 1L)
+  list(shapes = sh, d_emb = d_emb, d_ff = d_ff,
+       use_hist = use_hist, use_spill = use_spill)
+}
+
+unpack <- function(v, spec) {
+  out <- list(); k <- 0L
+  for (nm in names(spec$shapes)) {
+    s <- spec$shapes[[nm]]; n <- s[1] * s[2]
+    out[[nm]] <- matrix(v[k + seq_len(n)], s[1], s[2]); k <- k + n
+  }
+  out
+}
+pack <- function(p, spec)
+  unlist(lapply(names(spec$shapes), function(nm) as.vector(p[[nm]])))
+n_par <- function(spec) sum(vapply(spec$shapes, function(s) as.numeric(s[1]) * s[2], 0))
+
+init_par <- function(spec, seed = 11) {
+  set.seed(seed)
+  p <- list()
+  for (nm in names(spec$shapes)) {
+    s <- spec$shapes[[nm]]
+    p[[nm]] <- matrix(rnorm(s[1] * s[2], 0, 0.15), s[1], s[2])
+  }
+  p$alpha[1] <- -1.5
+  p$gam <- matrix(c(-4, 0.1), 2, 1)
+  if (!is.null(p$lam)) p$lam[1] <- 0.1
+  p$lsig[1] <- log(0.7)
+  pack(p, spec)
+}
+```
+
+```{r}
+#| label: dss-prep-code
+# Data preparation. Sessions index rows; simulation draws are stacked so that
+# every array is a matrix with (session, draw) rows and item columns.
+
+prep <- function(d, S = 32L, seed = 99) {
+  N <- d$N; J <- d$J; L <- d$L
+  Xd2   <- matrix(d$Xd, N * J, 4)
+  Xlin  <- cbind(1, Xd2[, 1], Xd2[, 2])          # intercept, price, rating
+  Xh2   <- d$cat_x[as.vector(d$hist_item), ]
+  gapv  <- as.vector(d$hist_gap)
+  posv  <- as.vector(d$pos)
+
+  Rmax <- max(d$nsearch)
+  sb <- vector("list", Rmax + 1L)                # already inspected before step r
+  sb[[1]] <- matrix(FALSE, N, J)
+  if (Rmax >= 1) for (r in seq_len(Rmax)) {
+    m <- sb[[r]]; act <- d$nsearch >= r
+    if (any(act)) m[cbind(which(act), d$ord[act, r])] <- TRUE
+    sb[[r + 1L]] <- m
+  }
+  rbuy <- integer(N)
+  for (i in seq_len(N)) if (d$buy[i] > 0)
+    rbuy[i] <- match(d$buy[i], d$ord[i, seq_len(d$nsearch[i])])
+
+  set.seed(seed)
+  list(N = N, J = J, L = L, S = S, Rmax = Rmax,
+       Xd2 = Xd2, Xlin = Xlin, Xh2 = Xh2, gapv = gapv, posv = posv,
+       ord = d$ord, nsearch = d$nsearch, buy = d$buy, rbuy = rbuy, sb = sb,
+       Zeta = matrix(rnorm(N * S * J), N * S, J),
+       Zeps = matrix(rnorm(N * S * J), N * S, J),
+       rowi = rep(seq_len(N), S), idx = seq_len(N * S))
+}
+```
+
+```{r}
+#| label: dss-forward-code
+# Encoder: attention over the consumer's history produces the preference state.
+
+enc_forward <- function(p, P, spec) {
+  N <- P$N; L <- P$L; d <- spec$d_emb
+  cache <- list(); Ed <- NULL
+  if (spec$use_hist || spec$use_spill) Ed <- P$Xd2 %*% t(p$W_e)
+  if (spec$use_hist) {
+    Eh  <- P$Xh2 %*% t(p$W_e)
+    K   <- Eh %*% t(p$W_k)
+    scv <- as.vector(K %*% p$w_q) / sqrt(d) + p$rho[1] * P$gapv
+    scM <- matrix(scv, N, L); scM <- scM - apply(scM, 1, max)
+    Ex  <- exp(scM); att <- Ex / rowSums(Ex)
+    V   <- Eh %*% t(p$W_v)
+    hraw <- matrix(0, N, d)
+    for (k in seq_len(d)) hraw[, k] <- rowSums(att * matrix(V[, k], N, L))
+    pre <- hraw %*% t(p$W1); ffh <- pmax(pre, 0)
+    h   <- hraw + ffh %*% t(p$W2)
+    cache <- list(Eh = Eh, K = K, att = att, V = V,
+                  hraw = hraw, pre = pre, ffh = ffh)
+  } else {
+    h <- matrix(0, N, d)
+  }
+  list(Ed = Ed, h = h, cache = cache)
+}
+
+# Full forward pass: pre-search index, search cost, Weitzman cutoff, and the
+# within-session attention weights that carry resolved uncertainty.
+
+net_forward <- function(p, P, spec) {
+  N <- P$N; J <- P$J; d <- spec$d_emb
+  en <- enc_forward(p, P, spec)
+  Ed <- en$Ed; h <- en$h; cache <- en$cache; Aw <- NULL
+
+  dbar <- as.vector(P$Xlin %*% p$alpha)
+  if (spec$use_hist) {
+    hrep <- h[rep(seq_len(N), J), , drop = FALSE]
+    dbar <- dbar + rowSums(Ed * hrep)
+    cache$hrep <- hrep
+  }
+  dbar <- matrix(dbar, N, J)
+
+  cc <- exp(p$gam[1] + p$gam[2] * P$posv)
+  cc <- pmin(pmax(cc, 1e-5), 20)
+  mres <- matrix(resv_m(cc), N, J)
+
+  if (spec$use_spill) {
+    M1 <- array(Ed, c(N, J, d))
+    jj <- rep(seq_len(J), each = J); kk <- rep(seq_len(J), times = J)
+    Scf <- matrix(0, N, J * J)
+    for (k in seq_len(d)) Scf <- Scf + M1[, jj, k] * M1[, kk, k]
+    Sc <- aperm(array(Scf / sqrt(d), c(N, J, J)), c(1, 3, 2))
+    for (j in seq_len(J)) Sc[, j, j] <- -Inf
+    mx <- Sc[, , 1]; for (k in 2:J) mx <- pmax(mx, Sc[, , k])
+    Ex <- exp(Sc - as.vector(mx))
+    sm <- Ex[, , 1]; for (k in 2:J) sm <- sm + Ex[, , k]
+    Aw <- Ex / as.vector(sm)
+    cache$M1 <- M1
+  }
+  list(dbar = dbar, mres = mres, cc = matrix(cc, N, J), Ed = Ed, h = h,
+       Aw = Aw, cache = cache)
+}
+```
+
+```{r}
+#| label: dss-loglik-code
+# Smoothed simulated log-likelihood and its analytic gradient. The forward loop
+# walks the observed inspection order, accumulating the log of each smoothed
+# inequality in @eq-dss-event; the backward loop runs the same walk in reverse.
+
+sst_obj <- function(v, P, spec, tsm = 0.45, grad = TRUE) {
+  p  <- unpack(v, spec)
+  fw <- net_forward(p, P, spec)
+  N <- P$N; J <- P$J; S <- P$S; d <- spec$d_emb; NS <- N * S
+  lam <- if (spec$use_spill) p$lam[1] else 0
+  sig <- exp(p$lsig[1])
+
+  rep_i <- P$rowi
+  D0  <- fw$dbar[rep_i, , drop = FALSE] + sig * P$Zeta
+  Mr  <- fw$mres[rep_i, , drop = FALSE]
+  Eps <- P$Zeps
+  Rmax <- P$Rmax
+
+  spill_l <- vector("list", Rmax + 1L)
+  spill <- matrix(0, NS, J); spill_l[[1]] <- spill
+  Us <- matrix(0, NS, max(Rmax, 1L)); Lsd <- numeric(NS)
+  selrep <- vector("list", Rmax); actrow <- vector("list", Rmax)
+  maskA <- vector("list", Rmax)
+
+  for (r in seq_len(Rmax)) {
+    act <- P$nsearch >= r
+    sel <- P$ord[, r]; sel[!act] <- 1L
+    selr <- rep(sel, S); ar <- rep(act, S)
+    selrep[[r]] <- selr; actrow[[r]] <- ar
+    mA <- (!P$sb[[r]]) & act
+    mA[cbind(seq_len(N), sel)] <- FALSE
+    maskA[[r]] <- mA[rep_i, , drop = FALSE]
+
+    z  <- D0 + Mr + lam * spill
+    zs <- z[cbind(P$idx, selr)]
+    Lsd <- Lsd + rowSums(plogis((zs - z) / tsm, log.p = TRUE) * maskA[[r]])
+    Lsd <- Lsd + ar * plogis(zs / tsm, log.p = TRUE)
+    if (r > 1L) for (t in seq_len(r - 1L))
+      Lsd <- Lsd + ar * plogis((zs - Us[, t]) / tsm, log.p = TRUE)
+
+    Us[, r] <- (D0 + lam * spill + Eps)[cbind(P$idx, selr)]
+    es <- Eps[cbind(P$idx, selr)]
+    if (spec$use_spill) {
+      Asel <- fw$Aw[cbind(rep(seq_len(N), J), rep(seq_len(J), each = N), rep(sel, J))]
+      spill <- spill + ar * matrix(Asel, N, J)[rep_i, , drop = FALSE] * es
+    }
+    spill_l[[r + 1L]] <- spill
+  }
+
+  hasbuy <- P$buy > 0
+  ustar <- numeric(NS)
+  if (any(hasbuy)) {
+    rb <- P$rbuy; rb[!hasbuy] <- 1L
+    ustar <- Us[cbind(P$idx, rep(rb, S))] * rep(hasbuy, S)
+  }
+  zfin  <- D0 + Mr + lam * spill
+  mStop <- (!P$sb[[Rmax + 1L]])[rep_i, , drop = FALSE]
+  Lsd <- Lsd + rowSums(plogis((ustar - zfin) / tsm, log.p = TRUE) * mStop)
+
+  mC <- matrix(FALSE, N, max(Rmax, 1L))
+  for (r in seq_len(Rmax)) mC[, r] <- (P$nsearch >= r) & !(hasbuy & P$rbuy == r)
+  mCr <- mC[rep_i, , drop = FALSE]
+  for (r in seq_len(Rmax))
+    Lsd <- Lsd + mCr[, r] * plogis((ustar - Us[, r]) / tsm, log.p = TRUE)
+  Lsd <- Lsd + rep(hasbuy, S) * plogis(ustar / tsm, log.p = TRUE)
+
+  Lm  <- matrix(Lsd, N, S); mxL <- apply(Lm, 1, max)
+  W   <- exp(Lm - mxL); rs <- rowSums(W)
+  ll  <- mxL + log(rs) - log(S)
+  nll <- -sum(ll) / N
+  if (!grad) return(list(nll = nll, ll = ll))
+
+  w <- as.vector(W / rs) / (-N)
+  gD0 <- matrix(0, NS, J); gM <- matrix(0, NS, J)
+  gU <- matrix(0, NS, max(Rmax, 1L)); gust <- numeric(NS)
+  glam <- 0; gAw <- if (spec$use_spill) array(0, c(N, J, J)) else NULL
+  gspill_cum <- matrix(0, NS, J)
+  dsig <- function(x) w / tsm * plogis(-x / tsm)
+
+  gz <- -dsig(ustar - zfin) * mStop
+  gust <- gust + rowSums(dsig(ustar - zfin) * mStop)
+  for (r in seq_len(Rmax)) {
+    g <- mCr[, r] * dsig(ustar - Us[, r])
+    gust <- gust + g; gU[, r] <- gU[, r] - g
+  }
+  gust <- gust + rep(hasbuy, S) * dsig(ustar)
+  if (any(hasbuy)) {
+    rb <- P$rbuy; rb[!hasbuy] <- 1L
+    ix <- cbind(P$idx, rep(rb, S))
+    gU[ix] <- gU[ix] + gust * rep(hasbuy, S)
+  }
+  gD0 <- gD0 + gz; gM <- gM + gz
+  gspill_cum <- gspill_cum + lam * gz
+  glam <- glam + sum(gz * spill_l[[Rmax + 1L]])
+
+  for (r in rev(seq_len(Rmax))) {
+    ar <- actrow[[r]]; selr <- selrep[[r]]; spr <- spill_l[[r]]
+    z  <- D0 + Mr + lam * spr
+    zs <- z[cbind(P$idx, selr)]
+    gzmat <- matrix(0, NS, J); gzs <- numeric(NS)
+    g <- dsig(zs - z) * maskA[[r]]
+    gzs <- gzs + rowSums(g); gzmat <- gzmat - g
+    gzs <- gzs + ar * dsig(zs)
+    if (r > 1L) for (t in seq_len(r - 1L)) {
+      g2 <- ar * dsig(zs - Us[, t])
+      gzs <- gzs + g2; gU[, t] <- gU[, t] - g2
+    }
+    gzmat[cbind(P$idx, selr)] <- gzmat[cbind(P$idx, selr)] + gzs
+    gu_mat <- matrix(0, NS, J)
+    gu_mat[cbind(P$idx, selr)] <- gU[, r]
+
+    gD0 <- gD0 + gzmat + gu_mat
+    gM  <- gM + gzmat
+    gsp_r <- lam * (gzmat + gu_mat)
+    glam <- glam + sum((gzmat + gu_mat) * spr)
+
+    if (spec$use_spill) {
+      es <- Eps[cbind(P$idx, selr)]
+      gcontrib <- gspill_cum * ar * es
+      gA <- matrix(0, N, J)
+      for (j in seq_len(J)) gA[, j] <- rowSums(matrix(gcontrib[, j], N, S))
+      sel <- P$ord[, r]; sel[P$nsearch < r] <- 1L
+      idxA <- cbind(rep(seq_len(N), J), rep(seq_len(J), each = N), rep(sel, J))
+      gAw[idxA] <- gAw[idxA] + as.vector(gA)
+    }
+    gspill_cum <- gspill_cum + gsp_r
+  }
+
+  g <- list()
+  gdbar <- matrix(0, N, J); gm <- matrix(0, N, J)
+  for (j in seq_len(J)) {
+    gdbar[, j] <- rowSums(matrix(gD0[, j], N, S))
+    gm[, j]    <- rowSums(matrix(gM[, j], N, S))
+  }
+  g$lsig <- matrix(sum(gD0 * P$Zeta) * sig, 1, 1)
+  if (spec$use_spill) g$lam <- matrix(glam, 1, 1)
+
+  gc_ <- gm * dm_dc(fw$mres) * fw$cc * (fw$cc > 1e-5 & fw$cc < 20)
+  g$gam <- matrix(c(sum(gc_), sum(gc_ * matrix(P$posv, N, J))), 2, 1)
+
+  gdv <- as.vector(gdbar)
+  g$alpha <- matrix(crossprod(P$Xlin, gdv), nrow(p$alpha), 1)
+  gEd <- if (spec$use_hist || spec$use_spill) matrix(0, N * J, d) else NULL
+  gh  <- matrix(0, N, d)
+  if (spec$use_hist) {
+    gEd <- gEd + gdv * fw$cache$hrep
+    for (k in seq_len(d)) gh[, k] <- rowSums(matrix(gdv * fw$Ed[, k], N, J))
+  }
+  if (spec$use_spill) {
+    sAg <- gAw * fw$Aw
+    rk <- sAg[, , 1]; for (k in 2:J) rk <- rk + sAg[, , k]
+    gSc <- sAg - fw$Aw * as.vector(rk)
+    M1 <- fw$cache$M1; gM1 <- array(0, c(N, J, d))
+    for (k in seq_len(J)) {
+      gk <- gSc[, , k]
+      for (dd in seq_len(d)) {
+        gM1[, , dd]  <- gM1[, , dd] + gk * M1[, k, dd]
+        gM1[, k, dd] <- gM1[, k, dd] + rowSums(gk * M1[, , dd])
+      }
+    }
+    gEd <- gEd + matrix(gM1, N * J, d) / sqrt(d)
+  }
+  g <- c(g, enc_backward(gh, gEd, p, P, fw, spec))
+  list(nll = nll, grad = pack(g[names(spec$shapes)], spec), ll = ll)
+}
+
+# Backward pass through the encoder, shared with the benchmark of @sec-dss-prediction.
+enc_backward <- function(gh, gEd, p, P, fw, spec) {
+  N <- P$N; L <- P$L; d <- spec$d_emb
+  g <- list()
+  if (spec$use_hist) {
+    ca <- fw$cache
+    g$W2  <- crossprod(gh, ca$ffh)
+    gpre  <- (gh %*% p$W2) * (ca$pre > 0)
+    g$W1  <- crossprod(gpre, ca$hraw)
+    ghraw <- gh + gpre %*% p$W1
+    gatt <- matrix(0, N, L); gV <- matrix(0, N * L, d)
+    for (k in seq_len(d)) {
+      gh_k <- matrix(ghraw[, k], N, L)
+      gatt <- gatt + gh_k * matrix(ca$V[, k], N, L)
+      gV[, k] <- as.vector(ca$att * gh_k)
+    }
+    g$W_v <- crossprod(gV, ca$Eh)
+    gEh   <- gV %*% p$W_v
+    gscv  <- as.vector(ca$att * (gatt - rowSums(ca$att * gatt)))
+    g$rho <- matrix(sum(gscv * P$gapv), 1, 1)
+    gK    <- outer(gscv, as.vector(p$w_q)) / sqrt(d)
+    g$w_q <- matrix(crossprod(ca$K, gscv) / sqrt(d), d, 1)
+    g$W_k <- crossprod(gK, ca$Eh)
+    gEh   <- gEh + gK %*% p$W_k
+    g$W_e <- crossprod(gEd, P$Xd2) + crossprod(gEh, P$Xh2)
+  } else if (spec$use_spill) {
+    g$W_e <- crossprod(gEd, P$Xd2)
+  }
+  g
+}
+```
+
+### Verifying the gradient
+
+Hand-derived gradients through a transformer, a softmax over inspected items, a
+recursive belief update and an implicitly defined reservation utility are easy to get
+wrong. A wrong gradient produces a model that trains to something plausible and
+false. The check is central differences on every coordinate.
+
+The check is run in @sec-dss-dgp, once the data generating process is in place, so
+that it exercises the same code path the estimates use.
+
+## Estimation: Smoothed Simulated Maximum Likelihood {#sec-dss-estimation}
+
+The smoothing temperature $\tau$ in @eq-dss-smooth is usually presented as a nuisance
+to be taken as small as possible. That advice is wrong. Getting it wrong silently
+destroys the estimates. Two biases move in opposite directions as $\tau$ falls.
+
+The first is *smoothing bias*. A logistic kernel at temperature $\tau$ behaves like an
+extra logistic disturbance of scale $\tau$ added to every comparison, so a large $\tau$
+inflates the apparent noise in the model and, under a fixed scale normalization,
+inflates every utility coefficient. This bias vanishes as $\tau \to 0$, which is the
+source of the usual advice.
+
+The second is *simulation bias*, and it grows as $\tau$ falls. @eq-dss-smooth takes
+the log of a simulated average. As the kernel sharpens, each draw's contribution
+approaches zero or one, the simulated average becomes the fraction of draws satisfying
+a rare event. The log of that average then acquires a downward bias whose size grows
+as the true probability falls. The optimizer responds by moving to parameters that make
+every draw moderately compatible with the data, which shrinks every utility
+coefficient toward zero. This is the failure mode that looks like a converged model
+and reports estimates that are wrong by a factor of two.
+
+The second bias admits a diagnostic that needs no knowledge of the truth. Evaluate the
+objective at a fixed parameter vector across a grid of $S$. Simulation bias is what
+makes the objective move as draws are added, so the size of that movement measures it.
+The first bias is invisible to any such diagnostic, because it is a property of the
+estimand and not of the simulation. The operating point therefore has to be chosen by
+Monte Carlo against a known truth. @sec-dss-montecarlo does exactly that. The
+practical rule that emerges is to take $\tau$ as small as the draw budget allows,
+verify with the diagnostic that simulation bias is small at that pair, and confirm the
+choice by recovery on simulated data.
+
+The optimizer is Adam with a decaying step size, run on the full sample with fixed
+draws.
+
+```{r}
+#| label: dss-adam
+fit_model <- function(objfun, v0, steps = 300, lr0 = 0.06, lr_decay = 0.1) {
+  v <- v0; m <- rep(0, length(v)); s <- rep(0, length(v)); path <- numeric(steps)
+  for (t in seq_len(steps)) {
+    lr <- lr0 * lr_decay^((t - 1) / max(steps - 1, 1))
+    o <- objfun(v); gr <- o$grad
+    gn <- sqrt(sum(gr^2)); if (gn > 5) gr <- gr * 5 / gn     # gradient clipping
+    m <- 0.9 * m + 0.1 * gr; s <- 0.999 * s + 0.001 * gr^2
+    v <- v - lr * (m / (1 - 0.9^t)) / (sqrt(s / (1 - 0.999^t)) + 1e-8)
+    path[t] <- o$nll
+  }
+  list(par = v, nll = path[steps], path = path)
+}
+```
+
+## A Simulated Clickstream {#sec-dss-dgp}
+
+The data generating process below is the SST's own structure run forward. Consumers
+have a two-dimensional taste vector that drifts across periods as an AR(1). In each
+period they engage with items aligned to their current taste, which becomes the
+history the encoder sees at the next session. In a session, eight items are displayed
+in slots, the consumer follows Weitzman's policy with position-dependent search costs,
+and inspecting an item shifts beliefs about items with similar style attributes.
+
+Three features keep this a fair test. The taste vector is
+latent, so the encoder must infer it from behavior and will do so imperfectly. Taste
+drifts, so a model that weights all history equally is misspecified. And position
+enters search cost only, so the exclusion restriction of @sec-dss-identification holds
+by construction and a model that ignores it can be shown to fail.
+
+```{r}
+#| label: dss-dgp-code
+make_catalog <- function(M)
+  cbind(price = rnorm(M), rating = rnorm(M), st1 = rnorm(M), st2 = rnorm(M))
+
+# Similarity weights that carry resolved uncertainty between displayed items.
+sim_weights <- function(Xs, temp = 0.7) {
+  S <- (Xs %*% t(Xs)) / temp
+  diag(S) <- -Inf
+  E <- exp(S - apply(S, 1, max))
+  E / rowSums(E)
+}
+
+sim_data <- function(n_users = 700, n_sess = 2, J = 8, L = 10, M = 400,
+                     alpha = c(int = -2.3, price = -0.55, rating = 0.50),
+                     gam0 = log(0.004), gam1 = 0.65,
+                     sig_eta = 0.8, lambda = 1.0, sim_temp = 0.7,
+                     rho_ar = 0.75, sig_tau = 0.9, kappa = 1.4,
+                     n_burn = 2L, seed = 1) {
+  set.seed(seed)
+  cat_x <- make_catalog(M)
+  N <- n_users * n_sess
+  b_per <- L %/% n_burn
+
+  hist_item <- matrix(0L, N, L); hist_gap <- matrix(0, N, L)
+  disp_item <- matrix(0L, N, J)
+  user_id <- integer(N); sess_id <- integer(N); tau_now <- matrix(0, N, 2)
+
+  row <- 0L
+  for (u in seq_len(n_users)) {
+    tau <- rnorm(2, 0, sig_tau)
+    buf <- integer(0)
+    for (t in seq_len(n_sess + n_burn)) {
+      tau <- rho_ar * tau + sqrt(1 - rho_ar^2) * rnorm(2, 0, sig_tau)
+      if (t > n_burn) {
+        row <- row + 1L
+        user_id[row] <- u; sess_id[row] <- t - n_burn
+        hist_item[row, ] <- buf[seq_len(L)]      # strictly past behaviour
+        hist_gap[row, ]  <- (seq_len(L) - 1) / L
+        disp_item[row, ] <- sample.int(M, J)
+        tau_now[row, ]   <- tau
+      }
+      pref <- kappa * (cat_x[, "st1"] * tau[1] + cat_x[, "st2"] * tau[2])
+      buf  <- c(sample.int(M, b_per, replace = FALSE, prob = exp(pref - max(pref))), buf)
+    }
+  }
+
+  pos  <- matrix(rep(seq_len(J) - 1, each = N), N, J)
+  mres <- matrix(resv_m(as.vector(exp(gam0 + gam1 * pos))), N, J)
+  Xd <- array(0, c(N, J, 4))
+  for (k in 1:4) Xd[, , k] <- matrix(cat_x[disp_item, k], N, J)
+
+  dbar <- alpha["int"] + alpha["price"] * Xd[, , 1] + alpha["rating"] * Xd[, , 2] +
+    tau_now[, 1] * Xd[, , 3] + tau_now[, 2] * Xd[, , 4]
+  eta <- matrix(rnorm(N * J, 0, sig_eta), N, J)
+  eps <- matrix(rnorm(N * J), N, J)
+
+  ord <- matrix(0L, N, J); nsearch <- integer(N); buy <- integer(N)
+  for (i in seq_len(N)) {
+    A  <- sim_weights(cbind(Xd[i, , 3], Xd[i, , 4]), sim_temp)
+    d0 <- dbar[i, ] + eta[i, ]
+    spill <- rep(0, J); unsearched <- rep(TRUE, J)
+    best <- 0; best_j <- 0L; r <- 0L
+    repeat {
+      if (!any(unsearched)) break
+      z <- d0 + lambda * spill + mres[i, ]
+      z[!unsearched] <- -Inf
+      jstar <- which.max(z)
+      if (best >= z[jstar]) break                        # stopping rule
+      r <- r + 1L; ord[i, r] <- jstar                    # selection rule
+      u_j <- d0[jstar] + lambda * spill[jstar] + eps[i, jstar]
+      if (u_j > best) { best <- u_j; best_j <- jstar }
+      unsearched[jstar] <- FALSE
+      spill <- spill + A[, jstar] * eps[i, jstar]        # resolved uncertainty
+    }
+    nsearch[i] <- r
+    buy[i] <- best_j                                     # 0 means no purchase
+  }
+
+  list(N = N, J = J, L = L, M = M, cat_x = cat_x, disp_item = disp_item,
+       hist_item = hist_item, hist_gap = hist_gap, Xd = Xd, pos = pos, ord = ord,
+       nsearch = nsearch, buy = buy, user_id = user_id, sess_id = sess_id,
+       tau_now = tau_now,
+       truth = list(alpha = alpha, gam0 = gam0, gam1 = gam1, sig_eta = sig_eta,
+                    lambda = lambda, sim_temp = sim_temp))
+}
+
+# The true structural primitives, available only because this is a simulation.
+true_primitives <- function(d) {
+  N <- d$N; J <- d$J; tr <- d$truth
+  dbar <- tr$alpha["int"] + tr$alpha["price"] * d$Xd[, , 1] +
+    tr$alpha["rating"] * d$Xd[, , 2] +
+    d$tau_now[, 1] * d$Xd[, , 3] + d$tau_now[, 2] * d$Xd[, , 4]
+  mres <- matrix(resv_m(as.vector(exp(tr$gam0 + tr$gam1 * d$pos))), N, J)
+  Aw <- array(0, c(N, J, J))
+  for (i in seq_len(N))
+    Aw[i, , ] <- sim_weights(cbind(d$Xd[i, , 3], d$Xd[i, , 4]), tr$sim_temp)
+  list(dbar = dbar, mres = mres, Aw = Aw, lam = tr$lambda, sig = tr$sig_eta)
+}
+
+click_matrix <- function(d) {
+  Y <- matrix(0, d$N, d$J)
+  for (i in seq_len(d$N))
+    if (d$nsearch[i] > 0) Y[i, d$ord[i, seq_len(d$nsearch[i])]] <- 1
+  Y
+}
+
+subset_d <- function(d, idx) {
+  d$Xd <- d$Xd[idx, , , drop = FALSE]
+  for (nm in c("hist_item", "hist_gap", "disp_item", "pos", "ord", "tau_now"))
+    d[[nm]] <- d[[nm]][idx, , drop = FALSE]
+  for (nm in c("nsearch", "buy", "user_id", "sess_id")) d[[nm]] <- d[[nm]][idx]
+  d$N <- length(idx)
+  d
+}
+```
+
+```{r}
+#| label: tbl-dss-descriptives
+#| tbl-cap: "Descriptive statistics of the simulated clickstream. The position gradient in click rates is generated entirely by the search-cost function, because position is excluded from utility."
+dat <- sim_data(n_users = 700, n_sess = 2, seed = 20)
+Yobs <- click_matrix(dat)
+
+cat("sessions                 :", dat$N, "\n")
+cat("consumers                :", length(unique(dat$user_id)), "\n")
+cat("mean items inspected     :", round(mean(dat$nsearch), 3), "\n")
+cat("sessions with no click   :", round(mean(dat$nsearch == 0), 3), "\n")
+cat("purchase rate            :", round(mean(dat$buy > 0), 3), "\n")
+cat("bought item was 1st click:",
+    round(mean(dat$buy[dat$buy > 0] == dat$ord[dat$buy > 0, 1]), 3), "\n\n")
+cat("click rate by slot       :", round(colMeans(Yobs), 3), "\n")
+cat("inspections per session  :", table(dat$nsearch), "\n")
+```
+
+Two descriptive facts already discipline the model. The click rate falls steeply
+across slots even though slot is irrelevant to utility, which is the signature of a
+search cost. And in more than a quarter of purchases the consumer bought something
+other than the first item inspected, which is the signature of a stopping rule: a
+consumer who could see all match values would never open a second item.
+
+### The gradient check
+
+```{r}
+#| label: dss-gradcheck
+dsm  <- subset_d(dat, 1:40)
+Psm  <- prep(dsm, S = 6, seed = 1)
+variants <- list("full SST"   = sst_spec(4, 6, TRUE,  TRUE),
+                 "cross-session only" = sst_spec(4, 6, TRUE,  FALSE),
+                 "classical SSM"      = sst_spec(4, 6, FALSE, FALSE))
+for (nm in names(variants)) {
+  sp <- variants[[nm]]
+  set.seed(3); v <- init_par(sp) + rnorm(n_par(sp), 0, 0.05)
+  an <- sst_obj(v, Psm, sp)$grad
+  fd <- vapply(seq_along(v), function(k) {
+    e <- rep(0, length(v)); e[k] <- 1e-5
+    (sst_obj(v + e, Psm, sp, grad = FALSE)$nll -
+     sst_obj(v - e, Psm, sp, grad = FALSE)$nll) / (2e-5)
+  }, 0)
+  cat(sprintf("%-20s %3d parameters   max relative error %.2e\n",
+              nm, n_par(sp), max(abs(an - fd) / (abs(an) + 1e-4))))
+}
+```
+
+Every analytic gradient agrees with central differences to seven digits, in all three
+variants. The backward pass through the Weitzman layer, the within-session attention
+and the recursive belief update is correct.
+
+## Monte Carlo: Does the Estimator Recover the Truth? {#sec-dss-montecarlo}
+
+Before asking whether the deep model beats its benchmarks, ask whether the estimator
+works at all. The cleanest test shuts off the features that put the truth outside the
+estimated model class. Setting the taste variance to zero and $\lambda$ to zero makes
+the data generating process exactly the classical sequential search model, whose
+parameters the classical specification can represent exactly. Anything other than
+recovery is then an estimator failure.
+
+### The temperature diagnostic
+
+First the diagnostic of @sec-dss-estimation. Evaluate the objective at a fixed
+parameter vector across $\tau$ and $S$, and look for flatness in $S$.
+
+```{r}
+#| label: tbl-dss-tau-diag
+#| tbl-cap: "Simulation bias in the smoothed log-likelihood. Entries are the negative log-likelihood per session at the true parameter vector. Reading down a column shows how much of the objective at a given draw count is simulation bias, because that bias is what the extra draws remove."
+dmc <- sim_data(n_users = 300, n_sess = 2, sig_tau = 0, lambda = 0, seed = 11)
+spec_c <- sst_spec(6, 12, use_hist = FALSE, use_spill = FALSE)
+v_true <- pack(list(alpha = matrix(c(dmc$truth$alpha), 3, 1),
+                    gam   = matrix(c(dmc$truth$gam0, dmc$truth$gam1), 2, 1),
+                    lsig  = matrix(log(dmc$truth$sig_eta), 1, 1)), spec_c)
+
+taus <- c(0.15, 0.25, 0.35, 0.45); Sg <- c(20, 40, 80, 160)
+diag_tab <- outer(Sg, taus, Vectorize(function(S, tt)
+  sst_obj(v_true, prep(dmc, S = S, seed = 7), spec_c, tsm = tt, grad = FALSE)$nll))
+dimnames(diag_tab) <- list(paste0("S=", Sg), paste0("tau=", taus))
+round(diag_tab, 3)
+```
+
+Read the table down each column. At $\tau = 0.15$ the objective moves by more than two
+log points between 20 and 160 draws, so most of what the optimizer sees at 20 draws is
+simulation bias. At $\tau = 0.45$ the same range of draws moves it by a fraction of
+that. The diagnostic orders the columns correctly and bounds one of the two biases. It
+cannot pick the operating point on its own, because it is monotone in $\tau$ and would
+always recommend more smoothing. The next table supplies the missing half.
+
+### Parameter recovery
+
+```{r}
+#| label: tbl-dss-mc
+#| tbl-cap: "Monte Carlo recovery when the truth lies inside the estimated model class. Each row is a separate estimation run on the same 600 sessions. Low temperatures shrink every utility coefficient toward zero, exactly as the simulation-bias argument predicts."
+Pmc  <- prep(dmc, S = 40, seed = 7)
+cfgs <- c(0.15, 0.30, 0.45)
+mc <- do.call(rbind, lapply(seq_along(cfgs), function(i) {
+  f <- fit_model(function(v) sst_obj(v, Pmc, spec_c, tsm = cfgs[i]),
+                 init_par(spec_c), steps = 250)
+  p <- unpack(f$par, spec_c)
+  data.frame(tau = cfgs[i], intercept = p$alpha[1], price = p$alpha[2],
+             rating = p$alpha[3], log_cost = p$gam[1], slot = p$gam[2],
+             sigma_eta = exp(p$lsig[1]))
+}))
+truth_row <- data.frame(tau = NA, intercept = dmc$truth$alpha[1],
+                        price = dmc$truth$alpha[2], rating = dmc$truth$alpha[3],
+                        log_cost = dmc$truth$gam0, slot = dmc$truth$gam1,
+                        sigma_eta = dmc$truth$sig_eta)
+round(rbind(mc, truth = truth_row), 3)
+```
+
+The bias is U-shaped in $\tau$, exactly as the two-bias argument predicts. At
+$\tau = 0.15$ with 40 draws every coefficient has collapsed toward zero, which is
+simulation bias. At $\tau = 0.45$ every coefficient overshoots, which is smoothing
+bias. At $\tau = 0.30$ the estimates land on the truth, including the slot coefficient
+of the search-cost function.
+
+This is the single most important practical lesson in the chapter for anyone
+implementing a differentiable structural likelihood. Neither bias announces itself in
+a fit statistic, and the two can cancel at one sample size but not at another. The
+interior optimum is invisible unless the estimator is run against a known truth. The
+estimates in the rest of the chapter use $\tau = 0.30$ with 64 draws, a larger draw
+budget than this table uses, because the deep specifications carry more parameters and
+need more of the simulation bias removed at the same temperature.
+
+One caveat that @sec-dss-identification anticipated. The slot coefficient and the
+cutoff $m$ are recovered sharply. The cost *level* is recovered with much less
+precision, because @fig-dss-resv is nearly flat in $m$ at small $c$, so a large
+relative error in the cost maps into a small error in behavior. Search costs reported
+in currency units should be read with that in mind.
+
+## Replication: Predictive Performance {#sec-dss-prediction}
+
+### The benchmarks
+
+The paper compares SST against state-of-the-art deep learning and structural models.
+A replication has to choose benchmarks. The choice decides how informative the
+comparison is. We use three.
+
+The **classical sequential search model** is the SST with the deep components
+switched off, so $\delta = \alpha'x$ and $\lambda = 0$. This is the structural
+benchmark, in the spirit of @kim2010online and @ursu2018rankings.
+
+The **cross-session ablation** keeps the history encoder and sets $\lambda = 0$. It
+isolates what the transformer contributes separately from what the within-session
+learning contributes.
+
+The **deep benchmark** is deliberately strong. It shares the SST's encoder exactly,
+including the attention over history and the residual block, and replaces the search
+theory with two prediction heads: an independent Bernoulli head for clicks and a
+softmax head over the displayed items plus the outside option for purchase. It is
+trained directly on the cross-entropy of the outcomes being predicted. This is a
+harder benchmark than a generic sequence recommender, because it has identical
+representational capacity and an objective aligned with the evaluation metric. If
+structure buys anything, it has to buy it against this.
+
+```{r}
+#| label: dss-bb-code
+bb_spec <- function(d_emb = 6L, d_ff = 12L, n_lin = 3L, n_att = 4L) {
+  sh <- list(W_e = c(d_emb, n_att), w_q = c(d_emb, 1L),
+             W_k = c(d_emb, d_emb), W_v = c(d_emb, d_emb), rho = c(1L, 1L),
+             W1 = c(d_ff, d_emb), W2 = c(d_emb, d_ff),
+             a_c = c(n_lin, 1L), g_c = c(1L, 1L), W_c = c(d_emb, d_emb),
+             a_b = c(n_lin, 1L), g_b = c(1L, 1L), W_b = c(d_emb, d_emb))
+  list(shapes = sh, d_emb = d_emb, d_ff = d_ff, use_hist = TRUE, use_spill = FALSE)
+}
+
+bb_obj <- function(v, P, spec, ycl, grad = TRUE) {
+  p <- unpack(v, spec); N <- P$N; J <- P$J; d <- spec$d_emb
+  en <- enc_forward(p, P, spec); Ed <- en$Ed; h <- en$h
+  hrep <- h[rep(seq_len(N), J), , drop = FALSE]
+  Hcr <- (h %*% t(p$W_c))[rep(seq_len(N), J), , drop = FALSE]
+  Hbr <- (h %*% t(p$W_b))[rep(seq_len(N), J), , drop = FALSE]
+  sc <- as.vector(P$Xlin %*% p$a_c) + p$g_c[1] * P$posv + rowSums(Ed * Hcr)
+  sb <- as.vector(P$Xlin %*% p$a_b) + p$g_b[1] * P$posv + rowSums(Ed * Hbr)
+  yc <- as.vector(ycl)
+  llc <- sum(yc * plogis(sc, log.p = TRUE) + (1 - yc) * plogis(-sc, log.p = TRUE))
+
+  sbM <- cbind(0, matrix(sb, N, J))                    # column 1 is no purchase
+  Eb <- exp(sbM - apply(sbM, 1, max)); pb <- Eb / rowSums(Eb)
+  llb <- sum(log(pb[cbind(seq_len(N), P$buy + 1L)]))
+  nll <- -(llc + llb) / N
+  if (!grad) return(list(nll = nll, pclick = matrix(plogis(sc), N, J),
+                         pbuy = pb[, -1, drop = FALSE], pnobuy = pb[, 1]))
+
+  gsc <- (plogis(sc) - yc) / N
+  gsbM <- pb
+  gsbM[cbind(seq_len(N), P$buy + 1L)] <- gsbM[cbind(seq_len(N), P$buy + 1L)] - 1
+  gsb <- as.vector(gsbM[, -1, drop = FALSE]) / N
+  g <- list(a_c = matrix(crossprod(P$Xlin, gsc), nrow(p$a_c), 1),
+            a_b = matrix(crossprod(P$Xlin, gsb), nrow(p$a_b), 1),
+            g_c = matrix(sum(gsc * P$posv), 1, 1),
+            g_b = matrix(sum(gsb * P$posv), 1, 1),
+            W_c = crossprod(gsc * Ed, hrep), W_b = crossprod(gsb * Ed, hrep))
+  Qc <- matrix(0, N, d); Qb <- matrix(0, N, d)
+  for (k in seq_len(d)) {
+    Qc[, k] <- rowSums(matrix(gsc * Ed[, k], N, J))
+    Qb[, k] <- rowSums(matrix(gsb * Ed[, k], N, J))
+  }
+  g <- c(g, enc_backward(Qc %*% p$W_c + Qb %*% p$W_b, gsc * Hcr + gsb * Hbr,
+                         p, P, en, spec))
+  list(nll = nll, grad = pack(g[names(spec$shapes)], spec))
+}
+```
+
+### Turning a structural model into a predictor
+
+A structural model does not emit click and purchase probabilities directly. It emits
+primitives. The probabilities come from running the estimated policy forward, which
+is the same operation that later produces counterfactuals. Using one routine for both
+is the point: a model that can predict this way can also answer questions about
+worlds it has not seen.
+
+```{r}
+#| label: dss-simpolicy
+# Forward simulation of the optimal sequential-search policy. Works identically
+# on estimated primitives and on the true ones.
+sim_policy <- function(dbar, mres, Aw, lam, sig, ndraw = 500, seed = 4242) {
+  N <- nrow(dbar); J <- ncol(dbar); NS <- N * ndraw
+  set.seed(seed)
+  rep_i <- rep(seq_len(N), ndraw); idx <- seq_len(NS)
+  D0  <- dbar[rep_i, , drop = FALSE] + sig * matrix(rnorm(NS * J), NS, J)
+  Eps <- matrix(rnorm(NS * J), NS, J)
+  Mr  <- mres[rep_i, , drop = FALSE]
+  spill <- matrix(0, NS, J); searched <- matrix(FALSE, NS, J)
+  clicks <- matrix(0, NS, J); best <- numeric(NS); bestj <- integer(NS)
+  active <- rep(TRUE, NS); nsr <- integer(NS)
+
+  for (r in seq_len(J)) {
+    if (!any(active)) break
+    z <- D0 + Mr + lam * spill
+    z[searched] <- -Inf
+    jst <- max.col(z, ties.method = "first")
+    go  <- active & (z[cbind(idx, jst)] > best)         # stopping rule
+    if (!any(go)) break
+    sel <- cbind(idx, jst)
+    clicks[sel] <- clicks[sel] + go
+    nsr <- nsr + go
+    u <- (D0 + lam * spill + Eps)[sel]
+    upd <- go & (u > best)
+    best[upd] <- u[upd]; bestj[upd] <- jst[upd]
+    searched[sel] <- searched[sel] | go
+    if (lam != 0) {
+      Acols <- matrix(0, NS, J)
+      for (j in seq_len(J)) Acols[, j] <- Aw[cbind(rep_i, j, jst)]
+      spill <- spill + go * Acols * Eps[sel]
+    }
+    active <- go
+  }
+  pclick <- matrix(0, N, J); pbuy <- matrix(0, N, J)
+  for (j in seq_len(J)) {
+    pclick[, j] <- rowMeans(matrix(clicks[, j], N, ndraw))
+    pbuy[, j]   <- rowMeans(matrix(bestj == j, N, ndraw))
+  }
+  list(pclick = pclick, pbuy = pbuy, pnobuy = 1 - rowSums(pbuy),
+       en = rowMeans(matrix(nsr, N, ndraw)))
+}
+
+auc <- function(score, y) {
+  r <- rank(score); n1 <- sum(y == 1); n0 <- sum(y == 0)
+  if (n1 == 0 || n0 == 0) return(NA_real_)
+  (sum(r[y == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0)
+}
+
+eval_pred <- function(pclick, pbuy, pnobuy, d, eps = 1e-6) {
+  Y <- click_matrix(d)
+  pc <- pmin(pmax(pclick, eps), 1 - eps)
+  pmat <- cbind(pmax(pnobuy, eps), pmax(pbuy, eps)); pmat <- pmat / rowSums(pmat)
+  c(ll_click  = mean(Y * log(pc) + (1 - Y) * log(1 - pc)),
+    auc_click = auc(as.vector(pclick), as.vector(Y)),
+    ll_buy    = mean(log(pmat[cbind(seq_len(d$N), d$buy + 1L)])),
+    hit_buy   = mean(max.col(pmat, ties.method = "first") - 1L == d$buy),
+    rmse_n    = sqrt(mean((rowSums(pclick) - d$nsearch)^2)))
+}
+
+mres_from_rank <- function(rankmat, gam0, gam1)
+  matrix(resv_m(as.vector(exp(gam0 + gam1 * (rankmat - 1)))),
+         nrow(rankmat), ncol(rankmat))
+
+rank_by <- function(score)
+  t(apply(score, 1, function(s) rank(-s, ties.method = "first")))
+
+predict_layout <- function(par, spec, P, rankmat = NULL, ndraw = 500, seed = 4242) {
+  p <- unpack(par, spec); fw <- net_forward(p, P, spec)
+  mres <- if (is.null(rankmat)) fw$mres else mres_from_rank(rankmat, p$gam[1], p$gam[2])
+  Aw   <- if (is.null(fw$Aw)) array(0, c(P$N, P$J, P$J)) else fw$Aw
+  sim_policy(fw$dbar, mres, Aw, if (spec$use_spill) p$lam[1] else 0,
+             exp(p$lsig[1]), ndraw = ndraw, seed = seed)
+}
+
+truth_layout <- function(d, rankmat = NULL, ndraw = 500, seed = 4242) {
+  tp <- true_primitives(d)
+  mres <- if (is.null(rankmat)) tp$mres else
+    mres_from_rank(rankmat, d$truth$gam0, d$truth$gam1)
+  sim_policy(tp$dbar, mres, tp$Aw, tp$lam, tp$sig, ndraw = ndraw, seed = seed)
+}
+
+bb_layout <- function(par, spec, P, rankmat = NULL) {
+  if (!is.null(rankmat)) P$posv <- as.vector(rankmat - 1)
+  bb_obj(par, P, spec, matrix(0, P$N, P$J), grad = FALSE)
+}
+```
+
+### Estimation
+
+Consumers are split into estimation and holdout groups, so no holdout consumer's
+history is seen during training.
+
+```{r}
+#| label: dss-fit
+dtr <- subset_d(dat, which(dat$user_id <= 400))
+dte <- subset_d(dat, which(dat$user_id >  400))
+Ptr <- prep(dtr, S = 64, seed = 7)
+Pte <- prep(dte, S = 64, seed = 8)
+
+specs <- list(SSM  = sst_spec(6, 12, use_hist = FALSE, use_spill = FALSE),
+              SSTh = sst_spec(6, 12, use_hist = TRUE,  use_spill = FALSE),
+              SST  = sst_spec(6, 12, use_hist = TRUE,  use_spill = TRUE))
+fits <- lapply(specs, function(sp)
+  fit_model(function(v) sst_obj(v, Ptr, sp, tsm = 0.30), init_par(sp), steps = 260))
+
+bsp  <- bb_spec(6, 12)
+bfit <- fit_model(function(v) bb_obj(v, Ptr, bsp, click_matrix(dtr)),
+                  init_par(bsp), steps = 400, lr0 = 0.05)
+
+cat("training sessions:", dtr$N, "   holdout sessions:", dte$N, "\n")
+for (nm in names(specs))
+  cat(sprintf("%-5s %4d parameters\n", nm, n_par(specs[[nm]])))
+cat(sprintf("%-5s %4d parameters\n", "DL", n_par(bsp)))
+```
+
+### Held-out performance
+
+```{r}
+#| label: tbl-dss-pred
+#| tbl-cap: "Held-out predictive performance. Click and purchase entries are mean log-likelihoods, so larger is better; rmse_n is the error in predicted inspections per session, so smaller is better. Oracle evaluates the true primitives and bounds what any estimator could achieve at this sample size."
+pred <- lapply(names(specs), function(nm) {
+  s <- predict_layout(fits[[nm]]$par, specs[[nm]], Pte)
+  eval_pred(s$pclick, s$pbuy, s$pnobuy, dte)
+})
+names(pred) <- c("classical SSM", "SST cross-session", "SST full")
+bo <- bb_obj(bfit$par, Pte, bsp, click_matrix(dte), grad = FALSE)
+pred[["deep benchmark"]] <- eval_pred(bo$pclick, bo$pbuy, bo$pnobuy, dte)
+spo <- truth_layout(dte)
+pred[["oracle"]] <- eval_pred(spo$pclick, spo$pbuy, spo$pnobuy, dte)
+round(do.call(rbind, pred), 4)
+```
+
+The ablation is monotone. Adding the cross-session encoder to the classical search
+model improves four of the five metrics and leaves purchase hit rate unchanged.
+Adding within-session resolution of uncertainty improves all five. That is claim 2 of @sec-dss-paper, and it replicates.
+
+Against the deep benchmark the full SST is ahead on all five metrics, which is claim 4.
+The margins are small on click and purchase log-likelihood and larger on search depth.
+That pattern is what the two objectives imply. The benchmark optimizes the
+cross-entropy of the outcomes it is scored on, which is why it stays close on those
+two columns despite having no theory of how a session unfolds. It has no mechanism
+that generates a search depth at all, so its predicted inspection count is a sum of
+independent click probabilities. The `rmse_n` column shows the cost of that.
+
+One caution before this is read as a clean win. The margin on purchase
+log-likelihood is small and it is not robust in our design. @sec-dss-limits reports a
+variant with a larger estimation sample in which the benchmark overtakes SST on that
+one column while SST keeps its advantage everywhere else.
+
+```{r}
+#| label: fig-dss-position
+#| fig-cap: "Click rate by slot, observed and predicted. The classical model reproduces the aggregate position gradient because it has a search-cost function, but it cannot say which consumer clicks which item. The full SST matches both margins."
+pc_ssm <- predict_layout(fits$SSM$par, specs$SSM, Pte)$pclick
+pc_sst <- predict_layout(fits$SST$par, specs$SST, Pte)$pclick
+Yte <- click_matrix(dte)
+op <- par(mar = c(4.2, 4.2, 2, 1))
+plot(1:dte$J, colMeans(Yte), type = "b", pch = 16, lwd = 2, ylim = c(0, 0.5),
+     xlab = "slot on the page", ylab = "click rate", main = "")
+lines(1:dte$J, colMeans(pc_ssm), type = "b", pch = 1, lty = 2, lwd = 2)
+lines(1:dte$J, colMeans(pc_sst), type = "b", pch = 2, lty = 3, lwd = 2)
+legend("topright", c("observed", "classical SSM", "SST full"),
+       pch = c(16, 1, 2), lty = c(1, 2, 3), lwd = 2, bty = "n")
+par(op)
+```
+
+## What the Deep Component Buys {#sec-dss-ablation}
+
+Predictive metrics compress a lot into one number. The structural estimates say more
+directly what the transformer is doing.
+
+```{r}
+#| label: tbl-dss-params
+#| tbl-cap: "Estimated structural parameters against the truth. The deep specifications recover the search-cost function, which the classical model badly understates because it must absorb preference heterogeneity into the search process."
+tp_te <- true_primitives(dte)
+par_tab <- do.call(rbind, lapply(names(specs), function(nm) {
+  p <- unpack(fits[[nm]]$par, specs[[nm]])
+  fw <- net_forward(p, Pte, specs[[nm]])
+  data.frame(intercept = p$alpha[1], price = p$alpha[2], rating = p$alpha[3],
+             log_cost = p$gam[1], slot = p$gam[2],
+             lambda = if (is.null(p$lam)) 0 else p$lam[1],
+             sigma_eta = exp(p$lsig[1]),
+             cor_delta = cor(as.vector(fw$dbar), as.vector(tp_te$dbar)),
+             sd_total = sqrt(var(as.vector(fw$dbar)) + exp(p$lsig[1])^2))
+}))
+rownames(par_tab) <- c("classical SSM", "SST cross-session", "SST full")
+tr <- dat$truth
+par_tab <- rbind(par_tab,
+  truth = data.frame(intercept = tr$alpha[1], price = tr$alpha[2],
+    rating = tr$alpha[3], log_cost = tr$gam0, slot = tr$gam1, lambda = tr$lambda,
+    sigma_eta = tr$sig_eta, cor_delta = 1,
+    sd_total = sqrt(var(as.vector(tp_te$dbar)) + tr$sig_eta^2)))
+round(par_tab, 3)
+```
+
+Four things in this table matter.
+
+**The classical model understates the position effect on search cost.** Its slot
+coefficient sits well below the truth, and its cost level is off by more than a log
+point. The mechanism is the one @sec-dss-identification described. Preference
+heterogeneity that the classical model cannot represent has to go somewhere. The only
+flexible margin left is the search process, so unexplained variation in which items
+get clicked is read as variation in the cost of clicking. This is a bias in a
+quantity firms act on. No fit statistic reveals it.
+
+**The deep specifications move the search-cost function toward the truth.** With the
+encoder in place the slot coefficient rises substantially and the cost level follows.
+The deep component is not decoration on the structural parameters. It is what makes
+them estimable. Both deep specifications still fall short of the truth at this sample
+size, so the correction is partial.
+
+**$\sigma_\eta$ sits above its nominal truth, which is correct behavior.** The truth
+value describes a world where the analyst knows the taste vector. The estimator does
+not know it, and recovers it only partially, so the residual belongs in the
+unobserved component. The column to read is `sd_total`, the implied dispersion of the
+full pre-search index. It rises toward the truth as the deep components are added,
+while staying below it at this sample size. The network's job is to move variance out
+of the unexplained bucket and into the explained one. The `cor_delta` column shows how
+far it gets.
+
+**$\lambda$ is over-estimated by roughly a factor of two. The raw coefficient is the
+wrong thing to read.** The within-session attention weights are learned, so they
+are not the true similarity weights. A learned weight profile that is more diffuse
+than the truth spreads the same information over more items, so $\lambda$ scales up
+to compensate. The coefficient is therefore not comparable across parameterizations.
+The comparable object is the behavior it implies: how much a consumer revises their
+expectation of the most similar remaining item after one click.
+
+```{r}
+#| label: dss-lambda-magnitude
+# Expected belief revision about the most similar un-inspected item after the
+# first click, in units of the match-value standard deviation.
+p_sst  <- unpack(fits$SST$par, specs$SST)
+fw_sst <- net_forward(p_sst, Pte, specs$SST)
+fc1 <- dte$ord[, 1]
+peak <- function(Aw) mean(vapply(seq_along(fc1), function(i)
+  if (fc1[i] > 0) max(Aw[i, -fc1[i], fc1[i]]) else NA_real_, 0), na.rm = TRUE)
+
+cat("attention on the nearest item   truth:", round(peak(tp_te$Aw), 3),
+    "  SST:", round(peak(fw_sst$Aw), 3), "\n")
+cat("implied revision per click      truth:",
+    round(tr$lambda * peak(tp_te$Aw), 3),
+    "  SST:", round(p_sst$lam[1] * peak(fw_sst$Aw), 3), "\n")
+```
+
+The learned attention is flatter than the truth, so $\lambda$ absorbs the difference.
+The implied revision is over-stated by much less than the coefficient is, which is the
+general lesson for reporting deep structural estimates: report the behavior the
+parameters imply, because the parameters themselves are only defined relative to a
+representation the estimator chose.
+
+```{r}
+#| label: fig-dss-attention
+#| fig-cap: "Learned attention over the consumer's history, by recency. The encoder places more weight on recent behaviour, which is the correct response to a taste process that drifts. Nothing in the specification forced this; the weight profile is estimated."
+att_prof <- colMeans(enc_forward(p_sst, Pte, specs$SST)$cache$att)
+op <- par(mar = c(4.2, 4.2, 2, 1))
+barplot(att_prof, names.arg = 1:length(att_prof), ylab = "mean attention weight",
+        xlab = "history position (1 = most recent)")
+abline(h = 1 / length(att_prof), lty = 2)
+par(op)
+```
+
+## Policy Experiment 1: Ranking {#sec-dss-policy-rank}
+
+The first policy question is the one every marketplace faces. Given a set of items
+and a set of slots, which item goes where? Under the model this is a well-posed
+problem. Slot determines search cost, search cost determines the reservation utility,
+and reservation utilities determine what gets inspected, so moving an item up the page
+raises the chance it is inspected and therefore the chance it is bought.
+
+Every candidate policy below is derived from an estimated model and then *evaluated
+under the true data generating process*, which is the luxury a simulation buys. The
+oracle policy ranks on the true pre-search index and bounds what is achievable.
+Revenue is the purchase probability weighted by a price of $40 + 10 \times$ the
+standardized price attribute.
+
+```{r}
+#| label: tbl-dss-policy1
+#| tbl-cap: "Ranking policies, evaluated under the true data generating process. Each policy is chosen by one model and scored by the truth."
+rev_of <- function(pbuy, Xd, base = 40, slope = 10)
+  rowSums(pbuy * (base + slope * Xd[, , 1]))
+
+set.seed(31)
+pbb  <- unpack(bfit$par, bsp); enb <- enc_forward(pbb, Pte, bsp)
+Hbr  <- (enb$h %*% t(pbb$W_b))[rep(seq_len(Pte$N), Pte$J), , drop = FALSE]
+score <- list(
+  random = matrix(runif(dte$N * dte$J), dte$N, dte$J),
+  `classical SSM` = net_forward(unpack(fits$SSM$par, specs$SSM), Pte, specs$SSM)$dbar,
+  `deep benchmark` = matrix(as.vector(Pte$Xlin %*% pbb$a_b) +
+                              rowSums(enb$Ed * Hbr), Pte$N, Pte$J),
+  `SST full` = fw_sst$dbar,
+  oracle = tp_te$dbar)
+rk <- lapply(score, rank_by)
+
+pol1 <- do.call(rbind, lapply(rk, function(R) {
+  s <- truth_layout(dte, rankmat = R)
+  c(P_buy = mean(rowSums(s$pbuy)), revenue = mean(rev_of(s$pbuy, dte$Xd)),
+    inspections = mean(s$en))
+}))
+pol1 <- cbind(pol1, `revenue gain %` =
+                100 * (pol1[, "revenue"] / pol1["random", "revenue"] - 1))
+round(pol1, 4)
+```
+
+Personalized ranking is worth real money here. The size of the prize is set by how
+well a model recovers individual preferences. The classical search model, which has no
+way to personalize, captures part of the gain because it can still sort on price and
+rating. The SST and the deep benchmark capture most of it and are close to each other,
+which is the expected result: choosing a ranking requires only the *ordering* of
+preferences within a session. Both models learn that ordering from the same data
+through the same encoder.
+
+### Choosing a policy is easier than forecasting one
+
+The comparison above understates the difference between the two approaches, because
+picking the best of five layouts is a much weaker requirement than saying what any of
+them will earn. A firm deciding whether a re-ranking project is worth doing needs the
+second. The table below asks each model to forecast revenue under each layout, and
+scores the forecast against the truth.
+
+```{r}
+#| label: tbl-dss-policy-eval
+#| tbl-cap: "Forecast revenue under each layout, against the realised value. The deep benchmark has a position coefficient, so it produces a number, but the number comes from a reduced-form association estimated under the observed assignment and does not extrapolate."
+fc <- do.call(rbind, lapply(rk, function(R) c(
+  realised = mean(rev_of(truth_layout(dte, rankmat = R)$pbuy, dte$Xd)),
+  `SST full` = mean(rev_of(predict_layout(fits$SST$par, specs$SST, Pte,
+                                          rankmat = R)$pbuy, dte$Xd)),
+  `classical SSM` = mean(rev_of(predict_layout(fits$SSM$par, specs$SSM, Pte,
+                                               rankmat = R)$pbuy, dte$Xd)),
+  `deep benchmark` = mean(rev_of(bb_layout(bfit$par, bsp, Pte, rankmat = R)$pbuy,
+                                 dte$Xd)))))
+round(fc, 3)
+cat("\nmean absolute forecast error\n")
+round(colMeans(abs(fc[, -1, drop = FALSE] - fc[, "realised"])), 3)
+```
+
+All three forecasts carry level error. The SST's is the smallest. The reason the
+structural forecast is better is not that its parameters are more accurate in some
+abstract sense. It is that a change in slot assignment enters the SST through the
+object that slot actually manipulates, the search cost, and propagates through a
+stopping rule that then determines purchases. The deep benchmark has a slot
+coefficient in a purchase softmax, which summarizes how purchases and slots covaried
+under the assignment it was trained on. That coefficient is a reduced form of the
+search process and it is not stable when the assignment changes. This is the Lucas
+critique in a recommender system.
+
+Read the level errors as a caution about the method too. An estimated structural
+model forecasting the value of its own preferred policy is evaluating that policy
+under its own beliefs. Those beliefs are over-confident about the part of preference
+the network explains. Reported counterfactual gains from a fitted
+structural model should be treated as upper bounds unless validated against held-out
+policy variation.
+
+## Policy Experiment 2: New Product Promotion {#sec-dss-policy-newprod}
+
+A new product has attributes and no behavioral history. The firm can promote it to a
+fraction of visitors by placing it in the top slot, which pushes an incumbent off the
+page. Two things must be forecast to do this well. Which consumers will like the new
+item, and what the promotion costs in cannibalized sales of the item it displaces.
+
+This is where an item embedding built from attributes pays off. The encoder maps the new item's attributes into the same space as everything
+else, so the model has an opinion about it without ever having seen it chosen.
+
+```{r}
+#| label: tbl-dss-policy2
+#| tbl-cap: "New-product targeting. The top 30% of consumers by each model's predicted adoption are shown the new item in the top slot, and outcomes are computed under the true data generating process including the cannibalization of the displaced item."
+insert_new_product <- function(d, new_x) {
+  J <- d$J; N <- d$N; d2 <- d
+  d2$cat_x <- rbind(d$cat_x, new_x)
+  d2$disp_item <- cbind(nrow(d2$cat_x), d$disp_item[, seq_len(J - 1), drop = FALSE])
+  Xd <- array(0, c(N, J, 4))
+  for (k in 1:4) Xd[, , k] <- matrix(d2$cat_x[d2$disp_item, k], N, J)
+  d2$Xd <- Xd
+  d2$ord <- matrix(0L, N, J); d2$nsearch <- integer(N); d2$buy <- integer(N)
+  d2
+}
+
+new_x <- matrix(c(-0.4, 1.0, 0.9, -0.7), 1, 4,
+                dimnames = list(NULL, c("price", "rating", "st1", "st2")))
+dnew <- insert_new_product(dte, new_x)
+Pnew <- prep(dnew, S = 8, seed = 9)
+
+targeting <- list(
+  `SST full`       = predict_layout(fits$SST$par, specs$SST, Pnew)$pbuy[, 1],
+  `classical SSM`  = predict_layout(fits$SSM$par, specs$SSM, Pnew)$pbuy[, 1],
+  `deep benchmark` = bb_obj(bfit$par, Pnew, bsp, matrix(0, dnew$N, dnew$J),
+                            grad = FALSE)$pbuy[, 1])
+truth_new <- truth_layout(dnew)
+targeting$oracle <- truth_new$pbuy[, 1]
+set.seed(5); targeting$random <- runif(dte$N)
+
+base_t   <- truth_layout(dte)
+rev_base <- rev_of(base_t$pbuy, dte$Xd)
+rev_new  <- rev_of(truth_new$pbuy, dnew$Xd)
+adopt    <- truth_new$pbuy[, 1]
+k <- round(0.30 * dte$N)
+
+pol2 <- do.call(rbind, lapply(targeting, function(sc) {
+  tgt <- rep(FALSE, dte$N); tgt[order(sc, decreasing = TRUE)[1:k]] <- TRUE
+  c(adoption_among_targeted = mean(adopt[tgt]),
+    revenue = mean(ifelse(tgt, rev_new, rev_base)),
+    gain_vs_no_promotion = mean(ifelse(tgt, rev_new, rev_base)) - mean(rev_base))
+}))
+round(pol2, 4)
+cat("\nrevenue with no promotion :", round(mean(rev_base), 3), "\n")
+cat("revenue promoting to all  :", round(mean(rev_new), 3), "\n")
+```
+
+Targeting on the model roughly doubles adoption relative to random targeting, and
+both the SST and the deep benchmark capture a similar share of the oracle's gain. The
+classical search model does much worse, because without a preference representation
+it can only say that the new item is good on average. A promotion policy that cannot
+distinguish between consumers is close to promoting at random.
+
+## Policy Experiment 3: Lowering Search Costs {#sec-dss-policy-cost}
+
+The two experiments above rearrange things the benchmark model has a coefficient for.
+The third does not. Suppose the platform ships a quick-view feature that halves the
+cost of inspecting an item. Nothing about preferences changes, nothing about the
+assortment changes, and no coefficient in the deep benchmark corresponds to the
+intervention. The benchmark cannot answer. Its failure is structural: it has no object
+to perturb.
+
+The structural model has exactly one: $\gamma_0$ shifts by $\log 0.5$.
+
+```{r}
+#| label: tbl-dss-policy3
+#| tbl-cap: "Halving search costs. Changes are relative to the status quo under each model's own primitives. The deep benchmark is absent because the intervention has no representation in it."
+qv <- log(0.5)
+m_qv_hat <- matrix(resv_m(as.vector(exp(p_sst$gam[1] + qv + p_sst$gam[2] * Pte$posv))),
+                   Pte$N, Pte$J)
+sst_qv <- sim_policy(fw_sst$dbar, m_qv_hat, fw_sst$Aw, p_sst$lam[1],
+                     exp(p_sst$lsig[1]))
+m_qv_true <- matrix(resv_m(as.vector(exp(tr$gam0 + qv + tr$gam1 * Pte$posv))),
+                    Pte$N, Pte$J)
+tru_qv <- sim_policy(tp_te$dbar, m_qv_true, tp_te$Aw, tp_te$lam, tp_te$sig)
+base_s <- predict_layout(fits$SST$par, specs$SST, Pte)
+
+pol3 <- rbind(
+  truth = c(inspections = mean(tru_qv$en) - mean(base_t$en),
+            P_buy = mean(rowSums(tru_qv$pbuy)) - mean(rowSums(base_t$pbuy)),
+            revenue = mean(rev_of(tru_qv$pbuy, dte$Xd)) - mean(rev_of(base_t$pbuy, dte$Xd))),
+  `SST full` = c(inspections = mean(sst_qv$en) - mean(base_s$en),
+            P_buy = mean(rowSums(sst_qv$pbuy)) - mean(rowSums(base_s$pbuy)),
+            revenue = mean(rev_of(sst_qv$pbuy, dte$Xd)) - mean(rev_of(base_s$pbuy, dte$Xd))))
+round(pol3, 4)
+```
+
+The SST gets the direction and the rough magnitude of all three responses. It
+over-states the revenue gain, for the reason given in @sec-dss-policy-rank. As an
+input to a build-or-not decision on a quick-view feature, a forecast of this quality
+is worth having. No reduced-form alternative produces one at all.
+
+This is the clearest statement of what the structural half of a deep structural model
+buys. It is not accuracy on the training distribution. It is the existence of an
+answer off it.
+
+## What Replicates and What Does Not {#sec-dss-limits}
+
+A replication is only useful if it is specific about its own limits.
+
+**Replicates.** The architecture works as described. The Weitzman equation is a
+differentiable layer with an exact derivative. Gradients reach every network weight,
+verified to seven digits in @sec-dss-dgp. The ablation in @sec-dss-prediction
+is monotone: cross-session attention improves on the classical model, and
+within-session resolution of uncertainty improves further. The deep component makes
+the structural parameters estimable, shown in @sec-dss-ablation, where the classical
+model mis-estimates the search-cost function because it must absorb preference
+heterogeneity into the search process. The policy experiments work. The gap between
+choosing a policy and forecasting its value in @sec-dss-policy-rank is where structure
+earns its keep.
+
+**Replicates with a caveat.** Identification. The functions $\delta(\cdot)$ and
+$c(\cdot)$ are identified under the normalizations and the position exclusion, which
+is what the paper's claim has to mean. The network weights are not identified and do
+not need to be. The cost *level* is weakly identified for the reason in @fig-dss-resv,
+so search costs reported in currency should carry that qualification.
+
+**Replicates, but fragile.** The predictive comparison against the deep benchmark.
+In the configuration reported in @sec-dss-prediction, 800 estimation sessions and 600
+holdout sessions, the full SST is ahead on all five metrics. In a variant we also ran,
+with 960 estimation sessions and 440 holdout sessions, the benchmark overtakes SST on
+purchase log-likelihood by about 0.05 while SST keeps its advantage on click
+prediction, click AUC and search depth. The direction of that shift is what theory
+predicts, because a correctly specified structural model buys efficiency and the value
+of efficiency falls as data accumulate. A benchmark trained directly on purchase
+cross-entropy should also be hardest to beat on exactly that loss. We report it because a
+margin that flips with the split is not a margin to build a claim on. The robust part
+of claim 4 in our replication is the advantage on sequence-level quantities, where the
+benchmark has no mechanism at all, and the policy results below.
+
+**Does not separate.** Two of the three policy experiments. On ranking and on
+new-product targeting, the deep benchmark matches SST. Both experiments rearrange
+objects the benchmark has a coefficient for, and both require only that a model order
+preferences correctly within a session, which the shared encoder does equally well in
+either model. A replication that ran only those two experiments would conclude that
+the structural half of the model is unnecessary. The separation appears in the
+forecasting exercise of @sec-dss-policy-rank and, decisively, in
+@sec-dss-policy-cost.
+
+**Cannot be assessed.** Everything specific to the paper's data. Magnitudes of search
+costs in a real category, the shape of real cross-session preference dynamics, the
+size of the revenue gains on the firm's actual traffic, and whether the identifying
+exclusion holds on that site. A simulation can establish that a method recovers a
+truth. It cannot establish that a particular estimate describes the world.
+
+**Estimation caveats that generalize.** Two are worth carrying into any project of
+this kind. The smoothing temperature trades two biases against each other and has an
+interior optimum that depends on the draw budget and on the size of the model, so it
+must be calibrated by Monte Carlo, per @sec-dss-montecarlo. And a fitted structural
+model evaluating its own preferred policy is over-optimistic, so counterfactual gains
+should be reported as upper bounds unless they are validated against held-out policy
+variation. @sec-dss-policy-cost over-states the revenue gain from halving search costs
+by about sixty percent while getting the sign and the order of magnitude right, which
+is roughly the accuracy this class of exercise delivers at this sample size.
+
+## Scaling Up {#sec-dss-scaling}
+
+Everything above is base R with hand-derived gradients, which is the right choice for
+a chapter whose purpose is to make the mechanism inspectable. It is the wrong choice
+for a project. At realistic scale, use automatic differentiation and mini-batching,
+and keep the structural layer exactly as it is written here. The sketch below is the
+same model in `torch`, which is the stable choice in R because it links to libtorch
+directly and needs no Python installation.
+
+```{r}
+#| label: dss-torch-sketch
+#| eval: false
+library(torch)
+
+# The Weitzman layer. Only the inversion needs a custom derivative, and it is
+# available in closed form from @eq-dss-dmdc, so autograd handles everything else.
+resv_layer <- autograd_function(
+  forward = function(ctx, cc) {
+    m <- torch_tensor(resv_m(as.numeric(cc$cpu())))$view_as(cc)
+    ctx$save_for_backward(m = m)
+    m
+  },
+  backward = function(ctx, grad_output) {
+    m <- ctx$saved_variables$m
+    # dm/dc = -1 / (1 - Phi(m))
+    list(cc = grad_output * (-1 / (1 - torch_special_ndtr(m))))
+  }
+)
+
+sst_module <- nn_module(
+  initialize = function(d_emb, d_ff, n_att, n_lin, n_head = 4) {
+    self$emb  <- nn_linear(n_att, d_emb, bias = FALSE)
+    self$attn <- nn_multihead_attention(d_emb, n_head, batch_first = TRUE)
+    self$ff   <- nn_sequential(nn_linear(d_emb, d_ff), nn_relu(),
+                               nn_linear(d_ff, d_emb))
+    self$norm <- nn_layer_norm(d_emb)
+    self$alpha <- nn_linear(n_lin, 1, bias = FALSE)
+    self$gam   <- nn_parameter(torch_tensor(c(-4, 0.1)))
+    self$lam   <- nn_parameter(torch_tensor(0.1))
+    self$lsig  <- nn_parameter(torch_tensor(log(0.7)))
+  },
+  forward = function(x_item, x_hist, mask_hist, slot) {
+    e_h <- self$emb(x_hist)
+    h   <- self$attn(e_h[, 1:1, ], e_h, e_h, key_padding_mask = mask_hist)[[1]]
+    h   <- self$norm(h + self$ff(h))
+    e_j <- self$emb(x_item)
+    list(dbar = self$alpha(x_item)$squeeze(-1) +
+                torch_einsum("bjd,bod->bj", list(e_j, h)),
+         m    = resv_layer(torch_exp(self$gam[1] + self$gam[2] * slot)),
+         e    = e_j)
+  }
+)
+```
+
+Three practical notes for that implementation. Mini-batch over sessions and keep the
+simulation draws fixed within a batch, so the objective a batch sees is deterministic.
+Anneal the smoothing temperature downward only while increasing the number of draws,
+guided by the diagnostic of @sec-dss-montecarlo. And carry the likelihood's inequality
+loop as a masked tensor operation over search steps, which is what the R code above
+does with matrices and is the only part that needs care to vectorize.
+
+## Using This as a Model Paper {#sec-dss-template}
+
+The reason to study SST closely is that almost nothing in it is about search. Strip
+the application away and a template remains. It applies wherever a behavioral theory
+produces a decision rule and a firm holds rich individual-level data.
+
+**One.** Find the place where the economic model asks for a primitive the analyst
+cannot observe. In sequential search it is the pre-search expected utility. In a
+dynamic durable-goods model it is the expected flow utility. In a learning model it is
+the prior. Classical practice fills that slot with a linear index because it must, and
+the linear index is usually the least defended part of the model.
+
+**Two.** Put a network in that slot, and only in that slot. The economics stays
+untouched. The test of a deep structural model is whether the theory would still be
+recognizable if the network were replaced by a linear index, and whether that
+replacement nests as a restriction. Here it does, exactly, which is what makes the
+ablation in @sec-dss-prediction interpretable.
+
+**Three.** Make the decision rule differentiable, and prefer a rule whose derivative
+you can write down. @eq-dss-dmdc is the whole reason the SST trains. It exists because
+Weitzman's equation has a clean implicit derivative. When the rule is a
+maximum or an ordering, rewrite the observed event as a product of pairwise
+comparisons and smooth each one, as in @eq-dss-event.
+
+**Four.** State identification in terms of functions. Name the
+normalizations. Name the exclusion restriction, and be explicit that it is an
+assumption about the world. Then show which margin of the data identifies which
+object, as in the three lemmas of @sec-dss-identification.
+
+**Five.** Validate against a known truth before validating against a benchmark. The
+temperature pathology in @sec-dss-montecarlo is invisible in fit statistics and fatal
+to every estimate. A deep structural model has enough moving parts that a Monte Carlo
+where the truth lies inside the model class is not optional.
+
+**Six.** Report counterfactuals as the deliverable, and report the forecast alongside
+the choice. Picking the better of two policies is a weak test that a flexible
+predictor often passes. Forecasting what a policy will deliver, and answering about
+an intervention with no coefficient in the reduced form, is the test structure is for.
+
+## Key Takeaways
+
+- Sequential search theory supplies a decision rule whose central object, the
+  reservation utility of @weitzman1979optimal, is a monotone and differentiable
+  function of the pre-search index and the search cost. That differentiability is
+  what lets economics sit inside a neural network as an ordinary layer.
+- The SST of @song2026sst puts a transformer in the one slot where the classical
+  search model was guessing: the map from a consumer's cross-session history to the
+  utility they expect before clicking. Setting the deep components to zero recovers
+  the classical model exactly, so the deep structure is a testable extension.
+- Identification in a deep structural model applies to functions. Under a
+  scale and location normalization and the exclusion of slot position from utility,
+  choice identifies the pre-search index, search order identifies differences in
+  reservation cutoffs, and stopping identifies their level. The network weights are
+  not identified and nothing of interest depends on them.
+- The differentiable likelihood requires smoothing a product of indicator functions.
+  The smoothing temperature must be chosen jointly with the number of simulation
+  draws. Too low a temperature produces a silent collapse of every coefficient
+  toward zero, diagnosable without knowing the truth by checking whether the
+  objective is stable as draws are added.
+- In our replication the deep components make the structural parameters estimable.
+  The classical model mis-estimates the search-cost function because preference
+  heterogeneity it cannot represent is absorbed into the search process.
+- Against a deep benchmark of equal capacity the structural model is ahead on
+  prediction, by a wide margin on search depth and by a thin and sample-sensitive
+  margin on purchase. Its decisive advantage lies elsewhere. Choosing between layouts
+  is something a flexible predictor does just as well, because it needs only the
+  ordering of preferences. Forecasting what a layout will earn, and answering about an
+  intervention that has no coefficient in the reduced form at all, is what the
+  structural half of the model is for.
