@@ -567,6 +567,76 @@ geo-test. The conceptual payoff remains: geography converts an observational
 targeting problem into a randomized one, complementing the user-level experimentation
 of @sec-causal-inference at a spatial scale that respects spillover.
 
+### When Geography Assigns the Treatment: EV Charging at the Supermarket {#sec-geo-evcharging}
+
+Randomized geo-tests are the exception. More often a third party decides where and when
+a treatment lands, and the analyst's first job is to say, from geometry alone, which
+units it reached. @chan2026evcharging is a careful recent instance that puts most of this
+chapter's primitives to work. The question is whether a public electric-vehicle (EV)
+charging station on a supermarket's parking lot changes the store's own grocery revenue,
+which two earlier studies had examined for mixed sets of US businesses using
+card-spending and foot-traffic data [@babar2024recharging; @zheng2024evstations]. The
+authors match monthly, inflation-adjusted revenue for all stores of a leading German
+grocery chain in a region holding almost a fifth of the country's population (January
+2019 to March 2023) to the federal registry of public charging stations, which records
+each station's geolocation and the date it began operating. Revenue covers cash as well
+as card payments, and the retailer's share of charging income is kept out of it, so the
+outcome is the store's core business.
+
+Every step of the design is a spatial decision. A store counts as treated only if a
+charger lies within 100 meters of walking distance, measured in Google Maps, and sits on
+the same car park as the store. Sixteen stores with a charger inside the same 100 meters
+but off their own lot are set aside, leaving 42 treated and 290 never-treated stores.
+Spillover is policed with the catchment logic of @sec-geo-distance: a 2-kilometer radius
+flags the 8 control stores that lie near a treated one, and the analysis is rerun at 3.5
+and 5 kilometers. Contamination from rival chains is handled by geocoding the five
+leading competitors' outlets inside each control store's catchment and matching them to
+the same registry. The moderators are geodemographic in the sense of
+@sec-geo-applications: the apartment-to-house ratio, household income, and public
+chargers per capita at the postal-code level, competitors and amenities within 200
+meters, and parking spaces counted by hand from satellite imagery.
+
+Because chargers arrived at different stores in different months, the estimator is the
+staggered difference-in-differences of @callaway2021did rather than two-way fixed
+effects, whose negative-weighting problem a Goodman-Bacon decomposition
+[@goodmanbacon2021differencdifferenc] put at 10% in these data (@sec-causal-did). The
+case for exogenous timing is institutional: hardware shortages, grid capacity, and
+layered permitting made the go-live date unpredictable for retailer and operator alike,
+anywhere from a few months to more than a year after the decision to install.
+
+The headline is a 3.41% increase in monthly store revenue (ATT $= 0.0341$,
+$p = 0.003$), about €200,000 a year for an average store in the sample. Pre-treatment
+leads show no trend, the uplift persists through the first year of exposure, and the
+estimate survives the wider catchments, dropping controls whose rivals offer charging
+(ATT $= 0.0273$), using late adopters as controls, and a stacked synthetic-control
+design. Three results speak directly to this chapter.
+
+- *Access geometry matters beyond distance.* The 16 stores whose charger was just as
+  close but not on their own lot gained nothing measurable (ATT $= -0.0044$,
+  $p = 0.708$), significantly less than the on-site stores.
+- *Part of the gain is taken from neighbors.* The chain's untreated stores lost revenue
+  when a nearby rival added charging (ATT $= -0.0180$, $p = 0.067$), which the authors
+  read as evidence that the effect is partly market stealing rather than pure expansion.
+- *The effect has a geography of its own.* It was larger where no competing grocer stood
+  within 200 meters, in postal codes with many apartments relative to houses (whose
+  residents often lack private charging), in wealthier postal codes, and where nearby
+  amenities give drivers something else to do while they charge. Annualized, the gain
+  exceeds €477,000 for stores in apartment-dense areas, against no significant gain
+  where houses dominate.
+
+Inside the store, the gain comes from more transactions (ATT $= 0.0222$) rather than
+larger baskets, peaks in weekend off-peak hours, and across categories is largest in
+niche ones (low household penetration, high purchase frequency); a category's
+environmental footprint does not predict its uplift. For site selection, a parking-lot
+amenity behaves like an attractiveness term in the Huff model of @sec-geo-distance, worth
+more or less depending on the surrounding geography of rivals, housing stock, and
+amenities. For method, when geography assigns treatment, the treatment radius, the
+spillover catchment, and the competitor radius are all modeling choices, and each
+deserves the sensitivity check this paper gives it. The data are proprietary; disguised
+data and code went to the journal's Data Editor under an approved alternative disclosure
+plan. How the authors argue for this as a contribution, given that the effect itself was
+already in print, is the worked example in @sec-sw-emb-evcharging.
+
 ## Mobile-Location Data and Privacy {#sec-geo-privacy}
 
 The richest contemporary location signal comes from mobile devices, and it is also

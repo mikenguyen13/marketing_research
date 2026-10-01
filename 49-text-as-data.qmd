@@ -410,6 +410,221 @@ is praise for a thriller and damnation for a car. The defensible use of a lexico
 a transparent, validated baseline whose biases are *bounded*, not as a black box whose
 output is taken at face value.
 
+### From Seed Words to a Domain Dictionary: Culture in Job Postings {#sec-tad-culture-dictionary}
+
+Domain-blindness has a standard remedy: build the dictionary from the corpus being
+measured. @li2021culture did this for corporate culture in earnings calls. They start
+from a few seed words for each of the five values firms most often list on their
+websites [@guiso2015culture]—innovation, integrity, quality, respect, and
+teamwork—train word embeddings on the calls (@sec-embeddings), and add the words whose
+vectors lie closest to each value's seeds. @huang2026culture take the method into the
+labor market, where culture is something job seekers care about and can rarely observe
+before they join. In the working-paper version [@pacelli2023culturewp], the corpus is
+about 25 million U.S. job postings from 4,911 firms over 2010–2020. The seeds are
+adapted to the setting. "Diversity" stays under respect because in a job ad it almost
+always refers to inclusion programs, whereas Li et al. dropped it because in an
+earnings call it usually means a diversification strategy. The authors then train
+word2vec on a stratified sample of one million postings, take the 500 words and
+phrases nearest each value, and prune the lists by hand.
+
+Each posting $i$ is then scored on each value $v$ by the TF-IDF weight of
+@eq-tfidf, summed over the value's dictionary $D_v$ and divided by the posting's
+length $L_i$:
+$$
+c_{iv} \;=\; \frac{1}{L_i} \sum_{w \in D_v} \mathrm{tf}_{iw} \log\frac{N}{\mathrm{df}_w}.
+$$ {#eq-tad-culture-score}
+Each value is standardized, and the composite *Job Culture* is the sum of the five
+standardized scores, standardized again. Two threshold versions count the values on
+which a posting falls in the top 30% (*Count High*) or require all five (*All High*).
+The chunk below scores six job ads written for this illustration, using the thirty
+most representative words per value that the working paper lists in its Appendix A.
+The original pipeline also lemmatizes with Stanford CoreNLP; the toy version joins
+dictionary phrases and strips plural endings, which is enough to see how the measure
+behaves.
+
+```{r culture-dictionary-score, message=FALSE, warning=FALSE}
+# --- The five culture dictionaries (Appendix A of the working paper) ---------
+# Underscores join phrases that the original pipeline detected and lemmatized.
+culture_dict <- list(
+  Integrity = c("integrity", "accountability", "transparency", "accountable",
+    "ethical", "organization", "consistent", "trust", "continuous_improvement",
+    "core_value", "transparent", "ethic", "reinforce", "responsibility",
+    "stewardship", "role_model", "hold_accountable", "governance", "fairness",
+    "honesty", "governance_process", "guide_principle", "highest_standard",
+    "steward", "honest", "governance_framework", "credibility",
+    "compliance_program", "responsible", "oversight"),
+  Teamwork = c("teamwork", "collaboration", "collaborate", "partnership",
+    "collaborative", "cooperation", "relationship", "peer", "cross-functional",
+    "interaction", "leadership", "interact", "closely", "foster", "influence",
+    "cross-functionally", "collaborative_relationship", "partner", "interface",
+    "partnering", "build_relationship", "contribute", "liaise",
+    "cross-functional_team", "cohesive", "communicate", "synergy", "alliance",
+    "works_closely", "works_collaboratively"),
+  Innovation = c("innovation", "innovative", "innovate", "passion", "creative",
+    "creativity", "excellence", "passionate", "inspire", "idea", "mindset",
+    "sustainable", "best-in-class", "data-driven", "world-class", "empower",
+    "learning", "enthusiasm", "product_innovation", "thought_leadership",
+    "technology", "operational_excellence", "know-how", "agility", "enable",
+    "evolution", "cutting-edge", "entrepreneurial", "innovative_thinking"),
+  Respect = c("respect", "team", "talent", "leader", "commitment", "team_member",
+    "colleague", "diverse", "people", "inclusion", "diversity", "embrace",
+    "share", "teammate", "inclusive", "coaching", "coach", "collective",
+    "leadership_team", "community", "recognition", "recognize",
+    "employee_engagement", "thoughtful", "talented", "mentoring", "team_player",
+    "workforce", "staff"),
+  Quality = c("quality", "customer_service", "customer", "engage", "client",
+    "focus", "engagement", "deliver", "mission", "effort", "resource", "advocate",
+    "stakeholder", "supplier", "customer_experience", "proactive", "support",
+    "vendor", "customer_satisfaction", "service", "internal_stakeholder",
+    "key_stakeholder", "support_team", "business_team", "communication",
+    "solution", "dedication", "high_quality", "service_delivery",
+    "operation_team")
+)
+dict_terms <- unique(unlist(culture_dict))
+
+# --- Six illustrative postings (written for this example, not real ads) ------
+postings <- c(
+  `Software engineer` = "Join a collaborative product team where creativity and
+    innovation drive everything we build. You will collaborate with designers in a
+    cross-functional team, share ideas openly, and bring a data-driven mindset to
+    cutting-edge technology. We value learning and empower engineers to experiment.",
+  `Compliance analyst` = "The analyst supports our compliance program and reports
+    to the governance committee. We hold ourselves to the highest standard of
+    integrity and transparency, and every team member is accountable for ethical
+    conduct. Responsibilities include oversight of controls and continuous
+    improvement of policies.",
+  `Registered nurse` = "Our nurses are the heart of a diverse and inclusive
+    community. We respect every colleague, invest in coaching and mentoring, and
+    recognize the commitment of our people. Join a workforce where diversity and
+    inclusion are lived every shift.",
+  `Customer support rep` = "Deliver high quality service to every customer. You
+    will engage with clients by phone and chat, resolve issues with a proactive
+    focus on customer satisfaction, and work with the support team to improve the
+    customer experience.",
+  `Warehouse associate` = "Load and unload trucks, scan inventory, and operate a
+    forklift safely. Must lift 50 pounds and stand for long periods. Day and night
+    shifts available. Forklift certification preferred.",
+  `Regional sales manager` = "Lead a team of account executives, build
+    relationships with key clients, and partner with marketing to deliver revenue.
+    The manager will coach and develop talent and foster a culture of
+    accountability."
+)
+
+# --- Tokenize: join dictionary phrases, then a crude plural lemmatization ----
+tokenize_posting <- function(x, terms) {
+  x <- tolower(gsub("\\s+", " ", x))
+  phrases <- terms[grepl("_", terms)]
+  for (p in phrases[order(-nchar(phrases))]) {
+    x <- gsub(gsub("_", " ", p, fixed = TRUE), p, x, fixed = TRUE)
+  }
+  tok <- unlist(strsplit(x, "[^a-z_-]+"))
+  tok <- tok[nchar(tok) > 0]
+  singular <- sub("s$", "", tok)
+  ifelse(!(tok %in% terms) & singular %in% terms, singular, tok)
+}
+tokens <- lapply(postings, tokenize_posting, terms = dict_terms)
+
+# --- Score each value (eq-tad-culture-score) ---------------------------------
+N   <- length(tokens)
+df  <- sapply(dict_terms, function(w) sum(sapply(tokens, function(t) w %in% t)))
+idf <- log(N / pmax(df, 1))
+score_value <- function(tok, words) {
+  tf <- table(factor(tok[tok %in% words], levels = words))
+  sum(as.numeric(tf) * idf[words]) / length(tok)
+}
+raw <- sapply(culture_dict, function(words)
+  sapply(tokens, score_value, words = words))
+
+# --- Standardize, then build the composite and the two threshold measures ----
+z <- scale(raw)
+top30 <- apply(raw, 2, function(s) s > 0 & s >= quantile(s, 0.7))
+result <- data.frame(
+  round(z, 2),
+  `Job Culture` = round(as.numeric(scale(rowSums(z))), 2),
+  `Count High`  = rowSums(top30),
+  `All High`    = as.integer(rowSums(top30) == 5),
+  check.names = FALSE
+)
+knitr::kable(result[order(-result$`Job Culture`), ],
+             caption = "Culture scores for six illustrative job postings. Value columns are standardized across postings; Job Culture is the standardized sum.")
+```
+
+The ranking is sensible: the software-engineering ad leads the composite, the
+warehouse ad, which contains no culture language at all, comes last, and each
+specialist ad peaks on its own value. The table also exposes the measure's main
+validity risk. Embedding neighbors include the vocabulary of the jobs in which a value
+is usually mentioned, so "customer," "service," and "support" sit in the quality
+dictionary and "team," "people," and "staff" in respect. The customer-support ad
+therefore scores as a quality culture partly because it describes customer support.
+Comparisons are only safe within an occupation, and the paper's designs respect that.
+In the working paper, firm fixed effects explain 29% of the variation in Job Culture,
+while firm-by-occupation fixed effects explain 52%. The language therefore varies
+across jobs within a firm, which is evidence against boilerplate and also a reason
+never to rank firms on raw scores pooled across occupations.
+
+The substantive results follow the sorting logic of a signal that job seekers value
+and cannot easily get elsewhere. In the working paper's most demanding specification
+(firm-by-metro-area and metro-area-by-quarter fixed effects), a one-standard-deviation
+increase in Job Culture is associated with about 0.20 percentage points more quarterly
+worker inflow, 16% of the sample median. The association is weaker where outside
+information about culture is plentiful: at large establishments and at firms with
+many, or more helpful, employer reviews. After the 2020 Black Lives Matter protests,
+respect language specifically gained attracting power (0.06 points of inflow per
+standard deviation, 29% of that subsample's median) while the other four values did
+not, which is what a sorting account predicts when one value becomes more salient to
+job seekers. Postings with more culture language also had higher interview offer
+rates (4.8% per standard deviation) and offer acceptance rates (5.3%). The published
+abstract reports the same pattern: higher inflows, stronger effects when job seekers
+value culture and face information frictions, value-specific salience, and more
+offers and acceptances. The magnitudes quoted here are the working paper's.
+
+For marketing measurement, the transferable part is the pipeline. A job ad is
+firm-authored persuasive text aimed at one market, and the same seed-and-expand
+construction applies to any value-laden construct in text a firm writes for another
+market, such as advertising copy, product descriptions, or sales proposals. The
+expansion step needs a large in-domain corpus; the sketch below does it with GloVe
+from `text2vec` in place of word2vec. Its output is a candidate list, not a
+dictionary. The manual pruning that follows is where the researcher decides what the
+construct is, and that step should be documented as carefully as the model.
+
+```{r culture-dictionary-expand}
+#| eval: false
+library(text2vec)
+
+# Expand seed words into candidate dictionaries with GloVe embeddings.
+# `postings` is a character vector of job-posting texts (in practice a stratified
+# sample in the hundreds of thousands); `seeds` is a named list of seed words.
+expand_dictionary <- function(postings, seeds, top_n = 500, dim = 100) {
+  it    <- itoken(tolower(postings), tokenizer = word_tokenizer)
+  vocab <- prune_vocabulary(create_vocabulary(it, ngram = c(1, 2), sep_ngram = "_"),
+                            term_count_min = 5)
+  vect  <- vocab_vectorizer(vocab)
+  tcm   <- create_tcm(itoken(tolower(postings), tokenizer = word_tokenizer),
+                      vect, skip_grams_window = 5)
+  glove <- GlobalVectors$new(rank = dim, x_max = 10)
+  wv    <- glove$fit_transform(tcm, n_iter = 20)
+  wv    <- wv + t(glove$components)          # sum of main and context vectors
+  lapply(seeds, function(s) {
+    s   <- intersect(s, rownames(wv))
+    ctr <- colMeans(wv[s, , drop = FALSE])   # the value's centroid
+    sim <- sim2(wv, matrix(ctr, nrow = 1), method = "cosine", norm = "l2")[, 1]
+    head(sort(sim, decreasing = TRUE), top_n) # candidates for manual review
+  })
+}
+
+# Illustrative seeds only; the authors adapt the seed lists of Guiso et al. (2015)
+# and Li et al. (2021) to the job-posting context.
+seeds <- list(
+  Integrity  = c("integrity", "ethical", "accountability", "transparency", "honesty"),
+  Teamwork   = c("teamwork", "collaboration", "collaborate", "cooperation"),
+  Innovation = c("innovation", "innovative", "creativity", "creative"),
+  Respect    = c("respect", "diversity", "inclusion", "inclusive"),
+  Quality    = c("quality", "customer", "service", "dedication")
+)
+# candidates <- expand_dictionary(my_postings, seeds)
+# Then prune by hand: drop generic words and proper nouns before scoring.
+```
+
 ### Tone Is Not the Measure: Weighting by Attention {#sec-49-tone-attention}
 
 A subtler design error than any of the lexicon's compositional failures is treating
@@ -811,6 +1026,152 @@ as a discovery, since an embedding that outperforms will not say what it knows. 
 the residual is a separate act of theorizing, and one this design sets up rather than
 performs.
 
+### Auditing a Literature: The Slogan Case Worked {#sec-tad-slogan-audit}
+
+The design is worth running rather than only describing, and @aka2026slogans make that
+possible: their replication materials at `github.com/adaaka/SloganMemorability` post the
+feature matrix for all 929 slogans—the 25 literature-derived factors, the binomial
+recognition and cued-recall counts, and 1,536-dimensional embeddings of both the slogan
+and its brand—alongside the fitted models. Refitting the comparison as
+ridge-regularized binomial models under ten-fold cross-validation reproduces the
+design on its own data and returns something a one-line summary of it hides: **the audit
+delivers a different verdict for each outcome.**
+
+```{r slogan-audit, message=FALSE, warning=FALSE}
+# Out-of-sample R^2 (squared correlation between predicted and observed rates)
+# from a ridge-regularized binomial refit of the posted Aka-McCoy data:
+# 929 slogans, 10-fold cross-validation, glmnet with alpha = 0.
+cv <- data.frame(
+  feature_set = c("Theory factors (25)", "Slogan embedding (1536)",
+                  "Slogan + brand embedding (3072)", "Theory + slogan embedding"),
+  recognition = c(0.464, 0.499, 0.432, 0.540),
+  recall      = c(0.290, 0.148, 0.298, 0.224)
+)
+print(cv, row.names = FALSE)
+
+# The audit quantity: what does the black box buy beyond the named literature?
+emb <- cv$feature_set == "Slogan embedding (1536)"
+thy <- cv$feature_set == "Theory factors (25)"
+cat(sprintf("\nEmbedding margin over theory-derived factors:\n  recognition %+.3f\n  recall      %+.3f\n",
+            cv$recognition[emb] - cv$recognition[thy],
+            cv$recall[emb]      - cv$recall[thy]))
+```
+
+Read the recognition column first, because it is the case the design was built for. The
+slogan embedding beats the literature's own factors by $0.035$—a real margin, and a
+modest one. Something about what makes a slogan feel *previously seen* is carried in the
+text and not named by the published drivers, but it is a residual rather than a
+reproach; the factors recover most of what the embedding recovers. That the two
+feature sets *combined* outperform either alone ($0.540$) settles the more useful
+question: they are not redundant, so the unnamed component is genuinely additional
+rather than a re-encoding of the named one.
+
+The recall column inverts the result. Here the theory-derived factors ($0.290$) beat the
+slogan embedding ($0.148$) by a wide margin, and the audit's usual reading—that a
+literature has failed to name something—is simply wrong. The third row says why: adding
+the **brand's** embedding to the slogan's lifts recall to $0.298$, recovering the gap
+almost exactly. Cued brand recall is a property of the slogan–brand *relation*, not of
+the slogan's text, and slogan text alone cannot encode it; the theory-derived set has it
+all along through rated brand fit. The general lesson is a constraint on the method: an
+embedding audit interrogates only the representation it is handed, so a null or negative
+margin is evidence about that representation's coverage before it is evidence about the
+theory's.
+
+The fourth row carries the estimation caveat. Stacking the 25 factors with the 1,536
+embedding dimensions *lowers* recall accuracy to $0.224$, below the factors alone,
+because a single ridge penalty applied across heterogeneous blocks shrinks 25
+informative columns toward the scale appropriate for 1,536 weakly informative ones. That
+is an artifact of the estimator, not a finding about the features—the fix is
+block-specific penalties (group ridge, or a two-stage fit)—and it is the reason an audit
+of this kind has to report the comparison it actually ran rather than an abstract
+contest between "theory" and "embeddings."
+
+The table is reproducible end to end from the posted files. The script below is the one
+that produced it; it is not executed when the book is rendered because it downloads a
+39 MB feature matrix and refits eight penalized models, but it runs unmodified.
+
+```{r slogan-audit-repro}
+#| eval: false
+# Reproduces the table above from the Aka-McCoy replication data.
+library(glmnet)
+base <- "https://raw.githubusercontent.com/adaaka/SloganMemorability/main/dataset/"
+d  <- read.csv(paste0(base, "final_dataset_imputed_z_and_embeddings.csv"), check.names = FALSE)
+l1 <- read.csv(paste0(base, "level1_mean_z.csv"), check.names = FALSE)
+
+X_fac <- as.matrix(l1[, !(names(l1) %in% c("", "X"))])          # 25 factors
+X_sl  <- as.matrix(d[, grep("^ada_embedding_no_", names(d))])   # slogan, 1536 dims
+X_br  <- as.matrix(d[, grep("^brand_embeddings_", names(d))])   # brand,  1536 dims
+
+# Binomial outcomes: successes and failures per slogan.
+Y <- list(recognition = cbind(d$miss_count,           d$hit_count),
+          recall      = cbind(d$sum_incorrect_recall, d$sum_correct_recall))
+
+# Out-of-sample R^2 under 10-fold CV, ridge (alpha = 0) with an inner CV for lambda.
+cv_r2 <- function(X, y, nfold = 10, seed = 1) {
+  set.seed(seed)
+  fold <- sample(rep(1:nfold, length.out = nrow(X)))
+  p <- rep(NA_real_, nrow(X))
+  for (k in 1:nfold) {
+    tr <- fold != k
+    fit <- cv.glmnet(X[tr, , drop = FALSE], y[tr, ], family = "binomial",
+                     alpha = 0, nfolds = 5)
+    p[!tr] <- predict(fit, newx = X[!tr, , drop = FALSE],
+                      s = "lambda.min", type = "response")
+  }
+  cor(p, y[, 2] / rowSums(y))^2
+}
+
+sets <- list("Theory factors (25)"             = X_fac,
+             "Slogan embedding (1536)"         = X_sl,
+             "Slogan + brand embedding (3072)" = cbind(X_sl, X_br),
+             "Theory + slogan embedding"       = cbind(X_fac, X_sl))
+sapply(Y, function(y) sapply(sets, cv_r2, y = y))
+```
+
+```{r slogan-factor-divergence}
+#| echo: false
+#| label: fig-slogan-factors
+#| fig-cap: "Why the two outcomes need separate models. Each point is one of the 25 literature-derived memorability factors from @aka2026slogans, positioned by its correlation with recognition (horizontal) and with cued brand recall (vertical) across 929 slogans. Rated brand fit, concreteness, and imageability carry both outcomes; the surface devices copywriters reach for first cluster near the origin; word frequency is negatively signed for recognition. The two outcomes correlate only 0.46 with each other."
+#| fig-width: 7
+#| fig-height: 5.2
+#| message: false
+#| warning: false
+f <- data.frame(
+  factor = c("brand fit", "creativity", "imageability", "humor", "liking",
+             "concreteness", "closest brand sim.", "surprise", "length", "arousal",
+             "frequency", "prevalence", "dominance", "valence", "distinctiveness",
+             "age of acquisition", "wordplay", "hyperbole", "alliteration",
+             "readability", "pronouns", "orthographic", "phonological", "metaphor",
+             "ease of spelling"),
+  recognition = c(0.517, 0.282, 0.505, 0.292, 0.148, 0.532, -0.081, 0.299, 0.159,
+                  -0.026, -0.294, -0.087, -0.212, -0.122, 0.258, -0.042, 0.158,
+                  0.068, 0.135, -0.040, -0.047, -0.138, -0.104, 0.003, -0.092),
+  recall = c(0.401, 0.328, 0.283, 0.261, 0.248, 0.217, -0.174, 0.126, 0.120, 0.097,
+             -0.096, -0.095, -0.091, -0.087, 0.082, 0.080, 0.061, 0.057, 0.045,
+             0.044, -0.044, -0.038, -0.024, 0.015, 0.004)
+)
+lab <- abs(f$recognition) > 0.24 | abs(f$recall) > 0.24
+op <- par(mar = c(4.2, 4.4, 1, 1))
+plot(f$recognition, f$recall, pch = 19, col = ifelse(lab, "#4e79a7", "grey55"),
+     cex = ifelse(lab, 1.15, 0.8), xlim = c(-0.38, 0.80), ylim = c(-0.25, 0.47),
+     xlab = "correlation with recognition", ylab = "correlation with cued brand recall")
+abline(h = 0, v = 0, col = "grey80"); abline(0, 1, lty = 3, col = "grey65")
+text(f$recognition[lab], f$recall[lab], f$factor[lab], pos = 4, cex = 0.72, col = "grey25")
+par(op)
+```
+
+@fig-slogan-factors makes the split visible in the factors themselves. The drivers that
+matter for both outcomes are relational and imagistic—rated brand fit ($r = 0.52$ with
+recognition, $0.40$ with recall), concreteness ($0.53$, $0.22$), imageability ($0.51$,
+$0.28$)—while the devices a copywriter reaches for first sit near the origin:
+alliteration ($0.14$, $0.05$), wordplay ($0.16$, $0.06$), metaphor ($0.00$, $0.02$),
+hyperbole ($0.07$, $0.06$). Word frequency is the one clearly negative driver for
+recognition ($-0.29$), which is what a recognition test should do—common vocabulary is
+precisely what a memory probe cannot discriminate. Points fall well off the diagonal,
+and the two outcomes correlate only $0.46$ across slogans, which is the empirical
+warrant for the paper's decision to model them separately rather than to average them
+into one memorability score.
+
 ## Pitfalls and Identification {#sec-tad-pitfalls}
 
 Text-as-data inherits every threat to validity that afflicts measurement, plus several
@@ -855,7 +1216,11 @@ that a column of model output earn the status of data.
   an estimate of how much of a phenomenon the published drivers fail to name—demonstrated
   for slogan memorability across recognition and cued brand recall [@aka2026slogans]. The
   gap is an upper bound on what is missing, not a discovery: the embedding will not say
-  what it knows.
+  what it knows. The verdict is also outcome-specific. Refit on the posted data
+  (@sec-tad-slogan-audit), embeddings beat the named factors on recognition by $0.035$
+  but *lose* to them on cued brand recall by $0.142$, because recall depends on the
+  slogan–brand relation that slogan text alone cannot encode. An audit interrogates only
+  the representation it is handed.
 - **Representation is the first and most consequential choice.** Bag-of-words and TF-IDF
   are transparent but order- and context-blind (@eq-bow, @eq-tfidf); embeddings capture
   context at the cost of interpretability (@sec-embeddings). Match the representation to
@@ -867,6 +1232,12 @@ that a column of model output earn the status of data.
   cannot represent negation or sarcasm, biasing estimates in a *signed* way
   (@sec-lexicon, @sec-sarcasm); decide which construct, at which level, validated how,
   before scoring.
+- **A domain dictionary can be grown from seed words with embeddings, but it inherits
+  the corpus's vocabulary.** Culture dictionaries expanded from job postings pick up
+  occupation words ("customer" for quality, "team" for respect), so scores are
+  comparable only within occupation. Within that limit, culture language in job ads
+  predicts worker inflows, offers, and acceptances [@huang2026culture;
+  @li2021culture] (@sec-tad-culture-dictionary).
 - **Supervised classification lives or dies by honest evaluation.** Under class
   imbalance, report precision, recall, and F1, guard against leakage, and validate
   out-of-distribution (@sec-classification-validity).

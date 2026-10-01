@@ -820,7 +820,12 @@ window.Quarto = {
   <li><a href="#sec-geo-distance" id="toc-sec-geo-distance" class="nav-link" data-scroll-target="#sec-geo-distance"><span class="header-section-number">53.3</span> Distance, Catchment, and Trade-Area Analysis</a></li>
   <li><a href="#sec-geo-aggregation" id="toc-sec-geo-aggregation" class="nav-link" data-scroll-target="#sec-geo-aggregation"><span class="header-section-number">53.4</span> Aggregation to Areas and the Choropleth</a></li>
   <li><a href="#sec-geo-autocorrelation" id="toc-sec-geo-autocorrelation" class="nav-link" data-scroll-target="#sec-geo-autocorrelation"><span class="header-section-number">53.5</span> Spatial Autocorrelation and Spatial Regression</a></li>
-  <li><a href="#sec-geo-experiments" id="toc-sec-geo-experiments" class="nav-link" data-scroll-target="#sec-geo-experiments"><span class="header-section-number">53.6</span> Geo-Experiments and Geo-Lift</a></li>
+  <li>
+<a href="#sec-geo-experiments" id="toc-sec-geo-experiments" class="nav-link" data-scroll-target="#sec-geo-experiments"><span class="header-section-number">53.6</span> Geo-Experiments and Geo-Lift</a>
+  <ul class="collapse">
+<li><a href="#sec-geo-evcharging" id="toc-sec-geo-evcharging" class="nav-link" data-scroll-target="#sec-geo-evcharging"><span class="header-section-number">53.6.1</span> When Geography Assigns the Treatment: EV Charging at the Supermarket</a></li>
+  </ul>
+</li>
   <li><a href="#sec-geo-privacy" id="toc-sec-geo-privacy" class="nav-link" data-scroll-target="#sec-geo-privacy"><span class="header-section-number">53.7</span> Mobile-Location Data and Privacy</a></li>
   <li><a href="#sec-geo-production" id="toc-sec-geo-production" class="nav-link" data-scroll-target="#sec-geo-production"><span class="header-section-number">53.8</span> Industry and Production Practice</a></li>
   <li><a href="#sec-geo-frontier" id="toc-sec-geo-frontier" class="nav-link" data-scroll-target="#sec-geo-frontier"><span class="header-section-number">53.9</span> Frontier and Expansion</a></li>
@@ -1200,7 +1205,22 @@ Warning
 </details>
 </div>
 <p>The difference-in-differences interaction recovers the planted lift because random assignment of markets makes treatment independent of the baseline trajectory, so the common-trend assumption holds by construction. Real geo-experiments are harder: a firm rarely controls enough comparable markets to randomize cleanly, market sizes are wildly heterogeneous (the <code>base</code> term above), and contamination across adjacent markets reintroduces the very spillover the design was meant to contain. These are why production geo-lift leans on matched-market and synthetic-control machinery rather than a bare difference of means, and why power analysis precedes any geo-test. The conceptual payoff remains: geography converts an observational targeting problem into a randomized one, complementing the user-level experimentation of <a href="47-causal-inference.html" class="quarto-xref"><span>Chapter 43</span></a> at a spatial scale that respects spillover.</p>
-</section><section id="sec-geo-privacy" class="level2" data-number="53.7"><h2 data-number="53.7" class="anchored" data-anchor-id="sec-geo-privacy">
+<section id="sec-geo-evcharging" class="level3" data-number="53.6.1"><h3 data-number="53.6.1" class="anchored" data-anchor-id="sec-geo-evcharging">
+<span class="header-section-number">53.6.1</span> When Geography Assigns the Treatment: EV Charging at the Supermarket</h3>
+<p>Randomized geo-tests are the exception. More often a third party decides where and when a treatment lands, and the analyst’s first job is to say, from geometry alone, which units it reached. <span class="citation" data-cites="chan2026evcharging">Chan et al. (<a href="#ref-chan2026evcharging" role="doc-biblioref">2026</a>)</span> is a careful recent instance that puts most of this chapter’s primitives to work. The question is whether a public electric-vehicle (EV) charging station on a supermarket’s parking lot changes the store’s own grocery revenue, which two earlier studies had examined for mixed sets of US businesses using card-spending and foot-traffic data <span class="citation" data-cites="babar2024recharging zheng2024evstations">(<a href="#ref-babar2024recharging" role="doc-biblioref">Babar and Burtch 2024</a>; <a href="#ref-zheng2024evstations" role="doc-biblioref">Zheng et al. 2024</a>)</span>. The authors match monthly, inflation-adjusted revenue for all stores of a leading German grocery chain in a region holding almost a fifth of the country’s population (January 2019 to March 2023) to the federal registry of public charging stations, which records each station’s geolocation and the date it began operating. Revenue covers cash as well as card payments, and the retailer’s share of charging income is kept out of it, so the outcome is the store’s core business.</p>
+<p>Every step of the design is a spatial decision. A store counts as treated only if a charger lies within 100 meters of walking distance, measured in Google Maps, and sits on the same car park as the store. Sixteen stores with a charger inside the same 100 meters but off their own lot are set aside, leaving 42 treated and 290 never-treated stores. Spillover is policed with the catchment logic of <a href="#sec-geo-distance" class="quarto-xref"><span>Section 53.3</span></a>: a 2-kilometer radius flags the 8 control stores that lie near a treated one, and the analysis is rerun at 3.5 and 5 kilometers. Contamination from rival chains is handled by geocoding the five leading competitors’ outlets inside each control store’s catchment and matching them to the same registry. The moderators are geodemographic in the sense of <a href="#sec-geo-applications" class="quarto-xref"><span>Section 53.1</span></a>: the apartment-to-house ratio, household income, and public chargers per capita at the postal-code level, competitors and amenities within 200 meters, and parking spaces counted by hand from satellite imagery.</p>
+<p>Because chargers arrived at different stores in different months, the estimator is the staggered difference-in-differences of <span class="citation" data-cites="callaway2021did">Callaway and Sant’Anna (<a href="#ref-callaway2021did" role="doc-biblioref">2021</a>)</span> rather than two-way fixed effects, whose negative-weighting problem a Goodman-Bacon decomposition <span class="citation" data-cites="goodmanbacon2021differencdifferenc">(<a href="#ref-goodmanbacon2021differencdifferenc" role="doc-biblioref">Goodman-Bacon 2021</a>)</span> put at 10% in these data (<a href="47-causal-inference.html#sec-causal-did" class="quarto-xref"><span>Section 43.4</span></a>). The case for exogenous timing is institutional: hardware shortages, grid capacity, and layered permitting made the go-live date unpredictable for retailer and operator alike, anywhere from a few months to more than a year after the decision to install.</p>
+<p>The headline is a 3.41% increase in monthly store revenue (ATT <span class="math inline">\(= 0.0341\)</span>, <span class="math inline">\(p = 0.003\)</span>), about €200,000 a year for an average store in the sample. Pre-treatment leads show no trend, the uplift persists through the first year of exposure, and the estimate survives the wider catchments, dropping controls whose rivals offer charging (ATT <span class="math inline">\(= 0.0273\)</span>), using late adopters as controls, and a stacked synthetic-control design. Three results speak directly to this chapter.</p>
+<ul>
+<li>
+<em>Access geometry matters beyond distance.</em> The 16 stores whose charger was just as close but not on their own lot gained nothing measurable (ATT <span class="math inline">\(= -0.0044\)</span>, <span class="math inline">\(p = 0.708\)</span>), significantly less than the on-site stores.</li>
+<li>
+<em>Part of the gain is taken from neighbors.</em> The chain’s untreated stores lost revenue when a nearby rival added charging (ATT <span class="math inline">\(= -0.0180\)</span>, <span class="math inline">\(p = 0.067\)</span>), which the authors read as evidence that the effect is partly market stealing rather than pure expansion.</li>
+<li>
+<em>The effect has a geography of its own.</em> It was larger where no competing grocer stood within 200 meters, in postal codes with many apartments relative to houses (whose residents often lack private charging), in wealthier postal codes, and where nearby amenities give drivers something else to do while they charge. Annualized, the gain exceeds €477,000 for stores in apartment-dense areas, against no significant gain where houses dominate.</li>
+</ul>
+<p>Inside the store, the gain comes from more transactions (ATT <span class="math inline">\(= 0.0222\)</span>) rather than larger baskets, peaks in weekend off-peak hours, and across categories is largest in niche ones (low household penetration, high purchase frequency); a category’s environmental footprint does not predict its uplift. For site selection, a parking-lot amenity behaves like an attractiveness term in the Huff model of <a href="#sec-geo-distance" class="quarto-xref"><span>Section 53.3</span></a>, worth more or less depending on the surrounding geography of rivals, housing stock, and amenities. For method, when geography assigns treatment, the treatment radius, the spillover catchment, and the competitor radius are all modeling choices, and each deserves the sensitivity check this paper gives it. The data are proprietary; disguised data and code went to the journal’s Data Editor under an approved alternative disclosure plan. How the authors argue for this as a contribution, given that the effect itself was already in print, is the worked example in <a href="41-scientific-writing.html#sec-sw-emb-evcharging" class="quarto-xref"><span>Section 75.6.3</span></a>.</p>
+</section></section><section id="sec-geo-privacy" class="level2" data-number="53.7"><h2 data-number="53.7" class="anchored" data-anchor-id="sec-geo-privacy">
 <span class="header-section-number">53.7</span> Mobile-Location Data and Privacy</h2>
 <p>The richest contemporary location signal comes from mobile devices, and it is also the most ethically and legally fraught. A smartphone reports position through GPS, cell-tower triangulation, Wi-Fi and bluetooth scans, and the IP address of its connection, at an accuracy ranging from a few meters outdoors to tens of meters indoors. Software development kits embedded in apps stream these coordinates to data brokers, who assemble device-level mobility traces, sequences of timestamped locations, and resell them for footfall measurement, attribution, audience building, and the hyper-contextual targeting that conditions an ad on where and when a person is (Andrews, Luo, Fang, and Ghose 2016, <em>Marketing Science</em> 35(2), 218-233, doi:10.1287/mksc.2015.0905; Luo, Andrews, Fang, and Phang 2014, <em>Management Science</em> 60(7), 1738-1756, doi:10.1287/mnsc.2013.1836).</p>
 <p>The privacy hazard is acute and specific to location. Mobility traces are <em>uniquely identifying</em> even when stripped of names: a handful of timestamped points, typically home at night and work by day, single out an individual from millions, so “anonymized” location data is anonymized in name only. Location also exposes sensitive inference, visits to clinics, places of worship, protests, or a competitor’s headquarters, that consumers never consented to reveal. These properties have made location a focus of regulation. The EU General Data Protection Regulation treats precise location as personal data requiring a lawful basis and, often, explicit consent; the California Consumer Privacy Act and its successors grant rights to access and delete it; mobile platforms have tightened operating-system permissions toward per-app, per-session, and coarse-location options; and enforcement actions against brokers trading in sensitive-place visits are accelerating. The methodological response is to design for privacy: aggregate to areas large enough to prevent re-identification (the points-to-zones move of <a href="#sec-geo-aggregation" class="quarto-xref"><span>Section 53.4</span></a> is itself a privacy control), add noise under formal <strong>differential privacy</strong> guarantees as national statistical agencies now do for census geographies, and prefer on-device or federated computation that never centralizes raw traces. These tools connect directly to the broader treatment of consumer privacy in <a href="22-privacy.html" class="quarto-xref"><span>Chapter 26</span></a>; here the point is that location data’s analytical power and its privacy risk are two faces of the same property, that <em>where</em> you are is a near-complete description of <em>who</em> you are.</p>
@@ -1234,6 +1254,9 @@ Replication resources: spatial analysis
 <div id="ref-andrews2016crowdedness" class="csl-entry" role="listitem">
 Andrews, Michelle, Xueming Luo, Zheng Fang, and Anindya Ghose. 2016. <span>“Mobile Ad Effectiveness: Hyper-Contextual Targeting with Crowdedness.”</span> <em>Marketing Science</em> 35 (2): 218–33. <a href="https://doi.org/10.1287/mksc.2015.0905">https://doi.org/10.1287/mksc.2015.0905</a>.
 </div>
+<div id="ref-babar2024recharging" class="csl-entry" role="listitem">
+Babar, Yash, and Gordon Burtch. 2024. <span>“Recharging Retail: Estimating Consumer Demand Spillovers from Electric Vehicle Charging Stations.”</span> <em>Manufacturing &amp; Service Operations Management</em> 26 (3): 797–813. <a href="https://doi.org/10.1287/msom.2022.0519">https://doi.org/10.1287/msom.2022.0519</a>.
+</div>
 <div id="ref-balducci2018unstructured" class="csl-entry" role="listitem">
 Balducci, Bitty, and Detelina Marinova. 2018. <span>“Unstructured Data in Marketing.”</span> <em>Journal of the Academy of Marketing Science</em> 46 (4): 557–90. <a href="https://doi.org/10.1007/s11747-018-0581-x">https://doi.org/10.1007/s11747-018-0581-x</a>.
 </div>
@@ -1242,6 +1265,12 @@ Bart, Yakov, Andrew T. Stephen, and Miklos Sarvary. 2014. <span>“Which Product
 </div>
 <div id="ref-bradlow2005spatialmodels" class="csl-entry" role="listitem">
 Bradlow, Eric T., Bart Bronnenberg, Gary J. Russell, Neeraj Arora, David R. Bell, Sri Devi Duvvuri, Frankel Ter Hofstede, Catarina Sismeiro, Raphael Thomadsen, and Sha Yang. 2005. <span>“Spatial Models in Marketing.”</span> <em>Marketing Letters</em> 16 (3–4): 267–78. <a href="https://doi.org/10.1007/s11002-005-5891-3">https://doi.org/10.1007/s11002-005-5891-3</a>.
+</div>
+<div id="ref-callaway2021did" class="csl-entry" role="listitem">
+Callaway, Brantly, and Pedro H. C. Sant’Anna. 2021. <span>“Difference-in-Differences with Multiple Time Periods.”</span> <em>Journal of Econometrics</em> 225 (2): 200–230. <a href="https://doi.org/10.1016/j.jeconom.2020.12.001">https://doi.org/10.1016/j.jeconom.2020.12.001</a>.
+</div>
+<div id="ref-chan2026evcharging" class="csl-entry" role="listitem">
+Chan, Ka Wing, Hauke A. Wetzel, Ljubomir Pupovac, Marnik G. Dekimpe, and Dominic Loske. 2026. <span>“<span>EV</span> Charging Availability and Grocery Store Performance.”</span> <em>Journal of Marketing Research</em>. <a href="https://doi.org/10.1177/00222437261491290">https://doi.org/10.1177/00222437261491290</a>.
 </div>
 <div id="ref-dinner2013crosschannel" class="csl-entry" role="listitem">
 Dinner, Isaac M., Harald J. Van Heerde, and Scott A. Neslin. 2013. <span>“Driving Online and Offline Sales: The Cross-Channel Effects of Traditional, Online Display, and Paid Search Advertising.”</span> <em>Journal of Marketing Research</em> 51 (5): 527–45. <a href="https://doi.org/10.1509/jmr.11.0466">https://doi.org/10.1509/jmr.11.0466</a>.
@@ -1257,6 +1286,9 @@ Ghose, Anindya, Beibei Li, and Siyuan Liu. 2019. <span>“Mobile Targeting Using
 </div>
 <div id="ref-goldfarb2011displaytargeting" class="csl-entry" role="listitem">
 Goldfarb, Avi, and Catherine Tucker. 2011. <span>“Online Display Advertising: Targeting and Obtrusiveness.”</span> <em>Marketing Science</em> 30 (3): 389–404. <a href="https://doi.org/10.1287/mksc.1100.0583">https://doi.org/10.1287/mksc.1100.0583</a>.
+</div>
+<div id="ref-goodmanbacon2021differencdifferenc" class="csl-entry" role="listitem">
+Goodman-Bacon, Andrew. 2021. <span>“Difference-in-Differences with Variation in Treatment Timing.”</span> <em>Journal of Econometrics</em> 225 (2): 254–77. <a href="https://doi.org/10.1016/j.jeconom.2021.03.014">https://doi.org/10.1016/j.jeconom.2021.03.014</a>.
 </div>
 <div id="ref-hui2009testingbehaviora" class="csl-entry" role="listitem">
 Hui, Sam K., Eric T. Bradlow, and Peter S. Fader. 2009. <span>“Testing Behavioral Hypotheses Using an Integrated Model of Grocery Store Shopping Path and Purchase Behavior.”</span> <em>Journal of Consumer Research</em> 36 (3): 478–93. <a href="https://doi.org/10.1086/599046">https://doi.org/10.1086/599046</a>.
@@ -1278,6 +1310,9 @@ Shankar, Venkatesh, Mirella Kleijnen, Suresh Ramanathan, Ross Rizley, Steve Holl
 </div>
 <div id="ref-sriram2026hotspot" class="csl-entry" role="listitem">
 Sriram, Karthik, Ankur Sinha, and Suvashis Choudhary. 2026. <span>“Predictive Hotspot Mapping for Data-Driven Crime Prediction.”</span> <em>Production and Operations Management</em> 35 (9): 3312–32. <a href="https://doi.org/10.1177/10591478261428736">https://doi.org/10.1177/10591478261428736</a>.
+</div>
+<div id="ref-zheng2024evstations" class="csl-entry" role="listitem">
+Zheng, Yunhan, David R. Keith, Shenhao Wang, Mi Diao, and Jinhua Zhao. 2024. <span>“Effects of Electric Vehicle Charging Stations on the Economic Vitality of Local Businesses.”</span> <em>Nature Communications</em> 15 (1): 7437. <a href="https://doi.org/10.1038/s41467-024-51554-9">https://doi.org/10.1038/s41467-024-51554-9</a>.
 </div>
 <div id="ref-zubcsek2017colocation" class="csl-entry" role="listitem">
 Zubcsek, Peter Pal, Zsolt Katona, and Miklos Sarvary. 2017. <span>“Predicting Mobile Advertising Response Using Consumer Colocation Networks.”</span> <em>Journal of Marketing</em> 81 (4): 109–26. <a href="https://doi.org/10.1509/jm.15.0215">https://doi.org/10.1509/jm.15.0215</a>.
@@ -2312,124 +2347,194 @@ Zubcsek, Peter Pal, Zsolt Katona, and Miklos Sarvary. 2017. <span>“Predicting 
 <span id="cb7-573"><a href="#cb7-573" aria-hidden="true" tabindex="-1"></a>targeting problem into a randomized one, complementing the user-level experimentation</span>
 <span id="cb7-574"><a href="#cb7-574" aria-hidden="true" tabindex="-1"></a>of @sec-causal-inference at a spatial scale that respects spillover.</span>
 <span id="cb7-575"><a href="#cb7-575" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-576"><a href="#cb7-576" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mobile-Location Data and Privacy {#sec-geo-privacy}</span></span>
+<span id="cb7-576"><a href="#cb7-576" aria-hidden="true" tabindex="-1"></a><span class="fu">### When Geography Assigns the Treatment: EV Charging at the Supermarket {#sec-geo-evcharging}</span></span>
 <span id="cb7-577"><a href="#cb7-577" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-578"><a href="#cb7-578" aria-hidden="true" tabindex="-1"></a>The richest contemporary location signal comes from mobile devices, and it is also</span>
-<span id="cb7-579"><a href="#cb7-579" aria-hidden="true" tabindex="-1"></a>the most ethically and legally fraught. A smartphone reports position through GPS,</span>
-<span id="cb7-580"><a href="#cb7-580" aria-hidden="true" tabindex="-1"></a>cell-tower triangulation, Wi-Fi and bluetooth scans, and the IP address of its</span>
-<span id="cb7-581"><a href="#cb7-581" aria-hidden="true" tabindex="-1"></a>connection, at an accuracy ranging from a few meters outdoors to tens of meters</span>
-<span id="cb7-582"><a href="#cb7-582" aria-hidden="true" tabindex="-1"></a>indoors. Software development kits embedded in apps stream these coordinates to data</span>
-<span id="cb7-583"><a href="#cb7-583" aria-hidden="true" tabindex="-1"></a>brokers, who assemble device-level mobility traces, sequences of timestamped</span>
-<span id="cb7-584"><a href="#cb7-584" aria-hidden="true" tabindex="-1"></a>locations, and resell them for footfall measurement, attribution, audience building,</span>
-<span id="cb7-585"><a href="#cb7-585" aria-hidden="true" tabindex="-1"></a>and the hyper-contextual targeting that conditions an ad on where and when a person</span>
-<span id="cb7-586"><a href="#cb7-586" aria-hidden="true" tabindex="-1"></a>is (Andrews, Luo, Fang, and Ghose 2016, *Marketing Science* 35(2), 218-233,</span>
-<span id="cb7-587"><a href="#cb7-587" aria-hidden="true" tabindex="-1"></a>doi:10.1287/mksc.2015.0905; Luo, Andrews, Fang, and Phang 2014, *Management Science*</span>
-<span id="cb7-588"><a href="#cb7-588" aria-hidden="true" tabindex="-1"></a>60(7), 1738-1756, doi:10.1287/mnsc.2013.1836).</span>
-<span id="cb7-589"><a href="#cb7-589" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-590"><a href="#cb7-590" aria-hidden="true" tabindex="-1"></a>The privacy hazard is acute and specific to location. Mobility traces are *uniquely</span>
-<span id="cb7-591"><a href="#cb7-591" aria-hidden="true" tabindex="-1"></a>identifying* even when stripped of names: a handful of timestamped points, typically</span>
-<span id="cb7-592"><a href="#cb7-592" aria-hidden="true" tabindex="-1"></a>home at night and work by day, single out an individual from millions, so</span>
-<span id="cb7-593"><a href="#cb7-593" aria-hidden="true" tabindex="-1"></a>"anonymized" location data is anonymized in name only. Location also exposes</span>
-<span id="cb7-594"><a href="#cb7-594" aria-hidden="true" tabindex="-1"></a>sensitive inference, visits to clinics, places of worship, protests, or a</span>
-<span id="cb7-595"><a href="#cb7-595" aria-hidden="true" tabindex="-1"></a>competitor's headquarters, that consumers never consented to reveal. These</span>
-<span id="cb7-596"><a href="#cb7-596" aria-hidden="true" tabindex="-1"></a>properties have made location a focus of regulation. The EU General Data Protection</span>
-<span id="cb7-597"><a href="#cb7-597" aria-hidden="true" tabindex="-1"></a>Regulation treats precise location as personal data requiring a lawful basis and,</span>
-<span id="cb7-598"><a href="#cb7-598" aria-hidden="true" tabindex="-1"></a>often, explicit consent; the California Consumer Privacy Act and its successors</span>
-<span id="cb7-599"><a href="#cb7-599" aria-hidden="true" tabindex="-1"></a>grant rights to access and delete it; mobile platforms have tightened operating-system</span>
-<span id="cb7-600"><a href="#cb7-600" aria-hidden="true" tabindex="-1"></a>permissions toward per-app, per-session, and coarse-location options; and</span>
-<span id="cb7-601"><a href="#cb7-601" aria-hidden="true" tabindex="-1"></a>enforcement actions against brokers trading in sensitive-place visits are</span>
-<span id="cb7-602"><a href="#cb7-602" aria-hidden="true" tabindex="-1"></a>accelerating. The methodological response is to design for privacy: aggregate to</span>
-<span id="cb7-603"><a href="#cb7-603" aria-hidden="true" tabindex="-1"></a>areas large enough to prevent re-identification (the points-to-zones move of</span>
-<span id="cb7-604"><a href="#cb7-604" aria-hidden="true" tabindex="-1"></a>@sec-geo-aggregation is itself a privacy control), add noise under formal</span>
-<span id="cb7-605"><a href="#cb7-605" aria-hidden="true" tabindex="-1"></a>**differential privacy** guarantees as national statistical agencies now do for</span>
-<span id="cb7-606"><a href="#cb7-606" aria-hidden="true" tabindex="-1"></a>census geographies, and prefer on-device or federated computation that never</span>
-<span id="cb7-607"><a href="#cb7-607" aria-hidden="true" tabindex="-1"></a>centralizes raw traces. These tools connect directly to the broader treatment of</span>
-<span id="cb7-608"><a href="#cb7-608" aria-hidden="true" tabindex="-1"></a>consumer privacy in @sec-privacy; here the point is that location data's analytical</span>
-<span id="cb7-609"><a href="#cb7-609" aria-hidden="true" tabindex="-1"></a>power and its privacy risk are two faces of the same property, that *where* you are</span>
-<span id="cb7-610"><a href="#cb7-610" aria-hidden="true" tabindex="-1"></a>is a near-complete description of *who* you are.</span>
-<span id="cb7-611"><a href="#cb7-611" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-612"><a href="#cb7-612" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#sec-geo-production}</span></span>
-<span id="cb7-613"><a href="#cb7-613" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-614"><a href="#cb7-614" aria-hidden="true" tabindex="-1"></a>Translating these methods into deployed systems means confronting the data-vendor</span>
-<span id="cb7-615"><a href="#cb7-615" aria-hidden="true" tabindex="-1"></a>ecosystem and the engineering stack that supports spatial work at scale.</span>
-<span id="cb7-616"><a href="#cb7-616" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-617"><a href="#cb7-617" aria-hidden="true" tabindex="-1"></a>**Location-data vendors.** The supply chain has tiers. *Base-map and boundary*</span>
-<span id="cb7-618"><a href="#cb7-618" aria-hidden="true" tabindex="-1"></a>providers supply the geometries (administrative boundaries, road networks, points of</span>
-<span id="cb7-619"><a href="#cb7-619" aria-hidden="true" tabindex="-1"></a>interest) on which everything else is layered, ranging from open data such as</span>
-<span id="cb7-620"><a href="#cb7-620" aria-hidden="true" tabindex="-1"></a>OpenStreetMap and national census bureaus to commercial map platforms.</span>
-<span id="cb7-621"><a href="#cb7-621" aria-hidden="true" tabindex="-1"></a>*Geodemographic* vendors sell area-level lifestyle classifications and consumer</span>
-<span id="cb7-622"><a href="#cb7-622" aria-hidden="true" tabindex="-1"></a>profiles keyed to postal geography. *Mobile-location and footfall* vendors sell</span>
-<span id="cb7-623"><a href="#cb7-623" aria-hidden="true" tabindex="-1"></a>device-level traces and visit panels derived from app SDKs, used for foot-traffic</span>
-<span id="cb7-624"><a href="#cb7-624" aria-hidden="true" tabindex="-1"></a>analytics and attribution. *Routing and accessibility* providers expose travel-time</span>
-<span id="cb7-625"><a href="#cb7-625" aria-hidden="true" tabindex="-1"></a>and isochrone APIs that replace Euclidean distance with network reality. A recurring</span>
-<span id="cb7-626"><a href="#cb7-626" aria-hidden="true" tabindex="-1"></a>production caution is **provenance and consent**: footfall panels vary enormously in</span>
-<span id="cb7-627"><a href="#cb7-627" aria-hidden="true" tabindex="-1"></a>coverage, representativeness, and the legality of their consent chain, so a panel's</span>
-<span id="cb7-628"><a href="#cb7-628" aria-hidden="true" tabindex="-1"></a>device sample must be weighted to the population it claims to represent and audited</span>
-<span id="cb7-629"><a href="#cb7-629" aria-hidden="true" tabindex="-1"></a>for the lawful basis on which its locations were collected.</span>
-<span id="cb7-630"><a href="#cb7-630" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-631"><a href="#cb7-631" aria-hidden="true" tabindex="-1"></a>**The spatial stack.** Production geospatial analytics typically combines a</span>
-<span id="cb7-632"><a href="#cb7-632" aria-hidden="true" tabindex="-1"></a>spatial database (PostgreSQL with the PostGIS extension, or the spatial functions</span>
-<span id="cb7-633"><a href="#cb7-633" aria-hidden="true" tabindex="-1"></a>now native to cloud data warehouses) for storage and joins at scale, a tiling and</span>
-<span id="cb7-634"><a href="#cb7-634" aria-hidden="true" tabindex="-1"></a>visualization layer for interactive maps, and an analytical layer in <span class="in">`R`</span> (<span class="in">`sf`</span>,</span>
-<span id="cb7-635"><a href="#cb7-635" aria-hidden="true" tabindex="-1"></a><span class="in">`terra`</span>, <span class="in">`spdep`</span>) or Python (<span class="in">`geopandas`</span>, <span class="in">`shapely`</span>, <span class="in">`pysal`</span>) for modeling. The</span>
-<span id="cb7-636"><a href="#cb7-636" aria-hidden="true" tabindex="-1"></a><span class="in">`sf`</span> package this chapter uses is the analytical front end of that stack and</span>
-<span id="cb7-637"><a href="#cb7-637" aria-hidden="true" tabindex="-1"></a>interoperates with the same simple-features standard the database speaks, so a</span>
-<span id="cb7-638"><a href="#cb7-638" aria-hidden="true" tabindex="-1"></a>trade-area model prototyped in <span class="in">`R`</span> ports to a warehouse query with the geometry</span>
-<span id="cb7-639"><a href="#cb7-639" aria-hidden="true" tabindex="-1"></a>semantics preserved (Bivand, Pebesma, and Gómez-Rubio 2013, *Applied Spatial Data</span>
-<span id="cb7-640"><a href="#cb7-640" aria-hidden="true" tabindex="-1"></a>Analysis with R*, Springer, doi:10.1007/978-1-4614-7618-4).</span>
-<span id="cb7-641"><a href="#cb7-641" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-642"><a href="#cb7-642" aria-hidden="true" tabindex="-1"></a>**Engineering pitfalls.** Three errors dominate production incidents. The first is</span>
-<span id="cb7-643"><a href="#cb7-643" aria-hidden="true" tabindex="-1"></a>**CRS mismatch**, overlaying or measuring across layers in different coordinate</span>
-<span id="cb7-644"><a href="#cb7-644" aria-hidden="true" tabindex="-1"></a>systems, which the discipline of @sec-geo-representation prevents. The second is</span>
-<span id="cb7-645"><a href="#cb7-645" aria-hidden="true" tabindex="-1"></a>**geocoding error**: converting addresses to coordinates is imperfect, and a</span>
-<span id="cb7-646"><a href="#cb7-646" aria-hidden="true" tabindex="-1"></a>mis-geocoded customer silently corrupts every downstream catchment and choropleth,</span>
-<span id="cb7-647"><a href="#cb7-647" aria-hidden="true" tabindex="-1"></a>so geocode quality must be scored and low-confidence matches flagged. The third is</span>
-<span id="cb7-648"><a href="#cb7-648" aria-hidden="true" tabindex="-1"></a>**scale and aggregation sensitivity**, the modifiable areal unit problem of</span>
-<span id="cb7-649"><a href="#cb7-649" aria-hidden="true" tabindex="-1"></a>@sec-geo-autocorrelation surfacing as a dashboard whose conclusions flip when the</span>
-<span id="cb7-650"><a href="#cb7-650" aria-hidden="true" tabindex="-1"></a>zoom level or zone definition changes. Each is mundane and each routinely sinks an</span>
-<span id="cb7-651"><a href="#cb7-651" aria-hidden="true" tabindex="-1"></a>otherwise sound spatial analysis.</span>
-<span id="cb7-652"><a href="#cb7-652" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-653"><a href="#cb7-653" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb7-654"><a href="#cb7-654" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: spatial analysis</span></span>
-<span id="cb7-655"><a href="#cb7-655" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-656"><a href="#cb7-656" aria-hidden="true" tabindex="-1"></a>Every spatial computation in this chapter—distance matrices, catchment assignment, the</span>
-<span id="cb7-657"><a href="#cb7-657" aria-hidden="true" tabindex="-1"></a>Huff model, choropleth aggregation, Moran's $I$ with a permutation null, and the</span>
-<span id="cb7-658"><a href="#cb7-658" aria-hidden="true" tabindex="-1"></a>difference-in-differences geo-lift—runs on the open R packages <span class="in">`sf`</span> (simple features),</span>
-<span id="cb7-659"><a href="#cb7-659" aria-hidden="true" tabindex="-1"></a><span class="in">`spdep`</span> (spatial weights and autocorrelation), and <span class="in">`ggplot2`</span>, the de facto standard</span>
-<span id="cb7-660"><a href="#cb7-660" aria-hidden="true" tabindex="-1"></a>spatial stack and the reproducible core of the chapter. The empirical mobile-targeting</span>
-<span id="cb7-661"><a href="#cb7-661" aria-hidden="true" tabindex="-1"></a>studies cited above (e.g., @ghose2019mobiletrajectory, @luo2014mobiletargeting,</span>
-<span id="cb7-662"><a href="#cb7-662" aria-hidden="true" tabindex="-1"></a>@andrews2016crowdedness, @dube2017pricetargeting) rely on proprietary carrier or</span>
-<span id="cb7-663"><a href="#cb7-663" aria-hidden="true" tabindex="-1"></a>platform location data that cannot be redistributed, so they rarely ship public</span>
-<span id="cb7-664"><a href="#cb7-664" aria-hidden="true" tabindex="-1"></a>replication packages; their value here is as design templates, and any data/code link</span>
-<span id="cb7-665"><a href="#cb7-665" aria-hidden="true" tabindex="-1"></a>should be confirmed on the article page rather than assumed.</span>
-<span id="cb7-666"><a href="#cb7-666" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb7-667"><a href="#cb7-667" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-668"><a href="#cb7-668" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#sec-geo-frontier}</span></span>
-<span id="cb7-669"><a href="#cb7-669" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-670"><a href="#cb7-670" aria-hidden="true" tabindex="-1"></a>Several directions are actively reshaping geospatial marketing. **Trajectory and</span>
-<span id="cb7-671"><a href="#cb7-671" aria-hidden="true" tabindex="-1"></a>mobility modeling** moves beyond static visit counts to the *sequence* of places a</span>
-<span id="cb7-672"><a href="#cb7-672" aria-hidden="true" tabindex="-1"></a>device traverses, enabling path-to-purchase analysis in physical space that mirrors</span>
-<span id="cb7-673"><a href="#cb7-673" aria-hidden="true" tabindex="-1"></a>the clickstream models of online behavior, and inviting the sequence methods of the</span>
-<span id="cb7-674"><a href="#cb7-674" aria-hidden="true" tabindex="-1"></a>text and behavioral-data literatures to operate over geographies rather than tokens.</span>
-<span id="cb7-675"><a href="#cb7-675" aria-hidden="true" tabindex="-1"></a>**Spatial machine learning** brings graph neural networks and geographically</span>
-<span id="cb7-676"><a href="#cb7-676" aria-hidden="true" tabindex="-1"></a>weighted models to demand prediction, treating areas as nodes in a spatial graph so</span>
-<span id="cb7-677"><a href="#cb7-677" aria-hidden="true" tabindex="-1"></a>that the autocorrelation of @sec-geo-autocorrelation becomes an architectural</span>
-<span id="cb7-678"><a href="#cb7-678" aria-hidden="true" tabindex="-1"></a>feature rather than a nuisance to be corrected. **Satellite and aerial imagery**</span>
-<span id="cb7-679"><a href="#cb7-679" aria-hidden="true" tabindex="-1"></a>turns the image-as-data methods of @sec-image-processing onto the earth itself,</span>
-<span id="cb7-680"><a href="#cb7-680" aria-hidden="true" tabindex="-1"></a>estimating economic activity, parking-lot fullness, and construction from pixels,</span>
-<span id="cb7-681"><a href="#cb7-681" aria-hidden="true" tabindex="-1"></a>a remote-sensing channel that needs no consenting device and so sidesteps part of</span>
-<span id="cb7-682"><a href="#cb7-682" aria-hidden="true" tabindex="-1"></a>the privacy problem while raising new ones. **Privacy-preserving geospatial</span>
-<span id="cb7-683"><a href="#cb7-683" aria-hidden="true" tabindex="-1"></a>analytics**, differentially private aggregates, on-device computation, and synthetic</span>
-<span id="cb7-684"><a href="#cb7-684" aria-hidden="true" tabindex="-1"></a>mobility data, is becoming a precondition rather than an enhancement as regulation</span>
-<span id="cb7-685"><a href="#cb7-685" aria-hidden="true" tabindex="-1"></a>tightens. And the **fusion** of location with the other modalities of this part,</span>
-<span id="cb7-686"><a href="#cb7-686" aria-hidden="true" tabindex="-1"></a>geotagged images, geolocated text, footfall paired with transaction logs, points</span>
-<span id="cb7-687"><a href="#cb7-687" aria-hidden="true" tabindex="-1"></a>toward the multimodal models in which *where* is one channel among several, each a</span>
-<span id="cb7-688"><a href="#cb7-688" aria-hidden="true" tabindex="-1"></a>generated feature carrying its own measurement error. The through-line is the one</span>
-<span id="cb7-689"><a href="#cb7-689" aria-hidden="true" tabindex="-1"></a>this chapter opened with: location is data, near things are more related than</span>
-<span id="cb7-690"><a href="#cb7-690" aria-hidden="true" tabindex="-1"></a>distant ones, and the methods that turn that fact into insight are the same ones</span>
-<span id="cb7-691"><a href="#cb7-691" aria-hidden="true" tabindex="-1"></a>that, used carelessly, turn geography into spurious findings or consumers into</span>
-<span id="cb7-692"><a href="#cb7-692" aria-hidden="true" tabindex="-1"></a>surveilled subjects. Handling both responsibly is what spatial marketing science now</span>
-<span id="cb7-693"><a href="#cb7-693" aria-hidden="true" tabindex="-1"></a>requires.</span>
+<span id="cb7-578"><a href="#cb7-578" aria-hidden="true" tabindex="-1"></a>Randomized geo-tests are the exception. More often a third party decides where and when</span>
+<span id="cb7-579"><a href="#cb7-579" aria-hidden="true" tabindex="-1"></a>a treatment lands, and the analyst's first job is to say, from geometry alone, which</span>
+<span id="cb7-580"><a href="#cb7-580" aria-hidden="true" tabindex="-1"></a>units it reached. @chan2026evcharging is a careful recent instance that puts most of this</span>
+<span id="cb7-581"><a href="#cb7-581" aria-hidden="true" tabindex="-1"></a>chapter's primitives to work. The question is whether a public electric-vehicle (EV)</span>
+<span id="cb7-582"><a href="#cb7-582" aria-hidden="true" tabindex="-1"></a>charging station on a supermarket's parking lot changes the store's own grocery revenue,</span>
+<span id="cb7-583"><a href="#cb7-583" aria-hidden="true" tabindex="-1"></a>which two earlier studies had examined for mixed sets of US businesses using</span>
+<span id="cb7-584"><a href="#cb7-584" aria-hidden="true" tabindex="-1"></a>card-spending and foot-traffic data <span class="co">[</span><span class="ot">@babar2024recharging; @zheng2024evstations</span><span class="co">]</span>. The</span>
+<span id="cb7-585"><a href="#cb7-585" aria-hidden="true" tabindex="-1"></a>authors match monthly, inflation-adjusted revenue for all stores of a leading German</span>
+<span id="cb7-586"><a href="#cb7-586" aria-hidden="true" tabindex="-1"></a>grocery chain in a region holding almost a fifth of the country's population (January</span>
+<span id="cb7-587"><a href="#cb7-587" aria-hidden="true" tabindex="-1"></a>2019 to March 2023) to the federal registry of public charging stations, which records</span>
+<span id="cb7-588"><a href="#cb7-588" aria-hidden="true" tabindex="-1"></a>each station's geolocation and the date it began operating. Revenue covers cash as well</span>
+<span id="cb7-589"><a href="#cb7-589" aria-hidden="true" tabindex="-1"></a>as card payments, and the retailer's share of charging income is kept out of it, so the</span>
+<span id="cb7-590"><a href="#cb7-590" aria-hidden="true" tabindex="-1"></a>outcome is the store's core business.</span>
+<span id="cb7-591"><a href="#cb7-591" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-592"><a href="#cb7-592" aria-hidden="true" tabindex="-1"></a>Every step of the design is a spatial decision. A store counts as treated only if a</span>
+<span id="cb7-593"><a href="#cb7-593" aria-hidden="true" tabindex="-1"></a>charger lies within 100 meters of walking distance, measured in Google Maps, and sits on</span>
+<span id="cb7-594"><a href="#cb7-594" aria-hidden="true" tabindex="-1"></a>the same car park as the store. Sixteen stores with a charger inside the same 100 meters</span>
+<span id="cb7-595"><a href="#cb7-595" aria-hidden="true" tabindex="-1"></a>but off their own lot are set aside, leaving 42 treated and 290 never-treated stores.</span>
+<span id="cb7-596"><a href="#cb7-596" aria-hidden="true" tabindex="-1"></a>Spillover is policed with the catchment logic of @sec-geo-distance: a 2-kilometer radius</span>
+<span id="cb7-597"><a href="#cb7-597" aria-hidden="true" tabindex="-1"></a>flags the 8 control stores that lie near a treated one, and the analysis is rerun at 3.5</span>
+<span id="cb7-598"><a href="#cb7-598" aria-hidden="true" tabindex="-1"></a>and 5 kilometers. Contamination from rival chains is handled by geocoding the five</span>
+<span id="cb7-599"><a href="#cb7-599" aria-hidden="true" tabindex="-1"></a>leading competitors' outlets inside each control store's catchment and matching them to</span>
+<span id="cb7-600"><a href="#cb7-600" aria-hidden="true" tabindex="-1"></a>the same registry. The moderators are geodemographic in the sense of</span>
+<span id="cb7-601"><a href="#cb7-601" aria-hidden="true" tabindex="-1"></a>@sec-geo-applications: the apartment-to-house ratio, household income, and public</span>
+<span id="cb7-602"><a href="#cb7-602" aria-hidden="true" tabindex="-1"></a>chargers per capita at the postal-code level, competitors and amenities within 200</span>
+<span id="cb7-603"><a href="#cb7-603" aria-hidden="true" tabindex="-1"></a>meters, and parking spaces counted by hand from satellite imagery.</span>
+<span id="cb7-604"><a href="#cb7-604" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-605"><a href="#cb7-605" aria-hidden="true" tabindex="-1"></a>Because chargers arrived at different stores in different months, the estimator is the</span>
+<span id="cb7-606"><a href="#cb7-606" aria-hidden="true" tabindex="-1"></a>staggered difference-in-differences of @callaway2021did rather than two-way fixed</span>
+<span id="cb7-607"><a href="#cb7-607" aria-hidden="true" tabindex="-1"></a>effects, whose negative-weighting problem a Goodman-Bacon decomposition</span>
+<span id="cb7-608"><a href="#cb7-608" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@goodmanbacon2021differencdifferenc</span><span class="co">]</span> put at 10% in these data (@sec-causal-did). The</span>
+<span id="cb7-609"><a href="#cb7-609" aria-hidden="true" tabindex="-1"></a>case for exogenous timing is institutional: hardware shortages, grid capacity, and</span>
+<span id="cb7-610"><a href="#cb7-610" aria-hidden="true" tabindex="-1"></a>layered permitting made the go-live date unpredictable for retailer and operator alike,</span>
+<span id="cb7-611"><a href="#cb7-611" aria-hidden="true" tabindex="-1"></a>anywhere from a few months to more than a year after the decision to install.</span>
+<span id="cb7-612"><a href="#cb7-612" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-613"><a href="#cb7-613" aria-hidden="true" tabindex="-1"></a>The headline is a 3.41% increase in monthly store revenue (ATT $= 0.0341$,</span>
+<span id="cb7-614"><a href="#cb7-614" aria-hidden="true" tabindex="-1"></a>$p = 0.003$), about €200,000 a year for an average store in the sample. Pre-treatment</span>
+<span id="cb7-615"><a href="#cb7-615" aria-hidden="true" tabindex="-1"></a>leads show no trend, the uplift persists through the first year of exposure, and the</span>
+<span id="cb7-616"><a href="#cb7-616" aria-hidden="true" tabindex="-1"></a>estimate survives the wider catchments, dropping controls whose rivals offer charging</span>
+<span id="cb7-617"><a href="#cb7-617" aria-hidden="true" tabindex="-1"></a>(ATT $= 0.0273$), using late adopters as controls, and a stacked synthetic-control</span>
+<span id="cb7-618"><a href="#cb7-618" aria-hidden="true" tabindex="-1"></a>design. Three results speak directly to this chapter.</span>
+<span id="cb7-619"><a href="#cb7-619" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-620"><a href="#cb7-620" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>*Access geometry matters beyond distance.* The 16 stores whose charger was just as</span>
+<span id="cb7-621"><a href="#cb7-621" aria-hidden="true" tabindex="-1"></a>  close but not on their own lot gained nothing measurable (ATT $= -0.0044$,</span>
+<span id="cb7-622"><a href="#cb7-622" aria-hidden="true" tabindex="-1"></a>  $p = 0.708$), significantly less than the on-site stores.</span>
+<span id="cb7-623"><a href="#cb7-623" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>*Part of the gain is taken from neighbors.* The chain's untreated stores lost revenue</span>
+<span id="cb7-624"><a href="#cb7-624" aria-hidden="true" tabindex="-1"></a>  when a nearby rival added charging (ATT $= -0.0180$, $p = 0.067$), which the authors</span>
+<span id="cb7-625"><a href="#cb7-625" aria-hidden="true" tabindex="-1"></a>  read as evidence that the effect is partly market stealing rather than pure expansion.</span>
+<span id="cb7-626"><a href="#cb7-626" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>*The effect has a geography of its own.* It was larger where no competing grocer stood</span>
+<span id="cb7-627"><a href="#cb7-627" aria-hidden="true" tabindex="-1"></a>  within 200 meters, in postal codes with many apartments relative to houses (whose</span>
+<span id="cb7-628"><a href="#cb7-628" aria-hidden="true" tabindex="-1"></a>  residents often lack private charging), in wealthier postal codes, and where nearby</span>
+<span id="cb7-629"><a href="#cb7-629" aria-hidden="true" tabindex="-1"></a>  amenities give drivers something else to do while they charge. Annualized, the gain</span>
+<span id="cb7-630"><a href="#cb7-630" aria-hidden="true" tabindex="-1"></a>  exceeds €477,000 for stores in apartment-dense areas, against no significant gain</span>
+<span id="cb7-631"><a href="#cb7-631" aria-hidden="true" tabindex="-1"></a>  where houses dominate.</span>
+<span id="cb7-632"><a href="#cb7-632" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-633"><a href="#cb7-633" aria-hidden="true" tabindex="-1"></a>Inside the store, the gain comes from more transactions (ATT $= 0.0222$) rather than</span>
+<span id="cb7-634"><a href="#cb7-634" aria-hidden="true" tabindex="-1"></a>larger baskets, peaks in weekend off-peak hours, and across categories is largest in</span>
+<span id="cb7-635"><a href="#cb7-635" aria-hidden="true" tabindex="-1"></a>niche ones (low household penetration, high purchase frequency); a category's</span>
+<span id="cb7-636"><a href="#cb7-636" aria-hidden="true" tabindex="-1"></a>environmental footprint does not predict its uplift. For site selection, a parking-lot</span>
+<span id="cb7-637"><a href="#cb7-637" aria-hidden="true" tabindex="-1"></a>amenity behaves like an attractiveness term in the Huff model of @sec-geo-distance, worth</span>
+<span id="cb7-638"><a href="#cb7-638" aria-hidden="true" tabindex="-1"></a>more or less depending on the surrounding geography of rivals, housing stock, and</span>
+<span id="cb7-639"><a href="#cb7-639" aria-hidden="true" tabindex="-1"></a>amenities. For method, when geography assigns treatment, the treatment radius, the</span>
+<span id="cb7-640"><a href="#cb7-640" aria-hidden="true" tabindex="-1"></a>spillover catchment, and the competitor radius are all modeling choices, and each</span>
+<span id="cb7-641"><a href="#cb7-641" aria-hidden="true" tabindex="-1"></a>deserves the sensitivity check this paper gives it. The data are proprietary; disguised</span>
+<span id="cb7-642"><a href="#cb7-642" aria-hidden="true" tabindex="-1"></a>data and code went to the journal's Data Editor under an approved alternative disclosure</span>
+<span id="cb7-643"><a href="#cb7-643" aria-hidden="true" tabindex="-1"></a>plan. How the authors argue for this as a contribution, given that the effect itself was</span>
+<span id="cb7-644"><a href="#cb7-644" aria-hidden="true" tabindex="-1"></a>already in print, is the worked example in @sec-sw-emb-evcharging.</span>
+<span id="cb7-645"><a href="#cb7-645" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-646"><a href="#cb7-646" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mobile-Location Data and Privacy {#sec-geo-privacy}</span></span>
+<span id="cb7-647"><a href="#cb7-647" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-648"><a href="#cb7-648" aria-hidden="true" tabindex="-1"></a>The richest contemporary location signal comes from mobile devices, and it is also</span>
+<span id="cb7-649"><a href="#cb7-649" aria-hidden="true" tabindex="-1"></a>the most ethically and legally fraught. A smartphone reports position through GPS,</span>
+<span id="cb7-650"><a href="#cb7-650" aria-hidden="true" tabindex="-1"></a>cell-tower triangulation, Wi-Fi and bluetooth scans, and the IP address of its</span>
+<span id="cb7-651"><a href="#cb7-651" aria-hidden="true" tabindex="-1"></a>connection, at an accuracy ranging from a few meters outdoors to tens of meters</span>
+<span id="cb7-652"><a href="#cb7-652" aria-hidden="true" tabindex="-1"></a>indoors. Software development kits embedded in apps stream these coordinates to data</span>
+<span id="cb7-653"><a href="#cb7-653" aria-hidden="true" tabindex="-1"></a>brokers, who assemble device-level mobility traces, sequences of timestamped</span>
+<span id="cb7-654"><a href="#cb7-654" aria-hidden="true" tabindex="-1"></a>locations, and resell them for footfall measurement, attribution, audience building,</span>
+<span id="cb7-655"><a href="#cb7-655" aria-hidden="true" tabindex="-1"></a>and the hyper-contextual targeting that conditions an ad on where and when a person</span>
+<span id="cb7-656"><a href="#cb7-656" aria-hidden="true" tabindex="-1"></a>is (Andrews, Luo, Fang, and Ghose 2016, *Marketing Science* 35(2), 218-233,</span>
+<span id="cb7-657"><a href="#cb7-657" aria-hidden="true" tabindex="-1"></a>doi:10.1287/mksc.2015.0905; Luo, Andrews, Fang, and Phang 2014, *Management Science*</span>
+<span id="cb7-658"><a href="#cb7-658" aria-hidden="true" tabindex="-1"></a>60(7), 1738-1756, doi:10.1287/mnsc.2013.1836).</span>
+<span id="cb7-659"><a href="#cb7-659" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-660"><a href="#cb7-660" aria-hidden="true" tabindex="-1"></a>The privacy hazard is acute and specific to location. Mobility traces are *uniquely</span>
+<span id="cb7-661"><a href="#cb7-661" aria-hidden="true" tabindex="-1"></a>identifying* even when stripped of names: a handful of timestamped points, typically</span>
+<span id="cb7-662"><a href="#cb7-662" aria-hidden="true" tabindex="-1"></a>home at night and work by day, single out an individual from millions, so</span>
+<span id="cb7-663"><a href="#cb7-663" aria-hidden="true" tabindex="-1"></a>"anonymized" location data is anonymized in name only. Location also exposes</span>
+<span id="cb7-664"><a href="#cb7-664" aria-hidden="true" tabindex="-1"></a>sensitive inference, visits to clinics, places of worship, protests, or a</span>
+<span id="cb7-665"><a href="#cb7-665" aria-hidden="true" tabindex="-1"></a>competitor's headquarters, that consumers never consented to reveal. These</span>
+<span id="cb7-666"><a href="#cb7-666" aria-hidden="true" tabindex="-1"></a>properties have made location a focus of regulation. The EU General Data Protection</span>
+<span id="cb7-667"><a href="#cb7-667" aria-hidden="true" tabindex="-1"></a>Regulation treats precise location as personal data requiring a lawful basis and,</span>
+<span id="cb7-668"><a href="#cb7-668" aria-hidden="true" tabindex="-1"></a>often, explicit consent; the California Consumer Privacy Act and its successors</span>
+<span id="cb7-669"><a href="#cb7-669" aria-hidden="true" tabindex="-1"></a>grant rights to access and delete it; mobile platforms have tightened operating-system</span>
+<span id="cb7-670"><a href="#cb7-670" aria-hidden="true" tabindex="-1"></a>permissions toward per-app, per-session, and coarse-location options; and</span>
+<span id="cb7-671"><a href="#cb7-671" aria-hidden="true" tabindex="-1"></a>enforcement actions against brokers trading in sensitive-place visits are</span>
+<span id="cb7-672"><a href="#cb7-672" aria-hidden="true" tabindex="-1"></a>accelerating. The methodological response is to design for privacy: aggregate to</span>
+<span id="cb7-673"><a href="#cb7-673" aria-hidden="true" tabindex="-1"></a>areas large enough to prevent re-identification (the points-to-zones move of</span>
+<span id="cb7-674"><a href="#cb7-674" aria-hidden="true" tabindex="-1"></a>@sec-geo-aggregation is itself a privacy control), add noise under formal</span>
+<span id="cb7-675"><a href="#cb7-675" aria-hidden="true" tabindex="-1"></a>**differential privacy** guarantees as national statistical agencies now do for</span>
+<span id="cb7-676"><a href="#cb7-676" aria-hidden="true" tabindex="-1"></a>census geographies, and prefer on-device or federated computation that never</span>
+<span id="cb7-677"><a href="#cb7-677" aria-hidden="true" tabindex="-1"></a>centralizes raw traces. These tools connect directly to the broader treatment of</span>
+<span id="cb7-678"><a href="#cb7-678" aria-hidden="true" tabindex="-1"></a>consumer privacy in @sec-privacy; here the point is that location data's analytical</span>
+<span id="cb7-679"><a href="#cb7-679" aria-hidden="true" tabindex="-1"></a>power and its privacy risk are two faces of the same property, that *where* you are</span>
+<span id="cb7-680"><a href="#cb7-680" aria-hidden="true" tabindex="-1"></a>is a near-complete description of *who* you are.</span>
+<span id="cb7-681"><a href="#cb7-681" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-682"><a href="#cb7-682" aria-hidden="true" tabindex="-1"></a><span class="fu">## Industry and Production Practice {#sec-geo-production}</span></span>
+<span id="cb7-683"><a href="#cb7-683" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-684"><a href="#cb7-684" aria-hidden="true" tabindex="-1"></a>Translating these methods into deployed systems means confronting the data-vendor</span>
+<span id="cb7-685"><a href="#cb7-685" aria-hidden="true" tabindex="-1"></a>ecosystem and the engineering stack that supports spatial work at scale.</span>
+<span id="cb7-686"><a href="#cb7-686" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-687"><a href="#cb7-687" aria-hidden="true" tabindex="-1"></a>**Location-data vendors.** The supply chain has tiers. *Base-map and boundary*</span>
+<span id="cb7-688"><a href="#cb7-688" aria-hidden="true" tabindex="-1"></a>providers supply the geometries (administrative boundaries, road networks, points of</span>
+<span id="cb7-689"><a href="#cb7-689" aria-hidden="true" tabindex="-1"></a>interest) on which everything else is layered, ranging from open data such as</span>
+<span id="cb7-690"><a href="#cb7-690" aria-hidden="true" tabindex="-1"></a>OpenStreetMap and national census bureaus to commercial map platforms.</span>
+<span id="cb7-691"><a href="#cb7-691" aria-hidden="true" tabindex="-1"></a>*Geodemographic* vendors sell area-level lifestyle classifications and consumer</span>
+<span id="cb7-692"><a href="#cb7-692" aria-hidden="true" tabindex="-1"></a>profiles keyed to postal geography. *Mobile-location and footfall* vendors sell</span>
+<span id="cb7-693"><a href="#cb7-693" aria-hidden="true" tabindex="-1"></a>device-level traces and visit panels derived from app SDKs, used for foot-traffic</span>
+<span id="cb7-694"><a href="#cb7-694" aria-hidden="true" tabindex="-1"></a>analytics and attribution. *Routing and accessibility* providers expose travel-time</span>
+<span id="cb7-695"><a href="#cb7-695" aria-hidden="true" tabindex="-1"></a>and isochrone APIs that replace Euclidean distance with network reality. A recurring</span>
+<span id="cb7-696"><a href="#cb7-696" aria-hidden="true" tabindex="-1"></a>production caution is **provenance and consent**: footfall panels vary enormously in</span>
+<span id="cb7-697"><a href="#cb7-697" aria-hidden="true" tabindex="-1"></a>coverage, representativeness, and the legality of their consent chain, so a panel's</span>
+<span id="cb7-698"><a href="#cb7-698" aria-hidden="true" tabindex="-1"></a>device sample must be weighted to the population it claims to represent and audited</span>
+<span id="cb7-699"><a href="#cb7-699" aria-hidden="true" tabindex="-1"></a>for the lawful basis on which its locations were collected.</span>
+<span id="cb7-700"><a href="#cb7-700" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-701"><a href="#cb7-701" aria-hidden="true" tabindex="-1"></a>**The spatial stack.** Production geospatial analytics typically combines a</span>
+<span id="cb7-702"><a href="#cb7-702" aria-hidden="true" tabindex="-1"></a>spatial database (PostgreSQL with the PostGIS extension, or the spatial functions</span>
+<span id="cb7-703"><a href="#cb7-703" aria-hidden="true" tabindex="-1"></a>now native to cloud data warehouses) for storage and joins at scale, a tiling and</span>
+<span id="cb7-704"><a href="#cb7-704" aria-hidden="true" tabindex="-1"></a>visualization layer for interactive maps, and an analytical layer in <span class="in">`R`</span> (<span class="in">`sf`</span>,</span>
+<span id="cb7-705"><a href="#cb7-705" aria-hidden="true" tabindex="-1"></a><span class="in">`terra`</span>, <span class="in">`spdep`</span>) or Python (<span class="in">`geopandas`</span>, <span class="in">`shapely`</span>, <span class="in">`pysal`</span>) for modeling. The</span>
+<span id="cb7-706"><a href="#cb7-706" aria-hidden="true" tabindex="-1"></a><span class="in">`sf`</span> package this chapter uses is the analytical front end of that stack and</span>
+<span id="cb7-707"><a href="#cb7-707" aria-hidden="true" tabindex="-1"></a>interoperates with the same simple-features standard the database speaks, so a</span>
+<span id="cb7-708"><a href="#cb7-708" aria-hidden="true" tabindex="-1"></a>trade-area model prototyped in <span class="in">`R`</span> ports to a warehouse query with the geometry</span>
+<span id="cb7-709"><a href="#cb7-709" aria-hidden="true" tabindex="-1"></a>semantics preserved (Bivand, Pebesma, and Gómez-Rubio 2013, *Applied Spatial Data</span>
+<span id="cb7-710"><a href="#cb7-710" aria-hidden="true" tabindex="-1"></a>Analysis with R*, Springer, doi:10.1007/978-1-4614-7618-4).</span>
+<span id="cb7-711"><a href="#cb7-711" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-712"><a href="#cb7-712" aria-hidden="true" tabindex="-1"></a>**Engineering pitfalls.** Three errors dominate production incidents. The first is</span>
+<span id="cb7-713"><a href="#cb7-713" aria-hidden="true" tabindex="-1"></a>**CRS mismatch**, overlaying or measuring across layers in different coordinate</span>
+<span id="cb7-714"><a href="#cb7-714" aria-hidden="true" tabindex="-1"></a>systems, which the discipline of @sec-geo-representation prevents. The second is</span>
+<span id="cb7-715"><a href="#cb7-715" aria-hidden="true" tabindex="-1"></a>**geocoding error**: converting addresses to coordinates is imperfect, and a</span>
+<span id="cb7-716"><a href="#cb7-716" aria-hidden="true" tabindex="-1"></a>mis-geocoded customer silently corrupts every downstream catchment and choropleth,</span>
+<span id="cb7-717"><a href="#cb7-717" aria-hidden="true" tabindex="-1"></a>so geocode quality must be scored and low-confidence matches flagged. The third is</span>
+<span id="cb7-718"><a href="#cb7-718" aria-hidden="true" tabindex="-1"></a>**scale and aggregation sensitivity**, the modifiable areal unit problem of</span>
+<span id="cb7-719"><a href="#cb7-719" aria-hidden="true" tabindex="-1"></a>@sec-geo-autocorrelation surfacing as a dashboard whose conclusions flip when the</span>
+<span id="cb7-720"><a href="#cb7-720" aria-hidden="true" tabindex="-1"></a>zoom level or zone definition changes. Each is mundane and each routinely sinks an</span>
+<span id="cb7-721"><a href="#cb7-721" aria-hidden="true" tabindex="-1"></a>otherwise sound spatial analysis.</span>
+<span id="cb7-722"><a href="#cb7-722" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-723"><a href="#cb7-723" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb7-724"><a href="#cb7-724" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: spatial analysis</span></span>
+<span id="cb7-725"><a href="#cb7-725" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-726"><a href="#cb7-726" aria-hidden="true" tabindex="-1"></a>Every spatial computation in this chapter—distance matrices, catchment assignment, the</span>
+<span id="cb7-727"><a href="#cb7-727" aria-hidden="true" tabindex="-1"></a>Huff model, choropleth aggregation, Moran's $I$ with a permutation null, and the</span>
+<span id="cb7-728"><a href="#cb7-728" aria-hidden="true" tabindex="-1"></a>difference-in-differences geo-lift—runs on the open R packages <span class="in">`sf`</span> (simple features),</span>
+<span id="cb7-729"><a href="#cb7-729" aria-hidden="true" tabindex="-1"></a><span class="in">`spdep`</span> (spatial weights and autocorrelation), and <span class="in">`ggplot2`</span>, the de facto standard</span>
+<span id="cb7-730"><a href="#cb7-730" aria-hidden="true" tabindex="-1"></a>spatial stack and the reproducible core of the chapter. The empirical mobile-targeting</span>
+<span id="cb7-731"><a href="#cb7-731" aria-hidden="true" tabindex="-1"></a>studies cited above (e.g., @ghose2019mobiletrajectory, @luo2014mobiletargeting,</span>
+<span id="cb7-732"><a href="#cb7-732" aria-hidden="true" tabindex="-1"></a>@andrews2016crowdedness, @dube2017pricetargeting) rely on proprietary carrier or</span>
+<span id="cb7-733"><a href="#cb7-733" aria-hidden="true" tabindex="-1"></a>platform location data that cannot be redistributed, so they rarely ship public</span>
+<span id="cb7-734"><a href="#cb7-734" aria-hidden="true" tabindex="-1"></a>replication packages; their value here is as design templates, and any data/code link</span>
+<span id="cb7-735"><a href="#cb7-735" aria-hidden="true" tabindex="-1"></a>should be confirmed on the article page rather than assumed.</span>
+<span id="cb7-736"><a href="#cb7-736" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb7-737"><a href="#cb7-737" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-738"><a href="#cb7-738" aria-hidden="true" tabindex="-1"></a><span class="fu">## Frontier and Expansion {#sec-geo-frontier}</span></span>
+<span id="cb7-739"><a href="#cb7-739" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-740"><a href="#cb7-740" aria-hidden="true" tabindex="-1"></a>Several directions are actively reshaping geospatial marketing. **Trajectory and</span>
+<span id="cb7-741"><a href="#cb7-741" aria-hidden="true" tabindex="-1"></a>mobility modeling** moves beyond static visit counts to the *sequence* of places a</span>
+<span id="cb7-742"><a href="#cb7-742" aria-hidden="true" tabindex="-1"></a>device traverses, enabling path-to-purchase analysis in physical space that mirrors</span>
+<span id="cb7-743"><a href="#cb7-743" aria-hidden="true" tabindex="-1"></a>the clickstream models of online behavior, and inviting the sequence methods of the</span>
+<span id="cb7-744"><a href="#cb7-744" aria-hidden="true" tabindex="-1"></a>text and behavioral-data literatures to operate over geographies rather than tokens.</span>
+<span id="cb7-745"><a href="#cb7-745" aria-hidden="true" tabindex="-1"></a>**Spatial machine learning** brings graph neural networks and geographically</span>
+<span id="cb7-746"><a href="#cb7-746" aria-hidden="true" tabindex="-1"></a>weighted models to demand prediction, treating areas as nodes in a spatial graph so</span>
+<span id="cb7-747"><a href="#cb7-747" aria-hidden="true" tabindex="-1"></a>that the autocorrelation of @sec-geo-autocorrelation becomes an architectural</span>
+<span id="cb7-748"><a href="#cb7-748" aria-hidden="true" tabindex="-1"></a>feature rather than a nuisance to be corrected. **Satellite and aerial imagery**</span>
+<span id="cb7-749"><a href="#cb7-749" aria-hidden="true" tabindex="-1"></a>turns the image-as-data methods of @sec-image-processing onto the earth itself,</span>
+<span id="cb7-750"><a href="#cb7-750" aria-hidden="true" tabindex="-1"></a>estimating economic activity, parking-lot fullness, and construction from pixels,</span>
+<span id="cb7-751"><a href="#cb7-751" aria-hidden="true" tabindex="-1"></a>a remote-sensing channel that needs no consenting device and so sidesteps part of</span>
+<span id="cb7-752"><a href="#cb7-752" aria-hidden="true" tabindex="-1"></a>the privacy problem while raising new ones. **Privacy-preserving geospatial</span>
+<span id="cb7-753"><a href="#cb7-753" aria-hidden="true" tabindex="-1"></a>analytics**, differentially private aggregates, on-device computation, and synthetic</span>
+<span id="cb7-754"><a href="#cb7-754" aria-hidden="true" tabindex="-1"></a>mobility data, is becoming a precondition rather than an enhancement as regulation</span>
+<span id="cb7-755"><a href="#cb7-755" aria-hidden="true" tabindex="-1"></a>tightens. And the **fusion** of location with the other modalities of this part,</span>
+<span id="cb7-756"><a href="#cb7-756" aria-hidden="true" tabindex="-1"></a>geotagged images, geolocated text, footfall paired with transaction logs, points</span>
+<span id="cb7-757"><a href="#cb7-757" aria-hidden="true" tabindex="-1"></a>toward the multimodal models in which *where* is one channel among several, each a</span>
+<span id="cb7-758"><a href="#cb7-758" aria-hidden="true" tabindex="-1"></a>generated feature carrying its own measurement error. The through-line is the one</span>
+<span id="cb7-759"><a href="#cb7-759" aria-hidden="true" tabindex="-1"></a>this chapter opened with: location is data, near things are more related than</span>
+<span id="cb7-760"><a href="#cb7-760" aria-hidden="true" tabindex="-1"></a>distant ones, and the methods that turn that fact into insight are the same ones</span>
+<span id="cb7-761"><a href="#cb7-761" aria-hidden="true" tabindex="-1"></a>that, used carelessly, turn geography into spurious findings or consumers into</span>
+<span id="cb7-762"><a href="#cb7-762" aria-hidden="true" tabindex="-1"></a>surveilled subjects. Handling both responsibly is what spatial marketing science now</span>
+<span id="cb7-763"><a href="#cb7-763" aria-hidden="true" tabindex="-1"></a>requires.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

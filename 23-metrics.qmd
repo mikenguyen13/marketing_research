@@ -521,6 +521,74 @@ decision. Second, in evaluating an analytics investment, *more data* and *faster
 data* are distinct treatments with distinct returns, and a study that varies both at
 once cannot price either.
 
+### Measuring a Unit by Its Downstream Footprint {#sec-metrics-downstream}
+
+Most metrics in this chapter are taken where the activity happens: a brand's
+reputation from what people say about the brand, a firm's return from its own
+accounts. A different design measures a unit through the traces it leaves in data
+that *another* organization collects in the ordinary course of business.
+@savva2026primarycare build such a measure for English primary care practices, which
+set their own staffing and appointment policies and are otherwise assessed mainly by
+patient surveys. They do not use practice records at all. They use roughly 1.4
+million attendances at two adjacent hospital emergency departments over 2013–2017,
+each tagged with the patient's registered practice, and take as the outcome the
+share of a practice's attendances that are for *ambulatory care–sensitive* (ACS)
+conditions—ear and urinary infections, asthma, chronic lung disease, influenza—that
+timely primary care should handle outside the hospital. Using a share rather than a
+count cancels any preference for one hospital that a practice's ACS and non-ACS
+patients have in common.
+
+Three properties of the design carry over to any metric of this kind. The first is
+that the metric's signal share is estimated, not assumed. A random-effects model with
+hospital-by-year fixed effects splits the share into a stable practice component and
+year-to-year noise, and the intraclass correlation—the practice component's share of
+that variance—is the metric's reliability, the same variance ratio used for raters in
+@sec-qualitative-research. Across 80 practices it is 51.9% (95% CI 37.8–65.7%) after
+controlling for list size, case mix, age and sex composition, area deprivation, and
+proximity to the hospital. A placebo that reassigns the ACS/non-ACS mix at random
+1,000 times, holding each practice's attendance totals fixed, gives a mean ICC of
+0.8% and a maximum of 9.2%. The older measure built from ACS *admissions* reaches
+only 17.3%: admissions are about a fifth as frequent (53 a year per practice against
+253 attendances) and depend more on the hospital's own bed and target pressures. The
+more frequent event, and the one less filtered by the measuring organization, makes
+the more reliable metric.
+
+The second is that risk adjustment reorders the ranking as well as shifting levels.
+One practice ranked 42nd of 80 on the raw share moves to first once deprivation and
+hospital coding differences are controlled; another falls from 39th to near the
+bottom. The adjustment rests on an assumption the data cannot test, namely that area
+deprivation is unrelated to a practice's true quality. If poorer areas systematically
+get worse practices, controlling for deprivation strips out part of the quality being
+measured, while omitting it blends quality with health inequality. The authors bound
+the problem with simulations that vary that correlation, comparisons within
+deprivation strata, and a specification without deprivation, and find the rankings
+stable at mild-to-moderate correlations. Any metric whose ranking carries money or
+reputation should be published with that kind of sensitivity analysis.
+
+The third is validation against the measure the new one is meant to supplement.
+Practices with a larger systematic component have more patients who would not
+recommend them (18.6% more, relative to the mean, per standard deviation) and more
+who could not get an appointment (10.0% more). They are also less likely to reach 90%
+of the national pay-for-performance points, and they have more patients per
+full-time physician. In this design the survey is the *criterion*, not the
+instrument. The behavioral metric is cheap, refreshes as hospital records arrive, and
+is hard for the measured unit to game: the practice neither reports it nor controls
+where a patient goes once that patient has decided to seek emergency care. That is
+the property Goodhart's law (@sec-reporting) says self-reported performance metrics
+lose under incentive pressure. The authors stop short of causal claims. Practices
+choose their staffing, so the staffing association is descriptive, and the estimate
+that lifting every practice below the 25th percentile to that benchmark would avoid
+6.7% of ACS attendances is extrapolated from two urban hospitals.
+
+The structure is common in marketing, where a unit's performance is often visible
+mainly in someone else's records. A franchisor sees a dealer's service quality
+through warranty claims and calls to its own contact center, a manufacturer sees a
+retailer's execution in returns processed elsewhere, and a marketplace sees a seller
+through buyer disputes. The same three checks apply in each case: estimate the
+stable component and its share of variance before ranking anyone, show which way
+risk adjustment moves the ranking and why, and validate against an independent
+criterion before attaching incentives to the result.
+
 ## Marketing Capability {#sec-capability}
 
 Capability is the most demanding metric in this chapter and the one that most
@@ -1500,7 +1568,10 @@ to match the marketing decision under study. The marketing constructs of
 @sec-metrics-marketing exemplify the field's methodological frontier: sentiment,
 purchase intention, trust, and reputation, once the province of surveys, are now
 recovered from text and images by pre-trained models whose accuracy and biases must
-themselves be validated. Capability, the subject of @sec-capability, is the hardest
+themselves be validated. A metric can also be read from another organization's
+routine records (@sec-metrics-downstream), which makes it hard for the measured unit
+to game but rests on a risk-adjustment assumption that has to be stress-tested before
+the ranking is used. Capability, the subject of @sec-capability, is the hardest
 case and the template for the rest: a latent efficiency, identified only under
 explicit distributional and exogeneity assumptions, whose credibility rests entirely
 on the care taken in building the input stocks and specifying the frontier. Across

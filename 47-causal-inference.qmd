@@ -385,6 +385,15 @@ is introduced in the DiD discussion at @sec-causal-did.
   an applied stacked-DiD design over a staggered two-firm rollout, in which the average
   effect is entirely driven by one market structure (worked through at
   @sec-platform-entry-externality).
+- Chan, K. W., Wetzel, H. A., Pupovac, L., Dekimpe, M. G. & Loske, D. (2026). "EV
+  Charging Availability and Grocery Store Performance." *Journal of Marketing
+  Research*.
+  [doi:10.1177/00222437261491290](https://doi.org/10.1177/00222437261491290) — **[F]**
+  Callaway–Sant'Anna estimates for chargers that reached 42 of 332 supermarkets in
+  different months, after a Goodman-Bacon decomposition finds a 10% negative-weighting
+  bias in two-way fixed effects; the robustness ladder (late adopters as controls,
+  stacked synthetic-control DiD, catchment radii for SUTVA) is worked through at
+  @sec-geo-evcharging.
 
 **Debate.** Which robust estimator, when? Is the efficient imputation estimator's
 stronger modeling worth it? How much published DiD work is invalidated? When a
@@ -1024,6 +1033,18 @@ exactly the kind @sec-policy-spillovers warns will contaminate a naive compariso
 inspected firms with their uninspected peers. (Only the published abstract was
 accessible when this section was written; the magnitudes are in the paper.)
 
+Firms run policy experiments too, and the same point about estimands applies.
+@fang2026returnless randomized nearly one million customers of a global e-commerce
+platform between an AI-decided, returnless partial refund and the standard process of
+shipping the item back for a full refund. The treatment arm changes three things at
+once: who decides, whether the item comes back, and how much is refunded. The
+experiment therefore identifies the effect of the policy as it would be deployed, not
+the effect of any single component, and the deployment effect is the quantity the
+platform's decision turns on. The outcomes are chosen the same way. Refund payouts,
+processing costs, later purchasing, and strategic claiming each enter the platform's
+payoff, and the paper reports all of them rather than a single headline metric
+(@sec-sw-decomposition).
+
 ## Difference-in-Differences {#sec-causal-did}
 
 When randomization is impossible—a competitor enters a market, a regulator changes
@@ -1322,6 +1343,35 @@ predl <- predict(rd_fit, data.frame(D = 0, points = gl))
 predr <- predict(rd_fit, data.frame(D = 1, points = gr))
 lines(gl, predl, lwd = 3); lines(gr, predr, lwd = 3)
 ```
+
+The simulation is sharp; eligibility rules in the field rarely are.
+@hotchkiss2026smallbiz supply a fuzzy design with every diagnostic on display.
+Subchapter V, a streamlined bankruptcy procedure for small businesses, is open
+only to debtors whose noncontingent liabilities do not exceed \$7.5 million.
+But eligible firms may still choose traditional Chapter 11, and a dozen cases
+above the line were admitted after courts classified some of their debts as
+contingent, so crossing the cutoff shifts the *probability* of treatment. Firms
+just below it are 41.9 percentage points more likely to use the procedure
+(first-stage $F = 71.23$). Scaling the jump in plan confirmations by that first
+stage gives a 32.0-point increase within \$4 to \$11 million of liabilities and
+49.5 points within \$6 to \$9 million, where identification is most credible
+but the first-stage $F$ falls to 19.71.
+
+Three features are worth copying. The running variable was not in the
+administrative data: reported total liabilities include contingent and
+unliquidated claims that do not count toward eligibility, so the authors
+hand-collected each debtor's schedules of claims to measure it. The validity
+checks are the full set described above: a McCrary test ($p = 0.25$), six
+covariates smooth individually and jointly, a donut that drops cases between
+\$7 and \$7.5 million, second-order polynomials, and a placebo cutoff at \$4
+million. And the threat specific to this setting is not manipulation but entry,
+since a more generous procedure could change which firms file at all; the
+authors bound that possibility rather than assume it away
+(@sec-ent-bankruptcy). The same reform also supports a
+difference-in-differences comparison with pre-2020 filings. Its 12.5-point
+intent-to-treat estimate, divided by the 0.42 first stage, implies roughly 30
+points, so two designs resting on different assumptions arrive at nearly the
+same local effect.
 
 ### Boundary Discontinuities: When the Running Variable Is a Place {#sec-causal-rd-boundary}
 

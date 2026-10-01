@@ -27,7 +27,8 @@ section below.
 The chapter proceeds from use to method to practice. It opens with the marketing
 *applications* that motivate graph thinking. It then develops the formal
 *representation* of a graph and the *centrality* measures that summarize a node's
-position, with a runnable `igraph` demonstration on simulated data. It treats
+position, with a runnable `igraph` demonstration on simulated data, and the
+ego-network measures of *brokerage and structural holes*. It treats
 *community detection*, the unsupervised discovery of cohesive subgroups. It then
 confronts the *contagion-versus-homophily* identification problem head on, because no
 honest account of network marketing can avoid it. It develops *diffusion* models and
@@ -280,6 +281,540 @@ differs across measures. A seeding or influencer program that targets "the most
 connected user" is implicitly committing to the degree theory of influence; if the real
 mechanism is brokerage across communities, betweenness is the right target, and the two
 will recommend different people.
+
+## Brokerage and Structural Holes {#sec-graph-brokerage}
+
+Betweenness (@eq-graph-betweenness) finds brokers by counting shortest paths across the
+whole graph. A second tradition, older in sociology and now central in strategy and
+organization research, asks a more local question: are a node's own contacts connected
+to one another? Its starting point is @granovetter1973, who argued that the overlap of
+two people's friendship networks rises with the strength of the tie between them, so
+that weak ties are the ones that link otherwise separate groups and carry information
+between them. @burt1992structural moved the argument from the tie to the position. A
+**structural hole** is a disconnection between two of ego's nonredundant contacts, and
+bridging such holes yields information benefits (access to nonredundant information) and
+control benefits (the ability to deal with parties who cannot easily deal with each
+other) [@burt1997contingent]. The control benefit is the *tertius gaudens* strategy of a
+broker who plays contacts off against one another for his or her own benefit
+[@obstfeld2005tertius]. The opposing view locates advantage in *closure*, a network in
+which contacts are tied to one another: @coleman1988social describes how closure
+facilitates two of the forms social capital takes, obligations and expectations on the
+one hand and effective social norms on the other. Much of the subsequent literature is
+an argument about when each view holds, and @burt2013advantage review it with network
+advantage as the organizing lens, tracing advantage to information breadth, timing, and
+arbitrage.
+
+### Burt's measures
+
+Burt's measures are computed on the ego network. Let $N(i)$ be ego $i$'s set of
+contacts, $N_i = |N(i)|$, and let
+$p_{ij} = (a_{ij} + a_{ji}) / \sum_{k}(a_{ik} + a_{ki})$ be the proportion of $i$'s
+relational investment directed to $j$, which reduces to $p_{ij} = 1/N_i$ in a binary
+network. **Constraint** measures how far ego's investment is concentrated, directly or
+through mutual contacts, on contacts who are themselves connected:
+$$
+c_i = \sum_{j \in N(i)} \Big( p_{ij} + \sum_{q \ne i, j} p_{iq}\, p_{qj} \Big)^2 .
+$$ {#eq-graph-constraint}
+The first term inside the parentheses is ego's direct investment in $j$; the second is
+the investment that reaches $j$ indirectly through a third contact $q$. Constraint is
+therefore high when ego has few contacts, when tie strength is concentrated on a few of
+them, and when those contacts are tied to one another, and lower constraint is read as
+more structural holes [@borgatti2026beyond]. Burt's general formula also weights each
+term by an exogenous concentration factor, which virtually all studies set to one
+[@borgatti2026beyond]. In `igraph::constraint()` the proportions $p_{qj}$ are computed
+over all of $q$'s ties (the "whole network" convention) rather than over $q$'s ties
+inside ego's network; the two conventions coincide when a network contains only ego and
+its contacts.
+
+The second measure, *effective size*, is the number of contacts discounted for their
+redundancy with one another:
+$$
+\mathrm{ES}_i = \sum_{j \in N(i)} \Big( 1 - \sum_{q \ne i, j} p_{iq}\, m_{jq} \Big)
+\;=\; N_i - \frac{2\,t_i}{N_i} \quad \text{(binary data)},
+$$ {#eq-graph-effsize}
+where $m_{jq}$ is $j$'s tie to $q$ divided by $j$'s strongest tie to anyone and $t_i$
+is the number of ties among ego's contacts. The binary simplification, due to Borgatti
+(1997, *Connections* 20(1): 35--38), shows that effective size is
+network size minus the average degree of the alters within the ego network
+[@everett2020unpacking]. It equals $N_i$ when no contacts are tied and 1 when every
+contact is tied to every other, and *efficiency* is effective size divided by $N_i$
+[@burt1992structural].
+
+A different formalization ties brokerage to group membership rather than to ego-network
+density. @gould1989structures partition actors into mutually exclusive groups and
+classify every open two-path $a \to b \to c$ (one in which $a$ has no direct tie to
+$c$) by the group memberships of the three actors. The partition yields five distinct
+roles for the broker $b$: a *coordinator* mediates between two members of its own
+group; an *itinerant* broker mediates between two members of a single group to which it
+does not belong; a *gatekeeper* passes a contact from an outsider into its own group; a
+*representative* passes a contact from its own group to an outsider; and a *liaison*
+connects two different groups, neither of them its own. Gould and Fernandez give
+quantitative measures of each role and a test of whether occupancy of a role exceeds
+what a random distribution of exchange relations would produce; the `sna` package's
+`brokerage()` function implements the counts. The roles read naturally onto marketing
+structures. A distributor that carries a manufacturer's offer into its own retail
+network occupies the gatekeeper position, and a key-account manager who carries the
+firm's offer to a customer's buying center acts as a representative.
+
+### What the evidence shows
+
+The canonical positive evidence is @burt2004goodideas. Among managers in a large
+American electronics company, compensation, positive performance evaluations,
+promotions, and good ideas were disproportionately held by people whose networks
+spanned structural holes, and between-group brokers were more likely to express ideas,
+less likely to have them dismissed, and more likely to have them judged valuable. The
+mechanism is that opinion and behavior are more homogeneous within than between
+groups, so a person connected across groups sees options that others do not. The value
+of that position is contingent. @burt1997contingent shows that it is especially high for
+managers with few peers doing the same work, and @burt2007secondhand finds that
+brokerage benefits are concentrated in the immediate network, with secondhand brokerage
+across indirect contacts often worth little. The content of ties matters too:
+@podolny1997resources find that mobility is enhanced by a large, sparse network of
+informal ties for acquiring information and resources, whereas well-defined performance
+expectations are more likely to arise from a small, dense network.
+
+The record is mixed once the outcome and the setting change. In the international
+chemicals industry, @ahuja2000collaboration finds that direct and indirect collaborative
+ties raise a firm's subsequent innovation output but that more structural holes in the
+interfirm collaboration network lower it. Among Canadian mutual fund companies, by
+contrast, innovative firms that also bridge structural holes earn a further performance
+boost [@zaheer2005benefiting]. For investment banks advising on U.K. mergers and
+acquisitions, structural holes increase status accumulation but dampen market
+performance, because open networks supply information about new opportunities while
+limiting information about partners' cooperativeness [@shipilov2008cake]. Cohesion and
+brokerage are not simple opposites. @reagans2003network find that both social cohesion
+around a tie and network range ease knowledge transfer, @fleming2007collaborative show
+across 35,400 inventors that collaborative brokerage helps generate an idea but hampers
+its diffusion and use by others, and @tortoriello2010activating find no advantage to
+bridging per se among 276 R&D scientists and engineers, only to bridging ties that are
+Simmelian, that is, embedded in a three-person clique. @aral2011diversity add a
+diversity-bandwidth trade-off. A structurally diverse network raises novelty at the cost
+of thinner information flow, so in e-mail and network data from an executive recruiting
+firm bridging ties sometimes delivered less novel information, depending on how much
+contacts' information overlaps, how deep their topical knowledge is, and how fast it
+refreshes.
+
+How brokers broker is a separate question. @obstfeld2005tertius contrasts the *tertius
+gaudens* with the *tertius iungens* ("third who joins"), who introduces disconnected
+people or coordinates connected ones, and finds that a tertius iungens orientation,
+dense networks, and diverse social knowledge predict involvement in innovation in an
+automotive engineering division. @quintane2016brokers reconcile the two strategies over
+time with e-mail relational-event data. When brokering through short-term interactions
+outside their long-term relationships, brokers are more likely than densely embedded
+actors to intermediate the information flow themselves; when brokering through their
+long-term ties, they are more likely to facilitate a direct exchange between the
+brokered parties. Brokers also affect the people around them. In the French television
+game show industry, hubs, the brokers who act as the main interface between their own
+network community and others, generate positive externalities for neighbors in
+creativity-focused roles and negative ones for neighbors in efficiency-focused roles
+[@clement2018brokerage]. @stovel2012brokerage stress the same duality at the societal
+level: brokerage eases interaction and economic activity, but it also breeds
+exploitation, corruption, and the accumulation of power.
+
+Finally, brokerage positions are contested and endogenous. In Italian television
+production, the structural holes a team spans originate in the prior status and
+centrality of the teams its members came from, and spanning holes is associated with
+larger audiences [@zaheer2009origins]. In a game-theoretic model of network formation
+in which every actor strives for structural holes, the predominant stable networks
+distribute benefits evenly, so no one keeps a structural advantage in the long run
+[@buskens2008dynamics]. @ryall2007brokers reach a parallel conclusion with a biform game:
+a broker earns an advantage only if no substitutes exist for the connections it offers
+or the value it creates, if it intermediates more than two parties, and if
+interdependence does not lock it into a fixed pattern of exchange, and when actors form
+relations strategically, profitable intermediation survives only under strict
+assumptions of unilateral action. Substitutability is exactly what the next development
+puts at the center of measurement.
+
+### Opportunity versus exclusivity
+
+Constraint has been the workhorse operationalization of structural holes, and
+@johnson2026reassessing argue that it does not measure what it is usually taken to
+measure.
+Using formal, computational, and empirical analyses, they conclude that constraint
+almost exclusively operationalizes dyadic constructs, namely available alternatives,
+exchange-partner diversity, and concentration, rather than the broader network
+structure that structural-hole theory invokes. As @borgatti2026beyond summarize the
+evidence, in large unweighted simulated networks the variance of inverse degree alone
+averages about 110 percent of the variance of constraint (possible because inverse
+degree covaries negatively with the closure terms), and in replications of two earlier
+studies, one of them the investment-bank study of @shipilov2008cake, constraint
+correlates .94 and .99 with the Herfindahl index of ego's tie distribution.
+
+@borgatti2026beyond accept that constraint has a measurement problem but locate it
+elsewhere. Degree belongs in a brokerage measure by design, because contacts create the
+pairs across which brokerage can occur: an ego with eight mutually disconnected contacts
+has more brokerage occasions than one with three. The real failure is substitutability.
+Their diagnostic holds degree fixed at eight. With no ties among the alters, ego's
+constraint is .125. Tying one alter to every other alter creates a competing broker,
+what @everett2020unpacking call a *shadow ego*, and constraint correctly rises to .455.
+Adding a second, third, and fourth competitor, each of which weakens ego further,
+lowers constraint to .452, .441, and .436, and even the fully closed ego network scores
+.439, below the single-competitor case. This is the general pattern
+@everett2020unpacking derived: with more than seven alters, maximum constraint occurs in
+a sparse shadow-ego network rather than in a closed one, and constraint can exceed one
+in small ego networks but cannot reach one in large ones.
+
+The remedy is to take the brokered pair, not the individual alter, as the unit of
+measurement. A *gap* is an unordered pair $\{j, k\}$ of ego's contacts that are not tied
+to each other; let $\mathcal{G}_i$ be ego's set of gaps and $c_{jk}$ the number of
+common neighbors of $j$ and $k$ in the whole network, which is at least one because ego
+is among them. Then
+$$
+P_i = |\mathcal{G}_i|, \qquad
+Q_i = \frac{1}{P_i} \sum_{\{j,k\} \in \mathcal{G}_i} \frac{1}{c_{jk}}, \qquad
+P_i Q_i = \sum_{\{j,k\} \in \mathcal{G}_i} \frac{1}{c_{jk}} .
+$$ {#eq-graph-pq}
+$P$ is **opportunity volume**, the number of occasions on which ego can connect two
+otherwise unconnected contacts. $Q$ is average *exclusivity*: $1/c_{jk}$ is ego's share
+of the length-two brokerage between $j$ and $k$, equal to one when ego is the only
+intermediary and to one half when a single competitor can make the same connection,
+which can be read as ego's expected share of brokerage occasions when competing brokers
+are equally capable. Their product $PQ$ is total exclusivity-weighted brokerage, and it
+equals ego's betweenness restricted to geodesics of length two. An indicator version
+scores a gap one only if $c_{jk} = 1$, so that $PQ_e$ counts the pairs ego connects
+exclusively; it follows the value-capture logic that a broker with a substitute for a
+given connection adds no value to it [@ryall2007brokers]. $P$ is closely tied to Burt's
+measure: for fixed degree it is a monotone transformation of ego-network density, and
+for binary data effective size equals $1 + 2P/N$ [@borgatti2026beyond].
+
+Two refinements matter in practice. First, a gap with a single intermediary can still
+be shallow if the two contacts are joined by a short path that avoids ego. Removing ego
+and letting $d_{jk}$ be the length of the shortest remaining path between $j$ and $k$,
+or letting $A_{-i}$ be the adjacency matrix with ego deleted, two distance-sensitive
+pair scores are
+$$
+q^{\text{geo}}_{jk} = 1 - \rho^{\,d_{jk} - 1}, \qquad
+q^{\text{walk}}_{jk} = \frac{1}{1 + r_{jk}}, \quad
+r_{jk} = \Big[ A_{-i}^{2} \,(I - \beta A_{-i})^{-1} \Big]_{jk},
+$$ {#eq-graph-hole-depth}
+with $0 < \rho < 1$, $q^{\text{geo}}_{jk} = 1$ when no bypass exists, and
+$0 < \beta < 1/\lambda_1$ for the largest eigenvalue $\lambda_1$ of $A_{-i}$. The
+shortest-bypass score ignores how many bypasses there are, whereas the walk-discounted
+score, which applies Katz-style walk counting to a single pair, penalizes both the
+number and the length of ego-avoiding routes and approaches $1/c_{jk}$ as
+$\beta \to 0$ [@borgatti2026beyond]. Second, the common-neighbor count must come from
+the whole network. A rival need not be one of ego's contacts to weaken ego's position,
+so with egocentric survey data $Q$ can only be computed locally and will overstate
+exclusivity.
+
+These measures share a monotonicity property that constraint lacks: a tie that does not
+involve ego can close a gap, create a bypass, or add a competitor, but it can never
+raise $P$ or $PQ$. $Q$ alone is not monotone, because closing a low-quality gap removes
+it from the average, which is why it should be reported with $P$ rather than on its own.
+The components also carry different strategic meaning. An ego spanning ten gaps, each
+shared with four other brokers ($P = 10$, $Q = .20$), and an ego spanning two gaps
+exclusively ($P = 2$, $Q = 1$) have the same $PQ = 2$; the first has more occasions for
+transfer and recombination, the second more leverage over timing and bargaining. Hence
+@borgatti2026beyond recommend specifying the structural-hole mechanism first.
+Information access depends on $P$ (the diversity of what those contacts know has to be
+measured separately, for instance from alter attributes), timing on exclusivity ($Q$ or
+$PQ$), control on the absence of substitutes (the indicator or base $Q$, or $PQ$),
+synthesis on $P$ and $Q$ jointly, and referral, which depends on contacts' ties beyond
+ego's network, is captured by none of $P$, $Q$, or constraint. For empirical work they
+suggest entering $P$ and $Q$ separately while controlling for a function of degree,
+with $PQ$ acting as their interaction; in their reconstruction of a published industry
+network the two components correlate only .201. All of these are measures of
+opportunity, not of whether or how an actor actually brokers.
+
+@fig-graph-brokerage contrasts three ego networks with the same three contacts. Closure
+leaves no gaps, the open network gives ego three exclusive gaps, and in the contested
+network a rival outside ego's network reaches the same contacts, which halves $Q$ and
+$PQ$ while leaving constraint exactly where it was in the open case.
+
+```{mermaid}
+%%| label: fig-graph-brokerage
+%%| fig-cap: "Three ego networks with the same three contacts. Under closure every pair of contacts is tied, so ego spans no gaps. In the open network ego spans all three gaps alone. In the contested network a rival broker outside ego's network (dashed ties) reaches the same contacts, so every gap is shared and exclusivity halves, yet constraint is identical to the open case because the rival is not one of ego's contacts."
+flowchart TB
+  subgraph CO["Contested: shared gaps"]
+    direction TB
+    E3["Ego<br/>P = 3, Q = 0.5, PQ = 1.5<br/>constraint = 0.333"]
+    A3["A"]
+    B3["B"]
+    C3["C"]
+    R3["Rival broker"]
+    E3 --- A3
+    E3 --- B3
+    E3 --- C3
+    R3 -.- A3
+    R3 -.- B3
+    R3 -.- C3
+  end
+  subgraph OP["Open: exclusive gaps"]
+    direction TB
+    E2["Ego<br/>P = 3, Q = 1, PQ = 3<br/>constraint = 0.333"]
+    A2["A"]
+    B2["B"]
+    C2["C"]
+    E2 --- A2
+    E2 --- B2
+    E2 --- C2
+  end
+  subgraph CL["Closure: no gaps"]
+    direction TB
+    E1["Ego<br/>P = 0, PQ = 0<br/>constraint = 0.926"]
+    A1["A"]
+    B1["B"]
+    C1["C"]
+    E1 --- A1
+    E1 --- B1
+    E1 --- C1
+    A1 --- B1
+    B1 --- C1
+    A1 --- C1
+  end
+```
+
+The first demonstration implements @eq-graph-effsize and @eq-graph-pq alongside
+`igraph::constraint()` (@eq-graph-constraint) and reproduces the eight-alter shadow-ego
+sequence of @borgatti2026beyond.
+
+```{r}
+#| label: fig-graph-brokerage-shadow
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 3.8
+#| fig-cap: "Burt's constraint and the pair-based measures along the eight-alter shadow-ego sequence, in which k of ego's alters become competing brokers tied to every other alter. Ego's position worsens with every added competitor. Constraint (left, plotted from k = 1 on a narrow vertical scale; it is 0.125 at k = 0) peaks at 0.455 with the first competitor and then falls, signalling an improvement that has not occurred; P and PQ (right) decline monotonically."
+library(igraph)
+
+# --- Pair-based brokerage measures (Borgatti and Everett 2026) ---
+# For ego i, a brokered pair (a "gap") is an unordered pair {j, k} of i's
+# alters that are not tied to each other. c_jk is the number of common
+# neighbors of j and k in the WHOLE network; ego is always one, so c_jk >= 1.
+#   P   = number of brokered pairs                  (opportunity volume)
+#   Q   = mean of 1 / c_jk over brokered pairs      (base exclusivity)
+#   PQ  = sum of 1 / c_jk                           (= two-step betweenness)
+#   PQe = number of pairs with c_jk == 1            (indicator version)
+brokerage_pq <- function(g, ego) {
+  alters <- as.integer(neighbors(g, ego))
+  none <- c(P = 0, Q = NA, PQ = 0, PQe = 0)
+  if (length(alters) < 2) return(none)
+  prs  <- combn(alters, 2)
+  open <- !apply(prs, 2, function(p) are_adjacent(g, p[1], p[2]))
+  if (!any(open)) return(none)
+  prs  <- prs[, open, drop = FALSE]
+  c_jk <- apply(prs, 2, function(p)
+    length(intersect(neighbors(g, p[1]), neighbors(g, p[2]))))
+  c(P = ncol(prs), Q = mean(1 / c_jk), PQ = sum(1 / c_jk),
+    PQe = sum(c_jk == 1))
+}
+
+# Burt's effective size for binary data, N - 2t/N, where t is the number of
+# ties among ego's N alters; efficiency is effective size divided by N.
+effective_size <- function(g, ego) {
+  alters <- as.integer(neighbors(g, ego))
+  N <- length(alters)
+  t <- ecount(induced_subgraph(g, alters))
+  c(N = N, ES = N - 2 * t / N, eff = (N - 2 * t / N) / N)
+}
+
+# --- The eight-alter shadow-ego sequence ---
+# Ego (vertex 1) has 8 alters (2..9), initially unconnected. Step k makes k
+# alters competing brokers ("shadow egos") tied to every other alter. By
+# structural-hole theory ego's position worsens monotonically in k.
+shadow_net <- function(k, n_alters = 8) {
+  g <- make_star(n_alters + 1, mode = "undirected", center = 1)
+  alters <- 2:(n_alters + 1)
+  for (s in alters[seq_len(k)]) {
+    others <- setdiff(alters, s)
+    new <- others[!sapply(others, function(o) are_adjacent(g, s, o))]
+    if (length(new) > 0) g <- add_edges(g, as.vector(rbind(s, new)))
+  }
+  g
+}
+
+shadow <- do.call(rbind, lapply(0:7, function(k) {
+  g <- shadow_net(k)
+  m <- brokerage_pq(g, 1)
+  data.frame(k          = k,
+             constraint = round(constraint(g, nodes = 1), 3),
+             eff_size   = effective_size(g, 1)[["ES"]],
+             P          = m[["P"]],
+             Q          = round(m[["Q"]], 3),
+             PQ         = round(m[["PQ"]], 2),
+             PQe        = m[["PQe"]],
+             btw2       = round(betweenness(g, v = 1, cutoff = 2), 2))
+}))
+print(shadow, row.names = FALSE)
+
+# --- Identities stated in the paper ---
+cat("\nPQ equals two-step betweenness in every row:",
+    isTRUE(all.equal(shadow$PQ, shadow$btw2)), "\n")
+cat("Effective size equals 1 + 2P/N in every row:",
+    isTRUE(all.equal(shadow$eff_size, 1 + 2 * shadow$P / 8)), "\n")
+
+# --- Figure: constraint versus P and PQ along the sequence ---
+op <- par(mfrow = c(1, 2), mar = c(4.2, 4.4, 2.2, 1))
+s1 <- shadow[shadow$k >= 1, ]
+plot(s1$k, s1$constraint, type = "b", pch = 19, col = "#1f3b73",
+     xlab = "Competing brokers (k)", ylab = "Burt's constraint",
+     main = "Constraint (k = 0: 0.125)", cex.main = 0.95)
+plot(shadow$k, shadow$P, type = "b", pch = 1, col = "grey40",
+     ylim = c(0, 28), xlab = "Competing brokers (k)",
+     ylab = "Count of gaps", main = "P and PQ", cex.main = 0.95)
+lines(shadow$k, shadow$PQ, type = "b", pch = 19, col = "#b0413e")
+legend("topright", c("P (gaps spanned)", "PQ (exclusivity-weighted)"),
+       pch = c(1, 19), col = c("grey40", "#b0413e"), bty = "n", cex = 0.85)
+par(op)
+```
+
+The printed table reproduces the published values: constraint runs .125, .455, .452,
+.441, .436, .436, .438, .439, while $P$ falls from 28 to 0, $Q$ from 1 to 1/7, and
+$PQ$ from 28 to 0. The indicator count $PQ_e$ drops from 28 to 0 at the very
+first competitor, since from then on no remaining gap is ego's alone. The two printed
+checks confirm the identities stated above, that $PQ$ is two-step betweenness
+(`betweenness(g, cutoff = 2)` in `igraph`) and that effective size equals $1 + 2P/N$.
+
+The second demonstration applies the same functions, plus the distance-sensitive scores
+of @eq-graph-hole-depth, to the three toy networks of @fig-graph-brokerage and to a
+simulated business-to-business referral network of 36 firms in three regional clusters,
+with ties far more likely within clusters than across them.
+
+```{r}
+#| label: graph-brokerage-sim
+#| message: false
+#| warning: false
+library(igraph)
+
+# --- Three toy ego networks with the same three contacts A, B, C ---
+# In the contested case the rival broker is tied to A, B, and C but is NOT
+# one of ego's contacts.
+toy <- list(
+  closure   = graph_from_literal(Ego-A, Ego-B, Ego-C, A-B, B-C, A-C),
+  open      = graph_from_literal(Ego-A, Ego-B, Ego-C),
+  contested = graph_from_literal(Ego-A, Ego-B, Ego-C, Rival-A, Rival-B, Rival-C)
+)
+toy_tab <- do.call(rbind, lapply(names(toy), function(nm) {
+  g <- toy[[nm]]; m <- brokerage_pq(g, "Ego")
+  data.frame(case = nm,
+             constraint = round(constraint(g, nodes = "Ego"), 3),
+             P = m[["P"]], Q = round(m[["Q"]], 3), PQ = round(m[["PQ"]], 2))
+}))
+print(toy_tab, row.names = FALSE)
+
+# --- Distance-sensitive quality scores (Borgatti and Everett 2026, App. B) ---
+# Shortest bypass: 1 - rho^(d_jk - 1), with d_jk the j-k distance once ego is
+# removed (no bypass: score 1). Walk-discounted: 1 / (1 + r_jk), where
+# r = A^2 (I - beta A)^{-1} on the ego-deleted adjacency matrix A and
+# beta < 1 / lambda_1 (here beta = 0.5 / lambda_1).
+deep_quality <- function(g, ego, rho = 0.5, beta_frac = 0.5) {
+  alters <- as.integer(neighbors(g, ego))
+  if (length(alters) < 2) return(c(Qgeo = NA, Qwalk = NA))
+  prs  <- combn(alters, 2)
+  open <- !apply(prs, 2, function(p) are_adjacent(g, p[1], p[2]))
+  if (!any(open)) return(c(Qgeo = NA, Qwalk = NA))
+  prs  <- prs[, open, drop = FALSE]
+  keep <- setdiff(seq_len(vcount(g)), ego)
+  h    <- induced_subgraph(g, keep)
+  idx  <- matrix(match(prs, keep), nrow = 2)      # pair ids inside h
+  d    <- distances(h)[cbind(idx[1, ], idx[2, ])]
+  geo  <- ifelse(is.finite(d), 1 - rho^(d - 1), 1)
+  A    <- as_adjacency_matrix(h, sparse = FALSE)
+  lam  <- max(abs(eigen(A, symmetric = TRUE, only.values = TRUE)$values))
+  beta <- if (lam > 0) beta_frac / lam else 0
+  R    <- A %*% A %*% solve(diag(nrow(A)) - beta * A)
+  walk <- 1 / (1 + R[cbind(idx[1, ], idx[2, ])])
+  c(Qgeo = mean(geo), Qwalk = mean(walk))
+}
+
+# --- A simulated B2B referral network: 36 firms in three regional clusters ---
+set.seed(20261001)
+pm  <- matrix(0.02, 3, 3); diag(pm) <- 0.30
+g   <- sample_sbm(36, pref.matrix = pm, block.sizes = c(12, 12, 12))
+blk <- rep(1:3, each = 12)                 # regional cluster of each firm
+V(g)$name <- paste0("f", seq_len(vcount(g)))
+
+meas <- do.call(rbind, lapply(seq_len(vcount(g)), function(i) {
+  pq <- brokerage_pq(g, i); es <- effective_size(g, i); dq <- deep_quality(g, i)
+  data.frame(firm = V(g)$name[i], degree = es[["N"]],
+             clusters = length(unique(blk[as.integer(neighbors(g, i))])),
+             eff_size   = round(es[["ES"]], 2),
+             constraint = round(constraint(g, nodes = i), 3),
+             P = pq[["P"]], Q = round(pq[["Q"]], 3), PQ = round(pq[["PQ"]], 2),
+             Qgeo = round(dq[["Qgeo"]], 3), Qwalk = round(dq[["Qwalk"]], 3))
+}))
+
+cat("\nSix firms with the largest PQ:\n")
+print(head(meas[order(-meas$PQ), ], 6), row.names = FALSE)
+cat("\nLowest-constraint firm:", meas$firm[which.min(meas$constraint)],
+    "| highest-PQ firm:", meas$firm[which.max(meas$PQ)], "\n")
+
+cat("\nSpearman correlations across the 36 firms:\n")
+print(round(cor(meas[, c("degree", "constraint", "P", "Q", "PQ")],
+                method = "spearman", use = "pairwise.complete.obs"), 2))
+```
+
+The toy table confirms the figure: closure scores a constraint of .926 with no gaps,
+and the open and contested networks share a constraint of .333 even though the rival
+halves ego's exclusivity ($Q$ from 1 to .5, $PQ$ from 3 to 1.5). Constraint cannot see
+the rival because the rival is not one of ego's contacts, whereas $Q$ counts common
+neighbors over the whole network. The simulated network shows the same separation at
+scale. Firms f33 and f21 have identical degree (5), effective size (4.60), number of
+gaps ($P = 9$), and constraint (.262), yet f33, whose contacts lie in all three
+clusters, spans every one of its gaps alone ($Q = 1$), while f21, whose contacts all
+lie in its own cluster, shares some of its gaps with other firms in that cluster
+($Q = .815$). Burt's measures cannot tell the two positions apart; $Q$, $PQ$, and both
+distance-sensitive scores can. The correlation matrix makes the @johnson2026reassessing
+point concrete, since constraint correlates $-.91$ with degree, and it shows why
+separating $P$ from $Q$ is useful: $Q$ is nearly uncorrelated with constraint ($.14$),
+so it carries information that constraint does not. The lowest-constraint firm (f27)
+and the highest-$PQ$ firm (f13) also differ, so a program that targets "the firm with
+the most structural holes" will choose different partners depending on the measure.
+Note, too, that f13's contacts all sit in its own cluster. Structural measures count
+gaps without knowing which group boundaries they cross, which is exactly the information
+the Gould-Fernandez roles add.
+
+### Implications for marketing
+
+Seeding and opinion-leader programs have mostly targeted degree. @hinz2011 find that
+seeding well-connected people is the most successful strategy because they are more
+likely to participate in a campaign; they use their greater reach but are not more
+influential on their peers than less-connected people. @goldenberg2009role show that
+hubs tend to adopt early, with innovative hubs speeding adoption and follower hubs
+enlarging the market, and @iyengar2011opinion find that sociometric and self-reported
+opinion leadership are weakly correlated and capture different constructs. Structure
+around the target matters as well: in an online social network, the density of
+connections among a consumer's already-adopted contacts strongly raises the consumer's
+adoption probability, and the average influence of adopters declines with their total
+number of contacts [@katona2011network]. That clustering effect is a closure result, and
+together with the finding that brokered ideas diffuse less [@fleming2007collaborative] it
+cautions against equating "broker" with "best seed." The measurement lesson of this
+section applies directly: if a campaign needs novel information to cross community
+boundaries, the relevant quantity is opportunity volume ($P$, or betweenness); if the
+firm needs a partner whose position cannot be bypassed, it is exclusivity ($Q$).
+
+In business-to-business markets the evidence again favors balance over either pure
+position. In an event study of 230 marketing-alliance announcements in the software
+industry, the efficiency and density of a firm's alliance network had their strongest
+positive effects on abnormal returns at moderate levels, while network centrality and
+reputation had none [@swaminathan2009a]. What a firm gains from an alliance also
+depends on the firm itself: in onshore drilling, slow firms gain the most speed from
+partnering and keep the gain only with prior partnering experience [@li2026speed], so a
+partner's network position and the focal firm's own capabilities jointly set the return
+(@sec-ms-corpdev). In new product alliances, knowledge redundancy
+diminishes information acquisition but enhances information utilization
+[@rindfleisch2001b]. Inside the selling organization, relationship managers perform
+best when wide-reaching, nonoverlapping ties in their informal network are combined
+with a densely interconnected formal network, and the effects grow with the overlap
+between the two networks [@gonzalez2014synergistic]. Salespeople's relational and
+positional centrality in the intraorganizational network both contribute to objective
+sales performance, but political skill predicts only the former
+[@bolander2015socialnetworks].
+
+For channel intermediaries, distributors, agencies, and platforms, @ryall2007brokers
+supply the economic logic and $Q$ supplies the measure. An intermediary earns rents from
+its position only while the parties it connects lack substitutes for the connection,
+and the arrival of a rival intermediary, or of a direct route between buyer and seller,
+erodes those rents without any change in the intermediary's own ties
+[@borgatti2026beyond]. Because interorganizational networks such as alliances,
+syndicates, and buyer-supplier relations are usually observed sociocentrically, the
+common-neighbor counts that $Q$ requires can be computed on the full network rather than
+approximated from ego-network surveys [@borgatti2026beyond]. The usual caution applies
+with special force. Positions are not randomly assigned [@zaheer2009origins], so a
+brokerage measure entered as a regressor is a generated feature subject to the
+selection and identification problems of @sec-graph-identification, and the temporal
+brokerage of @mell2021brokerage is a reminder that the relation on which a gap is
+defined is itself a theoretical choice.
 
 ## Community Detection {#sec-graph-communities}
 
@@ -712,6 +1247,13 @@ analyst is trying to explain.
 - **Centrality** measures (degree, betweenness, eigenvector) each formalize a different
   theory of which node matters, and they can disagree; choosing one is choosing a theory
   of influence, as the runnable `igraph` demonstration shows.
+- **Brokerage** is also measured locally. Burt's constraint and effective size summarize
+  the structural holes in an ego network, the Gould-Fernandez roles tie brokerage to
+  group boundaries, and the returns to brokerage depend on the outcome, the content of
+  ties, and competition among brokers. Because constraint largely tracks inverse degree
+  and can improve as rival brokers appear, the pair-based measures of @borgatti2026beyond
+  separate opportunity volume ($P$) from exclusivity ($Q$); the runnable demonstration
+  reproduces their shadow-ego result (@sec-graph-brokerage).
 - **Community detection** via modularity maximization (Louvain, Leiden) recovers
   cohesive subgroups usable as segments, competitive sets, or group-level features.
 - The **contagion-versus-homophily** identification problem, formalized by Manski's
@@ -752,3 +1294,13 @@ York 2003), is referenced inline with verified DOIs where a canonical Crossref D
 exists. This chapter sits alongside the text (@sec-text-as-data) and image
 (@sec-image-processing) treatments in the unstructured-and-multimodal family, and its
 platform and influencer-economy context is developed in @sec-platforms.
+
+For brokerage and structural holes, the foundations are @granovetter1973,
+@coleman1988social, @burt1992structural, and @gould1989structures, and the reviews by
+@stovel2012brokerage and @burt2013advantage map the field. The measurement debate runs
+from @everett2020unpacking through @johnson2026reassessing to @borgatti2026beyond, the
+contingent returns to brokerage are documented in @burt2004goodideas,
+@ahuja2000collaboration, @shipilov2008cake, and @aral2011diversity, and the competitive
+logic of brokerage is formalized by @ryall2007brokers and @buskens2008dynamics.
+Marketing applications of network position include @swaminathan2009a on alliance
+networks and @gonzalez2014synergistic on relationship managers' networks.

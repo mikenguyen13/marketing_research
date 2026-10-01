@@ -352,6 +352,21 @@ catalogue, which is why a title-by-title optimization gets it wrong. It is the
 same logic that makes the price structure of @eq-rochet-tirole a structure rather
 than a set of independent prices.
 
+What makes the result more than a "blend the two" heuristic is that the mirror image of
+the winning schedule *loses*. Releasing the first half sequentially and the second half
+all at once leaves the platform worse off than its own status quo: a slow open lets
+readers drift away, and dropping the remaining chapters on readers who have already quit
+has nobody left to hook. Revenue is therefore not monotone in how much is released at
+once. In the paper's counterfactuals the winning hybrid improves on the platform's
+existing schedule by roughly 45 percent, an optimized constant-speed sequential schedule
+by only about 7 percent, and a pure simultaneous release *lowers* revenue by about 18
+percent—because the notifications that each chapter drop generates are what bring
+readers back to the platform at all, and a single release sends none. Bingeing and
+exploration become complements only in that order: the binge has to come first and be
+paid for by a metered tail. The operational catch is that a hybrid requires banking
+chapters before launch, which delays the creator's own revenue and may require
+compensating them—a cost the authors argue the revenue upside comfortably covers.
+
 
 ## The Chicken-and-Egg Problem
 
@@ -395,6 +410,149 @@ The unifying logic is that all four reduce the *expected* participation gap that
 joining user must bridge—either by directly buying participation, by removing the
 cross-side dependence at launch, or by shrinking the critical mass needed for the
 first viable interactions.
+
+### When the Launcher Is an Incumbent: Data Bottlenecks {#sec-platform-incumbent}
+
+The second tactic above, coming for the tool and staying for the network, looks easiest
+for an established firm. It already owns the tool, the installed base, and years of
+customer data, which are exactly the assets a new platform has to manufacture.
+@fraser2026incumbent show why that head start is smaller than it looks. They followed
+Fincorp (a pseudonym), a leading U.S. provider of financial software to small and
+medium-sized enterprises (SMEs), as it built a platform from 2012 onward to match its SME
+customers with third-party lenders. The evidence is 89 semi-structured interviews
+conducted between 2012 and 2016, 82 inside the firm and 7 with executives of partner
+organizations, triangulated against 76 archival documents and 26 analyst and industry
+reports. Demand was not the problem. Managers cited a customer survey in which nine in
+ten customers used some form of credit while 70 percent of applications over the previous
+two years had been declined, and lenders found small loans too expensive to underwrite.
+The problem was data, and it arrived as a sequence of what the authors call **data
+bottlenecks**.
+
+The first two bottlenecks concerned access to customer data. Inside the firm, the data
+sat in autonomous business units, each holding a different slice of the same SME's
+records. Unit managers resisted pooling it because they regarded their data and their
+customer channel as their two competitive advantages and could see no provable upside in
+opening them up; informants described the obstacle as organizational rather than
+technical. Outside the firm, the product stored customer data on customers' own desktops,
+and when the platform asked SMEs to consent to sharing it with lenders, only a minority
+agreed, even though they had come looking for credit. A 15-point questionnaire allowed
+basic matching but left lenders with a "cold hand-off". Fincorp resolved the external
+bottleneck by launching a cloud version of its software and, in 2013, by making data
+sharing opt-out rather than opt-in, a change it could impose because its SME customers
+were fragmented and faced high switching costs. The internal bottleneck yielded only
+after persuading unit heads one by one had failed. The platform team ran a matching
+algorithm on the little data it had, a pilot produced about \$3 million in loans, and the
+result brought top management, including the CEO, behind the platform. Top management
+then mandated cooperation and tasked the chief technology officer with building a shared
+financial data platform across the units.
+
+Each resolution exposed the next bottleneck. Once data flowed, legacy desktop data turned
+out to be incompatible with cloud data at the level of the codebase, and the desktop
+users were among the most valuable customers, mature businesses seeking larger loans.
+Periodic data dumps were the stopgap, and discontinuing the desktop product in late 2014
+was the fix, after which the platform could prefill loan applications for 95 percent of
+customers. Meanwhile the lenders took the leads but completed loans on their own sites.
+That left the platform with a referral fee of about 2 percent of the loan amount and
+without the outcome data it needed to improve its matching model. The lenders' reluctance
+was partly technical, rooted in legacy systems, and partly strategic, since sharing
+approval data "could help competitors". The platform dropped its data-sharing and
+integration requirements to keep lenders on board and bought proxy outcome data from a
+credit-reporting firm instead.
+
+The improved model then surfaced the fifth bottleneck. Behavioral data, such as how often
+a customer logged into the software or whether it had started on a trial version,
+predicted default, but established lenders underwrote on revenue and credit scores and
+could not use it. As one Fincorp leader put it, "our best customers are still having the
+hardest time on the platform." The answer was to lend. With the approval of the CEO and
+CFO, Fincorp set out to commit about \$10 million of its own money to line-of-credit
+products. Its lenders were not offering that type of product on the platform, and the
+products were built on data the lenders could not use. The wider product range drew more
+SMEs to the platform and a growing set of smaller, more agile financial service providers
+able to use the richer data. @fig-platform-data-bottlenecks lays out the sequence.
+
+```{mermaid}
+%%| label: fig-platform-data-bottlenecks
+%%| fig-cap: "Data bottlenecks in an incumbent's platform launch, after the Fincorp case. The five nodes headed internal access, external access, interoperability, complementor access, and complementor supply are the bottlenecks; the other nodes are the firm's responses. Each resolution reconfigures the constraints and exposes the next bottleneck, and in the last phase the sponsor routes around the bottleneck instead of resolving it."
+flowchart TB
+    subgraph P1["Phase 1: Recognition"]
+        direction LR
+        B1["Internal access:<br/>customer data siloed<br/>in business units"]
+        B2["External access:<br/>data on desktops,<br/>few customers consent"]
+        W1["Workaround:<br/>15-point questionnaire"]
+        B1 --> W1
+        B2 --> W1
+    end
+    subgraph P2["Phase 2: Access resolved"]
+        direction LR
+        R2["Cloud product, opt-out<br/>default; pilot wins a<br/>top-management mandate"]
+        B3["Interoperability:<br/>desktop and cloud<br/>data incompatible"]
+        B4["Complementor access:<br/>lenders withhold<br/>outcome data"]
+        R2 --> B3
+        R2 --> B4
+    end
+    subgraph P3["Phase 3: Input and output"]
+        direction LR
+        R3["Desktop product retired;<br/>proxy outcome data bought<br/>from a credit bureau"]
+        B5["Complementor supply:<br/>lenders cannot use<br/>behavioral data"]
+        R3 --> B5
+    end
+    subgraph P4["Phase 4: Under-used data"]
+        direction LR
+        R4["Sponsor offers its own<br/>line-of-credit product<br/>built on that data"]
+        G4["Smaller, more agile<br/>complementors join;<br/>network effects grow"]
+        R4 --> G4
+    end
+    P1 -- "resolution exposes the next" --> P2
+    P2 -- "resolution exposes the next" --> P3
+    P3 -- "sponsor routes around" --> P4
+```
+
+The authors draw three dynamics from the case. First, the bottlenecks cascade. Problems
+of access to data must be solved before problems of interoperability appear, and those
+before the problem of whether complementors can absorb and act on the data. The sequence
+is therefore not a checklist that can be planned at the outset but a problem space that
+each solution reshapes. Second, the sponsor has three kinds of response:
+
+- It can impose new terms where it holds power over fragmented actors, as with the opt-out
+  default and the forced migration off the desktop product.
+- It can demonstrate value with imperfect data where the data belongs to actors it cannot
+  coerce, using questionnaires, data dumps, pilots, and proxy data. This works because
+  data, unlike a physical asset, can be sampled, proxied, and piloted at small scale before
+  full access is secured.
+- It can innovate around a bottleneck when entrenched complementors will not change, up to
+  entering the complementor role itself.
+
+Imposing terms tends to come early and innovating around later, with workarounds as
+bridges throughout. Third, the bottlenecks and responses are interdependent: resolving an
+upstream bottleneck shapes which responses are available downstream. Every bottleneck
+also had a technological and a control dimension at once, so fixing the technology could
+leave the control problem in place.
+
+Three lessons carry over to marketing. The first concerns who owns the customer. The units
+that resisted pooling data were defending what customer-facing units are built to defend,
+the relationship and the information it generates. Persuasion from below did not move
+them, but a working demonstration of what pooled data could do did. The authors present
+this as an extension of resource dependency theory: a peripheral unit gained influence
+over resources it did not control by demonstrating value creation, not through formal
+authority or bargaining leverage. The second concerns consent. Customers who came to the
+platform for credit mostly declined to let their data go to lenders, and the problem was
+solved by a default backed by lock-in rather than by persuasion. The paper reports that
+the lever worked, not how customers regarded it. A reader of @sec-privacy will recognize
+an opt-out default backed by switching costs as the kind of choice architecture that
+literature scrutinizes. The third qualifies the marquee-side tactic above. High-profile
+partners lent the young platform legitimacy, but the same established lenders could not
+or would not use its data, which is why the authors call them a double-edged sword. Their
+advice is a dual timeline of short-term workarounds and long-term structural fixes,
+together with a deliberately diversified complementor base. They expect the same
+bottlenecks for incumbents building generative-AI platform businesses on proprietary
+data, where business units and complementors have similar reasons to withhold it.
+
+The evidence is one firm, observed between 2012 and 2016, and the paper is explicit that
+some of the levers depended on context. The opt-out default and the forced migration were
+available because Fincorp held a strong position in a fragmented market with high
+switching costs. The proxy-data workaround required a market for third-party credit data
+to buy from. A sponsor without those conditions could not count on the same responses.
+
 
 ## Designing the First Interaction: Fulfillment on a Co-Creation Platform {#sec-platform-fulfillment}
 
@@ -626,6 +784,30 @@ as dissatisfied users self-censor unjustified complaints under anticipated scrut
 [@proserpio2017]—a reminder that governance interventions change participant behavior,
 not merely measure it. The design question is old enough to have its own literature: the earliest systematic treatment of online feedback mechanisms already framed reputation as an engineered institution with identifiable failure modes rather than a naturally occurring signal [@dellarocas2003digitizatword].
 
+The best-known failure mode is drift. @filippas2022reputation document **reputation
+inflation** on a large online labor market, where the share of workers receiving a
+perfect five-star rating rose from 33 percent to 85 percent in six years. They compare
+public scores with a private-feedback channel and with the sentiment of written
+reviews, and attribute more than half of the rise to raters lowering their standards
+rather than to better transactions. The mechanism is the cost of harming the person
+being rated. Of the employers who said privately that they would definitely not hire a
+worker again, 28.4 percent still gave that worker four or more stars in public.
+@mohlmann2026inflation show that this pressure is not constant across raters. It
+changes as a reviewer is socialized into the platform community. Their mixed-method
+study identifies three phases. *Newcomers*, not yet socialized, are less likely to
+inflate. *Inflators* follow a social norm the authors call direct reviewer reciprocity,
+and inflate. *Veterans* follow a norm of generalized reviewer reciprocity and inflate
+less. On this account, inflation is a stage in a reviewer's development rather than a
+fixed trait. Read together, the two papers imply that a platform's average rating
+depends partly on its mix of newcomers, inflators, and veterans, so growth or churn
+that shifts the mix can move the average with no change in quality. The governance
+implications are to target anti-inflation measures at reviewer tenure instead of
+applying one rule to everyone, and to treat retained veteran reviewers as a source of
+signal worth cultivating. For a consumer, the most enthusiastic reviewer is not
+necessarily the most informative one. (Only the published abstract of the ISR study
+was accessible when this section was written; its platform setting and estimates are
+in the paper.)
+
 **Matching technology and where its costs land.** The platform's search and
 filtering machinery is a governance instrument, not a neutral convenience: it
 decides which counterparties a participant ever sees, and therefore which
@@ -837,6 +1019,27 @@ products. This **self-preferencing** problem trades short-run platform profit ag
 long-run participation incentives, because sellers who fear expropriation invest less
 or exit. The empirical record on Amazon shows the platform entering exactly the product spaces where third-party sellers had demonstrated demand, which is the sharpest available evidence that the conflict is real rather than hypothetical [@zhu2018competingcomplemen]; the theoretical counterpart shows when a search-neutrality rule raises or lowers welfare once the platform internalizes both roles [@zou2021].
 
+@fraser2026incumbent identify a route around this conflict that runs through the data
+itself. In the lending platform of @sec-platform-incumbent, the sponsor became a lender
+on its own platform without alienating its lenders. The authors trace why to two
+properties on which data varies: its strategic sensitivity, meaning how far sharing it
+exposes the owner to competitive risk, and the absorptive capacity it demands of whoever
+would use it. Lenders' outcome data was highly sensitive and was guarded accordingly.
+Small-business behavioral data was low in sensitivity but beyond what established
+lenders' standardized underwriting could absorb. Data of that kind, open to complementors
+but unused by them, marks out a segment the sponsor can occupy without direct competitive
+overlap. A second pathway follows from variation in absorptive capacity across
+complementors. Established partners supply legitimacy and work with standardized data,
+while newer and more agile ones can use the richer data, so a sponsor can add to its
+complementor base rather than displace it. The authors expect the logic to travel, for
+instance to e-commerce platforms that hold shopping-pattern insights traditional
+merchants cannot process. The contrast with the Amazon evidence is the useful part. There
+the sponsor entered where complementors had demonstrated demand; here it entered where
+complementors could not follow, and Fincorp managers reported that lenders on the
+platform did not see the move as a threat. How durable that division is once
+complementors acquire the capacity to use the richer data is a question a single case
+cannot settle.
+
 ::: callout-note
 ## Controversy: the externalities a platform does not price
 
@@ -881,7 +1084,13 @@ complementors and accelerates indirect network effects; more control protects qu
 captures more value, and guards the core experience. The choice is not binary but a
 governance gradient, and the optimal point shifts over the life cycle: openness to
 bootstrap the network early, selective control to monetize and protect quality once the
-network is established.  [@boudreau2010openplatform]
+network is established.  [@boudreau2010openplatform] Openness decides how many
+complementors arrive, but not what they build. In the layered Hadoop ecosystem,
+@zhang2026executives find that startup complementors that hire an outside senior
+technology executive shift toward innovation that extends into platform layers they
+had not used, and away from deepening the layers they already occupy
+(@sec-ent-ehc). A complementor's staffing therefore steers where the ecosystem grows,
+through a channel the platform owner does not control.
 
 **Provenance of contributions.** Generative AI adds a governance problem the reputation
 machinery was never designed for: a contribution can now be cheap, fluent, plausible, and

@@ -22,7 +22,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
@@ -56,8 +56,11 @@ jobs:
           CONNECT_SERVER: ${{ secrets.CONNECT_SERVER }}
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
         run: |
+          # The live site is Posit Connect Cloud serving the committed _book/ from
+          # master, so no API deploy is needed; report the skip as a notice, not a
+          # warning, so successful runs carry no warning annotation.
           if [ -z "$CONNECT_SERVER" ] || [ -z "$CONNECT_API_KEY" ]; then
-            echo "::warning::CONNECT_SERVER / CONNECT_API_KEY not set — skipping Posit Connect deploy."
+            echo "::notice::CONNECT_SERVER / CONNECT_API_KEY not set — skipping API deploy; Posit Connect Cloud serves the committed _book/ from master."
             exit 0
           fi
           quarto publish connect "$CONNECT_SERVER" --no-prompt --no-browser --no-render
