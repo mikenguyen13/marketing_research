@@ -21,7 +21,9 @@ paradox**. From there we examine personalization (the firm's reason to collect
 data), trust and control (the levers that move the calculus), the surprising
 backfire of transparency (the **bulletproof-glass effect**), the economics of
 anonymity, and the regulatory regime—chiefly the European Union's General Data
-Protection Regulation (GDPR)—that now constrains the whole system. Throughout, the
+Protection Regulation (GDPR)—that now constrains the whole system, together with the
+open problem of verifying that a trained recommender has actually forgotten a user
+who asked to be deleted. Throughout, the
 goal is to give a marketing PhD the identification detail and a senior practitioner
 the decision logic, with reproducible code where a model is involved.
 
@@ -564,6 +566,419 @@ correlates [@chang2019automated]. The methodological point connects privacy rese
 to the broader text-analytics toolkit and makes the regulatory-compliance literature
 tractable beyond hand-coded samples.
 
+## The Right to Be Forgotten Inside a Trained Model {#sec-privacy-revocation-audit}
+
+GDPR's right to erasure lets a consumer ask a firm to delete their personal data, and
+for most firms deleting the rows is the easy part. The hard part is the model. A
+recommender trained on a user's viewing or purchase history keeps what it learned
+from that history after the rows are gone: it can go on ranking that user's
+characteristic items the way it did before. Removing a user's influence without
+retraining from scratch is the problem of *machine unlearning*
+[@cao2015towards; @bourtoule2021machine], with recommender-specific methods that
+partition the training data so that only the affected shard has to be retrained
+[@chen2022recommendation]. Unlearning methods tell a firm how to forget. They do not
+tell the user, the regulator, or the firm's own compliance team whether the deployed
+model actually *has* forgotten. A deletion request is a promise about a model's
+internals that nobody outside the engineering team can see.
+
+@zhu2026forget turn that verification gap into a design problem they call *user data
+revocation auditing*: given a trained sequential recommender and a user who asked to
+be deleted, infer whether the model still retains that user's data. Statistically,
+this is membership inference [@shokri2017membership], the attack in which an
+adversary decides whether a record was in a model's training set, turned to a
+defensive use and asked about a whole user rather than a single record. Membership
+inference against recommenders is known to work [@zhang2021membership]; the novelty
+is to use it as a compliance instrument. Their artifact, RecAudit, outperforms
+existing auditing and membership-inference baselines across several real-world
+datasets, and the authors pitch it as a way for platforms to find the high-risk users
+whose traces persist and to target corrective unlearning at them. (Only the published
+abstract and the authors' replication code were accessible when this section was
+written. The description of the method below is read from that code, and the
+paper's own headline experiments, on MovieLens-1M with 256 audit models, are not
+reported here.)
+
+### How the Audit Works
+
+The authors' code makes the design concrete. Users are split into thirds: *training*
+users, *audit* users, and *auxiliary* users. Half of the audit users stay in the
+target model's training data, standing in for deletion requests that were not
+honored; the other half are left out entirely, which is the gold standard of
+retraining from scratch. The auditor knows the model architecture and holds the
+interaction data of the audit and auxiliary users. It trains its own *audit models*
+(the "shadow models" of the membership-inference literature) on random halves of that
+pool, so that every user has a set of reference models that saw them and a set that
+did not.
+
+Each model is scored by how well it predicts a user's own behavior. For a sequence
+$s$ of user $u$ whose true next item is $i_s$, let $f_M(i \mid s)$ be model $M$'s
+score for item $i$ and $f_M^{(k)}(s)$ its $k$-th highest score over all items. The
+*unforgotten score* is the gap between the true next item and the model's top-$K$
+list, averaged over the user's sequences $S_u$:
+
+$$
+g_u(M) = \frac{1}{|S_u|} \sum_{s \in S_u} \left[ f_M(i_s \mid s)
+- \frac{1}{K} \sum_{k=1}^{K} f_M^{(k)}(s) \right], \qquad K = 10.
+$$ {#eq-privacy-gap}
+
+A model that memorized the user places the next item at or near the top of its list,
+so the gap is close to zero; a model that never saw the user leaves the item well
+below its top ten. Measuring the true item against the model's own top-$K$ mean,
+rather than using its raw probability, nets out how predictable the user's sequences
+are to begin with. The audit then asks whether the target model $M^\ast$ looks more
+like the reference models that saw $u$ or the ones that did not. With Gaussians
+fitted to the user's in-reference scores ($\hat\mu^{\text{in}}_u,
+\hat\sigma^{\text{in}}_u$) and out-reference scores ($\hat\mu^{\text{out}}_u,
+\hat\sigma^{\text{out}}_u$), the statistic is the log likelihood ratio
+
+$$
+\Lambda_u = \log \phi\!\left(g_u(M^\ast);\, \hat\mu^{\text{in}}_u, \hat\sigma^{\text{in}}_u\right)
+- \log \phi\!\left(g_u(M^\ast);\, \hat\mu^{\text{out}}_u, \hat\sigma^{\text{out}}_u\right),
+$$ {#eq-privacy-lr}
+
+and a user is flagged as *unforgotten* when $\Lambda_u > 0$. Ranking users by
+$\Lambda_u$ gives the priority list for unlearning. @eq-privacy-lr is the per-example
+likelihood-ratio test of @carlini2022membership; what RecAudit changes is the score
+that goes into it. The baselines in the authors' code span the membership-inference
+design space. One applies a single global threshold to the model's confidence in the
+true item [@yeom2018privacy]. Others compare the user's confidence with the user's
+own out-reference mean, or with the midpoint of the in and out means. The last runs
+the Gaussian test of @eq-privacy-lr on confidence instead of the gap. The code labels
+these by first author (Yeom, Zhou, Watson, Sablayrolles, Carlini).
+
+### Replication from the Authors' Posted Scores
+
+The first author's repository [@zhu2026recauditcode] ships a complete demo on
+MovieLens-100K [@harper2015movielens] with a BERT4Rec target model
+[@sun2019bert4rec]: the data split (314 audit users, 157 unforgotten and 157
+forgotten), the target model and 32 audit models (16 seeds, each training one model
+on a random half of the audit-plus-auxiliary pool and one on the complement), the
+per-user scores each model produced, and the authors' expected results. The README
+warns that the demo's numbers will differ from the paper's, which uses MovieLens-1M
+and 256 audit models. We re-implemented the audit stage in R from the posted scores
+and reproduced the authors' table exactly (@tbl-privacy-recaudit-replication).
+
+One detail decided whether the match was exact. The scores are stored in half
+precision (numpy `float16`), and the authors' code does its arithmetic at that
+precision. Half-precision rounding creates ties among users, and those ties move
+results in the fourth decimal: computed in double precision, RecAudit's AUROC comes
+out 0.9235 rather than 0.9236 and Carlini's FPR at 10% FNR 0.8153 rather than 0.8025.
+Rounding each intermediate step to the nearest `float16`, as numpy does, reproduces
+every published value. For five of the six methods the per-user statistics also
+match the authors' saved values to machine precision; Carlini's differ slightly for
+11 of 314 users, which does not change its AUROC or FPR.
+
+```{r}
+#| label: tbl-privacy-recaudit-replication
+#| tbl-cap: "Auditing whether a recommender forgot deleted users: the authors' MovieLens-100K demo (BERT4Rec, 32 audit models, 314 audit users) re-run from the posted scores. AUROC ranks unforgotten above forgotten users; FPR at 10% FNR is the share of honored deletions wrongly flagged when the audit catches 90% of unforgotten users. Every value matches the authors' README to four decimals."
+recaudit_tab <- data.frame(
+  Method = c("Yeom et al. (global confidence threshold)",
+             "Zhou et al. (confidence + correctness, global)",
+             "Sablayrolles et al. (per-user midpoint)",
+             "Watson et al. (per-user out-reference)",
+             "Carlini et al. (Gaussian LR on confidence)",
+             "RecAudit (Gaussian LR on gap score)"),
+  AUROC          = c(0.5825, 0.5802, 0.7238, 0.6872, 0.6561, 0.9236),
+  `FPR at 10% FNR` = c(0.7898, 0.7834, 0.5478, 0.6624, 0.8025, 0.2102),
+  check.names = FALSE)
+knitr::kable(recaudit_tab, digits = 4)
+```
+
+The gap is large. RecAudit ranks a random unforgotten user above a random forgotten
+one 92% of the time, against 72% for the best baseline. At an operating point that
+catches 90% of the users whose deletion was not honored, it wrongly flags 21% of the
+users whose deletion was honored; the baselines wrongly flag 55% to 80%. Its own
+decision rule ($\Lambda_u > 0$) flags 158 users, 134 of the 157 unforgotten users and
+24 false alarms, for an accuracy of 85.0%. Under the same rule the Carlini baseline
+flags 216 users, 93 of them false alarms.
+
+### What Carries the Gain
+
+RecAudit differs from the strongest baseline in two ingredients: the score
+(@eq-privacy-gap instead of confidence) and the test (per-user Gaussian reference
+instead of a global threshold). The posted scores let us cross the two, which the
+demo does not report. @tbl-privacy-recaudit-decomp runs the gap score through each
+baseline's test.
+
+```{r}
+#| label: tbl-privacy-recaudit-decomp
+#| tbl-cap: "Which ingredient carries the gain? The four tests crossed with the two scores, from the same posted demo scores. The confidence rows are the published baselines; the gap-score rows other than RecAudit are our own combinations."
+decomp_tab <- data.frame(
+  Test = rep(c("Global threshold", "Per-user out-reference",
+               "Per-user midpoint", "Per-user Gaussian LR"), 2),
+  Score = rep(c("Confidence in true item", "Gap score"), each = 4),
+  AUROC = c(0.5825, 0.6872, 0.7238, 0.6561, 0.6767, 0.8888, 0.9011, 0.9236),
+  `FPR at 10% FNR` = c(0.7898, 0.6624, 0.5478, 0.8025, 0.7006, 0.2548, 0.1847, 0.2102),
+  check.names = FALSE)
+knitr::kable(decomp_tab, digits = 4)
+```
+
+Both ingredients matter, and they interact. With a single global threshold the gap
+score is only modestly better than confidence (0.68 against 0.58), because users
+differ so much in how predictable they are that one cutoff cannot serve all of them.
+Calibrating against each user's own reference models is the larger step: the gap
+score's AUROC jumps from 0.68 to 0.89. Confidence gains less from calibration (0.58 to
+0.72), and the Gaussian test on confidence (0.66) does *worse* than the simple
+midpoint rule. One plausible reading is that the logit-transformed confidence is
+poorly fit by a Gaussian with only 16 draws per side, while the gap score is better
+behaved. The Gaussian test also is not uniformly best on the gap score: the midpoint
+rule has the lower false-alarm rate at 10% FNR (0.18 against 0.21) despite its lower
+AUROC. Which test to deploy depends on which operating point the auditor cares about.
+
+### The Cost of an Audit
+
+Every audit model is a full training run of the recommender, so the number of audit
+models is the dominant cost of an audit. @carlini2022membership note that with few
+reference models a pooled ("global") variance estimate is more stable than per-user
+variances. @fig-privacy-audit-budget re-runs both tests on random subsets of the 16
+seed pairs.
+
+```{r}
+#| label: fig-privacy-audit-budget
+#| fig-cap: "AUROC against the number of audit models (each seed pair trains two), from the posted demo scores. Points at 4 to 16 models average 40 random subsets of seed pairs; 32 is the full demo. Solid lines estimate a separate variance for each user; dashed lines pool one variance across users."
+#| fig-width: 7
+#| fig-height: 4.5
+budget <- data.frame(
+  models = c(4, 8, 16, 32),
+  rec_user   = c(0.7450, 0.8557, 0.9001, 0.9236),
+  rec_pool   = c(0.8789, 0.8906, 0.9003, 0.9073),
+  car_user   = c(0.6010, 0.6485, 0.6600, 0.6561),
+  car_pool   = c(0.6308, 0.6118, 0.6075, 0.6212))
+plot(budget$models, budget$rec_user, type = "b", log = "x", pch = 19, lwd = 2,
+     ylim = c(0.3, 0.95), xaxt = "n", xlab = "Number of audit models",
+     ylab = "AUROC", main = "Audit accuracy against audit budget")
+axis(1, at = budget$models)
+lines(budget$models, budget$rec_pool, type = "b", pch = 1,  lwd = 2, lty = 2)
+lines(budget$models, budget$car_user, type = "b", pch = 17, lwd = 2, col = "grey45")
+lines(budget$models, budget$car_pool, type = "b", pch = 2,  lwd = 2, lty = 2,
+      col = "grey45")
+abline(h = 0.5, col = "grey80", lty = 3)   # chance
+legend("bottomright", bty = "n", lwd = 2, lty = c(1, 2, 1, 2),
+       pch = c(19, 1, 17, 2), col = c("black", "black", "grey45", "grey45"),
+       legend = c("RecAudit, per-user variance", "RecAudit, pooled variance",
+                  "Carlini, per-user variance", "Carlini, pooled variance"))
+```
+
+With four audit models, per-user variances give RecAudit an AUROC of 0.745 (standard
+deviation 0.036 across subsets); pooling the variance raises it to 0.879, within 0.045
+of the full 32-model audit. The two estimators meet at 16 models, and only at 32 does
+the per-user version pull ahead (0.924 against 0.907). For a firm, this means a
+credible screen costs a handful of retraining runs, not hundreds. The paper's 256
+audit models buy the last few points of accuracy, and the extra budget is worth
+spending once the audit has to stand up in front of a regulator. These budget numbers
+come from the MovieLens-100K demo and should not be read as the paper's results.
+
+### What It Means for Marketers and Regulators
+
+Three implications follow. First, the audit is a black-box test of the deployed model:
+it needs the model's item scores for a user's sequences, not its weights. But it is
+not assumption-free. The auditor must know the architecture and training recipe well
+enough to train faithful reference models, and must hold auxiliary data from the same
+population, so a regulator who wanted to run it would have to mandate that access.
+Second, the score in @eq-privacy-gap is computed on the deleted user's own interaction
+history, so the audit has to be run by someone who still has that history: the user,
+submitting their own history, or a trusted auditor before final deletion. Verifying
+a deletion and completing it are therefore distinct steps, and the order matters.
+Third, the audit turns erasure from a binary legal claim into a ranked list of users
+whose traces most likely persist. That list is what lets a firm target approximate
+unlearning [@bourtoule2021machine; @chen2022recommendation] at the users who need it
+instead of retraining the whole recommender on every request, which ties the
+compliance cost of GDPR's erasure right to the market-structure costs in
+@tbl-gdpr-evidence.
+
+To reproduce the replication, check out the authors' repository (on Windows, the
+result files' names end in a period and need WSL or `git show` to extract), flatten
+the pickled scores to CSV with the short Python script below, and run the R script on
+the three CSVs. It prints @tbl-privacy-recaudit-replication,
+@tbl-privacy-recaudit-decomp, the budget curves in @fig-privacy-audit-budget, and a
+per-user comparison against the authors' saved statistics. The book does not run it
+at render time.
+
+```python
+# export_recaudit.py: flatten the RecAudit ml-100k demo pickles into three CSVs.
+# Usage: python export_recaudit.py <path-to-RecAudit-checkout> <output-dir>
+import os, sys, csv, pickle
+
+root, out = sys.argv[1] + "/RecStudio-main", sys.argv[2]
+load = lambda p: pickle.load(open(p, "rb"))
+base = "ml-100k/BERT4Rec/split/train"
+
+split = load(f"{root}/metadata/split/ml-100k/split/split_info.pkl")
+pos = [int(u) for u in split["pos_audit_users"]]       # still in the training data
+neg = [int(u) for u in split["neg_audit_users"]]       # deleted (never trained on)
+
+with open(f"{out}/recaudit_audit_users.csv", "w", newline="") as f:
+    w = csv.writer(f); w.writerow(["user_id", "unforgotten"])
+    w.writerows([(u, 1) for u in pos] + [(u, 0) for u in neg])
+
+rows = []
+for s in ["recaudit", "baseline"]:
+    for u, v in load(f"{root}/metadata/scores/target_model/{base}/1/{s}_score.pkl").items():
+        rows.append((int(u), "target", 0, s, float(v)))
+    for seed in range(1, 17):
+        for role in ["member", "nonmember"]:
+            p = f"{root}/metadata/scores/shadow_model/{base}/{seed}/{s}_{role}_score.pkl"
+            for u, v in load(p).items():
+                rows.append((int(u), role, seed, s, float(v)))
+with open(f"{out}/recaudit_scores.csv", "w", newline="") as f:
+    w = csv.writer(f); w.writerow(["user_id", "model", "seed", "score", "value"])
+    w.writerows(rows)
+
+# The authors' saved per-user statistics, for an exact cross-check. Their file names
+# end in "." ("Yeom et al."), which Windows cannot check out; accept "_et_al" copies.
+res = f"{root}/audit_results/audit/{base.replace('BERT4Rec/', 'BERT4Rec/BERT4Rec/')}/audit/1"
+with open(f"{out}/recaudit_author_likelihoods.csv", "w", newline="") as f:
+    w = csv.writer(f)
+    w.writerow(["method", "user_id", "label", "likelihood", "auroc", "fpr_at_10fnr"])
+    for m in ["Yeom et al.", "Zhou et al.", "Sablayrolles et al.", "Watson et al.",
+              "Carlini et al.", "RecAudit"]:
+        p = f"{res}/{m}"
+        r = load(p if os.path.exists(p) else p.replace(" et al.", "_et_al"))
+        for u, l, x in zip(r["users"], r["label"], r["likelihood"]):
+            w.writerow([m.replace(" et al.", "_et_al"), int(u), int(l), float(x),
+                        float(r["auroc"]), float(r["fpr_at_fix_fnr"])])
+```
+
+```{r privacy-recaudit-script, eval=FALSE}
+# Replication of the audit stage of RecAudit (Zhu, Yang, Fan & Lian 2026, ISR)
+# from the authors' posted ml-100k / BERT4Rec demo scores (github.com/zzh9568/RecAudit).
+args <- commandArgs(trailingOnly = TRUE)
+dir <- if (length(args)) args[1] else "."
+
+sc    <- read.csv(file.path(dir, "recaudit_scores.csv"))
+users <- read.csv(file.path(dir, "recaudit_audit_users.csv"))
+auth  <- read.csv(file.path(dir, "recaudit_author_likelihoods.csv"))
+
+# ---- half precision -------------------------------------------------------
+# The posted scores are numpy float16, and audit.py does its arithmetic in float16
+# (numpy keeps the array dtype when a Python float is added). h() rounds a double to
+# the nearest float16, so that each step below rounds exactly where numpy does.
+h <- function(x) {
+  ok <- is.finite(x) & x != 0
+  e <- pmax(floor(log2(abs(x[ok]))), -14)            # -14 = smallest normal exponent
+  q <- 2^(e - 10)                                    # 10 explicit mantissa bits
+  x[ok] <- round(x[ok] / q) * q                      # R rounds half to even, like IEEE
+  x
+}
+h_mean <- function(v) h(h(sum(v)) / length(v))       # numpy sums float16 in float32
+h_std  <- function(v) { d <- h(v - h_mean(v)); h(sqrt(h(h(sum(h(d * d))) / length(v)))) }
+
+# ---- score transforms (audit.py: _unforgotten_score_prepro) -----------------
+neg_loss <- function(s) { s <- pmin(h(s + 1e-3), 1); h(log(s)) }   # -(-log s)
+lira     <- function(s) { z <- h(h(s / h(h(1 - s) + 1e-3)) + 1e-3); h(log(pmin(z, 1e3))) }
+
+# ---- AUROC (trapezoidal, ties = 1/2) and FPR at 10% FNR ---------------------
+auroc <- function(y, x) {
+  r <- rank(x); n1 <- sum(y == 1); n0 <- sum(y == 0)
+  (sum(r[y == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0)
+}
+fpr_at_fnr <- function(y, x, fnr = 0.1) {
+  th  <- sort(unique(x), decreasing = TRUE)
+  tpr <- sapply(th, function(t) mean(x[y == 1] >= t))
+  fpr <- sapply(th, function(t) mean(x[y == 0] >= t))
+  ok  <- which(1 - tpr < fnr)
+  if (length(ok)) fpr[ok[1]]
+}
+
+# ---- assemble per-user target score and IN / OUT reference scores -----------
+get <- function(score, model, seeds = 1:16) {
+  d <- sc[sc$score == score & sc$model == model & (model == "target" | sc$seed %in% seeds), ]
+  split(d$value, d$user_id)
+}
+
+# 2-sided Gaussian likelihood ratio (Carlini et al.'s online LiRA; RecAudit's test)
+lr_gauss <- function(tgt, inn, out, pooled = FALSE) {
+  if (pooled) { s_in <- sd_pool(inn); s_out <- sd_pool(out) }
+  sapply(names(tgt), function(u) {
+    m1 <- h_mean(inn[[u]]); m0 <- h_mean(out[[u]])
+    s1 <- if (pooled) s_in else h_std(inn[[u]])   # numpy std, ddof = 0
+    s0 <- if (pooled) s_out else h_std(out[[u]])
+    dnorm(tgt[[u]], m1, s1 + 1e-30, log = TRUE) - dnorm(tgt[[u]], m0, s0 + 1e-30, log = TRUE)
+  })
+}
+sd_pool <- function(lst) sqrt(mean(sapply(lst, function(v) mean((v - mean(v))^2))))
+
+audit_stat <- function(test, tgt, inn, out, pooled = FALSE) {
+  ids <- names(tgt)
+  switch(test,
+    global = unlist(tgt) - mean(unlist(tgt)),
+    one_side = sapply(ids, function(u) tgt[[u]] - h_mean(out[[u]])),
+    two_side = sapply(ids, function(u) tgt[[u]] - h(h(h_mean(inn[[u]]) + h_mean(out[[u]])) / 2)),
+    gauss = lr_gauss(tgt, inn, out, pooled))
+}
+
+run <- function(method, seeds = 1:16, pooled = FALSE) {
+  cfg <- list(
+    "Yeom et al."         = c("baseline", "neg_loss", "global"),
+    "Zhou et al."         = c("baseline", "corr",     "global"),
+    "Sablayrolles et al." = c("baseline", "neg_loss", "two_side"),
+    "Watson et al."       = c("baseline", "neg_loss", "one_side"),
+    "Carlini et al."      = c("baseline", "lira",     "gauss"),
+    "RecAudit"            = c("recaudit", "none",     "gauss"),
+    "Gap score, global"   = c("recaudit", "none",     "global"),
+    "Gap score, 1-sided"  = c("recaudit", "none",     "one_side"),
+    "Gap score, 2-sided"  = c("recaudit", "none",     "two_side"))[[method]]
+  ids <- as.character(users$user_id)
+  tr <- switch(cfg[2], neg_loss = neg_loss, lira = lira, identity)
+  tgt <- lapply(get(cfg[1], "target")[ids], tr)
+  inn <- lapply(get(cfg[1], "member", seeds)[ids], tr)
+  out <- lapply(get(cfg[1], "nonmember", seeds)[ids], tr)
+  if (cfg[2] == "corr") {                     # Zhou et al.: confidence + correctness
+    hit <- function(l) lapply(l, function(v) as.numeric(v > 0))
+    rt  <- get("recaudit", "target")[ids]
+    tgt <- Map(function(a, b) h(a + b), tgt, hit(rt))
+  }
+  x <- audit_stat(cfg[3], tgt, inn, out, pooled)
+  y <- users$unforgotten
+  structure(c(auroc = auroc(y, x), fpr10 = fpr_at_fnr(y, x)), stat = setNames(x, ids))
+}
+
+methods <- c("Yeom et al.", "Zhou et al.", "Sablayrolles et al.", "Watson et al.",
+             "Carlini et al.", "RecAudit")
+tab <- t(sapply(methods, run))
+published <- data.frame(auroc = c(0.5825, 0.5802, 0.7238, 0.6872, 0.6561, 0.9236),
+                        fpr10 = c(0.7898, 0.7834, 0.5478, 0.6624, 0.8025, 0.2102))
+cat("\n== Replication vs the authors' README table ==\n")
+print(round(cbind(tab, readme_auroc = published$auroc, readme_fpr10 = published$fpr10), 4))
+
+# Exact check: recompute AUROC from the authors' own saved likelihoods
+cat("\n== AUROC from the authors' saved per-user likelihoods ==\n")
+print(round(sapply(split(auth, auth$method), function(d) auroc(d$label, d$likelihood)), 6))
+
+# ---- Extension 1: which ingredient carries the gain? ------------------------
+cat("\n== Decomposition: score x test ==\n")
+dec <- t(sapply(c("Yeom et al.", "Watson et al.", "Sablayrolles et al.", "Carlini et al.",
+                  "Gap score, global", "Gap score, 1-sided", "Gap score, 2-sided", "RecAudit"), run))
+print(round(dec, 4))
+
+# ---- Extension 2: audit-model budget ----------------------------------------
+set.seed(20261005)
+budget <- do.call(rbind, lapply(c(2, 4, 8, 16), function(k) {
+  draws <- if (k == 16) list(1:16) else replicate(40, sample(16, k), simplify = FALSE)
+  do.call(rbind, lapply(c("Carlini et al.", "RecAudit"), function(m) {
+    a <- sapply(draws, function(s) run(m, seeds = s)["auroc"])
+    p <- sapply(draws, function(s) run(m, seeds = s, pooled = TRUE)["auroc"])
+    data.frame(pairs = k, models = 2 * k, method = m,
+               auroc_mean = mean(a), auroc_sd = if (k == 16) 0 else sd(a),
+               auroc_pooled_var = mean(p))
+  }))
+}))
+cat("\n== AUROC by number of audit models (mean over 40 random seed subsets) ==\n")
+print(budget, digits = 4)
+
+# ---- per-user agreement with the authors' saved likelihoods ----------------
+cat("\n== Max |difference| between our per-user statistic and the authors' ==\n")
+key <- c("Yeom_et_al" = "Yeom et al.", "Zhou_et_al" = "Zhou et al.",
+         "Sablayrolles_et_al" = "Sablayrolles et al.", "Watson_et_al" = "Watson et al.",
+         "Carlini_et_al" = "Carlini et al.", "RecAudit" = "RecAudit")
+for (k in names(key)) {
+  ours <- attr(run(key[[k]]), "stat")
+  a <- auth[auth$method == k, ]
+  d <- abs(ours[as.character(a$user_id)] - a$likelihood)
+  cat(sprintf("%-20s max|diff| = %.3g   users differing > 1e-9: %d   our FPR@10%%FNR on their stat: %.4f (saved %.4f)\n",
+              key[[k]], max(d), sum(d > 1e-9), fpr_at_fnr(a$label, a$likelihood), a$fpr_at_10fnr[1]))
+}
+```
+
 ## Personalization and Sensitive Information: A Boundary Condition
 
 A recurring nuance is that the privacy calculus is *type-of-information* specific, not
@@ -620,6 +1035,11 @@ norms rather than to minimize disclosure or maximize collection.
   compliant consent yet forces app exit and depresses introduction, trading privacy
   against innovation, with two-sided competitive incidence and limited effect on
   dominant trackers [@godinho2022consumer; @janssen2022gdpr; @kollnig2021before].
+- **Deleting the data does not delete what the model learned.** Erasure can be
+  audited: comparing a recommender's fit to a user's own history against reference
+  models trained with and without that user flags unforgotten users with an AUROC of
+  0.92 in the authors' demo, which this chapter reproduces exactly, and a pooled-variance
+  version stays near 0.88 with only four reference models [@zhu2026forget].
 - Treat **privacy as strategy**: authentic, aligned, long-horizon, control-granting
   practices build the trust that flattens the privacy-cost gradient and insure against
   breach damage [@martin2017data; @casadesus2015competing].
