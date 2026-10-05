@@ -25,7 +25,8 @@ their combinations into shared representation spaces.
 This chapter proceeds from the concrete to the conceptual. It begins with the case for
 fusing modalities at all. It then lays out the three canonical fusion strategies and
 demonstrates two of them in genuinely runnable R, comparing early fusion against late
-fusion on simulated multimodal customer data. From there it treats the representational
+fusion on simulated multimodal customer data, and then works through a joint-fusion design
+for multiperiod risk prediction on public firm data. From there it treats the representational
 backbone of modern fusion: contrastive image-text models in the style of CLIP, and
 the multimodal large language models that have absorbed them. It examines the use of
 those models as measurement instruments, including the contested practice of treating a
@@ -125,8 +126,9 @@ representations as it goes; @fig-fus-strategies draws the three architectures si
 side. The runnable demonstration below contrasts the two that can
 be built from off-the-shelf, maintained packages: early fusion with a penalized linear
 model and late fusion with per-modality random forests combined by a stacking
-meta-learner. Joint fusion is treated conceptually, because its honest demonstration
-requires a deep-learning stack outside this book's runnable scope.
+meta-learner. Joint fusion needs a deep-learning stack, so it gets its own section
+(@sec-mmf-drdl), which reimplements a published joint-fusion design in R's `torch` and runs
+it on public firm data.
 
 ```{mermaid}
 %%| label: fig-fus-strategies
@@ -323,6 +325,531 @@ each base model is fit and regularized to its own modality and the combiner has 
 parameters to estimate. The honest takeaway is not that one strategy dominates but that
 the choice is an empirical, validated decision, and that fusing beats not fusing whenever
 the modalities carry complementary signal.
+
+## Joint Fusion in Practice: Discrete Codes and Monotone Risk {#sec-mmf-drdl}
+
+The demonstration above stopped short of joint fusion. A recent design-science paper shows
+what joint fusion looks like when the target is not a single label but a risk curve over
+several horizons. It repays a close reading, because each of its components answers a
+problem that the strategies above leave open. @wang2026drdl predict financial risk for
+firms observed through several heterogeneous data sources ("views") at once. Their method,
+discrete and regularized deep learning (DRDL), has two modules (@fig-mmf-drdl).
+
+The first is a disentangled multiview learning module motivated by chunking theory, the
+idea that people handle complex information by compressing it into a small number of
+familiar units. A *discrete multiview recoder* encodes each view and represents it with
+entries from a small learned codebook, the vector-quantization device that
+@vandenoord2017vqvae introduced for discrete representation learning. A *mask-based view
+fusion decoder* then combines the coded views. The stated aim is to filter out what several
+views repeat and keep what each view adds, which is the redundant-versus-complementary
+distinction this chapter opened with, now enforced inside the model rather than hoped for.
+The second module is monotonicity-aware multiperiod risk prediction. A risk accumulation
+function guarantees that predicted risk never falls as the horizon lengthens (time-wise
+monotonicity), a focal survival loss accommodates what the authors call instance-wise
+monotonicity, and an adaptive gradient-balancing method keeps the training objectives from
+crowding one another out. The authors evaluate DRDL on two types of companies in three
+markets in China and the United States, at yearly, quarterly, and monthly windows, for three
+kinds of risk: fundamental distress, regulatory listing risk, and market tail risk. They
+report gains over classic and state-of-the-art benchmarks in time-to-risk and out-of-time
+prediction, and in the identification of risky firms and the profitability of acting on the
+predictions. They also stress practical advantages: factor-level codes that an analyst can
+inspect and regulate, and predictions that respect the cumulative, irreversible way
+financial risk escalates. Only the published abstract was accessible when this section was
+written, so the reimplementation below follows the components the authors name, and the
+specific layer forms are ours.
+
+```{mermaid}
+%%| label: fig-mmf-drdl
+%%| fig-cap: "The DRDL design as reimplemented in this section. Each view of a firm is encoded, cut into factors, and each factor is snapped to its own small codebook; a mask gates the coded views into one fused representation, which a decoder must use to reconstruct each view from the others; a head emits per-period hazards whose accumulation gives a risk curve that cannot fall with the horizon."
+flowchart LR
+  subgraph IN["Views of one firm"]
+    direction TB
+    V1["Profitability<br/>ratios"]
+    V2["Leverage<br/>ratios"]
+    V3["Liquidity<br/>ratios"]
+    V4["Activity<br/>ratios"]
+  end
+  subgraph DM["Discrete multiview recoder"]
+    direction TB
+    E["One encoder<br/>per view"] --> Q["Cut into factors;<br/>snap each factor to<br/>its nearest code"]
+  end
+  subgraph FU["Mask-based fusion"]
+    direction TB
+    G["Gate each coded view:<br/>keep complementary,<br/>damp redundant"] --> Z["Fused firm<br/>representation"]
+    Z -.->|"reconstruct each view<br/>with its own block masked"| R["View decoders<br/>(regularizer)"]
+  end
+  subgraph RK["Monotone multiperiod risk"]
+    direction TB
+    H["Per-period hazards<br/>for years 1 to 5"] --> F["Accumulate:<br/>risk within h years<br/>never falls as h grows"]
+  end
+  IN --> DM
+  DM --> FU
+  FU --> RK
+```
+
+### A Reimplementation on Public Data {#sec-mmf-drdl-replication}
+
+The paper's data come from commercial databases and no code has been released, so its
+numbers cannot be reproduced. What can be reproduced is the design logic, on public data
+with the same structure. The UCI Polish bankruptcy data [@tomczak2016polishdata;
+@zieba2016ensemble] hold 43,405 annual statements of Polish manufacturing firms, each
+described by 64 financial ratios, in five files. Each file pairs statements with bankruptcy
+status a fixed number of years later, from one to five, so every statement carries a label
+at exactly one horizon. That is the multiperiod setting DRDL is built for. We split the 64
+ratios into four views: profitability (20 ratios), leverage and coverage (16), liquidity
+(14), and activity, size, and growth (14). Each component was then rebuilt at small scale in
+R's `torch`:
+
+- **Discrete recoder.** One small encoder per view produces a 16-dimensional vector, which
+  is cut into four 4-dimensional factors. Each factor is replaced by the nearest of 8
+  learned code vectors, using straight-through gradients, a commitment loss, and restarts
+  for any code that no firm uses. A single 8-entry codebook per view proved too coarse
+  (only $8^4 = 4{,}096$ possible firm representations across the four views), which is presumably why the paper
+  speaks of factor-level codes.
+- **Mask-based fusion.** A sigmoid gate computed from all four coded views scales each
+  view's code before concatenation. As a regularizer, a decoder must reconstruct each view
+  from the fused code *with that view's own block masked out*, so signal that the other
+  views already carry earns its place in the fused code only once.
+- **Risk accumulation.** The head emits a hazard $\lambda_t \in (0,1)$ for each year
+  $t = 1, \dots, 5$ and reports the risk of bankruptcy within $h$ years as
+  $F(h \mid x) = 1 - \prod_{t \le h} (1 - \lambda_t)$, which cannot decrease in $h$
+  whatever the network learns.
+- **Focal loss and balancing.** Each statement contributes a focal loss [@lin2017focal] on
+  $F(h \mid x)$ at its own horizon, which down-weights the many easy non-bankrupt firms.
+  The reconstruction-and-codebook loss is reweighted during training so that its gradient
+  on the shared encoders matches the gradient of the prediction loss.
+
+Statements were split 70/30 within each horizon-by-outcome cell, ratios were rank-normalized
+on the training data, and every model other than gradient boosting (which handles missing
+values natively) received indicators for the 11 ratios missing in more than 1% of rows,
+since missingness is itself predictive here. The neural models were trained for 60 epochs,
+a length chosen on a validation split carved out of the training data, and are averaged
+over five seeds. @tbl-mmf-drdl reports discrimination at each horizon and the share of test
+firms whose predicted risk curve falls somewhere between one and five years.
+
+```{r}
+#| label: tbl-mmf-drdl
+#| tbl-cap: "Reimplementing DRDL on the UCI Polish bankruptcy data (test set, 13,020 statements). AUC is computed within each horizon file. The last column is the share of test firms whose predicted risk of bankruptcy within h years decreases somewhere as h rises from 1 to 5. Neural rows average five seeds (seed standard deviation of mean AUC at most 0.005). Pooled rows are trained on all five files; see the text on firm overlap across files. The adjacent-files row fits a separate model per horizon, so its curves are not comparable (n/a)."
+#| echo: false
+#| message: false
+library(tibble)
+library(knitr)
+
+tribble(
+  ~Model,                                              ~h1,   ~h2,   ~h3,   ~h4,   ~h5,   ~`Mean AUC`, ~`Non-monotone`,
+  "Elastic-net logit, one per horizon",                0.942, 0.896, 0.863, 0.829, 0.895, 0.885,       "99.5%",
+  "Gradient boosting, one per horizon",                0.959, 0.942, 0.928, 0.942, 0.928, 0.940,       "99.5%",
+  "Gradient boosting per horizon + running max",       0.959, 0.944, 0.910, 0.835, 0.896, 0.909,       "0%",
+  "Gradient boosting, pooled, monotone in horizon",    0.981, 0.967, 0.965, 0.969, 0.975, 0.971,       "0%",
+  "  same, adjacent-year files dropped",               0.971, 0.952, 0.949, 0.962, 0.967, 0.960,       "n/a",
+  "MLP, independent sigmoid per horizon (pooled)",     0.975, 0.954, 0.964, 0.966, 0.974, 0.966,       "98.2%",
+  "MLP + risk accumulation (pooled)",                  0.970, 0.958, 0.967, 0.970, 0.977, 0.968,       "0%",
+  "DRDL-lite, continuous view codes",                  0.972, 0.958, 0.959, 0.973, 0.974, 0.967,       "0%",
+  "DRDL-lite, discrete factor codes",                  0.961, 0.947, 0.939, 0.954, 0.969, 0.954,       "0%"
+) |>
+  kable(digits = 3)
+```
+
+Four lessons come out of the table, and only some of them flatter the method.
+
+*Separate horizon models produce incoherent risk curves.* Fitting one model per horizon is
+the default, and it yields a predicted risk of bankruptcy within five years that is *lower*
+than the risk within one year for almost every firm (99.5% of test firms). Part of this is
+built into these data: each file was sampled separately, and the bankrupt share falls from
+6.9% at one year to 3.9% at five, so independent models faithfully reproduce five sampling
+designs. That is the point. Stacked horizon models cannot be read as a risk curve, and a
+risk manager who wants one has to impose coherence somewhere.
+
+*Where coherence is imposed matters.* Patching the curves afterwards with a running maximum
+fixes monotonicity but costs 0.031 in mean AUC, mostly at long horizons, where the one-year
+model's scores overwrite better long-horizon rankings. Building monotonicity into the model
+costs nothing. The risk-accumulation head matches the unconstrained network (0.968 against
+0.966) while eliminating every violation, which supports the paper's claim that the
+monotone structure is a free constraint rather than a trade-off. The same is true of gradient
+boosting with a monotone constraint on the horizon, a reminder that time-wise monotonicity
+is a modeling choice available outside deep learning.
+
+*Pooling across horizons helps, but these files flatter it.* Every pooled model beats the
+per-horizon models, which is the multiperiod argument: one model that sees
+all horizons borrows strength across them. The files carry no firm identifier, however, and
+a firm's statement from an adjacent year sits in an adjacent file, so a pooled model can
+partly recognize a test firm from its own training-set sibling. Refitting the pooled
+boosting model for each horizon without the two adjacent files lowers its mean AUC from
+0.971 to 0.960. That drop overstates the overlap, because the refit also loses two files of
+legitimate training data, yet most of the gain over the per-horizon models (0.960 against
+0.940) survives it. Any pooled number in the table should be read with this in mind,
+and only pooled models should be compared with one another.
+
+*Discreteness buys inspectability at a price, and the deep model does not beat boosting
+here.* With continuous view codes our DRDL-lite performs like the plain networks (0.967).
+Snapping the codes to codebooks lowers mean AUC to 0.954. What the discrete codes buy is the
+practical advantage the authors emphasize: every firm is described by a handful of code
+indices that an analyst can tabulate. On the test set, one leverage code gathers 193 firms of
+which 89% went bankrupt, against a 4.8% base rate. One profitability code gathers 525 firms
+with a 21% bankruptcy rate, and another gathers 323 firms of which none went bankrupt. The
+activity view's codes, by contrast, span only about 3% to 8%, which says that view adds little.
+Such a table is a factor-level summary a credit committee can read and challenge, which a
+16-dimensional continuous embedding is not. On accuracy, though, pooled boosting with a
+monotone constraint (0.971) is at least as good as any network here.
+
+That last result fits the scope of the paper rather than contradicting it. These data are a
+single, fully numeric source split into views by hand, so the views are heavily redundant,
+and on tabular data of this kind tree ensembles are hard to beat. DRDL's case rests on
+heterogeneous views drawn from different data sources, at scale, and judged on out-of-time
+and application-level criteria that a public cross-section cannot supply. What a public
+reimplementation can show is that each component does what it is claimed to do: the
+accumulation head makes risk curves coherent at no cost, factor-level codes yield an
+interpretable map of risky firm types, and pooling across horizons is valuable but must be
+evaluated with a firm-level split before any gain is believed. The script below reproduces
+the table. It downloads the data, fits the baselines in about a minute, and trains the 20
+neural fits in roughly 50 minutes on a laptop CPU.
+
+```{r mmf-drdl-repro}
+#| eval: false
+# Reproduces the table above. Requires the torch, glmnet, and xgboost packages
+# (run torch::install_torch() once after installing torch).
+# DRDL-lite on the UCI Polish bankruptcy data -------------------------------
+# A scaled-down reimplementation of the design logic in Wang, Che, Jiang & Zhao
+# (2026, ISR): per-view encoders -> discrete codebooks -> masked view fusion ->
+# monotone multiperiod risk head, trained with a focal loss and adaptive
+# gradient balancing. The paper's data and code are not public; the layer
+# forms below are our own stand-ins for each component the paper names.
+#
+# Data: Tomczak, UCI ML Repository #365 (CC BY 4.0). File "kyear.arff" holds
+# statements from year k of the forecasting window; its label is bankruptcy
+# status after h = 6 - k years.
+
+suppressMessages({
+  library(torch); library(glmnet); library(xgboost)
+})
+data_dir <- "polish"
+if (!dir.exists(data_dir)) {
+  zip <- tempfile(fileext = ".zip")
+  download.file("https://archive.ics.uci.edu/static/public/365/polish+companies+bankruptcy+data.zip",
+                zip, mode = "wb")
+  unzip(zip, exdir = data_dir)
+}
+n_seeds  <- 5    # neural models are averaged over 5 seeds
+n_epochs <- 60   # about 50 minutes on a laptop CPU for the full script
+
+# --- 1. Read the five horizon files ------------------------------------------
+read_arff <- function(f) {
+  L <- readLines(f, warn = FALSE)
+  L <- L[(grep("^@data", L, ignore.case = TRUE) + 1):length(L)]
+  L <- L[nzchar(trimws(L))]
+  m <- do.call(rbind, strsplit(L, ","))
+  m[m == "?"] <- NA
+  d <- as.data.frame(apply(m[, 1:64], 2, as.numeric))
+  names(d) <- paste0("X", 1:64)
+  d$y <- as.integer(m[, 65])
+  d
+}
+dat <- do.call(rbind, lapply(1:5, function(k) {
+  d <- read_arff(file.path(data_dir, sprintf("%dyear.arff", k)))
+  d$h <- 6L - k
+  d
+}))
+cat("rows:", nrow(dat), " bankrupt share by horizon:\n")
+print(round(tapply(dat$y, dat$h, mean), 4))
+
+# --- 2. Four economically defined views ---------------------------------------
+views <- list(
+  profitability = c(1, 6, 7, 11, 13, 14, 18, 19, 22, 23, 24, 31, 35, 39, 42,
+                    45, 48, 49, 56, 58),
+  leverage      = c(2, 8, 10, 15, 16, 17, 25, 26, 27, 30, 34, 38, 41, 53, 54, 59),
+  liquidity     = c(3, 4, 5, 12, 28, 33, 37, 40, 46, 50, 51, 55, 57, 63),
+  activity      = c(9, 20, 21, 29, 32, 36, 43, 44, 47, 52, 60, 61, 62, 64)
+)
+stopifnot(setequal(unlist(views), 1:64), !anyDuplicated(unlist(views)))
+
+# --- 3. Stratified 70/30 split within horizon x label -------------------------
+set.seed(2026)
+strata <- interaction(dat$h, dat$y)
+test <- unlist(lapply(split(seq_len(nrow(dat)), strata),
+                      function(ix) ix[sample.int(length(ix), round(.3 * length(ix)))]))
+is_test <- seq_len(nrow(dat)) %in% test
+tr <- dat[!is_test, ]; te <- dat[is_test, ]
+
+# Rank-Gaussian transform fitted on training data only (ratios are wildly
+# heavy-tailed); missing values go to the training median (= 0 after transform).
+rank_gauss <- function(x_tr, x_new) {
+  xs <- sort(x_tr[!is.na(x_tr)])
+  u  <- (findInterval(x_new, xs, left.open = FALSE) + 0.5) / (length(xs) + 1)
+  z  <- qnorm(pmin(pmax(u, 1e-4), 1 - 1e-4))
+  z[is.na(z)] <- 0
+  z
+}
+Xtr <- sapply(1:64, function(j) rank_gauss(tr[[j]], tr[[j]]))
+Xte <- sapply(1:64, function(j) rank_gauss(tr[[j]], te[[j]]))
+# Missingness is itself predictive in these data (trees see it natively), so
+# every other model gets an indicator for each ratio missing in > 1% of rows.
+miss_cols <- which(colMeans(is.na(tr[, 1:64])) > 0.01)
+Xtr <- cbind(Xtr, 1 * is.na(as.matrix(tr[, miss_cols])))
+Xte <- cbind(Xte, 1 * is.na(as.matrix(te[, miss_cols])))
+view_cols <- lapply(views, function(v) c(v, 64 + which(miss_cols %in% v)))
+cat("missingness indicators:", length(miss_cols), "\n")
+
+auc <- function(y, p) {
+  r <- rank(p); n1 <- sum(y == 1); n0 <- sum(y == 0)
+  (sum(r[y == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0)
+}
+# Evaluate a model that returns an n x 5 matrix of P(bankrupt within h | x).
+evaluate <- function(P, name) {
+  a <- sapply(1:5, function(h) auc(te$y[te$h == h], P[te$h == h, h]))
+  own <- P[cbind(seq_len(nrow(te)), te$h)]
+  viol <- mean(apply(P, 1, function(p) any(diff(p) < -1e-6)))
+  data.frame(model = name, t(setNames(round(a, 3), paste0("AUC_h", 1:5))),
+             AUC_pooled = round(auc(te$y, own), 3),
+             mean_AUC = round(mean(a), 3),
+             nonmonotone_share = round(viol, 3))
+}
+
+# --- 4. Classical baselines: one model per horizon ----------------------------
+P_logit <- P_xgb <- matrix(NA_real_, nrow(te), 5)
+for (h in 1:5) {
+  ix <- tr$h == h
+  cv <- cv.glmnet(Xtr[ix, ], tr$y[ix], family = "binomial", alpha = 0.5, nfolds = 5)
+  P_logit[, h] <- predict(cv, Xte, s = "lambda.min", type = "response")
+  dtr <- xgb.DMatrix(as.matrix(tr[ix, 1:64]), label = tr$y[ix])
+  bst <- xgb.train(params = list(objective = "binary:logistic", eta = 0.05,
+                                 max_depth = 4, subsample = 0.8,
+                                 colsample_bytree = 0.8, eval_metric = "auc"),
+                   data = dtr, nrounds = 400, verbose = 0)
+  P_xgb[, h] <- predict(bst, xgb.DMatrix(as.matrix(te[, 1:64])))
+}
+# Pooled boosting with horizon as a feature, constrained to be nondecreasing
+# in h: time-wise monotonicity without any deep learning.
+dpool <- xgb.DMatrix(cbind(as.matrix(tr[, 1:64]), h = tr$h), label = tr$y)
+bst_pool <- xgb.train(params = list(objective = "binary:logistic", eta = 0.05,
+                                    max_depth = 4, subsample = 0.8,
+                                    colsample_bytree = 0.8,
+                                    monotone_constraints = c(rep(0, 64), 1)),
+                      data = dpool, nrounds = 800, verbose = 0)
+P_pool <- sapply(1:5, function(h)
+  predict(bst_pool, xgb.DMatrix(cbind(as.matrix(te[, 1:64]), h = h))))
+P_cummax <- t(apply(P_xgb, 1, cummax))   # post-hoc fix of the per-horizon curves
+# Files carry no firm ID, and a firm's statement from an adjacent year sits in
+# an adjacent file, so pooling can "recognize" a test firm. To bound that leak,
+# refit the pooled model for each target horizon h without files h - 1, h + 1.
+P_pool_noadj <- matrix(NA_real_, nrow(te), 5)
+for (h in 1:5) {
+  ix <- abs(tr$h - h) != 1
+  d  <- xgb.DMatrix(cbind(as.matrix(tr[ix, 1:64]), h = tr$h[ix]), label = tr$y[ix])
+  b  <- xgb.train(params = list(objective = "binary:logistic", eta = 0.05,
+                                max_depth = 4, subsample = 0.8, colsample_bytree = 0.8,
+                                monotone_constraints = c(rep(0, 64), 1)),
+                  data = d, nrounds = 800, verbose = 0)
+  P_pool_noadj[, h] <- predict(b, xgb.DMatrix(cbind(as.matrix(te[, 1:64]), h = h)))
+}
+res <- rbind(evaluate(P_logit,  "Elastic-net logit, one per horizon"),
+             evaluate(P_xgb,    "Gradient boosting, one per horizon"),
+             evaluate(P_cummax, "Gradient boosting per horizon + running max"),
+             evaluate(P_pool,   "Gradient boosting, pooled, monotone in horizon"),
+             evaluate(P_pool_noadj, "  same, adjacent-year files dropped (AUC only)"))
+print(res)
+
+# --- 5. Neural models ----------------------------------------------------------
+torch_set_num_threads(4)
+xv_tr <- lapply(view_cols, function(v) torch_tensor(Xtr[, v], dtype = torch_float()))
+xv_te <- lapply(view_cols, function(v) torch_tensor(Xte[, v], dtype = torch_float()))
+x_tr  <- torch_tensor(Xtr, dtype = torch_float())
+x_te  <- torch_tensor(Xte, dtype = torch_float())
+y_tr  <- torch_tensor(tr$y, dtype = torch_float())
+h_tr  <- torch_tensor(tr$h, dtype = torch_long())
+
+# Risk accumulation: per-period hazards lambda_t in (0,1), cumulative risk
+# F(h) = 1 - prod_{t<=h} (1 - lambda_t). Nondecreasing in h by construction.
+accumulate <- function(logits) {
+  log_surv <- torch_cumsum(nnf_logsigmoid(-logits), dim = 2)  # log prod(1-lambda)
+  1 - torch_exp(log_surv)
+}
+
+# Focal loss on the cumulative risk at each firm's observed horizon.
+focal_loss <- function(p, y, gamma = 2, alpha = 0.75) {
+  p  <- p$clamp(1e-6, 1 - 1e-6)
+  pt <- torch_where(y > 0.5, p, 1 - p)
+  at <- torch_where(y > 0.5, torch_tensor(alpha), torch_tensor(1 - alpha))
+  (-at * (1 - pt)^gamma * torch_log(pt))$mean()
+}
+
+# Vector quantizer with straight-through gradients and a commitment loss.
+vq_layer <- nn_module(
+  initialize = function(K, d) {
+    self$codebook <- nn_parameter(torch_randn(K, d) * 0.5)
+  },
+  forward = function(e) {
+    d2  <- torch_cdist(e, self$codebook)          # n x K distances
+    idx <- d2$argmin(dim = 2)                     # 1-based in R torch
+    q   <- self$codebook[idx, ]
+    vq_loss <- nnf_mse_loss(q, e$detach()) + 0.25 * nnf_mse_loss(e, q$detach())
+    list(q = e + (q - e)$detach(), idx = idx, loss = vq_loss)
+  }
+)
+
+mlp <- function(i, o, hdim = 32) nn_sequential(nn_linear(i, hdim), nn_relu(),
+                                               nn_dropout(0.1), nn_linear(hdim, o))
+
+drdl_net <- nn_module(
+  initialize = function(dims, d = 16, K = 8, n_fac = 4, discrete = TRUE, monotone = TRUE) {
+    self$discrete <- discrete; self$monotone <- monotone
+    V <- length(dims); self$n_fac <- n_fac; self$fd <- d / n_fac
+    self$enc <- nn_module_list(lapply(dims, function(di) mlp(di, d)))
+    # Factor-level codes: each view's vector is cut into n_fac factors and each
+    # factor is snapped to its own K-entry codebook (K^n_fac states per view).
+    self$vq  <- nn_module_list(lapply(seq_len(V * n_fac), function(i) vq_layer(K, d / n_fac)))
+    # Mask-based fusion: a gate per view-dimension computed from all views.
+    self$gate <- nn_linear(V * d, V * d)
+    # View decoders reconstruct each view from the fused code with that view's
+    # own block masked out, so the fused code is pushed to carry what other
+    # views can predict (shared signal) only once.
+    self$dec <- nn_module_list(lapply(dims, function(di) mlp(V * d, di)))
+    self$head <- mlp(V * d, 5)
+    self$d <- d; self$V <- V
+  },
+  forward = function(xs) {
+    outs <- lapply(seq_len(self$V), function(v) {
+      e <- self$enc[[v]](xs[[v]])
+      if (!self$discrete) return(list(q = e, idx = NULL, loss = torch_tensor(0)))
+      fo <- lapply(seq_len(self$n_fac), function(f) {
+        cols <- ((f - 1) * self$fd + 1):(f * self$fd)
+        self$vq[[(v - 1) * self$n_fac + f]](e[, cols])
+      })
+      list(q = torch_cat(lapply(fo, `[[`, "q"), dim = 2),
+           idx = lapply(fo, `[[`, "idx"),
+           loss = Reduce(`+`, lapply(fo, `[[`, "loss")) / self$n_fac)
+    })
+    qcat <- torch_cat(lapply(outs, `[[`, "q"), dim = 2)
+    m    <- torch_sigmoid(self$gate(qcat))
+    z    <- m * qcat
+    rec  <- torch_tensor(0)
+    for (v in seq_len(self$V)) {
+      keep <- torch_ones(self$V * self$d)
+      keep[((v - 1) * self$d + 1):(v * self$d)] <- 0
+      rec <- rec + nnf_mse_loss(self$dec[[v]](z * keep), xs[[v]])
+    }
+    logits <- self$head(z)
+    risk <- if (self$monotone) accumulate(logits) else torch_sigmoid(logits)
+    list(risk = risk, aux = rec / self$V + Reduce(`+`, lapply(outs, `[[`, "loss")),
+         idx = lapply(outs, `[[`, "idx"), mask = m)
+  }
+)
+
+# Plain early-fusion MLP on all 64 ratios (no views, no codes).
+flat_net <- nn_module(
+  initialize = function(monotone) { self$f <- mlp(ncol(Xtr), 5, 64); self$monotone <- monotone },
+  forward = function(x) {
+    l <- self$f(x)
+    list(risk = if (self$monotone) accumulate(l) else torch_sigmoid(l),
+         aux = torch_tensor(0))
+  }
+)
+
+# Training. Loss at each firm's own horizon; for DRDL the prediction and
+# auxiliary (reconstruction + VQ) losses are reweighted every step so their
+# gradient norms on the shared encoders match (a GradNorm-style balance).
+train_net <- function(net, X, focal = TRUE, balance = TRUE, epochs = n_epochs, bs = 1024, trace = NULL) {
+  opt <- optim_adam(net$parameters, lr = 2e-3, weight_decay = 1e-5)
+  n <- nrow(Xtr); w_aux <- 1; step <- 0
+  shared <- if (!is.null(net$enc)) unlist(lapply(net$enc, function(m) m$parameters)) else NULL
+  for (ep in seq_len(epochs)) {
+    net$train()
+    perm <- sample.int(n)
+    for (b in split(perm, ceiling(seq_along(perm) / bs))) {
+      bi <- torch_tensor(b, dtype = torch_long())
+      xb <- if (is.list(X)) lapply(X, function(t) t[bi, ]) else X[bi, ]
+      out <- net(xb)
+      p   <- out$risk$gather(2, h_tr[bi]$unsqueeze(2))$squeeze(2)
+      lp  <- if (focal) focal_loss(p, y_tr[bi]) else nnf_binary_cross_entropy(p$clamp(1e-6, 1 - 1e-6), y_tr[bi])
+      step <- step + 1
+      if (balance && !is.null(shared) && out$aux$requires_grad && step %% 20 == 1) {
+        g1 <- autograd_grad(lp, shared, retain_graph = TRUE, allow_unused = TRUE)
+        g2 <- autograd_grad(out$aux, shared, retain_graph = TRUE, allow_unused = TRUE)
+        nrm <- function(g) sqrt(sum(sapply(g, function(t) if (is_undefined_tensor(t)) 0 else as.numeric((t^2)$sum()))))
+        w_aux <- 0.9 * w_aux + 0.1 * (nrm(g1) / (nrm(g2) + 1e-8))
+      }
+      loss <- lp + w_aux * out$aux
+      opt$zero_grad(); loss$backward(); opt$step()
+    }
+    # Dead-code restart: a codebook entry no firm maps to is moved onto a
+    # randomly chosen encoder output, which keeps all K codes in use.
+    if (!is.null(net$vq) && net$discrete) with_no_grad({
+      net$eval()
+      sb <- torch_tensor(sample.int(n, 4096), dtype = torch_long())
+      for (v in seq_len(net$V)) for (f in seq_len(net$n_fac)) {
+        cb  <- net$vq[[(v - 1) * net$n_fac + f]]$codebook
+        e   <- net$enc[[v]](X[[v]][sb, ])[, ((f - 1) * net$fd + 1):(f * net$fd)]
+        use <- tabulate(as.integer(torch_cdist(e, cb)$argmin(dim = 2)), nbins = cb$size(1))
+        for (k in which(use == 0)) cb[k, ] <- e[sample.int(4096, 1), ]
+      }
+      net$train()
+    })
+    if (!is.null(trace) && ep %% 5 == 0) trace(net, ep)
+  }
+  net
+}
+predict_net <- function(net, X) {
+  net$eval()
+  with_no_grad(as.matrix(net(X)$risk))
+}
+
+configs <- list(
+  list(name = "MLP, independent sigmoid per horizon", type = "flat", mono = FALSE, focal = FALSE),
+  list(name = "MLP + risk accumulation",              type = "flat", mono = TRUE,  focal = FALSE),
+  list(name = "DRDL-lite, continuous view codes",     type = "drdl", disc = FALSE),
+  list(name = "DRDL-lite (discrete codes)",           type = "drdl", disc = TRUE)
+)
+neural <- list(); keep_net <- NULL
+for (cfg in configs) {
+  rows <- list()
+  for (s in seq_len(n_seeds)) {
+    torch_manual_seed(100 + s); set.seed(100 + s)
+    if (cfg$type == "flat") {
+      net <- train_net(flat_net(cfg$mono), x_tr, focal = cfg$focal, balance = FALSE)
+      P <- predict_net(net, x_te)
+    } else {
+      net <- train_net(drdl_net(sapply(view_cols, length), discrete = cfg$disc), xv_tr)
+      P <- predict_net(net, xv_te)
+      if (cfg$disc && s == 1) keep_net <- net
+    }
+    rows[[s]] <- evaluate(P, cfg$name)
+    cat(cfg$name, "seed", s, "mean AUC", rows[[s]]$mean_AUC, "\n")
+  }
+  r <- do.call(rbind, rows)
+  avg <- r[1, ]; num <- sapply(r, is.numeric)
+  avg[num] <- round(colMeans(r[num]), 3)
+  avg$sd_mean_AUC <- round(sd(r$mean_AUC), 3)
+  neural[[cfg$name]] <- avg
+}
+res$sd_mean_AUC <- NA
+res <- rbind(res, do.call(rbind, neural))
+print(res, row.names = FALSE)
+saveRDS(res, "drdl_results.rds")
+
+# --- 6. Inspect the discrete codes (seed-1 DRDL) -----------------------------
+# Every test firm carries one code per factor per view. For each view, show the
+# factor whose codes separate bankruptcy rates most (codes with >= 100 firms).
+keep_net$eval()
+out <- with_no_grad(keep_net(xv_te))
+code_tab <- do.call(rbind, lapply(seq_along(views), function(v) {
+  tabs <- lapply(seq_len(keep_net$n_fac), function(f) {
+    idx <- as.integer(out$idx[[v]][[f]])
+    tb  <- data.frame(view = names(views)[v], factor = f,
+                      code = sort(unique(idx)),
+                      n = as.vector(table(idx)),
+                      bankrupt_rate = round(as.vector(tapply(te$y, idx, mean)), 3))
+    tb[tb$n >= 100, ]
+  })
+  spread <- sapply(tabs, function(t) diff(range(t$bankrupt_rate)))
+  tabs[[which.max(spread)]]
+}))
+print(code_tab, row.names = FALSE)
+d <- keep_net$fd * keep_net$n_fac
+mask_by_view <- sapply(seq_along(views), function(v)
+  mean(as.matrix(out$mask)[, ((v - 1) * d + 1):(v * d)]))
+names(mask_by_view) <- names(views)
+print(round(mask_by_view, 3))
+saveRDS(list(code_tab = code_tab, mask = mask_by_view), "drdl_codes.rds")
+```
 
 ## Shared Representations and Contrastive Models {#sec-mmf-clip}
 
@@ -680,7 +1207,11 @@ fusion studies cited here (@yang2024engagement, @wen2026livestream, @xu2024multi
 @xu2024memf, @dzyabura2023images, @sikdar2026artwork) rely on proprietary, platform, or
 scraped listing data and rarely ship public packages; verify any code/data link on the
 article page rather than assuming one. The artwork-pricing demonstration in
-@sec-mmf-art-demo is stylized simulation, not a replication of published estimates. For a
+@sec-mmf-art-demo is stylized simulation, not a replication of published estimates. The
+joint-fusion section (@sec-mmf-drdl) reimplements the design of @wang2026drdl, whose data
+and code are not public, on the CC BY 4.0 UCI Polish bankruptcy data
+[@tomczak2016polishdata]. Its script downloads the data itself and reproduces
+@tbl-mmf-drdl. For a
 public artifact from the companion creativity study, @sozuer2026recipe ship their
 generative recipe tool at <http://recipecreativity.com/>.
 :::
