@@ -61,8 +61,8 @@ future—which together situate these signals within the broader unstructured-da
 
 The chapter proceeds from the periphery inward and from the concrete to the
 conceptual. It first lays out the applications that motivate the methods. It then takes
-each signal in turn, eye-tracking, autonomic measures, and the
-electroencephalogram, developing the features that matter and giving a small,
+each signal in turn, eye-tracking, scroll and keystroke traces from ordinary devices,
+autonomic measures, and the electroencephalogram, developing the features that matter and giving a small,
 fully runnable simulation that builds the relevant quantities from scratch in base R
 and ggplot2. It treats functional neuroimaging and modern neural decoding
 conceptually, because those require hardware and data this book cannot simulate
@@ -175,6 +175,7 @@ characteristic features, and a representative study from the verified literature
 | Signal | Construct | Characteristic features | Representative study |
 |---|---|---|---|
 | Eye-tracking | Visual attention | Fixations, dwell, time-to-first-fixation, scanpath | @pieters2004attentioncapture |
+| Keystroke dynamics | Familiarity, cognitive load | Hesitation, key and field transitions | @kim2026areyouyou |
 | Electrodermal activity | Arousal (intensity) | Tonic level, phasic SCRs | @teixeira2012emotionengagement |
 | Facial EMG / coding | Valence (sign) | Zygomaticus / corrugator activity | @teixeira2014 |
 | EEG | Attention, timing, approach | ERP (N100/P300), band power, frontal asymmetry | @venkatraman2015predicting |
@@ -383,6 +384,381 @@ user can leave an option on screen while thinking of something else. Because scr
 tracking is also *covert*, it inherits in sharper form the consent and manipulation
 concerns of @sec-bio-validity-ethics: a method that reads deliberation from an interface
 the firm itself designs is as usable for exploitation as for understanding.
+
+## Keystroke Dynamics: Who Is Typing the Form? {#sec-bio-keystroke}
+
+Scroll tracking reads attention from an interface the consumer already uses. Keystroke
+dynamics does the same for cognition, and its most valuable marketing use is defensive:
+detecting identity fraud at the moment a new customer fills in a sign-up form. The
+problem is a marketing problem before it is a security one. Every bank card, buy-now-pay-later
+line, sign-up bonus, referral reward, and first-order discount is an acquisition offer,
+and fraudsters harvest those offers with stolen or synthetic identities. Every check
+that stops them also costs genuine applicants time, and some of those applicants abandon
+the funnel. The firm is choosing a point on a frontier between fraud loss and conversion.
+
+@kim2026areyouyou attack that frontier with a design-science study of keystroke
+dynamics during account setup. Their starting point is that knowledge-based
+authentication, the "which of these streets have you lived on" quiz, no longer works:
+after breaches such as Equifax's exposure of 147 million people's records in 2017, the
+authors report that fraudsters pass these screens 92% of the time against 46% for
+genuine customers. Their system instead scores how a first-time user types and moves
+through the platform's existing onboarding form, so every applicant is screened and no
+one is asked to do anything extra. They evaluated and refined the design across four
+experiments. The university's news release on the work reports four studies with more
+than 1,000 participants in total, and a system 95.5% effective at telling people entering
+their own information from people entering someone else's. It also describes the intended use as flagging roughly the
+most suspicious tenth of applications for extra verification
+[@byu2023keystrokes]. (Only the published practice abstract, the open conference version
+of the study, and that news release were accessible when this section was written; the
+paper's own tables are not reported here, and its data and code are not public.)
+
+### Why Typing Gives the Impostor Away
+
+The mechanism is motor memory. A person has typed their own name, birthday, and ZIP
+code hundreds of times, so entering them runs on the fast, automatic processing that
+dual-process accounts call Type 1. An impostor has to read, recall, or work out each
+answer, which is slow, deliberate Type 2 processing, and the extra load shows up as
+longer pauses before a field and longer gaps between keys. The conference version of the
+study makes the test concrete [@kim2023typing]. Its 202 participants, almost all aged
+18 to 24, filled in the same short form twice, once with their own details and once with
+a fictional person's, in random order. Welch t-tests found slower key transitions for
+the fictional identity on the first name ($p = 0.033$), date of birth, and ZIP code
+($p < 0.001$), though not on the last name ($p = 0.20$), and both key transitions and
+field transitions were slower at the form level ($p < 10^{-14}$). The study belongs to a
+line of information-systems work by overlapping authors that reads cognitive and
+emotional states from mouse-cursor movements: negative emotion [@hibbeln2017userfeeling],
+concealed information [@jenkins2019sleight], and fraudulent insurance claims
+[@weinmann2022righteous]. Keystrokes extend the idea to the device every form requires.
+
+Three quantities carry the signal. For the keydown times $d_1 < \dots < d_n$ of the
+content keys typed into field $f$, with $\text{focus}_f$ and $\text{blur}_f$ the times
+the cursor entered and left it,
+$$
+h_f = d_1 - \text{focus}_f, \qquad
+\kappa_f = \operatorname{median}_i\,(d_{i+1} - d_i), \qquad
+\tau_{f \to g} = d^{(g)}_1 - \text{blur}_f ,
+$$ {#eq-bio-keystroke}
+the hesitation before typing, the median key transition within the field, and the
+field transition to the next field $g$. None of them requires knowing *which* keys were
+pressed, which matters for privacy.
+
+This differs from classic keystroke authentication in one decisive way. Authentication
+asks whether a typist matches an enrolled template, a password typed fifty times at
+sign-up, and the benchmark comparison of detectors for that task assumes the template
+exists [@killourhy2009comparing]. A first-time applicant has no template. Kim et al.'s
+system must decide whether the typing looks *familiar with the content*, judged
+against how genuine people in general type their own details. That template-free design
+is what lets it screen the very first interaction, and it is the design the replication
+below puts to the test.
+
+### Where It Applies in Marketing
+
+The same screen fits wherever a consumer types claimed facts about themselves.
+
+- **Account opening and credit.** Card, loan, and buy-now-pay-later applications are the
+  setting Kim et al. target: synthetic identities that pass document checks but are
+  typed like strangers' details.
+- **Promotion and referral abuse.** New-customer discounts and referral bonuses invite
+  one person to open many accounts. Each account's details are, by construction, not the
+  typist's own.
+- **Survey and panel fraud.** Respondents who fake a qualifying age, ZIP code, or
+  occupation to get into a paid study are doing what the impostors in these experiments
+  do, which makes timing a covert complement to the screening tools of
+  @sec-online-panels.
+- **Bots and scripted sign-ups.** Scripted form fills leave timing that is too regular,
+  or no key events at all, the form-level version of the bot signatures in
+  @sec-clickstream.
+- **Lead-generation quality.** Forms submitted with someone else's contact details
+  inflate cost-per-lead metrics. A familiarity score lets a buyer price leads by
+  quality.
+
+The commercial path is already travelled. NeuroID, founded in 2015 at the University of
+Arizona by Valacich and Jenkins (two of Kim et al.'s authors) to sell behavioral
+analytics for fraud screening, was acquired by the credit bureau Experian in August
+2024 [@tla2024neuroid]. That makes this a rare case of marketing-relevant academic
+measurement turned into a product at scale. Readers should also weigh the paper's claims
+the way @sec-bio-industry recommends for any vendor-linked evidence: by asking what was
+validated, against what ground truth, and out of sample.
+
+### Replication on Open Data
+
+Kim et al.'s data are not public, but one closely related study's are. @monaro2018covert
+had 40 lab participants answer 18 identity questions by typing into a box, half
+truthfully and half using a fake identity they had memorized from a mock ID card. The
+questions came in three kinds: *control* questions everyone answered truthfully (hair
+colour), *expected* questions printed on the card (name, birth year, city), and
+*unexpected* questions that follow from the card but were never rehearsed (zodiac sign,
+age spelled out, region of birth). They trained four WEKA classifiers on five
+per-person features (the share of answers with conceptual errors, readability-adjusted
+response latency, time from first key to Enter, typing time per character, and the pause
+before Enter), then tested them on 20 new lab participants and 151 recruited online.
+The authors posted the data, the feature files, and the exact classifier settings
+[@monaro2018covertcode]. Our script re-runs their analysis from those files.
+
+@tbl-bio-keystroke-ttests reproduces their univariate tests exactly, and the conceptual
+error counts by question type also match to the unit: liars erred on 81 of 120
+unexpected questions against 3 of 120 for truth-tellers, and on 3 of 160 expected
+questions against none.
+
+```{r}
+#| label: tbl-bio-keystroke-ttests
+#| tbl-cap: "Monaro et al.'s (2018) Table 2 re-run from the posted data (40 lab participants, Welch t-tests, truth-tellers minus liars; Cohen's d with pooled SD). Every value matches the published table."
+ks_ttests <- data.frame(
+  Feature = c("Conceptual errors", "Response latency", "Response latency, readability-adjusted",
+              "Prompt to Enter"),
+  Published = c("t(21) = -10.57, d = 3.34", "t(31) = -6.34, d = 2.00",
+                "t(30) = -6.48, d = 2.05", "t(26) = -5.46, d = 1.73"),
+  Reproduced = c("t(21) = -10.57, d = 3.34", "t(31) = -6.34, d = 2.00",
+                 "t(30) = -6.48, d = 2.05", "t(26) = -5.46, d = 1.73"))
+knitr::kable(ks_ttests)
+```
+
+@tbl-bio-keystroke-classifiers compares the classifiers. Logistic regression, SMO and
+LMT reproduce exactly on both held-out samples, including the 86% to 91% accuracy on
+the online sample that is the study's most demanding test. The results that depend on
+random draws differ by a few points: the cross-validated accuracy of Logistic regression
+and RandomForest, and RandomForest's online ROC area. That is expected, because the WEKA build bundled with R (3.9.3) draws
+different random streams from the 3.8/3.9 build the authors used.
+
+```{r}
+#| label: tbl-bio-keystroke-classifiers
+#| tbl-cap: "Classifier accuracy, published / reproduced. Trained on 40 lab participants with WEKA defaults; tested by 10-fold cross-validation, on 20 new lab participants, and on 151 participants recruited online (86 liars). ROC area is WEKA's class-weighted figure on the online sample."
+ks_clf <- data.frame(
+  Classifier = c("Logistic", "SMO (linear SVM)", "LMT", "RandomForest"),
+  `10-fold CV, %`  = c("90 / 92.5", "95 / 95", "97.5 / 97.5", "92.5 / 90"),
+  `20 lab, %`      = c("100 / 100", "90 / 90", "90 / 90", "95 / 95"),
+  `151 online, %`  = c("86.1 / 86.1", "88.7 / 88.7", "90.1 / 90.1", "90.7 / 90.7"),
+  `ROC, online`    = c("0.930 / 0.930", "0.897 / 0.897", "0.959 / 0.959", "0.980 / 0.973"),
+  check.names = FALSE)
+knitr::kable(ks_clf, align = "lcccc")
+```
+
+### What Carries the Signal
+
+The replication licenses two questions the published tables do not answer, and both
+matter for anyone deploying Kim et al.'s idea. First, how much of the accuracy comes
+from keystroke *timing*, and how much from the *content* check, the error count that
+requires knowing the right answer? Second, does the timing signal survive when no
+fraudster is ever labelled, as in a template-free screen?
+
+```{r}
+#| label: tbl-bio-keystroke-signal
+#| tbl-cap: "What carries the signal on the 151 online participants. Supervised rows: WEKA Logistic trained on the 40 lab participants. One-class rows: z-scores of log timings against the 20 lab truth-tellers only, so no liar is ever seen in training. AUC treats ties as one half."
+ks_signal <- data.frame(
+  Model = c("All five features (the paper's model)", "Conceptual errors only",
+            "Timing only (four features, no error count)", "Response latency only",
+            "One-class: response latency", "One-class: all four timing features"),
+  Training = c(rep("Supervised, 40 lab", 4), rep("Truth-tellers only", 2)),
+  Accuracy = c(0.861, 0.901, 0.828, 0.815, NA, NA),
+  AUC      = c(0.925, 0.940, 0.877, 0.874, 0.874, 0.674))
+knitr::kable(ks_signal, digits = 3)
+```
+
+The content check does most of the work. The error count alone (AUC 0.940) beats the
+full five-feature model (0.925), and the full model's predicted probabilities collapse
+to nine distinct values: anyone who made an error is scored near certainty. That leaves
+timing as a ranking tool for everyone who made no error, and it is a useful one. Four
+timing features alone reach an AUC of 0.877. Response latency carries nearly all of
+that (0.874), and it transfers without any fraud labels: a one-class screen calibrated
+only on lab truth-tellers scores the online sample with the same AUC of 0.874. Pooling
+all four timing features in that screen *hurts* (0.674), because typing time and the
+pause before Enter barely separate liars online (single-feature AUCs of 0.63 and 0.48)
+and dilute the latency signal. Template-free screening works here, but only for a
+feature that has been checked one at a time.
+
+@tbl-bio-keystroke-qtype splits the lab data by question type, which is where the
+mechanism becomes visible.
+
+```{r}
+#| label: tbl-bio-keystroke-qtype
+#| tbl-cap: "Where the signal lives: subject-level AUC for separating liars from truth-tellers, by question type (60 lab participants; each person's mean over questions of that type). Control questions were answered truthfully by everyone and act as a placebo."
+ks_qtype <- data.frame(
+  `Question type` = c("Control (placebo)", "Expected (on the card)", "Unexpected (must be derived)"),
+  Errors = c(0.500, 0.567, 0.995), `Response latency` = c(0.449, 0.810, 0.959),
+  `Typing time per character` = c(0.504, 0.752, 0.794), `Pause before Enter` = c(0.520, 0.630, 0.701),
+  Deletions = c(0.587, 0.621, 0.632), check.names = FALSE)
+knitr::kable(ks_qtype, digits = 3)
+```
+
+The placebo row passes: on questions everyone answered truthfully, no feature separates
+the groups. On expected questions, the closest analogue to Kim et al.'s own-versus-other
+identity fields, latency (0.81) and typing speed (0.75) already separate liars who had
+*rehearsed* the fake identity, which is the motor-memory effect in pure form. On
+unexpected questions the gap widens sharply. Median adjusted latency is 2.1 seconds for
+truth-tellers and 4.5 seconds for liars, against 1.8 and 2.1 seconds on expected
+questions. The practical lesson for form design is that one cheap follow-up question an
+owner knows and an impostor must compute (an age, given the birth date just typed; a
+state, given the ZIP code) does more than any amount of passive timing on copied fields.
+Kim et al.'s conference study also added follow-up questions after the form was
+submitted [@kim2023typing].
+
+### The Step-Up Budget
+
+A score is used by sending the riskiest share of applicants to a slower check, such as a
+document scan, a selfie match, or a call-back, while everyone else onboards without
+friction. Two numbers describe the result: the share of fraud caught, and the share of
+step-ups that are actually fraud. Because the ROC curve does not depend on prevalence,
+the replication's online scores give both for any fraud rate $\pi$: flagging a share
+$k$ of all applicants means choosing the threshold where
+$\pi\,\text{TPR} + (1-\pi)\,\text{FPR} = k$. @fig-bio-keystroke-budget traces this
+frontier at a 2% fraud rate.
+
+```{r}
+#| label: fig-bio-keystroke-budget
+#| fig-cap: "Fraud caught against the share of all applicants sent to step-up verification, at a 2% fraud rate. Scores from the replication's Logistic models (trained on 40 lab participants, applied to 151 online). Ties in the score are broken at random, which is why the five-feature curve rises linearly until its tie block is exhausted."
+#| fig-width: 7
+#| fig-height: 4.5
+ks_budget <- data.frame(
+  flag   = seq(0, 0.30, by = 0.02),
+  all5   = c(0, 0.210, 0.420, 0.630, 0.826, 0.849, 0.849, 0.872, 0.895, 0.919, 0.942,
+             0.942, 0.965, 0.965, 0.965, 0.965),
+  timing = c(0, 0.246, 0.477, 0.477, 0.535, 0.628, 0.721, 0.744, 0.744, 0.744, 0.837,
+             0.837, 0.860, 0.860, 0.872, 0.884))
+plot(100 * ks_budget$flag, 100 * ks_budget$all5, type = "l", lwd = 2.5, ylim = c(0, 100),
+     xlab = "Applicants sent to step-up (%)", ylab = "Fraud caught (%)",
+     main = "The step-up budget at a 2% fraud rate")
+lines(100 * ks_budget$flag, 100 * ks_budget$timing, lwd = 2.5, lty = 2, col = "grey45")
+abline(v = 10, col = "grey80", lty = 3)
+legend("bottomright", bty = "n", lwd = 2.5, lty = c(1, 2), col = c("black", "grey45"),
+       legend = c("Timing + error check (paper's five features)", "Timing only"))
+```
+
+At a 2% fraud rate, stepping up 10% of applicants catches 85% of fraud with the
+five-feature model and 63% with timing alone. Each still pays for that in friction:
+only 17% (or 13%) of the stepped-up applicants are fraudsters, so five to seven genuine
+customers face the extra check for every impostor caught. Whether that is worth it is a
+customer-lifetime-value calculation (@sec-clv). With fraud loss $L$ per undetected
+impostor, and an expected cost $c$ of stepping up a genuine customer (abandonment
+probability times the customer's lifetime value, plus handling cost), stepping an
+applicant up pays when
+$$
+\Pr(\text{fraud} \mid s)\, L \;>\; \bigl(1 - \Pr(\text{fraud} \mid s)\bigr)\, c ,
+$$ {#eq-bio-stepup}
+so the budget $k$ should be set from the ratio $c/L$ and the calibrated score, not fixed
+by habit. These figures come from Monaro et al.'s small samples, not from Kim et al.'s
+data, and should be read as an illustration of the trade-off rather than as the
+system's operating characteristics.
+
+### Try It Yourself {#sec-bio-keystroke-demo}
+
+::: {.content-visible when-format="html"}
+The demo below runs entirely in your browser. Type your own details in the first form
+and the assigned identity in the second, then compare the two rhythms. It measures key
+timings only, never which keys you press, and it sends nothing anywhere. Its last panel
+lets you vary the fraud rate and the step-up budget along the curves in
+@fig-bio-keystroke-budget. The demo can also be
+[opened in its own tab](replication/keystroke-identity-fraud/demo.html).
+
+```{=html}
+<iframe id="keystroke-demo" src="replication/keystroke-identity-fraud/demo.html"
+        title="Keystroke identity demo" loading="lazy"
+        style="width:100%; height:1900px; border:1px solid #dee2e6; border-radius:6px;"></iframe>
+<script>
+(function () {
+  var f = document.getElementById("keystroke-demo");
+  f.addEventListener("load", function () {
+    try {
+      var d = f.contentWindow.document;
+      d.documentElement.setAttribute("data-theme", "light");   // match the book's light theme
+      // body height is the content's own height; documentElement.scrollHeight would include
+      // the iframe's viewport and grow on every resize
+      var fit = function () { f.style.height = Math.ceil(d.body.getBoundingClientRect().height + 2) + "px"; };
+      fit();
+      // observe from the iframe's own window: an observer created here does not track
+      // layout changes inside the frame
+      var RO = f.contentWindow.ResizeObserver;
+      if (RO) new RO(fit).observe(d.body);
+      window.addEventListener("resize", fit);
+    } catch (e) { /* cross-origin or file:// preview: keep the fixed height */ }
+  });
+})();
+</script>
+```
+:::
+
+::: {.content-hidden when-format="html"}
+The online edition of this book embeds an interactive demo here: readers type their own
+details and an assigned identity, compare the two keystroke rhythms, and vary the fraud
+rate and step-up budget along the curves in @fig-bio-keystroke-budget. The demo's source
+is `replication/keystroke-identity-fraud/demo.html` in the book's repository.
+:::
+
+### From Paper to Production
+
+@fig-bio-keystroke-pipeline lays out the production design that follows from the
+evidence above, and the book's repository implements it in
+`replication/keystroke-identity-fraud/`. A dependency-free browser script records only
+timings and key *classes* (letter, digit, deletion, shortcut), never key identities, so
+the payload cannot reveal what was typed. The server turns each session into the
+quantities of @eq-bio-keystroke and scores them against a reference built from
+applicants later confirmed genuine, separately by device class. Scores are one-sided
+robust z-scores, so only slower-than-reference typing raises risk, and each score comes
+with the features that drove it. A threshold set at a budget quantile routes sessions to
+*allow*, *step-up*, *no signal* (autofill, password managers, and paste are legitimate
+and carry no timing evidence), or *automation review* (synthetic key events). Confirmed
+outcomes feed back to refit the feature weights. Monitors track score drift and compare
+step-up rates across segments, and both should be checked before any threshold goes
+live. The folder also holds the demo in @sec-bio-keystroke-demo.
+
+```{mermaid}
+%%| label: fig-bio-keystroke-pipeline
+%%| fig-cap: "A production keystroke-screening pipeline for first-time applicants. Capture is timing-only; scoring is server-side and template-free; the decision is a budgeted step-up rather than a denial; outcomes, drift, and segment parity feed back into calibration."
+flowchart LR
+  CAP["Browser capture<br/>(timings + key class only)"] --> FEAT["Session features<br/>(hesitation, key and<br/>field transitions)"]
+  REF["Reference from<br/>known-genuine applicants<br/>(per device class)"] --> SC["One-sided robust score<br/>+ reason codes"]
+  FEAT --> SC
+  SC --> POL{"Budget<br/>threshold"}
+  POL -->|"most sessions"| AL["Allow"]
+  POL -->|"riskiest k%"| SU["Step-up check"]
+  POL -->|"no keystrokes"| NS["No signal:<br/>standard path"]
+  POL -->|"synthetic events"| AU["Automation review"]
+  SU --> OUT["Outcomes<br/>(KYC, chargebacks)"]
+  AL --> OUT
+  OUT --> REF
+  OUT --> MON["Monitors:<br/>drift, segment parity"]
+```
+
+```{r}
+#| label: bio-keystroke-scoring
+#| eval: false
+# Scoring new applicants with the repository's keystroke_score.R (base R + jsonlite).
+source("replication/keystroke-identity-fraud/keystroke_score.R")
+
+good <- do.call(rbind, lapply(genuine_payloads, ks_features))   # sessions later confirmed genuine
+ref  <- ks_calibrate(good, by_device = TRUE)                    # robust reference per device class
+
+recent <- ks_score(do.call(rbind, lapply(last_week_payloads, ks_features)), ref)
+thr    <- ks_threshold(recent$score, budget = 0.10)             # step up roughly 10%
+ks_parity(ks_decide(recent, thr), recent$device)                # check before going live
+
+ks_score_json(incoming_json, ref, thr)                          # JSON in, JSON out, per request
+# returns score, decision (allow / step_up / no_signal / step_up_automation), the features
+# that drove the score, device class, keystroke count, and the reference and threshold used
+```
+
+Four cautions follow. First, the evidence is small and mostly young: Kim et al.'s
+conference study used students, and Monaro et al.'s classifiers were trained on 40
+people and excluded online participants who used phones or tablets. Device, age,
+language, and motor disability all slow typing for innocent reasons, so per-segment
+calibration and the parity check are requirements, not refinements, and a step-up must
+stay a verification path rather than an automatic denial. Second, fraud rings adapt:
+pasting stolen details produces no keystrokes, which is why "no signal" must route to the
+standard path while the *share* of no-signal sessions is itself monitored. Third, the
+capture is covert by design. It inherits every consent obligation of
+@sec-bio-validity-ethics and @sec-privacy, and keystroke timing used to verify identity
+may be regulated as biometric data in some jurisdictions. Fourth, the headline accuracy
+figures for Kim et al.'s system come from a press release, and two of the authors
+co-founded the company that commercialized it. Out-of-sample validation by
+independent researchers is the missing piece.
+
+The full replication script below downloads Monaro et al.'s posted data and prints every
+table and the figure data in this section. The book does not run it at render time.
+
+```{r}
+#| label: bio-keystroke-replication
+#| eval: false
+#| file: replication/keystroke-identity-fraud/replicate_monaro2018.R
+```
 
 ## Autonomic Measures: Electrodermal Activity and Facial EMG {#sec-bio-autonomic}
 
@@ -799,7 +1175,11 @@ The eye-tracking, EDA, and ERP demonstrations in this chapter are fully reproduc
 base R and `ggplot2`—they are the honest, runnable artifacts of the modality. For real
 data, the open ecosystem is mature: EDA decomposition (`Ledalab`, `neurokit2` in Python),
 eye-movement event detection and AOI analysis (`PyGaze`, `gazepoint`/`eyetrackingR`),
-and EEG/ERP processing (`EEGLAB`, `MNE-Python`) are standard. By contrast, the empirical
+and EEG/ERP processing (`EEGLAB`, `MNE-Python`) are standard. The keystroke section is the
+exception among the empirical studies: Monaro et al.'s posted data reproduce their published
+tests and held-out accuracies exactly, and the repository's
+`replication/keystroke-identity-fraud/` folder adds a capture script, a tested scoring
+module, and an interactive demo. By contrast, the other empirical
 neuro studies cited here—being fMRI/EEG work with small samples of identifiable human
 subjects, much of it predating data-sharing mandates—rarely ship public replication
 packages; some authors share stimuli or aggregate data on request or via OpenNeuro, but a

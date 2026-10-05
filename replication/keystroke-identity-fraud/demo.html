@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Typing Identity Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a lab bench — two specimen forms side by side, then the instrument readout (strip
+   charts + table), then the operator's dial (step-up budget). Single column below 760px. */
+:root {
+  --bg: #f3f5f8;        /* cool paper */
+  --panel: #ffffff;
+  --ink: #18202c;
+  --muted: #5b6676;
+  --rule: #d6dce5;
+  --own: #2453a6;       /* your identity: steady blue */
+  --own-soft: #dfe8f8;
+  --other: #b8610c;     /* assigned identity: amber */
+  --other-soft: #f8e9d6;
+  --accent: #0f7a6c;    /* controls */
+  --warn: #9b2c2c;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161e; --panel: #1a212c; --ink: #e6ebf2; --muted: #9aa6b6; --rule: #2e3846;
+  --own: #7ea6f2; --own-soft: #23324d; --other: #f0a75a; --other-soft: #3d2c1a;
+  --accent: #4cc3b0; --warn: #f08a8a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11161e; --panel: #1a212c; --ink: #e6ebf2; --muted: #9aa6b6; --rule: #2e3846;
+  --own: #7ea6f2; --own-soft: #23324d; --other: #f0a75a; --other-soft: #3d2c1a;
+  --accent: #4cc3b0; --warn: #f08a8a; color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 36px; }
+h1, h2, h3 { font-family: var(--f-display); font-stretch: 85%; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 700; }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--f-data); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 17px; color: var(--muted); }
+.lede strong { color: var(--ink); font-weight: 600; }
+header { display: grid; gap: 12px; }
+.privacy { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; width: fit-content; }
+.privacy b { color: var(--accent); font-weight: 600; }
+
+.bench { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 760px) { .bench { grid-template-columns: 1fr; } }
+.specimen { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.specimen[data-kind="own"] { border-top: 4px solid var(--own); }
+.specimen[data-kind="other"] { border-top: 4px solid var(--other); }
+.specimen .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tag { font-family: var(--f-data); font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.own .tag, [data-kind="own"] .tag { background: var(--own-soft); color: var(--own); }
+[data-kind="other"] .tag { background: var(--other-soft); color: var(--other); }
+.card { font-family: var(--f-data); font-size: 13px; background: var(--other-soft); border-radius: 6px; padding: 10px 12px; display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; }
+.card span:nth-child(odd) { color: var(--muted); }
+form { display: grid; gap: 10px; }
+label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+label.followup { border-top: 1px dashed var(--rule); padding-top: 10px; }
+input { font-family: var(--f-data); font-size: 15px; padding: 9px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg); color: var(--ink); width: 100%; }
+input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.row2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+.note { font-size: 12.5px; color: var(--muted); }
+
+.actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+button { font-family: var(--f-body); font-weight: 600; font-size: 14px; border-radius: 6px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--accent); }
+button.primary { background: var(--accent); color: var(--panel); }
+button.ghost { background: transparent; color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+#status { font-size: 13px; color: var(--muted); }
+
+.readout { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 20px; display: grid; gap: 18px; min-width: 0; }
+.readout .hd { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.example-flag { font-family: var(--f-data); font-size: 11px; color: var(--warn); border: 1px solid var(--warn); border-radius: 4px; padding: 1px 7px; }
+.verdict { font-size: 16px; max-width: 72ch; }
+.verdict b { font-weight: 600; }
+.strip { display: grid; gap: 6px; min-width: 0; }
+.strip svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-family: var(--f-data); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.own { color: var(--own); } td.other { color: var(--other); }
+td.ratio { font-family: var(--f-data); }
+td.ratio.hi { color: var(--other); font-weight: 600; }
+
+.dial { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 24px; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 20px; }
+@media (max-width: 760px) { .dial { grid-template-columns: 1fr; } }
+.controls { display: grid; gap: 16px; align-content: start; }
+.ctl { display: grid; gap: 6px; }
+.ctl .lbl { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.ctl .lbl output { font-family: var(--f-data); color: var(--ink); }
+input[type=range] { padding: 0; border: 0; background: transparent; accent-color: var(--accent); }
+.seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button { flex: 1; border: 0; border-radius: 0; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; padding: 7px 8px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat { border-top: 1px solid var(--rule); padding-top: 8px; }
+.stat .v { font-family: var(--f-display); font-stretch: 80%; font-size: 30px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.chart { min-width: 0; display: grid; gap: 8px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-family: var(--f-data); font-size: 11px; }
+
+footer { display: grid; gap: 8px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 18px; }
+footer a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Keystroke dynamics · identity verification</span>
+    <h1>Are you you? Type it and see.</h1>
+    <p class="lede">People type their own name, birthday and ZIP code from <strong>motor memory</strong>. Someone using a stolen identity has to <strong>read, recall or compute</strong> each answer, and that leaves gaps in the keystroke rhythm. Fill in both forms below and compare your two rhythms.</p>
+    <span class="privacy"><b>●</b> Only key timings are measured, never which keys. Nothing leaves this page.</span>
+  </header>
+
+  <section class="bench" aria-label="Two forms to type">
+    <div class="specimen" data-kind="own">
+      <div class="hd"><h3>1 · Your identity</h3><span class="tag">familiar</span></div>
+      <p class="note">Use your own details, or any identity you have typed hundreds of times. Values are never stored.</p>
+      <form id="formA" autocomplete="off">
+        <div class="row2">
+          <label>First name<input id="a_first" name="a_first" autocomplete="off" spellcheck="false"></label>
+          <label>Last name<input id="a_last" name="a_last" autocomplete="off" spellcheck="false"></label>
+        </div>
+        <div class="row2">
+          <label>Date of birth (MM/DD/YYYY)<input id="a_dob" name="a_dob" inputmode="numeric" autocomplete="off"></label>
+          <label>ZIP code<input id="a_zip" name="a_zip" inputmode="numeric" autocomplete="off"></label>
+        </div>
+        <label class="followup">Follow-up: how old are you, in years?<input id="a_age" name="a_age" inputmode="numeric" autocomplete="off"></label>
+      </form>
+    </div>
+
+    <div class="specimen" data-kind="other">
+      <div class="hd"><h3>2 · An assigned identity</h3><span class="tag">unfamiliar</span></div>
+      <div class="card" aria-label="Identity to enter">
+        <span>First name</span><span>Delphine</span>
+        <span>Last name</span><span>Okonkwo-Hart</span>
+        <span>Date of birth</span><span>11/23/1979</span>
+        <span>ZIP code</span><span>58203</span>
+      </div>
+      <form id="formB" autocomplete="off">
+        <div class="row2">
+          <label>First name<input id="b_first" name="b_first" autocomplete="off" spellcheck="false"></label>
+          <label>Last name<input id="b_last" name="b_last" autocomplete="off" spellcheck="false"></label>
+        </div>
+        <div class="row2">
+          <label>Date of birth (MM/DD/YYYY)<input id="b_dob" name="b_dob" inputmode="numeric" autocomplete="off"></label>
+          <label>ZIP code<input id="b_zip" name="b_zip" inputmode="numeric" autocomplete="off"></label>
+        </div>
+        <label class="followup">Follow-up: how old is this person, in years?<input id="b_age" name="b_age" inputmode="numeric" autocomplete="off"></label>
+      </form>
+      <p class="note">Type it; don't paste. The follow-up is an "unexpected question": the owner knows it, an impostor has to work it out.</p>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="primary" id="go" disabled>Compare my two forms</button>
+    <button class="ghost" id="clear">Clear both forms</button>
+    <span id="status" role="status">Type at least a few characters in every field of both forms.</span>
+  </div>
+
+  <section class="readout" aria-live="polite">
+    <div class="hd"><h2>Readout</h2><span class="example-flag" id="exflag">Example session · yours replaces it</span></div>
+    <p class="verdict" id="verdict"></p>
+    <div class="strip">
+      <svg id="strip" viewBox="0 0 1000 150" role="img" aria-label="Keystroke timelines for both forms"></svg>
+      <div class="legend"><span><i style="background:var(--own)"></i>Your identity</span><span><i style="background:var(--other)"></i>Assigned identity</span><span>Each tick is one key press; gaps are hesitations. Field boundaries are marked below each line.</span></div>
+    </div>
+    <div class="tbl"><table id="tbl"></table></div>
+  </section>
+
+  <section style="display:grid; gap:14px">
+    <div style="display:grid; gap:6px">
+      <span class="eyebrow">From the replication</span>
+      <h2>The step-up budget</h2>
+      <p>A score does not convict anyone. A platform sends the riskiest share of new applicants to a slower check (document scan, selfie, call-back) and lets everyone else through. These curves come from re-running Monaro et al.'s published classifier on their 151 online participants. Pick a fraud rate and a budget and read off what the screen buys.</p>
+    </div>
+    <div class="dial">
+      <div class="controls">
+        <div class="ctl"><div class="lbl"><span>Model</span></div>
+          <div class="seg" role="group" aria-label="Model">
+            <button id="m_full" aria-pressed="true">Timing + answer check</button>
+            <button id="m_time" aria-pressed="false">Timing only</button>
+          </div></div>
+        <div class="ctl"><div class="lbl"><label for="prev">Fraud among new applicants</label><output id="prev_o"></output></div>
+          <input type="range" id="prev" min="0.5" max="20" step="0.5" value="2"></div>
+        <div class="ctl"><div class="lbl"><label for="budget">Share sent to step-up</label><output id="budget_o"></output></div>
+          <input type="range" id="budget" min="1" max="30" step="1" value="10"></div>
+        <div class="stats">
+          <div class="stat"><div class="v" id="s_caught"></div><div class="k">of fraud caught</div></div>
+          <div class="stat"><div class="v" id="s_prec"></div><div class="k">of step-ups are fraud</div></div>
+          <div class="stat"><div class="v" id="s_free"></div><div class="k">of genuine users skip friction</div></div>
+        </div>
+      </div>
+      <div class="chart">
+        <svg id="curve" viewBox="0 0 560 300" role="img" aria-label="Fraud caught against share sent to step-up"></svg>
+        <p class="note">Fraud caught (vertical) against share of all applicants sent to step-up (horizontal), at the chosen fraud rate. Ties in the score are broken at random. Trained on 40 lab participants, tested on 151 recruited online.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Method: Kim, Valacich, Jenkins, Wilson, Kumar &amp; Weisgarber (2026), "Are You, You? Seamlessly Fighting Identity Fraud with Keystroke Dynamics," <i>Information Systems Research</i> 37(3), doi:10.1287/isre.2023.0088. Their data are not public; the curves above replicate Monaro et al. (2018), "Covert lie detection using keyboard dynamics," <i>Scientific Reports</i> 8:1976, from <a href="https://github.com/SPRITZ-Research-Group/Covert_lie_detection_using_keyboard_dynamics">the authors' posted data</a>.</p>
+    <p>This page compares your two forms with each other. A production system has no second form to compare against: it compares each applicant with a reference built from known-genuine applicants, and it scores on the server.</p>
+  </footer>
+</div>
+
+<script src="keystroke-capture.js"></script>
+<script>
+(function () {
+  "use strict";
+  var FIELDS = ["first", "last", "dob", "zip", "age"];
+  var LABEL = { first: "First name", last: "Last name", dob: "Date of birth", zip: "ZIP code", age: "Follow-up: age" };
+  var capA = KeystrokeCapture.attach(document.getElementById("formA"), { fields: FIELDS.map(function (f) { return "a_" + f; }) });
+  var capB = KeystrokeCapture.attach(document.getElementById("formB"), { fields: FIELDS.map(function (f) { return "b_" + f; }) });
+  ["formA", "formB"].forEach(function (id) { document.getElementById(id).addEventListener("submit", function (e) { e.preventDefault(); }); });
+
+  var $ = function (id) { return document.getElementById(id); };
+  var fmt = function (x) { return x == null ? "–" : Math.round(x).toLocaleString(); };
+  var med = function (a) { a = a.filter(function (x) { return x != null && isFinite(x); }).sort(function (x, y) { return x - y; });
+    if (!a.length) return null; var m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+
+  // ---- summarise one capture into per-field rows + an event list for the strip chart ----
+  function summarise(cap, prefix) {
+    var f = cap.features(), ev = cap.events();
+    var rows = FIELDS.map(function (k) { var x = f.fields[prefix + k];
+      return { field: k, latency: x.latency_ms, dd: x.median_dd_ms, maxdd: x.max_dd_ms, del: x.n_deletions, n: x.n_content, pastes: x.pastes + x.untyped_inputs }; });
+    var ticks = [];
+    FIELDS.forEach(function (k) { ev.fields[prefix + k].keys.forEach(function (e) { ticks.push({ t: e.d, field: k, del: e.c === "del" }); }); });
+    ticks.sort(function (a, b) { return a.t - b.t; });
+    return { rows: rows, ticks: ticks, trans: f.median_field_transition_ms };
+  }
+
+  // ---- an example session so the readout is never empty (illustrative, not measured) ----
+  function exampleSession(slow, seed) {
+    var s = seed; var rnd = function () { s = (s * 16807) % 2147483647; return s / 2147483647; };
+    var lens = { first: 6, last: 8, dob: 10, zip: 5, age: 2 };
+    var t = 400, ticks = [], rows = [];
+    FIELDS.forEach(function (k, i) {
+      var hes = (k === "age" ? (slow > 1 ? 5200 : 900) : 520 * (slow > 1 ? 1.9 : 1)) * (0.8 + 0.4 * rnd());
+      if (i) t += 380 * (slow > 1 ? 1.6 : 1);
+      var start = t + hes, gaps = [];
+      t = start;
+      for (var j = 0; j < lens[k]; j++) {
+        if (j) { var g = (k === "dob" || k === "zip" ? 175 : 135) * slow * (0.7 + 0.6 * rnd()); if (slow > 1 && rnd() < 0.18) g += 600 * rnd(); gaps.push(g); t += g; }
+        ticks.push({ t: t, field: k, del: false });
+      }
+      rows.push({ field: k, latency: hes, dd: med(gaps), maxdd: Math.max.apply(null, gaps.length ? gaps : [0]), del: slow > 1 && rnd() < 0.4 ? 1 : 0, n: lens[k], pastes: 0 });
+    });
+    return { rows: rows, ticks: ticks, trans: 380 * (slow > 1 ? 1.6 : 1) };
+  }
+
+  // ---- render: strip chart ----
+  function drawStrip(A, B) {
+    var svg = $("strip"), W = 1000, L = 120, R = 16;
+    var end = Math.max(A.ticks.length ? A.ticks[A.ticks.length - 1].t - A.ticks[0].t : 1, B.ticks.length ? B.ticks[B.ticks.length - 1].t - B.ticks[0].t : 1);
+    var x = function (t) { return L + (W - L - R) * t / end; };
+    var out = [];
+    function lane(S, y, color, name) {
+      out.push('<text x="0" y="' + (y + 4) + '" style="fill:var(--muted);font-family:var(--f-data);font-size:12px">' + name + '</text>');
+      out.push('<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" style="stroke:var(--rule)"/>');
+      if (!S.ticks.length) return;
+      var t0 = S.ticks[0].t, prev = null, lastLabel = -1e9;
+      S.ticks.forEach(function (e) {
+        var xx = x(e.t - t0);
+        out.push('<line x1="' + xx.toFixed(1) + '" x2="' + xx.toFixed(1) + '" y1="' + (y - 14) + '" y2="' + (y + 14) + '" style="stroke:' + (e.del ? "var(--warn)" : color) + ';stroke-width:2"/>');
+        if (prev !== e.field) {
+          if (xx - lastLabel > 44) { out.push('<text x="' + xx.toFixed(1) + '" y="' + (y + 30) + '" style="fill:var(--muted);font-family:var(--f-data);font-size:10.5px">' + e.field + '</text>'); lastLabel = xx; }
+          prev = e.field;
+        }
+      });
+      out.push('<text x="' + (W - R) + '" y="' + (y - 20) + '" text-anchor="end" style="fill:var(--muted);font-family:var(--f-data);font-size:11px">' + (((S.ticks[S.ticks.length - 1].t - t0) / 1000).toFixed(1)) + ' s</text>');
+    }
+    lane(A, 38, "var(--own)", "yours");
+    lane(B, 108, "var(--other)", "assigned");
+    svg.innerHTML = out.join("");
+  }
+
+  // ---- render: table + verdict ----
+  function render(A, B, isExample) {
+    $("exflag").hidden = !isExample;
+    drawStrip(A, B);
+    var head = '<thead><tr><th></th><th colspan="2" style="text-align:center">Pause before typing, ms</th><th colspan="2" style="text-align:center">Median key interval, ms</th><th></th></tr>' +
+      '<tr><th>Field</th><th>Yours</th><th>Assigned</th><th>Yours</th><th>Assigned</th><th>Assigned ÷ yours</th></tr></thead>';
+    var body = FIELDS.map(function (k, i) {
+      var a = A.rows[i], b = B.rows[i];
+      var r1 = a.latency && b.latency ? b.latency / a.latency : null, r2 = a.dd && b.dd ? b.dd / a.dd : null;
+      var rr = function (r) { return r == null ? "–" : r.toFixed(1) + "×"; };
+      return '<tr><td>' + LABEL[k] + '</td><td class="own">' + fmt(a.latency) + '</td><td class="other">' + fmt(b.latency) +
+        '</td><td class="own">' + fmt(a.dd) + '</td><td class="other">' + fmt(b.dd) + '</td><td class="ratio' + ((r1 > 1.5 || r2 > 1.5) ? " hi" : "") + '">' + rr(r1) + ' · ' + rr(r2) + '</td></tr>';
+    }).join("");
+    var sumA = { lat: med(A.rows.map(function (r) { return r.latency; })), dd: med(A.rows.map(function (r) { return r.dd; })) };
+    var sumB = { lat: med(B.rows.map(function (r) { return r.latency; })), dd: med(B.rows.map(function (r) { return r.dd; })) };
+    var foot = '<tr><td><b>All fields (median)</b></td><td class="own"><b>' + fmt(sumA.lat) + '</b></td><td class="other"><b>' + fmt(sumB.lat) + '</b></td><td class="own"><b>' + fmt(sumA.dd) + '</b></td><td class="other"><b>' + fmt(sumB.dd) + '</b></td><td class="ratio">' +
+      (sumA.lat && sumB.lat ? (sumB.lat / sumA.lat).toFixed(1) + "×" : "–") + ' · ' + (sumA.dd && sumB.dd ? (sumB.dd / sumA.dd).toFixed(1) + "×" : "–") + '</td></tr>';
+    $("tbl").innerHTML = head + '<tbody>' + body + foot + '</tbody>';
+
+    var latR = sumA.lat && sumB.lat ? sumB.lat / sumA.lat : null, ddR = sumA.dd && sumB.dd ? sumB.dd / sumA.dd : null;
+    var ageA = A.rows[4], ageB = B.rows[4], ageR = ageA.latency && ageB.latency ? ageB.latency / ageA.latency : null;
+    var who = isExample ? "In this example session, the" : "The";
+    var rel = function (r) { return r >= 1 ? "<b>" + r.toFixed(1) + "×</b> longer" : "<b>" + (1 / r).toFixed(1) + "×</b> shorter"; };
+    var msg;
+    if (latR != null && ddR != null && (latR > 1.25 || ddR > 1.25)) {
+      msg = who + " pause before each field was " + rel(latR) + ", and the gaps between keys were " + rel(ddR) + ", on the assigned identity than on your own. " +
+        (ageR && ageR > latR ? "The age question shows the biggest pause (" + ageR.toFixed(1) + "×): the owner recalls it, everyone else has to work it out. " : "") +
+        (latR > 1.25 ? "This is the pattern the method looks for." : "");
+    } else if (latR != null) {
+      msg = "Your two forms look alike (" + latR.toFixed(1) + "× hesitation, " + (ddR ? ddR.toFixed(1) : "–") + "× key gaps). That happens when the assigned details are short or you rehearsed them. In Monaro et al.'s data the separation came mostly from the follow-up questions that need working out, not from the copied fields.";
+    } else {
+      msg = "Not enough keystrokes to compare yet.";
+    }
+    var pasted = A.rows.concat(B.rows).some(function (r) { return r.pastes > 0; });
+    if (pasted && !isExample) msg += " Some fields were pasted or autofilled, so they carry no timing evidence.";
+    $("verdict").innerHTML = msg;
+  }
+
+  render(exampleSession(1, 7), exampleSession(1.7, 11), true);
+
+  // ---- enable compare when both forms have keystrokes in every field ----
+  function ready() {
+    var ok = function (cap, p) { var f = cap.features().fields; return FIELDS.every(function (k) { return f[p + k].n_content >= 2 || (k === "age" && f[p + k].n_content >= 1); }); };
+    var a = ok(capA, "a_"), b = ok(capB, "b_");
+    $("go").disabled = !(a && b);
+    $("status").textContent = a && b ? "Both forms captured. Compare when ready." :
+      (a ? "Form 1 done. Now type the assigned identity in form 2." : "Type at least a few characters in every field of both forms.");
+  }
+  document.addEventListener("keyup", ready);
+  $("go").addEventListener("click", function () { render(summarise(capA, "a_"), summarise(capB, "b_"), false); $("status").textContent = "Compared. Clear both forms to try again."; });
+  $("clear").addEventListener("click", function () {
+    ["formA", "formB"].forEach(function (id) { $(id).reset(); });
+    capA.reset(); capB.reset(); ready();
+    render(exampleSession(1, 7), exampleSession(1.7, 11), true);
+  });
+
+  // ---- step-up budget explorer: ROC points from the replication (151 online participants) ----
+  var ROC = {
+    full: { fpr: [0,0.0615,0.0615,0.0615,0.0769,0.0769,0.0769,0.0923,0.1077,0.1231,0.1231,0.1231,0.1385,0.1385,0.1385,0.1538,0.1538,0.1538,0.1692,0.1846,0.1846,0.1846,0.2,0.2154,0.2154,0.2154,0.2308,0.2462,0.2615,0.2769,0.2923,0.3077,0.3231,0.3385,0.3538,0.3692,0.3846,0.4,0.4154,0.4308,0.4308,0.4462,0.4615,0.4769,0.4923,0.5077,0.5231,0.5385,0.5538,0.5692,0.5846,0.6,0.6154,0.6308,0.6462,0.6615,0.6769,0.6923,0.7077,0.7231,0.7385,0.7538,0.7692,0.7846,0.8,0.8154,0.8308,0.8462,0.8615,0.8769,0.8923,0.9077,0.9231,0.9385,0.9538,0.9538,0.9692,0.9846,1,1],
+            tpr: [0,0.8023,0.814,0.8256,0.8256,0.8372,0.8488,0.8488,0.8488,0.8488,0.8605,0.8721,0.8721,0.8837,0.8953,0.8953,0.907,0.9186,0.9186,0.9186,0.9302,0.9419,0.9419,0.9419,0.9535,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9767,0.9884,0.9884,0.9884,0.9884,1] },
+    time: { fpr: [0,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0154,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0308,0.0462,0.0615,0.0615,0.0615,0.0615,0.0615,0.0615,0.0769,0.0769,0.0769,0.0769,0.0769,0.0769,0.0769,0.0769,0.0769,0.0923,0.0923,0.0923,0.1077,0.1077,0.1077,0.1077,0.1077,0.1077,0.1077,0.1231,0.1231,0.1231,0.1385,0.1538,0.1692,0.1692,0.1692,0.1692,0.1692,0.1692,0.1692,0.1692,0.1846,0.1846,0.2,0.2154,0.2154,0.2154,0.2308,0.2462,0.2615,0.2615,0.2769,0.2769,0.2923,0.3077,0.3077,0.3077,0.3231,0.3385,0.3385,0.3385,0.3385,0.3538,0.3692,0.3846,0.3846,0.4,0.4154,0.4308,0.4462,0.4615,0.4769,0.4923,0.5077,0.5231,0.5385,0.5538,0.5692,0.5846,0.6,0.6154,0.6308,0.6462,0.6615,0.6769,0.6923,0.7077,0.7231,0.7231,0.7385,0.7538,0.7692,0.7846,0.8,0.8154,0.8308,0.8462,0.8462,0.8615,0.8615,0.8769,0.8923,0.8923,0.9077,0.9231,0.9385,0.9538,0.9692,0.9846,1],
+            tpr: [0,0,0.0116,0.0233,0.0349,0.0465,0.0581,0.0698,0.0814,0.093,0.1047,0.1163,0.1279,0.1395,0.1512,0.1628,0.1744,0.186,0.1977,0.2093,0.2209,0.2326,0.2442,0.2558,0.2674,0.2791,0.2907,0.3023,0.3023,0.314,0.3256,0.3372,0.3488,0.3605,0.3721,0.3837,0.3953,0.407,0.4186,0.4302,0.4419,0.4535,0.4651,0.4767,0.4767,0.4767,0.4884,0.5,0.5116,0.5233,0.5349,0.5349,0.5465,0.5581,0.5698,0.5814,0.593,0.6047,0.6163,0.6279,0.6279,0.6395,0.6512,0.6512,0.6628,0.6744,0.686,0.6977,0.7093,0.7209,0.7209,0.7326,0.7442,0.7442,0.7442,0.7442,0.7558,0.7674,0.7791,0.7907,0.8023,0.814,0.8256,0.8256,0.8372,0.8372,0.8372,0.8488,0.8605,0.8605,0.8605,0.8605,0.8721,0.8721,0.8837,0.8837,0.8837,0.8953,0.907,0.907,0.907,0.9186,0.9302,0.9419,0.9419,0.9419,0.9419,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9535,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9651,0.9767,0.9767,0.9884,0.9884,0.9884,1,1,1,1,1,1,1,1] }
+  };
+  // Share caught at flag rate k: interpolate TPR along flag = pi*TPR + (1-pi)*FPR (ties -> max TPR).
+  function caught(r, pi, k) {
+    var xs = [], ys = [];
+    for (var i = 0; i < r.fpr.length; i++) {
+      var f = pi * r.tpr[i] + (1 - pi) * r.fpr[i];
+      if (xs.length && Math.abs(f - xs[xs.length - 1]) < 1e-12) ys[ys.length - 1] = Math.max(ys[ys.length - 1], r.tpr[i]);
+      else { xs.push(f); ys.push(r.tpr[i]); }
+    }
+    if (k <= xs[0]) return ys[0];
+    for (var j = 1; j < xs.length; j++) if (k <= xs[j]) return ys[j - 1] + (ys[j] - ys[j - 1]) * (k - xs[j - 1]) / (xs[j] - xs[j - 1]);
+    return ys[ys.length - 1];
+  }
+  window.__caught = function (m, pi, k) { return caught(ROC[m], pi, k); };   // for checking against R
+
+  var model = "full";
+  function updateDial() {
+    var pi = +$("prev").value / 100, k = +$("budget").value / 100;
+    $("prev_o").textContent = (pi * 100).toFixed(1) + "%"; $("budget_o").textContent = Math.round(k * 100) + "%";
+    var c = caught(ROC[model], pi, k);
+    var prec = Math.min(1, pi * c / k), genuineFlag = Math.max(0, (k - pi * c) / (1 - pi));
+    $("s_caught").textContent = Math.round(c * 100) + "%";
+    $("s_prec").textContent = Math.round(prec * 100) + "%";
+    $("s_free").textContent = Math.round((1 - genuineFlag) * 100) + "%";
+    drawCurve(pi, k);
+  }
+  function drawCurve(pi, k) {
+    var W = 560, H = 300, L = 44, R = 14, T = 12, B = 34, xmax = 0.30;
+    var X = function (v) { return L + (W - L - R) * v / xmax; }, Y = function (v) { return T + (H - T - B) * (1 - v); };
+    var o = [];
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) { o.push('<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" style="stroke:var(--rule)"/><text x="' + (L - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + (v * 100) + '%</text>'); });
+    [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30].forEach(function (v) { o.push('<text x="' + X(v) + '" y="' + (H - 12) + '" text-anchor="middle">' + Math.round(v * 100) + '%</text>'); });
+    [["time", "var(--muted)", "5 4"], ["full", "var(--accent)", ""]].forEach(function (s) {
+      var pts = []; for (var v = 0; v <= xmax + 1e-9; v += 0.0025) pts.push(X(v).toFixed(1) + "," + Y(caught(ROC[s[0]], pi, v)).toFixed(1));
+      o.push('<polyline points="' + pts.join(" ") + '" style="fill:none;stroke:' + s[1] + ';stroke-width:' + (s[0] === model ? 3 : 1.5) + (s[2] ? ';stroke-dasharray:' + s[2] : '') + '"/>');
+    });
+    var c = caught(ROC[model], pi, k);
+    o.push('<line x1="' + X(k) + '" x2="' + X(k) + '" y1="' + Y(0) + '" y2="' + Y(c) + '" style="stroke:var(--ink);stroke-dasharray:2 3"/>');
+    o.push('<circle cx="' + X(k) + '" cy="' + Y(c) + '" r="5.5" style="fill:var(--panel);stroke:var(--ink);stroke-width:2"/>');
+    o.push('<text x="' + (W - R) + '" y="' + (Y(caught(ROC.full, pi, xmax)) + 16) + '" text-anchor="end" style="fill:var(--accent)">timing + answer check</text>');
+    o.push('<text x="' + (W - R) + '" y="' + (Y(caught(ROC.time, pi, xmax)) + 16) + '" text-anchor="end">timing only</text>');
+    $("curve").innerHTML = o.join("");
+  }
+  $("prev").addEventListener("input", updateDial); $("budget").addEventListener("input", updateDial);
+  [["m_full", "full"], ["m_time", "time"]].forEach(function (b) {
+    $(b[0]).addEventListener("click", function () { model = b[1];
+      $("m_full").setAttribute("aria-pressed", model === "full"); $("m_time").setAttribute("aria-pressed", model === "time"); updateDial(); });
+  });
+  updateDial();
+})();
+</script>
+</body>
+</html>
