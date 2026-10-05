@@ -1539,6 +1539,64 @@ produces. Where the human is the control on the model, the interface should surf
 the *evidence* rather than the *verdict*, and the model's output should arrive after
 the human's, not before it.
 
+### Who gains from the tool: experience, skill, and task complexity {#sec-aiml-experience}
+
+The two preceding subsections treat the human as a supervisor of the model. Much
+deployed AI runs the other way: the model advises and a frontline worker acts, and the
+question is which workers turn the advice into performance. @knight2026gigwork answer
+it with a randomized field experiment on Instacart, run from June to September 2022.
+The tool was a wayfinding aid for in-store shoppers, who are gig workers picking
+customers' orders. It showed a map of the store layout, marked the approximate location
+of each item to be picked, and drew a route that was recomputed in real time by a
+traveling-salesman algorithm [@knight2026cmrhumancapital]. Efficiency was measured by
+picking time and quality by refund rates. The working-paper version reports
+improvements of 3.29% in efficiency and 3.83% in quality, a 3.16% increase in the volume
+of work shoppers took on, and a 32.5% relative increase in the likelihood that a shopper
+worked in more than one store [@knight2023gigworkwp]. The authors' summary of the
+published study puts the sample at more than six thousand workers and adds that treated
+shoppers picked 5.53% more items per day [@knight2026cmrhumancapital].
+
+The averages are not the contribution. The paper is about the heterogeneity, and it
+finds that the tool relates differently to two forms of human capital that are easy to
+conflate:
+
+- **It complements experience.** Gains were larger for shoppers who had done more of the
+  work, so the tool raised the return to experience instead of eroding it.
+- **It substitutes for skill.** Lower-skilled shoppers closed part of the gap with
+  higher-skilled peers, which narrowed performance dispersion. The substitution was
+  conditional, though, because lower-skilled shoppers needed some experience before they
+  benefited fully.
+- **Its value depends on the task.** Effects were larger for complex orders and under
+  high workload, plausibly where unaided search is most costly.
+
+The mechanism the authors give for the experience result connects back to calibrated
+reliance (@sec-aiml-fanout). In their account, less experienced shoppers were more than
+five times as likely as experienced ones to rely heavily on the tool, and the authors
+argue that this overreliance can keep a shopper from adjusting the route when conditions
+in the store call for it [@knight2026cmrhumancapital]. Experienced shoppers used the guidance alongside their own
+knowledge of the store. This is the frontline version of the rubber-stamp failure: when
+a worker cannot tell when the model is wrong, the worker follows it everywhere, including
+where it is wrong.
+
+Three points carry over to marketing settings. First, "AI helps the weakest workers most"
+and "AI helps the most experienced workers most" are both true here. They describe
+different moderators, so a deployment plan has to say which form of human capital it
+means. Second, the authors' recommended rollout gives workers a baseline of experience
+before the tool arrives, using a staggered introduction with basic training. That runs
+against the intuition that a guidance tool is most useful to the newest workers. The same
+question about sequencing arises for
+next-best-action tools for salespeople (@sec-sales) and to suggested replies for service
+agents (@sec-service). Third, the treatment was randomized but experience and skill were
+not. The moderation results therefore describe how the causal effect differs across
+workers who differ in many correlated ways, such as tenure, survival on the platform, and
+store familiarity. They do not show what would happen if a given worker gained a year of
+experience. That is the standard limit of heterogeneous-effect analysis in experiments, including
+the causal-forest estimators discussed below, and it is one reason a staggered rollout
+is also a better experiment than a one-time launch. (The published article is paywalled.
+This account rests on the published and working-paper abstracts and on the authors'
+practitioner summary, so the figures above come from those sources, not from the
+article's tables.)
+
 ### The flywheel makes today's policy tomorrow's training data {#sec-aiml-flywheel}
 
 One feedback loop deserves separate statement because it changes the objective
@@ -1713,6 +1771,11 @@ published article is paywalled; this account rests on its abstract.)
   (@eq-aiml-cadence-opt), whose monitoring is statistical process control, and whose
   human reviewers have a finite fan-out (@eq-aiml-fanout) that bounds how much
   autonomy can safely be deployed [@dai2026aiops].
+- **Who gains from AI advice depends on which form of human capital you mean.** In an
+  Instacart field experiment, a wayfinding tool complemented experience and substituted
+  for skill, and novices relied on it most heavily, so giving workers some experience
+  before the tool arrives is part of the rollout design [@knight2026gigwork]
+  (@sec-aiml-experience).
 - The constructive resolution is **causal machine learning**, which embeds flexible
   learners inside design-based estimators to recover the *uplift* that marketing
   decisions require.
