@@ -681,7 +681,9 @@ negligible, supplemented by the class-year fixed effects noted above. The
 *ex post* nature of the measure remains a genuine caveat: forward citations cannot
 recover the importance an inventor or investor could have perceived *at the time*
 of patenting, which is exactly the quantity a forward-looking valuation would want.
-@galasso2011ceo exploit this measurement apparatus to study how managerial risk
+The stock market's reaction to the grant measures that quantity directly, and
+@sec-innovation-kpss shows how to estimate it patent by patent and where the estimate
+can and cannot be used. @galasso2011ceo exploit this measurement apparatus to study how managerial risk
 exposure shapes the quantity and the citation-weighted quality of innovation.
 
 ### What Citations Miss: The Value Pathways of Serendipitous Inventions {#sec-innovation-serendipity}
@@ -1586,6 +1588,689 @@ for managerial-incentive problems. The broader lesson is that *technology* is it
 an input into the production of innovation, and that firms and investors can
 partially offset the predictable post-IPO innovation slump by investing in it.
 
+## Patent Value from Stock-Market Signals {#sec-innovation-kpss}
+
+Forward citations measure a patent's influence on later technology. They do not measure
+what the patent is worth to the firm that owns it, and @sec-innovation-measure ended on
+that gap: citations accrue for years after the grant and cannot recover what an investor
+could have seen at the time. @kogan2017technological (KPSS) proposed a measure that fills
+it. When the U.S. Patent and Trademark Office (USPTO) announces a grant, the owner's stock
+price moves. Part of the move is news about the patent and part is everything else that
+happened that week. KPSS filter the return through a simple statistical model and turn
+it into a dollar value for every patent granted to a U.S. public firm since 1926. The
+resulting file is public and updated every year, and it has become the default measure
+of patent value in finance, economics, and strategy.
+
+This section covers the estimator, shows how to run it on real stock returns, and
+reports what the public file contains. It then turns to @arora2026revisiting, who show
+that the filter that makes KPSS values precise also builds in a specific kind of
+measurement error. Their result splits the uses of the measure in two. KPSS values work
+as a right-hand-side variable. As a dependent variable in a comparison of two groups of
+patents they are internally inconsistent and biased toward finding no difference, and
+the section implements the two alternatives they propose.
+
+### The KPSS Estimator {#sec-innovation-kpss-estimator}
+
+Let $\xi_j$ be the dollar value of patent $j$ to its owner, and let $\pi$ be the market's
+prior probability that the application succeeds. On the grant day the market learns only
+that the application succeeded, so the change in firm value is
+
+$$
+\Delta V_j = (1 - \pi)\,\xi_j .
+$$ {#eq-kpss-grant}
+
+KPSS measure the reaction with the firm's idiosyncratic return $R_j$, the firm's return
+minus the market's, compounded over the three trading days $[t, t+2]$ from the grant
+date (trading volume rises over those days and then settles). The return is split into
+the patent's value as a fraction of market capitalization, $v_j$, and unrelated news,
+$\varepsilon_j$:
+
+$$
+R_j = v_j + \varepsilon_j, \qquad v_j \sim N^{+}\!\left(0, \sigma^2_{v,ft}\right), \qquad
+\varepsilon_j \sim N\!\left(0, \sigma^2_{\varepsilon,ft}\right).
+$$ {#eq-kpss-decomp}
+
+The value is truncated at zero because a granted patent cannot destroy value, while the
+noise can take either sign. Under these assumptions the best prediction of $v_j$ given
+the observed return is the mean of a truncated normal,
+
+$$
+E[v_j \mid R_j] = \delta R_j + \sqrt{\delta}\,\sigma_{\varepsilon,ft}\,
+\frac{\phi\!\left(-\sqrt{\delta}\,R_j/\sigma_{\varepsilon,ft}\right)}
+     {1 - \Phi\!\left(-\sqrt{\delta}\,R_j/\sigma_{\varepsilon,ft}\right)},
+\qquad
+\delta = \frac{\sigma^2_{v,ft}}{\sigma^2_{v,ft} + \sigma^2_{\varepsilon,ft}},
+$$ {#eq-kpss-filter}
+
+which is increasing and convex in $R_j$. A large negative return maps to a value near
+zero, and a large positive return maps to roughly $\delta R_j$. The signal-to-noise
+ratio $\delta$ controls how much of the return is believed.
+
+Two parameters are needed. KPSS hold $\delta$ fixed across firms and years, which lets
+both variances move freely as long as they move in proportion, and estimate it from the
+extra volatility on grant days:
+
+$$
+\log R_{fd}^2 = \gamma\, I_{fd} + c' Z_{fd} + u_{fd}, \qquad \hat\delta = 1 - e^{-\hat\gamma},
+$$ {#eq-kpss-gamma}
+
+where $I_{fd}$ marks grant days and $Z_{fd}$ holds firm-by-year and day-of-week fixed
+effects. The published estimate is $\hat\gamma = 0.0146$, so $\hat\delta \approx 0.0145$
+[@kogan2012technologicalwp]. Only about 1.5% of the variance of a grant-week return is
+patent news, which is why filtering matters. The noise variance comes from realized
+volatility. If $\sigma^2_{ft}$ is the firm-year mean of squared daily idiosyncratic
+returns and $d_{ft}$ the share of trading days that are grant days, then
+
+$$
+\sigma^2_{\varepsilon,ft} = \frac{3\,\sigma^2_{ft}}{1 + 3\,d_{ft}\left(e^{\hat\gamma} - 1\right)} .
+$$ {#eq-kpss-noise}
+
+Finally the filtered return is scaled to dollars with the market capitalization $M_j$
+on the day before the grant, divided equally among the $N_j$ patents the firm received
+that day, and grossed up for the anticipated part of the news:
+
+$$
+\xi_j = \frac{1}{1 - \pi}\,\frac{1}{N_j}\,E[v_j \mid R_j]\,M_j .
+$$ {#eq-kpss-value}
+
+KPSS set $\pi = 0.56$, the average grant rate for 1991–2001 applications, which
+multiplies values by about 2.27. @fig-kpss-pipeline lays out the steps.
+
+```{mermaid}
+%%| label: fig-kpss-pipeline
+%%| fig-cap: "The KPSS estimator. Grant dates and daily returns give each grant day a three-day idiosyncratic return. Excess volatility on grant days identifies the signal-to-noise ratio, realized volatility gives the noise variance, and the truncated-normal filter turns the return into the expected patent share of firm value, which market capitalization, the number of patents granted that day, and the prior grant probability convert into dollars per patent."
+flowchart LR
+    A["USPTO grant dates<br/>(Tuesdays)"] --> C["Three-day idiosyncratic<br/>return R, days t to t+2"]
+    B["Daily firm and<br/>market returns"] --> C
+    C --> D["Regress log R squared on a<br/>grant-day dummy: gamma"]
+    D --> E["Signal-to-noise<br/>delta = 1 - exp(-gamma)"]
+    B --> F["Firm-year realized<br/>volatility: noise variance"]
+    E --> G["Truncated-normal filter<br/>E of v given R"]
+    F --> G
+    G --> H["Times market cap,<br/>divided by N patents<br/>and by 1 - pi"]
+    H --> I["Dollar value<br/>per patent"]
+```
+
+Two features of the construction matter for everything that follows. Every patent a firm
+receives on a given day gets the same value, since the day's filtered return is simply
+divided by $N_j$. And the value is a conditional expectation, a prediction of $v_j$ given
+a noisy signal, not $v_j$ itself.
+
+KPSS validate the measure in three ways. Case studies line up with it: an Amazon patent
+on using shopping-cart contents to generate recommendations, granted in November 2001,
+was followed by a 34% rise in the stock over two days, while an IBM patent on reserving
+airplane restrooms drew a slightly negative return despite a citation count in the top
+fifth of its cohort [@kogan2012technologicalwp]. Value rises with forward citations, and
+placebo estimates with grant dates reassigned at random within the year center on zero. At
+the firm level, summing values into an innovation measure predicts the firm's later
+growth in profits, output, capital, and employment, predicts slower growth at competitors, and in
+aggregate tracks medium-run swings in productivity [@kogan2017technological]. The median
+patent is worth about \$3.2 million in 1982 dollars.
+
+### A Toolkit in R {#sec-innovation-kpss-toolkit}
+
+The estimator fits in three functions. `kpss_filter()` is @eq-kpss-filter, written with
+the log inverse Mills ratio so it stays finite for large negative returns.
+`kpss_sigma_eps()` is @eq-kpss-noise. `gkpss_filter()` is the two-signal generalization
+derived in @sec-innovation-kpss-groups. The chunk also checks the closed forms against
+brute-force numerical integration of the posterior. The generalized filter agrees to
+five decimals and collapses to the KPSS filter when the second signal vanishes.
+
+```{r kpss-toolkit, message=FALSE, warning=FALSE}
+# E[x | r]: KPSS filter. x ~ N+(0, sx^2), eps ~ N(0, se^2), r = x + eps,
+# delta = sx^2 / (sx^2 + se^2)
+kpss_filter <- function(r, delta, sigma_eps) {
+  z <- -sqrt(delta) * r / sigma_eps
+  mills <- exp(dnorm(z, log = TRUE) - pnorm(z, lower.tail = FALSE, log.p = TRUE))
+  delta * r + sqrt(delta) * sigma_eps * mills
+}
+
+# Noise s.d. over a `window`-day event window, from the firm-year mean squared daily
+# idiosyncratic return (s2) and the share of trading days that are grant days.
+kpss_sigma_eps <- function(s2, grant_share, gamma, window = 3) {
+  sqrt(window * s2 / (1 + window * grant_share * (exp(gamma) - 1)))
+}
+
+# Generalized filter: E[x1 | r] when r = x1 + x2 + eps, with x1 ~ N+(0, (theta1*se)^2),
+# x2 ~ N+(0, (theta2*se)^2), eps ~ N(0, se^2). Swap theta1/theta2 to get E[x2 | r].
+gkpss_filter <- function(r, theta1, theta2, sigma_eps) {
+  q  <- sqrt(1 + theta1^2 + theta2^2)
+  s  <- sigma_eps * q
+  w1 <- s * sqrt(1 + theta2^2) / theta1
+  w2 <- s * sqrt(1 + theta1^2) / theta2
+  l1 <- theta2 / theta1 * q
+  l2 <- theta1 / theta2 * q
+  num <- 2 * (1 + theta2^2) * sigma_eps^2 / w1 * dnorm(r / w1) * pnorm(l1 * r / w1) -
+         2 * theta1^2 * sigma_eps^2 / w2 * dnorm(r / w2) * pnorm(l2 * r / w2)
+  owen <- function(h, a) vapply(h, function(hh) sn::T.Owen(hh, a), numeric(1))
+  den <- pnorm(r / w1) - 2 * owen(r / w1, l1) + pnorm(r / w2) - 2 * owen(r / w2, l2)
+  theta1^2 / q^2 * r + num / den
+}
+
+# Check both filters against brute-force numerical integration
+brute <- function(r, s1, s2, se) {
+  t  <- sqrt(s2^2 + se^2)
+  fz <- function(z) 2 / t * dnorm(z / t) * pnorm(s2 / se * z / t)   # density of x2 + eps
+  f1 <- function(v) 2 / s1 * dnorm(v / s1)
+  integrate(function(v) v * f1(v) * fz(r - v), 0, Inf)$value /
+    integrate(function(v) f1(v) * fz(r - v), 0, Inf)$value
+}
+chk <- data.frame(r = c(-2, 0, 1, 2.5))
+chk$closed_form <- gkpss_filter(chk$r, 0.4, 0.25, 1)
+chk$numerical   <- sapply(chk$r, brute, s1 = 0.4, s2 = 0.25, se = 1)
+chk$kpss_limit  <- gkpss_filter(chk$r, 0.4, 1e-4, 1)          # theta2 -> 0 ...
+chk$kpss        <- kpss_filter(chk$r, 0.4^2 / (1 + 0.4^2), 1)  # ... collapses to KPSS
+round(chk, 5)
+```
+
+### Running KPSS on Real Returns {#sec-innovation-kpss-pipeline}
+
+The pipeline below runs the estimator from scratch on public prices. It downloads
+daily prices for a firm and for an S&P 500 index fund (a stand-in for the CRSP
+value-weighted market), builds three-day idiosyncratic returns, estimates the noise
+variance from trailing 52-week volatility as the current KPSS release does, and applies
+the filter on each grant day. It takes $\gamma = 0.0155$ and $\pi = 0.56$ from the KPSS
+release rather than re-estimating them, because estimating $\gamma$ needs the full panel
+of patenting firms. With CRSP access, replace the download with CRSP returns and shares
+outstanding, and `value_per_share` times shares outstanding is $\xi_j$.
+
+```{r kpss-pipeline, eval=FALSE}
+library(data.table); library(jsonlite)
+
+# 1. Daily prices. Yahoo's chart endpoint returns split- and dividend-adjusted closes;
+#    with CRSP access, use RET and the value-weighted market return instead.
+get_yahoo <- function(sym, from = "2009-01-01", to = "2025-12-31") {
+  p1 <- as.integer(as.POSIXct(from, tz = "UTC")); p2 <- as.integer(as.POSIXct(to, tz = "UTC"))
+  u  <- sprintf(paste0("https://query1.finance.yahoo.com/v8/finance/chart/%s?",
+                       "period1=%d&period2=%d&interval=1d"), sym, p1, p2)
+  j  <- fromJSON(readLines(url(u, headers = c("User-Agent" = "Mozilla/5.0")), warn = FALSE))
+  r  <- j$chart$result
+  data.table(date  = as.IDate(as.POSIXct(r$timestamp[[1]], origin = "1970-01-01",
+                                         tz = "America/New_York")),
+             close = r$indicators$quote[[1]]$close[[1]],        # split-adjusted price
+             adj   = r$indicators$adjclose[[1]]$adjclose[[1]])  # total-return index
+}
+
+# 2. KPSS value of each grant day for one firm.
+#    grants: data.table(issue_date = IDate, K = patents granted that day)
+kpss_firm <- function(firm_px, mkt_px, grants, gamma = 0.0155, pi = 0.56,
+                      window = 3, vol_days = 252) {
+  x <- merge(firm_px[, .(date, pf = adj, close)], mkt_px[, .(date, pm = adj)], by = "date")
+  setorder(x, date)
+  x[, `:=`(rf = pf / shift(pf) - 1, rm = pm / shift(pm) - 1)]
+  x[, idio := rf - rm]                                  # market-adjusted return
+  fwd <- function(r) frollapply(r, window, function(z) prod(1 + z), align = "left")
+  x[, R := fwd(rf) - fwd(rm)]                           # [t, t+2] idiosyncratic return
+  x[, grant := date %in% grants$issue_date]
+  x[, s2 := frollmean(shift(idio^2), vol_days)]         # trailing 52-week variance
+  x[, gshare := frollmean(shift(as.numeric(grant)), vol_days)]
+  x[, sig_eps := kpss_sigma_eps(s2, gshare, gamma, window)]
+  x[, close_lag := shift(close)]
+  out <- merge(x[grant == TRUE & !is.na(R) & !is.na(sig_eps)], grants,
+               by.x = "date", by.y = "issue_date")
+  out[, E := kpss_filter(R, 1 - exp(-gamma), sig_eps)]  # filtered return, E[v | R]
+  # Patent value = E * market cap / (K * (1 - pi)); market cap = price * shares.
+  # Without a share count, report value per share, in dollars:
+  out[, value_per_share := E * close_lag / (K * (1 - pi))]
+  out[]
+}
+
+# 3. Patents and published values from the KPSS extended data
+#    (github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-Growth-Extended-Data)
+kp <- fread("KPSS_2025.csv")
+grants_of <- function(permno_) {
+  g <- kp[permno == permno_ & issue_date >= 20100101,
+          .(K = .N, xi_published = xi_nominal[1]), by = issue_date]   # xi in $ millions
+  g[, issue_date := as.IDate(as.character(issue_date), format = "%Y%m%d")][]
+}
+spy <- get_yahoo("SPY")
+val <- rbind(
+  kpss_firm(get_yahoo("AAPL"), spy, grants_of(14593))[, firm := "Apple"],
+  kpss_firm(get_yahoo("IBM"),  spy, grants_of(12490))[, firm := "IBM"])
+
+# 4. Validation: published xi / our value per share = the share count KPSS used (millions).
+val[, implied_shares_bn := xi_published / value_per_share / 1000]
+val[, .(grant_days = .N,
+        cor_log = cor(log(xi_published), log(value_per_share))), by = firm]
+val[, .(implied_shares_bn = median(implied_shares_bn)), by = .(firm, year = year(date))]
+```
+
+Run for Apple and IBM over 2010–2025, 827 grant days each, our values per share
+correlate with the published KPSS values at 0.980 (Apple) and 0.987 (IBM) in logs. A
+sharper check uses the fact that the ratio of a published value to our value per share
+is the number of shares KPSS multiplied by. If the pipeline matches theirs, that ratio
+should be a smooth share count rather than noise. @fig-kpss-implied-shares shows that
+it is. Within a year it moves by a few percent, and across years it declines steadily
+for both firms, as shares outstanding do at companies that buy back stock. The
+remaining gaps come from the market proxy and from Yahoo's price adjustments, not from
+the filter.
+
+```{r kpss-implied-shares, message=FALSE, warning=FALSE}
+#| label: fig-kpss-implied-shares
+#| fig-cap: "Share counts implied by dividing published KPSS patent values by values per share computed from scratch with Yahoo prices (median over each year's grant days, split-adjusted). A smooth series means the from-scratch pipeline reproduces the published estimates up to the share count. Results computed offline with the pipeline above."
+#| fig-height: 3.2
+library(ggplot2)
+implied <- data.frame(
+  year = rep(2010:2025, 2),
+  firm = rep(c("Apple", "IBM"), each = 16),
+  shares_bn = c(25.00, 25.40, 25.73, 25.37, 23.55, 22.82, 21.49, 20.61,
+                19.37, 18.13, 17.44, 16.54, 16.27, 15.96, 15.32, 15.02,
+                1.36, 1.28, 1.25, 1.14, 1.05, 1.02, 0.98, 0.97,
+                0.94, 0.92, 0.94, 0.93, 0.90, 0.90, 0.90, 0.90))
+ggplot(implied, aes(year, shares_bn)) +
+  geom_line(linewidth = 0.8) + geom_point(size = 1.4) +
+  facet_wrap(~ firm, scales = "free_y") +
+  labs(x = NULL, y = "Implied shares (billions)") +
+  theme_minimal(base_size = 11)
+```
+
+### The Public KPSS File {#sec-innovation-kpss-data}
+
+The September 2026 release covers 3,831,908 patents granted to 10,599 CRSP firms from
+1926 through 2025, each with a nominal and a CPI-deflated value and a forward-citation
+count. The chunk below reproduces the facts in this subsection from the file and its
+companion patent-to-CPC (Cooperative Patent Classification) match. Both files download
+from the KPSS GitHub repository; the code is not run when the book renders.
+
+Value is extremely skewed. The median patent is worth \$3.26 million in 1982 dollars,
+the mean \$12.34 million, and the 99th percentile \$136 million. The top 1% of patents
+account for 23.6% of all estimated value. Bundling is the norm: 86.7% of patents were
+granted on a day when the same firm received at least one other patent, and the
+within-firm-day standard deviation of values is exactly zero. Any patent characteristic
+that varies within a firm's grant day therefore cannot explain any variation in KPSS
+values.
+
+```{r kpss-public-data, eval=FALSE}
+library(data.table); library(fixest)
+kp  <- fread("KPSS_2025.csv")              # patent_num, permno, issue_date, xi_real, cites, ...
+cpc <- fread("Match_patent_cpc_2025.csv")  # patent_num, cpc ("A61K31/00;C07D...")
+kp[, yr := issue_date %/% 10000]
+
+# (a) How skewed is private value?
+xs <- sort(kp$xi_real, decreasing = TRUE)
+c(median = median(xs), mean = mean(xs), p99 = quantile(xs, 0.99, names = FALSE),
+  top1_share = sum(xs[seq_len(length(xs) / 100)]) / sum(xs))
+
+# (b) Bundles: every patent a firm receives on the same day gets the same value
+kp[, K := .N, by = .(permno, issue_date)]
+c(share_in_bundles = mean(kp$K > 1),
+  max_within_day_sd = kp[K > 1, sd(xi_nominal), by = .(permno, issue_date)][, max(V1)])
+
+# (c) Value and forward citations, grant years 1980-2010 (KPSS eq. 7 direction)
+cpc[, codes := strsplit(cpc, ";", fixed = TRUE)]
+cpc[, sub1 := substr(vapply(codes, `[`, "", 1), 1, 4)]                        # main CPC subclass
+cpc[, nsub := vapply(codes, function(z) length(unique(substr(z, 1, 4))), 1L)] # breadth
+kp <- merge(kp, cpc[, .(patent_num, sub1, nsub)], by = "patent_num")
+s <- kp[yr %between% c(1980, 2010) & xi_real > 0]
+s[, `:=`(lxi = log(xi_real), lc = log1p(cites))]
+etable(feols(lxi ~ lc | yr,                  s, cluster = ~yr),
+       feols(lxi ~ lc | yr + sub1^yr,        s, cluster = ~yr),
+       feols(lxi ~ lc | sub1^yr + permno,    s, cluster = ~yr),
+       feols(lxi ~ lc | sub1^yr + permno^yr, s, cluster = ~yr))
+
+# (d) KPSS as a regressor: the same slope under three variance estimators
+s[, z := as.numeric(scale(lxi))]
+etable(feols(lc ~ z | permno + yr, s, vcov = "iid"),
+       feols(lc ~ z | permno + yr, s, cluster = ~permno),
+       feols(lc ~ z | permno + yr, s, cluster = ~permno + yr))
+
+# (e) Bundle diagnostic for a two-group comparison: broad (top-quartile breadth) vs narrow
+b <- kp[yr %between% c(1980, 2020) & xi_real > 0]
+b[, broad := as.integer(nsub > quantile(nsub, 0.75, type = 1)), by = .(sub1, yr)]
+days <- b[, .(nb = sum(broad), nn = sum(1 - broad)), by = .(permno, issue_date)]
+days[, type := fifelse(nb > 0 & nn > 0, "mixed", fifelse(nb > 0, "broad only", "narrow only"))]
+days[, .N, by = type][, share := N / sum(N)][]
+b <- merge(b, days[, .(permno, issue_date, type)], by = c("permno", "issue_date"))
+b[broad == 1, mean(type == "mixed")]          # share of broad patents granted on mixed days
+b[, `:=`(lxi = log(xi_real), Kb = pmin(K, 30L))]
+etable(feols(lxi ~ broad | sub1^yr + permno^yr + Kb,    b, cluster = ~permno),
+       feols(lxi ~ broad | sub1^yr + permno^issue_date, b, cluster = ~permno))
+```
+
+@tbl-kpss-cites repeats the KPSS value–citation regression on the updated file for
+patents granted 1980–2010, which leaves at least fifteen years for citations to
+accumulate. Across patents in the same year and technology class, value rises with
+citations, with an elasticity near 0.27. Most of that association lies between firms.
+Within a firm it falls to 0.020, and within a firm-year to 0.0025. KPSS report the
+same pattern in the original data, with a coefficient of 0.174 under class-by-year
+effects, 0.013 with firm effects, and 0.004 with firm-by-year effects, after
+controlling for firm size and volatility [@kogan2012technologicalwp].
+
+| Fixed effects | Year | Year + CPC subclass × year | CPC subclass × year + firm | CPC subclass × year + firm × year |
+|---|---|---|---|---|
+| log(1 + citations) | 0.311 (0.018) | 0.266 (0.011) | 0.020 (0.002) | 0.0025 (0.0006) |
+| Patents | 1,472,191 | 1,470,255 | 1,468,860 | 1,456,020 |
+
+: Log KPSS value (1982 dollars) regressed on log(1 + forward citations), patents granted 1980–2010, from the public KPSS file (September 2026 release). Standard errors clustered by grant year in parentheses. {#tbl-kpss-cites}
+
+The same data show why standard errors need care when KPSS values are a regressor.
+Regress log(1 + citations) on the standardized log value with firm and year fixed
+effects and the slope is 0.115 under every variance estimator. The standard error is
+0.0027 if patents are treated as independent, 0.0188 clustered by firm, and 0.0222
+clustered by firm and year, seven to eight times larger. Patents in a bundle share one
+value by construction, so they cannot be independent observations.
+
+### What the Filter Does to Measurement Error {#sec-innovation-kpss-error}
+
+@arora2026revisiting begin from the fact that a KPSS value is a conditional expectation.
+Write the true value as $x$ and the KPSS value as $E[x \mid r]$, with measurement error
+$\omega = E[x \mid r] - x$. Three properties follow:
+
+$$
+E[\omega] = 0, \qquad \operatorname{Var}\!\left(E[x \mid r]\right) < \operatorname{Var}(x),
+\qquad \operatorname{Cov}(\omega, x) < 0, \qquad \operatorname{Cov}\!\left(\omega, E[x \mid r]\right) = 0 .
+$$ {#eq-kpss-error}
+
+The mean is right because of iterated expectations. The variance is too small because
+of the law of total variance: the variance of a prediction is the variance of the truth
+minus the variance it leaves unexplained. The error is negatively correlated with the
+truth: the filter shrinks every value toward the mean, so it undervalues good patents
+and overvalues bad ones. The error is uncorrelated with the KPSS value itself, which is
+the defining property of a prediction. In the econometric vocabulary, this is Berkson
+error rather than classical error, and the two have opposite consequences in a
+regression.
+
+When KPSS is the regressor in $y = \alpha + \beta x + \eta$, substituting
+$E[x \mid r]$ for $x$ puts $-\beta\omega$ in the error term, and that term is
+uncorrelated with the regressor, so OLS is unbiased. The raw return $r$ has classical
+error and is attenuated toward zero by the factor $\operatorname{Var}(x)/\operatorname{Var}(r)$,
+which at KPSS signal-to-noise levels is close to zero. When KPSS is the dependent
+variable in a comparison of groups the logic reverses. Shrinkage toward a common mean
+pulls group means toward each other.
+
+@tbl-kpss-sim-error checks each claim by simulation, with a signal-to-noise ratio higher
+than the empirical one so that the effects are visible in 100,000 draws. KPSS values
+have the right mean but less than 5% of the true variance. The regression slope on KPSS
+values is 1.99 against a truth of 2, while the slope on raw returns is 0.08. In the
+group comparison the reversal appears: KPSS recovers 7% of a true gap that raw returns
+recover in full. @fig-kpss-compression shows the shrinkage.
+
+```{r kpss-sim-error, message=FALSE, warning=FALSE}
+#| label: tbl-kpss-sim-error
+#| tbl-cap: "Simulated properties of KPSS values (theta = 0.35, 100,000 patents). Mean and skewness lines compare true values, KPSS values, and raw returns; the slope line regresses an outcome with a true slope of 2 on each measure; the group line compares two groups whose true value scales differ by half."
+set.seed(2017)
+th <- 0.35; se <- 1; sx <- th * se; delta <- th^2 / (1 + th^2)
+n  <- 1e5
+x  <- abs(rnorm(n, 0, sx))                 # true patent value (fraction of firm value)
+r  <- x + rnorm(n, 0, se)                  # observed event-window return
+ex <- kpss_filter(r, delta, se)            # KPSS value
+om <- ex - x                               # measurement error omega
+y  <- 2 * x + rnorm(n, 0, 0.5)             # a downstream outcome, true slope 2
+g  <- rbinom(n, 1, 0.5)                    # two patent groups that truly differ
+xg <- abs(rnorm(n, 0, sx * ifelse(g == 1, 1.5, 1)))
+rg <- xg + rnorm(n, 0, se)
+dp <- mean(xg^2) / (mean(xg^2) + se^2)     # the pooled delta KPSS would impose
+eg <- kpss_filter(rg, dp, se)
+sim_err <- data.frame(
+  quantity = c("Mean: true x / KPSS / raw r",
+               "Variance of KPSS relative to true x",
+               "Skewness: true x / KPSS",
+               "Cov(omega, x): KPSS undervalues good patents",
+               "Cov(omega, KPSS): zero by construction",
+               "Slope of y on x / on KPSS / on raw r (truth = 2)",
+               "Group gap: true / KPSS / raw r"),
+  value = c(sprintf("%.3f / %.3f / %.3f", mean(x), mean(ex), mean(r)),
+            sprintf("%.3f", var(ex) / var(x)),
+            sprintf("%.2f / %.2f", moments::skewness(x), moments::skewness(ex)),
+            sprintf("%.4f", cov(om, x)),
+            sprintf("%.1e", cov(om, ex)),
+            sprintf("%.2f / %.2f / %.2f", coef(lm(y ~ x))[2], coef(lm(y ~ ex))[2],
+                    coef(lm(y ~ r))[2]),
+            sprintf("%.3f / %.3f / %.3f", mean(xg[g == 1]) - mean(xg[g == 0]),
+                    mean(eg[g == 1]) - mean(eg[g == 0]), mean(rg[g == 1]) - mean(rg[g == 0]))))
+# Are conventional standard errors right when KPSS is the regressor?
+# 500 samples of 2,000 patents, delta and sigma known.
+mc <- t(replicate(500, {
+  xx <- abs(rnorm(2000, 0, sx)); ee <- kpss_filter(xx + rnorm(2000, 0, se), delta, se)
+  f  <- lm(2 * xx + rnorm(2000, 0, 0.5) ~ ee)
+  c(b = unname(coef(f)[2]), se = sqrt(vcov(f)[2, 2]))
+}))
+sim_err <- rbind(sim_err, data.frame(
+  quantity = "Monte Carlo s.d. of slope / mean OLS s.e.",
+  value = sprintf("%.3f / %.3f", sd(mc[, "b"]), mean(mc[, "se"]))))
+knitr::kable(sim_err, col.names = c("Quantity", "Simulated value"))
+```
+
+```{r kpss-compression, message=FALSE, warning=FALSE}
+#| label: fig-kpss-compression
+#| fig-cap: "True patent values, observed returns, and KPSS values from the simulation above. The filter turns a noisy return into a tight distribution around the true mean, shrinking the right tail of true values."
+#| fig-height: 3.2
+library(ggplot2)
+dens <- data.frame(value = c(x, r, ex),
+                   series = rep(c("True value x", "Observed return r", "KPSS value E[x | r]"),
+                                each = n))
+ggplot(dens, aes(value, colour = series)) +
+  geom_density(adjust = 1.2, linewidth = 0.8) +
+  coord_cartesian(xlim = c(-2, 2)) +
+  labs(x = "Value as a fraction of firm value", y = "Density", colour = NULL) +
+  theme_minimal(base_size = 11) + theme(legend.position = "bottom")
+```
+
+@arora2026revisiting also argue that OLS standard errors on KPSS regressors are too
+small and recommend bootstrapping. In the simulation, with $\delta$ and
+$\sigma_\varepsilon$ known, the understatement is modest: the Monte Carlo standard
+deviation of the slope is 0.351 against an average OLS standard error of 0.329. In
+real data two larger problems come first. $\gamma$ and $\sigma_\varepsilon$ are
+estimated, and values are shared within bundles, which the citation regression above
+showed can understate standard errors several-fold. A firm-level block bootstrap that
+re-runs the whole pipeline, from the $\gamma$ regression to the filter, handles all
+three at once.
+
+### Comparing Patent Groups: Generalized KPSS and Unfiltered Returns {#sec-innovation-kpss-groups}
+
+Much of the strategy and innovation literature uses KPSS values as an outcome: are
+patents from larger teams, science-based patents, or patents from vertically integrated
+firms worth more? @arora2026revisiting show that the question cannot be answered from
+KPSS values as published. The estimator imposes one signal-to-noise ratio, which means
+every patent a firm receives in a year is drawn from the same value distribution. A
+test of whether two groups differ in mean value is therefore a test of a difference the
+estimator assumed away. If the groups do differ, the shared $\delta$ sits between the
+two true ratios, so the high-value group is shrunk too hard and the low-value group not
+hard enough, and the estimated gap is biased toward zero. On days when a firm receives
+patents of both types the problem is sharper. The return then carries two signals, the
+filter in @eq-kpss-filter no longer applies, and equal splitting forces the measured
+within-day gap to zero.
+
+The first remedy keeps the filter but lets each group have its own distribution. Write
+$\theta_s = \sigma_{x_s}/\sigma_\varepsilon$ and $\theta_n = \sigma_{x_n}/\sigma_\varepsilon$
+for the two groups (S and N). The ratios come from a volatility regression with one
+dummy per day type,
+
+$$
+\log R_{fd}^2 = \gamma_s I^{S}_{fd} + \gamma_n I^{N\text{-only}}_{fd} + c' Z_{fd} + \nu_{fd},
+\qquad \theta_k^2 = e^{\gamma_k} - 1,
+$$ {#eq-kpss-two-gamma}
+
+and the noise variance from the volatility identity with both shares of grant days. On
+days with only one type, the KPSS filter applies with that type's $\delta_k$. On mixed
+days the return is $r = x_s + x_n + \varepsilon$, and the posterior mean of the S
+component, derived with the two-tier stochastic-frontier algebra of
+@papadopoulos2015halfnormal, is
+
+$$
+E[x_s \mid r] = \frac{\theta_s^2}{1 + \theta_s^2 + \theta_n^2}\, r +
+\frac{\dfrac{2(1+\theta_n^2)\sigma_\varepsilon^2}{\omega_1}\,\phi\!\left(\dfrac{r}{\omega_1}\right)\Phi\!\left(\dfrac{\lambda_1 r}{\omega_1}\right)
+ - \dfrac{2\theta_s^2\sigma_\varepsilon^2}{\omega_2}\,\phi\!\left(\dfrac{r}{\omega_2}\right)\Phi\!\left(\dfrac{\lambda_2 r}{\omega_2}\right)}
+{\Phi\!\left(\dfrac{r}{\omega_1}\right) - 2T\!\left(\dfrac{r}{\omega_1}, \lambda_1\right)
+ + \Phi\!\left(\dfrac{r}{\omega_2}\right) - 2T\!\left(\dfrac{r}{\omega_2}, \lambda_2\right)},
+$$ {#eq-kpss-two-signal}
+
+where $s = \sigma_\varepsilon\sqrt{1+\theta_s^2+\theta_n^2}$,
+$\omega_1 = s\sqrt{1+\theta_n^2}/\theta_s$, $\omega_2 = s\sqrt{1+\theta_s^2}/\theta_n$,
+$\lambda_1 = (\theta_n/\theta_s)\sqrt{1+\theta_s^2+\theta_n^2}$,
+$\lambda_2 = (\theta_s/\theta_n)\sqrt{1+\theta_s^2+\theta_n^2}$, and $T(h, a)$ is Owen's
+T function. `gkpss_filter()` implements it, and the check in
+@sec-innovation-kpss-toolkit confirms it against numerical integration. The method
+needs days on which one type is granted without the other, since those days identify
+the two ratios. It handles exactly two groups, so continuous characteristics must be
+split. And a patent's value now depends on which partition the researcher chose.
+
+The second remedy drops the filter. Regress the idiosyncratic event return on an
+indicator for any grant and an indicator for a grant of the group of interest, with
+firm and date fixed effects and controls for firm size and the number of patents, and
+compare the coefficients. Unfiltered returns are consistent with any difference in
+group means and simple to compute, but they are noisy and cannot separate two types
+granted on the same day.
+
+@tbl-kpss-sim-groups runs all of these on a simulated panel of 400 firms over 2,500
+trading days, in which S patents carry a larger value scale than N patents and 2.5% of
+days are mixed. KPSS recovers 2% of the true gap. Unfiltered returns recover 89%. The
+generalized estimator, with the any-S dummy specified as in @arora2026revisiting,
+overshoots to 126%: mixed days enter the S dummy, the second signal on those days
+inflates $\hat\gamma_s$, and an inflated $\theta_s$ exaggerates the S values. A small
+refinement fixes it. Identify each $\theta$ from pure days only and give mixed days
+their own dummy, which brings the estimate to 97% of the truth. Across three further
+seeds the any-S version ranged from 118% to 134% and the pure-day version from 82% to
+100%. @arora2026revisiting report a milder overshoot in their own simulation (a gap of
+0.0447 against a true 0.04) and attribute it to noise in estimating the parameters. The
+pure-day specification is our modification, not theirs, and is worth reporting
+alongside the original.
+
+```{r kpss-sim-groups, message=FALSE, warning=FALSE}
+#| label: tbl-kpss-sim-groups
+#| tbl-cap: "Estimated difference in mean patent value between two groups (S minus N) in a simulated panel of 400 firms and 2,500 trading days, with theta_S = 0.30, theta_N = 0.18, 7.5% S-only days, 7.5% N-only days, and 2.5% mixed days. Values are fractions of firm value."
+library(data.table); library(fixest)
+set.seed(33056)
+nF <- 400; nD <- 2500                      # 400 firms x 2,500 trading days
+th_s <- 0.30; th_n <- 0.18                 # S patents carry more value per unit of noise
+p <- data.table(firm = rep(seq_len(nF), each = nD))
+p[, sig := rep(runif(nF, 0.01, 0.03), each = nD)]   # firm-specific return noise
+u <- runif(nrow(p))                        # day mix: 7.5% S-only, 7.5% N-only, 2.5% mixed
+p[, `:=`(nS = as.integer(u < 0.025 | (u >= 0.100 & u < 0.175)),
+         nN = as.integer(u < 0.100))]
+p[, xs := nS * abs(rnorm(.N, 0, th_s * sig))]
+p[, xn := nN * abs(rnorm(.N, 0, th_n * sig))]
+p[, r  := xs + xn + rnorm(.N, 0, sig)]
+p[, `:=`(K = nS + nN, I = as.integer(nS + nN > 0),
+         S_any = nS, N_only = as.integer(nN == 1 & nS == 0),
+         S_only = as.integer(nS == 1 & nN == 0), mixed = as.integer(nS == 1 & nN == 1))]
+p[, s2 := mean(r^2), by = firm]            # realized second moment, one-day window
+
+# (1) KPSS: one signal-to-noise ratio, value split equally across the day's patents
+gam <- coef(feols(log(r^2) ~ I | firm, p))[["I"]]
+p[, se_k := kpss_sigma_eps(s2, mean(I), gam, window = 1), by = firm]
+p[I == 1, v_kpss := kpss_filter(r, 1 - exp(-gam), se_k) / K]
+
+# (2) Generalized KPSS: separate thetas, two-signal filter on mixed days
+gen_values <- function(theta_s, theta_n, se_g) {
+  out <- p[, .(nS, nN, r, seg = se_g)]
+  out[nS == 1 & nN == 0, vs := kpss_filter(r, theta_s^2 / (1 + theta_s^2), seg)]
+  out[nN == 1 & nS == 0, vn := kpss_filter(r, theta_n^2 / (1 + theta_n^2), seg)]
+  out[nS == 1 & nN == 1, `:=`(vs = gkpss_filter(r, theta_s, theta_n, seg),
+                              vn = gkpss_filter(r, theta_n, theta_s, seg))]
+  out[nS == 1, mean(vs)] - out[nN == 1, mean(vn)]
+}
+#   (2a) dummies as in Arora et al.: any-S day vs N-only day
+ga <- coef(feols(log(r^2) ~ S_any + N_only | firm, p))
+ts_a <- sqrt(exp(ga[["S_any"]]) - 1); tn_a <- sqrt(exp(ga[["N_only"]]) - 1)
+se_a <- p[, sqrt(s2[1] / (1 + mean(S_any) * ts_a^2 + mean(N_only) * tn_a^2)), by = firm]$V1
+#   (2b) refinement: identify each theta from pure days; mixed days get their own dummy
+gb <- coef(feols(log(r^2) ~ S_only + N_only + mixed | firm, p))
+ts_b <- sqrt(exp(gb[["S_only"]]) - 1); tn_b <- sqrt(exp(gb[["N_only"]]) - 1)
+se_b <- p[, sqrt(s2[1] / (1 + mean(S_only) * ts_b^2 + mean(N_only) * tn_b^2 +
+                            mean(mixed) * (ts_b^2 + tn_b^2))), by = firm]$V1
+
+# (3) Unfiltered returns: regress the event return on counts of each patent type
+ur <- feols(r ~ nS + nN | firm, p, vcov = "hetero")
+
+truth <- p[nS == 1, mean(xs)] - p[nN == 1, mean(xn)]
+res <- data.table(
+  method = c("Truth (simulated values)", "KPSS (one distribution)",
+             "Generalized KPSS, any-S dummy", "Generalized KPSS, pure-day thetas",
+             "Unfiltered returns regression"),
+  gap = c(truth, p[nS == 1, mean(v_kpss)] - p[nN == 1, mean(v_kpss)],
+          gen_values(ts_a, tn_a, rep(se_a, each = nD)),
+          gen_values(ts_b, tn_b, rep(se_b, each = nD)),
+          coef(ur)[["nS"]] - coef(ur)[["nN"]]))
+res[, pct := round(100 * gap / truth)]
+res[, gap := sprintf("%.5f", gap)]
+knitr::kable(res, col.names = c("Estimator", "S minus N mean value", "% of truth"))
+```
+
+The empirical stakes are large. @arora2026revisiting build a sample of 1,444,649
+patents granted 1980–2019 to 4,977 U.S. public firms and compare patent groups three
+ways. The volatility regressions already point away from a common distribution: $\hat\gamma$ is
+0.025 on days with a large-team patent against 0.017 on other days, and 0.037 for
+highly vertically integrated firms against 0.016 for the rest. @tbl-kpss-abfn reports
+the group gaps. In every case the generalized estimate is nine to twenty-two times the
+KPSS estimate. Three of the four conclusions survive all methods: large-team patents,
+science-based patents, and patents of vertically integrated firms are worth more. The
+fourth does not. KPSS and its generalization say patents invented entirely abroad are
+worth less, but unfiltered returns show no difference, so the offshoring result depends
+on the method.
+
+| Patent group | KPSS | Generalized KPSS | Ratio | Unfiltered returns: extra response on group days |
+|---|---|---|---|---|
+| Large inventor team (top quartile) | 0.025 | 0.232 | 9.3 | 0.0166 vs. 0.0250 base (67% larger) |
+| All inventors outside the U.S. | −0.008 | −0.140 | 17.5 | 0.0023 (s.e. 0.0068), no difference |
+| Science-based (cites scientific literature) | 0.015 | 0.140 | 9.3 | 0.0224 vs. 0.0217 base (about twice) |
+| Highly vertically integrated firm | 0.006 | 0.130 | 21.7 | 0.0179 vs. 0.0113 base (158% larger, p < 0.10) |
+
+: Group gaps in log patent value under KPSS and generalized KPSS (coefficients on the group indicator in patent-level regressions of log value, Table 5 of the paper), and the incremental three-day abnormal return on days when a patent of the group is granted. From @arora2026revisiting, NBER Working Paper 33056 as revised April 2026 [@arora2024revisitingwp]. {#tbl-kpss-abfn}
+
+When the same authors use the measures as regressors for later outcomes, the ranking
+flips. A one-standard-deviation increase in value predicts 0.33 more forward citations
+with KPSS (s.e. 0.058) but only 0.13 with raw returns (s.e. 0.065), and raw returns
+show no detectable association with litigation, reassignment, renewal to full term, or
+filing in all three major patent offices, where KPSS values predict all four. That is
+the Berkson-versus-classical contrast of @sec-innovation-kpss-error, appearing in data.
+
+### Check the Bundles Before You Compare Groups {#sec-innovation-kpss-bundles}
+
+Whether generalized KPSS can work for a given comparison depends on how often the two
+groups are granted to the same firm on the same day, and the public file answers that
+before any return data are bought. Section (e) of the public-data chunk runs the
+check for claim breadth, defining a broad patent as one in the top quartile of distinct
+CPC subclasses within its main subclass and grant year (13.7% of patents granted
+1980–2020). @tbl-kpss-bundles shows the result.
+
+| Firm grant days with | Share of firm-days |
+|---|---|
+| Narrow patents only | 69.5% |
+| Both broad and narrow patents (mixed) | 22.3% |
+| Broad patents only | 8.2% |
+
+: Composition of firm grant days for a broad-versus-narrow split, patents granted 1980–2020 in the public KPSS file. {#tbl-kpss-bundles}
+
+Mixed days are a minority of days but not of patents. 85.2% of broad patents were
+granted on a day when the firm also received a narrow one. On those days KPSS assigns
+broad and narrow patents identical values, so a regression of log value on the broad
+indicator with firm-by-grant-day fixed effects returns exactly zero. With firm-by-year
+fixed effects and controls for bundle size the estimate is 0.0003 (s.e. 0.0005). That
+null cannot tell us whether breadth is unpriced. It is what KPSS produces whether
+breadth matters or not. The 8.2% of broad-only days are what a generalized estimate
+or a returns regression would have to work with. The proportions are close to those in
+@arora2026revisiting, whose mixed-day shares are 22.5% for team size, 22.1% for science
+reliance, and 13.5% for offshoring.
+
+### Choosing a Stock-Market Measure of Patent Value {#sec-innovation-kpss-choose}
+
+@tbl-kpss-choose condenses the guidance of @arora2026revisiting into a choice by
+research question.
+
+| Research question | KPSS | Generalized KPSS | Unfiltered returns |
+|---|---|---|---|
+| Does patent value predict an outcome? (value as regressor or control) | Use; bootstrap the pipeline, cluster by firm | Rarely needed; estimates change little | Attenuated toward zero by noise |
+| Do two groups of patents differ in value? (value as outcome) | Do not use: assumes no difference, biased toward zero | Use when enough single-type days exist | Use; simple and consistent but noisy |
+| Comparisons across firms or industries | Caution: a common $\delta$ makes volatile firms' patents look valuable | Same caution | Same caution |
+
+: Which stock-market patent measure fits which question, after @arora2026revisiting. {#tbl-kpss-choose}
+
+A few further rules follow from the construction. Compare patents within firms where
+possible, because a common $\delta$ ties a firm's value scale to its volatility and a
+common $\pi$ ignores differences in grant rates. Report results under both alternatives
+for a group comparison, since they fail in different ways and agreement between them
+is the strongest evidence available. Remember that the measure prices the patent plus
+the information its grant conveys, including option value, so it will differ from
+retrospective survey valuations. And treat values in a bundle as one observation of
+the firm-day, not $N$ independent patents.
+
+The machinery is not specific to patents. It turns any recurring, dated, partly
+anticipated event into a value per event: product launches, trademark registrations,
+regulatory approvals, or contract awards. @sec-marketing-finance develops the event
+study it rests on. For marketing researchers it offers a way to value individual
+innovations when sales data are missing or arrive years late.
+
 ## Key Takeaways
 
 - Diffusion is the formal backbone of innovation forecasting. The **Bass model**
@@ -1643,6 +2328,13 @@ partially offset the predictable post-IPO innovation slump by investing in it.
   times the reaction of incremental ones [@srinivasan2009a]—and the post-IPO retreat
   from radical innovation [@Wies_2015] can be partly offset by technology investment
   [@wu2024innovation]. The valuation machinery is developed in @sec-marketing-finance.
+- The stock-market reaction to a patent grant, filtered through a truncated-normal
+  signal model, gives a dollar value for each patent [@kogan2017technological]; the
+  pipeline in @sec-innovation-kpss-pipeline reproduces the published values from public
+  prices. Because the filter is a conditional expectation, its error is Berkson-type:
+  KPSS values are unbiased as a regressor but compress group differences toward zero as
+  an outcome, so comparisons of patent groups need the generalized two-signal estimator
+  or unfiltered returns [@arora2026revisiting] (@tbl-kpss-choose).
 - **Generative AI is not one lever at the front end.** Used to concretize a concept,
   visual support cuts ideator effort but yields ideas 18% less creative than the more
   effortful textual support [@gordetzki2026ideation]; used to generate concepts, an LLM
