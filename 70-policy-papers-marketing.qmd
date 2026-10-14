@@ -362,8 +362,10 @@ cost-per-case calculation.
 ## Which version the numbers come from
 
 The figures in this section come from the 2024 World Bank working paper
-[@donati2024malariawp]. Its tables are open, and a reproducibility package for it
-has been verified by the World Bank. Only a one-line teaser abstract of the
+[@donati2024malariawp]. Its tables are open, and the World Bank's reproducibility
+package for it holds the data and the authors' code. Every estimate quoted here
+from Tables 2 to 5, 7, and D17 was reproduced from that package
+(@sec-pwm-campaign-replication). Only a one-line teaser abstract of the
 published article was accessible when this section was written. The 2026 CESifo
 version [@donati2026malariacesifo] frames some results differently; those
 differences are noted where they matter. Check the published tables before quoting
@@ -435,10 +437,13 @@ points (SE 2.5; control mean 60 percent). It raised help-seeking within 24 hours
 a fever by 10.7 points (SE 3.5, among the 301 who reported one). It also cut
 self-reported household malaria after the campaign by 2.4 points (SE 1.1) on a
 control rate of 5.5 percent. Among respondents in non-solid houses, each of these
-estimates is small and insignificant. The facility records line up with the
-surveys. Monthly incidence fell by 6.21 cases per million people in urban
-facilities (SE 2.86) but not detectably in rural ones (−2.24, SE 5.79), and the
-overall estimate (−4.68, SE 5.37) cannot be distinguished from zero.
+estimates is small and insignificant. The facility records point the same way.
+Malaria cases recorded at urban facilities fell by 6.21 a month per million
+residents (SE 2.86), while cases at rural facilities did not detectably fall
+(−2.24, SE 5.79), and the overall estimate (−4.68, SE 5.37) cannot be
+distinguished from zero. The urban estimate is significant under the paper's
+conventional test but not under a wild cluster bootstrap (p = 0.09;
+@sec-pwm-campaign-replication).
 
 Was the problem content or reach? Ad recall at the end of the campaign rose 4.9
 points among treated solid-house respondents but only 1.1 points (insignificant)
@@ -484,56 +489,81 @@ home, and 3.5 percent fewer recorded infections. The malaria team chose its risk
 marker in formative research before the trial and stratified on it, so the subgroup
 analysis was built into the design; a registration would have let the paper say so.
 With many outcomes and two strata, a referee will also ask for a multiple-testing
-adjustment [@list2019multiple].
+adjustment [@list2019multiple]. The replication package makes one possible
+(@tbl-pwm-malaria-mt). Across the six survey outcomes, three effects among
+solid-house dwellers survive at the 5 percent level: household bed-net use,
+help-seeking within 24 hours, and the share of household members with malaria. Of
+the six interactions that test whether the effect *differs* by dwelling type, only
+household bed-net use survives. The data support "the campaign worked among
+solid-house dwellers" more firmly than "it worked differently by dwelling type,"
+and the second claim is the one the policy argument needs.
 
 State the denominator. The working paper describes the urban reduction of 6.2 cases
 per million as about 30 percent of the pre-campaign monthly rate. That rate, 20.89,
-is the mean across all facilities. The urban-facility mean in the same subsample is
-9.45, and against that base the same point estimate is about two-thirds. The 2026
-abstract gives the decline as 33 percent. A relative effect cannot be interpreted
-unless its base is stated next to it.
+is the mean across all facilities. Every rate in the facility analysis divides
+cases by the subdistrict's whole population, so the comparison is legitimate as
+far as it goes. In the subdistrict-months behind the urban estimate, all facilities
+recorded 20.3 cases per million before the campaign, and 6.21 is 31 percent of
+that. Against the 9.5 cases recorded at urban facilities, the outcome the
+regression actually models, the same point estimate is a 66 percent decline. The
+2026 abstract gives the decline as 33 percent. The two readings answer different
+questions, and neither can be interpreted unless its base is stated next to it.
 
 Show how much the sample rule matters. The administrative analysis keeps only
 subdistricts with at least half their population inside the study circles, to limit
 contamination of the controls; outside the circles, control districts did receive
 ads. At thresholds of 10, 20, 30, 40, and 50 percent, the urban estimate keeps its
-sign (−6.64, −4.82, −4.00, −5.79, −6.21). At the 30 percent threshold, however, it
-is not significant (SE 2.60). The paper reports this table in an appendix. When the
-headline depends on a sample rule, the table belongs in the main text.
+sign (−6.64, −4.82, −4.00, −5.79, −6.21). Under the paper's cluster-robust test it
+is significant at the 5 percent level at 10, 40, and 50 percent but not at 20 or 30
+percent. The threshold also changes how many districts identify the effect, from 74
+at 10 percent to 50 at 50 percent. A wild cluster bootstrap (@sec-causal-week05),
+which holds its size better with few or unbalanced clusters, leaves only the 10
+percent sample significant (@tbl-pwm-malaria-hmis). The paper reports this table in
+an appendix. When the headline depends on a sample rule, the table belongs in the
+main text.
 
 Carry the uncertainty into the cost ratio. The \$6.54 figure divides by an overall
-effect whose 95 percent interval runs from −15.6 to +9.4 cases per million. The
+effect whose 95 percent interval runs from about −16 to +10 cases per million. The
 ratio is finite only at the favorable end of that interval and unbounded at the
-other. The \$3.35 figure applies the urban effect to the whole population of the 22
-states, even though rural incidence did not detectably fall. Report
-cost-effectiveness as an interval built from the interval of the effect, and apply
-each subgroup's effect only to that subgroup's population.
+other. The \$3.35 figure divides by the urban estimate without controls, whose
+interval also includes zero (p = 0.08). Because that estimate counts urban-facility
+cases per resident, multiplying it by the whole population of the 22 states does
+not double-count. It does assume that every subdistrict has urban facilities like
+the 62 behind the estimate, which hold 69 percent of the sample's population;
+restricting the effect to that share raises the figure to about \$4.80. With a wild
+cluster bootstrap, every cost ratio in the paper has a best case between \$1.22 and
+\$1.58 and no finite worst case (@tbl-pwm-malaria-hmis). Report cost-effectiveness
+as an interval built from the interval of the effect, and say which population the
+effect applies to.
 
 ### Power when the outcome is a rare disease {#sec-pwm-campaign-power}
 
 Measuring advertising effects is hard even when the outcome is sales, because the
 effects are small relative to the noise [@Lewis_2015]. It is harder when the outcome
 is a disease recorded at about 21 cases per million people per month and the
-treatment is randomized across 79 districts. The chunk below asks what this design
-could detect, using only the standard errors and means the working paper reports.
+facility estimates rest on only 56 of the 79 randomized districts, the ones with a
+subdistrict mostly inside the study circles (50 for the urban outcome). The chunk
+below asks what this design could detect, using the standard errors and means the
+working paper reports and the district counts from the replication package.
 
 ```{r pwm-malaria-power}
 #| echo: true
 #| message: false
 #| warning: false
 
-# Design analysis of the administrative-data arm of Donati et al., using only
-# numbers printed in the 2024 working paper: Table 5, fully controlled columns
-# (3), (6), (9), and the Table D7 means for the benchmark sample of 119
-# subdistricts in 79 randomized districts.
+# Design analysis of the administrative-data arm of Donati et al., using numbers
+# printed in the 2024 working paper (Table 5, fully controlled columns (3), (6),
+# (9), and the Table D7 means for the benchmark sample of 119 subdistricts) and
+# the number of districts behind each estimate, counted in the replication
+# package (see the replication subsection below).
 z <- qnorm(0.975) + qnorm(0.80)        # 80% power, 5% two-sided test
-J <- 79                                # randomized districts (clusters)
 
 adm <- data.frame(
   outcome  = c("Overall", "Urban facilities", "Rural facilities"),
   estimate = c(-4.68, -6.21, -2.24),   # cases per million people per month
   se       = c( 5.37,  2.86,  5.79),   # clustered by district
-  mean     = c(20.89,  9.45, 18.87)    # subsample means, Table D7
+  mean     = c(20.89,  9.45, 18.87),   # subsample means, Table D7
+  J        = c(56, 50, 56)             # districts (clusters) behind each estimate
 )
 adm$mde      <- z * adm$se
 adm$mde_pct  <- 100 * adm$mde / adm$mean
@@ -541,7 +571,7 @@ adm$power_20 <- with(adm, pnorm(0.2 * mean / se - qnorm(0.975)) +
                           pnorm(-0.2 * mean / se - qnorm(0.975)))
 # Districts needed for an MDE of 20% of the mean, scaling the SE by
 # 1/sqrt(J) with subdistricts per district and panel length held fixed.
-adm$districts_for_20pct <- ceiling(J * (adm$mde / (0.2 * adm$mean))^2)
+adm$districts_for_20pct <- ceiling(adm$J * (adm$mde / (0.2 * adm$mean))^2)
 print(transform(adm, mde = round(mde, 1), mde_pct = round(mde_pct),
                 power_20 = round(power_20, 2)), row.names = FALSE)
 
@@ -573,11 +603,12 @@ sprintf("%.2f", cost_per_case(ci[1]))
 For overall incidence, the design's minimum detectable effect was about 15 cases
 per million, or 72 percent of the mean. Its chance of detecting a 20 percent
 reduction was about one in eight. Bringing the minimum detectable effect down to 20
-percent would take roughly a thousand districts, against the 126 in the three study
+percent would take roughly 730 districts, against the 126 in the three study
 states. That scaling holds the number of subdistricts per district and the length of
 the panel fixed, so treat it as a rough guide rather than a design.
 
-The significant urban estimate has a second problem. Suppose the true effect were
+The urban estimate, significant only under the conventional test, has a second
+problem. Suppose the true effect were
 half the estimate. The design would detect it about one time in five, and the
 estimates that did reach significance would overstate it by a factor of about 2.3
 on average. @gelman2014beyond call this kind of exaggeration a Type M error. None of
@@ -600,6 +631,170 @@ stake. Read against @tbl-pwm-fit, it shows what makes a theory-light evaluation 
 but the contribution is about delivery, targeting, and measurement beyond a
 platform's own metrics. That contribution applies to any advertiser whose objective
 differs from the one the platform optimizes.
+
+### Replicating the campaign evaluation {#sec-pwm-campaign-replication}
+
+The World Bank's reproducibility package for the working paper holds the
+de-identified survey responses, the raw facility records (one spreadsheet per
+district and month, 1,778 in all), and the authors' Stata code. The cleaning and
+estimation code was ported to R without running any of the package's own code.
+The port reproduces every coefficient, standard error, and sample size in Tables 2
+to 5, 7, and D17 to the printed precision, 60 of 60 estimates.
+@tbl-pwm-malaria-repl shows the ones this section quotes.
+
+Two details of the port are worth knowing before you attempt one like it. The
+first is that the facility-data cleaning deletes every period from every
+spreadsheet cell before it converts text to numbers. Stata writes a whole-number
+cell as 1262, so nothing breaks. A reader that writes 1262.0 multiplies every
+count by ten, and every Table 5 estimate with it, so the code is correct only
+because of how one program prints numbers. The second is that Stata treats a
+missing value as larger than any number, so the rule that drops household malaria
+shares above one also drops missing shares. In the cross-section, that rule is
+what removes the junk answers. The survey files also carry Messenger user IDs
+and free-text answers. For that reason the replication script reads only the
+analysis columns and replaces the user ID with an integer index as soon as it
+loads. That is the minimum to expect of any script that handles chatbot-survey
+data.
+
+The replication also yields a count the paper does not report. The facility
+analysis keeps subdistricts with more than half their population inside the study
+circles. Those 119 subdistricts lie in only 56 of the 79 randomized districts, and
+the urban estimate rests on 62 subdistricts in 50 districts. The power calculation
+in @sec-pwm-campaign-power uses these counts.
+
+```{r}
+#| label: tbl-pwm-malaria-repl
+#| tbl-cap: "Selected estimates from Donati et al.'s 2024 working paper, re-estimated from the World Bank reproducibility package: coefficient (standard error). Survey and facility estimates are clustered by district; the retargeting experiment (Table 7) uses heteroskedasticity-robust errors. Facility estimates are cases per million residents per month. All 60 estimates in Tables 2 to 5, 7, and D17 match to printed precision."
+pwm_repl <- data.frame(
+  Estimate = c("Bed-net use, share of waves; solid (T2, col. 4)",
+               "Household members under a net; solid (T2, col. 8)",
+               "Household members under a net; T x solid (T2, col. 7)",
+               "Help within 24 hours of a fever; solid (T3, col. 8)",
+               "Any household malaria; solid (T4, col. 4)",
+               "Any household malaria; T x solid (T4, col. 3)",
+               "Facility cases, overall, no controls (T5, col. 1)",
+               "Facility cases, overall, all controls (T5, col. 3)",
+               "Urban facilities, no controls (T5, col. 4)",
+               "Urban facilities, all controls (T5, col. 6)",
+               "Rural facilities, all controls (T5, col. 9)",
+               "Retargeted bed-net use (T7, col. 1)",
+               "Retargeted bed-net use; individual T x solid (T7, col. 3)"),
+  `Working paper` = c("0.055 (0.025)", "0.068 (0.019)", "0.081 (0.025)", "0.107 (0.035)",
+                      "-0.024 (0.011)", "-0.038 (0.018)", "-3.12 (6.37)", "-4.68 (5.37)",
+                      "-6.10 (3.41)", "-6.21 (2.86)", "-2.24 (5.79)", "0.075 (0.029)",
+                      "0.000 (0.057)"),
+  Replication = c("0.055 (0.025)", "0.068 (0.019)", "0.081 (0.025)", "0.107 (0.035)",
+                  "-0.024 (0.011)", "-0.038 (0.018)", "-3.12 (6.37)", "-4.68 (5.37)",
+                  "-6.10 (3.41)", "-6.21 (2.86)", "-2.24 (5.79)", "0.075 (0.029)",
+                  "0.000 (0.057)"),
+  N = c(1789, 1789, 3900, 301, 1316, 3052, 1498, 1498, 791, 791, 1338, 1043, 1043),
+  Districts = c(79, 79, 79, 78, 79, 79, 56, 56, 50, 50, 56, NA, NA),
+  check.names = FALSE)
+op <- options(knitr.kable.NA = "")
+tab <- knitr::kable(pwm_repl, align = "lcccc", format.args = list(big.mark = ","))
+options(op); tab
+```
+
+@tbl-pwm-malaria-mt answers the referee's multiple-testing question for the six
+survey outcomes in Tables 2 to 4. It treats two families separately: the effects
+among solid-house dwellers, and the interactions that test whether the effect
+differs by dwelling type. The adjustment is the Romano–Wolf step-down, the
+procedure that @list2019multiple build on for experiments with several outcomes
+and subgroups. Each step compares a t-statistic with the bootstrap distribution of
+the largest t-statistic among the hypotheses not yet rejected. The bootstrap draws
+one wild-cluster weight per district and applies it in all twelve regressions, so
+it keeps the correlation between outcomes reported by overlapping respondents.
+
+Three of the six solid-house effects survive at the 5 percent level: household
+bed-net use (adjusted p = 0.013), help-seeking within 24 hours (0.024), and the
+share of household members with malaria (0.038). The respondent's own bed-net use
+and the any-malaria indicator do not (0.14 each). Among the interactions, only
+household bed-net use survives (0.009). Holm's simpler adjustment of the
+conventional p-values reaches the same verdicts. The evidence that the campaign
+changed behavior and health among solid-house dwellers is fairly strong. The
+evidence that its effect differed by dwelling type rests mainly on one outcome.
+
+```{r}
+#| label: tbl-pwm-malaria-mt
+#| tbl-cap: "Multiple-testing adjustment across the six survey outcomes of Tables 2 to 4. Solid-house effects come from the solid-house subsamples (columns 4 and 8); interactions are the T x solid coefficients (columns 3 and 7). Conventional p-values are cluster-robust, as in the paper. Adjusted p-values are Romano-Wolf step-down, computed separately for each family from 9,999 wild-cluster-bootstrap draws shared across all twelve regressions."
+pwm_mt <- data.frame(
+  Outcome = c("Bed-net use, share of waves", "Household members under a net",
+              "Any fever in household", "Help within 24 hours of a fever",
+              "Any household malaria", "Share of members with malaria"),
+  `Solid: effect`      = c(0.055, 0.068, 0.008, 0.107, -0.024, -0.008),
+  `Solid: p`           = c(0.029, 0.001, 0.702, 0.003, 0.035, 0.005),
+  `Solid: adjusted p`  = c(0.142, 0.013, 0.722, 0.024, 0.142, 0.038),
+  `T x solid: effect`  = c(0.051, 0.081, -0.016, 0.107, -0.038, -0.011),
+  `T x solid: p`       = c(0.179, 0.002, 0.564, 0.069, 0.035, 0.045),
+  `T x solid: adjusted p` = c(0.334, 0.009, 0.562, 0.192, 0.163, 0.181),
+  check.names = FALSE)
+knitr::kable(pwm_mt, digits = 3, align = "lcccccc")
+```
+
+@tbl-pwm-malaria-hmis turns to the facility records. With 50 to 74 clusters of
+unequal size, conventional cluster-robust tests can reject too often. The table
+therefore adds a wild cluster bootstrap with the null imposed and one Rademacher
+weight per district (9,999 draws), and its 95 percent intervals invert that test.
+The fully controlled urban estimate has a conventional p-value of 0.035 and a
+bootstrap p-value of 0.092, and its bootstrap interval runs from −12.9 to +1.0
+cases per million. Measured against the urban-facility mean in its own sample (9.5
+cases), the point estimate is a 66 percent decline. The interval runs from a
+decline larger than the whole urban caseload to an 11 percent rise. Across the
+population thresholds of Table D17, only the most inclusive sample, at 10 percent,
+stays significant under the bootstrap.
+
+The cost ratios inherit this uncertainty. Every bootstrap interval reaches zero, so
+every ratio has a finite best case, between \$1.22 and \$1.58 per reported case
+averted, and no finite worst case. The paper's \$3.35 and \$6.54 are point
+estimates of ratios whose upper bound the data cannot set. The table's \$6.53 uses
+the unrounded coefficient; the paper rounds it to −3.12 first.
+
+```{r}
+#| label: tbl-pwm-malaria-hmis
+#| tbl-cap: "Facility-record estimates (Table 5 and the urban rows of Table D17) with wild-cluster-bootstrap inference: null imposed, Rademacher weights by district, 9,999 draws, intervals by test inversion. Cost per reported case averted follows the working paper (USD 202,000 divided by the monthly effect per million times nine months times 1,100 million people); the best case uses the favorable end of the bootstrap interval. Every interval reaches zero, so no row has a finite worst case."
+pwm_hmis <- data.frame(
+  Estimate = c("Overall, no controls (T5, col. 1)", "Overall, all controls (T5, col. 3)",
+               "Urban, no controls (T5, col. 4)", "Urban, all controls (T5, col. 6)",
+               "Rural, all controls (T5, col. 9)", "Urban, threshold 10% (D17)",
+               "Urban, threshold 20% (D17)", "Urban, threshold 30% (D17)",
+               "Urban, threshold 40% (D17)"),
+  Effect    = c(-3.12, -4.68, -6.10, -6.21, -2.24, -6.64, -4.82, -4.00, -5.79),
+  Districts = c(56, 56, 50, 50, 56, 74, 72, 67, 56),
+  `p, cluster-robust` = c(0.626, 0.387, 0.080, 0.035, 0.700, 0.014, 0.062, 0.129, 0.047),
+  `p, wild bootstrap` = c(0.660, 0.485, 0.098, 0.092, 0.746, 0.028, 0.143, 0.240, 0.121),
+  `95% wild-bootstrap interval` = c("-16.6 to 10.6", "-16.8 to 8.3", "-13.3 to 1.2",
+                                    "-12.9 to 1.0", "-15.5 to 11.8", "-12.2 to -0.7",
+                                    "-10.8 to 1.5", "-10.1 to 2.3", "-12.5 to 1.5"),
+  `Cost per case (USD)`  = c(6.53, 4.36, 3.35, 3.28, NA, NA, NA, NA, NA),
+  `Best case (USD)`      = c(1.23, 1.22, 1.53, 1.58, NA, NA, NA, NA, NA),
+  check.names = FALSE)
+op <- options(knitr.kable.NA = "")
+tab <- knitr::kable(pwm_hmis, digits = 3, align = "lccccccc")
+options(op); tab
+```
+
+None of this overturns the paper. Its survey estimates reproduce exactly, and its
+main solid-house effects survive adjustment. What the replication changes is the
+status of two claims. The dwelling-type difference rests mainly on household
+bed-net use, and the decline in facility-recorded malaria is suggestive rather
+than established. That is the division of labor the power analysis predicted: the
+administrative arm can corroborate the survey evidence but cannot carry the claim
+on its own.
+
+The full replication script below reads the package from a local copy whose path
+is its first argument. It reproduces all 60 estimates and prints the numbers in
+the three tables above, in about three minutes. To run it, download
+`RR_IND_2024_180.zip` from the World Bank's Reproducible Research Repository
+(catalog entry 178), unzip it, and run
+`Rscript replicate_donati2024.R path/to/RR_IND_2024_180`. The book does not run it
+at render time.
+
+```{r}
+#| label: pwm-malaria-replication
+#| eval: false
+#| file: replication/facebook-malaria/replicate_donati2024.R
+```
+
 
 
 ## The Reviewer Objection Playbook {#sec-pwm-objections}
