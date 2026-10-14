@@ -345,6 +345,263 @@ to support subgroup analysis. A study with two thousand units and three periods 
 not going to find a spillover unless it is enormous, and should be redesigned
 rather than run.
 
+## A Second Paper Type: The Randomized Campaign Evaluation {#sec-pwm-campaign-eval}
+
+The architecture of the preceding chapters is one way to write a policy paper.
+There is a simpler type that uses almost no theory. It takes a marketing program
+that someone actually ran, randomizes it at scale, and measures the outcomes the
+program exists to change. It belongs in this chapter because its contribution is
+still a policy contribution. It is also the type a doctoral student can most
+realistically execute, because it needs a partner and a design rather than a model.
+@donati2026malaria, published in *Marketing Science*, is a clean recent instance.
+Their question is the title of the paper: can Facebook ads prevent malaria? They
+answer it with two field experiments, administrative health records, and a
+cost-per-case calculation.
+
+::: {.callout-note}
+## Which version the numbers come from
+
+The figures in this section come from the 2024 World Bank working paper
+[@donati2024malariawp]. Its tables are open, and a reproducibility package for it
+has been verified by the World Bank. Only a one-line teaser abstract of the
+published article was accessible when this section was written. The 2026 CESifo
+version [@donati2026malariacesifo] frames some results differently; those
+differences are noted where they matter. Check the published tables before quoting
+a number.
+:::
+
+The program was a social-marketing campaign by the nonprofit Malaria No More,
+*Bite Ko Mat Lo Lite* ("don't take the bite lightly"), funded by Facebook's
+Campaigns for a Healthier World initiative. Its ads urged people to sleep under bed
+nets and to get tested within 24 hours of a fever. It ran on Facebook and Instagram
+from July 2020 to early January 2021 and spent \$202,000. It reached about 130
+million users in 22 states, at an average of 3.6 impressions each. It was optimized
+for engagement: the team switched off weaker ads and moved budget to the
+best-performing ones. Campaigns like this are usually judged by engagement and by
+platform brand-lift surveys, and by those measures this one succeeded. The paper
+asks two questions those measures cannot answer. Did the campaign change offline
+behavior and disease? And did it work for the people most at risk?
+
+The design has five moves, shown in @fig-pwm-campaign.
+
+1. *Randomize the real campaign, not a copy of it.* The nonprofit agreed to delay
+   launch in three high-burden states (Uttar Pradesh, Jharkhand, and Chhattisgarh)
+   so that 40 of 80 districts could be randomized to receive it. One district was
+   dropped because two districts shared a name on the randomization list, leaving
+   79 for analysis. The platform cannot target ads by district boundary, so the
+   team drew circles around each district's main cities and the advertiser excluded
+   the control circles. Randomizing clusters rather than individuals matches how
+   both the ads and the disease spread. It also makes every estimate an
+   intent-to-treat effect of the campaign as it was actually delivered.
+2. *Measure outcomes off the platform, in layers.* The team recruited respondents
+   with ads that paid mobile credit for completing chatbot surveys on Messenger. A
+   longitudinal sample of 5,205 reported behavior in up to eight short surveys
+   during the campaign. A separately recruited sample of 3,052 reported household
+   malaria one to three months after it ended. Monthly records of tests and
+   positive cases by subdistrict, split into urban and rural facilities, came from
+   India's Health Management Information System. Each layer covers a weakness of
+   another. Surveys capture behavior but invite demand effects. Facility records
+   cannot be talked into a result, but they are coarse and under-count cases.
+3. *Fix a risk marker in advance and power both sides of it.* Formative surveys
+   found that dwelling type was the strongest household predictor of malaria.
+   Respondents in solid brick or cement houses were 43 percent less likely to
+   report a recent case than those in mud, tin, or straw dwellings. Organic
+   recruitment reached mostly solid-house dwellers, so recruitment was stratified
+   by district and dwelling type. Lookalike audiences seeded with non-solid
+   dwellers brought about 55 percent of respondents from higher-risk housing. The
+   marker also maps onto the facility data, because non-solid dwellings make up
+   roughly 15 percent of urban and 50 percent of rural housing in India.
+4. *Separate content from reach.* A split by risk group cannot by itself say
+   whether the ads failed to persuade the high-risk group or failed to reach it. A
+   second experiment answers that question.
+5. *Price the effect against alternatives.* Convert the estimate into a cost per
+   case averted and set it beside other ways of spending the same money.
+
+```{mermaid}
+%%| label: fig-pwm-campaign
+%%| fig-cap: "The randomized campaign evaluation as a template, following the malaria study. Randomization makes the effect causal, off-platform outcomes make it matter, a risk marker fixed in advance asks whom it reached, the second experiment separates content from delivery, and the cost comparison turns an estimate into a decision."
+flowchart TD
+  Q["Policy question in the program's own units<br/>did the campaign change behavior and disease?"] --> R["Randomize the real campaign<br/>40 of 80 districts, geofenced circles"]
+  R --> O["Measure off the platform<br/>surveys during and after, facility records"]
+  O --> H["Split by a risk marker fixed in advance<br/>solid vs non-solid dwellings, urban vs rural"]
+  H --> M{"Effect only where risk is low:<br/>content or reach?"}
+  M --> E["Second experiment equalizes exposure<br/>individual retargeting, N = 1,542"]
+  E --> C["Price it against alternatives<br/>cost per reported case averted"]
+```
+
+The headline result is a split. Among respondents in solid houses, the campaign
+raised the share of survey waves in which they slept under a net by 5.5 percentage
+points (SE 2.5; control mean 60 percent). It raised help-seeking within 24 hours of
+a fever by 10.7 points (SE 3.5, among the 301 who reported one). It also cut
+self-reported household malaria after the campaign by 2.4 points (SE 1.1) on a
+control rate of 5.5 percent. Among respondents in non-solid houses, each of these
+estimates is small and insignificant. The facility records line up with the
+surveys. Monthly incidence fell by 6.21 cases per million people in urban
+facilities (SE 2.86) but not detectably in rural ones (−2.24, SE 5.79), and the
+overall estimate (−4.68, SE 5.37) cannot be distinguished from zero.
+
+Was the problem content or reach? Ad recall at the end of the campaign rose 4.9
+points among treated solid-house respondents but only 1.1 points (insignificant)
+among non-solid ones, which suggests the ads never arrived. The second experiment
+tested this directly. For two weeks, the team retargeted the campaign's best ads,
+through a Custom Audience, to a random half of a fresh survey pool. They reached
+about 90 percent of that half, at 4.9 impressions each. With exposure equalized,
+bed-net use the previous night rose 7.5 points (SE 2.9) on a control rate of 65
+percent. The rise was 7.6 points among solid dwellers and 8.1 among non-solid
+dwellers, and the estimated interaction was exactly zero (SE 5.7). So the ads
+worked for the high-risk group once they reached it. The engagement-optimized
+campaign mostly did not reach it, and the recruitment data show why in prices:
+recruiting a respondent in a non-solid house cost almost ten times as much.
+
+That finding is the paper's marketing contribution. Suppose a delivery algorithm is
+told to maximize engagement within a budget. It will spend on the cheapest
+responsive users, the mechanism @lambrecht2019algorithmic documented for job ads. In
+public health, the cheapest users are often the ones who need the message least.
+The cost calculation then completes the template. It multiplies the monthly effect
+by nine months and by the 1.1 billion people in the campaign's states. That gives
+\$3.35 per reported case averted using the urban estimate and \$6.54 using the
+overall estimate. The paper sets these beside \$5–6 per case averted for distributing
+insecticide-treated nets and \$5.68 per additional COVID-19 vaccination from a
+meta-analysis of more than 800 Facebook public-health experiments
+[@athey2023digital].
+
+### Reading it as a referee would
+
+A referee should look hard at four features of the paper. Each one is also a
+lesson for anyone writing in this mould.
+
+The heterogeneity carries the policy content, so it needs the strongest possible
+status. In the 2024 version, the dwelling-type split leads the abstract. The 2026
+CESifo abstract leads instead with small and insignificant average effects. It
+reframes the split in terms of socioeconomic status and calls it a post-hoc
+heterogeneity analysis. The 2024 working paper reports ethical approval but no
+trial-registry identifier (the published article's front matter could not be
+checked). Compare @breza2021facebook, who randomized U.S. counties
+to a Facebook campaign of doctors' and nurses' videos before the 2020 holidays.
+They list their trial registrations in the abstract, name three primary outcomes,
+and report each one: less holiday travel, no change in the share of people leaving
+home, and 3.5 percent fewer recorded infections. The malaria team chose its risk
+marker in formative research before the trial and stratified on it, so the subgroup
+analysis was built into the design; a registration would have let the paper say so.
+With many outcomes and two strata, a referee will also ask for a multiple-testing
+adjustment [@list2019multiple].
+
+State the denominator. The working paper describes the urban reduction of 6.2 cases
+per million as about 30 percent of the pre-campaign monthly rate. That rate, 20.89,
+is the mean across all facilities. The urban-facility mean in the same subsample is
+9.45, and against that base the same point estimate is about two-thirds. The 2026
+abstract gives the decline as 33 percent. A relative effect cannot be interpreted
+unless its base is stated next to it.
+
+Show how much the sample rule matters. The administrative analysis keeps only
+subdistricts with at least half their population inside the study circles, to limit
+contamination of the controls; outside the circles, control districts did receive
+ads. At thresholds of 10, 20, 30, 40, and 50 percent, the urban estimate keeps its
+sign (−6.64, −4.82, −4.00, −5.79, −6.21). At the 30 percent threshold, however, it
+is not significant (SE 2.60). The paper reports this table in an appendix. When the
+headline depends on a sample rule, the table belongs in the main text.
+
+Carry the uncertainty into the cost ratio. The \$6.54 figure divides by an overall
+effect whose 95 percent interval runs from −15.6 to +9.4 cases per million. The
+ratio is finite only at the favorable end of that interval and unbounded at the
+other. The \$3.35 figure applies the urban effect to the whole population of the 22
+states, even though rural incidence did not detectably fall. Report
+cost-effectiveness as an interval built from the interval of the effect, and apply
+each subgroup's effect only to that subgroup's population.
+
+### Power when the outcome is a rare disease {#sec-pwm-campaign-power}
+
+Measuring advertising effects is hard even when the outcome is sales, because the
+effects are small relative to the noise [@Lewis_2015]. It is harder when the outcome
+is a disease recorded at about 21 cases per million people per month and the
+treatment is randomized across 79 districts. The chunk below asks what this design
+could detect, using only the standard errors and means the working paper reports.
+
+```{r pwm-malaria-power}
+#| echo: true
+#| message: false
+#| warning: false
+
+# Design analysis of the administrative-data arm of Donati et al., using only
+# numbers printed in the 2024 working paper: Table 5, fully controlled columns
+# (3), (6), (9), and the Table D7 means for the benchmark sample of 119
+# subdistricts in 79 randomized districts.
+z <- qnorm(0.975) + qnorm(0.80)        # 80% power, 5% two-sided test
+J <- 79                                # randomized districts (clusters)
+
+adm <- data.frame(
+  outcome  = c("Overall", "Urban facilities", "Rural facilities"),
+  estimate = c(-4.68, -6.21, -2.24),   # cases per million people per month
+  se       = c( 5.37,  2.86,  5.79),   # clustered by district
+  mean     = c(20.89,  9.45, 18.87)    # subsample means, Table D7
+)
+adm$mde      <- z * adm$se
+adm$mde_pct  <- 100 * adm$mde / adm$mean
+adm$power_20 <- with(adm, pnorm(0.2 * mean / se - qnorm(0.975)) +
+                          pnorm(-0.2 * mean / se - qnorm(0.975)))
+# Districts needed for an MDE of 20% of the mean, scaling the SE by
+# 1/sqrt(J) with subdistricts per district and panel length held fixed.
+adm$districts_for_20pct <- ceiling(J * (adm$mde / (0.2 * adm$mean))^2)
+print(transform(adm, mde = round(mde, 1), mde_pct = round(mde_pct),
+                power_20 = round(power_20, 2)), row.names = FALSE)
+
+# Type M (exaggeration) ratio if the true urban effect were half the
+# estimate: the average |estimate| among significant results, over |truth|.
+type_m <- function(true, se, crit = qnorm(0.975)) {
+  k <- crit * se
+  p_hi <- 1 - pnorm((k - true) / se)
+  p_lo <- pnorm((-k - true) / se)
+  e_hi <- true * p_hi + se * dnorm((k - true) / se)
+  e_lo <- true * p_lo - se * dnorm((-k - true) / se)
+  c(power = p_hi + p_lo,
+    exaggeration = ((e_hi - e_lo) / (p_hi + p_lo)) / abs(true))
+}
+round(type_m(true = -6.21 / 2, se = 2.86), 2)
+
+# Cost per reported case averted, as in Section 7 of the working paper:
+# monthly effect x 9 months x 1,100 million people; USD 202,000 ad spend.
+cost_per_case <- function(effect) 202000 / (abs(effect) * 9 * 1100)
+sprintf("%.3f", c(overall = cost_per_case(-3.12), urban = cost_per_case(-6.10)))
+
+# The overall estimate's 95% interval (column 1: -3.12, SE 6.37) includes
+# zero, so the ratio is finite only at the favourable end of the interval.
+ci <- -3.12 + c(-1, 1) * qnorm(0.975) * 6.37
+round(ci, 1)
+sprintf("%.2f", cost_per_case(ci[1]))
+```
+
+For overall incidence, the design's minimum detectable effect was about 15 cases
+per million, or 72 percent of the mean. Its chance of detecting a 20 percent
+reduction was about one in eight. Bringing the minimum detectable effect down to 20
+percent would take roughly a thousand districts, against the 126 in the three study
+states. That scaling holds the number of subdistricts per district and the length of
+the panel fixed, so treat it as a rough guide rather than a design.
+
+The significant urban estimate has a second problem. Suppose the true effect were
+half the estimate. The design would detect it about one time in five, and the
+estimates that did reach significance would overstate it by a factor of about 2.3
+on average. @gelman2014beyond call this kind of exaggeration a Type M error. None of
+this makes the urban result wrong. It means the administrative arm can corroborate
+the survey evidence but cannot carry the claim on its own. The parts of the paper
+that were adequately powered are the individual-level survey outcomes, with
+thousands of respondents, and the mechanism experiment, whose outcome (bed-net use)
+is common.
+
+When you design a study in this mould, run this calculation for the administrative
+outcome before launch. Then decide in advance which layer is the primary test, and
+write the abstract to match that decision.
+
+Read against @sec-pwm-kaul, the paper completes two legs of the analysis step that
+most program evaluations skip. Its comparison of cost per case with net distribution
+and vaccine campaigns prices an alternative initiative. Its central finding is an
+equity result in the trade-off sense: the benefits went to the group with less at
+stake. Read against @tbl-pwm-fit, it shows what makes a theory-light evaluation a
+*Marketing Science* paper rather than a public-health one. The outcome is malaria,
+but the contribution is about delivery, targeting, and measurement beyond a
+platform's own metrics. That contribution applies to any advertiser whose objective
+differs from the one the platform optimizes.
+
+
 ## The Reviewer Objection Playbook {#sec-pwm-objections}
 
 @tbl-pwm-objections lists the objections this paper type reliably attracts, in
@@ -428,6 +685,14 @@ in @sec-reporting.
 - In the writing, concede the intended effect first, label the epistemic status of
   each claim, put the distributional result in the abstract, and leave the reader
   with one decision-relevant number.
+- A second, theory-light paper type is the randomized evaluation of a real campaign
+  [@donati2026malaria], and it wins on design (@sec-pwm-campaign-eval). Randomize
+  the actual program at the cluster where it is delivered. Measure off-platform
+  outcomes in layers. Power the heterogeneity on a risk marker fixed in advance.
+  Separate content from reach with a second experiment, and price the result against
+  alternative programs. Rare administrative outcomes are seldom powered at feasible
+  cluster counts (@sec-pwm-campaign-power), so they corroborate the claim rather
+  than carry it.
 
 ## Further Reading {#sec-pwm-further}
 

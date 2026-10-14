@@ -637,6 +637,157 @@ data and code went to the journal's Data Editor under an approved alternative di
 plan. How the authors argue for this as a contribution, given that the effect itself was
 already in print, is the worked example in @sec-sw-emb-evcharging.
 
+### When Weather Is the Treatment: Matching Reviews to Stations {#sec-geo-weather-ratings}
+
+The charging-station registry came with coordinates. Most behavioral data do not, and
+the analyst has to build the geography before using it. @meister2026quality ask
+whether the weather in which a product is used leaks into its online rating. Answering
+that requires attaching a temperature reading to each of several hundred thousand
+reviews. The consumer-behavior side of the paper is discussed in
+@sec-online-context-ratings. This section follows the spatial pipeline and the
+identification argument it supports.
+
+The authors scraped REI.com in three waves (February 2022, October 2022, and November
+2023), collecting 558,365 ratings. REI showed at most 100 reviews per product per
+wave, so each product contributes at most 300. The reviewer's location is a free-text
+field, filled in on 275,396 ratings. The authors parsed common formats ("city, state",
+"city ST") and matched them to a list of 28,338 U.S. cities with latitude and
+longitude. When only a state could be parsed, they placed the reviewer at the state's
+population center. Each reviewer was then assigned the nearest of 2,148 National
+Centers for Environmental Information (NCEI) weather stations. The review date selects
+that station's daily observations. The final sample is 218,913 ratings: 20,060 for
+cold-weather gear (ten REI categories of products designed to keep the wearer warm)
+and 198,853 for everything else. @fig-geo-weather-pipeline traces the steps.
+
+```{mermaid}
+%%| label: fig-geo-weather-pipeline
+%%| fig-cap: "From a free-text reviewer location to an identified context effect in Meister and Reinholtz (2026). Each geocoding step adds measurement error, which biases the estimate toward zero; the fixed effects and the within-location comparison group carry the identification."
+flowchart LR
+  R["REI rating<br/>free-text location,<br/>review date"] --> P["Parse city/state<br/>match 28,338 US cities<br/>(state centroid if no city)"]
+  P --> S["Nearest NCEI station<br/>(2,148 stations)"]
+  S --> W["Mean temperature,<br/>review day + 2 prior days"]
+  W --> F["Station, month, product<br/>fixed effects: deviation<br/>from local seasonal normal"]
+  F --> C{"Product built<br/>to keep users warm?"}
+  C -->|yes| T["Cold-weather gear slope<br/>+0.002 stars per °F"]
+  C -->|no| N["Other products slope<br/>≈ 0 (placebo)"]
+  T --> D["Temp × cold-weather gear<br/>interaction, SEs<br/>clustered by product"]
+  N --> D
+```
+
+Two choices carry the identification. The first is to use only abnormal temperature.
+Climate and season shape both temperature and ratings: who buys a parka in Phoenix
+versus Minneapolis, and what gets bought in December versus May. Weather-station and
+month fixed effects therefore remove each location's typical climate and each month's
+typical season, which the authors describe as controlling for normal temperature in
+the same place and month. Product fixed effects absorb quality differences between
+products. The authors argue that deviations of this kind are plausibly
+exogenous, the standard argument in climate econometrics. The second choice is a
+comparison group inside the same location and weather. Rating behavior that varies
+with local weather for reasons unrelated to warmth, such as mood or the kind of person
+who reviews on cold days, should affect bicycles and tents as much as jackets. The
+estimand is therefore the interaction of temperature with a cold-weather-gear
+indicator. Other products serve as an in-sample placebo, in the spirit of a
+triple difference.
+
+The progression across the authors' five models shows what the fixed effects do.
+Without fixed effects, the interaction is 0.004 stars per degree Fahrenheit and the
+$R^2$ is .001. With station, month, and product fixed effects (the preferred model),
+it is 0.002 ($t = 3.93$; 95% CI [.0011, .0034]), and $R^2$ rises to .208. In that
+model, abnormal warmth raises cold-weather-gear ratings by 0.002 stars per degree
+($p = .003$), while other products show no effect (−0.0005, $p = .185$). The effect is
+stronger when temperatures are above normal (0.0036 per degree) than below normal
+(0.0014, $p = .055$).
+
+The pipeline introduces several kinds of measurement error into temperature. Reviews
+are dated by submission rather than use, which is why a three-day window serves as a
+proxy. Locations are self-reported and sometimes reduced to a state centroid. The
+nearest station can be far from where the product was worn. Snowboard clothing is
+probably used far from home, and its estimate is among the smallest of the ten
+categories. Error of this kind attenuates the coefficient. The authors therefore
+regard their standardized effect of .032 as likely an underestimate, and the geospatial lesson generalizes:
+coarse geocoding usually makes context effects look smaller, not larger.
+
+The specification curve [@simonsohn2020] varies seven analytic choices:
+
+- the sample (all locations or only city-level ones)
+- the temperature statistic (mean, minimum, maximum)
+- the window (one, three, or seven days)
+- the transformation (raw, minus the recent average, minus the normal for the same
+  dates in 2015–2023 excluding the review year)
+- four location fixed-effect structures
+- eight other fixed-effect sets
+- twelve control sets
+
+Together these yield 20,736 models. The merged review–weather file is not public, but
+the OSF archive [@meister2026qualitydata] posts every model's estimate. @tbl-geo-weather-speccurve
+re-tabulates them. The overall shares match the paper, and the breakdown by
+transformation and window is ours.
+
+```{r}
+#| label: tbl-geo-weather-speccurve
+#| tbl-cap: "Where the weather effect is robust and where it fades: the authors' saved estimates from the Study 1 specification curve (temperature x cold-weather gear, stars per degree F) and the Study 2 curve (precipitation x rain jacket, stars per inch), grouped by our own breakdown. 'CI excludes 0' uses 95% intervals with SEs clustered by product. Overall rows reproduce the published shares exactly."
+spec_tab <- data.frame(
+  Specifications = c("Study 1: all", "  Raw temperature", "  Minus recent average",
+                     "  Minus normal (same dates, other years)", "  1-day window",
+                     "  3-day window", "  7-day window", "Study 2 (rain): all"),
+  Models = c(20736, 6912, 6912, 6912, 6912, 6912, 6912, 6912),
+  `Median estimate` = c(0.0029, 0.0028, 0.0022, 0.0037, 0.0027, 0.0032, 0.0026, -0.2365),
+  `% expected sign` = c(95.2, 100.0, 85.6, 100.0, 88.6, 100.0, 96.9, 99.7),
+  `% CI excludes 0` = c(72.0, 100.0, 40.6, 75.4, 67.5, 90.0, 58.5, 25.9),
+  check.names = FALSE)
+knitr::kable(spec_tab, digits = 4)
+```
+
+Two choices account for most of the fragility. Subtracting the recent average plausibly
+removes the persistent part of a cold spell. What remains is day-to-day change, which
+is likely a noisier proxy for conditions at an unobserved consumption date, and only
+41% of those models are significant. The three-day window, the authors' focal choice,
+is significant in 90% of models, against 59% to 68% for one- and seven-day
+windows. The location fixed-effect structure matters much less: 69% to 75% of models
+are significant under each of the four options. Rain is a harder case for the same
+design. Precipitation is missing or flagged for more than a quarter of reviews,
+and more than half of the three-day windows are dry. Only 1,685 rain-jacket ratings
+remain, against 157,697 ratings of other products. The interaction is −0.407 stars per
+inch ($p = .02$) and has the expected sign in 99.7% of models, but its interval
+excludes zero in only 26% of them.
+
+The script below reproduces the table from the authors' saved estimates and is not run
+at render time.
+
+```{r geo-weather-speccurve-script}
+#| eval: false
+# Breakdown of the authors' saved specification-curve estimates
+# (specifications_1.csv and specifications_2.csv on https://osf.io/vbax7/).
+# Usage: Rscript speccurve_breakdown.R <path-to-OSF-download>
+suppressPackageStartupMessages(library(data.table))
+args <- commandArgs(trailingOnly = TRUE)
+osf  <- if (length(args)) args[1] else "osf_vbax7"
+sc <- fread(file.path(osf, "REI Studies", "specifications_1.csv"))
+tv <- sub(" \\* cold_weather", "", sc$effect)
+sc[, measure := fifelse(grepl("_ab$", tv), "Minus normal (same dates, other years)",
+                fifelse(grepl("_recent$", tv), "Minus recent", "Raw temperature"))]
+sc[, window := fifelse(grepl("^avg3", tv), "3-day", fifelse(grepl("^avg7", tv), "7-day", "1-day"))]
+sc[, station_fe := fifelse(grepl("Station_Month", fixed.effects), "Station x month",
+                  fifelse(grepl("Station_Week", fixed.effects), "Station x week",
+                  fifelse(grepl("Station", fixed.effects), "Station", "None")))]
+sc[, sig := effect.lb > 0 | effect.ub < 0]
+summ <- function(by) sc[, .(specs = .N, median_coef = round(median(effect.coef), 4),
+                            pct_positive = round(100 * mean(effect.coef > 0), 1),
+                            pct_sig = round(100 * mean(sig), 1)), by = by]
+cat("Overall\n"); print(summ(NULL))
+cat("\nBy temperature transformation\n"); print(summ("measure"))
+cat("\nBy window\n"); print(summ("window"))
+cat("\nBy location fixed effect\n"); print(summ("station_fe"))
+cat("\nBy data\n"); print(summ("data"))
+
+# Study 2 (rain jackets x precipitation), the same summary
+sc2 <- fread(file.path(osf, "REI Studies", "specifications_2.csv"))
+cat(sprintf("\nStudy 2: %d specs; median = %.4f; %.1f%% negative; %.1f%% CI excludes 0\n",
+  nrow(sc2), median(sc2$effect.coef), 100 * mean(sc2$effect.coef < 0),
+  100 * mean(sc2$effect.lb > 0 | sc2$effect.ub < 0)))
+```
+
+
 ## Mobile-Location Data and Privacy {#sec-geo-privacy}
 
 The richest contemporary location signal comes from mobile devices, and it is also

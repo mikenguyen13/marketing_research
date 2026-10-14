@@ -302,6 +302,141 @@ transfers for images. For marketing, action recognition is what lets a pipeline 
 (the demonstration moment in a review or a livestream) as opposed to mere product *presence*, a
 distinction that still-frame analysis cannot make.
 
+### Visual motion as a creative feature {#sec-video-motion}
+
+Action recognition asks *what* is moving. An older and simpler question is *how much* the
+picture moves, whatever the content, and it can be measured without any learned model.
+Two measurements are standard. The cheapest is **motion energy**, the average absolute
+frame-to-frame pixel difference, the same quantity that drives the shot detector above.
+The more principled one is **optical flow**: for each pair of consecutive frames, an
+estimate of how far and in which direction each patch of brightness has moved, so that the
+mean flow magnitude summarizes how fast the scene is moving in pixels per frame. Optical
+flow is also the "motion stream" that two-stream architectures feed to their second
+pathway (step 3 of the conceptual pipeline below), so the hand-built summary and the deep
+model draw on the same signal.
+
+@kumar2026attention show that this low-level feature carries real marketing weight. They
+treat visual motion, quantified with optical flow, as a *perceptual* feature of
+children's video, distinct from what the video says or how it feels, and test it with
+three designs. In the observational study, across more than 32,000 videos from leading
+children's YouTube channels, higher visual motion predicts viewership after controlling
+for a broad set of visual, audio, and affective characteristics. In the field
+experiment, the authors produce educational videos in which only the background motion
+is manipulated and deliver them in randomized advertising campaigns through YouTube's
+A/B testing infrastructure. The high-motion versions earn significantly higher view-rates
+and views. In a lab eye-tracking experiment with children, motion raises screen engagement
+mainly by shortening long off-screen lapses of attention rather than by making such lapses
+less frequent (@sec-bio-eyetracking). An earlier version of the paper
+[@kumar2025visualstimulus] manipulated motion differently, by replaying the same ad at
+0.5x to 2x speed. The authors describe 2x as roughly doubling the optical-flow magnitude,
+and it raised viewership of ads placed on the top 100 children's channels by 8.6%, with
+no effect on channels aimed at adults.
+
+The paper doubles as a template for using a video feature in research. First, the sampling
+policy is part of the measure. The online appendix reportedly samples frames from the
+opening seconds of each video, so "motion" means motion at the hook. A uniform sample over the full clip,
+or a keyframe sample that discards within-shot movement, would measure something else.
+Second, motion is correlated with nearly everything else in a children's video (cutting
+rate, colorfulness, music tempo, excitement), which is why the observational estimate
+conditions on visual, audio, and affective controls, and why it still needs the
+experiment. Third, the field experiment answers the "selection on the platform" pitfall
+listed under engagement prediction below. Because the creative is varied by the
+researcher and delivery is randomized, the algorithm that decides which videos are shown
+cannot manufacture the motion-to-views association. Fourth, motion can be measured by
+region. Because the manipulated motion sat in the background, the authors could ask
+whether it pulled gaze away from the instructional foreground, and the eye-tracking data
+say it did not.
+
+The chunk below makes the two measurements concrete on synthetic clips, using base R only.
+Each clip has a static, textured disk in the center (the "instructional" content) over a
+background texture that drifts sideways at a known speed. A fourth clip has a static
+background but a lighting flicker, a frame-wide brightness change with no movement at all.
+Optical flow is estimated in the Lucas-Kanade fashion: within each 8 by 8 block, the
+spatial and temporal brightness gradients give a small least-squares problem whose
+solution is the block's displacement.
+
+```{r video-motion-flow, message=FALSE, warning=FALSE}
+# Motion energy versus optical flow on synthetic clips (base R only).
+# Each 64 x 64 clip has a static, textured "instructional" disk in the centre
+# over a background texture that drifts sideways at `speed` pixels per frame.
+size <- 64
+xy   <- expand.grid(x = seq_len(size), y = seq_len(size))
+fg   <- (xy$x - 32)^2 + (xy$y - 32)^2 <= 16^2            # foreground region
+make_clip <- function(speed, n_frames = 30, flicker = 0) {
+  lapply(seq_len(n_frames), function(t) {
+    img <- 0.5 + 0.15 * sin(2 * pi * (xy$x - speed * (t - 1)) / 16) +
+                 0.15 * sin(2 * pi * xy$y / 16)
+    img[fg] <- 0.7 + 0.1 * sin(2 * pi * xy$x[fg] / 8) * sin(2 * pi * xy$y[fg] / 8)
+    matrix(img + flicker * (t %% 2), size, size)         # optional lighting flicker
+  })
+}
+
+# (1) Motion energy: mean absolute frame-to-frame pixel difference.
+motion_energy <- function(frames)
+  mean(vapply(seq_len(length(frames) - 1), function(t)
+    mean(abs(frames[[t + 1]] - frames[[t]])), numeric(1)))
+
+# (2) Optical flow, Lucas-Kanade style. Remove each frame's mean brightness,
+# then in every 8 x 8 block solve [Ix Iy] v = -It by least squares and
+# average the flow magnitude (pixels per frame) over blocks inside `mask`.
+lk_flow <- function(f1, f2, mask, block = 8) {
+  f1 <- f1 - mean(f1); f2 <- f2 - mean(f2)
+  f  <- (f1 + f2) / 2; n <- nrow(f)
+  Ix <- Iy <- matrix(0, n, n)
+  Ix[2:(n - 1), ] <- (f[3:n, ] - f[1:(n - 2), ]) / 2
+  Iy[, 2:(n - 1)] <- (f[, 3:n] - f[, 1:(n - 2)]) / 2
+  It <- f2 - f1
+  mags <- numeric(0)
+  for (i in seq(2, n - block, by = block)) for (j in seq(2, n - block, by = block)) {
+    r <- i:(i + block - 1); k <- j:(j + block - 1)
+    if (!all(mask[r, k])) next
+    A <- cbind(as.vector(Ix[r, k]), as.vector(Iy[r, k]))
+    v <- solve(crossprod(A), -crossprod(A, as.vector(It[r, k])))
+    mags <- c(mags, sqrt(sum(v^2)))
+  }
+  mean(mags)
+}
+clip_flow <- function(frames, mask = matrix(TRUE, size, size))
+  mean(vapply(seq_len(length(frames) - 1), function(t)
+    lk_flow(frames[[t]], frames[[t + 1]], mask), numeric(1)))
+
+clips <- list(static  = make_clip(0),   slow    = make_clip(0.5),
+              fast    = make_clip(1.5), flicker = make_clip(0, flicker = 0.1))
+fg_m  <- matrix(fg, size, size)
+motion_tbl <- data.frame(
+  clip            = names(clips),
+  true_bg_speed   = c(0, 0.5, 1.5, 0),
+  motion_energy   = sapply(clips, motion_energy),
+  flow_all        = sapply(clips, clip_flow),
+  flow_background = sapply(clips, clip_flow, mask = !fg_m),
+  flow_foreground = sapply(clips, clip_flow, mask = fg_m),
+  row.names = NULL)
+motion_tbl[, -1] <- round(motion_tbl[, -1], 3)
+knitr::kable(motion_tbl,
+  caption = "Motion energy and Lucas-Kanade flow magnitude (pixels per frame) for four synthetic 30-frame clips.")
+```
+
+Three lessons come out of the table. First, both measures rank the drifting clips
+correctly, and the background flow recovers the true speed closely (0.51 and 1.58 pixels
+per frame against 0.5 and 1.5). Tripling the speed roughly triples the flow, which is why
+the earlier version of the paper could treat playback speed as a dose of optical flow.
+Second, motion energy ranks the flickering clip as the most "moving" of the four even
+though nothing in it moves. Frame differencing counts any pixel change, whether a cut, a
+fade, or a lighting change, as motion. The flow estimator models displacement, and once
+the frame-wide brightness shift is removed it reports zero. Third, measuring by region
+separates where the motion is: the foreground flow is zero in every clip, so a whole-frame
+average (`flow_all`) dilutes the background drift with the static instructional content.
+This is the distinction @kumar2026attention exploit when they manipulate only the
+background. Production pipelines use dense, multi-scale estimators (OpenCV's Farnebäck or
+pyramidal Lucas-Kanade, or learned flow networks) that handle large displacements better
+and motion boundaries better than this single-scale version, but the construct is the one
+computed here. (Only the
+published abstract, an earlier working-paper abstract, and search-engine excerpts of the
+online appendix were accessible when this section was written. The frame-sampling detail
+comes from those excerpts, and the flow algorithm, the eye-tracking sample, and the
+published effect sizes are in the paper.)
+
+
 ### Temporal architectures
 
 Three families of architecture model video dynamics, and they trade off temporal fidelity against

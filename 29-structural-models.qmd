@@ -733,6 +733,166 @@ parameters it uses. The honest structural paper, accordingly, reports which resu
 are robust to weakening which assumption—and the practitioner reading one should ask,
 of every headline number, *what assumption is this resting on?*
 
+### Borrowing Identification from a Discontinuity {#sec-sm-rd-structure}
+
+One way to reduce the assumptions a structural parameter rests on is to import
+its identification from a reduced-form design. @moehring2026reddit does this for
+a social-media feed. The paper asks how Reddit's news feed would change the
+credibility of the news people engage with if it ranked posts to maximize
+predicted engagement, and what it would cost to rank for credibility instead.
+Neither ranking was ever deployed, so the answer has to come from a model.
+The key parameter of that model, how much a post's position governs whether
+anyone sees it, comes from a regression discontinuity built into Reddit's own
+ranking formula (@sec-causal-rd-algorithmic).
+
+**The model.** User $i$ visiting in period $t$ sees the post in position $r$ with
+probability $p_t\,p_r$. Here $p_t$ is the chance of logging on and $p_r$ the
+chance of reaching position $r$. Conditional on exposure, the user comments if a
+logit utility clears the outside option:
+
+$$
+\Pr(d_{ijt} = 1) = p_t\,p_{r_{jt}}\;
+\frac{\exp(\delta_{ijt})}{1 + \exp(\delta_{ijt})},
+\qquad
+\delta_{ijt} = x_{jt}'(\bar\beta + \beta_i) + \xi_{jt}.
+$$ {#eq-sm-feed-exposure}
+
+The vector $x_{jt}$ holds the publisher's political slant, slant squared, and a
+credibility rating. Every user gets their own $\beta_i$, which the panel of
+comment histories makes estimable. $\xi_{jt}$ is an article-period effect for
+latent commentability. Position does not enter utility: it changes who sees a
+post, not how much a reader who sees it wants to reply. That restriction comes
+from evidence that rankings move search but not purchase conditional on search
+[@ursu2018power].
+
+**Where identification comes from.** The obstacle is that rank and $\xi_{jt}$ are
+correlated, because the feed promotes commentable posts. Without $p_r$, a post
+with few comments could be unappealing or simply unseen, and the data cannot
+tell which. Excluding rank from utility, with treatment effects of rank held
+constant across users and articles, makes the RD estimate at each boundary a
+ratio of exposure probabilities:
+
+$$
+\tau_r = \log\frac{\sum_i \mathbb{E}[d_{ijt}(r)]}{\sum_i \mathbb{E}[d_{ijt}(r+1)]}
+= \log\frac{p_r}{p_{r+1}},
+\qquad p_1 = 1,
+$$ {#eq-sm-feed-tau}
+
+so the whole exposure curve is $p_r = \exp\!\big(-\sum_{r'<r}\tau_{r'}\big)$.
+Setting $p_1 = 1$ is a normalization, and the counterfactuals are robust to
+rescaling it. $p_t$ is calibrated from the number of users online in each
+archived snapshot via Little's law. With exposure fixed, each user's $\beta_i$
+comes from a likelihood over their own comment decisions. The $\xi_{jt}$ come
+from inverting observed comment shares [@berry1994estimating; @berry1995], and
+the individual estimates are shrunk by empirical Bayes to strip out sampling
+noise. The estimation sample is users who commented on at least 20 articles.
+They are 5% of commenters but write 44% of the comments.
+
+**The counterfactuals.** A platform that knows $\beta_i$ and predicts $\xi_{jt}$
+from post observables can rank by predicted comment probability. When exposure
+falls with position, sorting by that probability maximizes expected
+engagement. The credibility-aware alternative sorts by
+$\big((1-\lambda) + \lambda\,\mathbf{1}[c_j \ge 0.65]\big)\hat P_{ijt}$. Here
+$\lambda = 0$ is pure engagement maximization, $\lambda = 1$ ranks every
+high-credibility publisher first, and the 0.65 threshold is the median score
+within a professional rater's "medium" credibility band [@lin2023newsquality].
+Tracing $\lambda$ from 0 to 1 gives an engagement-credibility frontier. The
+substantive results are in @sec-platform-governance.
+
+```{mermaid}
+%%| label: fig-sm-rd-structure
+%%| fig-cap: "Reduced-form identification feeding a structural model. The ranking formula's discontinuity identifies position effects; with rank excluded from utility, these become exposure probabilities, which identify the comment-choice model; the model is then re-solved under ranking objectives the platform never ran."
+flowchart LR
+    A["Ranking code:<br/>hot score cutoff<br/>between adjacent posts"] --> B["RD estimates<br/>tau_r by position"]
+    B --> C["Exposure curve<br/>p_r = exp(-sum tau)"]
+    D["User comment panel<br/>+ publisher slant<br/>and credibility"] --> E["Comment-choice model<br/>beta_i, xi_jt"]
+    C --> E
+    E --> F["Counterfactual rankings:<br/>engagement max,<br/>non-personalized,<br/>credibility-aware lambda"]
+    F --> G["Engagement-credibility<br/>frontier"]
+```
+
+**What the counterfactuals inherit.** Each assumption that identified the
+parameters carries into the counterfactuals, as the identification section
+above warns. The constant-effect assumption turns a pooled RD into a single
+exposure curve applied to everyone. Only the 25 posts on the archived first page
+can be re-ranked, because no exposure or $\xi_{jt}$ estimates exist below it.
+That rules out evaluating a reverse-chronological feed. Supply, voting, and
+users' attention are held fixed. The paper relaxes the attention assumption in
+a search-cost version, in which search costs drive most of the position effect
+and re-optimized attention barely moves exposure. It also checks the
+personalization results against a collaborative-filtering recommender trained
+on over 500,000 users. Its predictions are validated by whether the RD effects
+are larger when the promoted post matches a user's predicted taste.
+
+The sketch below runs the pipeline forward. It takes an exposure curve
+calibrated to the smoothed RD estimates in the author's April 2026 manuscript,
+simulates a comment-choice model in which some users prefer low-credibility
+publishers, and traces part of the frontier.
+
+```{r sm-feed-frontier}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(2906)
+
+# --- Step 1: exposure by position, taken from an RD --------------------------
+# Rank enters only through exposure, so each boundary's RD effect is a log
+# ratio of exposure probabilities: tau_r = log(p_r / p_{r+1}), with p_1 = 1.
+# Calibrated to the smoothed curve tau_r = 0.458 - 0.164 log r reported in the
+# author's April 2026 manuscript (floored at zero from position 17 down).
+R     <- 25
+tau_r <- pmax(0.458 - 0.164 * log(1:(R - 1)), 0)
+p_r   <- exp(-c(0, cumsum(tau_r)))
+
+# --- Step 2: a comment-choice model, conditional on exposure -----------------
+# Users differ in their taste for credible publishers (some prefer low-
+# credibility outlets); xi is a post's latent commentability. Posts are drawn
+# once so that every ranking rule re-orders the same feeds.
+N <- 1500; Tn <- 30; cbar <- 0.65
+beta  <- rnorm(N, 0, 1)
+feeds <- replicate(Tn, list(c = rbeta(R, 4, 1.6), xi = rnorm(R)), simplify = FALSE)
+
+evaluate <- function(lambda, personalized = TRUE) {
+  eng <- hi <- numeric(N)
+  for (f in feeds) {
+    P <- plogis(-3.5 + outer(rep(1, N), f$xi) + outer(beta, 2.5 * (f$c - cbar)))
+    w <- (1 - lambda) + lambda * (f$c >= cbar)     # credibility-aware weight
+    S <- if (personalized) sweep(P, 2, w, `*`) else
+         matrix(colMeans(P) * w, N, R, byrow = TRUE)
+    # Rank within each user's feed (1 = top), then expose by position.
+    o  <- order(rep(seq_len(N), R), -S)
+    rk <- matrix(0L, N, R); rk[o] <- rep(seq_len(R), times = N)
+    E  <- P * p_r[rk]
+    eng <- eng + rowSums(E); hi <- hi + drop(E %*% (f$c >= cbar))
+  }
+  low <- beta < quantile(beta, 0.25)               # users who favour low credibility
+  c(engagement = mean(eng), hi_cred_share = mean(hi / eng),
+    hi_cred_share_low_taste = mean((hi / eng)[low]))
+}
+res <- rbind(`engagement max (lambda = 0)` = evaluate(0),
+             `lambda = 0.5`                = evaluate(0.5),
+             `lambda = 0.8`                = evaluate(0.8),
+             `credibility max (lambda = 1)` = evaluate(1),
+             `non-personalized, lambda = 0` = evaluate(0, personalized = FALSE))
+res[, "engagement"] <- res[, "engagement"] / res[1, "engagement"]
+round(res, 3)
+```
+
+Engagement is indexed to the personalized engagement-maximizing feed. Setting
+$\lambda = 0.5$ gives up 2.5% of engagement and raises the average
+high-credibility share from 0.648 to 0.733. Dropping personalization costs
+more engagement (4.8%) and buys almost no credibility (0.657). The last column
+shows why the distribution matters as well as the average. Among the quarter
+of users with the strongest taste for low-credibility outlets, the personalized
+engagement-maximizing feed leaves a high-credibility share of 0.368, below the
+0.471 they get from the non-personalized feed. The personalized feed shows
+low-credibility content to the users who will comment on it. Credibility-aware
+weighting lifts this group the most. These magnitudes come from the
+calibration, not from estimates. The qualitative pattern, a flat frontier near
+the engagement maximum with gains concentrated among low-credibility users,
+matches the paper's.
+
+
 ## Getting Started
 
 For readers building toward this literature, the graduate econometrics texts of

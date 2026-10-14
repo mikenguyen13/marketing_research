@@ -988,6 +988,72 @@ face?"—and often the honest answer is to redesign the test (larger, geo-based,
 focused on an intermediate outcome) rather than to trust an underpowered or
 observational number.
 
+### Born or Made? Field Data Plus a Randomized Experience Manipulation {#sec-causal-born-or-made}
+
+Advertising is the case where the selection term in @eq-selection-bias swamps the effect.
+A common marketing variant is subtler: the treatment is an *experience* the customer
+chooses, and the question is whether the experience changes later behavior or merely
+reveals who the customer already was. @kim2026customization pose exactly this question about
+product customization. In a retailer's transaction records, customers who customize once are
+more likely to customize again, and they spend more, visit more often, and buy more items.
+Write $D_i = 1$ for "customized at least once" and $Y_i$ for later customization or spend.
+The naive contrast then adds the causal effect of the experience to a selection term,
+$\mathbb{E}[Y_i(0) \mid D_i = 1] - \mathbb{E}[Y_i(0) \mid D_i = 0]$, which is the difference
+in later behavior that an inherent taste for customizing would produce even without the
+experience. Transaction data alone cannot separate "born" customizers from "made" ones.
+
+The paper's multimethod answer, sketched in @fig-ci-born-made, adds longitudinal
+experiments that randomize the experience itself. Some participants are assigned to
+customize and others to choose from a *matched* set of ready-made products, and later
+choices are tracked. The matched set is the design detail that matters. Comparing
+customization with a generic or worse product would mix the effect of the customizing
+experience with the effect of getting a better-fitting product. Matching the choice set
+keeps the comparison on the experience. Because assignment is random, the inherent
+preference is balanced across arms in expectation (the dashed path in the figure no longer
+reaches treatment), and the difference in later customization identifies the effect of the
+experience. The authors find that an initial customization experience significantly raises
+the subsequent likelihood of customizing, with favorable downstream outcomes for customer
+and retailer, so at least part of the field correlation is a causal journey effect rather
+than pure sorting.
+
+```{mermaid}
+%%| label: fig-ci-born-made
+%%| fig-cap: "Born versus made customizers. In field data, an inherent preference for customizing drives both the first customization and later behavior, so the two are confounded. A longitudinal experiment that randomizes customizing against choosing from a matched set of ready-made products cuts the path into treatment and isolates the effect of the experience."
+flowchart LR
+  subgraph FD["Field transaction data"]
+    P1["Inherent preference<br/>for customizing"]
+    C1["First customization<br/>(self-selected)"]
+    O1["Later customization,<br/>spend, visits"]
+    P1 -.-> C1
+    P1 -.-> O1
+    C1 --> O1
+  end
+  subgraph EX["Longitudinal experiment"]
+    R2["Random assignment:<br/>customize vs matched set"]
+    P2["Inherent preference<br/>for customizing"]
+    C2["Customization<br/>experience"]
+    O2["Later customization"]
+    R2 --> C2
+    P2 -.-> O2
+    C2 --> O2
+  end
+  FD --> EX
+```
+
+The design also shows what each half of the evidence buys. The field data supply
+external validity: real customers, real money, and a nine-year horizon long enough to see
+repeat behavior. They are weak on identification. The experiments supply identification
+and are weaker on external validity, because the participants, products, and stakes are
+the experimenters' rather than the retailer's. Neither half alone gives the quantity a
+retailer most wants, which is how much of the observed customizer premium would appear among
+customers who customize only because the firm nudged them. That is the question
+@sec-clv-customization-journey takes up, and the answer depends on how closely the
+experimental experience matches the field intervention. (Only the published abstract was
+accessible when this section was written. It does not report the field sample size, how the
+transaction analysis adjusts for self-selection, or the number and sizes of the experiments,
+so this description stays at the level of the design logic.)
+
+
 ### Policy Lotteries and the Estimand You Actually Want {#sec-causal-policy-lottery}
 
 Not every randomization is run by a researcher. Governments allocate scarce rights by
@@ -1448,6 +1514,168 @@ advertising exposure, state-level privacy and advertising-disclosure regimes
 distribution territories. In each case the design's credibility rests on the same
 question—what *else* changes at that boundary—rather than on any statistical
 diagnostic.
+
+### Algorithmic Discontinuities: When the Running Variable Is a Ranking Score {#sec-causal-rd-algorithmic}
+
+Loyalty tiers and liability caps are rules someone wrote into a contract. A
+platform's ranking code is also a rule, applied millions of times a day, and
+wherever it sorts items by a continuous score it creates a cutoff at every
+boundary between two adjacent items. @narayanan2015 exploited this in search
+advertising, where an auction's ad rank sets each ad's position
+(@sec-mmm-advertising). @moehring2026reddit carries the idea into a social-media
+feed, and the case shows what an algorithm-made discontinuity can and cannot
+deliver.
+
+The question is how much a post's position in the feed of Reddit's politics
+community raises the comments it receives. The naive comparison is confounded
+in the usual way: inherently more commentable posts collect more upvotes, upvotes
+move them up the feed, and they would have drawn more comments wherever they sat.
+The source of exogeneity is the platform's own code. Until 2017 Reddit kept an
+open-source mirror of its code base, so the default "hot" ranking can be read
+off exactly. Each post receives the score
+
+$$
+s_{jt} = \operatorname{sign}(v_{jt})\,\log_{10}\!\big(\max\{|v_{jt}|,\,1\}\big)
+- \frac{a_{jt}}{45{,}000},
+$$ {#eq-47-reddit-hot}
+
+where $v_{jt}$ is the post's net upvotes and $a_{jt}$ its age in seconds, and
+the feed lists posts in descending order of $s_{jt}$. To hold its score, a post must
+gain a factor of ten in net votes every 12.5 hours. For two posts competing for
+positions $r$ and $r+1$, the running variable is the score difference
+$\Delta s_i = s_i - s_{-i}$. Treatment is being listed above the rival, and it
+switches on as $\Delta s_i$ crosses zero. The identifying assumption is the usual
+continuity: a post's latent commentability does not jump at $\Delta s_i = 0$.
+Several features make that assumption credible. The cutoff is relative, not
+absolute. Two noisy vote streams and two clocks decide which of a particular
+pair of posts leads at the moment a snapshot is taken. A post that edges its
+rival by a few hundredths of a log-vote should be no more interesting than one
+that trails by the same margin.
+
+Four implementation choices are worth copying.
+
+- **The running variable is rebuilt from outside the platform.** Feed positions,
+  vote scores, ages, and publisher domains come from Internet Archive snapshots
+  of the community's first page (the top 25 posts). Comments come from a public
+  archive of Reddit activity. Because the code mirror was not maintained after
+  early 2017, the analysis stops in 2016; the rule has to be the one actually in
+  force.
+- **The score has two dimensions.** $\Delta s_i$ combines a vote difference and an
+  age difference, so the cutoff is a frontier in that plane, as with the boundary
+  designs above (@sec-causal-rd-boundary). The effect is estimated at the origin,
+  where the two posts are balanced on both votes and age.
+- **The first stage falls short of one, and a donut handles it.** Reddit adds
+  noise to displayed vote counts to deter manipulation and caches rankings for
+  speed, so a reconstructed score sometimes disagrees with the order on screen.
+  Noise in a running variable misclassifies units precisely at the cutoff.
+  Following @dong2023measurement, the author drops pairs with
+  $|\Delta s_i| < 0.05$. The mismatch that remains is flat in $\Delta s_i$, which
+  points to caching rather than vote noise, and the first-stage jump is close
+  to one at most boundaries.
+- **Estimation is local, then smoothed.** Each of the 24 boundaries gets a
+  quasi-Poisson regression with a linear term in $\Delta s_i$ on each side and a
+  uniform kernel. The bandwidth is the mean-squared-error-optimal choice
+  [@calonico2014robust], and standard errors are clustered by snapshot. Because
+  rank-by-rank estimates are noisy, a stacked regression then imposes
+  $\tau_r = \tau_0 + \tau_1 \log r$.
+
+The validity evidence follows the standard pattern. Placebo RDs on pre-treatment
+covariates (publisher slant, vote score, post age, hour posted) are nearly all
+insignificant at the 5% level. Estimates are stable across bandwidths, donut
+widths, comment windows, and polynomial orders. No density test is reported.
+Sorting here would mean steering one's post past a specific rival at the moment
+of an archive snapshot, which is a different and much less plausible threat
+than a customer topping up a basket to a free-shipping threshold.
+
+The results show how much the naive comparison overstates position effects. In
+the author's April 2026 manuscript, moving from second to first place raises
+comments in the following hour by 58.1% (a smoothed top-boundary effect of
+0.458 log points, standard error 0.058). The effect decays with depth: the
+estimated slope on $\log r$ is $-0.164$. The naive comparison at the top boundary is 0.790, while
+the rank-specific RD is 0.507. Below the first position the naive and RD
+estimates are close. The author's reading is that each hour has a top story
+that would have led engagement anywhere on the page. The same pattern, a naive
+estimate inflated mainly at the top, appears in Expedia's randomized hotel
+rankings [@ursu2018power]. (The 2024 draft on OSF used a log(1 + comments)
+outcome over 20 minutes and reported a 42.5% top-slot effect. Numbers here
+follow the later manuscript and should be checked against the published
+article.)
+
+The RD is not the end of the paper. Its estimates become the exposure
+parameters of a comment-choice model (@sec-sm-rd-structure), which is then used
+to evaluate rankings Reddit never ran (@sec-platform-governance). The
+simulation below builds the design in miniature. Latent quality drives both
+upvotes and comments, the hot score of @eq-47-reddit-hot assigns the top slot,
+and displayed votes carry a little noise.
+
+```{r rd-algorithmic-feed}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(4707)
+
+# --- A feed snapshot, reduced to the contest for the top slot ----------------
+# Each period, two posts compete for position 1. Latent "commentability" q
+# drives upvotes, so the better post tends to win the slot AND to draw comments
+# anyway: the selection problem that makes a naive rank comparison misleading.
+n_per <- 20000
+q1  <- rnorm(n_per); q2 <- rnorm(n_per)
+votes <- function(q) round(10^(2.6 + 0.35 * q + rnorm(length(q), 0, 0.35)))
+v1 <- votes(q1); v2 <- votes(q2)
+age1 <- runif(n_per, 1, 14) * 3600; age2 <- runif(n_per, 1, 14) * 3600
+
+# Reddit's (pre-2017) "hot" score: log10 votes minus age / 45,000 seconds
+hot <- function(v, a) sign(v) * log10(pmax(abs(v), 1)) - a / 45000
+D   <- as.integer(hot(v1, age1) > hot(v2, age2))   # post 1 ranked first?
+
+# Comments in the next window: the true effect of the top slot is tau
+tau  <- 0.40                                      # log points, about +49%
+cred <- plogis(0.8 * q1 + rnorm(n_per))           # publisher credibility, pre-treatment
+y1   <- rpois(n_per, exp(1.2 + 0.6 * q1 + tau * D))
+
+# The researcher sees vote counts with display noise, so the running variable
+# is measured with error near zero; a 0.05 donut removes the misclassified band.
+v1_obs <- round(v1 * exp(rnorm(n_per, 0, 0.03)))
+v2_obs <- round(v2 * exp(rnorm(n_per, 0, 0.03)))
+ds <- hot(v1_obs, age1) - hot(v2_obs, age2)
+
+# --- (1) Naive: compare outcomes of the top-ranked and second-ranked post ------
+naive <- coef(glm(y1 ~ D, family = quasipoisson))["D"]
+
+# --- (2) Local RD: quasi-Poisson, linear in the running variable each side -----
+rd <- function(y, h = 0.5, donut = 0.05, cut = 0, fam = quasipoisson()) {
+  x  <- ds - cut; dd <- as.integer(x > 0)
+  ok <- abs(x) <= h & abs(x) >= donut
+  unname(coef(glm(y ~ dd * x, family = fam, subset = ok))["dd"])
+}
+fs <- rd(D, fam = gaussian())                     # first stage: jump in P(top)
+
+out <- c(true_tau          = tau,
+         naive_rank_gap    = unname(naive),
+         rd_estimate       = rd(y1),
+         rd_no_donut       = rd(y1, donut = 0),
+         rd_wide_bw        = rd(y1, h = 1.0),
+         rd_narrow_bw      = rd(y1, h = 0.25),
+         first_stage       = fs,
+         first_stage_no_donut = rd(D, donut = 0, fam = gaussian()),
+         balance_cred      = rd(cred, fam = gaussian()),
+         balance_latent_q  = rd(q1,   fam = gaussian()),
+         placebo_cut_0.6   = rd(y1, h = 0.4, cut = 0.6))
+round(out, 3)
+```
+
+The naive gap between first- and second-placed posts (0.804) is twice the true
+effect (0.400), because the same latent quality that wins the slot also draws
+comments. The local RD gives 0.377, and widening or narrowing the bandwidth
+moves it little (0.376 and 0.358). Remove the donut and two things happen
+together. Display noise misclassifies near-ties, the first stage drops from
+1.000 to 0.871, and the estimate is pulled toward zero (0.345), which is the
+attenuation @dong2023measurement warn about. The balance rows show what
+continuity means. Publisher credibility does not jump at the cutoff, and
+neither does latent quality, which no real study can observe; that is why
+papers check balance on the covariates they do observe. A placebo cutoff at
+$\Delta s = 0.6$, where nothing happens, returns zero.
+
 
 ## Synthetic Control {#sec-causal-scm}
 

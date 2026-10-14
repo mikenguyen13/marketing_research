@@ -817,6 +817,61 @@ measure. (For the LLM/API specifics—model selection, prompting, and structured
 mechanics—the appropriate provider documentation should be consulted; this chapter
 treats LLMs as measurement instruments, not as an engineering topic.)
 
+### Validating an LLM Coder: Gender Portrayals in Film {#sec-tad-llm-film-coding}
+
+A study of #MeToo and Hollywood shows what the cautions above look like when the
+construct is cultural rather than commercial. @tran2026metoo needed film-level
+measures of sexual misconduct, female objectification, and stereotypical and
+counter-stereotypical gender roles for 1,523 top-grossing U.S. films released from
+2010 to 2023 (@sec-innovation). No coding team could watch that many films against
+a common rubric, so the measures come from AI-assisted content analysis validated
+by human coders, supplemented by text analysis of 334,917 crowdsourced movie
+keywords. According to the University of Arizona's press release, the model was
+ChatGPT. It was given written definitions of sexual violence, harassment, and
+exploitation and of gender characteristics such as agency and strength, and it
+rated each film on a five-point scale. The press release also says the ratings drew
+on reviews, plot summaries, and online discussion of each film, and that IMDb
+keywords were then used to review, verify, and supplement them.
+
+Three features of the design generalize. First, the construct definitions are the
+instrument. A five-point rating of "counter-stereotypical male portrayal" is only
+as stable as the written definition behind it, so the definition, the prompt, and
+the model version belong in the paper on the same footing as a survey item. Second,
+when the model rates a film from what it knows or can retrieve about that film,
+rather than from a document the researcher supplies, caution (iii) bites hardest.
+The model's view of a well-known film is partly a summary of the critical
+conversation about it, and that conversation may itself have changed after #MeToo.
+A human-coded validation sample is the check on that drift, and it should be drawn
+from films released both before and after the event (@sec-annotation). Third, the
+keywords are a second channel with different errors. IMDb keywords are contributed
+by viewers and reviewed by IMDb editors. They arrive already tokenized, and they
+record what audiences noticed in a film, not what the studio's synopsis emphasized
+[@tran2023consumerdiss]. Their errors come from who tags and which films attract
+tags, not from a model's training corpus. Agreement between two measures whose
+errors are plausibly independent is stronger evidence than either measure alone.
+This is the multitrait–multimethod logic of @sec-construct-vs-variable applied to
+text.
+
+The study's history adds a cautionary note. An earlier version, in Tran's 2023
+dissertation [@tran2023consumerdiss], covered 1,326 films released through 2019. It
+measured portrayals with a three-topic LDA model (@sec-lda) fitted to 54,725
+unique IMDb keywords and labeled the topics after the fact; one of them,
+"Relational", grouped family and relationship themes with gentle, non-violent male
+leads. In that version, male-led films in the relational topic gained about \$12
+million at the box office after #MeToo, and the essay read this as audiences
+rewarding counter-stereotypical men. The published version, with a longer window,
+construct-specific AI coding, and keywords in a supporting role, reports the
+opposite: resistance to counter-stereotypical male portrayals. The two versions
+differ in sample, window, and instrument at once, so this comparison cannot say
+which change moved the result. The general point stands regardless. A topic
+labeled after estimation is an interpretation of a word cluster, not a measure of
+the construct the label names, and when the instrument changes a substantive
+conclusion, the instrument is part of the finding. (Only the published abstract
+and the press release were accessible for the 2026 article when this section was
+written, so its model version, prompts, and human–AI agreement statistics are not
+reported here.)
+
+
 ## Text as Treatment: Causal Prediction for Novel Content {#sec-tad-causal-prediction}
 
 Everything so far has treated text as a *measurement* of something—sentiment, topic,
@@ -1007,6 +1062,41 @@ longer. The discipline is to freeze the measurement pipeline over the full study
 version and log it, and validate it on a hand-coded sample drawn from *both* the pre and
 post periods—so that any drift in the instrument is measured rather than absorbed into the
 treatment effect.
+
+The outcome can also be defined *relative to another text*. @wang2026reviewsummaries ask
+what customers write after a retailer places an AI-generated summary above its reviews
+(@sec-online-ai-summaries). Their content result is stated against the summary. After
+the summary appears, reviews discuss fewer of the product attributes it already covers
+and more of the attributes it omits. When they take up a covered attribute, they
+elaborate on it rather than restate the summary. That is a three-part coding scheme
+built on the aspect machinery of @sec-aspect-sentiment, and each part needs its own
+instrument. *Coverage* needs one attribute vocabulary applied identically to the summary
+and to every review, whether a topic model, a dictionary, or an LLM extractor
+(@sec-llm-extraction). An attribute counts as covered only if the same extractor finds
+it in both texts. *Elaboration versus restatement* is a similarity question about the
+sentences that mention a covered attribute: does the review paraphrase the summary's
+sentence, or add a reason, a use case, or a qualification? (The abstract does not say
+which extraction method the authors used, so what follows describes the design, not
+their pipeline.)
+
+A reference text brings three hazards that a stand-alone outcome does not.
+
+- *A before-and-after comparison needs a counterfactual summary.* "Fewer covered
+  attributes after the summary" requires some definition of "covered" for reviews
+  written before any summary existed. One option is to apply the attribute set of the
+  first summary to the pre-period reviews.
+- *The summary is a moving target.* Platforms regenerate summaries as reviews arrive.
+  Coding against the current summary can therefore misclassify the very reviews that
+  changed it: an attribute a reviewer introduced is later absorbed into the summary and
+  then counted as covered. Coverage has to be fixed by the version the reviewer could
+  have seen, which means archiving timestamped snapshots of the summary alongside the
+  reviews.
+- *The extractor's recall differs by genre.* Fluent, model-written summary prose and
+  terse customer reviews are different genres, and an extractor that finds attributes
+  more reliably in one than in the other shifts the covered/uncovered split
+  mechanically. Validate it on a hand-coded sample of each genre, in the spirit of the
+  pre- and post-period validation above.
+
 
 A second cross-cutting use runs the other way, treating the black-box representation as
 a *yardstick for theory* rather than as a substitute for it. @aka2026slogans predict the

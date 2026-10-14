@@ -1029,6 +1029,827 @@ built on one retailer's books meets JMR's replication policy.
    person's currency.
 :::
 
+### A Fourth Specimen: A Small Reward Framed as Four Open Questions {#sec-sw-emb-plasma}
+
+@bruers2026plasma, published online in *Management Science* in 2026, is about as plain
+as a field experiment gets. Four of twelve Red Cross-Flanders donation centers gave
+plasma donors one extra thank-you coupon, worth about €1.50, for six months. There is
+no structural model, no instrument, and no machine learning. The paper is worth reading
+for how a modest manipulation became a contribution a general-interest journal would
+take. It fits the three-stage architecture loosely. There is a randomized effect,
+boundaries in time and across behaviors, and a mechanism stage built from a survey.
+Published estimates below come from the article's abstract. Design details and
+month-by-month estimates come from the KU Leuven dissertation chapter that first
+reported the experiment [@bruers2024thesis]. Where the two versions differ, we say so.
+
+**One experiment, four questions.** The dissertation chapter asked a collector's
+question: how cost-effective are small material rewards for plasma donors? The
+published version asks four questions about prosocial behavior in general. Each is
+answered by a single feature of the design (@tbl-sw-plasma-questions). This is the move
+most worth copying. A narrower paper would bury the information-only arm, the
+month-by-month estimates, and the blood-donation outcome as robustness checks. Here
+each becomes a headline result, because each answers a question the literature had
+left open.
+
+| Open question | Why a reader cannot guess the answer | Design feature that answers it | Published answer |
+|:--|:--|:--|:--|
+| Do small rewards motivate prosocial behavior? | A payment small enough to seem token can lower effort below no payment at all [@gneezy2000payenough] | An extra coupon worth about €1.50, added to an existing coupon scheme | Plasma donations rise 7.1% over the reward period |
+| How do short-run effects differ from longer-run adjustment? | Earlier randomized donor-incentive experiments ran for much shorter treatment periods | A 24-month donor panel: 11 months before treatment, 9 under it, 4 after | The reward effect grows over six months and disappears once the coupon is withdrawn |
+| Do incentives pull effort away from other prosocial activities? | Displacement had been measured across nearby blood drives [@lacetera2012blood], not across the products one donor can give | Centers collect both blood and plasma, and only plasma earns the extra coupon | Blood donations fall 3.3% |
+| Do reminders about existing rewards matter? | Donors may not know which coupons they already receive | A separate arm whose newsletter only states the existing coupons | Plasma donations rise 4.6% over nine months, an effect that fades with repetition |
+
+: The anatomy of the framing in @bruers2026plasma. Questions and answers follow the published abstract. The second and third columns draw on the dissertation chapter's review and design [@bruers2024thesis]. {#tbl-sw-plasma-questions}
+
+Each question also passes the test of @sec-sw-open-question: both answers would have
+been publishable. A null on the first question would be evidence of crowding-out. A
+drop below baseline after the coupon was withdrawn would have been a backlash result.
+Zero substitution would mean the gain was net. The paper did not need any particular
+sign to have a contribution, which is what made a small experiment safe to run for two
+years.
+
+**The long panel turns a small effect into a dynamics story.** @fig-sw-plasma-timeline
+shows the schedule. The reward arm received the newsletter item for three months
+before its extra coupon began, to accustom donors to seeing the coupons stated. Every
+change was announced a month ahead. That staggering separates the reminder from the
+reward within a single arm. The dissertation's monthly estimates trace the shape. The
+reward effect climbs from 6.4% in January 2023 to 9.8% in June. The information effect
+peaks at about 8% in the second and third months and falls to 0.8% by the ninth. The
+versions disagree on one point. The dissertation reports a 4.4% effect in the first
+month after withdrawal, which then fades. The published abstract says the effect
+disappears immediately. Quote the version you cite.
+
+```{mermaid}
+%%| label: fig-sw-plasma-timeline
+%%| fig-cap: "The schedule of the plasma-reward experiment, from the dissertation chapter, with the effects the published abstract reports. Both treated arms received the newsletter item for nine months; only the reward arm received the third coupon, for the last six."
+flowchart LR
+  P["Pre-period<br/>Nov 2021 to Sep 2022<br/>11 months, no treatment"] --> I["Information only<br/>Oct to Dec 2022<br/>newsletter states the coupons<br/>in both treated arms"]
+  I --> R["Reward period<br/>Jan to Jun 2023<br/>reward arm: 3 coupons<br/>for plasma instead of 2"]
+  R --> Q["Post-period<br/>Jul to Oct 2023<br/>2 coupons again,<br/>no newsletter item"]
+  I -.-> E1["Reminder: +4.6%<br/>over nine months,<br/>fading with repetition"]
+  R -.-> E2["Extra coupon: +7.1% plasma,<br/>growing; blood -3.3%"]
+  Q -.-> E3["Reward effect gone<br/>(published version)"]
+```
+
+The dissertation's appendix prints the monthly donation counts for each center, so the
+picture can be redrawn from the page. @fig-sw-plasma-dynamics redraws it and fits the
+dissertation's center-level robustness model: log monthly donations on center and month
+fixed effects plus the two treatment indicators.
+
+```{r}
+#| label: fig-sw-plasma-dynamics
+#| fig-cap: "Monthly plasma donations in the two treated arms relative to the control arm, rescaled so the eleven pre-experiment months average 1, redrawn from the center-level counts in the dissertation's appendix. Light shading marks the nine months in which the newsletter stated the coupons; dark shading marks the six months of the extra coupon in the reward arm."
+#| echo: true
+#| message: false
+#| warning: false
+# Monthly plasma donations at the 12 Red Cross-Flanders donation centers,
+# November 2021 to October 2023, transcribed from Table 88 of the dissertation
+# chapter that reports the experiment (Bruers 2024).
+centers <- c("Aalst", "Brugge", "Edegem", "Geel",               # control
+             "Genk", "Gent", "Mechelen", "Roeselare",           # information
+             "Kortrijk", "Sint-Niklaas", "Turnhout", "Leuven")  # information + reward
+arm <- rep(c("control", "information", "reward"), each = 4)
+plasma <- matrix(c(
+    625,  781, 1084,  493,  801, 1205,  570,  692,  945,  488,  535, 1274,  # Nov/21
+    762, 1004, 1223,  681,  943, 1439,  746,  853, 1128,  647,  690, 1397,  # Dec/21
+    734,  831, 1127,  592,  806, 1108,  686,  799,  971,  567,  654, 1129,  # Jan/22
+    747,  901, 1122,  628,  849, 1259,  667,  753,  971,  561,  605, 1333,  # Feb/22
+    725,  942, 1201,  707,  822, 1339,  690,  859, 1033,  614,  658, 1368,  # Mar/22
+    606,  754,  955,  572,  717, 1106,  572,  674,  947,  514,  534, 1137,  # Apr/22
+    660,  888, 1125,  581,  819, 1327,  633,  718,  999,  517,  572, 1340,  # May/22
+    724,  873, 1148,  585,  868, 1242,  588,  812, 1068,  653,  645, 1306,  # Jun/22
+    768,  998, 1182,  698,  993, 1171,  825,  864, 1062,  639,  702, 1383,  # Jul/22
+    937, 1217, 1481,  839, 1246, 1520,  963, 1032, 1271,  757,  808, 1637,  # Aug/22
+    771, 1018, 1199,  763, 1034, 1394,  878,  974, 1203,  699,  760, 1517,  # Sep/22
+    648,  793,  982,  612,  757, 1225,  629,  764,  904,  498,  630, 1278,  # Oct/22
+    710,  791,  989,  559,  876, 1277,  656,  772,  986,  567,  583, 1319,  # Nov/22
+    719,  825,  923,  573,  807, 1311,  614,  784,  980,  590,  632, 1337,  # Dec/22
+    657,  785,  975,  616,  815, 1124,  666,  800, 1005,  534,  640, 1356,  # Jan/23
+    589,  834,  920,  571,  790, 1222,  599,  745, 1025,  577,  601, 1301,  # Feb/23
+    741,  889,  959,  637,  810, 1286,  702,  872, 1093,  661,  697, 1454,  # Mar/23
+    624,  749,  831,  500,  675, 1110,  523,  735,  983,  508,  564, 1214,  # Apr/23
+    661,  802,  914,  537,  731, 1138,  601,  740,  997,  513,  632, 1244,  # May/23
+    610,  819,  907,  543,  727, 1115,  531,  769, 1030,  551,  609, 1187,  # Jun/23
+    769,  991, 1202,  653,  888, 1291,  805,  927, 1201,  656,  752, 1373,  # Jul/23
+    896, 1148, 1401,  831,  873, 1573,  938, 1087, 1352,  736,  845, 1613,  # Aug/23
+    727,  909, 1000,  629,  778, 1286,  689,  887, 1072,  585,  739, 1191,  # Sep/23
+    619,  817,  993,  575,  739, 1340,  630,  856, 1023,  575,  678, 1390   # Oct/23
+  ), nrow = 24, byrow = TRUE, dimnames = list(NULL, centers))
+month <- -10:13   # month 1 = October 2022, the first newsletter that states the coupons
+
+# Each treated arm's total relative to the control arm, rescaled so that the
+# eleven pre-experiment months average 1 (the dissertation's Figure 38).
+arm_total <- sapply(split(seq_along(centers), arm), function(j) rowSums(plasma[, j]))
+relative  <- arm_total[, c("information", "reward")] / arm_total[, "control"]
+relative  <- sweep(relative, 2, colMeans(relative[month <= 0, ]), "/")
+
+plot(month, relative[, "reward"], type = "n", ylim = c(0.93, 1.18),
+     xlab = "Month (1 = October 2022)", ylab = "Plasma donations relative to control",
+     main = "Information decays; the extra coupon builds, then stops")
+rect(0.5, 0, 9.5, 2, col = "grey92", border = NA)   # newsletter states the coupons
+rect(3.5, 0, 9.5, 2, col = "grey82", border = NA)   # reward arm: third coupon
+abline(h = 1, lty = 3)
+lines(month, relative[, "information"], type = "b", pch = 1, lty = 2)
+lines(month, relative[, "reward"], type = "b", pch = 16)
+legend("topleft", c("Information arm", "Information + reward arm"),
+       pch = c(1, 16), lty = c(2, 1), bty = "n")
+
+# The dissertation's center-level robustness model: log donations on center and
+# month fixed effects plus the two treatment indicators.
+d <- data.frame(month = rep(month, 12), center = rep(centers, each = 24),
+                arm = rep(arm, each = 24), donations = as.vector(plasma))
+d$information <- as.integer(d$arm != "control" & d$month %in% 1:9)
+d$reward      <- as.integer(d$arm == "reward"  & d$month %in% 4:9)
+fit <- lm(log(donations) ~ factor(month) + factor(center) + information + reward, data = d)
+round(100 * (exp(coef(fit)[c("information", "reward")]) - 1), 1)   # percent effects
+```
+
+Plain least squares on the transcribed table gives 3.6% for the information item and
+6.0% for the reward. For this model the dissertation reports 3.3% and 5.5%, fitted with
+autocorrelated errors that we did not reproduce. Its preferred donor-level
+fixed-effects Poisson model gives 4.6% and 7.1%, the figures the published abstract
+carries. The figure also shows why the donor-level model carries the paper. With four
+centers per arm, the pre-period ratios wander by up to about five percent either side
+of 1. Month 0, before any treatment, already sits near 1.06 in both arms. The late
+spike in month 13 comes from a recruitment campaign, which the dissertation notes
+worked best at the two largest centers, both in treated arms.
+
+**Substitution is priced, not just reported.** The partner collects blood and plasma at
+the same sites, so the experiment can see what the coupon costs in the prosocial act it
+did not reward. In the dissertation's numbers, the blood decline is barely significant
+at the donor level (p = 0.047) and not significant in the center-level model. It
+accounts for about one sixth of the plasma gain. The paper reports it anyway, and the
+cost arithmetic shows why. Every plasma donor gets the extra coupon, including those
+who would have come anyway. The dissertation therefore puts the marginal cost at
+€1.50 × 107% / 7%, about €23 per extra plasma donation, and €34 once the lost blood
+donations are netted out. The same dissertation's meta-analysis puts the cost of cash
+or vouchers worth €5 to €15 per blood donation at €20 to €120 per extra donation. A
+cost per net extra donation is the number a collector can act on.
+
+**The partner shapes the design, and the paper says how.** The Red Cross funded the
+study and supplied administrative records on 77,646 donors who gave at a center at
+least once over the two years. The outcome is therefore a count of donations, not a
+stated intention. The partner's rules also set the design's limits. An informal cap of
+about €5 on rewards for voluntary, unpaid donation limited the reward to three coupons.
+A rule against treating donors at the same center differently meant that centers, not
+donors, were randomized. The twelve centers were grouped by cluster analysis into four
+triplets of similar size and donor mix, and one center per triplet went to each arm.
+Matching helps, but twelve units cannot balance everything: 43% of control-arm donors
+lived more than 15 km from their center, against 26% in each treated arm. Inference is
+the other cost. The dissertation clusters standard errors by donor, although treatment
+varies by center. With twelve clusters, a referee will ask for center-level inference
+such as the wild cluster bootstrap (@sec-causal-week05). Say in the paper what the
+partner allowed and what it cost.
+
+**Registration, described accurately.** The trial appears in the AEA RCT Registry
+[@bruers2024registry], but the entry was submitted in August 2024, more than a year
+after the intervention ended in June 2023. The dissertation states that no
+preregistration was done, while noting that the models and hypotheses were fixed
+before data collection. A registration filed after the data exist documents a design.
+It does not constrain the analysis the way a pre-analysis plan does, and a careful
+reader will check the dates. Describe your own registration by its date.
+
+**A mechanism stage without a model.** The dissertation closed by asking whether a
+larger reward works through donors' self-interest or by signaling that donations are
+more urgently needed. The published version answers with survey evidence. Small
+rewards act as signals of increased need or as gifts that call for reciprocity, and
+the authors suggest the findings may carry over to volunteering. The survey's design is
+not described in the versions we could read. Asking recipients how they interpret an
+incentive is a cheap mechanism stage, and the honesty requirement applies to it in
+full: stated interpretations are consistent with a mechanism but do not isolate one.
+
+::: {.callout-tip}
+## Making a small field experiment publishable
+
+1. Turn the one effect into several open questions, and give each a design feature
+   that answers it.
+2. Write each question so that either answer is a result, including a null.
+3. Run the panel long enough to see build-up, decay, and what happens after the
+   treatment ends, and report effects month by month.
+4. Measure the behavior the incentive might pull people away from, and fold the loss
+   into the cost per unit gained.
+5. Give reminding people of what they already get its own arm, separate from giving
+   them more.
+6. Use the partner's administrative outcomes, and state which of the partner's rules
+   shaped the design.
+7. Match inference to the unit of randomization, and say how many clusters you have.
+8. Date your registration honestly, and add a direct check on mechanism, even a
+   survey, before a referee asks for one.
+:::
+
+The template carries over to loyalty programs and promotions. A points bonus on one
+product line is the same experiment, and substitution away from the other lines is the
+outcome that keeps the estimate honest.
+
+## The Lifecycle Paper: How Response Changes Across Stages {#sec-sw-lifecycle}
+
+Many marketing questions are really about a process. A product is announced,
+launched, reviewed, discounted, and retired. An event is advertised, held, and then
+sold as a recording. A customer searches, buys, uses, and complains. A lifecycle paper
+takes one response parameter, such as a price elasticity, an advertising effect, or
+the weight of word of mouth, and asks how it changes from stage to stage. The finding
+is the profile across stages, not a single number. Done well, the paper also says why
+the profile has that shape. The two usual reasons are that different people act at
+different stages, and that the same people know or want different things at different
+stages. Separating them is the core analytical task of the genre.
+
+The genre borrows from its neighbors. Each stage needs a credible estimate, as in
+@sec-sw-emb. The gap between stages is decomposed into selection and within-person
+change, as in @sec-sw-decomposition. The mechanism is often tested by moderation, as
+in @sec-sw-emb-listings. What sets it apart is the axis everything is organized on:
+a sequence of stages whose boundaries are fixed by an institution rather than by the
+analyst.
+
+**The specimen.** @cong2026livestream ask how demand for paid livestreams responds to
+price before the stream and after it, when the recording is on sale
+(@sec-price-lifecycle has the substance). On a Chinese knowledge-sharing platform,
+2,299 talks sold at a price fixed for their whole life. Demand before the stream has
+an elasticity of about $-1.2$, and demand for the recording about $-0.8$. The paper
+traces the gap partly to who buys early (heavy users, who are more price-sensitive)
+and partly to what buyers know (quality is uncertain until the ratings arrive), and
+ends with stage-specific prices. The account below follows the authors' June 2026
+arXiv version, which carries the published title.
+
+| Section | What it contains | Rhetorical job |
+|---|---|---|
+| Introduction | Platforms market the run-up to a stream; recordings are an afterthought; three features of the setting; the two elasticities; the two mechanisms; the pricing number | Make the later stage a neglected object, and promise a clean comparison across stages |
+| Literature | Livestreaming studies (all about the live stage); live versus taped content; advance selling | Show that each stream covers one stage or one kind of uncertainty, and that this paper spans the lifecycle |
+| Context and data | A lifecycle figure (listing, stream, recording); price fixed after listing; promoted events dropped; 30-day windows covering 85% of sales | Define the stages by the institution, and say what stays constant across them |
+| Identification and main results | One pooled model with a stage interaction; rich controls; coefficient-stability bound; double machine learning; similar-event-price instrument | Estimate the parameter in each stage, and test the gap formally |
+| Mechanism 1: self-selection | Buyer activity by stage; elasticity by engagement group; the gap within each group | Measure how much of the gap is *who* buys |
+| Mechanism 2: quality uncertainty | Review topics; smaller gaps for reputable creators, "hard" topics, and existing followers; buyers active in both stages | Show within-buyer change where theory says it should be large, and its absence where it should be small |
+| Alternative explanations | Weekly elasticities flat within each stage with a jump at the stream; search costs acknowledged | Rule out that the stage boundary is an artifact of how the platform displays each stage |
+| Policy | One price versus a price per stage; +2.3% revenue, more for unknown creators | Turn the gap into a decision, with the assumptions stated |
+| Conclusion | Rebalance marketing toward the recording; one platform, learning content, no viewing data | Redeem the opening promise and bound how far it travels |
+
+: Anatomy of a lifecycle paper, read from @cong2026livestream (arXiv version of June 2026). {#tbl-sw-lifecycle-anatomy}
+
+```{mermaid}
+%%| label: fig-sw-lifecycle-spine
+%%| fig-cap: "The spine of a lifecycle paper. Stages are fixed by an institutional event, the parameter is estimated in each, and the gap between stages is split into a selection part and a within-buyer part before it is turned into a stage-specific policy."
+flowchart LR
+  S["Stages fixed by<br/>an event that changes<br/>information or buyers"] --> E["Parameter in<br/>each stage,<br/>one pooled model"]
+  E --> G["Gap between<br/>stages, with a<br/>standard error"]
+  G --> C["Selection:<br/>who acts in<br/>each stage"]
+  G --> W["Within change:<br/>what the same buyers<br/>know or want"]
+  C --> A["Rule out artifacts<br/>of how each stage<br/>is displayed"]
+  W --> A
+  A --> P["Stage-specific<br/>policy, with its<br/>assumptions stated"]
+```
+
+### The moves worth copying
+
+**Let the institution define the stages.** The stages here are set by the platform:
+the listing date, the stream, and the switch to recording. The analyst did not choose
+them after looking at the data. The paper's first figure is the lifecycle itself, and
+the data section says what stays constant across stages. The price cannot change
+after listing, which is what makes a comparison of elasticities across stages
+meaningful. Events the platform discounted partway through are dropped for the same
+reason. The outcome windows (30 days on each side) are set so that stages are
+comparable across events, and the paper reports that they capture 85% of sales, so a
+reader can judge what was left out.
+
+**Test the gap, not two separate estimates.** The main specification pools both stages
+and interacts price with a post-stream indicator, so the difference in elasticities
+has its own standard error. Separate regressions for each stage appear only as a
+robustness check. The authors justify this in a footnote, and it is worth copying.
+Note also what the pooled form buys for identification. If an omitted creator
+quality shifts demand equally in both stages, it biases the two elasticities by the
+same amount and leaves the gap unbiased. Saying this out loud tells a referee which
+claim is the robust one.
+
+**Describe who acts in each stage before modeling why.** The first mechanism table is
+plain description: buyers before the stream have written more answers and have more
+followers than buyers of the recording. Only then does the paper estimate
+elasticities by buyer type. The order matters, because a selection story that has not
+first been shown in the raw composition reads as speculation.
+
+**Split the gap into selection and within-buyer change.** The two explanations make
+different predictions. If the gap is pure selection, it vanishes once buyer type is
+held fixed. If buyers' information changes, the gap survives within type. The paper
+runs this test twice: within engagement groups, and on the buyers who purchased in
+both stages, a group that holds composition fixed by construction. The gap survives
+both. A coarse proxy for type leaves some selection inside each group, so the
+within-type gap is an upper bound on within-buyer change. The simulation below shows
+why the test works.
+
+```{r sw-lifecycle-selection}
+#| message: false
+#| warning: false
+set.seed(2026)
+J  <- 2000                                  # events, each sold before and after the stream
+lp <- rnorm(J, log(20), 0.6)                # log price (RMB); fixed for the event's whole life
+xi <- rnorm(J, 0, 0.5)                      # event appeal, independent of price here
+eta <- c(frequent = 1.6, infrequent = 0.6)  # each type's price sensitivity
+
+# Demand for event j in stage s from consumer type k is Poisson with mean
+#   scale * share(k, s) * exp(xi_j - eta_ks * (lp_j - log 20)),
+# where eta_ks = eta_k + shift if s is the pre-event stage (quality still uncertain).
+simulate <- function(freq_pre, freq_post, shift_pre) {
+  grid <- expand.grid(j = 1:J, stage = c("pre", "post"), type = names(eta),
+                      stringsAsFactors = FALSE)
+  share <- ifelse(grid$type == "frequent",
+                  ifelse(grid$stage == "pre", freq_pre, freq_post),
+                  ifelse(grid$stage == "pre", 1 - freq_pre, 1 - freq_post))
+  e <- eta[grid$type] + ifelse(grid$stage == "pre", shift_pre, 0)
+  grid$lp <- lp[grid$j]
+  grid$q  <- rpois(nrow(grid), 400 * share * exp(xi[grid$j] - e * (grid$lp - log(20))))
+  grid
+}
+
+# Elasticity in each stage from log(1 + demand) on log price, as in a stage-interacted model.
+stage_elasticities <- function(d) {
+  d$post <- as.integer(d$stage == "post")
+  b <- coef(lm(log1p(q) ~ post * lp, data = d))
+  c(pre = unname(b["lp"]), post = unname(b["lp"] + b["post:lp"]))
+}
+summarise <- function(d) {
+  agg <- aggregate(q ~ j + stage + lp, data = d, FUN = sum)   # what the platform sees
+  pooled <- stage_elasticities(agg)
+  within <- sapply(names(eta), function(k) unname(diff(stage_elasticities(d[d$type == k, ]))))
+  round(c(pre = pooled[["pre"]], post = pooled[["post"]],
+          gap = pooled[["post"]] - pooled[["pre"]],
+          gap_within_frequent = within[["frequent"]],
+          gap_within_infrequent = within[["infrequent"]]), 2)
+}
+
+scenarios <- list(
+  "Selection only"   = c(freq_pre = 0.8, freq_post = 0.2, shift_pre = 0),
+  "Uncertainty only" = c(freq_pre = 0.5, freq_post = 0.5, shift_pre = 0.4),
+  "Both"             = c(freq_pre = 0.8, freq_post = 0.2, shift_pre = 0.4)
+)
+res <- t(sapply(scenarios, function(p) summarise(do.call(simulate, as.list(p)))))
+knitr::kable(res, col.names = c("Pre elasticity", "Post elasticity", "Gap (post - pre)",
+                                "Gap within frequent", "Gap within infrequent"))
+```
+
+In the first row, no buyer's price sensitivity changes at all. Frequent, price-sensitive
+users simply make up 80% of the early market and 20% of the late one. The aggregate
+data still show demand that is far more elastic before the event (about $-1.4$) than
+after it (about $-0.8$), close to the pattern in the paper. Only the split by type
+gives it away: within each type the gap is zero. In the second row, the buyer mix is
+constant and every buyer becomes less price-sensitive once quality is known, so the
+gap appears both in aggregate and within each type. In the third row, both are at
+work and the aggregate gap is roughly their sum, while the within-type gap recovers
+the uncertainty part alone. This is the logic of the paper's Table 10. The aggregate
+gap cannot tell the stories apart; the within-type gap can.
+
+**Test the within mechanism by where it should be weak.** Quality uncertainty predicts
+a smaller gap wherever buyers already knew what they were getting: creators with a
+quality badge, "hard" topics whose quality can be judged from a description, and
+buyers who already followed the creator. Each prediction is stated before its table,
+and each holds. As in @sec-sw-emb-listings, moderation is consistent with the
+mechanism without isolating it, and the paper concedes that live and recorded content
+differ in other ways too.
+
+**Check that the boundary is not an artifact of the display.** Platforms often show each
+stage differently. Here upcoming events sit at the top of the page and past events
+drift down it. If position drove the gap, elasticities would trend within each stage.
+Instead they are flat on both sides with a jump at the stream. The paper says plainly
+that it cannot rule out higher search costs for archived events. Naming the
+alternative you cannot exclude costs less credibility than letting a referee name it.
+
+**End with a policy and the assumption it rests on.** The counterfactual compares one
+price for the whole life with a price for each stage, under linear demand and
+independent stages. The authors call the second assumption "admittedly strong" and
+name the dependence it ignores (cheap early tickets could cannibalize the recording
+or signal quality to its buyers). A lifecycle counterfactual almost always rests on
+some assumption about how stages are linked, so state it and say which way relaxing
+it would move the answer.
+
+**A lesson from the version history.** The first public version (arXiv, July 2021)
+was titled "The Role of 'Live' in Livestreaming Markets." It estimated a daily
+elasticity curve from two weeks before to two weeks after the stream with a
+generalized orthogonal random forest. Elasticity was about $-0.5$ two weeks out,
+near zero on the stream day, and about $-0.1$ afterward, and the paper attributed the
+stream-day pattern to the chance to interact with the creator in real time. The
+published paper (June 2026 arXiv) is plainer and stronger. The question became how
+demand changes across the lifecycle rather than what "live" is worth. The daily curve
+became a two-stage contrast with a pooled test and an instrument. The real-time
+interaction mechanism was dropped, because weekly elasticities in the run-up to the
+stream turned out to be flat. A self-selection mechanism and a pricing counterfactual
+were added. Coarser stages identified cleanly made a better paper than a
+fine-grained curve identified by a flexible method, and the mechanism the data no
+longer supported was cut rather than kept.
+
+**The genre in this book.** Many papers already cited here have the same shape, and
+reading them as one genre makes the moves easier to see.
+
+- @elberse2003 model movies released in sequence across countries, where performance
+  in the first market shapes demand and screen allocation in later ones.
+- @weinberg2000salesthrough treat theatrical release and video as sequential channels
+  and ask when the second stage should open, given that it cannibalizes the first.
+- @moe2002 use advance purchase orders, the pre-release stage, to forecast sales after
+  launch.
+- @liu2006wordmouth trace movie word of mouth from before release through the run and
+  ask which features of it predict box office at each point.
+- @eliashberg2000 build a decision-support model for evaluating a movie before release.
+- @golder2004 explain the turning points of the product life cycle (takeoff and
+  slowdown) with informational cascades.
+- @deighton2012addingbricks show that the effect of opening stores on a retailer's
+  catalog and online channels changes with time since opening.
+- @lemon2016 organize customer experience into pre-purchase, purchase, and
+  post-purchase stages, the conceptual frame for journey papers.
+- @colicev2019 link firm and user content to separate stages of the marketing funnel.
+- @kim2026customization ask whether a first customization experience changes the later
+  stages of a customer's journey, and separate who customizes from what customizing
+  does with a randomized experience manipulation (@sec-causal-born-or-made).
+- @xie2001advance give the theory for the stage before consumption, when buyers are
+  uncertain about their own future state.
+
+::: {.callout-tip}
+## A checklist for writing your own lifecycle paper
+
+1. Define the stages by an event that changes what buyers know or who is buying
+   (announcement, release, first reviews, the event itself, expiry), not by calendar
+   time. Draw the lifecycle as the paper's first figure.
+2. State what is held constant across stages (price, product, display) and drop units
+   where the firm intervened partway through.
+3. Choose windows that make stages comparable across units, and report how much of
+   total activity they capture.
+4. Estimate one pooled model with stage interactions so the gap has a standard error,
+   and keep separate per-stage regressions as robustness.
+5. Identify the level of the parameter in every stage; then say which confounds the
+   pooled form differences out of the gap.
+6. Show who acts in each stage with descriptive tables before proposing any
+   mechanism.
+7. Split the gap into selection and within-buyer change: estimate by buyer type, and
+   on buyers active in more than one stage. Report how much of the gap survives.
+8. For each within-buyer mechanism, name the units where it should be weak, state the
+   prediction before the table, and test it.
+9. Check whether the stage boundary is an artifact of how the platform presents each
+   stage: look for a jump at the boundary rather than a trend within stages.
+10. Turn the gap into a stage-specific policy, write down the assumption that links the
+    stages (cannibalization, signaling, strategic waiting), and say which way relaxing
+    it would move the answer.
+11. Bound the claim: one platform, one kind of content, one period.
+:::
+
+## The Field-Experiment Paper from an Emerging Market {#sec-sw-emerging-field}
+
+A growing share of the data that marketing students hold comes from markets the
+field's journals rarely see: a panel of retailers in Vietnam, a survey of vendors in
+Lagos, transaction logs from a network of mobile-money agents. Writing a paper from
+such data runs into a problem that none of the templates above solves on its own.
+The paper usually offers no new theory and no new method. Its evidence does not come
+as a list of hypotheses, each confirmed by a coefficient. What it has instead is a
+setting where an important question can be answered cleanly, and a design that
+answers it. Turning that into a paper takes craft. @anderson2026datadecisions,
+published online in *Marketing Science* in October 2026, is a well-built specimen. It
+is a close cousin of the effect–mechanism–boundary paper (@sec-sw-emb): a randomized
+experiment supplies the effect, and measured intermediate outcomes carry the
+mechanism.
+
+(The published article was not accessible when this section was written. The
+publisher deposits a one-sentence abstract with Crossref. The fuller sources are the
+abstract of a 2022 working paper in the Private Enterprise Development in Low-Income
+Countries (PEDL) series, the abstract of a 2023 SSRN version, the trial's entry in the
+AEA RCT Registry (AEARCTR-0005591), the article's deposited reference list, and Chicago
+Booth Review coverage, including a 2024 article and a 2026 podcast interview with
+Chintagunta [@chicagobooth2024apps; @chicagobooth2026podcast]. Each number below names the version it comes from. Where versions
+disagree, the text says so. The section structure discussed here is a reconstruction
+of what a paper in this genre must contain, not the article's table of contents.)
+
+### The study in two paragraphs
+
+The authors randomized 550 growth-oriented micro and small enterprises in Rwanda into
+three arms (registry). Two hundred fifty treatment firms received an Android
+smartphone, a data plan, and MARKETmanager, an app the researchers designed. Owners
+used it to record sales, products, customers, and marketing actions, and it returned
+monthly reports comparing the firm's current performance with its past. Fifty placebo
+firms received the phone and data plan without the app. Two hundred fifty control
+firms received nothing during the study and were promised access afterward. The
+registry dates the intervention from July 2019 to March 2020. The 2022 working paper
+describes nine months of treatment, and the 2024 Booth Review article seven, ending
+as COVID-19 arrived. Staff visited treated owners to help them enter and read the
+data: weekly according to the registry, monthly according to the 2024 article. That
+article adds that the visitors explained the reports but gave no advice on what to do
+with them. In the podcast, Chintagunta describes the visitors as mostly undergraduates
+chosen for their lack of business experience.
+
+The findings come in four families, listed in the same order in every version of the
+abstract. Usage started low and rose by the third month. The 2022 abstract reports
+daily usage rates of 90–95%. The 2024 article reports that about 30% of treated firms
+used the app daily at first, rising to 60%. The two figures probably measure different
+things, and only the paper can settle which. On mental performance, "objective
+ability and psychological tests" (six of them, according to the 2024 article) show
+gains in reasoning, memory, logic, and calculation. On practices, treated firms
+adopted product-management activities, with spillovers into accounting practices the
+app never targeted. On money, monthly sales were 36.4% and monthly profits 29.2%
+higher than in the control group on average. These two figures appear in the 2022,
+2023, and published abstracts. The published abstract adds that comparisons with the
+placebo arm, which holds phone and internet access fixed, attribute the gains to the
+analytics rather than the device.
+
+### Where the contribution comes from without a new theory or method
+
+A paper like this does not claim to have invented anything. Its contribution is one,
+or several, of three other kinds, and the specimen makes all three.
+
+1. *A causal estimate of a quantity people already act on.* Governments, donors, and
+   software vendors already sell analytics to small firms on the assumption that it
+   pays. The gap is not a missing theory but a missing number. The 2023 abstract says
+   so in one line: analytics is "widely promoted", but evidence on its effects for
+   individual entrepreneurs "remains limited". An evidence gap of this kind is
+   legitimate when the quantity is policy-relevant and nobody has randomized it.
+2. *A mechanism measured, not asserted.* "Analytics improves decisions" is usually an
+   assumption. Here it becomes an observation, because the authors tested the owners
+   themselves. A battery of cognitive tests is a measurement contribution in a
+   marketing journal, and it turns a firm-level result into a claim about people.
+3. *A tension resolved.* The 2022 abstract opens with two literatures that predict
+   opposite signs. In one, technology builds the user's human capital. In the other,
+   analysis paralysis, confirmation bias, information overload, and "brain drain"
+   erode it. The deposited reference list covers both: studies of cognitive training
+   and neuroplasticity on one side, and on the other a 2025 experiment in which
+   generative AI without guardrails harmed high-school students' learning. A
+   two-sided prior is what makes an empirical answer a contribution
+   (@sec-sw-open-question). Neither side could have called the result in advance.
+
+The contribution sentence of @sec-sw-contribution adapts accordingly. It becomes:
+"We estimate the effect of [a treatment decision makers already buy or fund] on [the
+outcomes they care about] among [a population described by its economic role], a
+quantity prior work could not estimate because [the treatment is everywhere where data
+are rich, or nobody randomized it], and we show that the effect runs through
+[measured intermediate outcomes]."
+
+The title history shows the same move. The 2022 working paper asked a question: "Is
+(Smart) Technology Really Making Us Dumber?" The 2023 SSRN version answered it:
+"(Smart) Technology Doesn't Make Us Dumber". The published title drops the
+provocation altogether: "From Data to Decisions: Marketing Analytics, Mental
+Performance, and Firm Growth in an Emerging Market". It names the causal chain in
+order and puts the setting last, as a scope condition. The country does not appear in
+it at all.
+
+### The country as the source of variation, not a curiosity
+
+The hardest sentence in an emerging-market paper answers the question a referee in
+Chicago or Rotterdam is silently asking: why should I care about Rwanda? The weak
+answer describes the country. The strong answer says what the country makes
+estimable. In rich markets almost every firm already has some data, so the value of
+analytics cannot be estimated from a starting point of none. In the specimen's
+setting, few micro and small enterprises "formally record their marketing data"
+(registry). In the podcast, Chintagunta puts the baseline share with any records at
+about 30%. The setting is where the treatment can be switched on from zero. Write the
+setting paragraph as an argument about variation, and the reader stops treating the
+country as exotic.
+
+The second move puts the reader's own literature beside the result.
+@bargill2024ebay randomized eBay's Seller Hub, a data-rich seller dashboard, and found
+that access raised sellers' revenues by 3.6% on average. The same question in a rich
+platform setting produced an effect about a tenth the size. The outcomes, populations,
+and measurement all differ, so the comparison is a hypothesis about where analytics
+pays most, not an estimate. Stated that way, it gives a US reader a reason to care:
+your number is small because your firms already know what this treatment teaches.
+
+The third move describes the firms by their economic role, not their geography. Most
+are retail shops, with some services such as hair salons (podcast). The registry
+frames them as the last mile through which large companies reach consumers in
+emerging markets. A brand manager at a consumer-goods firm recognizes that population
+at once.
+
+The fourth move is a research program. The same team has varied the marketing lever
+while holding the population type fixed. Marketing versus finance training came first
+in South Africa [@anderson2018], then volunteer marketers in Uganda
+[@anderson2021marketersmatter], customer-feedback seeking in Rwanda
+[@kaul2025callmemaybe], and now analytics. The Uganda paper appeared in the *Journal
+of Marketing* issue on better marketing for a better world, whose editorial invites
+work of this kind [@chandy2021better]. Each paper inherits the credibility of the last
+one's fieldwork. A student with one emerging-market dataset should ask early which
+second paper the same population and instruments could support.
+
+Two habits of style follow. Name the country in the setting section, not in the
+headline claim. And give the real reason for the choice of country alongside the
+scientific one. Chintagunta says plainly in the podcast that the study went to Rwanda
+partly because the research funding was there. Chintagunta also cites the country's push on
+technology access and its heavy use of mobile payments. A paper can state both. It
+should not claim the country was picked for representativeness unless it was.
+
+### Evidence without hypothesis tests: the design is the argument
+
+The specimen has no H1 through H4. In their place it has a design whose arms define
+the estimands, and outcome families reported in causal order. The table below
+reconstructs the estimands from the registry's design.
+
+| Contrast | What it estimates | What a writer must say about it |
+|---|---|---|
+| Treatment vs. control | The whole bundle: phone, data, app, and support visits | This is the policy-relevant effect of offering the program |
+| Treatment vs. placebo | The app and its support, holding phone and internet fixed | It answers "it's just the smartphone", but the placebo arm has only 50 firms, so the contrast is less precise |
+| Placebo vs. control | Phone and data alone | A useful null if it is small, and a finding in its own right if not |
+
+: The estimands implied by a three-arm design with a placebo, reconstructed from the registry entry for @anderson2026datadecisions. {#tbl-sw-emerging-estimands}
+
+Several practices then replace hypothesis-by-hypothesis testing.
+
+- *Report outcome families in causal order.* Usage, then mind, then practices, then
+  money. Each family is reported as an effect with a confidence interval, not as a
+  verdict on a hypothesis. The order is the story: a reader who has seen take-up and
+  cognition is ready to believe the sales figure.
+- *Separate the offer from the use.* With usage low at first, the intent-to-treat
+  effect answers the policy question of what offering the app does. Scaling by usage
+  (treatment on the treated) answers how much using it does. Report both, and say which
+  one the abstract quotes. The public versions do not say which estimate the 36.4%
+  is.
+- *Be exact about registration.* The trial was registered on March 24, 2020, after the
+  intervention began in July 2019, and no analysis plan appears on the public page. A
+  writer in that position should say "registered" and not "pre-registered", should
+  name the primary outcomes (here sales and profits), and should label everything else
+  as secondary or exploratory. Readers forgive late registration far more readily than
+  a claim that turns out to be false.
+- *Control multiplicity by family.* Six cognitive tests and a list of practice items
+  invite fishing. The standard remedy is a summary index per family, with p-values
+  adjusted across families [@anderson2008multiple]. That paper is in the specimen's
+  reference list, which suggests, though the public versions cannot confirm it, that
+  the authors use this approach.
+- *Show the mechanism through intermediate outcomes, and say what that cannot prove.*
+  The reference list includes the causal-mediation framework of @imai2010general.
+  Cognition and practices were not themselves randomized, so a mediation estimate
+  rests on sequential ignorability (@sec-causal-mediation-assumptions). The safe claim
+  is that the effect on intermediate outcomes and the effect on profits line up as
+  the mechanism predicts. The placebo arm strengthens that claim, but it cannot turn
+  it into an experiment on the mediator.
+- *Treat heterogeneity as a test of mechanism, not a search.* The reference list
+  includes generalized random forests, debiased machine learning for conditional
+  average treatment effects, and lasso-based selection of controls, the current
+  toolkit for heterogeneity in experiments. Use the forest for discovery and label it
+  that way. Separately, name two or three subgroups that the mechanism says should
+  gain more, such as owners with weak baseline numeracy if the mechanism runs through
+  calculation skill. In the podcast, Chintagunta says that the owners who already kept
+  records showed directionally similar gains but were too few to test. Writing that
+  sentence is the honest version of a heterogeneity result.
+- *Benchmark the magnitude.* A 29.2% profit gain means little until it is compared
+  with something. The 2024 Booth Review article reports the authors' cost
+  calculation: about \$4–\$6 a month in variable cost, an unsubsidized up-front cost
+  of \$170–\$210 per business, and break-even in roughly 7–10 months. Set that
+  against the alternatives a funder would consider. The same team's volunteer
+  marketers raised monthly profits by 35.8% in Uganda [@anderson2021marketersmatter].
+  Classroom training has a mixed record, which @mckenzie2021training reassesses.
+  Intensive consulting worked for large Indian textile plants but at a much higher
+  cost per firm [@bloom2013management]. Express the effect as a percentage of the
+  control mean, in local currency and in dollars at a stated exchange rate, and per
+  dollar spent.
+
+### The institutional section as persuasion
+
+In a paper from an unfamiliar market, the setting and intervention sections do work
+that a literature review does elsewhere. They make the reader trust a design they
+cannot picture. Four kinds of detail carry most of the weight.
+
+- *Who the firms are.* Sector mix, size, how they were recruited, what "growth-oriented"
+  meant as a screening rule, and how the sample compares with a national benchmark.
+  The specimen's reference list includes Rwanda's 2020 Establishment Census, the
+  natural benchmark for that comparison.
+- *What the treatment was, screen by screen.* What owners entered and how often,
+  what came back, and what the visitors were and were not allowed to say. The podcast
+  gives the level of detail a reader needs. Owners entered whether the shop was open
+  and its revenue each day. Every two weeks they entered their top three products
+  with price and cost, from which the app computed margins, together with counts of
+  regular, occasional, and new customers. Detail of this kind is persuasive because it
+  rules out the most damaging alternative, that the program was really free
+  consulting. Visitors chosen for their lack of business experience serve the same
+  purpose.
+- *What everyone else received.* Placebo firms had their data plans topped up, and
+  every arm had enumerator visits (podcast). Balanced contact is the main answer to
+  Hawthorne effects and experimenter demand, and it belongs in the design section, not
+  in a footnote.
+- *How the design changed.* An earlier PEDL-funded project by the same team, active
+  2016–2018, describes a larger plan on its public page: 1,500 owners around Kigali, a
+  finance-information tool and a marketing-information tool in separate arms, and
+  follow-ups at 12 and 18–24 months. The public record does not say whether the
+  executed study is a revision of that plan. A referee who finds such a page will ask.
+  One paragraph explaining what changed and why pre-empts the question.
+
+### Would it work elsewhere?
+
+The external-validity paragraph is where emerging-market papers most often say too
+much or too little. The productive form names the conditions under which the effect
+should travel, not a list of countries. For the specimen those conditions are
+plausibly three: owners do not already track their key numbers, the owner makes the
+decisions, and the phone and data cost little relative to monthly profit. Each
+condition can be checked against another market's data. Chintagunta declines to
+extrapolate to US corner stores, saying such a claim would be "anecdotal" (podcast).
+That restraint is a model to copy. Two further caveats belong in the paragraph. The
+sample was screened for growth orientation, so the estimate describes firms that pass
+that screen, not the median microenterprise. And persistence is a separate question.
+The 2024 article reports a March 2021 follow-up of 14 randomly chosen treated owners,
+13 of whom still kept records. Evidence that thin is useful as illustration and
+should be labeled as such, not counted as a long-run estimate.
+
+### Credible numbers where firms keep no books
+
+The specimen's measurement problem is general to the genre, and in one respect it is
+sharper. The published abstract says treated firms "report" higher sales and profits,
+and the verb matters: in settings without books, outcomes are self-reported. Here the
+treatment is record-keeping, so it changes the instrument that measures the outcome.
+Treated owners may report more accurately, or more optimistically, than control owners
+who are guessing. The defenses a referee will look for are these:
+
+1. Measure outcomes with the same enumerator protocol in every arm. Never use the
+   app's own records as the outcome for treated firms, because control firms have no
+   such records.
+2. Collect several follow-up rounds and average them. Noisy outcomes like
+   microenterprise profits gain more power from repeated measurement than from extra
+   firms [@mckenzie2012moret], a paper the specimen cites.
+3. Cross-check reported profit against reported sales minus reported costs, and state
+   the trimming or winsorizing rule before looking at treatment effects.
+4. Pair self-reports with outcomes that are hard to inflate. Business practices
+   measured as a standard index of yes/no items [@mckenzie2017practices] and objective
+   cognitive tests both qualify. In the podcast, Chintagunta describes the Cognitive
+   Reflection Test [@frederick2005crt], with about 0.7 of three items correct in the
+   control group against about one in the treatment group. These are oral,
+   approximate figures. The exact estimates are in the paper.
+5. Ask whether a test measures the trained skill or general ability. An owner who
+   computes margins every two weeks has practiced arithmetic. A gain on a calculation
+   test is near transfer. A gain on reasoning or memory tests is the more surprising
+   claim and needs the stronger defense. The specimen's reference list includes the
+   cognitive-training literature in which this distinction is argued.
+6. Report attrition by arm and bound the estimates for it. The public versions give no
+   attrition figures. The study ended as COVID-19 arrived, which makes the timing of
+   the endline survey and the response rate worth a paragraph of their own.
+7. Account for local shocks. The reference list includes spatially robust standard
+   errors and satellite night-lights data, which suggests the authors treat local
+   economic conditions explicitly. That is worth doing whenever firms cluster in a
+   few markets.
+
+### The anatomy of the genre
+
+| Section | Rhetorical job | What the specimen supplies (version) |
+|---|---|---|
+| Title | Name the causal chain; put the setting last, as scope | Data, decisions, mind, growth; "an emerging market" (published title) |
+| Abstract | One number per outcome family, in causal order | Usage, cognition, practices, sales and profits (all abstracts) |
+| Introduction: the tension | Show that the answer is not known in advance | Technology builds vs. erodes human capital (2022 abstract) |
+| Introduction: the gap | Present a missing causal estimate, not a missing theory | Analytics widely promoted, evidence limited (2023 abstract) |
+| Setting | Turn the country into the source of variation | Few firms record marketing data (registry); about 30% kept records (podcast) |
+| Intervention | Make the treatment replicable and rule out "it was just advice" | Entry cadence, monthly reports, visitors who give no advice (registry; podcast; 2024 article) |
+| Design | Let the arms define the estimands, with a placebo for the obvious objection | 250 treatment, 50 placebo, 250 control (registry) |
+| Data and measurement | Show that outcomes are credible without books | Same contact for all arms; objective tests (podcast; abstracts) |
+| Results: take-up | Show the first stage before any effect | Usage rises by month three (all abstracts) |
+| Results: mind | Mechanism measured on the person | Reasoning, memory, logic, calculation (all abstracts) |
+| Results: practices | Mechanism measured on the firm, including untargeted spillovers | Product management; accounting (all abstracts) |
+| Results: money | The policy number | Sales +36.4%, profits +29.2% (2022, 2023, published abstracts) |
+| Heterogeneity | Test the mechanism; label discovery as discovery | Forest and debiased-ML methods (reference list) |
+| Cost and benchmarks | Make the magnitude interpretable | \$4–\$6 a month; break-even 7–10 months (2024 article) |
+| Scope | Conditions under which the effect should travel | Restraint on extrapolating to the United States (podcast) |
+
+: A reconstructed anatomy of the emerging-market field-experiment paper. The published article's own section structure was not accessible. The rows give the jobs a paper in this genre has to do, with the evidence for each in the public versions of @anderson2026datadecisions. {#tbl-sw-emerging-anatomy}
+
+```{mermaid}
+%%| label: fig-sw-emerging-arc
+%%| fig-cap: "The story arc of an emerging-market field-experiment paper, reconstructed from the abstracts of Anderson et al. (2026) and its working papers. Solid arrows give the narrative order in which the abstracts report results; they are not estimated causal paths. The dashed arrow marks the placebo arm's job of ruling out the device itself."
+flowchart LR
+    S["Setting<br/>owners keep few records,<br/>so analytics can start from zero"] --> T["Tension<br/>does technology build<br/>or erode human capital?"]
+    T --> D["Design<br/>treatment 250 · placebo 50<br/>· control 250"]
+    D --> U["Take-up<br/>low at first,<br/>rising by month three"]
+    U --> M["Mind<br/>reasoning, memory,<br/>logic, calculation"]
+    U --> P["Practices<br/>product management;<br/>accounting spillover"]
+    M --> P
+    P --> F["Money<br/>monthly sales +36.4%<br/>monthly profits +29.2%"]
+    F --> C["Scope<br/>cost, break-even,<br/>where it should travel"]
+    D -.->|placebo holds the<br/>phone fixed| F
+```
+
+### When your own data were not randomized
+
+Most students with emerging-market data have a survey, a panel, or a partner's
+transaction logs, not an experiment. Most of the template still applies. The country
+is still a source of variation, the institutional section still has to make a design
+believable, the outcome families can still be ordered as a chain, and the measurement
+defenses apply unchanged. What changes is the design paragraph. The arms that define
+the estimands become an identification argument: a policy rollout, a boundary, or a
+staggered adoption whose timing the firm did not choose. Those arguments are developed
+in @sec-sw-emb-listings and @sec-causal-inference. If no such argument is available, the
+honest genre is the descriptive paper (@sec-sw-descriptive), whose contribution is a
+pattern that nobody had documented, stated with its own ceiling.
+
+::: {.callout-tip}
+## A checklist for writing your own emerging-market paper
+
+1. Write the setting paragraph as an argument about variation: say what the country
+   lets you estimate that a rich-data market cannot.
+2. Put the closest result from a high-income setting beside yours, and explain the
+   difference in magnitude as a hypothesis rather than a finding.
+3. Describe the firms by their economic role (retailers, suppliers, agents) and
+   benchmark the sample against a national census or survey.
+4. State the contribution as an estimate, a measured mechanism, or a resolved tension,
+   and name the decision maker who needs the number.
+5. Let the arms or the identifying variation define the estimands, and include a
+   placebo or comparison that answers the most obvious objection.
+6. Report outcome families in causal order, one index per family, with multiplicity
+   adjusted across families.
+7. Give both the effect of the offer and the effect of use, and say which one the
+   abstract quotes.
+8. Say exactly when the study was registered and what was pre-specified.
+9. Present mechanisms through intermediate outcomes, and state the assumption that a
+   mediation estimate needs.
+10. Name the subgroups the mechanism predicts before running exploratory
+    heterogeneity, and report underpowered subgroups as underpowered.
+11. Measure outcomes with one protocol across arms, average several rounds, and pair
+    self-reports with measures that are hard to inflate.
+12. Cost the intervention and compare it per dollar with the alternatives a funder
+    would consider.
+13. Write the external-validity paragraph as a list of conditions, and label thin
+    follow-up evidence as illustration.
+14. Give the real reason the study ran where it did, alongside the scientific one.
+:::
+
 ## The Front End {#sec-sw-front-end}
 
 The front end—title, abstract, and introduction—is the part of the paper most
