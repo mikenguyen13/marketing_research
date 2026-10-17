@@ -522,6 +522,17 @@ truth, and find that observational methods diverge substantially from the
 experimental benchmark—not with a consistent bias one could correct, which would be
 manageable, but variably.
 
+**2023 — richer data do not rescue observational methods.** @gordon2023closeenough
+give double/debiased machine learning and stratified propensity-score matching more
+than 5,000 user-level features across 663 Facebook experiments. Neither recovers
+the experimental lifts reliably.
+
+**2026 — a third answer: predict, don't identify.** @gordon2026pie stop asking
+observational data to identify the effect and use a library of experiments to
+*predict* it for campaigns that were never tested (@sec-adv-pie). Amazon runs a
+version of the method in production, and Meta's incremental attribution uses similar
+ingredients.
+
 **The other side, which is not a rebuttal.** Attribution modeling
 [@li2014attribution; @berman2018attribution] remains genuinely useful, and its
 defenders do not generally claim it recovers incrementality. They claim it
@@ -920,6 +931,416 @@ the empirical embodiment of the chapter's central claim: advertising's effect is
 credibly constructed *increment above a baseline*, and the quality of that baseline,
 not the sophistication of the regression, is what makes the estimate believable.
 
+## Scaling Experiments: Predicted Incrementality by Experimentation {#sec-adv-pie}
+
+The controversy above ends in a division of labor that leaves a gap. Experiments
+answer whether a campaign was incremental, but a platform cannot hold out a control
+group on every campaign: withholding impressions costs the advertiser reach and the
+platform revenue, and the engineering burden grows with every test. Attribution
+counts are available for every campaign, but they are not causal. Two earlier
+papers by Gordon, Zettelmeyer, and coauthors at Facebook (now Meta) mark the path
+between the two. @gordon2019 showed, using Facebook experiments as ground truth,
+that observational estimators miss the experimental lift by large and variable
+margins. @gordon2023closeenough repeated the test on 663 experiments with more than
+5,000 user-level features, richer data than most advertisers or their measurement
+vendors can access, and asked whether double/debiased machine learning or
+stratified propensity-score matching could undo the platform's ad selection. Neither
+could: against median experimental lifts of 29%, 18%, and 5% for upper-, mid-, and
+lower-funnel outcomes, the median DML estimates were 83%, 58%, and 24%. Neither
+paper offered a scalable substitute. @gordon2026pie do. Their proposal, **Predicted Incrementality by
+Experimentation (PIE)**, stops asking an observational method to identify a causal
+effect and instead asks a supervised learner to *predict* one, using a library of
+experiments as labelled training data.
+
+### The idea in one regression
+
+Index campaigns by $r$. For a campaign run as an RCT, we observe the mean outcome in
+the test group, $\bar Y_{tr}$, and in the control group, $\bar Y_{cr}$. For a
+campaign run without an RCT, we observe only the analogue of $\bar Y_{tr}$, because
+every eligible user was eligible for the ad. Under perfect compliance (every
+test-group user is exposed), the simplest PIE model regresses the missing quantity
+on the observed one across the RCTs,
+
+$$
+\bar Y_{cr} = \theta_0 + \theta_1 \bar Y_{tr} + \varepsilon_r ,
+$$ {#eq-pie-simple}
+
+and imputes $\hat{\bar Y}_{cr'} = \hat\theta_0 + \hat\theta_1 \bar Y_{tr'}$ for a
+non-experimental campaign $r'$, so that the predicted lift is
+$\bar Y_{tr'} - \hat{\bar Y}_{cr'}$. Why should this work at all? Write each group
+mean as its population value plus sampling error, with $\alpha_r$ the campaign's
+baseline conversion rate and $\tau_r$ its treatment effect: $\bar Y_{tr} = \alpha_r
++ \tau_r + \nu_{tr}$ and $\bar Y_{cr} = \alpha_r + \nu_{cr}$. The two sides share
+$\alpha_r$. Cross-campaign variation in baseline conversion is therefore the signal
+that lets the test-group mean predict the control-group mean, while variation in
+$\tau_r$ enters the regressor as noise. The authors' general model replaces the
+single regressor with a vector of pre-determined features $\mathbf X^{\text{pre}}_r$
+(objective, budget, bidding strategy, targeting, vertical, advertiser experience)
+and post-determined features $\mathbf X^{\text{post}}_r$ (the test-group conversion
+rate, the exposure rate, last-click conversions), and predicts the causal target
+directly:
+
+$$
+\hat\psi_r = f\!\left(\mathbf X^{\text{pre}}_r, \mathbf X^{\text{post}}_r; \theta\right) + e_r,
+\qquad
+\text{ICPD}_r = \frac{\widehat{\text{ATT}}_r \cdot \bar D_{tr} \cdot N_{tr}}{\text{spend}_r},
+$$ {#eq-pie-general}
+
+where the target in the application is **incremental conversions per dollar**
+(ICPD): the experimentally estimated effect on the treated, times the number of
+exposed test-group users, divided by spend. ICPD is the reciprocal of a cost per
+incremental conversion, which advertisers already use, and it avoids the division
+by near-zero lifts that makes cost per incremental conversion unstable as a
+regression target. @fig-adv-pie-flow lays out the workflow.
+
+```{mermaid}
+%%| label: fig-adv-pie-flow
+%%| fig-cap: "The PIE workflow. Each RCT supplies one labelled observation: features computed from the test group alone, and a causal label computed from the test-control comparison. A model trained on that library predicts the label for campaigns that ran without a control group. The authors recommend a platform keep refreshing the library with background experiments so that it stays representative."
+flowchart LR
+  subgraph Train["Tested campaigns (RCTs)"]
+    direction TB
+    T1["Test group: conversions, exposure rate, last-click counts"] --> F1["Features X_pre, X_post"]
+    T2["Test vs. control comparison"] --> L1["Label: ICPD from the RCT"]
+  end
+  M["Supervised model f(X; θ), e.g. random forest"]
+  Train --> M
+  subgraph Score["Untested campaigns"]
+    direction TB
+    N1["All eligible users: the same logged metrics"] --> F2["Features X_pre, X_post"]
+  end
+  Score --> M
+  M --> P["Predicted ICPD"]
+  P --> Dc["Go / no-go: is ICPD above the break-even threshold?"]
+  S["Background RCTs on a sample of campaigns"] -->|refresh the library| Train
+```
+
+### Why a bad control can be a good predictor
+
+The move that makes PIE work is also the one most likely to unsettle a reader
+trained in causal inference. Last-click conversions, the test-group conversion rate,
+and the exposure rate are all outcomes of the campaign. In a user-level causal model
+they are textbook "bad controls": conditioning on a post-treatment variable opens
+paths between treatment and unobservables (@sec-causal-inference). PIE never
+conditions on them to identify anything. Identification has already been done, one
+campaign at a time, by randomization; the model's only job is to learn how campaign
+aggregates *covary* with the identified effects across campaigns. The authors push
+the point further. An unobserved user trait that raises both the chance of seeing an
+ad and the baseline chance of buying would bias an observational estimator, and the
+backdoor criterion would forbid ignoring it. For PIE the same trait is a *source* of
+predictive power, because it leaves fingerprints in the exposure rate, the click
+rate, and the last-click count, and those fingerprints vary across campaigns with
+the size of the effect. Clicks can predict incrementality even when clicking has no
+causal effect on purchase, simply because who clicks reveals who was exposed.
+
+The price of this freedom is three assumptions that are about prediction rather
+than identification. First, running a campaign as an RCT must not change how its
+test group behaves, which holds when the only difference is that a control group is
+withheld from delivery. Second, the RCT library must be representative of the
+campaigns being scored; advertisers who choose to run lift tests may differ from
+those who do not, which is why the authors favor platform-run background
+experiments. Third, the mapping $f$ must be stable between the library and the
+scored campaigns (no concept shift). Their simulations add six conditions under
+which PIE beats the naive benchmark of predicting the average effect for every
+campaign: effects that vary a lot across campaigns, baselines that vary only
+modestly, a positive correlation between baselines and effects, many large RCTs,
+selection into exposure, and a selection mechanism that is similar across campaigns.
+
+### What the Meta experiments show
+
+The application uses Meta's Conversion Lift experiments run by U.S. advertisers
+between November 2019 and March 2020: 839 experiments with at least one million
+test-group users and 5,000 test-group conversions, yielding 998 test-control pairs
+and 2,226 experiment-by-conversion-event RCTs across the purchase funnel. The median
+experiment ran 28 days on 7.4 million users with a 10% control group, and 76.3% of
+test-group users were exposed. Labels are Wald (2SLS) estimates of the effect on the
+treated. A random forest predicts ICPD, evaluated by cost-weighted out-of-sample
+$R^2$ under 10-fold cross-validation.
+
+The headline is the climb in $R^2$ as features are added. Pre-determined campaign
+settings alone give 0.35; adding the test-group conversion rate gives 0.46; adding
+the seven-day last-click count gives 0.85; the full feature set gives 0.88. Treating
+the raw seven-day last-click count per dollar *as if* it were ICPD gives 0.19. The
+contrast is the paper's sharpest lesson. Last-click conversions per dollar overstate
+ICPD by a factor of 1.33 on average (1.2 in e-commerce, 1.5 in retail, 2.0 in
+travel), yet their rank correlation with the experimental truth is 0.89. The metric
+is biased but informative, and a model that learns the mapping from the biased
+metric to the truth across campaigns recovers most of the information that the raw
+metric wastes.
+
+Four further results set the practical boundaries. Accuracy depends on the size of
+the library: 50 RCTs give $R^2 = 0.37$, 400 give 0.72, and 1,600 give 0.81. The
+model interpolates well to new campaigns of advertisers it has seen ($R^2 = 0.87$)
+and less well to advertisers it has not (0.72). Extrapolating across segments costs
+anywhere from almost nothing (retargeting to prospecting, $-0.009$) to a great deal
+(non-travel to travel advertisers, $-0.25$; 2019 campaigns to 2020 campaigns,
+$-0.21$; large and medium advertisers to the 55 RCTs from small ones, $-0.55$).
+Finally, the authors evaluate the model the way a manager would use it. Set a
+break-even ICPD threshold between 50% and 150% of the median for the campaign's
+vertical and funnel stage, and ask how often the model's go/no-go verdict differs
+from the RCT's. PIE disagrees with the RCT on 8–12% of campaigns, last-click on
+12–20%; and last-click's errors are lopsided, mostly false positives, because an
+inflated metric rarely calls a good campaign bad but often calls a bad one good.
+
+The authors are explicit about what does not travel. Their data are from a social
+feed, where users scroll rather than search; a last-click on a search ad is far more
+contaminated by the intent that produced the search, so the strong showing of
+last-click as a *feature* should not be assumed for search advertising. Their
+campaign-level data were pre-aggregated, so features and labels come from the same
+users and could share sampling noise; the median RCT's size limits that concern but
+does not remove it. And the numbers are a proof of concept for one platform and
+period, not constants a second platform can borrow.
+
+### Replicating the simulation evidence
+
+The Meta experiments are proprietary, but the paper's simulation evidence is fully
+specified, and it is the part that explains *when* PIE works. Users draw a latent
+propensity $U \sim \text{U}(0,1)$; a user is exposed if $U \ge 1 - p_E$; an exposed
+user clicks with probability $CP_r + \beta_{CP}U$; and conversion probabilities are
+$\alpha_r + \gamma_r U$ without the ad and $\alpha_r + \gamma_r U + \tau_r D + \delta_r C$
+with it. Each campaign's users are split in half: one half produces the label, the
+other half the features, so that the two share no sampling noise. Four nested OLS
+specifications are fitted on half of the campaigns and scored on the other half.
+The replication code is in `replication/pie/` of the book's repository.
+
+```{r adv-pie-sim-code, eval=FALSE}
+#| file: replication/pie/pie_sim_functions.R
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#| label: tbl-adv-pie-sim
+#| tbl-cap: "Out-of-sample $R^2$ of the full PIE specification (test-group conversions, exposure rate, clicks, last-click conversions) in the paper's Appendix 3 and in our re-run with the paper's parameter ranges. Unless noted, campaigns have 10,000 users and 1,000 RCTs, the label is expected incremental conversions per user in the label half (the effect on the treated under full compliance), and $\\gamma_r = 0$. Table A-7 rows use $\\gamma_r \\sim \\text{U}[0.10, 0.20]$ and are run under both click settings of Table A-6, because the paper does not report which one it used."
+a3 <- read.csv("replication/pie/appendix3_results.csv")
+a3$gap <- a3$r2_full - a3$paper_full
+knitr::kable(a3[, c("table", "scenario", "r2_y", "r2_full", "paper_full", "gap")],
+             digits = 3,
+             col.names = c("Paper table", "Scenario", "Ours: conversions only",
+                           "Ours: full model", "Paper: full model", "Difference"))
+```
+
+@tbl-adv-pie-sim shows that the paper's simulation evidence reproduces closely once
+one choice it leaves implicit is made explicit. Under full compliance (Tables A-3 to
+A-6), the re-run lands within about 0.02 of every published value with 1,000 or more
+RCTs. Every comparative static has the published sign and size: more heterogeneity
+in baselines hurts (0.68 to 0.29 as the range of $\alpha_r$ widens), more
+heterogeneity in effects helps (0.17 to 0.64), a positive baseline-effect correlation
+helps and a negative one destroys the signal (0.89 at $\rho = 0.9$, 0.02 at
+$\rho = -0.9$), and last-click features add value only when many users click and the
+causal effect of a click varies across campaigns. The two rows that miss by more are
+the small-sample ones (50 and 100 RCTs, so OLS is fitted on 25 or 50 campaigns), where
+the result depends on unreported details such as how a column that is constant under
+full compliance is handled. That is a reminder that the paper's own simulations
+were not built to be replicated to the third decimal.
+
+The choice that matters is the label. The paper builds it from "observed incremental
+conversions" in the label half. If one reads that as the *expected* effect, the
+tables reproduce. If one reads it as a *realized* difference of Bernoulli outcomes,
+$R^2$ falls to 0.42 with 10,000 users per campaign and to 0.14 with 1,000, because
+the noise in a label is variance that no feature can predict. This is the
+simulation counterpart of the authors' remark that estimated labels put a ceiling
+below one on attainable $R^2$, and it is one reason to build a library from large
+experiments, as the empirical application does (at least a million users and 5,000
+conversions each).
+And reading the label as a count of incremental conversions, rather than as the
+effect on the treated, matters once exposure is partial (Table A-7).
+
+The paper's central selection result then reproduces: as exposure becomes more
+selective, the exposure rate turns from a nearly useless feature into the most
+valuable one. With $p_E \sim \text{U}[0.10, 0.30]$, the test-group conversion rate
+alone predicts almost nothing ($R^2$ of 0.03 to 0.05), and adding the exposure rate
+lifts it to 0.54–0.63, against 0.05 and 0.66 in the paper. Because the paper does not report the click process
+behind Table A-7, we run each row under both click settings of Table A-6. The two
+settings bracket the published values, and the high-click setting matches the most
+selective row almost exactly. The general lesson is about replicating a simulation
+from a paper: when every reported row moves together under one reading of an
+ambiguous step, that reading is probably the authors'.
+
+### The pipeline on a synthetic platform
+
+To practise the empirical half of the paper without Meta's data, the file
+`replication/pie/pie_platform_demo.R` builds a synthetic platform of 2,250 RCTs from
+450 advertisers. It is calibrated only to the aggregates the paper reports: last-click
+conversions per dollar overstate ICPD by roughly a third overall and most in travel,
+yet remain highly rank-correlated with the truth. Its numbers are an exercise, not
+a reproduction, and the code below runs the same pipeline as the paper: random
+forests with spend weights, nested feature sets, raw last-click as a benchmark, and
+the industry's calibration multiplier (one experiment's ratio of incremental to
+attributed conversions, applied to every other campaign's attributed count).
+
+```{r, message=FALSE, warning=FALSE}
+#| label: fig-adv-pie-r2
+#| fig-cap: "Spend-weighted out-of-sample $R^2$ for ICPD on the synthetic platform. PIE specifications add feature groups from left to right; the two benchmarks use no model (raw last-click) or a single ratio from one experiment (calibration multiplier, averaged over which experiment was run)."
+#| fig-height: 3.6
+source("replication/pie/pie_platform_demo.R")
+library(ggplot2)
+d <- simulate_platform()                    # 2,250 RCTs, 450 advertisers
+set.seed(2)
+preds <- lapply(pie_specs, function(f) cv_predict(d, f))     # 10-fold CV
+r2 <- c(sapply(preds, function(p) wr2(d$icpd, p, d$spend)),
+        "Raw LCC-7D"             = wr2(d$icpd, d$lcc7_pd, d$spend),
+        "Calibration multiplier" = calibration_factor_r2(d))
+ratio <- tapply(d$lcc7_pd, d$vertical, mean) / tapply(d$icpd, d$vertical, mean)
+rho   <- cor(d$lcc7_pd, d$icpd, method = "spearman")
+
+plot_df <- data.frame(model = factor(names(r2), levels = names(r2)), r2 = r2,
+                      kind = c(rep("PIE", 4), rep("Benchmark", 2)))
+ggplot(plot_df, aes(model, r2, fill = kind)) +
+  geom_col(width = 0.65) +
+  geom_text(aes(label = sprintf("%.2f", r2)), vjust = -0.3, size = 3.2) +
+  scale_fill_manual(values = c(PIE = "#2c5d8a", Benchmark = "#c47f2c")) +
+  labs(x = NULL, y = "Out-of-sample R²", fill = NULL) +
+  coord_cartesian(ylim = c(min(0, min(r2)) - 0.05, 1)) +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 20, hjust = 1), legend.position = "bottom")
+```
+
+On this platform, last-click conversions per dollar overstate ICPD by a factor of
+`r sprintf("%.2f", ratio["Ecomm"])` in e-commerce, `r sprintf("%.2f", ratio["Retail"])`
+in retail, and `r sprintf("%.2f", ratio["Travel"])` in travel, while their rank
+correlation with the RCT labels is `r sprintf("%.2f", rho)`. The pattern of
+@fig-adv-pie-r2 follows the paper's: pre-determined settings alone predict modestly
+($R^2$ = `r sprintf("%.2f", r2["PIE(Pre)"])`), the test-group conversion rate adds
+a good deal, and the last-click count adds the most
+($R^2$ = `r sprintf("%.2f", r2["PIE(Pre, Yt, LCC-7D)"])`); the remaining features change
+little (`r sprintf("%.2f", r2["PIE(Full)"])` with everything). Raw last-click scores
+`r sprintf("%.2f", r2["Raw LCC-7D"])`. A calibration multiplier taken from one
+experiment scores `r sprintf("%.2f", r2["Calibration multiplier"])` on average over
+which experiment supplies it, `r if (r2["Calibration multiplier"] > r2["Raw LCC-7D"]) "a modest gain over raw last-click, because it removes some of the average overstatement," else "no better than raw last-click,"`
+yet far below PIE. Whichever experiment supplies the ratio brings its own sampling
+noise and its own vertical's bias to every other campaign, and one scalar cannot
+undo an overstatement that differs from campaign to campaign. That is the
+playbook's own warning against calibrating a channel from one test, made
+quantitative.
+
+```{r, message=FALSE, warning=FALSE}
+#| label: fig-adv-pie-decisions
+#| fig-cap: "How often a go/no-go decision based on a model differs from the decision the RCT would support, on the synthetic platform. The threshold is a multiple of the median RCT ICPD in the campaign's vertical and funnel stage. Solid lines are total disagreement; dashed lines are false positives (the model calls a campaign successful that the RCT does not)."
+#| fig-height: 3.4
+dis <- rbind(cbind(model = "PIE(Full)", disagreement(d, preds[["PIE(Full)"]])),
+             cbind(model = "Raw LCC-7D", disagreement(d, d$lcc7_pd)))
+ggplot(dis, aes(threshold, colour = model)) +
+  geom_line(aes(y = disagree), linewidth = 0.9) +
+  geom_line(aes(y = type1), linetype = "dashed") +
+  scale_colour_manual(values = c("PIE(Full)" = "#2c5d8a", "Raw LCC-7D" = "#c47f2c")) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Threshold (multiple of segment median ICPD)",
+       y = "Share of campaigns", colour = NULL) +
+  theme_minimal(base_size = 11) + theme(legend.position = "bottom")
+```
+
+@fig-adv-pie-decisions repeats the paper's decision test on the synthetic platform.
+Across thresholds, PIE's verdict differs from the RCT's on
+`r sprintf("%.0f–%.0f%%", 100 * min(dis$disagree[dis$model == "PIE(Full)"]), 100 * max(dis$disagree[dis$model == "PIE(Full)"]))`
+of campaigns and raw last-click's on
+`r sprintf("%.0f–%.0f%%", 100 * min(dis$disagree[dis$model == "Raw LCC-7D"]), 100 * max(dis$disagree[dis$model == "Raw LCC-7D"]))`.
+Most of last-click's disagreements are false positives (the dashed line sits close
+to the solid one), the asymmetry the paper reports. An inflated metric rarely
+condemns a good campaign, but it often approves a bad one.
+
+```{r adv-pie-extrapolation, message=FALSE, warning=FALSE}
+# Cold start: hold out whole advertisers rather than random campaigns.
+p_new <- cv_predict(d, pie_specs[["PIE(Full)"]], group = "adv_id")
+r2_new <- wr2(d$icpd, p_new, d$spend)
+# Learning curve: train on m randomly chosen RCTs, score the rest.
+lc <- sapply(c(50, 200, 800), function(m) mean(replicate(3, {
+  tr  <- sample(nrow(d), m); te <- setdiff(seq_len(nrow(d)), tr)
+  fit <- ranger::ranger(x = d[tr, pie_specs[["PIE(Full)"]]], y = d$icpd[tr],
+                        case.weights = d$spend[tr], num.trees = 300, min.node.size = 5)
+  wr2(d$icpd[te], predict(fit, d[te, pie_specs[["PIE(Full)"]]])$predictions, d$spend[te])
+})))
+round(c(existing_advertisers = unname(r2["PIE(Full)"]), new_advertisers = r2_new,
+        rcts_50 = lc[1], rcts_200 = lc[2], rcts_800 = lc[3]), 3)
+```
+
+Two results from this exercise differ from the paper's, and the differences are
+instructive. Holding out whole advertisers costs almost nothing here, whereas it
+cost Meta's model 0.15 of $R^2$. In the synthetic world most of what distinguishes
+one advertiser from another shows up in its post-determined features, which a new
+advertiser also has; in the Meta data, advertiser-specific structure the features
+did not reveal evidently mattered more. The size of the cold-start penalty is an
+empirical property of a platform, which is why the paper reports it rather than
+assuming it. The learning curve, in contrast, has the paper's shape: a few dozen
+experiments buy a usable model, and the gains continue, more slowly, into the
+hundreds.
+
+### How the industry uses it
+
+PIE is unusual among academic measurement proposals in that versions of it are
+already running inside the largest ad platforms, and the three implementations
+differ in instructive ways.
+
+**Amazon.** The paper reports that an implementation is in production at Amazon
+Ads, where it calibrates machine-learning attribution models to RCT outcomes in
+Amazon's multi-touch attribution system. The system's own description
+[@lewis2025amazonmta], written by Amazon researchers with Gordon and Zettelmeyer,
+calls this step a causal calibration model. At the campaign level, conversions
+estimated by RCTs are regressed on the conversions credited by last-touch
+attribution and by model-driven attribution, an ML model built from traffic events,
+bid logs, retail information, and catalog data. The fitted weights are then pushed
+down to touchpoint-level credit, normalized into attribution shares for advertiser
+reports, and fed into bidding. The library behind it is described as hundreds of
+thousands of RCTs. Amazon announced multi-touch attribution as a beta at its
+unBoxed conference on 15 October 2024, with a full rollout planned for 2025
+([Amazon press release](https://press.aboutamazon.com/2024/10/amazon-unveils-simplified-product-launch-optimization-and-measurement-solutions-for-full-funnel-performance)).
+The design shows where PIE sits in a modern stack: experiments supply the causal
+anchor at the campaign level, PIE carries it to campaigns that were not tested,
+and an attribution model distributes it across touchpoints.
+
+**Meta.** Meta announced an opt-in "incremental attribution" setting in August 2024
+that optimizes for and reports incremental rather than attributed conversions
+([Meta for Business, 14 August 2024](https://www.facebook.com/business/news/campaign-optimization-updates)),
+and reported completing its global rollout in June 2025
+([Meta for Business, 4 June 2025](https://www.facebook.com/business/news/optimize-conversions-for-business-values)).
+Meta's help pages describe machine-learning models that predict whether a
+conversion was caused by an ad, and Ads Manager reports the incremental count beside
+the standard attributed count. @gordon2026pie note that Meta developed this model
+independently, during the same period as their research, using similar ingredients:
+pre- and post-determined features across a large set of prior RCTs. The performance
+figures Meta publishes (for example, average gains in incremental conversions among
+advertisers who tested the setting) are the platform's own claims and have not been
+independently audited.
+
+**Google.** Google's *Modern Measurement Playbook* (2024) describes the practice
+that PIE generalizes. A **calibration multiplier** equals the incremental impact
+measured in an experiment divided by the attributed impact for the same campaigns
+and period; between experiments, attributed ROAS is multiplied by it to estimate
+incremental ROAS (an attributed ROAS of \$5 with a multiplier of 0.7 implies an
+incremental ROAS of \$3.50), and bid targets are divided by it
+([playbook PDF](https://storage.googleapis.com/twg-content/documents/For_pub_on_TwG___External_Playbook_Modern_Measurement.pdf),
+pp. 15–16). The playbook itself warns against calibrating a whole channel from a
+single experiment and recommends retesting every three to six months. PIE replaces
+the one scalar per channel with a learned, campaign-specific mapping, and the
+synthetic exercise above shows why that matters: a single ratio inherits the noise
+of the experiment it came from and ignores the fact that last-click overstates
+incrementality more in some campaigns than in others. At the channel level, Google's
+open-source marketing mix model, Meridian, uses experiment results to set
+channel-specific ROI priors
+([Meridian documentation](https://developers.google.com/meridian/docs/advanced-modeling/roi-priors-and-calibration)),
+the MMM analogue of the same idea (@sec-marketing-mix-models).
+
+For an advertiser or agency without a platform's library, the recipe scales down.
+Run lift tests on a deliberately varied sample of campaigns (verticals, objectives,
+audiences, spend levels) rather than on the campaigns most likely to look good; log
+for every campaign, tested or not, the same features the tests produce from their
+test groups; fit and cross-validate a model by *advertiser* and by *time*, not only
+by campaign; judge it by decision disagreement at the thresholds you actually use;
+and keep running a trickle of experiments, because the mapping drifts and the
+library ages.
+
+### What the paper teaches about research design
+
+Three moves in @gordon2026pie are worth copying beyond advertising. The first is the
+**reframing**: a problem the field had been losing as an identification problem
+becomes winnable as a prediction problem once a different unit of analysis (the
+campaign rather than the user) supplies labels whose identification is not in
+doubt. The second is the **division of evidence**: a stylized model says why the
+features should carry signal, simulations say when that signal is strong or weak,
+and only then does the proprietary application show how strong it is in one
+setting. A reader who cannot access the data can still check the first two. The
+third is the **decision metric**: an $R^2$ is not a business outcome, so the paper
+translates prediction error into the share of campaigns on which a manager would
+make the wrong call, and separates the two kinds of wrong call because they cost
+different amounts.
+
 ## Key Takeaways
 
 - Advertising's effect is best defined as an **increment above a baseline**, not a raw
@@ -948,3 +1369,8 @@ not the sophistication of the regression, is what makes the estimate believable.
 - Widening the dependent variable—to word of mouth, traffic, firm value, even public
   health—and respecting **spillover** and **attribution** often reveals effects that
   immediate own-brand sales elasticities miss [@hewett2016; @fossen2021impact; @ghosh2023societal].
+- Experiments and attribution are not the only options. **Predicted incrementality
+  by experimentation** trains a model on many RCTs to predict incremental
+  conversions per dollar for untested campaigns; attribution counts that are biased
+  as *estimates* can be informative as *features*, because the experiments carry the
+  identification [@gordon2026pie].
