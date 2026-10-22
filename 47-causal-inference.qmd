@@ -1540,6 +1540,108 @@ intent-to-treat estimate, divided by the 0.42 first stage, implies roughly 30
 points, so two designs resting on different assumptions arrive at nearly the
 same local effect.
 
+### Stacked Discontinuities: Unbundling Two Policies at One Cutoff {#sec-causal-rd-stacked}
+
+Regulation rarely changes one thing at a time. A consumer-protection law that
+standardizes a product usually also rewrites how its price is disclosed, so a single
+RD at the eligibility cutoff identifies the bundle, not either part. When the
+components arrive at different dates, the same cutoff can be read in several periods
+and the parts recovered by differencing. @kulkarni2026fineprint do this for consumer
+loans in Chile.
+
+Two laws set up the design. Law 20.448 (2011) created the Universal Credit Contract: for
+consumer loans below 1,000 UF (*Unidad de Fomento*, an inflation-indexed unit of
+account), banks had to show prospective borrowers a standardized contract that limited
+the fees that could be charged and disclosed costs in a uniform format. Borrowers could
+still take a different loan. Law 20.555 (2012) then extended the disclosure rules to
+all loans, while the standardized product stayed below the cutoff only. Reading the
+1,000-UF line in each period gives three discontinuities:
+
+| Period | Below 1,000 UF | Above 1,000 UF | Jump at the cutoff identifies |
+|---|---|---|---|
+| Before 2011 | Nothing | Nothing | Any pre-existing jump (placebo) |
+| 2011 | Standardization + disclosure | Nothing | Bundle + pre-existing jump |
+| From 2012 | Standardization + disclosure | Disclosure | Standardization + pre-existing jump |
+
+: The multi-stage design of @kulkarni2026fineprint. Each period's discontinuity, net of the pre-period one, identifies a different component; the difference between the 2011 and post-2012 jumps identifies disclosure. {#tbl-rd-stacked}
+
+Subtracting the pre-period jump from each later one is a **difference-in-discontinuities**
+[@grembi2016fiscal]. It removes anything else that happens at 1,000 UF, such as banks
+pricing round amounts differently, as long as that other jump is stable over time. The
+manipulation threat is unusually weak here. Loans are written in pesos, the cutoff is in
+UF, and the exchange rate moves daily, so a borrower aiming at a peso amount cannot
+easily land on a chosen side of the UF line. The authors still show density tests on
+both scales. Two further tools address the locality of RD: a Cox hazard model estimated
+around the cutoff, and the conditional-independence approach of
+@angrist2015wanna, which uses covariates to extrapolate the effect away from the
+cutoff.
+
+The data are loan-level records of the Chilean financial regulator (CMF) for regulated
+banks from 2009 to 2015. Disclosure reduces delinquency by 13.7 percentage points, a
+40% fall, and default by 1.68 points, a 98% fall. Standardization has no effect. Disclosure does
+not change initial loan terms, so it appears to work by improving borrowers'
+understanding of what they owe, not by steering them to cheaper loans. For a marketer
+this separates two levers that are usually pulled together: making a price legible
+versus restricting what can be priced (@sec-nudges).
+
+The simulation builds the three periods with a true disclosure effect of $-0.137$, a
+zero standardization effect, and a small pre-existing jump at the cutoff that a
+single-period RD would wrongly attribute to policy.
+
+```{r rd-stacked-sim}
+#| echo: true
+set.seed(2011)
+
+# Loan size in UF around the 1,000-UF cutoff; treatment applies BELOW it.
+# Baseline delinquency ~0.34 with a smooth slope, plus a pre-existing jump
+# of +0.03 just below 1,000 (e.g., bank practice at round amounts).
+n_per  <- 30000; cutoff <- 1000; h <- 80
+eff_D  <- -0.137; eff_S <- 0; pre_jump <- 0.03
+
+sim_period <- function(period) {
+  x     <- runif(n_per, 700, 1300)
+  below <- as.integer(x < cutoff)
+  D <- switch(period, pre = 0 * below, y2011 = below, post = rep(1L, n_per))
+  S <- switch(period, pre = 0 * below, y2011 = below, post = below)
+  p <- 0.34 + 0.0001 * (x - cutoff) + pre_jump * below + eff_D * D + eff_S * S
+  data.frame(period, x, below, y = rbinom(n_per, 1, pmin(pmax(p, 0), 1)))
+}
+
+rd_jump <- function(d) {                  # local linear, separate slopes
+  d <- d[abs(d$x - cutoff) <= h, ]
+  coef(lm(y ~ below * I(x - cutoff), data = d))["below"]
+}
+
+periods <- c(pre = "pre", y2011 = "y2011", post = "post")
+jumps   <- sapply(periods, function(p) unname(rd_jump(sim_period(p))))
+bundle <- jumps["y2011"] - jumps["pre"]   # standardization + disclosure
+stand  <- jumps["post"]  - jumps["pre"]   # standardization alone
+disc   <- bundle - stand                  # disclosure alone
+
+cat(sprintf("Naive 2011 RD (bundle + pre-jump): %6.3f\n", jumps["y2011"]))
+cat(sprintf("Bundle, diff-in-disc:              %6.3f  (true %6.3f)\n", bundle, eff_D + eff_S))
+cat(sprintf("Standardization alone:             %6.3f  (true %6.3f)\n", stand, eff_S))
+cat(sprintf("Disclosure alone:                  %6.3f  (true %6.3f)\n", disc, eff_D))
+```
+
+The disclosure estimate is a difference of two differences, so it carries the sampling
+error of four local regressions; with real data the confidence interval should come
+from a joint bootstrap, not from adding standard errors.
+
+The public replication package [@kulkarni2026fineprintdata] is a model of
+documentation even though the microdata are confidential and must be requested from the
+CMF. Three details are worth copying. The paper's bandwidths (82 UF for the main 2011
+regressions) are fixed as named globals, with a switch to recompute MSE-optimal
+bandwidths, so a replicator can tell exact replication from a robustness check. The
+`rdrobust` version is pinned, because later builds move the optimal bandwidth in the
+third decimal, which shifts weighted coefficients enough to flip a significance star.
+And a crosswalk explains that the Chilean variable names for delinquency and default are
+the reverse of the U.S. labels used in the paper. The spot check it reports, a 2011
+coefficient of $-0.144$ (SE 0.070, $N = 1{,}117$) on ever-delinquent for borrowers who
+saw the contract, is the bundle; it sits close to the disclosure-only estimate, as a
+null standardization effect implies. The article has a corrigendum
+[@kulkarni2026fineprintcorr], which should be read with it.
+
 ### Boundary Discontinuities: When the Running Variable Is a Place {#sec-causal-rd-boundary}
 
 The loyalty-points example has a running variable that each unit carries as a
