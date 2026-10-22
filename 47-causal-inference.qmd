@@ -1345,6 +1345,89 @@ cat(sprintf("2SLS (IV):               %.3f\n", iv))
 cat(sprintf("First-stage F:           %.1f\n", F_stat))
 ```
 
+### Invitations, Not Assignments: Intention-to-Treat Under Two-Sided Non-Compliance {#sec-causal-iv-invitation}
+
+Many good instruments do not assign treatment. They *invite* it. A lottery offers a
+voucher that some winners decline. An encouragement design sends an email that some
+recipients ignore, while some non-recipients find the feature anyway. Two kinds of
+units ignore the instrument. **Never-takers** stay untreated even when invited, and
+**always-takers** take treatment even when not invited. The **compliers** are the
+units whose treatment the invitation actually moves. With a binary invitation $Z_i$ and
+treatment $D_i$, three regressions answer three different questions:
+
+- The reduced form of $Y$ on $Z$ is the **intention-to-treat (ITT)** effect. It is causal
+  under nothing more than random assignment of $Z$.
+- The first stage of $D$ on $Z$ estimates the share of compliers, $\pi_c$, provided
+  there are no defiers.
+- Their ratio, @eq-wald, is the LATE on compliers. It additionally needs monotonicity
+  and the exclusion restriction.
+
+Because $\text{ITT} = \pi_c \cdot \text{LATE}$ and $0 < \pi_c \le 1$, the ITT has the same
+sign as the LATE and is no larger in magnitude. That is what makes it the conservative
+headline when the extra assumptions are in doubt.
+
+A study of startups born in the Great Recession [@bias2026recession], covered in
+@sec-ent-recession, shows the logic at work. The treatment, being born in the recession, is a founder's
+choice. The invitation is receiving one's first patent grant during the recession. Two
+independent sources of randomness make it as good as random: examiners who differ in
+review speed are assigned quasi-randomly, and nobody filing years earlier could know
+when the recession would arrive. That is a *double randomization*, conditioned on
+technology-field-by-application-year fixed effects. Two refinements carry over to other
+settings. First, the authors found signs that the realized invitation was not quite
+random, because weaker applications seemed to get priority during the recession. They
+therefore instrumented the realized grant date with a *predicted* grant date, built from
+the filing date, the docketing lag, and the examiner's historical speed, and called the
+result a bias-corrected ITT. Second, they probed the two assumptions usually waved
+through [@bias2023recessionwp]. For exclusion, they ran a "no first stage, no reduced
+form" check, due to Angrist, Lavy, and Schlosser. In samples where the invitation does
+not move founding dates, such as the untreated firms, it should not move outcomes
+either, and it does not. For monotonicity, they used Dobbie, Goldin, and Yang's
+implication that with no defiers the first stage must be non-negative in every subsample.
+They split startups by inventor-team size, experience, productivity, breakthrough record,
+and whether the inventors had an attorney, and the first stage stayed positive throughout.
+Their LATEs come out about three times the ITTs, as the complier share implies.
+
+The simulation below builds that population. Always-takers are weaker "forced"
+founders and never-takers are stronger ones, so the naive comparison of recession-born
+and expansion-born firms mixes types. Here it gets even the *sign* wrong. The ITT is
+small but correctly signed, and dividing by the first stage recovers the effect on
+compliers.
+
+```{r iv-invitation-sim}
+#| echo: true
+set.seed(2007)
+
+# Startups differ in how their founding date responds to a recession-timed
+# patent grant Z (the invitation). Type shares loosely follow the working
+# paper's compliance decomposition; outcome levels are illustrative only.
+n    <- 20000
+type <- sample(c("always", "never", "complier"), n, replace = TRUE,
+               prob = c(0.20, 0.54, 0.26))
+Z    <- rbinom(n, 1, 0.3)                           # examiner speed x cycle
+D    <- as.integer(type == "always" | (type == "complier" & Z == 1))
+
+# Baseline 7-year survival differs by type (selection), and so does the
+# recession effect (heterogeneity). Always-takers are weaker founders.
+base   <- c(always = 0.35, never = 0.60, complier = 0.50)[type]
+effect <- c(always = 0.05, never = 0.00, complier = 0.30)[type]
+Y      <- rbinom(n, 1, pmin(base + effect * D, 1))
+
+ols   <- coef(lm(Y ~ D))["D"]
+itt   <- coef(lm(Y ~ Z))["Z"]                       # reduced form
+first <- coef(lm(D ~ Z))["Z"]                       # complier share
+late  <- itt / first                                # Wald ratio
+
+cat(sprintf("Naive OLS (born in recession vs not): %6.3f\n", ols))
+cat(sprintf("ITT (invited vs not):                 %6.3f\n", itt))
+cat(sprintf("First stage (complier share):         %6.3f\n", first))
+cat(sprintf("LATE = ITT / first stage:             %6.3f\n", late))
+cat(sprintf("True effect on compliers:             %6.3f\n", 0.30))
+```
+
+The LATE describes only the compliers. In the startup study, these are ventures whose
+founding date moved with their grant, and the estimate says nothing about the forced
+entrepreneurs who would have started in the recession regardless.
+
 ## Regression Discontinuity {#sec-causal-rd}
 
 A **regression discontinuity** design exploits rules that assign treatment based on
