@@ -1428,6 +1428,102 @@ The LATE describes only the compliers. In the startup study, these are ventures 
 founding date moved with their grant, and the estimate says nothing about the forced
 entrepreneurs who would have started in the recession regardless.
 
+### Peer Shocks as Instruments: Do Foundations Fill Funding Gaps? {#sec-causal-iv-peer-shock}
+
+Some instruments come from the other agents in a network. A study of large U.S. private
+foundations [@lu2026charitable] asks whether a foundation gives a nonprofit more when the
+nonprofit needs it more. A development officer asks the same thing when one major funder
+pulls back. Need is not observed. The natural proxy is what the recipient's other funders
+do: when they cut, the next dollar is worth more to the recipient. But that proxy is
+endogenous in the same way price is in demand estimation. A recipient that has a good year,
+with a new program or a strong campaign, draws more money from every funder at once. So
+foundation $i$'s grant and its peers' grants move together for reasons that have nothing to
+do with $i$ responding to need. In the authors' sample, the OLS slope of the change in
+$i$'s grant on the change in peer grants is positive.
+
+The instrument is the peers' investment returns. A foundation's giving tracks its
+endowment. So when the other foundations funding recipient $j$ earn poor portfolio returns,
+they cut their grants to $j$ for reasons unrelated to $j$'s programs. For foundation $i$,
+recipient $j$ and year $t$, the outcome is $\Delta\log \text{Grant}_{i,j,t+1}$. The
+endogenous regressor is $\Delta\log \text{PeerGrant}_{i,j,t+1}$, the change in what all
+other foundations give $j$. The instrument is $\log(1+R_{-i,j,t})$, the return of those
+other foundations, weighted by their grants to $j$ over the previous three years. The
+regression controls for $i$'s own return, its lagged assets, the current grant and the
+current level of peer grants. The own-return control carries the exclusion argument.
+Foundations hold similar portfolios, so a bad market year lowers everyone's returns. Without
+the control, the instrument would also pick up $i$'s own budget shock.
+
+```{mermaid}
+%%| label: fig-ci-peer-shock-dag
+%%| fig-cap: "The peer-return instrument for recipient need. A shock to the recipient's own prospects moves every funder's grant at once (dashed paths), which is why OLS gets the sign wrong. The portfolio returns of the recipient's other funders move their grants for reasons unrelated to the recipient. Exclusion requires that they reach foundation i's grant only through peer grants, which is why the foundation's own return, driven by the same market, is held fixed."
+flowchart LR
+  Z["Peer foundations' returns<br/>R₋ᵢⱼₜ (instrument)"] -->|"first stage"| D["Change in peer grants<br/>to recipient j"]
+  D -->|"response to need"| Y["Change in foundation i's<br/>grant to recipient j"]
+  U["Recipient demand shock<br/>(unobserved)"] -.-> D
+  U -.-> Y
+  M["Market return"] --> Z
+  M --> R["Own return Rᵢₜ<br/>(controlled)"]
+  R --> Y
+```
+
+The published estimates are below. They come from the 143,282 foundation-recipient-years
+in the regression sample. They are drawn from 511 foundations whose grants are recorded in
+the Candid database from 2003 to 2019, linked to their IRS Form 990-PF filings.
+
+| Quantity | Estimate (SE) |
+|:---|:---|
+| OLS: $\Delta\log$ peer grants | 0.03 (0.00) |
+| First stage: peer return on $\Delta\log$ peer grants | 0.996 (0.283) |
+| Reduced form: peer return on $\Delta\log$ own grant | −0.222 (0.112) |
+| 2SLS: $\Delta\log$ peer grants | −0.22 (0.07) |
+| First-stage $F$ | 12.4 |
+| Weak-IV-robust (VtF) 95% interval | [−0.35, −0.06] |
+
+: Foundation responses to peer funding shocks. Copied from Tables 5, A2 and A3 of @lu2026charitable as distributed in the authors' replication package [@lu2026charitabledata]. Standard errors are two-way clustered by year and foundation. {#tbl-ci-peer-shock}
+
+The sign flips. When peers' returns cause a 10% drop in their funding of a recipient, the
+foundation raises its own grant by about 2.2%. Foundations fill part of the gap. The
+positive OLS slope is what a common demand shock predicts. The 2SLS estimate is the Wald
+ratio from @eq-wald: −0.222 / 0.996 ≈ −0.22.
+
+The first-stage $F$ of 12.4 clears the old rule of thumb of 10, but not by much, and that
+rule is optimistic. @lee2022tratio show that the usual ±1.96 cutoff gives a true 5% test
+only when $F$ exceeds 104.7. The authors therefore report the VtF interval of
+@lee2023vtf, which stays valid at any first-stage strength. It excludes zero for the
+baseline. In the three reweighted specifications, the first-stage $F$ falls to between
+5.4 and 10.7 and every VtF interval crosses zero. Those robustness columns are
+uninformative, not confirming. The lesson generalizes: report a weak-IV-robust interval
+for every specification, because a weaker first stage can hide in a robustness table.
+
+The split-sample 2SLS estimates show where foundations respond:
+
+- Science recipients: −0.29 (0.08), against −0.10 (0.07) for arts and religion. The
+  difference has $p = 0.015$.
+- The longest-running third of donor-recipient relationships: −0.45 (0.12), against +0.14
+  (0.14) for the shortest third ($p = 0.009$).
+- Boards with at least one trustee flagged as a related person, the authors' marker of
+  founder or family involvement: −0.30 (0.08), against −0.03 (0.13) ($p = 0.081$).
+  Splits by board size and by the number of highly paid officers show no difference.
+
+The subsample first-stage $F$s range from 7.9 to 19.5, so the same caution applies to the
+splits.
+
+The responsiveness stops at reallocation. At the foundation level, payout one to three
+years ahead does not move with the grant-weighted peer shock across a foundation's
+recipients (0.017, SE 0.023, one year ahead). Payout rates also respond about twice as
+strongly to negative own returns as to positive ones (3.12 against 1.45 per unit of
+return, Wald $p = 0.05$). University endowments show the same asymmetry
+[@brown2014endowments]. The authors read this as a preference for preserving capital.
+Foundations shift a fixed budget toward recipients that need it, but they do not spend
+more in total when need rises.
+
+For nonprofit marketing, the result says institutional funders are partial substitutes.
+When some cut back, others partly make up the difference, with an elasticity of about
+−0.2, and the offset is concentrated in long relationships. That is an empirical case for treating funder retention
+as relationship marketing, as @sec-clv does for customers. The replication package ships
+the Stata code and de-identified grant extracts, with Candid recipient names replaced by
+random identifiers, so the first stage and the splits can be re-estimated.
+
 ## Regression Discontinuity {#sec-causal-rd}
 
 A **regression discontinuity** design exploits rules that assign treatment based on
