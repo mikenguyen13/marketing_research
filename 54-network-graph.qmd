@@ -978,12 +978,20 @@ that twins must exist and be findable, which is why it appears in science and pa
 where the corpus is large enough that near-simultaneous duplicate discovery is common,
 rather than in consumer settings where the adopted object is rarely duplicated.
 
-@fig-net-identification shows why the naive reading fails and how the three routes
-restore identification.
+A fourth route is weaker but far more common, because it needs neither an experiment nor
+a special network architecture nor duplicated content. The researcher builds an
+*exposure measure* from an observed network and then runs a battery of tests, each
+designed to fail if one specific alternative explanation were true. It does not identify
+contagion in Manski's strict sense. What it can do is make each rival story pay a
+concrete, checkable price. @sec-graph-exposure works through one carefully built
+example.
+
+@fig-net-identification shows why the naive reading fails, how the three routes
+restore identification, and where the fourth route stops short.
 
 ```{mermaid}
 %%| label: fig-net-identification
-%%| fig-cap: "The identification problem for social influence. Contagion, homophily, and common external shocks all produce the same observed clustering, the reflection problem blocks their separation from a single cross-section, and only randomization, architecture-based structure, or a content-matched comparison recovers identified contagion."
+%%| fig-cap: "The identification problem for social influence. Contagion, homophily, and common external shocks all produce the same observed clustering, and the reflection problem blocks their separation from a single cross-section. Randomization, architecture-based structure, or a content-matched comparison recovers identified contagion. An exposure measure with stacked falsification tests (dashed) yields a bounded case against named alternatives, not identification."
 flowchart LR
   CO["Contagion<br/>(influence)"] --> OB["Observed clustering<br/>(adoption correlated across ties)"]
   HO["Homophily<br/>(selection on similarity)"] --> OB
@@ -992,9 +1000,11 @@ flowchart LR
   RP --> EX["Randomized experiment"]
   RP --> STR["Observational with structure<br/>(architecture-based instrument)"]
   RP --> CM["Content-matched comparison<br/>(near-duplicate transmitted objects)"]
+  RP -.-> EXP["Exposure measure +<br/>stacked falsification tests"]
   EX --> ID["Identified contagion<br/>(justifies seeding)"]
   STR --> ID
   CM --> ID
+  EXP -.-> BC["Bounded case<br/>(named rivals ruled out)"]
 ```
 
 The discipline this section imposes is non-negotiable. A centrality score, a community
@@ -1005,6 +1015,152 @@ unstructured-data chapters [@balducci2018unstructured], and here it is at its mo
 friends made me do it," is so plausible. The credible default is to treat any
 observational network-effect estimate as an upper bound and to reach for randomization,
 a structural model, or an architecture-based instrument before making a causal claim.
+
+### Exposure Measures and Stacked Falsification: Did Fraud Spread Through Friendships? {#sec-graph-exposure}
+
+Often none of the three routes is open. Nobody randomized the spread, the network is
+observed only in aggregate, and the thing that travels is not a datable object with
+twins. @griffin2026fraud faced exactly this. They asked whether fraud in the Paycheck
+Protection Program (PPP), the U.S. pandemic loan program, spread through social ties. Their
+answer rests on a single exposure measure and about a dozen tests, each built to rule out
+one rival explanation. The paper is worth studying for the design and also for how the
+argument is laid out, which @sec-sw-contagion-template takes up.
+
+**The exposure measure.** The network is the Facebook Social Connectedness Index (SCI)
+[@bailey2018connectedness]. For two places $i$ and $j$, it counts Facebook friendship
+links between their residents and divides by the product of their user counts, so it
+measures the intensity of ties independent of how heavily each place uses Facebook. The
+authors weight other ZIP codes' fraud rates by these ties, dropping every ZIP code in the
+focal ZIP's own county:
+
+$$
+\text{SocialProximity}_i=\frac{\sum_{j:\,c(j)\neq c(i)} \text{SCI}_{ij}\,\text{FlaggedPerCapita}_j}{\sum_{j:\,c(j)\neq c(i)} \text{SCI}_{ij}},
+$$ {#eq-graph-social-proximity}
+
+where $c(\cdot)$ is the county and $\text{FlaggedPerCapita}_j$ is suspicious PPP loans per
+resident, taken from loan-level fraud flags the authors built and validated earlier
+[@griffin2023fintech]. The same construction measures how close a place is socially to
+venture capital [@kuchler2022proximity] and appears throughout the social-finance
+literature [@kuchler2021social]. It is a spatial lag, $W y$, with a social rather than a
+geographic $W$. That makes it the "fraction of neighbors who adopted" regressor the
+previous paragraph warns about, and the reflection problem applies in full
+[@manski1993reflection]. Everything that follows exists to pay down that debt.
+
+**The battery.** Each row of @tbl-graph-exposure-battery names an alternative
+explanation and the test that would have exposed it. The numbers are standardized
+coefficients from regressions of ZIP-code fraud per capita on social proximity
+(@eq-graph-social-proximity), with county
+fixed effects, loan-weighted, and with standard errors clustered by county. We re-estimated
+each one in R from the authors' public replication package
+[@griffin2025fraudreplication], and every coefficient and $t$-statistic matches the
+published tables to the reported precision.
+
+| Rival explanation | Test | Result |
+|:---|:---|:---|
+| County-wide shocks (state programs, local enforcement) | County fixed effects; exposure counts only out-of-county ties | Built into every regression |
+| Homophily on observables | Add income, poverty, density, education, unemployment, race, FinTech share | 1.054 ($t$=4.01) → 0.982 (5.09) → 0.861 (5.27) |
+| Exposure is just one more correlate | Incremental adjusted $R^2$ | 0.053 for social proximity versus 0.045 for all 13 controls together |
+| Homophily on unobservables | Oster bound (@sec-causal-oster) | Stays positive unless selection on unobservables is 1.5 to 2.5 times selection on observables |
+| One subgroup drives it | Split at the median of six demographics | Effect flat across splits (their Figure 3) |
+| Physical spillover (local ads, nearby addresses) | Horse race with an inverse-distance exposure | Physical alone 0.382 (2.52); jointly social 1.113 (4.95), physical −0.384 (−2.81) |
+| Local omitted variables | Count only ties at least 100 or 500 miles away | 0.615 (4.95) and 0.553 (3.54) |
+| Static correlation, not spread | 2021 fraud on 2020 exposure, controlling for own 2020 fraud | 0.444 (2.81), with own lag 0.473 (4.21) |
+| Common trend | Pairs matched on identical first-month fraud | Paths diverge: about 35% versus under 20% flagged by program end (their Figure 4) |
+| Demand for PPP in general | Placebo outcome: non-suspicious lending; placebo channel: traditional banks | Weak or absent |
+
+: The falsification battery in @griffin2026fraud. Sample: 19,753 ZIP codes in 2,338 counties (19,393 for the 2021 regression). Coefficients are in standard-deviation units with $t$-statistics in parentheses; figure references are to the published paper. {#tbl-graph-exposure-battery}
+
+No single row is decisive. Distance restrictions, for instance, rule out local omitted
+variables but not a national shock shared by socially linked places. What persuades is
+that each surviving rival has to be more contrived than the last.
+
+**Fingerprint outcomes.** The strongest evidence is not in the table. Homophily can
+explain why two linked places have similar fraud *rates*. It has a much harder time
+explaining why they share fraud *recipes*. The authors find clusters of loans that are
+identical on industry, loan amount and reported headcount. One is more than 4,000
+\$20,000 loans from a single lender to Illinois "insurance agencies", each claiming
+exactly one employee. Such clusters turn up more often in counties more tightly tied to
+the cluster's home county. They appear at the FinTech lenders and platforms involved and
+almost never at traditional banks. Social proximity to FinTech lending
+predicts which FinTech platform a ZIP code's borrowers used (0.96 for Womply, 1.10 for
+BlueAcorn). Proximity to Bank of America or JPMorgan Chase lending does not predict use of
+those banks (−0.06 and 0.11, both insignificant). Matching borrowers to 136 public social
+media groups by name adds a direct channel. Members of groups trading "sauce" and
+"methods" had higher flag rates than members of groups giving ordinary loan advice. A
+fingerprint outcome is one that only shared information could produce. That is the
+observational counterpart of the content-matched design above, and it is the same logic
+@maturana2019teachers use when teachers in one school pick the same mortgage lender.
+
+**One check we added.** If the exposure measure picked up only how PPP-heavy a place's
+friends are, social proximity to *non*-suspicious lending should predict fraud as well.
+It does not. Added alongside the main measure, it has a coefficient of −0.149
+($t$=−1.88), and the coefficient on proximity to suspicious lending rises from 0.982 to
+1.043 ($t$=5.12). This is our extension, not a result in the paper.
+
+**What the battery cannot rule out.** Every test shares one blind spot. Suppose the same
+ties that carry gossip also mark audiences that a third party targets together. The
+Chicago–Atlanta–New Orleans ties that dominate the paper's network figure plausibly
+reflect, in part, the Great Migration. The authors also report that FinTech platforms
+advertised PPP loans heavily on social media. If those ads reached linked communities
+together, correlated targeting would look like transmission. The race controls absorb only the
+observable part of that story. The SCI also dates from 2021, after the program
+began, so the design assumes the ties predate the fraud; the authors cite evidence that
+SCI is stable over time but cannot test it here. Designs that move the network
+itself are stronger. @dimmock2018fraud exploit mergers of financial-advisory firms, which
+change who an adviser works beside for reasons unrelated to that adviser. @bailey2018housing
+use house-price shocks that hit an investor's distant friends, not the investor. Without
+such a shock, a stacked battery like this is the best available evidence, and it
+should be reported as a case against named alternatives, not as an identified peer
+effect.
+
+For marketing, the template carries over directly. County-level SCI is public, and swapping
+"suspicious loans" for "brand adoptions" or "product reviews" gives a word-of-mouth
+exposure measure for any outcome observed by place. The battery tells you what a referee
+will ask next. Two coding details are worth copying from the replication. Their Table 4
+standardizes on the estimation sample, while their Table 5 standardizes on every row
+before incomplete rows are dropped. Standardized coefficients change with the sample used
+to standardize, even when the $t$-statistics do not. Under the first convention their
+0.444 becomes 0.465, so state which one you use.
+
+```{r}
+#| label: graph-exposure-replication
+#| eval: false
+# Core of the replication of Griffin, Kruger & Mahajan (2026), Tables 4-6.
+# Full script: replication/fraud-contagion/replicate.R. Data: Harvard Dataverse
+# doi:10.7910/DVN/I6NAAZ (CC0), file "Replication Package.7z".
+library(haven)
+library(fixest)
+
+z <- read_dta("Replication Package/Data/AggregatedData/zip_code_main.dta")
+z$log_income <- log(z$average_household_income)
+
+# Stata [aweight] standardization (weights rescaled to sum to N)
+wstd <- function(x, w) {
+  m <- sum(w * x) / sum(w)
+  s <- sqrt(sum(w * (x - m)^2) / sum(w) * length(x) / (length(x) - 1))
+  (x - m) / s
+}
+fit <- function(f, d) feols(f, d, weights = ~loans, cluster = ~county,
+                            fixef.rm = "singleton")
+
+ctrl <- "log_pop_density + log_income + poverty + unemployment + educ_attainment +
+         share_within_50mi + share_within_150mi + lender_fintech"
+race <- "pct_black + pct_asian + pct_other_race + pct_hispanic_latino + pct_native"
+
+y <- "susp_at_least_one_metric_per_pop"
+s <- z[obs(fit(as.formula(paste(y, "~ sci_susp_county +", race, "+", ctrl,
+                               "| county")), z)), ]
+for (v in c(y, "sci_susp_county", "dist_susp_county", "sci_not_susp_county"))
+  s[[v]] <- wstd(s[[v]], s$loans)
+
+fit(as.formula(paste(y, "~ sci_susp_county | county")), s)                # 1.054
+fit(as.formula(paste(y, "~ sci_susp_county + non_white +", ctrl,
+                     "| county")), s)                                     # 0.982
+fit(as.formula(paste(y, "~ sci_susp_county + dist_susp_county + non_white +",
+                     ctrl, "| county")), s)                               # 1.113, -0.384
+fit(as.formula(paste(y, "~ sci_susp_county + sci_not_susp_county + non_white +",
+                     ctrl, "| county")), s)                               # placebo exposure
+```
 
 ## Diffusion and the Independent-Cascade Process {#sec-graph-diffusion}
 
@@ -1260,6 +1416,10 @@ analyst is trying to explain.
   reflection problem, is the hardest causal problem in network marketing; credible
   answers require randomization, architecture-based instruments, or structural models,
   and observational network-effect estimates should be read as upper bounds.
+- When none of those is available, an **exposure measure** (an SCI-weighted average of
+  the outcome in linked places) plus a battery of falsification tests and *fingerprint
+  outcomes* can rule out named rivals, as in the PPP-fraud study we replicated. It
+  still cannot rule out correlated targeting of linked audiences.
 - **Diffusion** models (independent cascade, linear threshold) and the submodularity of
   influence spread justify principled seeding; the simulation confirms that centrality-
   based seeding beats random seeding *under an assumed contagion process*.
@@ -1283,7 +1443,9 @@ misinformation-as-diffusion case is @vosoughi2018. For the identification machin
 canonical references cited by verified DOI in the text are Manski (1993) on the
 reflection problem, Bramoullé, Djebbari and Fortin (2009) on identification through
 network architecture, and the randomized-experiment line of Aral and Walker (2011,
-2012), Bapna and Umyarov (2015), and Centola (2010); the homophily concept traces to
+2012), Bapna and Umyarov (2015), and Centola (2010). For SCI-based exposure designs, start
+with @bailey2018connectedness and @kuchler2021social, then read @griffin2026fraud for a
+full falsification battery. The homophily concept traces to
 McPherson, Smith-Lovin and Cook (2001, *Annual Review of Sociology* 27, 415--444,
 doi:10.1146/annurev.soc.27.1.415). The methods substrate, community detection (Blondel
 et al. 2008; Traag et al. 2019), influence maximization (Kempe, Kleinberg and Tardos
