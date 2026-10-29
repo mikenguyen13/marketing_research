@@ -1525,6 +1525,153 @@ as relationship marketing, as @sec-clv does for customers. The replication packa
 the Stata code and de-identified grant extracts, with Candid recipient names replaced by
 random identifiers, so the first stage and the splits can be re-estimated.
 
+### The Algorithm's Own Rule as an Instrument: A Recommender's Search Radius {#sec-causal-iv-algorithm-radius}
+
+Platform data invite a particular endogeneity problem. A recommender shows a product
+more often *because* the product is appealing, so a regression of clicks on exposure
+mixes the effect of being shown with the appeal that got it shown. A study of a mobile
+location-based recommender in South Korea [@han2026mlbrs] finds an instrument in the
+algorithm's own design. The service, which the authors call SmartAround, ranks nearby
+places on proximity, collaborative-filtering popularity and content-based relevance. It
+launched officially on April 3, 2019, after a beta for early adopters, and it draws
+candidates from a fixed 400-metre radius around the user. When the service switches on,
+every restaurant gains exposure, but a restaurant with many rivals inside that radius
+splits the gain with them.
+
+The instrument is therefore $\text{Post}_t \times \text{Competitors}_j$, where
+$\text{Competitors}_j$ counts other restaurants within 400 m of restaurant $j$ before
+the launch. The design resembles a shift-share instrument. The launch is the common
+shock, and local density sets each restaurant's share of it. The endogenous regressor
+is log exposure, the outcome is log clicks, and every specification carries restaurant
+fixed effects, region-by-time and category-by-time fixed effects, district daily active
+users and weather. The first stage is negative, as dilution predicts (−0.000394 per
+rival in log exposure), and strong (Kleibergen–Paap $F = 316$ on 3.7 million
+restaurant-days from 16,720 restaurants in ten districts). The 2SLS elasticity of
+clicks with respect to exposure is 0.078 (SE 0.009).
+
+```{mermaid}
+%%| label: fig-ci-radius-dag
+%%| fig-cap: "The recommender-radius instrument. Restaurant appeal raises both how often the algorithm shows a restaurant and how often users click (dashed paths). After launch, rivals inside the algorithm's 400 m candidate radius dilute exposure. The main exclusion threat is a neighbourhood shock that tracks density; rivals 800 m or more away cannot share a user's candidate set, so their count is a negative control for that shock."
+flowchart LR
+  Z["Post × rivals within 400 m<br/>(instrument)"] -->|"first stage<br/>(dilution, negative)"| D["Log exposure"]
+  D -->|"β: exposure → clicks"| Y["Log clicks"]
+  U["Restaurant appeal<br/>(unobserved)"] -.-> D
+  U -.-> Y
+  N["Neighbourhood density<br/>and post-launch demand"] -.->|"exclusion threat"| Y
+  N --> Z
+  N --> R["Post × rivals 800–1,200 m<br/>(negative control)"]
+```
+
+Because the online appendix runs a check for each IV assumption, the study is a useful
+model for a paper of one's own. @tbl-ci-radius-checks lists them.
+
+| Assumption | Check | Result |
+|:---|:---|:---|
+| Relevance comes from the launch | Leads and lags by density quartile; 43 placebo launch dates between February 11 and March 25, 2019 | Quartiles split sharply after launch; some pre-launch leads are significant, mostly for the densest quartile, and dropping that quartile gives 0.076 ($F = 45$); placebo coefficients lie between about −0.0002 and 0.00003, far from the actual −0.0004 |
+| Exclusion | Control for Post × rivals in outer rings (400–1,000, 400–1,200, 800–1,000 and 800–1,200 m) | 0.062 to 0.078, $F$ 194 to 318 |
+| Exclusion | District users regressed on the instrument; foot-traffic control (Seoul only) | No association ($p = 0.38$); 0.070 |
+| Monotonicity | Exposure gain by 25 density bins | Positive in every bin, falling with density |
+| Functional form | Median-split instrument with coarsened-exact and propensity-score matching; asinh; Poisson with a control function; weekly data | Same sign and similar size throughout |
+| Correlated errors across funnel stages | Triangular control-function system, 100 cluster-bootstrap replications | Click elasticity unchanged at 0.078 |
+
+: Validity checks for the recommender-radius instrument, from the online appendix of @han2026mlbrs. The main text has not been read for this summary. {#tbl-ci-radius-checks}
+
+The outer rings carry the exclusion argument, and they work because the cutoff is known.
+The radius is centred on the user, not the restaurant. A rival 400–800 m away can
+therefore still enter the candidate set of a user standing between the two, so the
+inner rings absorb some of the mechanism along with neighbourhood confounding. The
+authors treat the resulting 0.062 as a conservative bound. A rival 800 m or more away
+can never share a candidate set with the focal restaurant, so the 800–1,000 m and
+800–1,200 m rings are clean negative controls, and with them the estimate stays at
+0.077 to 0.078. Two limits are stated openly. The first stage collapses under
+district-by-time fixed effects ($F = 15.5$, estimate insignificant), because those
+absorb most of the cross-district variation the instrument relies on. The maintained
+assumption is that no unobserved confounder operates only inside the 400 m radius.
+
+The funnel continues to visit intentions (calls, saves, navigation requests), and here
+the design asks more of the reader. The visit equation uses the *fitted* log clicks
+from the click stage as its regressor, which gives 0.053 (SE 0.002) with $F = 6{,}587$.
+The appendix also reports that the instrument does not predict visits in reduced form
+(3.05e−7, $p = 0.548$) and offers this as support for the exclusion restriction. A
+referee should read it the other way. If the instrument moves exposure, exposure moves
+clicks and clicks move visits, the reduced form of the instrument on visits must be the
+product of the three stages. @eq-wald says a just-identified IV estimate is the reduced
+form divided by the first stage, so with this instrument alone a null reduced form
+implies a null visit effect. A visit-stage $F$ in the thousands, beside a click-stage
+$F$ of 316, suggests the fitted clicks carry variation beyond the instrument. One
+possibility is that they come from observed rather than instrumented exposure, which
+would let restaurant appeal back in. The appendix wording leaves this open, and the main
+text may settle it. Until it does, treat 0.078 as the identified result and 0.053 as
+less secure.
+
+The simulation below builds the design. Restaurants sit in neighbourhoods of varying
+density, appeal raises exposure and clicks together, and busier neighbourhoods gain
+more app users after launch. The instrument alone is biased by that neighbourhood
+shock. An outer-ring control or neighbourhood fixed effects remove most of the bias.
+The last lines contrast two ways to estimate the visit stage, and compare the reduced
+form with what the chain of effects predicts.
+
+```{r iv-radius-sim}
+#| echo: true
+set.seed(400)
+
+# Pre-to-post changes for restaurants in 60 neighbourhoods (restaurant fixed
+# effects differenced out). Effect sizes are illustrative, not the paper's.
+n_hood <- 60
+n      <- 20000
+hood   <- sample(n_hood, n, replace = TRUE)
+dens   <- rgamma(n_hood, shape = 4, rate = 0.4)[hood]     # neighbourhood density
+comp   <- rpois(n, dens)                                   # rivals within 400 m
+ring   <- rpois(n, 5 * dens)                               # rivals 800-1,200 m
+eta    <- 0.03 * (dens - 10) + rnorm(n_hood, 0, 0.1)[hood] # post-launch demand
+appeal <- rnorm(n)                                         # unobserved appeal
+
+b_click <- 0.30; b_visit <- 0.20
+d_exp   <- 1.5 - 0.10 * comp + 0.5 * appeal + 0.3 * eta + rnorm(n, 0, 0.5)
+d_click <- b_click * d_exp + 0.6 * appeal + 0.5 * eta + rnorm(n, 0, 0.5)
+d_visit <- b_visit * d_click + 0.4 * appeal + 0.2 * eta + rnorm(n, 0, 0.3)
+
+# Just-identified 2SLS as the Wald ratio of reduced form to first stage.
+wald <- function(y, d, z, w = rep(0, length(z))) {
+  fs <- lm(d ~ z + w); rf <- lm(y ~ z + w)
+  c(est = unname(coef(rf)["z"] / coef(fs)["z"]),
+    F   = unname(summary(fs)$coefficients["z", "t value"]^2),
+    rf  = unname(coef(rf)["z"]), fs = unname(coef(fs)["z"]))
+}
+demean <- function(v) v - ave(v, hood)
+
+ols      <- coef(lm(d_click ~ d_exp))["d_exp"]
+iv_raw   <- wald(d_click, d_exp, comp)
+iv_ring  <- wald(d_click, d_exp, comp, ring)
+iv_fe    <- wald(demean(d_click), demean(d_exp), demean(comp))
+vis_iv   <- wald(d_visit, d_click, comp, ring)
+plug     <- fitted(lm(d_click ~ d_exp + ring))   # fitted from OBSERVED exposure
+vis_plug <- coef(lm(d_visit ~ plug + ring))["plug"]
+chain    <- iv_ring["fs"] * b_click * b_visit
+
+cat(sprintf("Exposure -> clicks, true:             %7.3f\n", b_click))
+cat(sprintf("  OLS:                                %7.3f\n", ols))
+cat(sprintf("  2SLS, instrument alone:             %7.3f  (F = %.0f)\n", iv_raw["est"], iv_raw["F"]))
+cat(sprintf("  2SLS + outer-ring control:          %7.3f  (F = %.0f)\n", iv_ring["est"], iv_ring["F"]))
+cat(sprintf("  2SLS + neighbourhood FE:            %7.3f  (F = %.0f)\n", iv_fe["est"], iv_fe["F"]))
+cat(sprintf("Clicks -> visits, true:               %7.3f\n", b_visit))
+cat(sprintf("  2SLS on the instrument:             %7.3f\n", vis_iv["est"]))
+cat(sprintf("  Plug-in fitted clicks:              %7.3f\n", vis_plug))
+cat(sprintf("Reduced form, instrument on visits:   %8.4f\n", vis_iv["rf"]))
+cat(sprintf("  Implied by the chain of effects:    %8.4f\n", chain))
+```
+
+The plug-in visit estimate inherits the appeal bias of OLS, however large its $F$. The
+reduced form on visits is small but not zero, and close to the product of the stages. Neighbourhood fixed effects work here because rival counts vary a good deal
+within a neighbourhood. In the paper they vary too little within a district, which is
+why district-by-time fixed effects drained the first stage.
+
+The template carries over to other platform settings. Find a rule the algorithm
+follows, such as a radius, a ranking cutoff, a rotation or a capacity, and combine it
+with the moment the rule took effect. Then use the rule's known limits to build negative
+controls, units the algorithm can never reach. For the substantive findings on
+geographically disadvantaged restaurants, see @sec-online-mobile-recs.
+
 ## Regression Discontinuity {#sec-causal-rd}
 
 A **regression discontinuity** design exploits rules that assign treatment based on
