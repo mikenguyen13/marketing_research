@@ -892,6 +892,201 @@ calibration, not from estimates. The qualitative pattern, a flat frontier near
 the engagement maximum with gains concentrated among low-credibility users,
 matches the paper's.
 
+### Checking a Structural Model Against a Field Experiment {#sec-sm-sd-experiment}
+
+The previous subsection imported a reduced-form estimate *into* a structural
+model. The stronger test runs the other way: estimate the structural model
+without the experiment, then ask whether it predicts what the experiment finds.
+Few structural papers can do this, because the experiment that would discipline
+the model is usually the one nobody ran. @gabel2026statedependence ran it for
+the oldest parameter in scanner-data choice modeling, structural state
+dependence.
+
+**The parameter and why it is hard.** Since @guadagni1983, brand-choice models
+have included a term for the brand bought last time. Its coefficient is
+structural state dependence: buying a brand today makes the household more likely
+to buy it next time, through a switching cost, habit, or the like. The trouble is
+that a household that keeps buying the same brand might simply like it. Persistent
+taste differences produce the same autocorrelation in choices with no causal link
+between purchases [@keane1997statedependence]. Structural models separate the two
+by assuming a distribution for taste heterogeneity and modelling the initial
+conditions. @dube2010statedependence did this carefully and found that genuine
+state dependence survives once heterogeneity and alternative explanations are
+controlled. But the estimate still rests on those assumptions, which is the
+objection @angrist2010credibility raise against structural work in industrial
+organization in general (@sec-sm-vs-causal).
+
+**The experiment.** In a large natural field experiment, randomly assigned coupons
+push some households toward a focal brand. The coupon is an encouragement in the
+sense of @sec-causal-iv-invitation. It moves today's brand choice, and as long as
+it affects next purchase only through today's choice, the Wald ratio identifies the
+local average treatment effect (LATE) of buying the brand now on buying it again.
+That LATE is nonparametric. It needs no distributional assumption about
+preferences, and randomization removes the selection that confounds the
+observational comparison.
+
+**What they find.** Across 223 brands, the authors find positive structural state
+dependence for most, using what they call a principled approach to aggregating
+the evidence. On average, buying a brand raises the probability of buying it again
+by 10 percentage points, conditional on a category purchase. That is a 74% lift and
+corresponds to relative switching costs of 21%. The result that matters for this
+chapter is the comparison: structural brand-choice models produce LATEs consistent
+with those from the encouragement design. The authors draw the practical
+implication. Structural models are easier to estimate and give more precise
+estimates, and only they are built for policy evaluation. Here the
+experiment shows that their extra assumptions do not distort the answer.
+
+The result does not settle the question everywhere. @levine2023hurricanes use
+hurricane-driven stockouts of bottled water as a natural experiment that forces
+households to switch brands. In the working-paper version, purchases revert to
+their pre-hurricane path immediately and the authors cannot reject zero state
+dependence, while a discrete-choice model estimated from price variation in the
+same category finds a positive effect [@levine2022hurricaneswp]. Two quasi-random
+shocks to brand choice, two categories, and opposite verdicts on the structural
+model. A seminar should ask which differences explain the gap. Candidates are
+the category, the source of the shock (a coupon the household chose to redeem
+versus a stockout it did not choose), who the compliers are, and how much power
+each design has.
+
+**How to compare a model with an experiment.** A structural coefficient and a LATE
+are different objects. The coefficient is a utility parameter for the whole
+population; the LATE is a probability difference for the households that the coupon
+moved. The comparison is valid only if the fitted model runs the *same* experiment
+internally. Simulate the coupon for each household and compute the complier-weighted
+change in repurchase probability that the model implies. Then compare that number
+with the Wald estimate. The sketch below does this on simulated data where the truth
+is known. It fits two structural models to a 12-period pre-experiment panel that
+never contains a coupon. One is a loyalty logit in the Guadagni–Little style
+without heterogeneity. The other adds a normal random intercept whose mean depends
+on the initial choice, which handles the initial conditions. Each model then predicts
+the coupon experiment.
+
+```{r sm-sd-experiment}
+#| echo: true
+#| message: false
+#| warning: false
+set.seed(2911)
+
+# --- A market with true state dependence AND persistent taste heterogeneity ---
+# Each period every household buys the focal brand (1) or the rival (0).
+# v = alpha_i + gamma * [focal bought last time] - beta * (price gap)
+N <- 20000; Tobs <- 12; burn <- 30
+mu <- -1; sigma <- 1.5; gamma <- 0.6; beta <- 2
+alpha <- rnorm(N, mu, sigma)
+draw_dp <- function() rnorm(N, 0, 0.4)               # focal minus rival price
+step <- function(last, dp) rbinom(N, 1, plogis(alpha + gamma * last - beta * dp))
+
+last <- rbinom(N, 1, 0.3)
+for (t in seq_len(burn)) last <- step(last, draw_dp())
+y0 <- last                                           # initial condition
+Y <- DP <- matrix(0, N, Tobs)
+for (t in seq_len(Tobs)) { DP[, t] <- draw_dp(); Y[, t] <- last <- step(last, DP[, t]) }
+LAG <- cbind(y0, Y[, -Tobs])
+
+# --- The experiment: a randomized coupon in period 13, outcome in period 14 ---
+coupon <- 0.5                                        # price cut on the focal brand
+Z  <- rbinom(N, 1, 0.5)
+dp13 <- draw_dp(); dp14 <- draw_dp()
+D  <- rbinom(N, 1, plogis(alpha + gamma * last - beta * (dp13 - coupon * Z)))
+Yn <- rbinom(N, 1, plogis(alpha + gamma * D - beta * dp14))
+
+# Ground truth: complier-weighted effect of buying focal at 13 on buying it at 14
+w_true <- plogis(alpha + gamma * last - beta * (dp13 - coupon)) -
+          plogis(alpha + gamma * last - beta * dp13)
+d1 <- plogis(alpha + gamma - beta * dp14); d0 <- plogis(alpha - beta * dp14)
+truth <- sum(w_true * (d1 - d0)) / sum(w_true)
+lift  <- truth / (sum(w_true * d0) / sum(w_true))
+
+# Encouragement design: Wald estimator and its standard error
+fs <- mean(D[Z == 1]) - mean(D[Z == 0]); rf <- mean(Yn[Z == 1]) - mean(Yn[Z == 0])
+wald <- rf / fs
+u <- Yn - wald * D
+se_wald <- sqrt(var(u[Z == 1]) / sum(Z) + var(u[Z == 0]) / sum(1 - Z)) / abs(fs)
+
+# Naive observational contrast in the control arm
+naive <- mean(Yn[Z == 0 & D == 1]) - mean(Yn[Z == 0 & D == 0])
+
+# --- Structural models, fit on the pre-period panel only (no experiment) ---
+# (a) Loyalty logit with no heterogeneity
+ca <- coef(glm(as.vector(Y) ~ as.vector(LAG) + as.vector(DP), family = binomial))
+
+# (b) Random-intercept logit, alpha_i ~ N(a0 + a1 * y0, s^2) (initial conditions),
+#     integrated by 15-node Gauss-Hermite quadrature, with an analytic gradient
+gh <- local({ n <- 15; J <- matrix(0, n, n); b <- sqrt(seq_len(n - 1) / 2)
+  J[cbind(1:(n - 1), 2:n)] <- b; J[cbind(2:n, 1:(n - 1))] <- b
+  e <- eigen(J, symmetric = TRUE)
+  list(x = e$values * sqrt(2), w = e$vectors[1, ]^2) })   # nodes/weights for N(0,1)
+K <- length(gh$x)
+nodes <- function(th) {
+  a0 <- th[1]; a1 <- th[2]; s <- exp(th[3]); g <- th[4]; b <- th[5]
+  ll <- matrix(0, N, K); sc <- vector("list", K)
+  for (k in seq_len(K)) {
+    p <- plogis(a0 + a1 * y0 + s * gh$x[k] + g * LAG - b * DP)
+    ll[, k] <- rowSums(Y * log(p) + (1 - Y) * log1p(-p))
+    r <- Y - p
+    sc[[k]] <- cbind(rowSums(r), y0 * rowSums(r), s * gh$x[k] * rowSums(r),
+                     rowSums(r * LAG), -rowSums(r * DP))
+  }
+  m <- apply(ll, 1, max)                              # log-sum-exp for stability
+  post <- sweep(exp(ll - m), 2, gh$w, `*`)
+  list(ll = log(rowSums(post)) + m, post = post / rowSums(post), sc = sc)
+}
+nll  <- function(th) -sum(nodes(th)$ll)
+grad <- function(th) { z <- nodes(th)
+  -Reduce(`+`, lapply(seq_len(K), function(k) colSums(z$post[, k] * z$sc[[k]]))) }
+th <- optim(c(-1, 1, 0, 0, 1), nll, grad, method = "BFGS",
+            control = list(maxit = 500))$par
+
+# --- Run the coupon experiment inside each fitted model ---
+late_a <- local({
+  w <- plogis(ca[1] + ca[2] * last + ca[3] * (dp13 - coupon)) -
+       plogis(ca[1] + ca[2] * last + ca[3] * dp13)
+  sum(w * (plogis(ca[1] + ca[2] + ca[3] * dp14) - plogis(ca[1] + ca[3] * dp14))) / sum(w)
+})
+late_b <- local({          # integrate each household's alpha over its posterior
+  a0 <- th[1]; a1 <- th[2]; s <- exp(th[3]); g <- th[4]; b <- th[5]
+  post <- nodes(th)$post; num <- den <- 0
+  for (k in seq_len(K)) {
+    a <- a0 + a1 * y0 + s * gh$x[k]
+    w <- plogis(a + g * last - b * (dp13 - coupon)) - plogis(a + g * last - b * dp13)
+    num <- num + sum(post[, k] * w * (plogis(a + g - b * dp14) - plogis(a - b * dp14)))
+    den <- den + sum(post[, k] * w)
+  }
+  num / den
+})
+
+res <- data.frame(
+  estimate = c("True complier effect (simulation)",
+               "Encouragement design (Wald LATE)",
+               "Naive repurchase gap, control arm",
+               "Structural (a): loyalty logit, no heterogeneity",
+               "Structural (b): random intercept + initial conditions"),
+  repurchase_effect = round(c(truth, wald, naive, late_a, late_b), 3))
+print(res, row.names = FALSE)
+cat(sprintf("Wald SE %.3f | first stage %.3f | true lift %.0f%% | gamma: (a) %.2f, (b) %.2f, true %.2f\n",
+            se_wald, fs, 100 * lift, ca[2], th[4], gamma))
+```
+
+In this simulation the true effect on compliers is 0.106: buying the focal brand
+raises the chance of buying it again by about 11 points, a 31% lift. The coupon
+experiment recovers it (0.117). The naive comparison of households that did and
+did not buy the brand in the control arm (0.346) is more than three times too large,
+because loyal buyers differ in taste. The loyalty logit without heterogeneity
+makes the same mistake from inside a structural model (0.363), with an estimated
+loyalty coefficient of 1.71 against a true 0.60. Ignoring taste heterogeneity biases
+state dependence upward, as the classic literature warned. The random-intercept
+model, fitted to data that contain no coupon, predicts 0.107. That is the
+pattern @gabel2026statedependence report: a correctly specified structural model
+matches the experiment it never saw.
+
+Note the standard error of the Wald estimate, 0.043 with 20,000 households. The
+first stage is weak (the coupon shifts purchase for about 15% of households), so a
+single brand's experiment is noisy. This is why the paper aggregates evidence
+across 223 brands, and why the structural model's precision is worth having once
+the experiment has validated it. The parameter values are illustrative and are
+not calibrated to the paper, which we could read only in its published abstract.
+The paper's data, coupon design, and model specifications are not described here.
+
 
 ## Getting Started
 
