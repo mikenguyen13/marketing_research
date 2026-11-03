@@ -527,6 +527,13 @@ give double/debiased machine learning and stratified propensity-score matching m
 than 5,000 user-level features across 663 Facebook experiments. Neither recovers
 the experimental lifts reliably.
 
+**2026 — the assumption that fails may be overlap, not unconfoundedness.**
+@rafieian2026overlap argues that on an auction-based platform the assignment rule is
+logged, so selection on unobservables is not the binding problem. The binding problem
+is that auctions are deterministic: many users have essentially no chance, or no
+chance of avoiding, seeing a given ad. More features cannot fix a propensity of zero
+or one (@sec-adv-overlap).
+
 **2026 — a third answer: predict, don't identify.** @gordon2026pie stop asking
 observational data to identify the effect and use a library of experiments to
 *predict* it for campaigns that were never tested (@sec-adv-pie). Amazon runs a
@@ -1341,6 +1348,151 @@ translates prediction error into the share of campaigns on which a manager would
 make the wrong call, and separates the two kinds of wrong call because they cost
 different amounts.
 
+## Algorithmic Allocation and the Overlap Assumption {#sec-adv-overlap}
+
+The measurement controversy and PIE both treat observational ad measurement as a
+confounding problem: the platform shows ads to people on the basis of information
+the analyst does not see. @rafieian2026overlap points out that for the platform
+itself, and for researchers working with its logs, the other half of the
+assumption usually fails. Valid observational estimation requires *strong
+ignorability* [@rosenbaum1983central], which has two parts:
+
+- unconfoundedness, $\{Y_i(1), Y_i(0)\} \perp W_i \mid X_i$;
+- overlap, $0 < \pi(X_i) = \Pr(W_i = 1 \mid X_i) < 1$.
+
+An ad platform knows its own allocation rule: the bids, predicted click-through
+rates, and targeting inputs that decide each auction. Conditional on those logged
+inputs, assignment is unconfounded by construction. But an auction is a
+deterministic rule: given the inputs, one ad wins. For a given campaign, a large
+share of users have a propensity that is effectively zero (they are always outbid)
+or one (the campaign always wins them). Overlap, the part of ignorability that
+applied work tends to treat as a formality, is the part that breaks.
+
+### What the standard estimators recover
+
+Split users into three regions by their propensity for a campaign: never assigned
+($\pi = 0$, share $\alpha_0$, average effect $\tau_0$), probabilistically assigned
+($0 < \pi < 1$, share $\alpha_r$, effect $\tau_r$), and always assigned ($\pi = 1$,
+share $\alpha_1$, effect $\tau_1$). The average treatment effect is
+
+$$
+\tau^{*} = \alpha_0 \tau_0 + \alpha_r \tau_r + \alpha_1 \tau_1 .
+$$ {#eq-adv-overlap-decomp}
+
+Within the two deterministic regions the treatment never varies, so $\tau_0$ and
+$\tau_1$ are not identified from that campaign's data, however many covariates
+are observed. Rafieian shows what the standard estimators do with this. Any method
+built on the Robinson residual-on-residual objective, including double/debiased
+machine learning and causal forests, multiplies each observation by
+$W_i - \pi(X_i)$. When the propensity is known, that factor is exactly zero in
+the deterministic regions, so those users drop out and the estimator converges to
+$\tau_r$. Inverse-propensity weighting has to discard the same users, because
+their weights are undefined, and also converges to $\tau_r$. The estimators are not
+broken; they answer a narrower question than the one posed. The gap is
+
+$$
+\tau^{*} - \tau_r = \alpha_0 (\tau_0 - \tau_r) + \alpha_1 (\tau_1 - \tau_r),
+$$ {#eq-adv-overlap-bias}
+
+which can take any value once either deterministic region is non-empty.
+
+It would be harmless if effects were the same in all three regions, and the
+paper argues that on an ad platform they will not be. The allocation algorithm
+exists to put ads where they pay. If winning an auction is positively correlated
+with a user's treatment effect, then $\tau_1 \ge \tau^{*}$; if never being shown
+is correlated with a low effect, then $\tau_0 \le \tau^{*}$. The better the
+targeting, the less the users who sit on the margin of the auction resemble the
+population. The working-paper version adds two further results: when the
+propensity has to be *estimated*, $W_i - \hat\pi(X_i)$ is small rather than zero,
+the deterministic users re-enter with large leverage, and the estimate need not
+converge even to $\tau_r$. Trimming on the estimated propensity
+[@crump2009overlap] does not reliably repair this.
+
+```{r adv-overlap-sim-code, eval=FALSE}
+#| file: replication/overlap-mc/overlap_mc.R
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#| label: tbl-adv-overlap-sim
+#| tbl-cap: "Known-propensity simulation from the 2023 working paper of @rafieian2026overlap, re-run with the code in `replication/overlap-mc/`. Outcomes are $Y_i = W_i \\tau_{g(i)} + \\varepsilon_i$ with $\\varepsilon_i \\sim N(0, 3^2)$ and $\\pi \\sim \\text{U}(0,1)$ in the probabilistic region. The partialling-out estimator uses the known propensity; IPW drops the rows where $\\pi$ is 0 or 1. Both settle on $\\tau_r = 2$, not on the true ATE. In the second row no user has a probabilistic assignment, so neither can be computed."
+source("replication/overlap-mc/overlap_mc.R")
+t1 <- run_table1()
+options(knitr.kable.NA = "—")
+knitr::kable(t1, digits = 2,
+             col.names = c("N", "$\\{\\tau_0, \\tau_1, \\tau_r\\}$",
+                           "$\\{\\alpha_0, \\alpha_1, \\alpha_r\\}$", "True ATE",
+                           "$\\tau_r$", "Mean difference", "Partialling-out",
+                           "IPW (trimmed)"))
+```
+
+@tbl-adv-overlap-sim reproduces the large-sample rows of the working paper's
+Table 1 to within sampling error. The raw mean difference is badly confounded, and
+the two corrected estimators recover $\tau_r$ rather than the population effect.
+The last row, with 1,000 users, is noisy in both the paper's run and ours. The fourth row is
+the sobering one. Only 20% of users are in deterministic regions, yet the
+estimators report about 2 when the true average effect is 0.7, because the
+excluded users have effects of $-1$ and $-8$.
+
+### The fix: borrow strength across campaigns
+
+The paper's solution recasts the lack of overlap as a missing-data problem. Stack
+the conditional effects of $J$ campaigns on the same $N$ users into a matrix
+$\mathcal{T}$ with entries $\tau^{(j)}(X_i)$. Cell $(i, j)$ is identified when
+$0 < \pi^{(j)}(X_i) < 1$ and missing otherwise. Estimate the identified cells with
+any CATE learner, mark the rest as missing, and fill them by low-rank matrix
+completion. The paper uses soft-impute [@mazumder2010softimpute], the
+nuclear-norm method popularized by recommender systems. Each campaign's ATE is
+then the column mean of the completed matrix. The identifying assumption changes
+rather than disappears. It is now that $\mathcal{T}$ is approximately low rank:
+a user whose effect cannot be measured for campaign $j$ responds like users who
+behaved similarly on the campaigns where both could be measured. The method also
+needs many campaigns run on overlapping users and, for each user, enough
+probabilistic cells to place them. Large ad platforms, which run many campaigns on
+the same users, usually meet both requirements. The
+published version applies the method to auction allocation and to both simulated
+and real advertising data. It reports that the method recovers aggregate and
+individual-level ad effects and improves targeting efficiency. The paper also
+develops a test that traces the bias across trimming thresholds, so an analyst
+can see whether lack of overlap matters in their own data.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+mc <- run_completion()
+mc_bias_overlap <- mean(mc$overlap_only - mc$true_ate)
+mc_bias_complete <- mean(mc$completed - mc$true_ate)
+mc_true <- mean(mc$true_ate)
+```
+
+The same script runs a toy version. There are 2,000 users and 40 campaigns, and
+the CATE matrix has rank 2. The allocation rule scores users on a noisy
+prediction of their effect, always awards the top 10%, and never shows the bottom
+40%. Identified cells are observed with noise. Averaging only the identified
+cells, which is what DML or IPW would target, overstates the average campaign
+effect by `r sprintf("%.2f", mc_bias_overlap)` against a true mean of
+`r sprintf("%.2f", mc_true)`. After completion the bias is
+`r sprintf("%.2f", mc_bias_complete)`. The toy is favorable by construction: its
+matrix is exactly low rank and its CATE estimates are unbiased. It shows the
+mechanism, not how well the method performs on real data.
+
+### How it relates to PIE
+
+PIE (@sec-adv-pie) and matrix completion both answer the observational
+measurement problem by pooling across campaigns, but they rest on different
+assumptions and need different inputs. PIE needs a library of RCTs and assumes
+that the mapping from campaign features to lift carries over to campaigns that
+were never tested. Matrix completion needs no experiments, only logged
+propensities, and assumes a low-rank structure in user-by-campaign effects.
+Three practical lessons follow from the paper, whichever route is taken:
+
+- Log the propensity, not just the winner. Known propensities make the
+  deterministic regions visible. Estimated ones blur them and contaminate the
+  estimate.
+- Report $\alpha_0$, $\alpha_r$, and $\alpha_1$. An estimate of $\tau_r$ is
+  legitimate as long as it is labelled as the effect on users at the margin of
+  the auction.
+- Do not assume that richer covariates help. The 5,000 features in
+  @gordon2023closeenough address confounding. They do nothing for a user whose
+  propensity is exactly zero.
+
 ## Key Takeaways
 
 - Advertising's effect is best defined as an **increment above a baseline**, not a raw
@@ -1374,3 +1526,9 @@ different amounts.
   conversions per dollar for untested campaigns; attribution counts that are biased
   as *estimates* can be informative as *features*, because the experiments carry the
   identification [@gordon2026pie].
+- On auction-based platforms the assignment rule is logged, so unconfoundedness
+  often holds. **Overlap** fails instead: deterministic allocation leaves users
+  who are never or always shown an ad, and DML or IPW then recover only the effect
+  for users at the auction margin. Treating those cells as missing and completing
+  a low-rank user-by-campaign effect matrix recovers the population effect
+  [@rafieian2026overlap].
