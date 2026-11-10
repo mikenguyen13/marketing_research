@@ -401,6 +401,14 @@ is introduced in the DiD discussion at @sec-causal-did.
   bias in two-way fixed effects; the robustness ladder (late adopters as controls,
   stacked synthetic-control DiD, catchment radii for SUTVA) is worked through at
   @sec-geo-evcharging.
+- Luca, M., Nagaraj, A. & Subramani, G. (2026). "Getting on the Map: The Impact of
+  Online Listings on Business Performance." *Management Science* 72(10), 9199–9214.
+  [doi:10.1287/mnsc.2024.04716](https://doi.org/10.1287/mnsc.2024.04716) — **[F]**
+  Gardner's two-stage imputation estimator on an unbalanced establishment panel of
+  public tax receipts. Two-way fixed effects give about half the two-stage estimate in
+  the bulk-import sample. @sec-data-txmb re-runs the design on the public data with
+  planted listing dates, to show which threats the estimator handles and which it
+  cannot.
 
 **Debate.** Which robust estimator, when? Is the efficient imputation estimator's
 stronger modeling worth it? How much published DiD work is invalidated? When a
@@ -431,6 +439,12 @@ RD simulation in @sec-causal-rd below (@fig-rd).
   Confidence Intervals for Regression-Discontinuity Designs." *Econometrica* 82(6),
   2295–2326. [doi:10.3982/ecta11757](https://doi.org/10.3982/ecta11757) — **[R]**
   robust bias-corrected inference and data-driven bandwidths; the modern default.
+- Liu, S., Zhang, F., Wang, J. & Gao, B. (2026). "From Winning to Giving: The Effect
+  of Gold Medals in Crowdsourcing Contests." *Management Science*, published online
+  ahead of print. [doi:10.1287/mnsc.2024.07419](https://doi.org/10.1287/mnsc.2024.07419)
+  — **[R]** three medal cutoffs on a Kaggle leaderboard; estimates that drift with
+  bandwidth, a local-randomization check and a surprise-award placebo, worked
+  through at @sec-causal-rd-medals.
 
 **Debate.** Continuity versus local-randomization framing; how local is "local,"
 and external validity at the cutoff; robustness to bandwidth.
@@ -545,6 +559,18 @@ observational-versus-experimental ad-measurement evidence at
   the Royal Statistical Society Series B* 80(4), 597–623.
   [doi:10.1111/rssb.12268](https://doi.org/10.1111/rssb.12268) — **[R]** frontier
   balancing for many covariates; bridges to ML (Week 11).
+- Rossi, M. & Schleef, F. (2026). "Quality Disclosures and Disappointment: Evidence
+  from the Academy Nominations." *Management Science* 72(11), 9274–9297.
+  [doi:10.1287/mnsc.2024.09016](https://doi.org/10.1287/mnsc.2024.09016) — **[R]**
+  propensity-score matching on user embeddings from a recommender trained only on
+  pre-treatment ratings, with the recommender's predicted rating as a placebo
+  outcome; worked through at @sec-satisfaction-awards.
+- Poelhekke, S., Vlahu, R. & Volosovych, V. (2026). "Corporate Acquisitions and Bank
+  Relationships." *Management Science* 72(11), 9342–9367.
+  [doi:10.1287/mnsc.2023.04231](https://doi.org/10.1287/mnsc.2023.04231) — **[R]**
+  coarsened exact matching combined with a first-difference DiD, with exact matching
+  on the lagged outcome and three matched samples of increasing strictness; discussed
+  at @sec-causal-did.
 
 **Debate.** Matching versus weighting versus doubly-robust; can balancing ever
 substitute for a design? The "propensity-score paradox" (over-trimming).
@@ -1911,6 +1937,119 @@ precisely because firms so often roll changes out geographically and at staggere
 times—exactly the structure DiD exploits, and exactly the structure that demands
 the heterogeneity-robust care just described.
 
+A platform feature rolled out product by product shows what that care looks like when
+the platform, not the researcher, chooses the timing. @wang2026reviewsummaries estimate
+how Amazon's AI-generated review summaries affect review volume
+(@sec-online-ai-summaries), and their online appendix covers four checks that any
+staggered design of this kind should report. (1) *Robust estimator next to TWFE.* The
+two-way estimate on log(reviews + 1) is 0.071 without controls and 0.060 with them. The
+Callaway–Sant'Anna estimate [@callaway2021did] is 0.039 and 0.052. Both robust estimates
+are smaller, which is the kind of gap the forbidden-comparison critique
+[@goodmanbacon2021differencdifferenc] says can open, and both remain clearly positive. (2) *Model the timing.* A Cox hazard
+model of when each product received its summary includes the outcome's five weekly
+lags. None of them predicts adoption, so the platform did not visibly target products
+whose reviews were already rising. Price and product tenure do predict adoption, which
+is why they belong among the controls. (3) *Use a second control population.* The same
+products on a storefront or retailer without the feature (Amazon UK, Walmart) give a
+comparison that does not depend on not-yet-treated products. (4) *Check the transform.*
+With many zero-review weeks, log(y + 1) estimates depend on the outcome's units. The
+authors also report Poisson and untransformed-count estimates (about 0.33 more reviews
+per product-week), which is the defensible way to state the magnitude.
+
+A government program rolled out place by place gives a third pattern, in which every
+unit in the sample is eventually treated. @agarwal2026road study whether India's rural
+road program drew households into the stock market (@sec-sw-emb-roads), and the
+working-paper version [@agarwal2022roadwp] keeps only the 4,154 postal codes that
+received a first road during the sample window. Dropping never-connected places removes
+the comparison most exposed to selection, since places that never get a road differ
+from those that do. Identification then rests on timing alone, and that has three
+consequences worth stating in any paper built this way. (1) *The event study loses a
+degree of freedom.* Without a never-treated group, unit and calendar-time fixed effects
+absorb a linear trend in time since treatment, so two event-time coefficients have to
+be omitted instead of one. The authors drop the year before completion and the earliest
+lead. (2) *The pre-trend test is weaker than it looks.* With two leads normalized to
+zero, the remaining leads can only reveal departures from a linear pre-trend. The
+working paper says so, and reports a joint test of the pre-period coefficients
+($p = 0.58$). (3) *Controls run out.* A group-time estimator [@callaway2021did] must use
+not-yet-treated units as controls, and the last cohort to be treated has none, so
+late-period effects are either not identified or rest on few comparison units. The
+working paper adds a placebo that fits this design well: reassign completion dates at
+random, 500 times, keeping the set of treated places fixed. The placebo coefficients
+average zero, which rules out a result produced by the panel's structure but not one
+produced by road timing that follows local growth.
+
+A harder case is when *consumers* choose the treatment. @myeong2026bytes estimate what a
+food-delivery subscription does to orders, restaurant visits and local spending
+(@sec-platform-subscription-spillover). Each user's own sign-up date is the event, so
+the identifying variation comes from self-selection plus timing. Their online appendix
+contains three checks that carry over to any "adopters versus matched non-adopters"
+DiD, and one hazard to look for. (1) *Look-ahead matching.* Compare early adopters with
+people who adopt later, using only the window before the later group signs up. Both
+groups chose the product, so selection on the decision to subscribe is held fixed and
+only its timing differs. Here, the look-ahead comparison (139 users per group) gives
++0.089 focal-platform orders a day, −0.034 rival orders and +0.038 restaurant visits.
+All three match the main estimates in sign. The focal and restaurant effects are close
+to the main estimates (+0.085 and +0.035), and the rival loss is almost four times
+larger (main estimate −0.009), on a far smaller sample. (2)
+*A placebo outcome.* Choose an outcome that the treatment should not move but that the
+same confounders would move, such as a general spending surge or a change in how the
+user uses the app. Non-delivery online spending returns 0.018 (SE 0.013). (3)
+*Separate uptake from use.* Dropping subscribers who never ordered, and separately
+dropping the heaviest post-subscription users, shows whether the effect is driven by
+mechanical usage among the most engaged. Note that the first of these moves the
+estimate *toward* treatment-on-the-treated, whatever the table calls it. The hazard is
+**bad controls**. The models condition on day-level activity in other spending
+categories (beauty, culture, transport, cafés and so on). If those are same-period
+spending, as their names suggest (the main text was not available to check), they are
+themselves candidate outcomes, and the paper's own thesis is that the subscription
+moves non-food local spending. Conditioning on a post-treatment outcome blocks part of
+the effect. The no-controls specification is the diagnostic. The platform estimates
+barely move (0.704 against 0.706 for log amount), but restaurant visits rise from 0.035
+to 0.050, which is the direction that over-control would predict. When the controls
+are plausibly affected by treatment, report the specification without them as the
+primary estimate, or measure the controls before treatment. A last habit is to check the
+stars against the standard errors before quoting an appendix table. Two cells in this
+one carry three stars on t-ratios below 1 (−0.012 with SE 0.018 and −0.001 with SE
+0.003). These are probably typesetting slips, but a reader cannot know which number is
+correct.
+
+In a fifth pattern the event is chosen by a third party. @poelhekke2026acquisitions ask
+what a majority acquisition does to the target firm's bank relationships
+(@sec-ms-corpdev), where the acquirer picks the target and the target's later bank
+choices are the outcome. The design details below come from the main text of the
+September 2025 working-paper revision [@poelhekke2025acquisitionswp]; its tables and
+online appendix were not read. Four choices are worth copying, and one limit should be
+stated plainly. (1) *Difference the outcome when it is a persistent count.* The number
+of banks a firm uses barely moves from year to year, so a levels regression with firm
+fixed effects has strongly serially correlated errors. The authors regress the change
+from the year before the deal to the year after on an acquisition dummy, which removes
+the firm effect and also lets the change be split into banks added and banks dropped.
+A net change near zero can hide replacement, and the split shows it. (2) *Match by
+coarsening, with the lagged outcome matched exactly.* Coarsened exact matching
+[@iacus2012cem] puts treated and control firms in the same cell of
+year × industry × country and the same bins of employment, revenue, assets, and growth,
+and requires the same number of banks before the deal. No propensity model has to be
+specified, and balance on the binned variables holds by construction. Three matched
+samples of increasing strictness are reported, and the headline estimate (+0.056
+relationships in the full sample) is only slightly smaller in each. (3) *Show where
+the staggered variation comes from.* A Goodman-Bacon decomposition
+[@goodmanbacon2021differencdifferenc] attributes 92% of the identifying variation to
+comparisons of treated with never-treated firms, so the forbidden comparisons carry
+little weight, and the interaction-weighted estimator [@sun2021eventstudies] and a
+same-year-treatment subsample give the same answer. (4) *Report the matched result
+when it disagrees.* For acquirers from another region, the full sample shows more banks
+added (+0.064) and no change in banks dropped. In the matched sample the addition is no
+longer significant and dropped relationships become less likely (−0.029). The authors
+print both and change the interpretation from expansion to retention. The limit is
+that matching and differencing remove fixed differences and observed pre-deal
+characteristics, not selection on what the acquirer expects to happen next. The paper
+states its identifying assumption directly, that acquirers do not choose targets on
+the trend in the target's bank relationships, and concedes that acquirer motives are
+unobserved. The authors also decline to estimate what the new bank ties do to target
+performance, because that would require a second source of exogenous variation for
+bank choice. Stopping at the estimand the design can support is a choice a reader
+should credit.
+
 ## Instrumental Variables {#sec-causal-iv}
 
 Sometimes treatment is endogenous and no untreated group plausibly satisfies
@@ -2110,6 +2249,24 @@ decades. The exclusion restriction says the coupon affects next purchase only
 through today's purchase. It would fail if the coupon itself made the brand more
 memorable. @sec-sm-sd-experiment shows how to compare this LATE with a structural
 model's prediction.
+
+An invitation can also expire. In corporate technology pilots the control group is
+usually given access once the pilot ends, so the first stage shrinks over calendar time
+and eventually vanishes. @cui2026copilot face this in three experiments that randomized
+access to an AI coding assistant (@sec-aiml-copilot-rct). In a panel with unit and
+period fixed effects, initial assignment $Z_i$ predicts adoption strongly while only the
+treated group has access and weakly afterwards. Each additional post-pilot period then
+adds noise to a pooled 2SLS estimate without adding identifying variation, and the
+analyst is tempted to choose the cutoff date after seeing the results. The authors
+instead weight each period by its difference in adoption between treatment and control
+[@cui2025copilotwp]. Periods with a large gap count heavily, and periods in which the
+control group has caught up count for almost nothing, with no cutoff to choose. The
+cost is in the estimand. If the effect of the tool is constant over time, the weights
+only improve precision. If it changes, for instance because the tool improves, the
+estimate is an average tilted toward the high-gap periods, and that has to be said when
+reporting it. The same paper reports the non-experimental difference-in-differences
+estimate next to the instrumented one for each firm. The two differ by a factor of about
+three, in opposite directions across firms.
 
 ### Peer Shocks as Instruments: Do Foundations Fill Funding Gaps? {#sec-causal-iv-peer-shock}
 
@@ -2353,6 +2510,218 @@ follows, such as a radius, a ranking cutoff, a rotation or a capacity, and combi
 with the moment the rule took effect. Then use the rule's known limits to build negative
 controls, units the algorithm can never reach. For the substantive findings on
 geographically disadvantaged restaurants, see @sec-online-mobile-recs.
+
+### Two Instruments, Two Complier Groups: A Prompt and a Stock-Out {#sec-causal-iv-two-instruments}
+
+Most IV papers defend one instrument. A study of "swap and save" prompts in online
+grocery shopping [@gonzalvez2026swapsave] uses two for the same treatment, and the
+pair shows what a second instrument can and cannot add. The substantive question
+(@sec-nudge-identification) is whether a shopper who accepts a prompted swap to a
+cheaper product keeps buying it. The treatment is the swap, the outcome is buying the
+alternative on later trips, and the endogeneity is self-selection: shoppers who accept
+a swap may be the ones who would have drifted to that product anyway. The setting is
+an Israeli price-comparison platform covering five online supermarkets in 2015, and
+the category is mineral water.
+
+The first instrument is exposure to the button. The authors compare shoppers who were
+shown it (4,079, including those who clicked and declined and those who never
+clicked) with matched shoppers who bought the same product at the same store within
+30 days and were not shown it (1,905), in an event-study panel with shopper, retailer,
+day-of-week and trip fixed effects. The second instrument is a stock-out of the
+shopper's regular water, when the same button offers in-stock substitutes regardless
+of price. @tbl-ci-swap-iv sets the two side by side.
+
+| | Prompt exposure | Stock-out |
+|:---|:---|:---|
+| What moves the shopper | A cheaper alternative is flagged | The regular product is unavailable |
+| First stage | 0.369 (SE 0.012), $F = 890$ | 0.535 (SE 0.046), $F = 136$ |
+| Effect of a swap on later purchase | 0.214 (SE 0.027) | 0.318 (SE 0.070) |
+| Observations | 27,682 | 9,745 |
+| Independence argument | Day-to-day price movements decide who sees a prompt; pre-trends flat | Supply disruptions decide who meets a stock-out; pre-trends flat |
+| Main exclusion threat | The prompt advertises the alternative even to shoppers who decline | The stock-out recurs, or changes how the shopper views the regular product |
+
+: Two instruments for the same treatment, from the online appendix of @gonzalvez2026swapsave. Standard errors are clustered by shopper, and both first stages report the Kleibergen–Paap $F$. The main text has not been read for this summary. {#tbl-ci-swap-iv}
+
+Three features of the design are worth carrying to other settings.
+
+*One-sided non-compliance changes the estimand.* A shopper cannot swap without the
+button, so the prompt design has no always-takers. In that case the LATE of
+@sec-causal-iv is the effect of treatment on the treated: the compliers are exactly
+the shoppers who swapped. The IV estimate (21.4 points) and the authors' matched
+difference-in-differences on swappers (23.7 points in the abstract) therefore target
+the same group, and their agreement is a real cross-check on the selection story, not
+two unrelated numbers that happen to be close. The implied intention-to-treat effect
+of showing the button, first stage times second stage, is about 8 points. A platform
+deciding whether to deploy the button to everyone needs that figure, while a brand
+asking what one trial is worth needs the 21.
+
+*An exclusion threat that can be partly tested.* A prompt could raise later purchases
+without a swap, simply by putting the alternative in front of the shopper. The
+appendix checks this in two ways. Exposed shoppers who did not swap are no more
+likely than unexposed controls to buy the alternative afterwards ($-0.010$, not
+significant). And a heteroskedasticity-based instrument in the style of Lewbel (2012)
+frees the prompt to enter the outcome equation directly, where its coefficient is
+$-0.036$ (SE 0.013). Both point away from an advertising effect. If anything the
+second suggests that seeing and declining an offer makes a later purchase slightly
+less likely, which would bias the main estimate down. Neither check covers everything.
+The first speaks only for never-takers, since a direct effect among the shoppers who
+did swap cannot be separated from the swap itself, and the second leans on the
+Lewbel estimator's own assumptions about the error structure.
+
+*Different instruments answer for different shoppers.* The stock-out estimate (31.8
+points) is half again as large as the prompt estimate. The two confidence intervals
+overlap, so the gap may be noise. If it is real, it has an interpretation: shoppers
+who accept a price-motivated swap are selected on price sensitivity, while a
+stock-out pushes a broader set of shoppers into a trial. Agreement between two
+instruments is evidence for both, but disagreement is not evidence against either,
+because each recovers the effect for its own compliers. The stock-out result carries
+the paper's mechanism claim for a different reason. It involves no price advantage,
+so persistence after it cannot be a response to savings. Its exclusion restriction
+needs its own scrutiny. A stock-out that recurs on later trips would raise purchases
+of the substitute mechanically, and the appendix asserts that stock-outs are
+temporary without reporting how often they repeat.
+
+Two measurement choices sit under both designs. Exposure is inferred for shoppers who
+never clicked: the button is taken as shown if another shopper triggered a swap for
+that product at that store on that day. The alternative product for anyone who did
+not swap is imputed as the most common swap target. Misclassified exposure weakens a
+first stage, and these first stages are strong, but a reader should still ask whether
+the unexposed controls were unexposed.
+
+The simulation shows the first and third points. Price-sensitive shoppers accept
+prompted swaps, drift toward cheap products anyway, and are less likely to stay once
+the price edge is gone. Stock-out swaps are unrelated to price sensitivity.
+
+```{r iv-two-instruments-sim}
+#| echo: true
+set.seed(2015)
+
+# Shoppers differ in price sensitivity s. Price-sensitive shoppers are the ones
+# who accept a cheaper swap, they drift toward cheap products anyway (baseline),
+# and they are less likely to stay with a product once its price edge is gone.
+# All magnitudes are illustrative, not the paper's.
+n    <- 200000
+s    <- runif(n)
+base <- 0.05 + 0.10 * s            # later purchase of the alternative, no trial
+tau  <- 0.35 - 0.25 * s            # effect of one trial on later purchase
+
+wald <- function(y, d, z) (mean(y[z == 1]) - mean(y[z == 0])) /
+                          (mean(d[z == 1]) - mean(d[z == 0]))
+
+# Instrument 1: the prompt. No button, no swap (one-sided non-compliance),
+# and only the price-sensitive accept.
+z1 <- rbinom(n, 1, 0.5)
+d1 <- z1 * (s > 0.63)
+y1 <- rbinom(n, 1, base + tau * d1)
+
+# Instrument 2: a stock-out. Whether a shopper takes the suggested substitute
+# depends on things unrelated to price sensitivity.
+z2 <- rbinom(n, 1, 0.1)
+d2 <- z2 * rbinom(n, 1, 0.535)
+y2 <- rbinom(n, 1, base + tau * d2)
+
+naive <- mean(y1[z1 == 1 & d1 == 1]) - mean(y1[z1 == 1 & d1 == 0])
+
+cat(sprintf("Prompt: share of exposed who swap        %6.3f\n", mean(d1[z1 == 1])))
+cat(sprintf("  Swappers vs. exposed non-swappers      %6.3f\n", naive))
+cat(sprintf("  Wald estimate, prompt as instrument    %6.3f\n", wald(y1, d1, z1)))
+cat(sprintf("  True effect on those who swapped       %6.3f\n", mean(tau[d1 == 1])))
+cat(sprintf("Stock-out: share of exposed who swap     %6.3f\n", mean(d2[z2 == 1])))
+cat(sprintf("  Wald estimate, stock-out as instrument %6.3f\n", wald(y2, d2, z2)))
+cat(sprintf("  True effect on those who swapped       %6.3f\n", mean(tau[d2 == 1])))
+cat(sprintf("Average effect in the population         %6.3f\n", mean(tau)))
+```
+
+Comparing swappers with exposed non-swappers overstates the effect, because swappers
+would have bought the alternative more often in any case. The prompt instrument
+recovers the effect on the shoppers who swapped, which here is below the population
+average. The stock-out instrument recovers the population average because its
+compliers are a random draw. Both are correct, and they differ. The ordering in the
+simulation matches the paper's two estimates, but that is one story that fits them,
+not something the appendix establishes.
+
+### A Policy List as an Instrument: Offshoring and Innovation {#sec-causal-iv-policy-list}
+
+Governments often liberalize by list: these products may now be imported, these
+sectors may now take foreign investment. Membership on the list is a tempting
+instrument, because it shifts what firms do in some categories and not in others.
+@branstetter2026offshoring use one to ask whether offshoring production reduces
+innovation. In November 2001 Taiwan removed 122 electronics products from the list of
+goods whose production could not be moved to mainland China. The data cover 483 listed
+Taiwanese electronics firms in 16 product clusters, and @sec-innovation-offshoring
+describes the measures and the findings. This section looks at the design, using the
+working-paper version [@branstetter2021offshoringwp], the only one whose tables were
+available here.
+
+For firm $i$, product cluster $j$ and horizon $t$ from 2003 to 2011, the two stages
+are
+
+$$
+\Delta \ln \text{Off}_{ijt} = \alpha_0 + \alpha_1\,\text{Affected}_j + \varepsilon_{ijt},
+\qquad
+\Delta \ln \text{Pat}_{ijt} = \beta_0 + \beta_1\,\widehat{\Delta \ln \text{Off}}_{ijt} + u_{ijt},
+$$ {#eq-iv-policy-list}
+
+where $\Delta$ is the change from 2000 to year $t$, $\text{Off}$ is the cumulated
+export value of the firm's mainland subsidiaries in the cluster, $\text{Pat}$ is the
+firm's weighted patent count in the cluster, and one is added before taking logs.
+$\text{Affected}_j$ equals one if the cluster was liberalized. Each horizon is a
+separate regression on 3,665 firm-cluster pairs, with standard errors clustered by
+firm. Long differences are used because the customs data begin in 2000, which leaves
+one year before the reform.
+
+Ordinary least squares gives a coefficient between +0.005 and +0.008 at the horizons
+through 2008. Two-stage least squares gives −0.023 to −0.032 at the five horizons
+where it is significant. The authors' explanation is a demand shock: a firm whose
+product is selling well expands production in China and also invests in the
+technology behind it, which pushes the OLS coefficient up.
+
+With one binary instrument and no covariates, @eq-iv-policy-list is a Wald ratio:
+
+$$
+\hat\beta_1 = \frac{\overline{\Delta \ln \text{Pat}}_{\text{affected}} - \overline{\Delta \ln \text{Pat}}_{\text{unaffected}}}
+                   {\overline{\Delta \ln \text{Off}}_{\text{affected}} - \overline{\Delta \ln \text{Off}}_{\text{unaffected}}}.
+$$ {#eq-iv-policy-wald}
+
+The design is therefore a comparison of patent growth in liberalized and
+non-liberalized clusters, scaled by the difference in offshoring growth. Anything else
+that made patenting grow at different rates in the two groups of clusters is in the
+numerator. @tbl-iv-policy-list goes through the checks this implies.
+
+| Question | What the working paper reports | Assessment |
+|---|---|---|
+| Is the first stage strong? | $F$ between 22.8 and 45.9 in the full sample (Table 4) | Strong in the full sample |
+| Does it stay strong in subsamples? | In clusters that were product-oriented before the reform, $F$ is 1.9 to 4.2 for 2003–2006 and 12.6 to 15.1 for 2007–2011 (Table 10) | The claim that the decline is driven by product-oriented clusters rests on a weak first stage at the early horizons |
+| Do pre-trend controls change the estimate? | Controlling for 1995–1999 global patenting trends, $F$ is 5.1 to 7.7 through 2006 and the significant coefficients are −0.087 to −0.137 (Table A3.1) | Sign survives; the magnitude is about four times the baseline and the early horizons are weakly identified |
+| At what level does the instrument vary? | 16 product clusters; errors clustered on 483 firms. An instrumental-variable Poisson model with product-clustered errors is negative at every horizon (Table 7) | Firm clustering treats cluster-level assignment as if it varied across thousands of pairs; with 16 clusters, cluster-robust errors are themselves unreliable |
+| How were the units defined? | 669 HS codes grouped by K-means on 2000–2011 patents, 2000–2011 exports, and the policy indicator. Results are also shown for two other distance measures and for 18 clusters (Tables A3.3–A3.5) | Units are built from the instrument and post-reform outcomes; with Euclidean distance the estimate is significant at three horizons only |
+| Is there a pre-period for the treatment? | Customs data start in 2000 | No pre-trend test for offshoring is possible, which the authors acknowledge |
+| Is the exclusion restriction plausible? | China joined the WTO in late 2001; the liberalized list leans toward high-technology products | Authors argue the WTO shock was common to one sector and that technological opportunity would bias toward a positive effect; U.S. patenting in the affected classes was catching up over the period (Appendix A2) |
+| Does the functional form matter? | Mean of 0.33 weighted patents per pair in 2000; log of one plus the count. Inverse hyperbolic sine (Table A3.7) and Poisson (Table 7) versions | Sign is stable across the three |
+
+: Design checks for the policy-list instrument in the Taiwan offshoring study, from the working paper [@branstetter2021offshoringwp]. {#tbl-iv-policy-list}
+
+Three lessons apply to any list-based instrument.
+
+First, count the units at which the instrument varies. A list assigns treatment to
+categories, and there are rarely many of them. Thousands of firm-category observations
+do not add independent variation in the instrument. With few assigned units, report
+inference that respects the assignment level, such as a wild cluster bootstrap or a
+permutation of which categories are treated, next to the conventional errors.
+
+Second, a strong first stage in the full sample says nothing about a subsample.
+Heterogeneity analysis in IV re-estimates the first stage on each split, and one split
+can be weak when the pooled sample is not. Report the first-stage $F$ for every split
+and treat a weak one as uninformative, whatever its coefficient.
+
+Third, fix the units before looking at outcomes. When categories must be aggregated,
+aggregate them on pre-period information only. Grouping on post-period outcomes and
+on the instrument makes the comparison groups a function of the result.
+
+The estimate is a local average effect for firm-cluster pairs whose mainland exports
+rose because the product was liberalized. The sample keeps 483 of 792 listed
+electronics firms, those with at least some patenting or mainland exporting, so it
+describes the larger multinational firms and not the sector as a whole.
 
 ## Regression Discontinuity {#sec-causal-rd}
 
@@ -2804,6 +3173,174 @@ continuity means. Publisher credibility does not jump at the cutoff, and
 neither does latent quality, which no real study can observe; that is why
 papers check balance on the covariates they do observe. A placebo cutoff at
 $\Delta s = 0.6$, where nothing happens, returns zero.
+
+### Rank Cutoffs: Medals on a Leaderboard {#sec-causal-rd-medals}
+
+A feed creates a cutoff between every pair of adjacent posts. A contest leaderboard
+has only a few, and the platform announces them in advance. Kaggle, the
+machine-learning competition site, awards bronze, silver and gold medals by final
+rank. @liu2026goldmedals use the gold line to ask what a purely symbolic award does
+to the winner afterwards. Gold medallists enter fewer later contests and contribute
+more to the community: they post more often, write longer posts, receive more
+upvotes and share more code. Bronze and silver medals have no detectable effect. The
+authors call this goal shifting. The award moves effort out of the activity it
+rewards and into other kinds of platform engagement. Earlier field evidence on
+symbolic awards concerned the rewarded activity itself; in a natural field
+experiment, randomly assigned awards raised retention among new Wikipedia editors
+[@gallus2017symbolic].
+
+The running variable $r_{ij}$ is contestant $i$'s signed rank distance from the gold
+cutoff in contest $j$, and treatment is $\mathbf{1}\{r_{ij} \geq 0\}$. Every
+specification carries contest fixed effects and fixed effects for the contestant's
+Kaggle progression tier. Three features of the setting are worth copying.
+
+- **The platform hides the running variable until it is too late to sort.** During
+  a contest, Kaggle scores submissions on a public leaderboard that uses part of the
+  test data. Final ranks come from a private, held-out part. Among the top 10 on the
+  public board, the correlation between public and final rank is 0.004, and among
+  the top 50 it is 0.015. A contestant near the gold line cannot tell which side of
+  it they will finish on. This is the substantive argument against manipulation,
+  and it is stronger than a density test, because it explains why sorting cannot
+  happen.
+- **The other two medal lines are built-in placebos.** The same contestants, rules
+  and outcome measures apply at the silver and bronze cutoffs. Null effects there
+  mean the gold result is not about winning *a* medal, or about the attention any
+  medal brings.
+- **Money can be separated from the medal.** Some top finishers also win cash.
+  Dropping winners who received prize money leaves the estimates almost unchanged
+  (participation −0.042, posting probability 0.170), and so does keeping only
+  contests that offer money or only featured contests.
+
+| Outcome | Estimate | SE | CER-optimal bandwidth | $N$ |
+|:---|---:|---:|---:|---:|
+| Contest participation | −0.043 | 0.018 | 1.597 | 6,788 |
+| Posting probability | 0.096 | 0.033 | 0.801 | 4,021 |
+| log(post volume) | 0.197 | 0.070 | 0.816 | 4,068 |
+| log(post length) | 0.575 | 0.206 | 0.737 | 3,779 |
+| log(upvotes) | 0.267 | 0.061 | 1.179 | 5,396 |
+
+: Effects of winning gold at the cutoff, local linear RD with triangular kernel and coverage-error-optimal bandwidths (online appendix Table A4 of @liu2026goldmedals). The main text, whose headline estimates use MSE-optimal bandwidths, has not been read for this summary. {#tbl-rd-medals}
+
+The appendix is unusually candid about one weakness. The estimates move with the
+bandwidth, and they move in one direction. As the bandwidth widens from 0.5 to 2.0,
+the participation effect shrinks from −0.072 to −0.043, while the posting-probability
+effect grows from 0.069 to 0.165 and the post-length effect from 0.454 to 1.056. The
+authors attribute this to smoothing bias. A local linear fit is a good approximation
+only close to the cutoff, and a wider window brings in ranks where the conditional
+mean bends. Global polynomials show the same instability more sharply: the
+posting-probability jump is 0.225 with a second-order polynomial and 0.095 with a
+fifth-order one. Two things survive every variant. Every specification gives the
+same sign. And the participation effect, between −0.035 and −0.072, is far more
+stable than the posting effects. The safe reading is the sign and the
+narrow-bandwidth magnitude. The rest of the robustness table is consistent:
+rectangular and Epanechnikov kernels, local quadratic fits, added controls for ten
+pre-award covariates, and logit and Poisson versions all give the same signs. The
+appendix's own code measures are weaker than the posting ones. The number of
+scripts rises (0.028, SE 0.013), but script versions and lines of code do not move
+significantly.
+
+Two further designs answer different questions from the RD:
+
+- **Local randomization.** Treating the five teams on each side of the line as if
+  randomly assigned [@cattaneo2024extensions], participation falls from 0.192 to
+  0.146 (Fisher $p = 0.019$) and posting probability rises from 0.448 to 0.617. This
+  view needs no functional form at all, which matters given the drift above.
+- **Silver medallists as controls.** A difference-in-differences design compares
+  first-time gold medallists with silver medallists who have never won gold,
+  following @foerderer2021winner, over 325,717 user-weeks with user, contest and week
+  fixed effects. Participation falls by 0.091 and posting probability rises by
+  0.055. This is an average over all gold winners, not the effect at the line, which
+  is why the participation drop is twice the RD estimate. The event study shows flat
+  pre-trends, a participation drop that persists, and a posting spike that settles
+  above its earlier level rather than returning to it.
+
+A last check comes from the platform's history. When Kaggle introduced medals in
+June 2016, it awarded them retroactively for 156 earlier contests (1,518 gold and
+4,505 silver medallists). These medals came as a surprise, and the same
+gold-versus-silver comparison finds no effect on anything: participation 0.012 (SE
+0.009) on 109,950 user-weeks. The authors read this as evidence that the effect
+needs an *anticipated* award, and say the result is suggestive only. A reader should
+weigh it lower still. Many recipients of a medal for a contest years earlier had
+probably left the platform, so a null could reflect absence rather than
+indifference.
+
+On mechanism, the published paper draws on self-determination theory and the
+needs-as-motives hypothesis. A gold medal satisfies the need for competence that
+drove the competing, and effort moves to contributing. Nine gold medallists,
+interviewed in August 2025, describe gold as proof of ability and as release from
+competing. One Grandmaster adds that competition golds carry far more prestige than
+the golds awarded for code or discussion. The effects differ across winners.
+Winners with more previous competition medals shift more toward contributing, those
+with more contribution medals add less, and team winners shift less than solo
+winners. The working-paper version explained the same pattern with downward social
+comparison instead. For a marketer, the design raises a question about status
+programs such as loyalty tiers (@sec-rel-loyalty). Reaching the top tier may change
+behaviour outside the rewarded activity, such as reviews, referrals and help to
+other customers, as much as inside it. A program that measures only spending would
+miss that shift.
+
+The simulation below builds the design. Leaderboards have three medal lines, only
+gold changes behaviour, and baseline posting drops off steeply between ranks 15 and
+35, so the fit below the gold line bends as the window widens.
+
+```{r rd-medal-cutoffs}
+#| echo: true
+set.seed(2016)
+
+# --- Leaderboards with three medal lines -------------------------------------
+# 5,000 contests with 100 ranked teams each. Only GOLD (top 10) changes
+# behaviour; silver (top 30) and bronze (top 60) are labels with no effect.
+# Baseline posting falls off steeply between ranks 15 and 35, so the outcome
+# curves away from a straight line as the window widens below the gold line.
+n_contest <- 5000; n_team <- 100
+rank <- rep(1:n_team, n_contest)                       # 1 = winner
+cut  <- c(gold = 10, silver = 30, bronze = 60)         # last place inside each medal
+tau_post <- 0.10; tau_comp <- -0.045                   # true effects of gold
+
+gold <- as.integer(rank <= cut[["gold"]])
+post <- rbinom(length(rank), 1, 0.15 + 0.35 * plogis((25 - rank) / 5) + tau_post * gold)
+comp <- rbinom(length(rank), 1, 0.30 + 0.05 * exp(-rank / 40) + tau_comp * gold)
+
+r_to <- function(k) (cut[[k]] + 0.5 - rank) / 10       # rank distance in 10s, > 0 inside
+
+# Local polynomial RD, triangular kernel, separate fits on each side.
+rd <- function(y, k, h, p = 1) {
+  x <- r_to(k); w <- pmax(0, 1 - abs(x) / h); d <- as.integer(x > 0)
+  unname(coef(lm(y ~ d * poly(x, p, raw = TRUE), weights = w, subset = w > 0))["d"])
+}
+
+bw  <- c(0.5, 1, 1.5, 2, 3)
+tab <- rbind(posting_linear    = sapply(bw, function(h) rd(post, "gold", h)),
+             posting_quadratic = sapply(bw, function(h) rd(post, "gold", h, p = 2)),
+             contest_linear    = sapply(bw, function(h) rd(comp, "gold", h)))
+colnames(tab) <- paste0("h=", bw)
+round(tab, 3)
+
+# The silver and bronze lines are built-in placebos.
+round(c(posting_at_silver = rd(post, "silver", 1), posting_at_bronze = rd(post, "bronze", 1)), 3)
+
+# Local randomization: the 5 places either side of the gold line, with a
+# Fisher p-value from permuting the medal label inside that window.
+win  <- abs(r_to("gold")) <= 0.5
+dm   <- function(y, d) mean(y[d == 1]) - mean(y[d == 0])
+obs  <- dm(comp[win], gold[win])
+perm <- replicate(2000, dm(comp[win], sample(gold[win])))
+round(c(contest_diff_in_means = obs, fisher_p = mean(abs(perm) >= abs(obs))), 3)
+```
+
+The true posting effect is 0.10. The local linear estimate starts near it (0.090 at
+the narrowest bandwidth) and falls steadily to 0.060 as the window widens, the same
+kind of one-directional drift as in the appendix. A local quadratic fit stays
+closer to the truth over the middle bandwidths, at the cost of more noise. The
+participation outcome has a nearly straight baseline, so its estimate moves little
+across bandwidths. Note that the gold side of the line holds only ten ranks, so widening the
+bandwidth adds data almost entirely from the losing side. The silver and bronze
+lines return zero, as they should. The five-place local-randomization comparison
+recovers the participation effect without fitting any curve.
+
+(Only the abstract and online appendix of @liu2026goldmedals were accessible when
+this section was written. The numbers above come from the appendix, and the
+main-text estimates should be checked against the published article.)
 
 
 ## Synthetic Control {#sec-causal-scm}

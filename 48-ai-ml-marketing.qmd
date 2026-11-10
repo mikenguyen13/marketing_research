@@ -692,8 +692,9 @@ their synthetic distributions are too narrow, shift with the wording of a prompt
 drift over time, so they are unreliable for the variance-dependent inference that survey
 data exist to support [@bisbee2024synthetic]. The productive posture is therefore
 *augmentation* rather than replacement—spending a little human data to debias a lot of
-LLM data [@wang2026llm]—which @sec-online-panels develops for survey respondents and
-@sec-conjoint-variants for conjoint.
+LLM data [@wang2026llm], or learning from aggregate human benchmarks how much to trust
+each prompt, persona, and model checkpoint [@leng2026humcal]—which @sec-silicon-samples
+develops for survey respondents and @sec-conjoint-variants for conjoint.
 
 Both roles cast the LLM as a tool the firm wields. A third relevance is now emerging
 that the firm does not control at all: the LLM as a *distribution channel*. When a
@@ -951,6 +952,26 @@ only proxy the ChatGPT shock with question-and-answer activity on Stack Exchange
 turns the comparison into a test of whether the boundary of substitution moves.
 (Only the published abstract was accessible when this paragraph was written; the
 effect magnitudes are reported in the paper.)
+
+@liu2026generate observe both sides of the market at once. Using data from a leading
+online labor platform, they follow submarkets whose required skills overlap most with
+what large language models do well, and find a pronounced displacement effect and an
+overall contraction after ChatGPT. Demand and supply both fell, but supply fell by
+less, so the freelancers who stayed competed harder for the remaining work. The
+competition was sharpest in programming-intensive submarkets, and the authors trace it
+to skill transitions: by lowering the human-capital barrier to writing code, ChatGPT let
+incumbent freelancers take on programming tasks, and high-skilled freelancers made up a
+disproportionate share of those who moved. That last result sits uneasily beside
+@yiu2026repositioning, where high-skill freelancers were the least likely to switch
+domains. One reading reconciles them: Yiu et al. ask who leaves an exposed domain, Liu
+et al. ask who enters a domain the tool has made easier, and domain-specific human
+capital that raises the cost of leaving can coexist with general ability that lowers the
+cost of entering. For anyone reading platform data after a generative-AI shock, the
+lesson is about the denominator. A count of jobs or bids in a submarket mixes a demand
+contraction with a supply inflow from elsewhere on the platform, and a design that
+measures only one side will misread both. (Only the published abstract was accessible
+when this paragraph was written; the platform, sample, and effect sizes are reported in
+the paper.)
 
 ### Replication: what a label-only design cannot see {#sec-aiml-disclosure-replication}
 
@@ -1471,6 +1492,23 @@ of the validation habits urged in @sec-aiml-drift, with the addition that the me
 set is chosen *before* deployment and charted continuously rather than reconstructed
 after a complaint.
 
+### Which automation: mechanizing tasks versus orchestrating hand-offs {#sec-aiml-orchestration}
+
+The pipeline view treats automation as one thing. @huang2026workflow separate two
+mechanisms that a marketing-analytics team should also separate. *Mechanization*
+automates a discrete, repeatable task (a scheduled retraining job, a data-validation
+check, a build), improving consistency and speed on stable work. *Orchestration*
+automates the communication between tasks, people, and stages (routing an alert to the
+right owner, triggering the next stage when the last passes review), improving
+coordination on work that is exploratory and changes shape. In their study of open-source
+software projects using GitHub Actions, mechanization sped up maintenance issues while
+orchestration sped up development issues, and the overall gain was about 10% in issue
+resolution time (@sec-innovation-workflow). The implication for this chapter is a
+diagnostic: before automating a marketing-AI workflow, ask whether the bottleneck is
+the task itself or the hand-off between tasks. A team that mechanizes a slow hand-off
+gets a fast step and the same queue, which is the capacity logic of @sec-aiml-fanout seen
+from the tooling side.
+
 ### Human supervision is a capacity constraint {#sec-aiml-fanout}
 
 The pillar that most often goes unmodeled is the human one, and it has a capacity that
@@ -1615,6 +1653,227 @@ is also a better experiment than a one-time launch. (The published article is pa
 This account rests on the published and working-paper abstracts and on the authors'
 practitioner summary, so the figures above come from those sources, not from the
 article's tables.)
+
+### High-skilled work: three coding-assistant experiments {#sec-aiml-copilot-rct}
+
+The Instacart tool guides manual work. The claim that generative AI will reshape
+high-skilled, highly paid work needs its own field evidence, and most early estimates
+came from laboratory tasks. @cui2026copilot supply it with three randomized experiments
+on GitHub Copilot, a coding assistant that suggests code completions inside the
+developer's editor. Microsoft, Accenture, and an anonymous Fortune 100 electronics
+manufacturer ran the experiments in the ordinary course of business to decide whether to
+adopt the tool, and shared the data afterwards. The three cover 4,867 developers. The
+figures below come from the February 2025 working paper [@cui2025copilotwp]; the
+published abstract reports the same headline.
+
+The designs differ, and the differences drive the econometrics.
+
+- Microsoft (1,746 developers, from September 2022). About half were offered access by
+  email, with randomization partly by individual and partly by team. The control group
+  was let in after about eight months.
+- Accenture (320 developers in Southeast Asia, from July 2023). About 61% were offered
+  access, together with a training session and encouragement from managers. The control
+  group was let in after about four months.
+- The anonymous company (3,054 developers, autumn 2023). Everyone was invited, but the
+  invitation date was randomized across teams over six weeks.
+
+Output is read from version-control logs. The primary outcome is the weekly number of
+completed pull requests, the unit in which a developer submits a piece of work for
+review and merging. Commits and builds (compilations) are secondary measures of
+activity, and the share of builds that succeed is the only measure of quality.
+
+Access was randomized, but use was not. At Microsoft only 8.5% of the treated group
+signed up in the first two weeks, and it took two reminder emails five months later to
+bring take-up to 42.5%. In every experiment 30% to 40% of developers never tried a tool
+that was free to them, needed no complementary investment, and sat inside software they
+already used. The authors therefore instrument a developer's adoption with the random
+assignment, in a developer-week panel with developer and week fixed effects, and they
+weight each period by the gap in adoption between treatment and control so that the
+weeks after the control group catches up contribute little (@sec-causal-iv-invitation
+explains the logic). The three experiment-level estimates are then combined by a
+precision-weighted average, because a staggered rollout and a treatment-control split
+do not fit in one regression.
+
+| Outcome | Microsoft | Accenture | Anonymous | Pooled |
+|---|---:|---:|---:|---:|
+| Pull requests | 27.38\*\* (12.88) | 17.94 (18.72) | 54.03 (42.63) | 26.08\*\* (10.3) |
+| Commits | 18.32 (11.25) | −4.48 (21.88) | n.a. | 13.55 (10.0) |
+| Builds | 23.19 (14.20) | 92.40\*\*\* (26.78) | n.a. | 38.38\*\*\* (12.55) |
+| Build success rate | −1.34 (4.23) | −17.40\*\* (7.12) | n.a. | −5.53 (3.64) |
+
+: Weighted instrumental-variable estimates of the effect of adopting GitHub Copilot, as a percentage of the control-group mean, with standard errors in parentheses, from Table 2 of @cui2025copilotwp. \*\*\* p < 0.01, \*\* p < 0.05. Only pull requests are observed at the anonymous company. {#tbl-aiml-copilot-rct}
+
+The headline is a 26% increase in completed pull requests among developers who adopted
+the tool. Four qualifications belong next to it.
+
+First, the estimate is imprecise. Only the Microsoft experiment is significant on its
+own, and the pooled standard error implies a 95% interval from roughly 6% to 46%. The
+authors say as much: weekly output is zero in most developer-weeks, take-up was slow,
+and the window with a clean treatment-control contrast was short in all three firms.
+Nearly five thousand developers were not enough to pin the effect down, which is a
+useful planning fact for anyone designing an internal AI pilot.
+
+Second, the number describes adopters, not the workforce. It is a treatment-on-the-treated
+effect for developers whom the invitation moved into use, and the adoption indicator
+stays on after first use even if the developer later stops. The effect of merely
+offering the tool is smaller in proportion to take-up.
+
+Third, quantity and quality are not separated. Builds rose more than pull requests, and
+at Accenture the build success rate fell by 17%. The authors raise the less optimistic
+reading themselves: developers may accept suggestions and compile to see whether they
+work. A pull request is also a unit whose size the developer chooses, so a tool that
+encourages smaller submissions would raise the count without raising the work done. The
+study has no measure of defects, review burden, or maintainability. @song2026copilot,
+discussed in the innovation chapter, find in open-source projects that Copilot raised
+contributions and also the coordination work needed to integrate them, which is the
+kind of cost this outcome set cannot see.
+
+Fourth, the paper reports difference-in-differences estimates that ignore the
+randomization, as an observational study would have to. They are 7.6% at Microsoft
+against an experimental 27.4%, and 52.7% at Accenture against 17.9%. The observational
+estimate is too low in one firm and too high in the other, so there is no single
+direction in which to correct studies of AI adoption that lack an experiment.
+
+The heterogeneity analysis uses Microsoft only, where tenure and job level are observed.
+Developers with below-median tenure were more likely to adopt (81.6% against 72.1% by
+the end of the sample), more likely to keep using the tool, and showed larger point
+estimates: 27% to 39% across the three output measures, against 8% to 13% for
+longer-tenured developers. Junior developers show the same ordering against senior ones.
+None of these differences in output effects is statistically significant, and the
+authors describe the pattern as suggestive. It agrees in direction with the customer-support evidence in
+@brynjolfsson2025genai and runs against the Instacart result above, where experience
+complemented the tool. The two settings differ in what the tool supplies. A routing aid
+adds information that an experienced shopper can combine with store knowledge, while a
+code-completion model supplies drafts of the kind that experienced developers can
+already write. As in the Instacart study, tenure was not randomized, and the
+least-productive developers also accepted a larger share of suggestions, so greater
+gains and greater reliance cannot be told apart.
+
+The article was accepted through the marketing department of *Management Science*, and
+the adoption result is the part with the most direct marketing content. An internal
+tool is a product with a funnel. One email produced almost no trial, reminders produced
+a lot, and training with managerial encouragement at Accenture produced the fastest
+early take-up. A firm that budgets for licenses but not for the adoption campaign should
+expect the 30% to 40% non-trial rate observed here. The authors also note that their
+field estimate is far below an earlier laboratory result for the same tool, in which
+developers finished a set task in 58% less time. Coding is only part of a developer's
+job, and only some coding tasks suit the tool. Lab-to-field shrinkage of that size is a
+reasonable prior for the marketing applications in the next subsection.
+
+### Does deployed generative AI sell more? Seven workflow experiments {#sec-aiml-genai-sales}
+
+The evidence so far in this section measures the input side: a worker picks faster, a
+developer merges more code, or an agent resolves more chats. The question a marketing manager asks is on the output side,
+which is whether a customer-facing generative model raises sales. @fang2026genaisales
+answer it with seven randomized field experiments at a large cross-border online retail
+platform, run between September 2023 and June 2024. The platform inserted generative AI
+into seven workflows and tested each against its own standard practice, with consumers
+(in one case products) as the unit of randomization and less than 1% overlap of
+consumers across experiments. The figures below come from the February 2026 working
+paper [@fang2026genaifirmwp], which carried an earlier title and framed the outcome as
+firm productivity; the published abstract reports the same headline numbers.
+
+@tbl-aiml-genai-sales collects the five experiments for which the authors had
+transaction data. The outcome is sales in dollars per randomized unit, estimated in
+levels by OLS with cohort fixed effects and expressed as a percentage of the control
+mean.
+
+| Workflow | Control condition | Units | Sales | Conversion |
+|---|---|---:|---:|---:|
+| Pre-sale service chatbot | Auto-reply saying no service is available | 44,614 consumers | +16.3%\*\*\* | +21.7%\*\*\* |
+| Search query refinement | Literal query translation | 1,849,382 consumers | +2.9%\*\* | +1.1%\*\* |
+| Product description | Human-written description, often missing | 4,772,937 consumers | +2.1%\*\* | +1.3%\*\*\* |
+| Marketing push message | About 2,000 human-written messages | 13,715,528 consumers | +1.6% | +3.0%\*\* |
+| Google advertising title | Seller-written title | 1,244,016 products | −4.5% | −3.3% |
+
+: Treatment effects of generative-AI workflows on sales and conversion, as a percentage of the control-group mean, from Tables 4 and 5 of @fang2026genaifirmwp. \*\*\* p < 0.01, \*\* p < 0.05; unmarked estimates are not statistically significant. {#tbl-aiml-genai-sales}
+
+Two further experiments have no transaction data and rest on the platform's internal
+analysis, without significance tests: a chargeback-defense agent raised the success
+rate of disputes by 15%, and real-time translation for English-speaking service agents
+raised consumer satisfaction by 5.2%.
+
+Three patterns in the table are worth more than the 16.3% headline.
+
+First, the effect size tracks the baseline, not the technology. The same team built all
+seven applications, so the spread from −4.5% to +16.3% is mostly a statement about what
+the model replaced. The chatbot replaced nothing: control consumers who asked a
+pre-sale question about a platform-sold product were told that no one was available.
+Search refinement replaced a literal translation of Arabic, Japanese and Polish queries.
+The advertising title replaced a seller's own title with one from a model that had not
+been tuned for advertising, and the treated ads drew fewer views and clicks. The
+product-description result makes the same point within a single experiment. Products
+whose original description ran under 50 words gained 6.1% in sales, while products with
+a fuller description showed no significant gain. A percentage lift from an AI deployment
+is therefore not a property of the tool, and it should not be compared across workflows
+or firms without naming the counterfactual.
+
+Second, the authors ran the comparison that the headline invites. Against human agents
+alone, a chatbot that could escalate to a human raised sales by 11.5%, significant only
+at the 10% level, and the working paper treats that as the conservative bound. Against
+no service at all, the same hybrid raised sales by 25%. The chatbot on its own sold 3.7%
+more than human agents, a difference that is not significant. That is weaker than a
+finding of equivalence, because the standard error in that arm is as large as the one
+behind the 16.3% estimate, so the data are compatible with a shortfall of several
+percent as well as a double-digit advantage. For service design (@sec-service) the hybrid result is
+the more useful one, because it prices the escalation path, not the model.
+
+Third, sales rose through purchase incidence. Conversion increased in every workflow
+with a positive sales effect, while cart value among buyers did not move significantly.
+The authors read this as market expansion from lower search, information, communication
+and personalization frictions. One caution applies to the second half of that claim.
+Cart value is measured conditional on buying, and treatment changed who buys, so the
+cart-value contrast compares two differently selected groups and is not itself an
+experimental estimate. Post-purchase outcomes guard against the worry that the model
+oversold. Return rates fell for product descriptions (3.9%) and push messages (11.4%),
+and ratings did not decline in any workflow.
+
+The paper's summary figure is about \$5 of incremental sales per consumer per year
+across the four workflows with positive estimates. It is a back-of-the-envelope number
+and should be cited as one. Each per-consumer lift is multiplied by the number of
+experiment-length periods in a year, on the assumption that the effect repeats
+undiminished, and the four products are added, on the assumption that workflows do not
+interact. Search refinement supplies \$2.63 of the \$4.96 upper figure because a
+nine-day effect is multiplied by 40.6. The push-message term enters at its point
+estimate although its sales effect is statistically indistinguishable from zero, but it
+contributes only \$0.15.
+
+The heterogeneity result is the consumer-side counterpart of @sec-aiml-experience.
+Consumers with fewer past purchases gained significantly more in every workflow tested,
+with weaker differences by login activity and account age. Smaller and newer sellers
+show larger point estimates, but those differences are mostly insignificant. As with the
+Instacart study, the moderators were not randomized, so the pattern says where the
+effect is larger, not what experience causes.
+
+Several limits bound what the study licenses. The experiments lasted from one day to two
+months, so novelty, learning and repeat purchase are outside the data. Managers chose
+the seven workflows for expected payoff, which makes them a favorable sample of possible
+deployments. A consumer-level experiment on one platform cannot say how much of the
+incremental sales came from rival retailers or would survive rivals deploying the same
+tools. And the working paper discloses that two authors consulted for the platform and
+a third is its employee. The working paper also interprets the sales gains as total
+factor productivity, on the argument that labor, capital and prices were held fixed. The
+published title and abstract speak of sales productivity and sales performance instead,
+and that narrower reading is the one the design supports.
+
+### Human or algorithmic requester? Matching the agent to the data task {#sec-aiml-datacuration}
+
+The preceding subsections ask how people work with an algorithm. A prior question is how the people on the *receiving* end treat an algorithmic agent that acts in the firm's name. @adam2026datacuration study this for an increasingly common B2B task, data curation, in which a vendor asks established customers either to supply new information (*data enrichment*, such as setting up a customer profile for customized services) or to confirm and update existing records (*data reconciliation*). The request arrives by email from either a human data requester (HDR) or an algorithmic data requester (ADR). Their theory is the effort-accuracy trade-off combined with gain-loss framing. Enrichment is a potential gain on top of services the customer already has, so the customer should economize on effort and prefer the agent that seems easier to deal with. Reconciliation puts existing services at risk if the data are wrong, so the customer should weight accuracy and prefer the agent that seems less error-prone.
+
+**Field experiment (Study 1).** The vendor was a European pharmaceutical firm with more than 5 billion euros in sales, which sells laboratory machines, supplies and services. The authors randomized 1,315 customers, sampled across regions and sectors in Germany, into four cells (HDR or ADR, enrichment or reconciliation) in February and March 2023. Emails went out at 10 a.m., and the authors checked that no customer had earlier contact with either requester type. A pretest with 407 participants confirmed that people identified the requester type and the practice as intended. Of the 1,315 customers, 250 (19.0%) responded, and 173 of those (69.2%) agreed.
+
+| Task | Agreement, ADR | Agreement, HDR | Logit on HDR (vs. ADR) |
+|---|---|---|---|
+| Enrichment (n = 100) | 0.59 | 0.37 | -0.94, odds ratio 0.39, p < 0.05 |
+| Reconciliation (n = 150) | 0.78 | 0.89 | 0.92, odds ratio 2.50, p < 0.1 |
+
+The sign reverses with the task. Customers were 61% less likely to agree, in odds terms, when an HDR asked for enrichment, and 150% more likely when an HDR asked for reconciliation. The reconciliation effect is only marginally significant, and the paper says so.
+
+**Agreement is not completion.** Of the 173 who agreed, 148 (85.6%) finished the request. For enrichment, completion was 0.48 for an ADR and 0.22 for an HDR (p < 0.01). For reconciliation it was 0.74 against 0.78, which is not distinguishable. The human advantage in reconciliation therefore did not carry through to the outcome the vendor cares about. The authors' follow-up emails and interviews give a reason: customers who agreed to the HDR often said they would come back when they had more time, and then did not. A human requester seems to invite a later, fuller engagement that tends to be postponed.
+
+**Online experiment (Study 2).** A scenario experiment with B2B sales professionals recruited through a European panel (400 assigned, 324 after attention checks) reproduced both signs and measured the mechanisms. Agreement for enrichment was 0.82 with an ADR and 0.66 with an HDR; for reconciliation it was 0.72 and 0.86. A bootstrapped mediation analysis (10,000 resamples) found that for enrichment the HDR effect ran through effort expectancy (indirect effect -0.73, 95% CI [-1.64, -0.22]) and not through error concerns. For reconciliation it ran through error concerns (indirect effect 0.62, 95% CI [0.15, 1.54]) and not through effort expectancy. Adding privacy concerns as a covariate left the results qualitatively unchanged.
+
+Three points are worth carrying. First, the result complements the algorithm-aversion argument earlier in this chapter. Customers did not simply prefer or avoid the algorithm; they preferred it for a low-stakes, effort-bound task and avoided it for a consequential, accuracy-bound one, which matches the broader finding that people turn to humans when errors matter. Second, the design sets a bar for agent studies: a randomized field experiment gives ecological validity, and a matched online experiment supplies the mechanism that the field setting cannot. Third, the design has a known weakness. Study 1 conditions on responding, since only 19% replied, so a requester type that changes who responds would not show up as an effect on agreement (the authors report nonresponse checks that raise no concern). Study 2 forced a choice and so sidesteps nonresponse, which is why the two together are more persuasive than either alone. The practical rule the authors draw is to deploy ADRs for enrichment, use HDRs for reconciliation, and frame the email to match: convenience and benefit for enrichment, accuracy, auditability and risk reduction for reconciliation.
 
 ### The flywheel makes today's policy tomorrow's training data {#sec-aiml-flywheel}
 

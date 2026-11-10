@@ -410,6 +410,30 @@ is praise for a thriller and damnation for a car. The defensible use of a lexico
 a transparent, validated baseline whose biases are *bounded*, not as a black box whose
 output is taken at face value.
 
+A lexicon can also measure a *topic* instead of a valence, and the same cautions apply
+with one more added. @boustanifar2026intangible measure firms' off-balance-sheet
+obligations (pending lawsuits, product liability, environmental claims, false
+advertising) by counting 569 words and phrases in annual reports. Three of their
+choices are general lessons in dictionary building. First, they prune by reading
+context. Their starting point is the 904-word litigious list of
+@loughran2011liability, from which they delete 407 entries after checking how each is
+used in filings. *Interrogate* turns out to describe laboratory methods in biotech
+filings, and *designator* is an airline code. Second, they add bigrams. *Liability* is
+neutral in a financial statement and stays out, while *product liability* and
+*environmental liability* go in. Third, they do not divide by document length as
+@eq-lexicon-score does. A share is natural when every token can be scored, as in
+sentiment. When the dictionary looks for one kind of content inside a long document
+about other things, the share is driven largely by how long the document is. They use
+the log of the raw count and enter log length as a control, and in their data the
+count rises more than proportionally with length, so the share would not have removed
+length in any case. The justification for equal weights is a comparison of tone
+measures that finds domain-specific word counts about as powerful as more elaborate
+weighting, provided words with other common uses are removed first [@henry2016tone].
+The paper validates the count only against outcomes (future lawsuits, media coverage,
+returns), with no human-coded benchmark, which is the gap a marketing application
+should close (@sec-classification-validity). @sec-sw-measurement takes the paper apart
+as a template for measurement papers and simulates the scaling choice.
+
 ### From Seed Words to a Domain Dictionary: Culture in Job Postings {#sec-tad-culture-dictionary}
 
 Domain-blindness has a standard remedy: build the dictionary from the corpus being
@@ -578,6 +602,21 @@ abstract reports the same pattern: higher inflows, stronger effects when job see
 value culture and face information frictions, value-specific salience, and more
 offers and acceptances. The magnitudes quoted here are the working paper's.
 
+Inflows show that the signal attracts workers, but not what the attraction costs the
+firm. @lee2026startupculture supplies the price side for start-ups. Rather than
+scoring postings against five values fixed in advance, the paper reports two culture
+types emerging from start-up postings on an online job board: a worker-centered type
+about employee well-being, close in content to the respect dictionary above, and a
+firm-centered type about customers, firms, and markets. Because the paper also
+observes salaries, the measure can be set against pay. Worker-centered postings draw
+20% more applications and pay 5% less than measurably similar jobs, which makes the text
+measure a route to a compensating differential, a quantity rather than a correlate.
+The paper's next step, an equilibrium model that asks whether firms adopt the culture
+to save on labor or to raise productivity, is discussed in @sec-sw-measure-model as an
+example of a measurement paper that needed a model to say what its facts meant.
+(Only the published abstract of Lee's paper was accessible, so the text method behind
+the two types is not described here.)
+
 For marketing measurement, the transferable part is the pipeline. A job ad is
 firm-authored persuasive text aimed at one market, and the same seed-and-expand
 construction applies to any value-laden construct in text a firm writes for another
@@ -654,6 +693,146 @@ Journal*'s acquisition by News Corp as a shock to editorial tone that is plausib
 unrelated to the fundamentals of any particular covered country. An ownership change
 is a useful class of instrument for text-based measures generally: it moves the
 generating process for the text while leaving the underlying phenomenon alone.
+
+### Structure Is Signal: Earnings Calls as Conversational Graphs {#sec-tad-conversation-graph}
+
+Every method so far treats a document as a bag, or at best a sequence, of words. Some of the
+constructs that matter live in the *relations between utterances*. An earnings call is a
+natural case: a prepared presentation followed by a question-and-answer session in which
+analysts press executives. Whether an analyst returns to a point the CEO made, or opens a
+topic nobody had raised, is information that a pooled representation of the transcript
+cannot contain, because pooling discards which utterance said what, and when.
+
+@yang2026earningscalls build the model around exactly that observation. Their starting
+problem is that transcripts are long and the risk-relevant signal is sparse and scattered
+across sections, so off-the-shelf encoders miss it. Their design, as stated in the author
+abstract, represents each transcript as a **conversational graph** whose nodes are the
+topics discussed and whose edges encode similarity between topics, so that the graph makes
+three things explicit: *what* is discussed (topical content), *how* it is discussed
+(cross-referencing back to earlier points, or newly introduced topics), and *in what
+manner* (sentiment and other linguistic features). A graph neural network
+(@sec-graph-embeddings) then learns a transcript-level representation used to forecast
+financial risk. The abstract reports four results: forecasting error falls significantly
+relative to the baselines, including deep-learning and large-language-model approaches in
+the practice summary; the gain holds after controlling for the firm's fundamentals; the
+advantage over baselines *grows with transcript length*; and the interpretability analysis
+singles out cross-referencing and newly introduced topics as influential. Transcripts with
+more new topics in the Q&A, more cross-referencing, and a more positive tone are associated
+with lower predicted risk. (Only the abstracts were accessible when this section was
+written, so edge construction, the network architecture, the risk target, and the effect
+sizes are not reported here; consult the paper for them.)
+
+**A transparent predecessor.** The closest published relative with open code and data is
+@sang2022dialoguegat, from a different group. It builds a graph over *utterances and
+speakers*, links each utterance to its neighbors in the dialogue and to its speaker, runs a
+graph attention network over it, and predicts stock-return volatility over the next 3, 7,
+and 15 days for S&P 1500 firms, using an extension of the MAEC call dataset
+[@li2020maec] with speaker identities added. Volatility is the standard risk target in this
+literature [@kogan2009risk], and the evaluation splits train, validation, and test by
+calendar year, so the model never sees the future. Three of their findings travel to
+other settings. In the 2015 test year, the speaker-aware graph model reaches a mean squared
+error of $0.4530$ at the 3-day horizon, against $0.5174$ for the best dialogue-structured
+baseline they run and $1.0905$ for last period's volatility alone. Removing the speaker
+nodes, the model's key structural ingredient, raises the error to $0.5493$, worse than
+replacing the learned speaker vectors with random ones ($0.5036$). And adding position
+embeddings, which encode where each utterance falls in the sequence, *hurts* ($0.4894$);
+the authors call sequential information unnecessary and even harmful for this task. The
+structure that helps is who talks to whom and about what, not the clock.
+
+**Why pooling cannot see it.** The toy below makes the representation point concrete. Two
+calls contain the *same eight utterances*, so any bag-of-words, TF-IDF, or mean-embedding
+summary of the two transcripts is identical (cosine similarity of exactly 1). They differ
+only in who said what: in call A the analysts raise two topics management never mentioned;
+in call B every analyst question returns to something management already said. The graph
+features separate them completely; the pooled vector cannot. The second half simulates 1,500
+calls in which, by construction of the data-generating process, echoing lowers later
+volatility and new Q&A topics raise it, then compares out-of-sample fit. This is a
+demonstration that a representation can only use what it can see, not evidence about real
+calls, and the similarity threshold and every coefficient are ours, not the paper's.
+
+```{r tad-conversation-graph}
+set.seed(2026)
+K <- 6
+unit <- function(v) v / sqrt(sum(v^2))
+# An utterance embedding is its topic's basis vector plus noise
+embed <- function(topics, noise = 0.25)
+  t(sapply(topics, function(k) { e <- rep(0, K); e[k] <- 1; unit(e + rnorm(K, 0, noise)) }))
+
+# Conversational graph: one node per utterance, an edge when cosine similarity >= tau.
+# seg marks prepared remarks "P" versus Q&A "Q".
+conv_features <- function(U, seg, tau = 0.6) {
+  A <- (U %*% t(U) >= tau) * 1; diag(A) <- 0; n <- nrow(U)
+  # new topic: a Q&A utterance with no similar utterance anywhere earlier in the call
+  new_q <- sapply(seq_len(n), function(i) seg[i] == "Q" && !any(A[i, seq_len(i - 1)] == 1))
+  # cross-reference: a Q&A utterance tied to some prepared-remarks utterance
+  xref  <- sapply(seq_len(n), function(i) seg[i] == "Q" && any(A[i, seg == "P"] == 1))
+  c(edges = sum(A) / 2, new_topics_qa = sum(new_q), cross_refs = sum(xref))
+}
+
+# --- Part 1: identical utterances, different structure ---
+utt <- embed(c(1, 1, 2, 2, 3, 3, 4, 4))            # the eight utterances
+seg <- c(rep("P", 4), rep("Q", 4))
+UA  <- utt                                          # A: remarks cover 1,2; Q&A raises 3,4
+UB  <- utt[c(1, 3, 5, 7, 2, 4, 6, 8), ]             # B: remarks cover 1-4; Q&A echoes 1-4
+print(rbind(`A: Q&A raises new topics` = conv_features(UA, seg),
+            `B: Q&A echoes remarks`    = conv_features(UB, seg)))
+bagA <- colMeans(UA); bagB <- colMeans(UB)
+cat("cosine between pooled vectors:", round(sum(bagA * bagB) / sqrt(sum(bagA^2) * sum(bagB^2)), 4), "\n")
+
+# --- Part 2: what a pooled representation cannot see ---
+# Each call's prepared remarks draw from its own random 3-topic subset; analysts echo one
+# of those topics with probability e, else raise a topic outside it. Novelty is relative.
+sim_call <- function(n_p = 6, n_q = 8) {
+  home <- sample(1:K, 3); away <- setdiff(1:K, home); e <- runif(1)
+  tp <- sample(home, n_p, TRUE)
+  tq <- sapply(seq_len(n_q), function(i) if (runif(1) < e) sample(home, 1) else sample(away, 1))
+  U <- embed(c(tp, tq))
+  c(conv_features(U, c(rep("P", n_p), rep("Q", n_q))), bag = colMeans(U))
+}
+N <- 1500
+X <- as.data.frame(t(replicate(N, sim_call())))
+X$vol <- 0.40 - 0.030 * X$cross_refs + 0.045 * X$new_topics_qa + rnorm(N, 0, 0.10)
+tr <- 1:1000; te <- 1001:N
+oos_r2 <- function(f) {
+  m <- lm(f, X[tr, ])
+  1 - sum((X$vol[te] - predict(m, X[te, ]))^2) / sum((X$vol[te] - mean(X$vol[tr]))^2)
+}
+cat("out-of-sample R2, pooled bag vector :", round(oos_r2(reformulate(paste0("bag", 1:K), "vol")), 3), "\n")
+cat("out-of-sample R2, graph features    :", round(oos_r2(vol ~ cross_refs + new_topics_qa), 3), "\n")
+```
+
+Both calls have four edges, so graph *density* does not separate them either; it is the
+segment-tagged structure, which edges run from Q&A back to the remarks, that carries the
+difference. The pooled vector explains almost nothing of the simulated outcome, and the
+two graph features recover a large share of it.
+
+**What to take from this for marketing text.**
+
+- *Encode the construct, not just the content.* The authors did not ask a bigger encoder
+  to find risk; they decided that cross-referencing and topic novelty are the constructs
+  from the accounting literature on managerial communication, and built them into the
+  graph. That is the same discipline as @sec-tad-pipeline: the representation is a measurement
+  choice, and the measurement should follow theory.
+- *Expect the gain to concentrate in long, sparse documents.* Their advantage grows with
+  transcript length, which is the regime where pooling dilutes a few decisive passages. The
+  same logic applies to support-chat logs, sales-call recordings transcribed to text, focus
+  groups, and long review threads: a speaker-aware, topic-linked representation is a
+  candidate wherever two parties talk and the question is who responded to whom.
+- *Speakers are features.* In the predecessor, deleting the speaker nodes cost more than
+  scrambling them, so the speaker identity (executive or analyst, agent or customer) is
+  informative in itself, not merely a label to strip before analysis.
+- *Order is not automatically information.* Position embeddings did not help; test whether
+  your sequence model is buying anything the graph links do not already supply.
+- *Hold out the future and control for the obvious predictor.* The predecessor trains on
+  earlier years and tests on later ones, and gives every baseline last period's volatility
+  so that all models start from the same footing; the ISR abstract reports that its gain
+  survives controlling for the firm's fundamentals. A text model that only restates last
+  quarter's risk has not learned from the text.
+- *Interpretation is a hypothesis, not an estimate.* That new Q&A topics, cross-references,
+  and positive tone go with lower predicted risk is what the fitted model reports; it is
+  not a causal effect of an executive's phrasing, and the tone result should be read with
+  the caution of @sec-49-tone-attention. For the dictionary route to the same transcripts,
+  which scores *focus* rather than structure, see @sec-mf-focus.
 
 ### Supervised and Model-Based Sentiment {#sec-supervised-sentiment}
 
@@ -1075,27 +1254,62 @@ and to every review, whether a topic model, a dictionary, or an LLM extractor
 (@sec-llm-extraction). An attribute counts as covered only if the same extractor finds
 it in both texts. *Elaboration versus restatement* is a similarity question about the
 sentences that mention a covered attribute: does the review paraphrase the summary's
-sentence, or add a reason, a use case, or a qualification? (The abstract does not say
-which extraction method the authors used, so what follows describes the design, not
-their pipeline.)
+sentence, or add a reason, a use case, or a qualification?
 
-A reference text brings three hazards that a stand-alone outcome does not.
+The authors' online appendix documents their pipeline, and it is a good template
+[@wang2026reviewsummaries, Online Appendices B and O]. On the *summary side* no
+extraction is needed, because Amazon lists the summary's attribute keywords under the
+paragraph and tags each one as positive or negative. On the *review side*, GPT-4.1 at
+temperature zero reads one review at a time and returns the attributes it explicitly
+discusses. The prompt fixes the level of detail with examples ("lasts all day" →
+"Battery life", "does not smudge" → "Smudge resistance") and excludes bare opinions,
+brands, and delivery complaints. A second LLM pass merges surface variants ("battery",
+"how long the charge lasts") into canonical labels. A review attribute counts as
+*covered* when its canonical label matches a summary keyword or one of that keyword's
+top-five WordNet synonyms. *Elaboration* has two measures: the character length of
+review sentences that mention a covered attribute, and their semantic similarity to the
+summary's sentence on the same attribute. *Agreement* with the summary compares a
+RoBERTa sentiment classifier's reading of each attribute sentence with the summary's
+tag. For validation, two research assistants hand-coded 200 random reviews. They agreed
+with each other at Cohen's $\kappa = .90$, and the LLM agreed with their consensus at
+$\kappa = .86$. Read the raw agreement rates (99.75% and 99.70%) with care. Almost every
+review-by-attribute cell is a "no", so percent agreement is close to 100% even for a
+weak coder. Kappa is the number that carries information here.
+
+A reference text brings hazards that a stand-alone outcome does not. The pipeline above
+handles some of them and leaves others open.
 
 - *A before-and-after comparison needs a counterfactual summary.* "Fewer covered
   attributes after the summary" requires some definition of "covered" for reviews
   written before any summary existed. One option is to apply the attribute set of the
-  first summary to the pre-period reviews.
+  first summary to the pre-period reviews. The authors take this route when they ask
+  which pre-rollout reviews the summary reflects.
 - *The summary is a moving target.* Platforms regenerate summaries as reviews arrive.
   Coding against the current summary can therefore misclassify the very reviews that
   changed it: an attribute a reviewer introduced is later absorbed into the summary and
   then counted as covered. Coverage has to be fixed by the version the reviewer could
   have seen, which means archiving timestamped snapshots of the summary alongside the
-  reviews.
+  reviews. The authors observe that Amazon's summaries typically update within a week
+  of new reviews, and they code against the updated text. In a weekly panel, that
+  leaves a misclassification window of up to a week.
 - *The extractor's recall differs by genre.* Fluent, model-written summary prose and
   terse customer reviews are different genres, and an extractor that finds attributes
   more reliably in one than in the other shifts the covered/uncovered split
   mechanically. Validate it on a hand-coded sample of each genre, in the spirit of the
-  pre- and post-period validation above.
+  pre- and post-period validation above. Using the platform's own keyword list removes
+  the extractor from the summary side. The risk then moves to vocabulary matching: an
+  LLM label that names the same concept as Amazon's keyword but is not among its
+  WordNet synonyms counts as *uncovered*. A constant mismatch rate inflates the
+  uncovered counts but cancels in a before-and-after comparison. It biases that
+  comparison only if the mismatch rate changes once the summary appears. Post-period
+  reviews that borrow the summary's wording would match *more* easily, which works
+  against the paper's finding rather than for it. Spot-check matched and unmatched
+  pairs by hand in both periods.
+- *Normalization depends on the batch.* The list of attribute expressions was too long
+  for one prompt, so it was normalized in batches of 300, followed by a consolidation
+  pass. Batching can give the same concept different labels in different batches. Any
+  residual split inflates attribute counts. Report how many labels the consolidation
+  pass merged, and check that coverage results survive a different batch order.
 
 
 A second cross-cutting use runs the other way, treating the black-box representation as

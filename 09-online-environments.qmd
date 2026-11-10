@@ -597,34 +597,76 @@ knowledge. A controlled laboratory experiment measures perceived collective effi
 directly and finds that it mediates the effect of the summary on the likelihood of
 leaving a review. The field effect is larger for well-reviewed than for under-reviewed
 products, and for polarizing than for non-polarizing ones. The content changes too.
-After the summary appears, reviews are richer and complement it rather than repeat it.
-Reviewers discuss fewer of the attributes the summary already covers and more of the
-attributes it leaves out. When they do discuss a covered attribute, they elaborate on it
-rather than restating the summary. @sec-tad-applications treats this
-covered/uncovered/elaborated coding as a measurement design.
-@fig-online-ai-summaries lays out the argument.
+After the summary appears, reviews are richer. Reviewers discuss fewer of the
+attributes the summary already covers and more of the attributes it leaves out. When
+they do discuss a covered attribute, they elaborate on it rather than restating the
+summary. @sec-tad-applications treats this covered/uncovered/elaborated coding as a
+measurement design.
+
+The online appendix shows the field design and most of the estimates. The main field
+sample is Amazon's Beauty & Personal Care department: about 3,000 products observed
+weekly (69,322 product-weeks), with the summary rolled out to products at different
+times. The headline two-way fixed-effects estimate on log(weekly reviews + 1) is 0.071
+without controls and 0.060 with them. In levels, that is about 0.33 to 0.39 more reviews
+per product per week. The Callaway–Sant'Anna estimator, which avoids the forbidden
+comparisons of staggered timing (@sec-causal-did), gives 0.039 and 0.052. Three further
+comparisons make the result more than an Amazon-only pre/post contrast. The same products
+on Amazon's US and UK storefronts are compared with product-by-storefront fixed effects. A
+kitchenware manufacturer's weekly data for May–October 2023 compare products on Amazon,
+which had the summary, with the same products on Walmart, which did not (0.094). And the
+laboratory study shows participants a Newegg-style summary rather than Amazon's.
+The moderators hold up as well. The extra effect for products with above-median
+pre-period review counts is 0.085, on a base effect of 0.020. For products with
+above-median rating variance it is 0.044, on a base of 0.048
+[@wang2026reviewsummaries, Online Appendices A–E, L].
+
+The appendix also qualifies the "complement, not repeat" reading of the abstract. In the
+US–UK sample, the number of reviews that mention a summary attribute rises (0.085), and
+so does the number that mention none (0.177). Reviews whose sentiment toward an attribute
+*matches* the summary's tag rise (0.074), as do reviews that disagree with it (0.039). The
+laboratory comments show the same pattern. Among 80 participants per arm, 56% of treated
+versus 40% of control participants wrote a review mentioning a summary keyword, and
+7.5% versus 1.25% wrote one mentioning none. By our arithmetic, that is about 64% versus
+41% writing any review. The authors read this as two separate effects. Collective
+efficacy raises contribution overall, while complementarity shapes what the extra reviews
+say. It also tells against a pure "less redundancy" story, under which only gap-filling
+reviews should rise. @fig-online-ai-summaries lays out the argument.
 
 ```{mermaid}
 %%| label: fig-online-ai-summaries
-%%| fig-cap: "How an AI-generated review summary changes review supply, as reported in the abstract of Wang et al. (2026). The summary raises perceived collective efficacy, which mediates the effect on the likelihood of reviewing in a lab experiment. The field effect is stronger for well-reviewed and polarizing products, and the reviews that follow complement the summary rather than repeat it."
+%%| fig-cap: "How an AI-generated review summary changes review supply, as reported by Wang et al. (2026) and their online appendix. The summary raises perceived collective efficacy, which mediates the effect on the likelihood of reviewing in a lab experiment. The field effect is stronger for well-reviewed and polarizing products. Reviews that reinforce the summary and reviews that add to it both increase, with attribute coverage tilting toward what the summary omits. Sales gains concentrate in already top-ranked products."
 flowchart LR
   S["AI-generated summary<br/>placed above the reviews"] --> E["Perceived collective<br/>efficacy"]
   E --> V["More reviews written"]
   S --> C["Review content:<br/>fewer covered attributes,<br/>more uncovered attributes,<br/>elaboration over restatement"]
   M["Stronger for well-reviewed<br/>and polarizing products"] -.-> V
+  S --> R["Sales rank improves,<br/>more for top-ranked products"]
 ```
 
 The two moderators locate the effect. A summary has more to say about a product with
 many reviews, so it is not surprising that well-reviewed products gain most. The cost
 is that the summary does little for the under-reviewed product, which is where one more
 review is worth most to a reader. A summary therefore does not solve the cold-start
-problem of thin review pages. The polarization result connects to polarity
+problem of thin review pages. The sales results point the same way. Weekly sales rank
+improves after the summary appears (log rank falls by 0.072). For products that were in
+the top 20% before the rollout it falls by a further 0.070, about twice the gain. The
+authors call this a Matthew effect: thin review pages give the model little to
+summarize, so the summary helps most where demand is already concentrated
+[@wang2026reviewsummaries, Online Appendix G]. Average ratings of later reviews also rise,
+by about 0.11 to 0.12 stars. The polarization result connects to polarity
 self-selection [@schoenmueller2020]. On a polarizing product the summary has to report
 a split, and one plausible reading (ours, not the authors') is that a visible split
 makes one more voice feel consequential. The summary also inherits the limits of its
 inputs. In @sec-online-context-ratings most of the temperature effect sat in reviews
 that never mention the weather, so a summary generated from review text alone has
 nothing to correct with. It restates the contaminated consensus in more fluent prose.
+The appendix gives a partial look at what the summary draws on. The authors treat a
+pre-rollout review as "included" when it contains one of the attribute keywords Amazon
+lists under the summary, or a WordNet synonym of one. Whether a review was negative,
+written by an Amazon Vine reviewer, or recent does not predict inclusion. Longer reviews
+are more likely to be included, and reviews with a higher share of affective words are
+less likely. The summary therefore leans toward reviews written in a detailed,
+attribute-focused style. It does not lean toward a particular sentiment.
 
 The comparison with the generative-AI shocks in @sec-platform-governance is
 instructive. When Stack Overflow banned ChatGPT answers, contributions fell
@@ -633,16 +675,24 @@ activity fell [@huang2026stances]. In both cases AI could substitute for the
 contributor's own output. A review summary is built *from* that output, and on this
 evidence it draws more of it.
 
-Two caveats apply. First, the collective-efficacy mechanism is established in the
-laboratory. Whether the field increase runs through the same channel, rather than, for
-example, through the summary making a product page look more active, is an inference
-from the pairing of the two studies. Second, a summary needs reviews to summarize, so
-any platform's rollout is likely to be selected on review volume. Readers of field
-estimates in this literature should therefore check how treated and untreated products
-compare on review momentum before the summary appeared. (Only the published abstract was
-accessible when this section was written. The abstract does not name the platform or
-the identification design of the field study, and its sample sizes and effect sizes are
-not reported here.)
+Three caveats apply. First, the collective-efficacy mechanism is established in the
+laboratory, in a 160-participant study built around wireless earbuds. Whether the field increase
+runs through the same channel, rather than, for example, through the summary making a
+product page look more active, is an inference from the pairing of the two studies.
+Second, a summary needs reviews to summarize, so a platform's rollout could be selected
+on review momentum. The authors test this directly with a Cox hazard model of when each
+product received its summary. Review volume in each of the five preceding weeks does not
+predict the timing, although price and product tenure do. A shuffled-treatment placebo
+and an equivalence test on pre-period prediction errors also come out clean. Third, more
+reviews could simply mean more buyers, since the summary also lifts sales. The authors
+convert sales rank to estimated sales with a Pareto rank–sales curve. They calibrated
+its slope by buying 40 units of a near-zero-sales product and watching its rank move
+($\theta = 0.446$). Reviews per estimated sale still rise. Because the denominator is
+itself estimated from rank, this check supports the propensity reading but does not
+settle it. (The main article was paywalled when this section was revised. The design
+details and estimates above come from the open online appendix, which reports the main
+estimates in its robustness tables. The text-measurement pipeline is described in
+@sec-tad-applications.)
 
 
 ## Images as a Data Type
@@ -879,6 +929,17 @@ effect absent for positive reviews or irrelevant brands. Not all rating systems 
 sales: @nishijima2021 find that Rotten Tomatoes' "fresh"/"rotten" categorization has
 no effect on box-office performance.
 
+All of these studies concern businesses already on a platform. The prior question is
+whether being listed at all matters, and it is not settled by default, because many
+businesses are not listed. @luca2026gettingmap match Texas mixed-beverage tax receipts to
+Yelp's listing records and find that about 18% of alcohol-serving bars and restaurants
+still had no listing at the end of 2017, though a listing was free. Being added raised
+revenue by roughly 5% to 10%, including for 1,295 venues Yelp created in two days in
+2010 from a purchased directory file. The venues that gain most are those that struggle
+to build a reputation otherwise (independents, tourist areas) and those with better
+products. The data source and its use are worked through in @sec-data-txmb, and the
+paper's argument is dissected in @sec-sw-emb-listings.
+
 ### Herding, Polarity, and Sequencing
 
 Reviews are not independent draws. @sunder2019drives document substantial **herding**
@@ -893,7 +954,11 @@ and tipping: @chen2022 show that when customers rate *before* tipping they tip l
 because they feel they have already rewarded the provider through the rating, an
 effect stronger when they tip from their own pocket, have flexible categorization,
 or believe the provider benefits from ratings—and mitigated by highlighting the
-consistency motive between rating and tipping. Q&A sections answered by other
+consistency motive between rating and tipping. The wording of the tip prompt matters
+too: on a freelance marketplace an injunctive-norm request ("It's customary to leave a
+tip") raised tipping more than reciprocity appeals did, with no detectable loss of
+repeat business [@kim2026tiprequest]; @sec-nudge-tipping works through that
+experiment and the wider tipping-culture debate. Q&A sections answered by other
 consumers and sellers improve product–consumer fit and reduce mismatch-driven
 negative reviews [@banerjee2021].
 
@@ -1065,6 +1130,17 @@ res[, `:=`(est = round(est, 3), se = round(se, 3), t = round(t, 3), p = signif(p
 print(res)
 fwrite(res, "mr2026_lab_table.csv")
 ```
+
+Weather is not the only thing outside the product that ends up in a rating.
+Expectations do too. @rossi2026disappointment compare MovieLens ratings of the same
+films in the 40 days before and after their Academy Award nominations, matching
+raters on taste vectors from a recommender trained on pre-nomination data. Matched
+users who rate after the nomination give about 0.04 fewer stars, and the drop is
+about three times larger on IMDb, where raters are less experienced. Review text
+points to disappointment and not to lost interest or contrarian reactions to a
+popular film. A quality signal that brings in viewers also raises the bar the film
+has to clear, so the average rating of a product falls just after it is certified.
+@sec-satisfaction-awards works through the design.
 
 
 ### When the Review Ecosystem Fails

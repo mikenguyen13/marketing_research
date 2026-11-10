@@ -1302,12 +1302,63 @@ structure *and* node attributes (a customer's demographics, a product's category
 single supervised objective, which is why they now underpin large-scale industrial
 recommendation and fraud systems.
 
+A forecasting use of the same machinery appears in the clickstream chapter, where a
+graph over product-stage transitions (a view of one SKU followed by a view of another)
+supplies neighbor embeddings for probabilistic sales forecasts (@sec-click-forecast).
+
 The standard caution applies with full force to learned representations. A node
 embedding is a generated feature, and its proximity structure encodes homophily and
 shared environment along with whatever genuine influence exists. Using embeddings to
 *predict* (who will churn, what to recommend) is on firm ground; using an embedding
 coordinate as a regressor in a *causal* claim about social influence reintroduces every
 hazard of @sec-graph-identification in a less transparent form.
+
+### A Citation Network as a Predictor: Medical Device Recalls {#sec-graph-predicate}
+
+A clean example of graph learning used for *prediction*, where the caution above does
+not bite, comes from regulated product markets. More than 90% of medical devices sold in
+the United States clear the FDA's 510(k) pathway, which asks a new ("applicant") device
+to show substantial equivalence to a previously cleared "predicate" device. Each
+clearance therefore *cites* its predicates, and the resulting predicate network is a
+directed citation graph over products, formally the same object as a patent-citation
+graph (@sec-innovation). The regulatory concern is that devices cleared by equivalence
+are more recall-prone, which is a product-safety and brand-liability outcome for the
+firm as much as a public-health one. @everhart2023recalls document the association
+between submission characteristics and later recalls, and @mukherjee2018recall study
+the recall decision itself from the supply-chain side. For the marketing side of the
+same pathway, @pahnke2026positioning show how a venture's choice of reference products
+changes its time to clearance (@sec-ent-resources).
+
+@zhu2026deeppredicate turn the citation structure into a forecasting tool. Using 45,398
+devices cleared between 2003 and 2020, they feed the characteristics of each device's
+predicate network to a deep learning model that addresses three design problems named in
+their abstract: learning the network structure, capturing the temporal pattern of
+network characteristics, and accounting for dependencies along the citation history.
+The model, DeepPredicate, improves recall-prediction accuracy and timeliness over
+existing state-of-the-art approaches; the authors' institutional summary reports a gain
+of 6.56 percentage points and an estimated saving of about $328 million a year from
+earlier response, and positions the tool as augmenting rather than replacing expert
+judgment. The reference list shows the toolkit they draw on, graph convolution and
+attention, GraphSAGE-style aggregation, recurrent units, and long-sequence transformers,
+but this passage rests on the published abstract and summary, not the full text, so
+consult the paper for the exact architecture and the baselines it beats.
+
+Two features make the design instructive for marketing researchers. First, the idea is
+not new, since citation networks have long been mined for quality and novelty signals
+(@sec-innovation), and the contribution is the *execution*: treating the citation
+history as a temporal, dependent sequence rather than a static degree count. Second,
+the target is a rare, costly event, so the evaluation is about detecting recalls early
+and precisely, not about a structural coefficient, which is the right standard for a
+predictive system. The same design logic transfers to any setting where products,
+suppliers, or patents inherit risk from the things they cite or copy.
+
+Papers in the same family, deep or graph-based prediction for a high-stakes health or
+safety outcome, include @guo2025icugraph (an explainable graph-learning model for
+intensive care unit length of stay), @yu2022wearable (adversarial attention-based
+multisource, multitask learning for chronic-condition severity), @ahsen2019biasaware (a
+bias-aware classifier when the labels are human-generated), and @abbasi2019dontmention
+(user-generated-content signals as early adverse-event warnings, the nearest
+relative on the post-market safety side).
 
 ## Industry and Production Practice {#sec-graph-production}
 

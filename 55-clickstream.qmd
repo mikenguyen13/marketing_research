@@ -127,6 +127,13 @@ inflates every downstream number and corrupts attribution and recommendation ali
 same logic works inside a single form: keystroke timing separates applicants typing their
 own details from impostors typing someone else's (@sec-bio-keystroke).
 
+*Demand forecasting* aggregates the log instead of following individuals. Views and
+carts are advance demand information about tomorrow's purchases, and the pattern of
+which products shoppers compare reveals substitutes and complements that a SKU's own
+sales history cannot. Graph neural networks over the product-stage transitions now turn
+that signal into probabilistic sales forecasts, including for promotion-driven spikes
+(@sec-click-forecast).
+
 These applications share a substrate. Each begins from the same event log and differs
 only in the target (a session metric, a path, a conversion, a next item, a lapse time,
 a bot flag) and in the modeling machinery brought to bear. We therefore turn first to
@@ -682,6 +689,369 @@ mixed-methods complement to @sec-click-sequence, and the dynamic counterpart to 
 engagement constructs of @sec-engagement: engagement is a developmental path, not a level
 to be maximized.
 
+## Footprints as Search: Structural Models of the Click Path {#sec-click-search}
+
+The Markov chains and sequence clusters above *describe* paths. They do not say why a
+consumer clicked the third listing rather than the first, why she stopped after two
+products, or what she would have done had a price been different. A **consumer search
+model** answers those questions by treating every click as a purchase of information.
+Opening a product page costs time and attention; it reveals how well the product fits;
+and the consumer keeps clicking only while the expected gain from one more look
+exceeds that cost. Read this way, a clickstream is the visible trace of an optimal
+stopping problem. That reading is what lets a researcher estimate preferences and
+search costs separately and then run the counterfactuals a platform cares about:
+re-ranking a results page, changing a promotion, or redesigning a channel.
+
+This section reviews the search literature, sets out the Weitzman machinery that most
+empirical work uses, and then works through a recent *Information Systems Research*
+paper that pushes the model across channels and adds a reference price
+[@zhang2026footprints]. A stylized replication, with its own code, closes the section.
+
+### Four Decades of Consumer Search Research {#sec-click-search-lit}
+
+**Theory.** The economics of search begins with @stigler1961economics, who asked how many
+price quotes a buyer should collect when prices are dispersed and each quote is costly.
+His buyer fixed the sample size in advance (*simultaneous* or *non-sequential*
+search). @mccall1970economics recast the problem as *sequential*: draw one offer at a time and
+stop when an offer beats a reservation value. @diamond1971model then showed the
+uncomfortable equilibrium consequence: with any positive search cost and identical
+consumers, firms charge the monopoly price and nobody searches, the "Diamond paradox"
+that much later theory works to escape. @weitzman1979optimal solved the version empirical
+work now uses, in which the alternatives differ ("boxes" with different reward
+distributions and opening costs) and the searcher must choose *which* box to open next.
+His answer is an index rule, described below. @wolinsky1986 turned search for
+differentiated products (match values rather than prices) into a model of monopolistic
+competition, which is the template for most platform theory (@sec-ams-search).
+Order matters: @armstrong2009prominence show that a *prominent* firm, the one every
+consumer samples first, charges less than its rivals, and @armstrong2017ordered and @choi2018consumer show that Weitzman's rules
+are equivalent to a discrete choice over "effective values", which makes search
+models tractable in equilibrium. In that reformulation, cheaper search can *raise*
+prices [@choi2018consumer]. Work on *what* a search reveals relaxes Weitzman's
+assumption that one look tells the consumer everything
+[@branco2012optimal; @ke2016search; @gu2022consumer].
+
+**Simultaneous or sequential?** Early empirical work inferred search costs from price
+distributions alone [@hong2006using] or from consideration sets in scanner data
+[@mehta2003price]. Browsing data made the search *strategy* testable. @delossantos2012testing
+use web-browsing logs and reject sequential search with a known price distribution in
+favor of fixed-sample search. @honka2014quantifying estimates search costs of \$35 to
+\$170 in U.S. auto insurance and finds that they, more than switching costs, drive
+retention. @honka2017simultaneous show that the strategy is identified from price
+patterns within consideration sets; the auto-insurance data favor simultaneous search,
+and wrongly assuming sequential search overpredicts large insurers' shares. The answer
+differs across markets, which is why each new setting has to test it rather than assume
+it.
+
+**The clickstream turn.** Online data reveal *which* products a consumer inspected and
+in *what order*, the "footprint" this chapter is about. @kim2010online use Amazon's camcorder
+search data to show that search typically covers only 10 to 15 options, which changes
+own- and cross-price elasticities, and @kim2017probit extend
+the approach to a probit model under sequential search. @koulayev2014search shows that conditional
+search decisions on a hotel platform separate search costs from unobserved tastes. @bronnenberg2016zooming document that
+camera shoppers search little and search *near* what they finally buy.
+@chen2017sequential model refinement tools alongside clicks on a hotel-booking site:
+sorting and filtering induce 33% more searches and raise the utility of what is bought
+by 17%. @ursu2018power uses a field experiment at Expedia to show that rankings change
+what consumers search but not what they buy conditional on searching. Position works
+through search costs, not utility. Rankings
+also matter on hotel search engines [@ghose2014examining], and @ghose2019modeling
+model consumers' "footprints" there as an optimal-stopping problem, finding that a
+digest of social-media content on the results page could raise the engine's revenue
+by 12%. The paper below borrows that framing. Platform-design questions follow directly: @dinerstein2018consumer quantify the
+trade-off between steering consumers to low prices and preserving seller incentives on
+eBay; @delossantos2017optimizing optimize click-through rankings when consumers can refine
+their search; @jiang2021consumer use the model to design retargeting.
+
+**Estimation and identification.** The open methodological questions are now about
+estimation. @morozov2021estimation show that ignoring search frictions overstates preference
+heterogeneity, with consequences for pricing;
+@ursu2023search find that consumers often break off and resume a search, and
+model the breaks as fatigue; and @ursu2025sequential consolidate practice
+(the working-paper version is @ursu2022sequentialwp): which normalizations are
+unavoidable, how preferences are separated from search costs, and how the simulators
+compare. Neural-network estimators of structural parameters are the latest entrant
+[@wei2025estimating]. @honka2019empirical survey the empirical literature as a whole.
+
+**Reference prices.** The reference-price literature sits in pricing
+(@sec-pricing; @winer1986referenceprice; @kalyanaram1995reference;
+@mazumdar2005reference): consumers judge a price against an internal standard formed
+from prices seen before, and losses loom larger than gains. In egg purchases, consumers respond 2.5 times as
+strongly to a price above the reference as to an equal price below it
+[@putler1992incorporating].
+Reference prices built from prices *seen during a search*, rather than from past
+purchase occasions, are where the two literatures meet, and they have met rarely.
+When consumers form price expectations from the prices at their previous purchases,
+they search less as prices fall, which helps explain why retail gasoline prices come
+down slowly [@lewis2011asymmetric]. Elicited price beliefs turn out to be heterogeneous
+and under-updated relative to Bayes [@jindal2021importance].
+
+**Multiple channels.** The multichannel literature asks how consumers combine channels
+over a journey, classically researching in one and buying in another
+[@verhoef2007multichannel], and how promotions in one channel spill into another
+[@breugelmans2016cross]. Device and app channels are the IS version of the question
+[@xu2017battle]. @geng2013competing model a
+two-channel sequential search in which a consumer's channel choice reduces to comparing
+two reservation prices, applied to piracy. The
+closest empirical predecessor to the paper below is @hu2024westore, who use JD.com's
+public data from the 2020 MSOM data-driven research challenge [@shen2024jd] to compare
+the retailer's native app with its WeChat mini-program. Their model has a channel
+choice followed by Weitzman search, with a *fixed* cost of entering a channel and a
+*marginal* cost per click. In their accepted manuscript, the mini-program has the
+higher fixed cost but the lower marginal cost (for the base user tier, a marginal cost
+of 0.087 on WeChat against 0.168 on the app). Mini-program sessions are longer (4.35
+clicks against 3.46) and convert more often (41% against 26.8%).
+@tbl-click-search-streams summarizes the six streams and what each contributes to a
+model of the click path.
+
+| Stream | Representative work | Data | Lesson for a click-path model |
+|---|---|---|---|
+| Search theory | Stigler; McCall; Weitzman; Wolinsky | None (theory) | Clicks are information purchases governed by a reservation rule |
+| Strategy tests | De los Santos et al.; Honka & Chintagunta | Browsing logs, quotes | Test sequential against simultaneous search; do not assume it |
+| Clickstream search | Kim et al.; Koulayev; Chen & Yao; Ursu | Click order, rankings, purchases | Order identifies preferences; stopping identifies search costs |
+| Estimation practice | Morozov et al.; Ursu, Seiler & Honka | Simulated and real logs | Normalizations limit which counterfactuals are credible |
+| Reference prices | Winer; Kalyanaram & Winer; Mazumdar et al. | Scanner panels | Prices are judged against a standard; losses outweigh gains |
+| Multichannel | Verhoef et al.; Hu & Karacaoglu | Channel journeys | Channels differ in entry and per-click costs |
+
+: Six streams that a multichannel search paper has to join. {#tbl-click-search-streams}
+
+### The Weitzman Machinery {#sec-click-search-weitzman}
+
+Consumer $i$ faces options $j = 1,\dots,J$ and an outside option $j = 0$. Utility splits
+into what she knows before clicking and what the click reveals,
+$$
+u_{ij} = \underbrace{x_j'\beta - \alpha p_{ij} + \mu_{ij}}_{\delta_{ij}\ \text{(pre-search)}} + \varepsilon_{ij},
+$$ {#eq-click-search-util}
+where $\mu_{ij}$ is a taste shock she sees on the listing page and $\varepsilon_{ij}$ the
+match value she learns only by opening the page. Opening costs $c_{ij}$. The
+**reservation utility** $z_{ij}$ makes her indifferent between opening the page and
+taking $z_{ij}$ for sure,
+$$
+\int_{z_{ij}}^{\infty} (u - z_{ij})\, dF_{ij}(u) = c_{ij}
+\quad\Longrightarrow\quad
+z_{ij} = \delta_{ij} + m(c_{ij}),
+$$ {#eq-click-search-reservation}
+where, for standard normal $\varepsilon$, $m(c)$ solves
+$c = \phi(m) + m\,[\Phi(m) - 1]$ [@kim2010online]. @weitzman1979optimal proves that three
+rules are optimal:
+
+1. **Selection.** Open boxes in decreasing order of $z_{ij}$.
+2. **Stopping.** Stop when the best utility found so far, including the outside option,
+   exceeds the highest $z$ among unopened boxes.
+3. **Choice.** Buy the best option among those opened.
+
+Each rule becomes an inequality on the data, and the likelihood of a footprint is the
+probability that all of them hold at once. That probability has no closed form, so it
+is simulated. The **kernel-smoothed frequency simulator** replaces each indicator with
+a logistic kernel of scale $\rho$, so that a draw that violates a rule by a little is
+penalized rather than discarded [@honka2014quantifying; @ursu2018power]. Identification follows
+the rules: which products are clicked *first* depends only on preferences, because
+search costs shift every $z$ alike when costs are common; how soon people *stop* then
+pins down search costs [@ursu2025sequential].
+
+One caution needs stating before any counterfactual. The variances of the two taste
+shocks are usually both normalized to one, and search costs are then identified only
+relative to the scale of $\varepsilon$. Search costs therefore cannot be converted into
+money, and counterfactuals that *change search costs* inherit an arbitrary
+normalization. Counterfactuals that change *prices* do not, because price enters the
+pre-search utility the consumer already knows [@ursu2025sequential]. The promotion
+counterfactual below is of the second kind.
+
+### Multichannel Sequential Search with a Reference Price {#sec-click-search-mss}
+
+@zhang2026footprints start from a platform fact. E-commerce platforms now sell through
+a native app and through a "mini-program" that runs inside a super-app such as
+WeChat, so the same
+consumer can browse the same products in two channels, leaving click-through and
+purchase records in both. Prior search models were built for one channel. The authors'
+**multichannel sequential search** (MSS) model treats a footprint as a threefold
+search, across channels, across products, and across pages of results, and lets the
+consumer carry a **cross-channel reference price** that she updates as she browses. In
+the authors' words, the evolving reference price "reshapes the attractiveness of
+unsearched products and channels relative to those already explored." A price seen in
+the app changes how cheap the mini-program's listing looks, and so changes where she
+clicks next. @fig-click-search-mss lays out the process.
+
+```{mermaid}
+%%| label: fig-click-search-mss
+%%| fig-cap: "The threefold search process in the multichannel sequential search model of Zhang et al. (2026): every click is a choice of channel, product, and page, and the reference price carried between clicks updates with each price seen."
+flowchart LR
+  S["Session starts<br/>reference price r0"] --> C{"Cross-channel:<br/>app or<br/>mini-program?"}
+  C --> P{"Cross-product:<br/>which listing<br/>to open?"}
+  P --> G{"Cross-page:<br/>stay on page or<br/>load the next?"}
+  G --> O["Open product page<br/>learn match value"]
+  O --> R["Update reference price<br/>from the price just seen"]
+  R --> T{"Best found beats<br/>every remaining<br/>reservation utility?"}
+  T -- "no" --> C
+  T -- "yes" --> B["Buy best searched<br/>or leave"]
+```
+
+Estimated on a large clickstream from what the authors call "a leading e-commerce
+platform", the model reveals significant heterogeneity in channel preferences,
+cross-channel search costs, and sensitivity to the cross-channel reference price, and
+it predicts both clicks and purchases better than state-of-the-art single-channel
+sequential search models. The policy result is the paper's headline. The recommended
+promotion opens a *gap* between channels, with an average discount difference of 32%
+between the app and the mini-program. According to the authors, the gap creates a
+strong cross-channel reference-price effect, so a smaller promotion yields more
+profit. The version of the abstract on the authors' institutional repository reports
+a 22% profit improvement over existing approaches, at lower promotion spending, and
+adds that aligning cross-channel external links with the promotion raises profit
+further.
+
+The authors do not name the platform in either abstract. The paper's reference list
+cites the JD.com MSOM dataset [@shen2024jd], the same source @hu2024westore use to
+compare the app with the mini-program, but we could not confirm that it is the
+estimation sample. The question matters for reading the results. In those 2018 data,
+@hu2024westore found that only 0.5% of customers switch channel within a session, and
+they set those sessions aside. A model whose core is cross-channel search needs a
+sample, or a definition of a session, in which switching is common. A reader of the
+full paper should check which one it uses. (Only the two versions of the abstract and
+the deposited reference list were accessible when this section was written, so the
+specification of the reference price, the estimator, and the parameter estimates are
+not reported here.)
+
+Three things about the paper are worth carrying into one's own work. First, each new
+model component answers a feature of the data: two channels, paged results, and prices
+that differ across channels for the same product. Second, the reference price breaks
+one of Weitzman's assumptions. Once a price seen in one box changes the value of
+the others, search outcomes are no longer independent across boxes, and the index
+rule is no longer guaranteed optimal. A model that re-applies the rules after every
+click with an updated state is a behavioral approximation, and should be described
+as one. Third, the counterfactual is a price policy, the kind the normalization
+discussed above permits.
+
+### A Stylized Replication {#sec-click-search-sim}
+
+The paper's data and code are not public, so we build a stylized version of the same
+idea and check that it can be estimated. One platform sells four products in both an
+app and a mini-program, two products per results page. A click costs
+$c = \exp(\gamma_0 + \gamma_{\text{page}}\,\text{page2} + \gamma_{\text{switch}}\,\text{switch})$,
+so loading the second page and switching channel are both costlier than staying put.
+Prices vary across sessions through random promotions. The consumer carries a
+reference *price ratio* (price over list price) that is an exponentially smoothed
+average of the ratios she has clicked, in either channel, with weight $\omega$ on the
+old value. A listing below the reference is a gain, valued at $\lambda_{\text{gain}}$
+per unit, and one above it is a loss, valued at $\lambda_{\text{loss}}$. After every
+click she recomputes all reservation utilities under the new channel and reference,
+then applies the three rules. We simulate 3,000 sessions and estimate the ten
+parameters by kernel-smoothed simulated maximum likelihood with 200 draws per consumer.
+@tbl-click-search-footprints summarizes the footprints the model generates.
+
+| Footprint statistic | Value |
+|---|---|
+| Clicks per session (mean) | 1.85 |
+| Sessions entering through the mini-program | 39.6% |
+| Sessions that switch channel | 27.6% |
+| Sessions that load the second page | 60.5% |
+| Sessions that end in a purchase | 43.4% |
+
+: Footprints from 3,000 simulated sessions of the stylized multichannel search model. {#tbl-click-search-footprints}
+
+Channel switching is far more common here than the 0.5% that @hu2024westore report
+for JD.com. We chose a low switching cost on purpose, so that the cross-channel
+parameters can be estimated at all. @tbl-click-search-estimates compares the estimates
+with the true values, alongside a reference-free benchmark that drops the gain, loss,
+and memory parameters.
+
+| Parameter | True | MSS estimate (SE) | Reference-free |
+|---|---|---|---|
+| Intercept $\beta_0$ | -0.80 | -0.70 (0.09) | -0.24 |
+| Mini-program channel $\beta_{\text{MP}}$ | -0.30 | -0.18 (0.01) | -0.24 |
+| Quality $\beta_q$ | 0.80 | 0.67 (0.02) | 0.83 |
+| Price $\alpha$ | 1.50 | 1.14 (0.12) | 1.67 |
+| Gain $\lambda_{\text{gain}}$ | 1.00 | 1.09 (0.09) | — |
+| Loss $\lambda_{\text{loss}}$ | 2.00 | 1.70 (0.24) | — |
+| Search cost, base $\gamma_0$ | -4.00 | -3.27 (0.05) | -3.10 |
+| Search cost, page 2 $\gamma_{\text{page}}$ | 0.60 | 0.50 (0.06) | 0.43 |
+| Search cost, switch $\gamma_{\text{switch}}$ | 0.60 | 0.54 (0.02) | 0.47 |
+| Reference memory $\omega$ | 0.50 | 0.33 (0.02) | — |
+| Log-likelihood | | -16,266.5 | -16,439.2 |
+
+: Kernel-smoothed simulated maximum likelihood estimates ($\rho = 10$, 200 draws per consumer) against the true parameters. Standard errors from the numerical Hessian. {#tbl-click-search-estimates}
+
+The model gets the structure right and some of the levels wrong. Every sign is
+correct. Loss aversion is recovered, with losses weighted about 1.6 times as heavily as
+gains (the truth is 2). Switching channel and loading a second page both raise
+search costs, and the switching cost is the better estimated of the two. The reference
+effect is plainly in the data: dropping it costs 173 log-likelihood points for three
+parameters. But the base search cost is too high (-3.27 against -4.00), the price
+coefficient too low, and the memory weight too short. The standard errors are far
+smaller than these gaps, so the gaps are bias, not noise. They are the bias the
+smoothing kernel introduces at a finite $\rho$, the reason @ursu2025sequential recommend
+choosing $\rho$ by Monte Carlo and reporting the choice. The reference-free model has a
+different problem. With no way to let the prices seen earlier in a session shift the
+value of the next listing, it compensates with a higher price coefficient and a much
+higher intercept.
+
+**The promotion counterfactual.** The platform considers two policies at each
+discount depth $d$: a *uniform* discount in both channels, and a *gap*, the same discount
+in the mini-program only. Unit cost is 55% of list price. @tbl-click-search-cf reports
+profit per session under the true parameters, the MSS estimates, and the
+reference-free estimates.
+
+| $d$ | True U | True G | MSS U | MSS G | No-ref U | No-ref G | G - U | G - U, no ref. |
+|---|---|---|---|---|---|---|---|---|
+| 0% | 0.164 | 0.164 | 0.219 | 0.219 | 0.207 | 0.207 | 0.000 | 0.000 |
+| 10% | 0.146 | 0.154 | 0.185 | 0.199 | 0.180 | 0.195 | 0.007 | 0.011 |
+| 20% | 0.119 | 0.134 | 0.143 | 0.170 | 0.142 | 0.175 | 0.015 | 0.027 |
+| 30% | 0.079 | 0.103 | 0.092 | 0.129 | 0.093 | 0.146 | 0.024 | 0.046 |
+| 40% | 0.029 | 0.063 | 0.033 | 0.079 | 0.034 | 0.108 | 0.034 | 0.066 |
+
+: Profit per session (in hundreds of the list-price unit) under a uniform discount and a mini-program-only gap, evaluated with the true parameters, the MSS estimates, and the reference-free estimates, using 20,000 simulated sessions with common random numbers. U = uniform discount, G = gap. The last two columns are G - U under the true parameters, with the reference effect and with it switched off. {#tbl-click-search-cf}
+
+Three results follow, and the first is not the paper's. In this stylized market no
+promotion pays: profit falls with depth under both policies and under every model,
+because a discount gives away more margin than it wins in conversions. Our toy does
+not reproduce a profitable gap, and we did not tune it until it did.
+
+Second, at every depth the gap beats the uniform discount, under all three models.
+The obvious explanation is the reference price: see the full price in one channel,
+and the discount in the other looks like a gain. The last two columns test that
+explanation by switching the reference effect off in the *true* model. The gap's
+advantage roughly *doubles* (0.046 instead of 0.024 at 30%). In this market, then, the
+gap wins on margin, because fewer sales carry the discount, and the reference effect
+works against it. With losses weighted twice as heavily as gains, a consumer who has
+just seen the mini-program's discount registers the app's full price as a loss. A gap
+creates losses as well as gains. Whether a channel gap gains from the reference effect
+therefore depends on the gain–loss asymmetry, on how the reference is formed, and on
+which channel consumers see first. A reader of @zhang2026footprints should look for
+exactly those estimates behind the 32% gap.
+
+Third, the models' errors are not neutral across policies. The MSS estimates overstate
+profit at every policy (0.219 against 0.164 with no promotion), which is the parameter bias of @tbl-click-search-estimates showing up as money.
+The reference-free model errs most at deep gaps: it predicts that a 40% gap leaves
+0.108 of profit per session when the truth is 0.063, an overstatement of about 70%,
+against about 25% for the MSS model (0.079). The *drop* from no promotion to a 40% gap tells
+a different story: the reference-free model gets it almost exactly (0.099 against a
+true 0.101), while the MSS model overstates it (0.140). Neither model is uniformly
+better. Which one errs less depends on whether the decision turns on profit levels or
+on profit differences between policies. A counterfactual is only as good as the parameters that
+drive the policy being evaluated, which is why papers in this genre report
+recommendations from the incumbent model alongside their own.
+
+Two lessons from building the estimator are worth more than the estimates. First,
+check the likelihood against the simulator before estimating anything. If the
+simulator's own taste draws are fed back as a single "draw", every rule must hold, and
+the negative log-likelihood must fall toward zero as $\rho$ grows. In a pilot run it did. That check verifies the inequalities but not the
+averaging across draws. A bug in the averaging, where R's `ifelse()` silently collapsed
+a consumer-by-draw matrix to its first column, left the profile likelihood minimized far
+from the true intercept and price coefficient. Only profiling each parameter around its
+true value exposed it. Second, the smoothing scale is a tuning parameter. In the
+pilot, once the bug was fixed, $\rho = 10$ put the profile minima at or next to the true values, and
+$\rho = 25$ did worse. This is why the literature picks $\rho$ by Monte Carlo
+[@ursu2025sequential].
+
+The full script simulates the footprints, estimates both models, and runs the
+counterfactual. It is shipped with the book as
+`replication/multichannel-search/mss_simulate_estimate.R` and is not run at render
+time.
+
+```{r click-search-script}
+#| eval: false
+# Not run at render time: see replication/multichannel-search/mss_simulate_estimate.R
+source("replication/multichannel-search/mss_simulate_estimate.R")
+```
+
 ## Deep Sequence Models {#sec-click-deep}
 
 The classical methods above impose structure: a Markov chain assumes limited memory, and
@@ -728,6 +1098,295 @@ an engagement embedding) is fed into a downstream regression or decision, its es
 error can correlate with the outcome, and the standard errors of the downstream model
 will understate uncertainty unless the generation step is accounted for. Behavioral
 embeddings are powerful inputs, but they are model outputs first.
+
+## Forecasting Sales from the Clickstream Graph {#sec-click-forecast}
+
+Everything so far treats the clickstream as a record of *individual* journeys. A
+retailer's operations team asks a different question: how many units of each SKU will
+sell over the next three days? That is an *aggregate* quantity, and the click log bears
+on it in two ways. First, views and carts precede purchases, so today's browsing is
+advance demand information about tomorrow's sales. @huang2014clickstream showed that
+adding clickstream signals to a demand model improves forecasts and lowers inventory
+cost, and @martinezdealbeniz2020flash used a hierarchical model of sequential shopping
+decisions to forecast volatile flash-sale demand. Second, shoppers compare. Someone who
+views four phones and buys one has told the platform that those four are substitutes,
+and the three that were not bought still carry information about the one that was.
+Models that forecast each SKU from its own history discard that cross-product signal.
+
+@liu2026clickstream turn it into a forecasting architecture, ForecastClickGraph, and the
+paper is a good specimen of how to put *learned embeddings* to work on a marketing
+log. Three embeddings are learned in sequence. I walk through them, rebuild the part of
+the machinery that can be rebuilt without the authors' data, and then read the evidence
+the way a referee would.
+
+### The Product-Stage Graph {#sec-click-forecast-graph}
+
+The unit of the graph is a *product-stage*: "SKU A viewed", "SKU A added to cart" and
+"SKU A purchased" are three different nodes. A directed edge from node $j$ to node $i$
+carries the number of times that day's sessions moved from $j$ to $i$. A view of A
+followed by a cart-add of A is an *intra-product* edge; a view of A followed by a view
+of B is an *inter-product* edge. Each day gets its own graph, and each node carries a
+time series of its daily event counts. The target is the purchase node's series over the
+next $H$ days, forecast at several quantiles rather than as a single number.
+
+On the public data the authors use, the graphs are large and mostly cross-product. The
+data are a Kaggle log of 285 million events from a Middle Eastern e-commerce platform,
+October 2019 to April 2020 [@kechinov2020ecommerce]. The holiday subset the paper models
+holds 38 million sessions over 239,718 SKUs. The average daily graph has about 87,490
+nodes and 917,220 edges, and roughly 95% of the edges join *different* SKUs. The
+transition table is informative on its own. After viewing a SKU, a shopper views another
+SKU about 50% of the time and carts or buys the same one only 3.58% of the time. After
+carting, the shopper sticks with it: fewer than 3% move to another SKU. After a
+purchase, 6.6% go on to view a different product. The funnel is leaky at the top and
+sticky at the bottom, which is why cross-product edges matter early in the journey and
+intra-product edges matter late.
+
+### Three Embeddings {#sec-click-forecast-embeddings}
+
+**An embedding of each node's history.** An LSTM reads a node's last $T = 7$ daily
+counts, after each series is rescaled by its median and mean absolute deviation, and its
+final hidden state is the node's *time-series embedding*. A small MLP maps that embedding
+to the base forecast: $H$ steps by the 10th, 50th and 90th percentiles, produced directly
+rather than recursively, so errors do not compound across the horizon. All SKUs share one
+set of weights (*cross-learning*), which is what lets the model forecast SKUs with short
+histories [@salinas2020deepar].
+
+**An embedding of the neighborhood.** A Graph Transformer layer [@shi2021masked] lets a
+purchase node attend over its *upstream* neighbors, the view and cart nodes that feed it,
+including those of other products. Query, key and value vectors are linear maps of the
+neighbors' time-series embeddings, the edge weight enters the key, and the
+attention-weighted sum of the values is the *neighbor embedding*. A second MLP turns it
+into a second set of quantile forecasts. The authors read the attention weight as a
+proxy for the conversion rate from the upstream node to the purchase node. Because
+neighbors' views and carts are already partly reflected in the node's own history,
+adding the neighbor forecast naively would double count, so a sigmoid *gate* computed
+from all three embeddings shrinks it before it is added.
+
+**An embedding of burstiness.** The third piece borrows the burstiness score of
+@lappas2009burstiness. For a series $y_1,\dots,y_T$, the score at time $t$ is the
+observed share of the window's total, $y_t / \sum_s y_s$, minus the share expected if the
+activity were spread evenly, $1/T$. A day with a large positive score is a spike relative
+to the window. Each node's burstiness series is averaged over its upstream neighbors to
+form a *neighbor burstiness* series, which a dense layer embeds. A tanh output in
+$[-1, 1]$ is then multiplied by an exponential moving average of the node's own sales
+(smoothing factor 0.7) to give a proportional correction to the trend. The logic is that
+a burst in views and carts across *many* related products is more likely a platform-wide
+promotion than noise in one series, and it shows up in the neighbors before it reaches
+purchases. The final forecast is the sum of the base, burst and gated neighbor
+forecasts, trained on the quantile (pinball) loss of @koenker1978regression summed over
+quantiles, horizon steps and SKUs.
+
+The same architecture accepts a fourth embedding, the one most marketing papers would
+start with. The authors' appendix adds learned embeddings of brand (5,384 values) and
+category (142 values), each of dimension 8, with a default vector for the 38% to 41% of
+products missing the field. It lowers MSE by 2.5% and *raises* SMAPE by 2.7%, which the
+authors read as noise from the missing metadata. Metadata embeddings are not free when a
+large share of the metadata is missing.
+
+### Rebuilding the Mechanism {#sec-click-forecast-replicate}
+
+The authors' trained model is not available, only the manuscript, and the 285-million-row
+log is too large for a book that renders offline. What *can* be rebuilt exactly is the
+arithmetic the paper walks through in its Figure 3, and the logic of the burst correction
+can be checked on a simulation built to contain it. The first lines of the chunk below
+reproduce the paper's worked example: for a SKU-A purchase series of $(9, 14, 17)$ the
+scaled series is $(-1.875, 0, 1.125)$, the burstiness scores are $(-0.108, 0.017, 0.092)$,
+and a forecast of 8 against an outcome of 10 costs 1.5 on the pinball loss at $q = 0.75$.
+The rest simulates 300 SKUs over 70 days in which a latent demand lift shows up in views
+and carts the same day and reaches purchases a day later, then compares a trend-only
+forecast with one corrected by neighbor burstiness (@tbl-click-forecast-sim).
+
+```{r click-forecast-mechanism}
+#| label: tbl-click-forecast-sim
+#| tbl-cap: "Simulated one-day-ahead purchase forecasts with and without the neighbor-burstiness correction. MSE on held-out days."
+robust_scale <- function(y) { m <- median(y); (y - m) / mean(abs(y - m)) }
+burstiness   <- function(y) {
+  if (sum(y) == 0) rep(0, length(y)) else y / sum(y) - 1 / length(y)
+}
+pinball <- function(f, y, q) q * pmax(y - f, 0) + (1 - q) * pmax(f - y, 0)
+
+# The worked example from the paper's Figure 3
+yA <- c(9, 14, 17)
+round(robust_scale(yA), 3)
+round(burstiness(yA), 3)
+pinball(8, 10, 0.75)
+
+# --- A product-stage simulation: 300 SKUs, 70 days ---------------------------
+set.seed(2026)
+P <- 300; D <- 70; T0 <- 7
+promo_platform <- c(30:32, 55:57)              # platform-wide grand promotions
+base  <- exp(rnorm(P, 2.2, 0.8))               # SKU popularity
+shock <- matrix(rbinom(P * D, 1, 0.01), P, D)  # idiosyncratic SKU promotions
+shock[, promo_platform] <- 1
+lift <- matrix(0, P, D)
+for (t in 1:D) {
+  lift[, t] <- 1 + 2.5 * shock[, t] + if (t > 1) 0.8 * shock[, t - 1] else 0
+}
+view  <- matrix(rpois(P * D, 6 * base * lift), P, D)
+cart  <- matrix(rpois(P * D, 0.4 * base * lift), P, D)
+purch <- matrix(rpois(P * D, base * cbind(1, lift[, -D])), P, D)  # one-day lag
+
+burst_ts <- function(y) {                      # window-T0 burstiness, one score per day
+  out <- rep(NA_real_, length(y))
+  for (t in T0:length(y)) out[t] <- burstiness(y[(t - T0 + 1):t])[T0]
+  out
+}
+# NeighBurst: mean burstiness of the upstream nodes (view and cart)
+neigh <- (t(apply(view, 1, burst_ts)) + t(apply(cart, 1, burst_ts))) / 2
+ema <- function(y, lam = 0.7) { e <- y[1]; for (v in y[-1]) e <- lam * e + (1 - lam) * v; e }
+
+days   <- T0:(D - 1)
+Em     <- t(sapply(1:P, function(i) sapply(days, function(t) ema(purch[i, (t - T0 + 1):t]))))
+target <- purch[, days + 1]
+Nb     <- neigh[, days]
+ratio  <- pmax(pmin(target / pmax(Em, 1) - 1, 1), -1)
+train  <- days <= 45
+
+# Burst correction: regress next-day deviation from trend on neighbor burstiness
+correct <- function(Nb) {
+  fit <- lm(c(ratio[, train]) ~ c(Nb[, train]))
+  pmax(Em * (1 + pmax(pmin(coef(fit)[1] + coef(fit)[2] * Nb, 1), -1)), 0)
+}
+adj    <- correct(Nb)
+adj_pl <- correct(apply(Nb, 2, sample))        # placebo: shuffle across SKUs within day
+
+is_burst <- matrix(rep((days + 1) %in% c(promo_platform, promo_platform + 1), each = P), P)
+test <- matrix(rep(!train, each = P), P)
+mse  <- function(f, m) mean((f[test & m] - target[test & m])^2)
+res <- rbind(
+  "Trend only (EMA of own sales)" =
+    c(mse(Em, is_burst | !is_burst), mse(Em, is_burst), mse(Em, !is_burst)),
+  "Trend + neighbor burstiness" =
+    c(mse(adj, is_burst | !is_burst), mse(adj, is_burst), mse(adj, !is_burst)),
+  "Placebo: neighbor signal shuffled across SKUs" =
+    c(mse(adj_pl, is_burst | !is_burst), mse(adj_pl, is_burst), mse(adj_pl, !is_burst))
+)
+colnames(res) <- c("All test days", "Promotion days", "Other days")
+knitr::kable(round(res, 1))
+```
+
+On the simulated promotion days the corrected forecast cuts MSE from about 1,085 to 390,
+and the gain is not confined to promotions. Part of that is the design: the burst signal
+here is a clean upstream measure of a latent lift, which real clickstreams only
+approximate, so the magnitude says nothing about the paper's data. The placebo row is
+the more useful one. Shuffling the neighbor signal across SKUs *within each day* removes
+the SKU-specific information but keeps the day's platform-wide level, and it still
+recovers a large part of the gain (promotion-day MSE of 484). In this world, most of what
+the burst module buys is the platform-wide promotion signal, and only the remainder is
+SKU-specific. That is the intuition the authors give for averaging burstiness over many
+neighbors, and it suggests a test they could add on the real data: shuffle within day and
+see how much of the paper's 7.8% burst-period ablation effect survives.
+
+### What the Evidence Shows {#sec-click-forecast-evidence}
+
+All figures here come from the author-accepted manuscript; the published version may
+differ in detail. The comparison is organized as a ladder of *information sets*, which
+is the best design choice in the paper. Rung one forecasts a SKU from its own sales
+(Prophet [@taylor2018forecasting], DeepAR, NHITS [@challu2023nhits], Transformer and
+Informer variants, LSTM). Rung two adds the SKU's own view and cart counts as
+covariates. Rung three adds neighbors through a graph layer (GAT, GraphSAGE, Graph
+Transformer). Rung four interleaves graph convolution with recurrence (T-GCN, GConvGRU,
+GConvLSTM, GC-LSTM). Each rung isolates what an extra layer of the data contributes, so
+the reader can see which source of information the gain comes from.
+
+On the October-to-November test, the proposed model's MSE is 428.1, against 505.9 for the
+best univariate model (an LSTM), 487.2 for the best covariate model (NHITS), 480.6 for the
+best static graph model (GAT) and 473.8 for the best dynamic one (T-GCN). The "10% to 28%"
+in the abstract spans the gap to T-GCN (about 10%) and the gap to Prophet (28%), so the
+honest summary against a strong deep baseline is a reduction in MSE of roughly 10%. The
+SMAPE gaps are smaller: the model is under one SMAPE point ahead of every covariate model
+and of GC-LSTM, GConvGRU and GConvLSTM, while T-GCN, the best baseline on MSE, is 1.4
+points behind it on SMAPE (33.5% against 32.1%).
+
+Four further results carry the argument.
+
+- **Bursts.** The 21 promotion days account for 52% of holiday-season sales. On those
+  days the four strongest models have MSE above 1,400, against about 60 on normal days.
+  The proposed model's burst-period MSE is 1,466 against 1,673 for GAT.
+- **Ablation.** Dropping the burst module raises overall MSE by 1.5% and burst-period MSE
+  by 7.8%. Dropping the neighbor embedding raises overall MSE by 6.6%. Dropping both
+  raises it by 18.2% and returns exactly the LSTM's 505.9, as it should, since what
+  remains is the LSTM base.
+- **A visible mechanism.** The learned weight on the neighbor forecast rises from about
+  0.1 before the November promotion to about 0.4 during it, and the burst multiplier is
+  positive during promotions and often negative right after, consistent with the
+  stockpiling dip described in the promotion literature.
+- **Cold start and decision metrics.** On 4,769 products launched in December, forecast
+  *without retraining*, MSE is 5.22 against 6.22 for the LSTM. At the 90th percentile,
+  the quantile that sets safety stock, the model's quantile loss is 13.7% below the
+  LSTM's. Its 75% quantile forecast covers 68.8% of outcomes, short of the nominal 75%
+  but closer than the benchmarks.
+
+### A Referee's Reading {#sec-click-forecast-critique}
+
+The paper is strong, and the places a referee would press are specific.
+
+*The headline metric is dominated by a handful of SKUs.* MSE rewards getting the popular
+SKUs right, and on promotion days the squared errors are in the thousands. The sales
+distribution is heavily skewed: among active SKU-days the 75th percentile of daily
+purchases is 3 while the maximum is 4,469. A per-SKU-weighted metric, or the gain broken
+down by volume decile, would show whether the 10% is broad or concentrated. The
+connectivity split in the paper's boundary conditions points the same way: a 16% gain over
+the LSTM on high-connectivity SKUs and 2.4% on low.
+
+*The evaluated universe is filtered.* Target SKUs are those with sales on at least half
+the training days (3,445 in October, 3,251 in November) out of 239,718 in the log. The
+authors say so and put intermittent demand out of scope, which is fair, but it means the
+results speak to the head of the catalog.
+
+*The significance tests vary the seed, not the world.* Each model is trained 30 times and
+compared with a one-sided Wilcoxon signed-rank test. That tests whether the difference
+survives *training* noise. It does not say whether the difference would survive a
+different month, platform or set of promotions, and the test set is one platform and a
+few months (the second, non-holiday window, January to April 2020, overlaps the onset of
+COVID-19). Forecasts for different SKUs on the same promotion day are also strongly
+dependent, so the effective sample is much smaller than the number of SKU-days.
+
+*Attention is not the conversion rate.* The authors read attention weights as proxies for
+stage-to-stage conversion. Their own Table 2 reports the empirical transition
+probabilities directly, and those are what the edge weights already encode. The post-hoc
+analysis in their Appendix 8 examines the neighbor weight and the burst multiplier, not
+the edge-level attention. Treating attention as a managerial measure of which products
+lead demand (the paper's search-versus-experience discussion) needs that check first.
+
+*Prices and promotion depth are excluded by design.* That is the right choice for a
+marketplace that cannot see sellers' plans, and it is what lets the model run on a public
+log. It also means the burst module learns promotion *effects*, not promotion *causes*:
+it can react to a promotion that has started but cannot plan one. The paper's own
+boundary condition says that on a reseller platform with promotion calendars, a model
+with those inputs should win (on promotion information in retail forecasting, see @fildes2022retail).
+
+### Using the Template {#sec-click-forecast-template}
+
+The paper is also a template for a *method-for-a-new-data-source* paper at a top
+operations or information-systems journal. The structure transfers to other behavioral
+logs, and each piece does a job in the argument.
+
+1. **A new representation of an unstructured trace.** The contribution is the
+   product-stage graph, a way of turning a log into a structure a model can use. A novel
+   network layer is secondary, and here an off-the-shelf Graph Transformer does the
+   attending.
+2. **A task-specific module tied to a managerial problem.** The burst module answers one
+   operational problem, promotion spikes, and the ablation shows it earns its place.
+3. **A benchmark ladder organized by information set**, so that each rung answers "what
+   does this extra data buy?" rather than "does my model beat everyone's?"
+4. **A decision metric next to the statistical one.** Quantile loss, calibration and
+   achieved service level connect the forecast to inventory choices.
+5. **Boundary conditions as results.** Sparse graphs, stable demand and available prices
+   are named as conditions under which the method should *not* win, and one
+   (connectivity) is tested.
+6. **Public data.** The Kaggle log lets a reader rerun the benchmarks, which is much of
+   why a methods paper is believed. The authors' code was not found alongside the
+   manuscript.
+
+The same recipe fits a marketing question. A brand's clickstream, review stream or
+search-query log can be turned into a graph whose nodes are product-stages, queries or
+creators, with learned embeddings of each node's history and neighborhood
+(@sec-graph-embeddings). If those embeddings feed a downstream causal regression, the
+generated-regressor caution of @sec-click-deep applies: a forecasting embedding is a
+model output, and the estimation error does not disappear in the second stage. For the
+writing side of the template, see the design-science method-paper structure in
+@sec-sw-design-science.
 
 ## Attribution {#sec-click-attribution}
 

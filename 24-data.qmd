@@ -674,6 +674,322 @@ inferred composition as a generated-regressor estimate that needs its first-stag
 uncertainty propagated (@sec-measurement-scales). (The published paper is paywalled;
 this account rests on its abstract and the public data portal.)
 
+## Establishment Revenue from Tax Records: Texas Mixed Beverage Receipts {#sec-data-txmb}
+
+Revenue at the level of a single store, bar, or restaurant is the outcome marketing
+researchers most want and can least often get. Firms guard it, and the platforms that
+see transactions rarely release them. Some tax records are an exception. Texas taxes
+every permit holder that sells mixed beverages on its gross receipts from liquor, wine,
+beer, and cover charges, and the Comptroller of Public Accounts publishes each
+location's monthly filing on the state's open-data portal as the *Mixed Beverage Gross
+Receipts* dataset (`data.texas.gov`, identifier `naix-2893`). In October 2026 the file
+ran from January 2007 to September 2026 and held about 3.8 million location-months. It
+is free, needs no registration, and serves through a standard Socrata API.
+
+@luca2026gettingmap use this file to estimate what a Yelp listing does to a bar's or
+restaurant's revenue, with matched listing dates from Yelp. Their argument is analyzed
+in @sec-sw-emb-listings. What makes the file valuable in their design applies to many
+others. It is close to a census of a whole industry, so non-adopters are observed
+alongside adopters. It is monthly. It comes from a source with no stake in the platform
+being studied. Its blind spots are just as specific. It records alcohol, not food. The
+working paper behind the article cites survey evidence that alcohol is roughly 20–30%
+of a restaurant bill and about 70% at a bar [@luca2022gettingmapwp]. Venues without a
+mixed-beverage permit, such as most cafés and fast-food outlets, are absent altogether.
+
+```{r}
+#| label: txmb-pull
+#| eval: false
+# One county, 2007-2017, straight from the open-data API (no key needed).
+# Travis County (Austin) is county code 227; Harris is 101, Dallas 57.
+url <- paste0("https://data.texas.gov/resource/naix-2893.csv?",
+              "$where=location_county='227'%20AND%20obligation_end_date_yyyymmdd<'2018-01-01'",
+              "&$limit=200000&$order=:id")
+d <- data.table::fread(url, colClasses = list(character = c("taxpayer_number",
+                                                              "location_number")))
+```
+
+### What is an establishment?
+
+The file has no field called "establishment", and the first decision is which
+identifier to treat as one. @tbl-data-txmb-ids counts the candidates in the Travis County
+extract (Austin) for 2007–2017, which contains 118,333 location-months.
+
+```{r}
+#| label: tbl-data-txmb-ids
+#| tbl-cap: "Candidate establishment identifiers in the Texas mixed-beverage file, Travis County, 2007-2017. Counts computed from the public API extract in October 2026."
+txmb_ids <- data.frame(
+  Identifier = c("Taxpayer number", "Taxpayer number x location number",
+                 "Name x address string", "TABC permit number", "Street address"),
+  Distinct = c(1791, 2171, 2099, 2770, 1392),
+  `What it follows` = c("The legal entity that owes the tax",
+                        "One venue under one owner",
+                        "A venue as customers see it",
+                        "A license, which can change while the venue continues",
+                        "A site, across every business that occupies it"),
+  check.names = FALSE)
+knitr::kable(txmb_ids, format.args = list(big.mark = ","))
+```
+
+The counts disagree because the identifiers follow different things. A taxpayer can
+run several locations, so taxpayer numbers undercount venues. Permit numbers overcount
+them: 36% of taxpayer-location pairs file under more than one permit number over the
+eleven years. Addresses outlive owners: 31% of street addresses host more than one
+taxpayer, and one hosted twelve. The taxpayer-location pair and the name-address string
+nearly agree, and the gap between them is ownership changes in which a new owner keeps
+the old name.
+
+No choice is right in general. The rule is to pick the identifier that tracks whatever
+the treatment attaches to. A Yelp listing is attached to a name at an address. It
+survives a change of owner who keeps the name, and it does not transfer to a new
+restaurant at the same site. That is why the working paper builds its own location IDs
+from names and addresses rather than taking taxpayer numbers. A study of a permit
+policy would choose differently, and so would a study of a site, such as a new transit
+stop.
+
+### Cleaning the panel
+
+The working paper documents its cleaning in an appendix, and the same rules apply to any
+use of the file. Sum or deduplicate multiple filings in a month. Trim the runs of zero
+receipts that precede opening and follow closing, since a permit holder files zero
+while not yet operating. Drop venues with zero months or missing months in the middle of
+their lives, because a seasonal closure or renovation produces exactly the revenue jump
+a treatment would. Check each venue's first filing against its *responsibility begin
+date*, the date it became liable for the tax, which tells you whether the venue opened
+during the panel or before it. In the Travis extract, after trimming, 179 of 2,021
+taxpayer-location pairs had interior zero months and 21 had gaps. Requiring at least
+two years of filings leaves 1,207 venues, 93,490 venue-months, and median monthly
+receipts of \$37,732.
+
+Linking the panel to a platform is the step where most of the error enters. The paper
+used Yelp's internal matcher on names and coordinates. An outside researcher would use
+fuzzy name and address matching against scraped or licensed listing data. Whatever the
+matcher, audit it in both directions on a random sample of matched and unmatched venues.
+Then work out which group each error type contaminates: a false match puts an untreated
+venue among the treated, and a missed match puts a treated venue among the controls.
+
+### Stress-testing a listing design on the public panel {#sec-data-txmb-stress}
+
+Yelp's listing dates are proprietary, so the paper's estimate cannot be reproduced from
+public data. The revenue side is public, though, and that supports a useful exercise.
+Plant listing dates with known properties into the real revenue paths of real venues,
+then check what each estimator recovers. Real paths carry the seasonality, ramp-ups,
+slow declines, and one-off shocks that a simulated panel leaves out. The exercise
+uses the cleaned Travis panel (1,207 venues) and a lifecycle-trimmed version (945
+venues) that drops each venue's first year of life and, for venues that closed, its last
+year. In each of 50 draws per cell, a random 60% of venues are "listed" and the rest
+serve as never-listed controls. Each draw is estimated three ways. The first is two-way
+fixed effects. The second is the two-stage imputation estimator of
+@gardner2022twostage, the estimator the paper uses, through the `did2s` package
+[@butts2022did2s]. The third adds venue-age bins to its first stage. All three use venue
+and month fixed effects. The four ways a listing date can arrive are:
+
+- *Random:* a uniformly random month at least six months into the venue's life, with no
+  effect. This is the placebo.
+- *Owner-timed:* the owner lists just before an upswing they can see coming, such as a
+  renovation or a new chef. The date is drawn from the 20% of months with the largest
+  rise from the previous six months to the next six. There is no effect.
+- *Bulk:* a single date, July 2010, for every listed venue open six months either side,
+  with a true effect of 0.05 log points, as in the paper's natural experiment.
+- *Growing:* random dates, with an effect that grows by 0.01 a year as the platform's
+  reach grows, which is the heterogeneity the paper cites to justify its estimator.
+
+```{r}
+#| label: tbl-data-txmb-stress
+#| tbl-cap: "What three estimators recover when listing dates with known properties are planted in real Travis County revenue paths. Mean over 50 draws per row. The standard error of each mean is about 0.002 to 0.005."
+txmb_stress <- data.frame(
+  `Listing date` = rep(c("Random (placebo)", "Owner-timed", "Bulk, July 2010", "Growing effect"), 2),
+  Panel = rep(c("All months", "Lifecycle-trimmed"), each = 4),
+  Truth = c(0, 0, 0.050, 0.073, 0, 0, 0.050, 0.074),
+  TWFE = c(-0.007, 0.085, 0.046, 0.063, -0.005, 0.071, 0.051, 0.063),
+  `Two-stage` = c(0.004, 0.120, 0.074, 0.080, -0.001, 0.085, 0.059, 0.071),
+  `Two-stage + age` = c(-0.010, 0.107, 0.069, 0.066, -0.004, 0.086, 0.058, 0.069),
+  check.names = FALSE)
+knitr::kable(txmb_stress, digits = 3)
+```
+
+@tbl-data-txmb-stress yields four lessons, each tied to a step in the paper's argument.
+
+First, the pipeline itself is sound: with random dates and no effect, the estimates are
+within about a point of zero. Second, the owner-timing threat is not hypothetical. An owner
+who lists before an upswing produces a "listing effect" of 0.085 to 0.120 out of nothing.
+That is larger than the paper's full-sample estimate and close to its bulk-sample one.
+No estimator removes it, because it is selection on the timing, not a weighting
+problem. This is the threat the paper's ladder of super-adders and bulk adds exists to
+answer (@sec-sw-emb-listings).
+
+Third, the imputation estimator learns each listed venue's level from its months before
+listing, so anything unusual about early life leaks into the effect. In this panel,
+venues earn about 9–12% more in each of their next twelve years than in their first. On the untrimmed
+panel, the bulk design therefore reports 0.074 for a true 0.05. Dropping the first and
+last year of life cuts the bias to under a point. Adding age bins to the first stage helps
+much less. The paper drops venues listed within three months of opening. These numbers
+suggest the ramp-up here lasts closer to a year, which matters most for venues listed
+early in life. Fourth, when the effect grows with the platform's reach, two-way fixed
+effects understate it by about 15% (0.063 against a truth of 0.074), while the two-stage
+estimator is close. That is the paper's stated reason for using it.
+
+Can an event study catch the owner who saw the upswing coming? @fig-data-txmb-event
+plots the two-stage event-study coefficients on the trimmed panel, averaged over 20
+draws. In this panel the answer is yes. The months that precede a rise are mostly months
+that follow a fall, so owner-timed listings leave a dip of 6–8% in the leads. The
+spurious effect fades by about nine months and then climbs again toward month twelve.
+That annual cycle most likely means much of the "upswing" an owner sees coming is the
+venue's own seasonal pattern, such as a campus bar's autumn, which month fixed effects
+shared by all venues do not remove. The paper reports the opposite pattern:
+flat leads and a jump that persists. That pattern is the evidence against owner timing
+that an event study can supply. It is not a complete defense. An upswing that arrives
+out of a flat revenue path, such as a renovation that permanently lifts revenue, would
+leave flat leads and a lasting effect too. Only a listing date chosen by someone other
+than the owner rules that case out.
+
+```{r}
+#| label: fig-data-txmb-event
+#| fig-cap: "Two-stage event-study coefficients for planted listing dates on the lifecycle-trimmed Travis County panel, averaged over 20 draws (month -1 is the reference). Random dates leave a flat line. Dates an owner picks just before an upswing leave a dip in the leads and a spurious effect that fades and then returns on an annual cycle."
+#| fig-width: 7
+#| fig-height: 3.6
+library(ggplot2)
+k <- c(-12:-2, 0:12)
+ev <- data.frame(
+  k = rep(c(k, -1), 2),
+  b = c(c(0.001, 0.001, 0.002, -0.003, 0.001, 0.000, 0.005, 0.001, 0.001, 0.002, 0.001,
+          0.001, 0.000, -0.003, -0.002, 0.001, -0.001, 0.001, -0.006, -0.002, -0.005,
+          -0.003, -0.003, -0.004), 0,
+        c(0.024, 0.049, 0.057, 0.043, 0.023, 0.006, -0.057, -0.075, -0.085, -0.083,
+          -0.059, 0.098, 0.136, 0.152, 0.146, 0.136, 0.119, 0.058, 0.039, 0.022, 0.014,
+          0.024, 0.051, 0.111), 0),
+  dates = rep(c("Random dates", "Owner-timed dates"), each = 25))
+ggplot(ev, aes(k, b, colour = dates)) +
+  geom_hline(yintercept = 0, colour = "grey60") +
+  geom_vline(xintercept = -0.5, linetype = "dashed", colour = "grey60") +
+  geom_line() + geom_point(size = 1.2) +
+  labs(x = "Months relative to the planted listing date",
+       y = "Effect on log receipts", colour = NULL) +
+  theme_bw() + theme(legend.position = "bottom")
+```
+
+The complete script below downloads the extract, builds the panel, and reproduces every
+number in this section. It takes about ten minutes on a laptop. Swap the county code to
+run it on Houston, Dallas, or any other county in the state.
+
+```{r}
+#| label: txmb-stress-script
+#| eval: false
+# Texas Mixed Beverage Gross Receipts: identifier anatomy, panel construction,
+# and an estimator check on the real revenue panel (Travis County, 2007-2017).
+library(data.table); library(fixest); library(did2s)
+args <- commandArgs(TRUE); dir <- if (length(args)) args[1] else "."
+f <- file.path(dir, "travis.csv")
+if (!file.exists(f)) download.file(paste0(
+  "https://data.texas.gov/resource/naix-2893.csv?$where=location_county='227'",
+  "%20AND%20obligation_end_date_yyyymmdd<'2018-01-01'&$limit=200000&$order=:id"), f)
+d <- fread(f, colClasses = list(character = c("taxpayer_number", "location_number")))
+d[, ym := as.integer(substr(obligation_end_date_yyyymmdd, 1, 4)) * 12L +
+        as.integer(substr(obligation_end_date_yyyymmdd, 6, 7)) - 1L]
+d[, addr := gsub("\\s+", " ", toupper(trimws(sub("\\s+(STE|SUITE|#|UNIT|BLDG).*$", "",
+                                                    location_address, ignore.case = TRUE))))]
+d[, est := paste(taxpayer_number, location_number, sep = "-")]
+
+# ---- 1. Identifier anatomy ---------------------------------------------------
+anat <- data.table(
+  unit = c("rows (establishment-months)", "taxpayer numbers", "taxpayer x location number",
+           "TABC permits", "name x address strings", "street addresses"),
+  n = c(nrow(d), uniqueN(d$taxpayer_number), uniqueN(d$est), uniqueN(d$tabc_permit_number),
+        uniqueN(d[, paste(location_name, location_address)]), uniqueN(d$addr)))
+print(anat)
+names_per_est <- d[, .(k = uniqueN(location_name)), by = est]
+tp_per_addr  <- d[, .(k = uniqueN(taxpayer_number)), by = addr]
+perm_per_est <- d[, .(k = uniqueN(tabc_permit_number)), by = est]
+cat(sprintf("est with >1 name: %.1f%%; addr with >1 taxpayer: %.1f%% (max %d); est with >1 permit: %.1f%%\n",
+            100 * mean(names_per_est$k > 1), 100 * mean(tp_per_addr$k > 1), max(tp_per_addr$k),
+            100 * mean(perm_per_est$k > 1)))
+
+# ---- 2. Cleaning, following Appendix B of the working paper -------------------
+p <- d[, .(rev = sum(total_receipts), nfil = .N), by = .(est, ym)]
+cat("est-months with >1 filing:", sum(p$nfil > 1), "\n")
+setorder(p, est, ym)
+p[, pos := cumsum(rev > 0) > 0 & rev(cumsum(rev(rev > 0)) > 0), by = est]  # trim leading/trailing zeros
+p <- p[pos == TRUE]
+bad <- p[, .(zero = any(rev <= 0), gap = (max(ym) - min(ym) + 1L) != .N), by = est]
+cat(sprintf("after trimming: %d est; interior zero months: %d; gaps: %d\n",
+            nrow(bad), sum(bad$zero), sum(!bad$zero & bad$gap)))
+p <- p[est %in% bad[!zero & !gap, est]]
+p[, id := as.integer(factor(est))]
+p[, `:=`(y = log(rev), first = min(ym), T = .N), by = id]
+p <- p[T >= 24]                                         # enough months to place an event
+cat(sprintf("analysis panel: %d establishments, %d est-months, median monthly receipts $%s\n",
+            uniqueN(p$id), nrow(p), format(median(p$rev), big.mark = ",")))
+# Opening date from the tax file itself, so lifecycle months can be removed.
+beg <- d[, .(open = min(as.integer(substr(responsibility_begin_date_yyyymmdd, 1, 4)) * 12L +
+                        as.integer(substr(responsibility_begin_date_yyyymmdd, 6, 7)) - 1L)), by = est]
+p[beg, open := i.open, on = "est"]
+p[, agey := pmin(pmax((ym - open) %/% 12L, 0L), 15L)]   # venue age in years, top-coded
+print(round(coef(feols(y ~ i(agey) | id + ym, p)), 3))      # revenue by age year vs. year 0
+lastm <- 2017L * 12L + 10L                              # Nov 2017, the last full month
+p[, close := max(ym), by = id]
+trim <- p[ym >= open + 12L & (close >= lastm | ym <= close - 12L)]   # drop first/last year of life
+trim[, `:=`(first = min(ym), T = .N), by = id]
+trim <- trim[T >= 24]
+cat(sprintf("lifecycle-trimmed panel: %d establishments, %d est-months\n",
+            uniqueN(trim$id), nrow(trim)))
+
+# ---- 3. Estimator check: four ways a listing date can arrive -------------------
+assign_dates <- function(q, scn) {
+  ids <- unique(q[, .(id, first, last = first + T - 1L)]); tr <- ids[runif(.N) < 0.6]
+  if (scn %in% c("random", "growing")) {
+    tr[, g := first + 6L + floor(runif(.N) * pmax(last - first - 11L, 1L))]
+  } else if (scn == "owner") {
+    # the owner lists just before an upswing they can see coming (renovation, new chef):
+    # pick among the months with the largest 6-month-ahead minus 6-month-behind change
+    up <- q[id %in% tr$id][order(id, ym)][, {
+      a <- frollmean(y, 6, align = "left"); b <- shift(frollmean(y, 6), 1)
+      s <- a - b; ok <- which(!is.na(s)); top <- ok[s[ok] >= quantile(s[ok], 0.8)]
+      .(g = ym[top[sample.int(length(top), 1)]])
+    }, by = id]
+    tr <- tr[up, on = "id"]
+  } else if (scn == "bulk") {
+    G <- 2010L * 12L + 6L                                # July 2010, as in the paper
+    tr <- tr[first <= G - 6L & last >= G + 6L][, g := G]
+  }
+  q[tr, g := i.g, on = "id"]
+  if (scn == "bulk") q[, y := y + 0.05 * (!is.na(g) & ym >= g)]
+  if (scn == "growing")                                  # effect grows with platform reach
+    q[!is.na(g) & ym >= g, y := y + 0.01 * (ym - 2007L * 12L) / 12]
+  q[, post := as.integer(!is.na(g) & ym >= g)]
+  q
+}
+truth_of <- function(q, scn) if (scn == "bulk") 0.05 else if (scn == "growing")
+  q[post == 1, mean(0.01 * (ym - 2007L * 12L) / 12)] else 0
+ts2 <- function(q, f) unname(coef(did2s(q, yname = "y", first_stage = f,
+  second_stage = ~ i(post, ref = 0), treatment = "post", cluster_var = "id", verbose = FALSE))[1])
+draw <- function(panel, scn) {
+  q <- assign_dates(copy(panel), scn)
+  c(truth = truth_of(q, scn), twfe = coef(feols(y ~ post | id + ym, q))[["post"]],
+    two_stage = ts2(q, ~ 0 | id + ym), two_stage_age = ts2(q, ~ i(agey) | id + ym))
+}
+set.seed(20261007); R <- 50
+grid <- CJ(panel = c("raw", "trimmed"), scn = c("random", "owner", "bulk", "growing"), sorted = FALSE)
+res <- rbindlist(lapply(seq_len(nrow(grid)), function(i) data.table(grid[i],   # plain loop:
+  t(replicate(R, draw(if (grid$panel[i] == "raw") p else trim, grid$scn[i]))))))  # not inside by=
+fwrite(res, file.path(dir, "txmb_draws.csv"))
+out <- res[, .(truth = mean(truth), twfe = mean(twfe), two_stage = mean(two_stage),
+               two_stage_age = mean(two_stage_age), sd = sd(two_stage)), by = .(panel, scn)]
+print(out, digits = 3)
+fwrite(out, file.path(dir, "txmb_results.csv"))
+
+# ---- 4. Do pre-trends catch the owner who saw the upswing coming? --------------
+es <- function(scn, R = 20) rbindlist(lapply(seq_len(R), function(r) {
+  q <- assign_dates(copy(trim), scn)
+  q[, rel := fifelse(is.na(g), Inf, pmin(pmax(ym - g, -13L), 13L))]
+  m <- did2s(q, yname = "y", first_stage = ~ 0 | id + ym,
+             second_stage = ~ i(rel, ref = c(-1, -13, 13, Inf)),
+             treatment = "post", cluster_var = "id", verbose = FALSE)
+  data.table(k = as.integer(sub("rel::", "", names(coef(m)))), b = coef(m))
+}))[, .(b = mean(b)), by = k][order(k)][, scn := scn]
+ev <- rbind(es("random"), es("owner"))
+print(dcast(ev, k ~ scn, value.var = "b"), digits = 3)
+fwrite(ev, file.path(dir, "txmb_event.csv"))
+```
+
 ## Pitfalls and Identification {#sec-data-pitfalls}
 
 The sources in this chapter differ in unit, frequency, and provenance, but the
@@ -690,6 +1006,7 @@ flowchart LR
   D["Generated-regressor error<br/>(name-based demographics)"] --> D2["Propagate first-stage<br/>uncertainty"]
   E["Recall vs. coverage trade-off<br/>(CE survey)"] --> E2["Match instrument to estimand<br/>(interview vs. diary)"]
   F["Rate limits / TOS<br/>(APIs, scrapers)"] --> F2["Budget requests; prefer<br/>official endpoints"]
+  G["Identifier is not the unit<br/>(tax records: taxpayer,<br/>permit, address)"] --> G2["Use the ID the<br/>treatment attaches to"]
 ```
 
 The unifying discipline is the one stated at the outset: name the estimand, name

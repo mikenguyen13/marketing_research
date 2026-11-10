@@ -150,11 +150,16 @@ incoherent even when every individual sentence is sound.
 
 The skeleton flexes with the paper's type, and naming the type early orients both
 writer and reviewer. Four types recur. A **research paper** tests hypotheses and
-reports findings; its contribution lives in $H \Rightarrow R$. A **methods paper**
+reports findings; its contribution lives in $H \Rightarrow R$. A research paper can
+also build theory inductively instead of testing it, naming a new construct from
+qualitative evidence (@sec-sw-theory-building). A **methods paper**
 proposes a new estimator, design, or measurement instrument; its contribution is
 that the method recovers something prior methods could not, so the burden is a
 demonstration—often on synthetic data with known ground truth—that it works and a
-comparison against incumbents. A **review paper** consolidates a domain, and its
+comparison against incumbents. Its design-science variant, common in information
+systems, has its own architecture (@sec-sw-design-science). When the instrument is a
+new variable built from text or another unstructured source, the burden shifts from
+ground truth to validation against outcomes (@sec-sw-measurement). A **review paper** consolidates a domain, and its
 contribution is organization: a taxonomy, an integrative framework, or an agenda
 that practitioners and scholars did not previously have. A **conceptual or
 discussion paper** advances or critiques theory, trading empirical evidence for
@@ -385,12 +390,194 @@ exactly what the third row asks a reader to check, because a break chosen after
 looking at the data is a forking path. The substance is developed in
 @sec-mf-carbon.
 
+*Management Science* publishes the genre as well, through its organizations
+department. @destefano2026careers relate the breadth of an employee's project
+portfolio to promotion inside one services firm, and their limitations section
+says in so many words that the results are correlational. Two specification
+choices do the work that identification would do elsewhere. First, the regressor
+is split by timing. Breadth in the current year and breadth accumulated before
+it enter separately, because the first is contaminated by selection (poorly
+matched employees keep switching projects) and the second much less so. The two
+coefficients take opposite signs, which a single cumulative measure would have
+blended. Second, the main models leave out the performance rating, on the
+argument that breadth plausibly works through performance and a mediator is a
+bad control. The rating is then added in a separate column so the reader can see
+how much the estimates move. Neither choice makes the estimates causal. Each
+tells the reader which rival account a coefficient has been protected against,
+and that is the most a descriptive design can offer. The substance is in
+@sec-ent-teams.
+
 The practical implication is a targeting decision made *before* writing. A
 descriptive paper aimed at a marketing journal usually needs one of the three
 channels above as its declared home; the same paper aimed at a management
 journal can stand on the stylized-facts warrant directly. Authors who write the
 management version and submit it to the marketing journal receive a predictable
 review: interesting, but what is the identification?
+
+### From a New Measure to a Model: When the Facts Cannot Choose {#sec-sw-measure-model}
+
+Of the three marketing channels, the new-data-source paper is the one most students
+will write first: the contribution is a measurement capability and the first look it
+affords. Its characteristic weakness is the one a referee names in the opening
+paragraph of the report. The facts are new, but what do they mean? Often the facts are
+consistent with two mechanisms that carry opposite implications, and no amount of
+further description will separate them. The paper then has two honest options. It can
+find a design that identifies the mechanism, or it can write down a model in which the
+mechanisms make different predictions and let the measured facts discipline it. The
+second route is how a measurement paper reaches a top general-interest journal when no
+experiment is available, and @lee2026startupculture is a compact specimen.
+
+Lee measures something that had been measured mainly for large, established firms
+[@guiso2015culture; @li2021culture]: the corporate culture that start-ups *advertise*
+to job seekers, read from their postings on an online job board.
+@tbl-sw-measure-model traces how the paper moves from that measure to a question the
+facts cannot answer, and then to a model that answers it.
+
+| Step | What the paper does | What the step buys |
+|:--|:--|:--|
+| A new measure | Reads the culture start-ups advertise in job postings; two types emerge, worker-centered (employee well-being) and firm-centered (customers, firms, markets) | An observable for a construct that is otherwise inferred from surveys or from large-firm disclosures |
+| Facts with a price attached | Worker-centered postings draw 20% more applications and pay 5% less than measurably similar jobs | Workers value the culture, and the value appears as a wage discount: a quantity, not a sentiment |
+| A null that matters | Firm outcomes do not differ significantly by advertised culture | Weighs against the simple story that culture pays for itself, but a null with selected adoption can also mask an effect |
+| The question the facts leave open | Is the worker-centered culture adopted to cut labor costs or to raise productivity? | A question with opposite managerial and welfare answers, which no further cross-tabulation can settle |
+| An equilibrium model | Develops an equilibrium model of the choice between the two cultures | Its answer: many firms adopt the worker-centered culture primarily for cost savings |
+
+: From a new measure to a model, traced through @lee2026startupculture. Steps and results as the published abstract states them. {#tbl-sw-measure-model}
+
+(Only the published abstract was accessible when this section was written. The article
+is not open access, and the working-paper copy sits behind a bot check. The table
+records the paper's moves as its abstract states them, and the model below is a
+stylized illustration written for this chapter, not Lee's.)
+
+It is worth seeing concretely why the null forces a model. A zero outcome gap between
+adopters and non-adopters is evidence of a zero effect only if adoption is unrelated to
+the firm's underlying quality. If cash-poor firms value a 5% wage saving more, as they
+should, adopters are negatively selected, and a genuine productivity effect can be
+offset exactly by that selection. The chunk below builds two worlds. In World A the
+culture is purely a cost device: it has no productivity effect, and adoption is
+unrelated to firm quality. In World B the culture raises outcomes by 0.25 standard
+deviations, but the value of the wage saving falls with productivity, so weaker firms
+adopt more. Both worlds are tuned to the same adoption rate and the same outcome gap.
+
+```{r sw-measure-model}
+# A stylized adoption model written for this illustration; it is not Lee's model.
+# theta is a firm's latent productivity, which the researcher never sees; f is a
+# noisy observable proxy for it (funding raised, say). Advertising the
+# worker-centered culture (W = 1) is worth
+#   s0 * exp(-rho * theta)   the labor-cost saving, worth more to cash-poor firms
+#   + delta                  any productivity gain, which also raises the outcome
+#   - K + u                  a fixed cost of sustaining the claim, and a taste shock
+# and the outcome is y = theta + delta * W + e. Workers' taste for the culture
+# (the wage discount and the application premium) is the same in both worlds.
+s0 <- 0.25; sig_u <- 0.5
+
+draw_world <- function(delta, rho, K, n = 5000, seed = 1) {
+  set.seed(seed)
+  theta <- rnorm(n); f <- theta + rnorm(n)
+  W <- as.integer(s0 * exp(-rho * theta) + delta - K + rlogis(n, scale = sig_u) > 0)
+  data.frame(f, W, y = theta + delta * W + rnorm(n))
+}
+facts <- function(d) c(
+  `Adoption share`        = mean(d$W),
+  `Outcome gap`           = mean(d$y[d$W == 1]) - mean(d$y[d$W == 0]),
+  `Adoption slope on f`   = unname(coef(lm(W ~ f, data = d))[2]))
+
+world_A <- draw_world(delta = 0,    rho = 0,     K = 0.475)  # cost device only
+world_B <- draw_world(delta = 0.25, rho = 0.425, K = 0.747)  # productivity, masked
+knitr::kable(rbind(`World A: cost saving only` = facts(world_A),
+                   `World B: productivity effect, selected adoption` = facts(world_B)),
+             digits = 3,
+             caption = "Two worlds, one set of headline facts. The adoption slope is the moment the headline facts do not use.")
+
+# Model-implied moments, computed from adoption probabilities on a large
+# simulated panel of firms (the same draws for every parameter value).
+set.seed(99); th_s <- rnorm(20000); f_s <- th_s + rnorm(20000)
+implied <- function(delta, rho, K) {
+  S <- s0 * exp(-rho * th_s)
+  p <- plogis((S + delta - K) / sig_u)
+  c(adopt = mean(p),
+    gap   = sum(p * (th_s + delta)) / sum(p) - sum((1 - p) * th_s) / sum(1 - p),
+    slope = cov(p, f_s) / var(f_s),
+    cost_share = sum(p * (S > delta)) / sum(p))   # adopters whose cost motive is larger
+}
+# For a candidate delta, find the (rho, K) that reproduce the two headline facts.
+fit_headline <- function(delta, obs) {
+  K_for <- function(rho) uniroot(function(K)
+    implied(delta, rho, K)[["adopt"]] - obs[["Adoption share"]], c(-5, 10))$root
+  rho <- uniroot(function(r)
+    implied(delta, r, K_for(r))[["gap"]] - obs[["Outcome gap"]], c(-3, 5))$root
+  c(delta = delta, rho = rho, K = K_for(rho))
+}
+
+obs <- facts(world_B)
+ridge <- t(sapply(c(0, 0.1, 0.2, 0.3, 0.4), function(dl) {
+  par <- fit_headline(dl, obs)
+  c(par[1:2], implied(par[1], par[2], par[3])[c("adopt", "gap", "slope", "cost_share")])
+}))
+colnames(ridge) <- c("Productivity effect", "Selection strength", "Adoption share",
+                     "Outcome gap", "Adoption slope", "Cost-motivated share")
+knitr::kable(ridge, digits = 3,
+             caption = "Every candidate productivity effect fits the headline facts of World B exactly; only the implied adoption slope differs.")
+
+# The third moment picks the point on the ridge.
+d_hat <- uniroot(function(dl) {
+  p <- fit_headline(dl, obs); implied(p[1], p[2], p[3])[["slope"]] - obs[["Adoption slope on f"]]
+}, c(0, 0.45))$root
+p_hat <- fit_headline(d_hat, obs)
+knitr::kable(data.frame(
+  ` ` = c("True (World B)", "Recovered from three moments"),
+  `Productivity effect` = c(0.25, d_hat),
+  `Cost-motivated share of adopters` = c(implied(0.25, 0.425, 0.747)[["cost_share"]],
+                                         implied(p_hat[1], p_hat[2], p_hat[3])[["cost_share"]]),
+  check.names = FALSE), digits = 3,
+  caption = "Adding the adoption slope identifies the productivity effect and the distribution of motives.")
+```
+
+The first table is the referee's problem in miniature. Both worlds show the same
+adoption share (about 0.38) and an outcome gap that no sample of this size could tell
+from zero; its standard error is about 0.04. The wage discount and the application
+premium come from workers' taste and are identical by construction. The second table
+shows why more description of the same facts cannot help. For every candidate
+productivity effect from 0 to 0.4 there is a selection strength that reproduces the
+headline facts exactly, so the facts trace a ridge, not a point. What breaks the tie is
+a prediction the model makes and the headline facts do not use. If selection is masking
+a productivity effect, adoption must fall with an observable proxy for firm quality,
+and the steeper the fall, the larger the effect it hides. In World B the slope is
+−0.027 with a standard error near 0.005, so it is easily detected. Matching that one
+extra moment picks a point on the ridge and recovers an effect of 0.23 against a true
+0.25. It also returns a quantity no regression could report: the share of adopters for
+whom the cost saving, rather than the productivity gain, is the larger motive. The
+recovered share is 0.62 against a true 0.57.
+
+Five lessons carry over to any measurement paper that is tempted to add a model.
+
+1. **The facts ask for the model.** Its question is the one the reduced form leaves
+   open, and the paper says so before the model appears. A model appended to answer a
+   question nobody raised reads as decoration.
+2. **The measured facts discipline the model.** The wage discount is not only a
+   finding; it sets the size of the cost motive. A model whose parameters owe nothing
+   to the paper's own measurements throws away the contribution the paper has already
+   made.
+3. **Name the moment that identifies the mechanism.** Say which feature of the data
+   separates the hypotheses and why the headline facts could not. In the toy it is the
+   adoption gradient; in a real paper it may be an entry margin, a distribution rather
+   than a mean, or a response to a shock.
+4. **Deliver a quantity, not a verdict.** "Many firms adopt primarily for cost
+   savings" is a statement about the distribution of motives across firms, which a
+   model can return and a regression cannot.
+5. **Keep the model as small as the question.** The toy needs three parameters to
+   settle one question. Every additional primitive is another link in @eq-sw-chain that
+   a referee may refuse to grant.
+
+The paper's history suggests that the third and fourth lessons were learned in
+revision. An earlier version circulated in 2022 as a [Singapore Management University
+working paper](https://ink.library.smu.edu.sg/soe_research/2478). As indexed there, its
+abstract presented the model as showing that financially constrained start-ups have an
+incentive to advertise the culture workers prefer, even though without the constraint
+they would not. The published abstract instead poses the model as a contest between
+two named mechanisms, cost savings and productivity, and reports which one dominates.
+The model's job shifted from rationalizing a fact to adjudicating between explanations
+of it, and that is the form in which the paper was published. (The working-paper
+abstract was read through a search index, not from the document itself.)
 
 A descriptive paper that stops at the pattern is one genre; a paper that goes on
 to argue for a particular explanation of that pattern is another, and it needs a
@@ -827,6 +1014,18 @@ participation (@sec-causal-mediation-firm-panel).
 under which the gains actually appear, finding R&D intensity in every
 high-profitability configuration (@sec-qual-fsqca).
 
+A different, equally instructive pairing is the *multimethod* paper in which one method
+produces the measure the other estimates. @huang2026workflow use machine learning to
+classify roughly 280,000 GitHub issues as maintenance or development work and then
+estimate, with econometrics, how two forms of workflow automation change resolution
+speed for each (@sec-innovation-workflow). The writing lesson is that the two methods
+are not parallel robustness checks but a pipeline, so the paper must justify the
+classifier's validity before the regression is believed, because any classification
+error enters the econometric stage as measurement error in the outcome's category. The
+theory does the matching work: two mechanisms (mechanization, orchestration) are
+mapped to two innovation types (exploitative, explorative) before any data appear, so
+each estimate answers a stated prediction instead of fishing across cells.
+
 ### Why the stages are ordered, and why the method changes
 
 The ordering is not stylistic. Each stage exists to answer the objection the previous
@@ -1044,6 +1243,124 @@ built on one retailer's books meets JMR's replication policy.
    person's currency.
 :::
 
+### A Third Specimen: Mechanism by Moderation, Without a Model {#sec-sw-emb-listings}
+
+@luca2026gettingmap, published in *Management Science* in 2026 (marketing department),
+ask whether being listed on a review platform raises a small business's revenue. Their
+answer is 5% to 10% for Texas bars and restaurants added to Yelp. The paper is worth
+studying for its craft more than its topic. It builds all three stages from reduced-form
+evidence, with no structural demand model and no formal theory model. It also runs on
+an outcome anyone can download (@sec-data-txmb). The account below draws its numbers
+from the NBER working-paper version [@luca2022gettingmapwp]. The heterogeneity results
+summarized at the end are from the published abstract, because the working paper does
+not yet contain them.
+
+**The main effect is set up by a descriptive puzzle.** The paper's first result is a
+count, not a coefficient. About 18% of alcohol-serving establishments in the state still
+had no listing at the end of 2017, and 4,810 of 14,381 were never listed at all, even
+though a listing costs nothing. That fact does two jobs. It makes the causal question
+non-obvious: if a free listing raised revenue, why would so many owners skip it? It also
+sets the extensive margin apart from the review literature, which had studied ratings,
+rankings, and review counts for businesses already on the platform. The working paper
+then gives the magnitude a familiar benchmark, comparing it with the revenue value of
+one additional star.
+
+**The endogeneity argument is a ladder, and each rung removes the owner from the timing
+decision.** The threat is specific: an owner might add a listing during a renovation,
+an ownership change, or an upswing, and the revenue gain would then belong to those
+events. The paper answers with four samples, each estimated with the same imputation
+difference-in-differences and establishment and county-by-month fixed effects
+(@fig-sw-listings-ladder). The estimate is 0.052 log points for all listings and 0.052 for
+venues listed at least three months after opening, which rules out a new-venue ramp-up.
+It is 0.089 for the 747 venues listed by 56 "super-adders", the top 1% of users by
+listings created, whose timing has nothing to do with the restaurant's plans. It is
+0.104 for the 1,295 venues Yelp created on 22 and 23 July 2010 from a purchased directory
+file, whose timing the platform set. The direction of travel is the argument. If owner
+timing inflated the full-sample estimate, taking the owner out should shrink it. It
+grows instead. Event-study leads close the case by showing no rise in revenue before any
+listing.
+
+```{mermaid}
+%%| label: fig-sw-listings-ladder
+%%| fig-cap: "The identification ladder in the working paper on online listings. Each rung moves the choice of listing date further from the owner, and the estimated revenue effect rises rather than falls."
+flowchart LR
+  R1["All listings<br/>date set by owners,<br/>users, or platform<br/>+0.052"] --> R2["Listed 3+ months<br/>after opening<br/>no new-venue ramp<br/>+0.052"]
+  R2 --> R3["Added by 56<br/>super-adders<br/>date set by heavy users<br/>+0.089"]
+  R3 --> R4["Bulk adds, July 2010<br/>date set by a<br/>data purchase<br/>+0.104"]
+```
+
+Two qualifications show what each rung costs. First, every rung changes the population
+as well as the identification. Bulk-added venues are more rural (75% urban against 86%
+for all listed venues) and later earn a mean rating of 2.09 against 3.03. So the 0.104 is
+an effect for the kind of venue that waits to be added, not a cleaner estimate of the
+0.052. The ladder supports "positive, and not an artifact of owner timing". It does not
+support a single number. Second, the estimator is part of the evidence. Ordinary
+two-way fixed effects give 0.054 for the bulk sample, about half the two-stage estimate.
+The paper explains its choice by its setting: the panel is unbalanced in calendar time,
+and Yelp's reach grows over the sample, so effects should differ by when a venue was
+listed. That is the case in which the robust estimators of @sec-causal-week06 matter.
+The two-way results go in an appendix, so a reader can see the gap.
+
+**Measurement is validated where it could fail.** Two of the paper's inputs are proxies,
+and each gets its own check. Alcohol receipts stand in for total revenue, and an appendix
+assembles outside evidence that the two move together. The tax-to-Yelp match comes from
+Yelp's internal matcher, which the authors audited with three crowdworkers per venue on
+750 venues. Of the matched venues, 241 of 250 really were on Yelp. Of the unmatched
+venues, 202 of 250 really were absent. The second number deserves more weight than the
+working paper gives it. The paper says only false positives affect its regressions, but
+never-listed venues are its main control group. A listed venue misclassified as
+unlisted therefore sits among the controls, and with about one unmatched venue in five
+actually listed, the bias runs toward zero.
+
+**The mechanism comes from who gains, not from a mediator.** The first specimen measured
+a mediator, and the second decomposed the outcome. This paper takes a third route, and
+it is the one open to anyone without a mediator series. Each candidate mechanism
+predicts which venues should gain more. If a listing works by standing in for reputation
+the venue cannot build otherwise, gains should be larger where reputation is hard to
+build: independents rather than chains, and tourist areas whose customers lack local
+knowledge. If a listing works by revealing quality to people who would not otherwise
+see it, gains should be larger for better products. The published abstract reports both
+patterns. Independents and venues in tourist areas gain more, and so do larger venues
+and those with good reviews. Each split is a prediction stated before the table, so the
+heterogeneity table is the mechanism test. A disclosure result answers the opening
+puzzle. Venues that stayed off the platform until the bulk import earned lower ratings,
+as voluntary-disclosure models predict: owners who expect bad reviews have a reason not
+to list. Even so, they gained from being listed.
+
+The honesty requirement applies with full force here, because no one randomized chain
+status. A chain-versus-independent split is also a split by size, location, and
+management. Moderation evidence is consistent with a mechanism. It does not isolate one.
+Its strongest form, which this design reaches toward, pairs splits on which rival
+mechanisms predict opposite signs, so that only one story fits the whole pattern.
+
+::: {.callout-tip}
+## Explaining an effect without a model
+
+1. Open with the descriptive fact that makes the causal question puzzling (here, free
+   listings that many owners skip).
+2. Name who chooses the treatment date, and build a ladder of samples in which someone
+   progressively further from the outcome chooses it.
+3. Read the ladder by the direction its estimates move, and say what population each
+   rung represents.
+4. Justify the estimator from features of the setting (unbalanced panel, effects that
+   grow with the platform), and show the naive estimator in an appendix.
+5. Audit every constructed variable, and work out which group each error type
+   contaminates.
+6. Derive from each candidate mechanism a prediction about who gains more, state it
+   before the table, and treat the heterogeneity table as the mechanism test.
+7. Use the selection result (who stayed out) to answer the puzzle you opened with.
+:::
+
+The template transfers directly to studies of firms adopting a free digital channel,
+such as opening a social media account, joining a marketplace, or claiming a profile.
+Each shares the three problems this paper solves. The adopter picks the date, the
+non-adopters are a selected group worth describing in their own right, and the outcome
+has to come from outside the platform, or the effect of being on the platform is measured
+with the platform's own data. The rung to look for is an adoption whose date someone
+other than the firm set. Tax receipts, permits, and other administrative records solve
+the outcome problem when they exist, and @sec-data-txmb shows what one such source
+takes to use.
+
 ### A Fourth Specimen: A Small Reward Framed as Four Open Questions {#sec-sw-emb-plasma}
 
 @bruers2026plasma, published online in *Management Science* in 2026, is about as plain
@@ -1254,6 +1571,168 @@ full: stated interpretations are consistent with a mechanism but do not isolate 
 The template carries over to loyalty programs and promotions. A points bonus on one
 product line is the same experiment, and substitution away from the other lines is the
 outcome that keeps the estimate honest.
+
+### A Fifth Specimen: One Effect, Several Routes {#sec-sw-emb-roads}
+
+@agarwal2026road, published in *Management Science* in 2026 (finance department), ask
+whether building a rural road brings a village's households into the stock market. The
+treatment and the outcome sit far apart, and a reader's first reaction is to ask how
+asphalt could open a brokerage account. That distance is why the paper is useful here.
+The main effect takes one table. Most of the paper is spent on the routes from road to
+trade, and each route gets its own prediction, its own data source, and its own test.
+The earlier specimens each explained an effect one way: a mediator, a decomposition, a
+moderator table, a survey. This one runs several explanations side by side and tries to
+discriminate among them.
+
+The account below is drawn from the February 2022 working paper [@agarwal2022roadwp],
+because the published text was not accessible when this section was written. Where the
+published abstract differs, the difference is noted. Magnitudes need particular care.
+The February 2022 draft reports that a new road raises the number of new investors in a
+postal code by 28.7% and their trades by 64.5%. The abstract on record for the SSRN
+version reports 6.8% and 7.9%, and the published abstract reports no magnitude. The
+numbers below are the 2022 draft's and show the pattern of the argument. Take
+magnitudes from the published tables before quoting any.
+
+**The setting supplies the design, and the paper borrows it openly.** India's rural road
+program (PMGSY) built all-weather feeder roads to more than 115,000 previously
+unconnected villages. Development economists had already used the program to study
+schooling, labor, and lending, and the paper says it follows the empirical strategy
+of one of those studies. The new ingredient is the outcome: every trade on the National Stock Exchange
+by 13.5 million individual investors, each tagged with a postal code. The authors
+assign villages to postal codes within five kilometers, keep the 4,154 postal codes
+that received their first program road between October 2004 and February 2015, and
+estimate a monthly panel with postal-code, month, and district-by-year fixed effects.
+Every unit is eventually treated, so the comparison is only ever about timing
+(@sec-causal-did discusses what that costs). A new outcome on an accepted design is a
+legitimate contribution, and it leaves the referee's attention for the mechanism
+sections, which is where this paper wants it.
+
+**The main effect is split once before any mechanism is discussed.** New investors,
+defined as accounts less than three years old, drive most of the response. In the 2022
+draft the effect is about six additional new investors and 214 additional trades per
+postal code per month, in a sample where the average postal code has 36 active
+investors. Effects are larger in rural postal codes and in areas of intermediate
+development. The poorest tenth by consumption shows no extra response relative to
+developed areas. That split is a boundary result and a first hint about mechanism. It
+is what one would expect if a road cannot create investors where there is little to
+invest.
+
+**Each route is written as a prediction about something other than the headline
+outcome.** @fig-sw-roads-routes and @tbl-sw-roads-routes give the structure. The
+information route says a road lowers the cost of learning about stocks, through
+better access to facts about companies and through more contact with people who
+already invest [@hong2004social]. If so, three things should follow, and none of them
+is the participation count. Remote places, where information was scarcest, should
+respond more. Portfolios should broaden. Holdings should reach toward firms farther
+away. The financial-inclusion route says a road brings bank branches, and a branch is
+where an account gets opened and where savings sit before they move. If so, the
+effect should concentrate in postal codes where a branch opened after the road, and
+money should leave savings deposits and consumption. A third candidate is a rival
+more than a route: roads raise incomes, and richer households buy stocks. If that
+were the whole story, the response should concentrate in months of good rainfall,
+the standard proxy for a positive income shock in rural India.
+
+```{mermaid}
+%%| label: fig-sw-roads-routes
+%%| fig-cap: "The argument structure of the road-construction paper, reconstructed from the February 2022 working paper. Each route from road to participation is tested on an implication other than the participation count, and a final stage asks whether the new participants did well."
+flowchart LR
+  R["New feeder road<br/>(timing varies by<br/>postal code)"] --> I["Information route"]
+  R --> F["Financial-inclusion<br/>route"]
+  R --> W["Income shock<br/>(rival account)"]
+  I --> I1["Larger where remote<br/>More tickers held<br/>More distant firms"]
+  F --> F1["Larger where a branch<br/>follows the road<br/>Deposits and<br/>consumption fall"]
+  W --> W1["Larger after good<br/>rainfall? No"]
+  I1 --> P["More new investors<br/>and trades"]
+  F1 --> P
+  W1 -.-> P
+  P --> Q["Did they do well?<br/>Short-run gains,<br/>long-run losses,<br/>more volatile stocks"]
+```
+
+| Route | Implication tested | Data brought in | Result in the 2022 draft |
+|---|---|---|---|
+| Information | Larger response in remote postal codes | Distance to the nearest large city (2011 Census) | New investors rise about 0.4% more per additional 10 km |
+| Information | Broader portfolios | Count of distinct tickers traded | Up 51.1% |
+| Information | Reach toward distant firms | Headquarters locations from a firm database | No increase for firms within 50 km; up 60.6% for firms more than 500 km away |
+| Financial inclusion | Larger response where a branch opens within 36 months | Central bank register of branch openings | New investors up a further 8.9%, their trades 9.6% |
+| Financial inclusion | Demand, not bank salesmanship | Branch ownership (state-owned or private) | Stronger for state-owned branches |
+| Financial inclusion | Money moves out of savings and consumption | Branch-level deposit returns; a household panel in 16 districts | Savings deposits fall; consumption falls while income rises |
+| Income shock (rival) | Response concentrated after good rainfall | Gridded monthly rainfall | Interaction not positive; negative for new investors |
+
+: Routes from road to stock market participation, the implication each was tested on, and the data each test required. Results are from the February 2022 working paper. {#tbl-sw-roads-routes}
+
+**Every route costs a new dataset.** The right-hand columns of @tbl-sw-roads-routes
+list a census, a firm database, a confidential branch register, deposit returns, a
+household survey, and a rainfall archive. Mechanism sections in student drafts
+usually re-cut the main regression by variables already in the file. Here each claim
+about a route is checked against a measurement that the main result did not use,
+which is why seven rows read as seven pieces of evidence and not one result shown
+seven ways.
+
+**The best split is the one on which two stories disagree.** A branch could raise
+participation because households want to invest and now can, or because bank staff
+sell investments. The authors argue that state-owned banks reach further into rural
+areas but earn less fee income, and so have less reason to push stock trading. The
+demand story therefore predicts a stronger effect for state-owned branches, and the
+sales story a weaker one. The estimate is stronger for state-owned branches. This is
+the move the third specimen reached toward: a moderator chosen because rival accounts
+predict opposite signs. The published abstract adds a route the 2022 draft lacks,
+risk sharing, under which roads should matter more where incomes are volatile, and
+reports limited evidence for it. A route that was proposed, tested, and found weak
+is reported as such, and it makes the two surviving routes more credible.
+
+**The last stage qualifies the headline.** Participation is usually treated as a
+good outcome, and the paper could have stopped there. It asks instead how the new
+investors did. In the 2022 draft, trades after road completion earn money over 1-day
+and 10-day holding periods, show no detectable profit over 25 days, and lose money
+over 140 trading days, and trading shifts toward more volatile stocks. The published abstract keeps
+the conclusion: infrastructure raises participation but not necessarily the quality
+of investment outcomes. This is a fourth stage beyond effect, mechanism, and
+boundary, and it changes the policy sentence. Without it the paper recommends roads
+as financial-inclusion policy. With it the paper says roads bring people in and
+something else has to help them invest well.
+
+**Where the specimen is thin.** The honesty requirement of @sec-sw-emb applies, and a
+conference discussion of the working paper states the problem compactly
+[@hong2022roaddiscussion]. A road moves everything at once: information, bank access,
+and income. If bank branches were treated as the variable of interest and the road as
+its instrument, the exclusion restriction would fail, because the road also works
+through the other routes. The branch split has a second weakness. A branch that opens
+after the road is itself an outcome of the road, and banks choose where to open, so
+the postal codes with new branches may be the ones where demand for investing was
+about to rise anyway. The discussion asks which way causation runs between branches
+and participation. The rainfall test addresses transitory income only, and a
+permanent rise in income from better market access remains a live alternative. The
+evidence supports "both routes are operating" and does not support a share for each.
+A paper that needs shares has to write down a model, as in @sec-sw-measure-model, or
+find separate variation in each route. The same discussion suggests a different
+frame, the unplanned benefits of public-goods spending, which shows that the frame
+was a choice.
+
+::: {.callout-tip}
+## Explaining one effect through several routes
+
+1. Before any mechanism test, split the main effect on the margin that matters (here,
+   new against experienced investors) so the reader knows whose behavior needs
+   explaining.
+2. Write each route as a causal sentence, then derive an implication for a variable
+   other than the headline outcome.
+3. Bring a new measurement to each implication. Re-cutting the main regression by
+   variables already in the file is weaker evidence.
+4. Include the dull rival (people simply got richer) and give it a test of its own.
+5. Look for one split on which two versions of a route predict opposite signs.
+6. Report a route that found little support. It makes the others more credible.
+7. Say that the tests show which routes operate and do not apportion the effect among
+   them, and flag any split that conditions on something the treatment itself caused.
+8. End by asking whether the outcome you raised was good for the people concerned, and
+   let the answer change the policy sentence.
+:::
+
+The template carries over to marketing questions where a distant cause is suspected of
+moving a consumer outcome: broadband rollout and online shopping, a new store format
+and category entry, a payment technology and spending. In each, the main effect is
+the short part of the paper, and the list of routes, with one outside dataset apiece,
+is the plan for the rest.
+
 
 ## The Lifecycle Paper: How Response Changes Across Stages {#sec-sw-lifecycle}
 
@@ -1498,6 +1977,7 @@ reading them as one genre makes the moves easier to see.
     it would move the answer.
 11. Bound the claim: one platform, one kind of content, one period.
 :::
+
 
 ## The Field-Experiment Paper from an Emerging Market {#sec-sw-emerging-field}
 
@@ -1865,6 +2345,341 @@ pattern that nobody had documented, stated with its own ceiling.
 14. Give the real reason the study ran where it did, alongside the scientific one.
 :::
 
+## The Design-Science Method Paper {#sec-sw-design-science}
+
+The methods paper sketched under paper types has a codified variant in information
+systems that marketing scholars increasingly write for, review for, and borrow from:
+the computational design-science paper. Its artifact is a method, usually a
+predictive model, and its contribution is design knowledge, meaning a statement of
+which design choices solve which problem and why
+[@hevner2004design; @gregor2013positioning; @abbasi2024pathways]. Students who know
+only the hypothesis-testing template find these papers hard to imitate, because the
+logic that holds them together is never stated in any one place. The paper
+reveals it through a handful of tables.
+
+Two papers from the same September 2026 issue of *Information Systems Research* serve as
+specimens. @wang2026drdl propose DRDL, a deep-learning method that predicts whether
+and when a firm will fall into financial distress from several data sources at once
+(@sec-mmf-drdl reimplements it). @xu2026upstar propose UPSTAR, a product recommender
+that first infers *why* a customer bought each item, out of stable preference or
+exploratory intent, and then predicts the next purchase. The domains share almost
+nothing, but the architecture is the same, and the shared architecture is what to
+learn. (DRDL was read in full. For UPSTAR, only the published abstract and the
+authors' released code were accessible when this section was written, so statements
+about UPSTAR's internals come from the code.)
+
+### The spine: one artifact per challenge
+
+The single most important object in a design-science paper is a table that most
+readers skim: the design framework. It runs from goals to challenges to design
+components, and it is built backward from the problem's own features. DRDL's version
+(their Table 2) has two goals, five challenges, and five components, one component for
+each challenge.
+
+| Paper | Goal | Challenge | Design component |
+|---|---|---|---|
+| DRDL | Use entangled multiview data | Separate complementary from redundant signal | Discrete multiview recoder |
+| | | Fuse views without carrying redundancy | Mask-based view fusion decoder |
+| | Predict risk over several horizons | Risk must not fall as the horizon lengthens | Risk accumulation function |
+| | | A firm that fails sooner must score riskier | Focal survival loss |
+| | | The two objectives' gradients can conflict | Adaptive gradient balancing |
+| UPSTAR (reconstructed) | Know why each item was bought | Motivation categories are left implicit | Framework of purchase motivations |
+| | | Inferring motivation usually needs surveys or side data | STB measure from sequences and item attributes only |
+| | Use motivation to predict the next purchase | The two motivations follow different dynamics | Separate sequence encoders, joined by a learned fusion gate |
+| | | Exploratory signals are sparse and noisy | Teacher–student distillation from the motivation-specific heads |
+
+: The design framework as the spine of a design-science paper. DRDL rows follow the authors' Table 2 [@wang2026drdl]; UPSTAR rows are reconstructed from the published abstract and the released code [@xu2026upstar], not from a table in the paper. {#tbl-sw-design-spine}
+
+The table matters because every later section indexes into it. The method section has
+one subsection per row. The ablation study removes the rows one at a time. The
+comparison with related methods uses the challenges as its columns. The contribution
+section restates the goals as design principles. Two failure modes are visible at
+a glance. A component with no row is decoration, and a referee will ask why it is
+there. A challenge with no component is a promise the paper never redeems.
+
+Each goal usually comes with a kernel theory, a theory from outside the
+method's field that explains why the design should work. DRDL draws on the
+chunking theory of memory from cognitive psychology to justify discrete codes. UPSTAR
+starts from a framework of purchase motivations and keeps the two that are rooted in
+the consumer's own interests. The kernel theory is inspiration, not a hypothesis
+under test, and the honest papers say so. DRDL calls it "a principled inspiration".
+Referees judge it on whether the design traces back to it, not on whether the
+experiments confirm it.
+
+### The front half: question, gap table, rationale
+
+The research questions are design questions, phrased as *how to*. DRDL's two are how to
+separate useful from redundant information across data views, and how to predict risk
+over time while respecting two monotonicity constraints. The advice of
+@sec-sw-open-question still applies, but differently: here the gap is a capability
+gap, so it has to be shown, not asserted. DRDL shows it with a positioning table
+of prior studies, with design properties as checkmark columns and "This study" as the
+last row. The table note states the search rule: studies from 2020–2025 in the AIS
+Senior Scholars' list of premier journals and in the Academic Journal Guide's operations
+research and management science category (rated 3 and above), 57 candidates in all. That
+note turns a literature review into an auditable claim. The table's columns
+reuse the vocabulary of the design framework. So does a second table, which compares
+the proposed method with the incumbent methods on the same property columns.
+
+Between the literature and the method sits a section that hypothesis-testing papers
+lack: methodological challenges and design rationale. It argues from the problem's
+characteristics to each challenge, so that by the time the method appears, every
+component already has a reason to exist.
+
+### The method section
+
+The method section follows a fixed order: a formal problem definition, an overview
+figure, one subsection per component, and a subsection explaining why the design
+should work (DRDL §4.7, "Mechanism of Disentanglement"). DRDL is also honest about
+novelty, a habit worth copying. Its contribution paragraph separates the existing
+building blocks it reuses, such as vector quantization and the multilayer perceptron,
+from the five it designed. A referee who finds an uncredited standard component
+discounts every other novelty claim in the paper.
+
+### Evaluation at three levels
+
+Both papers evaluate at three levels, and DRDL names them: model, application, and
+mechanism.
+
+**Model: does it predict better?** DRDL compares against 21 benchmarks from three
+method families. Sixteen of them are four multitask architectures, each combined with
+the monotonicity and ranking losses that earlier work proposed for the same two
+properties. The baselines thus get the best existing fix for each challenge rather than
+appearing as straw men. It runs five repetitions of 10-fold cross-validation for 50
+estimates per cell, plus an out-of-time split. It reports ranking, horizon-specific,
+and calibration metrics. Two appendices pre-empt the predictable objections. Gradient
+boosting and parametric survival models on hand-built ratios answer "is the complexity
+worth it?" Averaging and stacking ensembles answer "isn't this just an ensemble?" The
+headline is a C-index of 0.775 against 0.712 for the best benchmark on yearly
+Chinese-market prediction. UPSTAR's abstract reports gains over state-of-the-art
+recommenders on three retail datasets.
+
+**Application: is the gain worth anything?** Offline accuracy is not a decision, so
+the paper translates it into the currency of the person who acts on it (the same rule
+as item 8 above). DRDL simulates investment pools and counts the distressed firms each
+method lets in, scores profitability by return on assets and equity, and repeats the
+exercise under mean–variance weighting. For a recommender, the equivalent is what the
+recommendations do for the retailer. UPSTAR's abstract stresses surfacing genuinely
+exploratory items, which drive discovery and cross-category sales.
+
+**Mechanism: why does it work?** "Mechanism" here means something different from
+Stage 2 of @sec-sw-emb, and it stands on firmer ground. The author controls the artifact,
+so removing a component is an intervention on the design rather than an inference from
+observational data. Five kinds of evidence recur:
+
+1. *Ablation tied to the spine.* Drop each component in turn. DRDL removes six,
+   one at a time, and reports the performance gained per unit of training time for
+   each. The mask-based fusion decoder delivers the most gain per second in both
+   markets.
+2. *Verify the property each component claims.* If a component claims to disentangle,
+   measure disentanglement directly. DRDL scores its representations on two
+   disentanglement metrics against two disentangled-VAE baselines. A component
+   whose claimed property is never measured has only an ablation to its name, and an
+   ablation cannot say *why* the drop happened.
+3. *Locate the gain where the theory predicts it.* UPSTAR's headline mechanism
+   evidence is that the improvement concentrates on exploration-driven purchases.
+   That is where a motivation-aware design should help and a motivation-blind
+   one should struggle.
+4. *Rule out the cheap explanations:* more parameters, ensembling, class imbalance.
+5. *Sensitivity and interpretability:* vary the hyperparameters the design introduced
+   (codebook size in DRDL, the stable and exploratory cutoffs in UPSTAR), and show what
+   the learned representations encode.
+
+DRDL runs seven such analyses, most of them in online appendices. The main text
+carries the ablation and the property check, because those two tie the evidence back
+to the spine.
+
+### Make the elaborate version beat the simple one
+
+UPSTAR's released code shows why the simple version of your own idea should appear in
+the paper. In the code, the paper's STB measure works like this. It builds an item
+co-purchase graph and perturbs it adversarially. It then scores each item by how
+little its learned embedding moves: robust items count as stable preference, fragile
+ones as exploratory. Within each customer's history, the top half of items by score are
+labelled stable and the bottom 40% exploratory. The repository's configuration offers
+three STB variants. Its help text describes a repurchase-intensity score as "default &
+best" and the original adversarial version as "degenerate". The repository ships
+training code but no evaluation script. None of this shows that the published results
+are wrong, and we have not rerun them. It does show the question a replicator will ask
+first: does the sophisticated component earn its place over a one-line heuristic for
+the same construct? The defense is to put that heuristic in the paper as a baseline and
+beat it. The second defense is to release the code that regenerates the headline table,
+not only the training loop.
+
+### Carrying the template into a marketing journal
+
+Design-science outlets judge the artifact. Marketing journals reading the same paper
+weigh three further things.
+
+- **Validity of any new measure.** A score like STB is a measurement claim: that a
+  number computed from transaction logs tracks a psychological motivation. The
+  standards of @sec-reliability-validity apply. That means convergent evidence against
+  an external criterion, such as stated motivation or a known exploration episode, and
+  discriminant evidence against confounds such as purchase frequency.
+- **Decision value shown in the field.** An offline accuracy table persuades an IS
+  referee more than a marketing one. A field experiment, or a credible policy
+  counterfactual, carries the application level further.
+- **The marketing question in front.** UPSTAR's motivation framework is the marketing
+  hook. The architecture is the means. A marketing version of the paper leads with
+  what the framework says about consumers and treats the recommender as the test of
+  that framework.
+
+::: {.callout-tip}
+## A checklist for the design-science method paper
+
+1. Phrase each research question as *how to design* something that achieves a stated
+   property.
+2. Build the design framework (@tbl-sw-design-spine) before drafting. Every component
+   gets exactly one challenge, and every challenge gets a component.
+3. Name the kernel theory, and present it as inspiration for the design, not a
+   hypothesis the experiments test.
+4. Back the gap claim with a positioning table whose selection rule sits in the table
+   note, and reuse its property columns to compare against incumbent methods.
+5. Separate reused building blocks from novel ones in the contribution statement.
+6. Benchmark across method families, give strong baselines the best existing fix for
+   each challenge, and report variance across repeated splits plus an out-of-time
+   test.
+7. Include the simple heuristic version of your own idea, and a tuned off-the-shelf
+   learner on hand-built features, as baselines.
+8. Translate accuracy into a decision outcome measured in the user's currency.
+9. Ablate one component at a time, measure the property each component claims, and
+   show the gain landing where the kernel theory predicts.
+10. State the contribution as design principles, and release code that reproduces the
+    headline table, not only the training loop.
+:::
+
+## The Structural-Model Paper: A Consumer-Search Specimen {#sec-sw-structural}
+
+A third paper from the same September 2026 issue of *Information Systems Research*
+shows a different genre, the empirical structural-model paper. @zhang2026footprints model
+how consumers search across a platform's native app and its mini-program, carrying a
+reference price from one channel to the other, and use the estimates to design a
+promotion (@sec-click-search-mss covers the substance). The artifact here is not a
+method to be benchmarked, as in @sec-sw-design-science, nor a causal effect, as in
+@sec-sw-emb. It is an *estimated model of behavior*, and the contribution is what the
+model lets a decision maker do that a reduced-form analysis cannot. Structural papers
+in marketing, economics, and IS share a skeleton, and this one shows it clearly.
+(Only the two versions of the abstract and the deposited reference list were accessible
+when this section was written, so what follows reads the paper's framing, not its
+internals.)
+
+### The title and the abstract
+
+The title has two halves joined by a colon, a phenomenon and a model:
+"Analyzing Consumer Footprints on E-Commerce Platforms: A Multichannel Sequential
+Search Model with Reference Price." The first half echoes @ghose2019modeling, "Modeling
+Consumer Footprints on Search Engines," and that echo positions the paper in an IS
+tradition before the reader reaches the abstract. The second half lists the model's
+ingredients in order of novelty: *multichannel* is new, *sequential search* is the
+inherited framework, and *reference price* is the behavioral addition.
+
+The Crossref abstract makes six moves in seven sentences, and each is one or two
+sentences long:
+
+1. **Context.** Mini-programs let consumers browse across the app and the mini-program,
+   leaving click and purchase records in both.
+2. **Opportunity.** These multichannel footprints contain information about search
+   preferences that could improve multichannel management.
+3. **Gap.** Prior studies focus on single-channel contexts that "may not directly apply."
+4. **Model.** A threefold search across channels, products, and pages, with a
+   reference price updated along the journey.
+5. **Findings.** Heterogeneity in channel preferences, cross-channel costs, and
+   reference-price sensitivity explains the variety of footprints.
+6. **Policy.** A 32% average promotion gap between channels, and more profit from a
+   smaller promotion than the state-of-the-art model achieves.
+
+A second abstract, on the paper's record in City University of Hong Kong's
+repository and marked "© 2026, INFORMS", swaps move 5 for a prediction claim ("significantly
+outperforms the state-of-the-art sequential search models in predicting both clicks and
+purchases") and quantifies move 6 as a 22% profit improvement. That pairing is the
+genre's signature: the model is first shown to be *right* (it predicts held-out
+behavior better than the incumbent model) and then shown to be *useful* (it changes a
+decision, by an amount in money).
+
+### The spine: data feature, model component, counterfactual lever
+
+The design-science paper is held together by a table of challenges and components
+(@tbl-sw-design-spine). The structural paper's equivalent links three things: a
+*feature of the data* that the incumbent model cannot reproduce, the *model component*
+added to reproduce it, and the *counterfactual lever* that the component makes
+available. A component that changes no counterfactual is hard to justify; a lever with
+no component behind it is a promise the paper cannot keep.
+
+| Paper | Data feature | Model component | Counterfactual lever |
+|---|---|---|---|
+| Zhang et al. (2026) | Same products, two channels, different prices | Cross-channel search with channel-specific costs | Channel-specific promotion |
+| | Prices seen early shape later clicks | Reference price updated along the journey | Promotion *gap* between channels |
+| | Results arrive in pages | Cross-page search cost | (inherited from ranking work) |
+| | Channels are linked by external links | Channel entry and switching costs | Aligning links with promotions |
+| Hu & Karacaoglu (2024) | Mini-program sessions are longer and convert more | Fixed (entry) and marginal (per-click) search costs by channel | Referral credits on WeChat; coupons on the app |
+
+: The structural paper's spine. Zhang et al. rows are reconstructed from the published abstracts; Hu & Karacaoglu rows follow their accepted manuscript [@hu2024westore]. {#tbl-sw-structural-spine}
+
+The table also says where to spend pages. The paper has to show *model-free evidence*
+for every data feature in the first column before the model appears (for example,
+that consumers who saw a lower price in one channel click differently in the other),
+because a referee who does not believe the feature will not believe the component.
+
+### The sections, and what each must contain
+
+A structural search paper usually runs in this order.
+
+1. **Introduction**, ending with the policy number and a contribution paragraph for
+   each literature the paper joins. This paper joins three, as its reference list
+   shows: consumer search (Weitzman-type models from @weitzman1979optimal to
+   @morozov2021estimation), reference prices (@mazumdar2005reference; @putler1992incorporating), and
+   multichannel and mobile commerce. The contribution claim works because the three
+   have rarely been combined. That is the "intersection" gap of @sec-sw-contribution, and
+   it holds only if the intersection is really empty, which leads to the next item.
+2. **Literature**, organized by stream, closing each stream with what this paper adds.
+   The closest prior work deserves a paragraph of its own. The nearest predecessor here
+   is @hu2024westore, a *Production and Operations Management* paper on the same app
+   versus mini-program comparison, estimated on JD.com data with a sequential search
+   model. It does not appear in the ISR paper's deposited reference list. Whether
+   the two were developed in parallel we cannot tell. The lesson for authors is
+   general: search the adjacent fields (operations, IS, economics) for the closest
+   competitor, because a referee from that field will know it.
+3. **Data and model-free evidence.** Sessions, channels, click order, prices, and
+   purchases, with descriptive patterns tied to the spine's first column.
+4. **Model.** Utility, search costs, the reference-price process, and the decision
+   rules, stated as equations, with every departure from the canonical model flagged.
+   A reference price that updates with prices seen during the search breaks one of
+   Weitzman's independence assumptions. An honest paper says what the consumer is
+   assumed to anticipate and what she is not.
+5. **Identification.** Which variation in the data pins down which parameter: click
+   order for preferences, stopping for search costs, cross-channel price differences for
+   the reference-price parameters. The framework of @ursu2025sequential is now the
+   standard reference for this argument.
+6. **Estimation**: the simulator, its tuning, and a Monte Carlo study showing that the
+   estimator recovers known parameters (@sec-click-search-sim does this for a stylized
+   version).
+7. **Results**: parameter estimates, heterogeneity, and fit against benchmark search
+   models and machine-learning predictors (this paper's reference list includes a
+   deep click-prediction model, xDeepFM).
+8. **Counterfactuals.** The policy simulation, compared against the policy the
+   benchmark model would have recommended. Choose counterfactuals the normalizations
+   permit: price and promotion changes rather than search-cost changes.
+9. **Robustness and conclusion.**
+
+::: {.callout-tip}
+## A checklist for the structural search paper
+
+1. Make the title name the phenomenon first and the model second.
+2. Build the spine (@tbl-sw-structural-spine) before drafting: every new component
+   answers a data feature and opens a counterfactual lever.
+3. Show model-free evidence for each data feature before the model.
+4. Flag every departure from the canonical model, and say what it costs in optimality
+   or identification.
+5. Argue identification parameter by parameter, from the variation in the data.
+6. Run a Monte Carlo recovery study for the estimator and report the tuning choices.
+7. Beat the incumbent structural model *and* a flexible predictive model out of
+   sample.
+8. Run counterfactuals the normalizations allow, and compare against the incumbent
+   model's recommendation.
+9. Search adjacent fields for the closest prior paper and position against it
+   explicitly.
+:::
+
 ## The Observational Contagion Paper: A Fraud-Spread Specimen {#sec-sw-contagion-template}
 
 Many marketing and finance questions are about spread: of word of mouth, of a product, of
@@ -2014,6 +2829,688 @@ consistent with" is a defensible claim from a battery, "the causal peer effect i
     tables. Standardized coefficients change with the standardization sample.
 11. Rank your evidence type against shock-based designs and phrase the causal claim to
     match.
+:::
+
+## The Theory-Building Paper: Naming a Construct from Hidden Data {#sec-sw-theory-building}
+
+Some papers earn their place by changing how a field looks at a phenomenon. They name
+a construct nobody had named, show how to observe it, sort its variants, and end with
+what institutions should do about it. This is the inductive theory-building paper. It
+is the house genre of *Organization Science*, *Administrative Science Quarterly*, and
+the *Academy of Management Journal*, and marketing journals publish it too, in consumer
+culture theory and in conceptual-empirical work. It is hard to learn from the
+hypothesis-testing template, because the contribution is not an estimate. It is a
+concept, a classification of the concept's forms, and an argument about where a
+boundary lies.
+
+@weiss2026criminal is a clean specimen. The authors ask how entrepreneurs carry out
+criminal deception, meaning the use of deceptive means to defraud audiences. They answer
+from the court records of 12 Silicon Valley technology ventures whose founders were
+prosecuted for securities, wire, or bank fraud between 2000 and 2023. The answer is a
+new construct, *façading*. Entrepreneurs construct, perform, and protect an illusory
+appearance of a high-growth venture that masks the venture's actual underperformance,
+and they do it in three forms keyed to how far the venture has fallen behind what its
+audiences expect. The paper closes with remedies addressed to the SEC, to investors, and
+to entrepreneurship educators. (This section was written from the authors' accepted
+manuscript [@weiss2026criminalpreprint]. Section and table numbers follow that version
+and may differ slightly in print.)
+
+### The spine: one construct, three sub-processes, three forms
+
+The paper makes ten moves, and each one transfers to other topics.
+
+| Move | Where it sits | What @weiss2026criminal do | What to copy |
+|---|---|---|---|
+| Name an unstudied trajectory | Introduction | Prior work treats deception as dramatized storytelling. The unstudied path is the slide from dramatization into criminal deception | Place the phenomenon on a continuum the field already accepts, and point to the segment nobody has studied |
+| Anchor in public cases | Introduction | Nikola's demo truck rolled down a slope; Frank fabricated a customer dataset ten times its real size | Open with one or two named public examples before the anonymized data |
+| Choose a lens that spans two literatures | Introduction; Theoretical Motivation | The discourse–organizing interface. Cultural entrepreneurship studies the stories, wrongdoing research studies causes and effects, and neither studies the organizing that makes a lie hold up | Show that each literature owns half the phenomenon. Borrow the distinction from precedent (their footnote 1) instead of coining one |
+| Get past the observability barrier | Methods: Dataset | Federal court records from PACER, filtered by statute, district, venture age, and funding type | Find the archive in which the hidden behavior was forced into the open, and write the sample as a filter someone could rerun |
+| Define the construct from an existing one | Introduction; Data Analysis | *Façade*, an established organizational concept, becomes *façading*, a process with three sub-processes | Start from a definition readers accept, extend it, and give the extension parts a coder can find |
+| Operationalize the parts | Data Analysis, Steps 2–4 | Facets deceived (narrow: one or two; expansive: more), audience (novice or expert), protection approach | Turn every part of the definition into a coding rule |
+| Explain the variation | Data Analysis, Step 5; Table 3 | The form of façading tracks the size of the expectation–reality gap, which tracks the venture's life-cycle stage | Name the one dimension that sorts the cases, and report the rival explanations checked first |
+| Report findings as a grid | Findings | Three forms × three sub-processes, in the same order in every subsection | Give every cell of the typology the same internal structure |
+| Draw the theory | Figure 1 | Expected and actual performance over the life cycle, with the gap shaded | Make the construct a visible quantity in one picture |
+| Turn mechanism into remedy | Practical Implications | Whistleblower protection for startup employees, SEC audits of late-stage ventures, investor accountability, education | Derive each remedy from a finding, and address it to a named institution |
+
+: The architecture of an inductive theory-building paper, read from @weiss2026criminal. {#tbl-sw-theory-spine}
+
+### Seeing something new
+
+The paper's new way of looking rests on three reframings, and none of them needs new
+vocabulary.
+
+1. *From discourse to the discourse–organizing interface.* Earlier work studied the
+   stories entrepreneurs tell. This paper studies the organizing that lets a false story
+   survive checking: the doctored invoices, forged term sheets, staged demos, and
+   impersonated reference calls.
+2. *From the future to the past.* The earlier literature treats deception as part of
+   future-making, in the form of aspirational claims about what a venture will do. The
+   prosecuted founders fabricated what the venture had already done: booked revenue,
+   recurring customers, a completed audit. The authors argue that fictionalizing the past
+   is the hallmark of the criminal form.
+3. *From the entrepreneur to the institution.* Silicon Valley's unicorn ideal sets what
+   audiences expect at each stage, so the gap founders backfill is set by the ecosystem,
+   not only by their own pitches.
+
+Each reframing is a contrast a referee can check against the literature cited, and that
+is what makes it defensible. A lens the referee cannot check against prior work reads as
+a label.
+
+Positioning against the nearest neighbor takes one clause. The paper cites a 2022
+working paper by Mohliver, Karp, and Zuzul titled *Dominant Deceptions*, which appears
+to be an earlier version of @zuzul2026dominant. That project follows a single venture
+and traces how deception spreads inside it. @weiss2026criminal describe that work as being about how deception
+diffuses within ventures, and they claim a different question: how deception is carried
+out, compared across ventures. Both papers build on an expectation–reality gap, and their
+answers fit together. One traces the drift from "we will" to "we have" inside one firm.
+The other sorts the finished schemes across firms. When a close competitor exists, name
+it, say which question it answers, and claim a different one.
+
+### Defining the construct
+
+The definition is built in three steps. It starts from a noun the field already uses. In
+the organizational definition the authors adopt, a façade is a symbolic front that
+reassures stakeholders of the organization's legitimacy. The noun then becomes a
+process, façading. Finally, the process is split into sub-processes a coder can find in a
+document:
+
+- *constructing* the façade, through fictionalized stories, fabricated evidence, staged
+  product demos, co-opted verification, and manipulated regulatory compliance;
+- *performing* it before the audiences that hold resources;
+- *protecting* it from scrutiny.
+
+A construct also needs a boundary, because a construct defined only by its center gets
+stretched to fit everything (@sec-construct-vs-variable). The paper draws the line
+between ordinary entrepreneurial dramatization and criminal deception. Entrepreneurs
+cross it when their stories become detached from the venture's operational reality and
+are propped up by organized fabrication of evidence. That boundary is what makes the
+construct useful, because it tells an educator, an investor, or a juror which side of the
+line a given act falls on.
+
+The typology is cumulative. Surface façading fictionalizes stories of imminent success.
+Reinforced façading adds interlocking sets of faked historical evidence and central
+control of information. Deep façading adds faked product demos, co-opted due diligence,
+manipulated regulatory compliance, and organized secrecy. Each form contains the acts of
+the one before it (their Table 3). That makes the scheme easy to apply and hard to
+dispute at the margins. The authors also report what they did not see. They call the
+process discontinuous because no venture in the data moved from one form to the next,
+and they say such a progression is possible but unobserved.
+
+### Measuring it: data that make the hidden visible
+
+Criminal deception is hidden by design, which is why earlier research theorized it mostly
+through its causes and consequences. The paper's main methodological move is to find data
+in which the hidden part is already documented. Court records are produced adversarially.
+Prosecutors must prove each deceptive act with exhibits, and defendants contest the
+evidence. The sample is defined as a filter a reader could rerun:
+
+- federal securities-fraud charges and the related wire, bank, and conspiracy statutes;
+- the Northern District of California;
+- cases between 2000 and 2023;
+- privately held, equity-financed, high-growth technology ventures;
+- fraud within ten years of founding.
+
+The filter excludes public companies, fraud tied to an IPO, and SEC investigations that
+settled or closed without a public record. A second search then collects every further
+case against the same founders.
+
+The analysis section is unusually long, and the authors say why: inductive analysis of
+court records is rare in organization science. It has five steps:
+
+1. selecting documents (complaints, indictments, plea agreements, sentencing memoranda,
+   and trial transcripts, but not procedural filings);
+2. in vivo coding of the first three ventures;
+3. building a codebook by moving between the data and the literature;
+4. drawing a timeline for each venture, with its funding rounds overlaid;
+5. comparing the twelve cases.
+
+Two choices are worth copying. In the last step, the authors built tables to test rival
+explanations before settling on the life-cycle gap. They checked whether sophistication
+depended on how early the deception began, and on how long it lasted. They also
+pseudonymized every venture although the records are public, because the aim is patterns
+across cases, not singling out deviant individuals.
+
+The headline numbers in the introduction can be checked against the paper's own Table 1.
+Run this check on your own manuscript before you submit it.
+
+```{r sw-facading-audit}
+#| message: false
+#| warning: false
+# The 12 ventures of Weiss & Radoynovska (2026), from their Tables 1 and 3.
+# capital_musd: equity capital raised, $ million. prison_months: summed over all
+# defendants (founders, co-founders, executives); 0 = civil case only; NA = pending.
+cases <- data.frame(
+  venture = c("Speedify", "TakeOff", "RapidLauncher",
+              "QuickSnap", "ProfitDash", "Accelify", "RevenueBoost",
+              "ScaleX", "Tracton", "UnicornHealth", "HyperJet", "GrowthHacker"),
+  form = factor(rep(c("Surface", "Reinforced", "Deep"), c(3, 4, 5)),
+                levels = c("Surface", "Reinforced", "Deep")),
+  capital_musd  = c(12, 22, 1.13, 115.7, 4.5, 204.5, 7.3,
+                    910.41, 17.6, 104.79, 93.77, 0.30),
+  court_cases   = c(1, 1, 1, 3, 1, 1, 1, 6, 2, 3, 5, 2),   # appeals counted as cases
+  prison_months = c(0, 24, 8, 18, 36, 0, 88, 135 + 155, 30, NA, 180 + 160, 36),
+  pages         = c(28, 64, 53, 153, 58, 25, 94, 2702, 68, 135, 521, 121)
+)
+
+# Audit the introduction's headline totals against the table.
+data.frame(
+  quantity   = c("Ventures", "Court cases", "Prison sentences (years)",
+                 "Equity capital raised ($ million)"),
+  stated     = c(12, 27, 73, 1800),
+  from_table = c(nrow(cases), sum(cases$court_cases),
+                 sum(cases$prison_months, na.rm = TRUE) / 12,
+                 sum(cases$capital_musd))
+)
+
+# How much of the coded evidence each form of facading rests on.
+by_form <- do.call(rbind, lapply(split(cases, cases$form), function(d) data.frame(
+  form           = as.character(d$form[1]),
+  ventures       = nrow(d),
+  median_capital = median(d$capital_musd),
+  court_pages    = sum(d$pages),
+  share_of_pages = round(sum(d$pages) / sum(cases$pages), 2)
+)))
+rownames(by_form) <- NULL
+by_form
+```
+
+Three of the four totals reproduce: 12 ventures, 27 court cases (counting appeals as
+cases), and 72.5 prison-years, which the introduction rounds to 73. The capital raised
+does not. The per-venture figures sum to \$1.49 billion against \$1.8 billion in the text,
+and we could not reconcile the two. The published version may have corrected one or the
+other. The \$687.6 million in losses cannot be rebuilt from the table at all. Table 1 mixes
+restitution, disgorgement, and forfeiture, and two co-founders owe the same \$93 million in
+restitution. The rule for your own paper is that every number in the introduction should
+be recomputable from a table in the paper, with the aggregation rule stated in the table
+note.
+
+The page counts carry a second lesson. Deep-façading cases supply 88% of the 4,022 coded
+pages, and ScaleX, the one venture whose founder went to a jury trial, supplies 2,702
+pages by itself. The most sophisticated form is therefore observed through the deepest
+records, and records are deepest where a defendant fought the charges. A referee could
+fairly ask whether part of what separates the forms is documentation rather than
+behavior, since a guilty plea leaves a thin file. The rival explanations the authors
+report concern timing and duration, not record depth. If your data source's coverage
+varies with your construct, say so, and show that the construct holds among cases with
+comparable records.
+
+The gap itself can be measured with numbers, which points to a quantitative follow-up.
+Where a complaint quotes a claimed figure beside the true one, their ratio measures how
+far the façade had drifted from reality.
+
+```{r sw-facading-gap}
+# Claimed versus actual figures quoted from the complaints in the findings section.
+gap <- data.frame(
+  venture = c("QuickSnap", "Accelify", "HyperJet"),
+  form    = c("Reinforced", "Reinforced", "Deep"),
+  metric  = c("Revenue, Q1 2018 ($)", "Gross revenue, 2013 ($ million)",
+              "Client accounts, mid-2009"),
+  claimed = c(6043369, 101, 1012002),
+  actual  = c(1300381, 9.5, 81618)
+)
+gap$inflation <- round(gap$claimed / gap$actual, 1)
+gap
+```
+
+Three ventures, each measured at a different stage and on a different metric, do not
+make a test. Collected across hundreds of SEC complaints, a ratio like this would let
+the paper's central proposition be tested: that deception becomes more elaborate as the
+gap widens.
+
+### Findings as a grid
+
+Each findings subsection has the same internal order:
+
+1. an opening paragraph that places the form in the life cycle and states the size of
+   the gap;
+2. three parts, on constructing, performing, and protecting the façade, each headed by
+   a run-in sentence that states the finding (for example, "Protecting the façade
+   through passing blame");
+3. a closing paragraph that restates the form in one sentence and leads into the next
+   form.
+
+Each subsection draws on three to five ventures. The evidence is block quotations from
+complaints, sentencing memoranda, and plea agreements. Evidence that would only repeat
+what the previous form already showed goes to an online appendix (footnotes 6 and 9 say
+so), and the main text shows only what is new at each level. A reader can turn to any
+cell of the three-by-three grid and find the same structure.
+
+### Drawing the theory
+
+The paper's Figure 1 puts the theory in one picture. The venture life cycle runs along
+the horizontal axis and performance up the vertical one. A steep curve, topped with a
+unicorn icon, marks the performance audiences expect. A lower curve, ending in a horse
+icon, marks actual performance. The area between them is shaded and widens from left to
+right, and the three forms of façading label three regions of it. Breaks in the
+expectation curve encode the claim that ventures enter a form directly rather than
+passing through all three. @fig-sw-facading lays out the argument the figure compresses.
+
+```{mermaid}
+%%| label: fig-sw-facading
+%%| fig-cap: "The argument of Weiss and Radoynovska (2026), drawn as a chain. Their own Figure 1 plots it as two diverging performance curves. Solid arrows are the theorized relations; dashed arrows mark where the proposed remedies intervene."
+flowchart TD
+    E["Institutional expectations<br/><i>unicorn ideal; burden of proof<br/>rises with life-cycle stage</i>"] --> G["Expectation–reality gap<br/><i>minor · wide · extreme</i>"]
+    A["Actual venture<br/>performance"] --> G
+    G --> F["Form of façading<br/><i>surface · reinforced · deep</i>"]
+    F --> C["Construct<br/><i>stories → faked records →<br/>staged demos, co-opted checks</i>"]
+    C --> P["Perform<br/><i>novice → expert audiences</i>"]
+    P --> Pr["Protect<br/><i>blame → information control →<br/>organized secrecy</i>"]
+    Pr --> D["Unmasking<br/><i>insiders, probing counterparties</i>"]
+    R["Remedies<br/><i>whistleblowers, audits,<br/>due diligence, education</i>"] -.-> D
+    R -.-> E
+    style F fill:#e8f0fe,stroke:#1a73e8
+```
+
+### Contributions: arguments first, then literatures
+
+The discussion opens with a subsection titled "Toward a Theory of Criminal Deception".
+It states four numbered arguments before it mentions any literature:
+
+1. Façading backfills the gap between expected and actual performance.
+2. The form of façading depends on the size of the gap.
+3. The theory sits at the discourse–organizing interface.
+4. The venture's projected appearance becomes progressively detached from its reality.
+
+The fourth argument climbs a ladder of metaphors: a veneer laid over the real venture,
+then a standalone artifact that audiences deal with instead of the venture, then a staged
+parallel world like the one in *The Truman Show*. Each metaphor names a different level
+of detachment, so the ladder adds content rather than decoration.
+
+Only then come the contributions, one subsection for each of three literatures (cultural
+entrepreneurship, organizational wrongdoing, and the social effects of entrepreneurship),
+and each ends with a research agenda. One claim is built to be quoted and argued with:
+verifiability, not authenticity, is the right guard against deception, because
+authenticity judgments reward the rule-breaking and hubris that entrepreneurial culture
+already prizes. A contrarian claim that can be tested is often the sentence later papers
+cite.
+
+### Proposing a solution
+
+The practical implications say who should act and how. Lower the barriers to
+whistleblowing, and extend SEC whistleblower protection to startup employees. Introduce
+SEC audits of ventures late in the life cycle. Hold investors who sit on boards more
+accountable, and have them check claims against several independent sources during due
+diligence. Teach entrepreneurship students where permissible dramatization ends and
+criminal façading begins. The remedies also enter a live debate in legal scholarship over
+whether the SEC should police private markets, which gives the paper readers beyond its
+own field.
+
+The remedies persuade because they follow from the findings. @tbl-sw-remedy-mirror sets
+each protection approach beside what defeated it in the cases and the remedy that would
+make that outcome more likely. We compiled the middle column from the findings section;
+the paper does not tabulate how each façade was unmasked.
+
+| Form | Protection approach | How the façade was unmasked | Remedy it motivates |
+|---|---|---|---|
+| Surface | Passing blame | A novice investor's lawyer ran a reference check (TakeOff); an intern spotted doctored wire confirmations and a former employee blogged about it (RapidLauncher); the money ran out (Speedify) | Investor due diligence; education so that novice investors and employees recognize the pattern |
+| Reinforced | Centralizing and controlling information | An employee reviewing the books found nonexistent customers (QuickSnap); a newly hired CFO quit within days and told the board (Accelify) | Board pressure to hire independent finance staff; whistleblower protection for startup employees |
+| Deep | Entrenching organized secrecy | Employees went to regulators and the press (ScaleX); insurers questioned the billing (UnicornHealth); the general counsel, asking a KPMG contact about CFO candidates, learned the audit had never happened (HyperJet) | Whistleblower protection; SEC audits late in the life cycle; verification that bypasses the founder |
+
+: Each protection approach set beside how it failed in the cases and the remedy it motivates. Forms and protection approaches follow @weiss2026criminal, Table 3. The unmasking column is our compilation from their findings section; the main text does not describe it for ProfitDash, RevenueBoost, Tracton, or GrowthHacker. {#tbl-sw-remedy-mirror}
+
+Insiders unmasked five of the eight façades whose unmasking the findings describe: an
+intern, an employee, a new CFO, employees who went to regulators and the press, and a
+general counsel. That pattern is the empirical case for putting whistleblowers first,
+and a reader can see it in the evidence without being told. The paper does not test any
+remedy, which is acceptable in *Organization Science*, where practical implications
+follow from the theory. Marketing's policy outlets set a higher bar
+(@sec-policy-papers-marketing). There a remedy should be evaluated, or at least costed,
+before it is recommended.
+
+### Carrying the template into a marketing journal
+
+Marketing has its own archives in which hidden behavior was forced into the open. FTC
+complaints and consent orders, National Advertising Division decisions, state
+attorney-general actions, and class-action filings all document deceptive claims with
+exhibits, as these court records do. The construct travels too. One deep-façading venture
+sold "AI" insights that were partly produced by paid human workers watching videos, the
+pattern now called AI washing. Greenwashing, fake reviews, and vaporware announcements
+(@sec-market-entry) are other cases in which a claim and the organizing behind it can
+come apart. Three adjustments help a marketing version get through review.
+
+- **Put the market stake in front.** A marketing referee will ask what the construct
+  changes for buyers, competitors, or regulators, not only for theory.
+- **Pair the typology with a measure that scales.** The coding rules in
+  @tbl-sw-theory-spine (facets deceived, audience, protection approach) can become
+  labels for a text classifier run over thousands of enforcement documents
+  (@sec-text-as-data). A claimed-to-actual ratio like the one above is a continuous
+  measure of the gap. The typology then becomes a hypothesis the next study can test at
+  scale.
+- **State the boundary as a decision rule.** The line between dramatization and
+  criminal deception has a counterpart in advertising law, the line between puffery and
+  a material misrepresentation. A paper that tells readers which side of it a claim falls
+  on is useful to managers and regulators alike.
+
+::: {.callout-tip}
+## A checklist for the theory-building paper
+
+1. Place the phenomenon on a continuum the field already studies, and name the segment
+   nobody has studied.
+2. Open with one or two named public cases before the anonymized data.
+3. Show that each relevant literature holds half of the phenomenon, and borrow the lens
+   from an existing distinction.
+4. Find data in which the hidden behavior is already documented, and write the sample
+   as a filter someone could rerun.
+5. Build the construct from a definition readers accept, split it into sub-processes a
+   coder can find, and state the boundary where it stops applying.
+6. Make the typology cumulative if you can, and say which transitions you did not
+   observe.
+7. Report the rival explanations you checked, and check whether the depth of your data
+   varies with the construct.
+8. Give every cell of the typology the same structure in the findings, and move
+   repeated evidence to an appendix.
+9. Draw the construct as a quantity in one figure.
+10. State the theoretical arguments before the contributions to each literature, and
+    end each contribution with a research agenda.
+11. Derive each remedy from a finding, address it to a named institution, and say
+    whether it was tested.
+12. Make every headline number recomputable from a table in the paper.
+:::
+
+## The Measurement Paper: A New Variable from Text {#sec-sw-measurement}
+
+A measurement paper names something that matters and that no dataset records, builds a
+variable for it from a source nobody had mined for that purpose, and then spends most
+of its pages showing that the variable behaves the way the thing itself should. The
+contribution is the variable. The regressions are there to earn the reader's trust in
+it, and none of them needs to identify a causal effect. Finance and accounting publish
+this genre steadily, with text-based measures of competition, financial constraints,
+corporate culture, and brand value among the well-known cases
+[@li2021culture; @boustanifar2025brand], and it is the most direct route by which
+unstructured data (@sec-text-as-data) becomes a top-journal paper.
+
+@boustanifar2026intangible is a specimen worth taking apart because the method is as
+simple as the genre allows. The measure is a word count. Whatever persuades the reader
+therefore comes from the architecture of the paper, and that architecture can be
+copied. The authors start from an accounting rule. A liability goes on the balance
+sheet only if it is probable and can be reliably estimated. Anything else, such as a
+pending lawsuit, a product-liability exposure, an environmental obligation, or a
+false-advertising or patent-infringement claim, is disclosed in the text of the annual
+report and nowhere in the numbers. They call these obligations *intangible
+liabilities* (IL), count the words that signal them in every 10-K filed between fiscal
+years 1996 and 2020, and show that the count predicts lawsuits, reputational damage,
+valuation, stock returns, and crash risk. (This section was written from the authors'
+accepted manuscript [@boustanifar2023intangiblewp], in its April 2026 revision marked
+as forthcoming in *Management Science*. Table numbers and estimates follow that version
+and may differ slightly in print.)
+
+### The spine: define, build, validate, price
+
+| Move | Where it sits | What @boustanifar2026intangible do | What to copy |
+|---|---|---|---|
+| Name the construct by symmetry | Title; first paragraph | Intangible assets are valuable but off the balance sheet, and a large literature measures them. Intangible liabilities are the unmeasured mirror image | Find the empty cell next to a construct the field already accepts. The reader then needs no persuading that the new one is real |
+| Open with a case in which the gap is visible | Epigraphs | 3M faced earplug litigation that one bank analyst put between \$2 billion and \$185 billion, and had reserved nothing, because it judged the liability neither probable nor estimable | Show one case where the standard data say zero and everyone knows the answer is not zero |
+| Explain why the source contains the construct | Section 2.2 | Disclosure is legally required, and firms tend to over-disclose, vaguely, to protect themselves from plaintiffs | Argue the data-generating process of the source before measuring anything. Who writes it, under what obligation, with what incentive to shade it? |
+| Build the simplest defensible measure | Section 2.2; Appendix Table 1 | Start from the 904-word litigious list of @loughran2011liability, delete 407 words, add 72, and publish all 569 terms | Start from a published instrument, document every deletion and addition with examples, and print the whole instrument |
+| Check that it sorts known groups | Section 3 | Tobacco, insurance, healthcare, and pharmaceuticals rank highest. Textiles, printing, and apparel rank lowest | Show a ranking the reader could have guessed. An unsurprising figure is the point of this step |
+| Show it is not only the known groups | Sections 3–4 | Industry effects alone explain 13% of the variation. 3M sits in a low-IL industry | Report how much variance the obvious classifier leaves over. That remainder is the measure's reason to exist |
+| Predict an outcome the construct should cause | Section 5 | Higher IL this year, more class actions and worse media coverage next year, including within firm | Use future outcomes from an independent source, and repeat the test with unit fixed effects |
+| Show that someone pays for it | Sections 5–7 | Lower valuation ratios, higher expected returns, higher crash risk, higher cost of debt and audit fees | Tie the measure to a price or a decision, so that the construct has stakes |
+| Separate it from its neighbors | Appendix | The result survives controls for two litigation-risk measures and four intangible-capital measures | Enter the closest existing measures in the same regression |
+| Open the box | Sections 8 and 10 | Risk-factor text and the rest of the filing both carry signal. A LASSO names the most predictive terms | Show where in the source the signal lives and which components drive it |
+
+: The architecture of a text-based measurement paper, read from @boustanifar2026intangible. {#tbl-sw-measurement-spine}
+
+The abstract follows the same order at one sentence per step: the accounting rule,
+examples, the name, the measure, its correlates, what it predicts, how it is priced,
+and the implication. A reader who stops after the abstract already knows what the
+construct is and why it has stakes. That matters more in this genre than in most,
+because there is no clever identification strategy to carry the reader's interest.
+
+### Defining the construct before measuring it
+
+The definition is borrowed from a rule, which makes the boundary of the construct
+checkable. An intangible liability is an economically significant obligation that fails
+the recognition test (probable and estimable) and so appears only in text. A footnote
+then separates it from the neighboring accounting category. Disclosed contingent
+liabilities are a subset, because a firm can be exposed to a kind of harm, such as
+personal injury from its products, before any claim exists, and that exposure is
+written up under risk factors. The footnote is also the argument for measuring over the
+whole filing. A measure built only on the legal-proceedings section would capture the
+subset and miss the construct.
+
+A second footnote settles what "intangible" means. It is not "cannot be touched." It is
+"cannot be appraised at an actual or approximate value." Human capital can be touched
+and is off the balance sheet. A firm's cryptocurrency cannot be touched and is on it.
+Two sentences of this kind close off the most likely misreading of a new label, and a
+new construct should always get them (@sec-construct-vs-variable).
+
+The positioning against prior work is equally short. Accounting research already
+measures *litigation risk*, the probability of being sued [@kim2012litigation]. The
+authors grant that it is one source of intangible liabilities and list others that it
+leaves out: pending suits, recalls, guarantees, environmental obligations, and pending
+legislation. They later add litigation-risk measures as controls. The claim is that the
+new construct is broader than its nearest neighbor, and the paper supports the claim
+with a definition in the front and a regression in the back.
+
+### Building the measure, and the three decisions inside a word count
+
+A dictionary measure looks like it involves no decisions. This one involves three, and
+the paper defends each.
+
+*Which words.* The starting list was built to measure tone, so many of its entries are
+legalistic words with no bearing on obligations (*hereby*, *shall*, *aforementioned*).
+The authors read how each word is used in filings before deciding. *Interrogate*
+appears in biotech filings about interrogating cells. *Designator* is an airline code.
+*Extracorporeal* is a medical procedure. All three go. The parent list is also
+unigram-only and correctly omits *liability*, which is neutral in a financial
+statement. The new list adds bigrams such as *product liability*, *environmental
+liability*, *false advertising*, and *filed suit*, which carry the meaning that the
+single word does not. For a marketing reader, the dictionary is in part a list of
+marketing-made obligations: *false advertising*, *deceptive*, *product liability*,
+*recall*, *warranty defect*, *counterfeit*, *unfair competition*.
+
+*How to weight.* Every term counts equally. The cited justification is a comparison of
+methods in the disclosure literature, which finds equal-weighted, domain-specific word
+counts about as powerful as more elaborate schemes, provided the list excludes words
+that also appear in other contexts [@henry2016tone]. That is why so much of the effort
+goes into pruning.
+
+*How to scale.* The main measure is the log of the raw count, with the log of filing
+length entered as a control. The authors argue against the usual share-of-words
+scaling. In sentiment work every word is positive, negative, or neutral, so a share is
+natural. Here the researcher is looking for one kind of content inside a document that
+is mostly about other things, and dividing by length lets differences in length drive
+the variation. Where a control is impossible, as in portfolio sorts, they fall back on
+the share.
+
+The scaling decision has consequences that a short simulation makes visible. In their
+Table 3 the coefficient of the log count on log filing length is about 1.2, so
+dictionary hits grow faster than the filing does. The simulation below builds that in.
+It is our illustration and uses no data from the paper. Each filing has a latent
+exposure that the researcher never sees, a length, and a count of dictionary hits that
+depends on both. The outcome depends on exposure and, separately and negatively, on
+length.
+
+```{r sw-measurement-scaling}
+#| message: false
+#| warning: false
+# A stylized illustration written for this section; none of it is the paper's data.
+set.seed(41)
+n      <- 20000
+theta  <- rnorm(n)                         # latent exposure, never observed
+len    <- 10 + 0.74 * rnorm(n)             # log words in the filing
+count  <- rpois(n, exp(4.3 + 0.5 * theta + 1.2 * (len - 10)))   # dictionary hits
+y      <- 1.0 * theta - 0.5 * (len - 10) + rnorm(n, sd = 3)     # long filings do worse
+
+z <- function(x) as.numeric(scale(x))
+log_count <- log(1 + count)
+share     <- count / exp(len)
+resid_ct  <- resid(lm(log_count ~ len))    # log count net of filing length
+
+slope <- function(f) unname(coef(lm(f))[2])
+scaling <- data.frame(
+  measure = c("Log count, no length control", "Share of total words",
+              "Log count, length controlled", "Latent exposure (infeasible)"),
+  cor_with_exposure = c(cor(log_count, theta), cor(share, theta),
+                        cor(resid_ct, theta), 1),
+  cor_with_length   = c(cor(log_count, len), cor(share, len),
+                        cor(resid_ct, len), cor(theta, len)),
+  slope_per_sd      = c(slope(y ~ z(log_count)), slope(y ~ z(share)),
+                        slope(y ~ z(resid_ct) + len), slope(y ~ z(theta) + len))
+)
+scaling[-1] <- round(scaling[-1], 2)
+print(scaling, row.names = FALSE)
+```
+
+The raw log count is mostly a measure of how long the filing is, and its slope on the
+outcome is close to zero because the length effect cancels the exposure effect. The
+share does much better, but it still loads on length, because hits grow faster than
+words, and it recovers only about three-quarters of the true slope. The log count with
+length controlled comes close to the infeasible benchmark. Two things follow for anyone
+building a count-based measure. Estimate the elasticity of the count to document length
+before choosing a scaling, since a share is right only when that elasticity is one. And
+when two versions of the measure appear in one paper, say which result rests on which.
+
+### The validation ladder
+
+The paper never claims that its dictionary is accurate. It shows, one test at a time,
+that the measure sits where the construct should sit among other variables. That is a
+nomological argument (@sec-reliability-validity), and laid out as a ladder it reads as
+follows.
+
+| Rung | The question a referee asks | Evidence | Size |
+|---|---|---|---|
+| Face validity | Does it rank groups the way I would? | Mean IL across the 49 Fama–French industries | Tobacco, insurance, healthcare, and pharmaceuticals on top. Utilities sixth, traced by hand to cases such as PG&E's wildfire liabilities |
+| Case validity | Does it find the firms I know about? | Top firms inside low-IL industries | 3M in business supplies, Corteva in agriculture. HP scores high and IBM low |
+| Incremental variance | Is it just industry and size? | Regressions of IL on firm characteristics | Industry alone explains 13%. Industry, year, and size explain about half |
+| Convergent correlates | Does it move with the known proxies? | Same regressions | Higher volatility and turnover, lower ROA, abnormal returns, and Tobin's $q$, matching the inputs to existing litigation-risk models |
+| Prediction, legal | Does it forecast the event? | Securities class actions filed in the next year | 0.32% of bottom-quintile firm-years and 5.66% of top-quintile ones. One SD of IL adds 1.64 points to a 2.2% base rate, and the result holds within firm |
+| Prediction, reputational | Does a different source agree? | RepRisk index of negative media coverage in the next year | One SD of IL adds 2.2 points to a mean of 10.4 |
+| Valuation | Do investors see it? | Log P/E and log market-to-book | One SD of IL goes with ratios 4–5% lower |
+| Pricing | Do investors demand payment for it? | Quintile portfolios and Fama–MacBeth regressions | High minus low earns 4.35% a year. Alphas run from 2.91% ($q^5$) to 6.02%. One SD of IL goes with 0.16% a month, with 19 other predictors controlled |
+| Mechanism | Why would it be priced? | Firm-specific crash risk in the next year | One SD of IL raises negative skewness by 14% of its mean. Earnings surprises show no sign of mispricing |
+| Discriminant | Is it an old measure renamed? | Litigation-risk and intangible-capital controls | The IL coefficient is stable. In the return regressions the litigation-risk measures do not survive the full controls |
+
+: The validation ladder in @boustanifar2026intangible, with estimates from the accepted manuscript. {#tbl-sw-measurement-ladder}
+
+Four features of the ladder are worth copying beyond the list itself.
+
+1. *The outcomes come from somewhere else.* Lawsuits come from a law-school
+   clearinghouse, reputation from a commercial media-screening vendor, and returns from
+   the exchange. None of them is built from 10-K text, so the measure cannot predict
+   them by construction.
+2. *Every test is run twice, across firms and within firm.* The within-firm version
+   says that when a firm's own filings add liability language, lawsuits and bad press
+   follow. That answers the objection that the measure only identifies a type of firm.
+3. *The descriptive tables are allowed to disagree with the thesis.* In the raw
+   quintile means, valuation ratios rise with IL. The negative relation appears only
+   once size, profitability, and industry are held fixed. The authors print the raw
+   table, say that it shows a positive association, and then show the regression. A
+   referee who finds that reversal unaided will distrust the paper. A referee who is
+   told about it will not.
+4. *The pricing result is given a reason.* A return premium invites the charge of data
+   mining (@sec-mf-anomaly-baserate). The paper answers with a risk story, that these
+   liabilities can crystallize suddenly, and tests an implication of the story on a
+   different outcome, crash risk. It then tests the rival story, mispricing, on
+   earnings announcements, and concedes that the two cannot be fully separated.
+
+### Where the specimen is thin
+
+A template is more useful with its weak points marked, and several of them are places
+where a marketing referee would press harder than a finance referee did.
+
+- *No human has checked the measure against text.* There is no hand-coded sample of
+  filings, no precision for individual terms, and no test of whether a high score means
+  much liability or much boilerplate. The published list keeps generic words (*legal*,
+  *court*, *claim*, *attorney*, *legislation*, *contingent*) that appear in filings
+  with nothing at stake. The validation is entirely by association with outcomes. A
+  marketing journal would normally ask for agreement with human judgment as well
+  (@sec-classification-validity).
+- *The simplest rival is beaten off the page.* A footnote reports that the parent
+  dictionary shows no robust relation to future lawsuits, reputation, or returns. This
+  is the comparison that justifies all the pruning, and it is described as unreported.
+  It should be a table (@sec-sw-design-science makes the same point about method
+  papers).
+- *The legal outcome is narrower than the construct.* The lawsuits are securities
+  class actions, which shareholders bring. The construct's own examples are product,
+  environmental, and intellectual-property claims. The two are related, since a product
+  disaster often triggers a shareholder suit, but the validation outcome is not the
+  obligation the paper defines.
+- *Filing length does a lot of work.* Adding length and three accounting ratios lifts
+  the explained variance of IL from 0.51 to 0.75. In the return regressions, length
+  carries a coefficient of $-0.17$ beside IL's $+0.16$. The finding is therefore about
+  liability language relative to the length of the filing, and long filings alone
+  predict lower returns. The simulation above shows why this must be stated plainly.
+- *The headline number is one of several.* The abstract's 3% matches the
+  industry-adjusted figures (a 3.02% return spread and a 2.99% six-factor alpha). The
+  same table gives 2.11%, significant only at the 10%
+  level, under the industry-adjusted $q^5$ model and 6.02% under a mispricing-factor
+  model. Announcement returns for high-IL firms are significantly negative in the two
+  specifications without industry effects and insignificant with them.
+- *The predictive words are hard to read.* The LASSO's 149 selected terms include
+  *infringement*, *product liability*, and *fraud*, and also *majeure*, *bailiff*, and
+  *attornment*. The text describes a pre-2015 training sample and a post-2015 test
+  sample but reports no out-of-sample fit. The authors do warn that a zero coefficient
+  does not make a word uninformative.
+- *Some counts do not reconcile in the manuscript.* The text gives 112,716 firm-years
+  and the descriptive table 112,457. The reputation sample is 11,329 in the text and
+  11,256 or 12,598 in the regressions. The final typeset version may resolve these.
+  The lesson from @sec-sw-theory-building applies here too: every sample size in the
+  prose should be recomputable from a table.
+
+None of this undoes the contribution. It marks what a successor paper can add, and the
+authors' own conclusion lists two of the items: more sources (earnings calls, social
+media, press coverage) and better language models.
+
+### Carrying the template into a marketing journal
+
+Marketing is full of constructs that firms describe in words and no database records.
+A firm's exposure to a product-harm crisis, its dependence on a few customers or one
+retailer, its reliance on a celebrity or founder, its privacy and data-breach exposure,
+and the gap between its sustainability claims and its operations are all discussed in
+filings, earnings calls, complaints, and reviews, and none has a standard variable.
+One of the authors had already applied the recipe on the asset side, with a brand
+measure built from the frequency of the word *brand* in filings
+[@boustanifar2025brand] (@sec-branding). Seen together, the two papers are one research
+program: pick an off-balance-sheet quantity, find the text in which firms must discuss
+it, count, validate, and price.
+
+Four adjustments help a marketing version.
+
+- **Validate against people as well as outcomes.** Have trained coders rate a few
+  hundred documents on the construct, report agreement among them, and report how the
+  measure tracks their ratings. Predictive tests show that a measure is useful.
+  Agreement with human judgment shows that it measures what its name says
+  (@sec-reliability-validity).
+- **Tabulate the horse race.** Put the parent dictionary, a share-scaled version, an
+  embedding-expanded dictionary (@sec-tad-culture-dictionary), and an LLM coder
+  (@sec-llm-extraction) in one table with the same outcomes. If the simple count wins or
+  ties, transparency is the argument for it. If it loses, the paper has a better measure.
+- **Choose outcomes a marketing reader prices.** Recalls, regulatory actions,
+  complaint volume, brand-tracking scores, customer churn, and retailer delistings can
+  play the role that class actions and RepRisk play here. Stock returns remain
+  available for a strategy audience (@sec-marketing-finance).
+- **Decide what the last third of the paper is.** A finance paper ends with pricing. A
+  marketing paper can end with a decision instead: which firms should change
+  disclosure, product design, or claims, and what it is worth to them. If the measured
+  facts raise a question that reduced-form evidence cannot settle, a small model is the
+  other way to finish (@sec-sw-measure-model).
+
+::: {.callout-tip}
+## A checklist for the measurement paper
+
+1. Name the construct by its relation to one the field already measures, and define it
+   with a rule that says what is in and what is out.
+2. Open with a named case in which the standard data record nothing and the stakes are
+   plainly large.
+3. Explain who produces the source text, under what obligation, and with what incentive
+   to distort it.
+4. Start from a published instrument. Document deletions and additions with examples,
+   and print the full instrument in an appendix.
+5. Estimate how the raw count scales with document length before choosing between a
+   share and a controlled count, and say which results use which.
+6. Show that the measure sorts known groups and finds known cases, then report how much
+   variance those groups leave unexplained.
+7. Predict future outcomes drawn from independent sources, across units and within
+   unit.
+8. Tie the measure to a price or a decision.
+9. Put the nearest existing measures, and the parent instrument, in the same table.
+10. Validate against human coding as well as against outcomes.
+11. Show where in the source the signal sits and which terms carry it, with
+    out-of-sample fit.
+12. Print the raw descriptive pattern even when it runs against the conditional one,
+    and make every sample size recomputable.
 :::
 
 ## The Front End {#sec-sw-front-end}
@@ -2405,6 +3902,18 @@ localizes a broken arrow that the author can no longer see.
   declines from stage to stage. The test of whether the later stages are contributions
   rather than decoration is whether a null there would have changed the paper
   [@singh2026opensource].
+- A **design-science method paper** hangs on its design framework, which maps goals
+  to challenges and gives each challenge exactly one component (@tbl-sw-design-spine).
+  It evaluates the method at three levels: model, application, and mechanism. Its
+  mechanism evidence is ablation plus a direct check of the property each component
+  claims, and its simplest credible rival is the heuristic version of its own idea
+  [@wang2026drdl; @xu2026upstar].
+- A **theory-building paper** names a construct from data in which hidden behavior was
+  forced into the open. It defines the construct from an existing concept, splits it
+  into parts a coder can find, states the boundary where it stops applying, sorts its
+  forms along one dimension, and derives remedies from the mechanism
+  (@tbl-sw-theory-spine). Every headline number should be recomputable from a table in
+  the paper [@weiss2026criminal].
 - The argument is a chain of claims the reader may refuse to grant
   (@eq-sw-chain); a paper fails at its **weakest arrow**, and most "low
   contribution" rejections are in fact broken arrows—a filled gap or a design that
@@ -2429,6 +3938,19 @@ localizes a broken arrow that the author can no longer see.
   (@eq-sw-abduction). The **PEEBI** structure—priors, establish, evaluate, best
   explanation, implication (@tbl-sw-peebi)—reports that reasoning honestly where
   the deductive template would force a fiction about the order of discovery.
+- A **new measure** earns a top-journal contribution when its facts carry a price and
+  pose a question they cannot answer alone. When a null outcome gap could be a true
+  zero or a real effect masked by selected adoption, a small model disciplined by the
+  measured facts, and identified by a moment the headline facts do not use, turns the
+  null into a statement about motives: many start-ups advertise a worker-centered
+  culture mainly to save on wages [@lee2026startupculture] (@sec-sw-measure-model).
+- A **measurement paper** contributes a variable, and its regressions exist to earn
+  trust in that variable. Define the construct with a rule, explain why the source
+  must contain it, start from a published instrument and print the new one, then climb
+  a validation ladder from known groups to independent future outcomes to prices
+  (@tbl-sw-measurement-ladder). Check how a count scales with document length before
+  choosing a scaling, and validate against human coding as well as outcomes
+  [@boustanifar2026intangible] (@sec-sw-measurement).
 - **Robustness is rhetoric**: writing the reviewer's objections into the paper
   before submission is the highest-return revision activity, and the R&R response is
   a craft document whose job is to make the editor's decision easy to defend.
@@ -2449,6 +3971,12 @@ makes one explanation better than another; @choudhury2026abduction supplies the
 design-side account of abduction that the two SMJ papers presuppose. Read
 together they are the closest thing the field has to a manual for writing a paper
 whose conclusion was discovered rather than predicted.
+
+For the design-science method paper, @hevner2004design set out the guidelines that
+IS referees still apply, and @gregor2013positioning explain how to position and state
+a design contribution, from an instantiated artifact up to a design theory.
+@abbasi2024pathways is the *ISR* editors' statement of what they now expect from
+AI-based design research.
 
 The
 textual-analysis methods that let us measure the readability of our own and others'

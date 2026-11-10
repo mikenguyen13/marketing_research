@@ -434,9 +434,30 @@ coefficients, subgroup contrasts, any inference that lives in the second moment.
 marketing-specific guidance of @sarstedt2024silicon is correspondingly cautious: reserve
 silicon samples for *upstream* work—pretesting items, piloting designs, generating
 hypotheses—where being approximately right is useful and being wrong is cheap, and do not
-mistake them for the human data that adjudicates a claim. The constructive middle path,
-which spends a small human sample to debias a large synthetic one rather than choosing
-between them, is developed for conjoint in @sec-conjoint-variants.
+mistake them for the human data that adjudicates a claim.
+
+The prompt sensitivity Bisbee and colleagues document can also be put to use. An analyst
+who runs the same items under several prompts, personas, and model checkpoints holds not
+one silicon sample but a set of noisy *elicitation variants*, and the usual ways of
+pooling them—a uniform average, post-stratification weights fixed in advance, or keeping
+the single best-looking subgroup—ignore how well each variant tracks people. The human
+mimicry calibration (HuMCal) of @leng2026humcal instead *learns* credibility weights over
+the variants, fitting them to aggregate human benchmarks such as published marginals. It
+needs neither the model's internals nor subgroup-level human labels. Because uniform,
+post-stratified, and best-subgroup weights are all special cases, the fitted combination
+weakly dominates each of them on the calibration data. The authors test it on a
+revealed-preference market-structure task built from U.S. bank-card transactions and on
+Pew opinion items. Weights learned in one setting beat the heuristic baselines in most
+transfers across time, geography, industry, and topic, and recalibrating on newer
+checkpoints often helped further. The in-sample guarantee does not travel: the authors
+stress that out-of-sample transfer is an empirical regularity, not a theorem. The weights
+therefore need re-checking whenever a fresh benchmark exists, which is the same
+validation discipline this chapter asks of any instrument. (Only the published abstract
+was accessible when this paragraph was written.)
+
+HuMCal calibrates against human *aggregates*. The other constructive middle path spends a
+small sample of individual human responses to debias a large synthetic one rather than
+choosing between them, and is developed for conjoint in @sec-conjoint-variants.
 
 ## Response Styles and Systematic Measurement Biases
 
