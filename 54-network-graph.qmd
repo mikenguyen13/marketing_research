@@ -282,6 +282,100 @@ connected user" is implicitly committing to the degree theory of influence; if t
 mechanism is brokerage across communities, betweenness is the right target, and the two
 will recommend different people.
 
+### Status as eigenvector centrality, and the path that moves it {#sec-graph-status-mobility}
+
+Eigenvector centrality is also the standard measure of *status* in markets where
+affiliation is a form of deference. In venture capital, a joint investment signals that
+each syndicate member recognizes the others' standing, so a VC's status is computed as
+its eigenvector centrality in the co-investment network [@podolny2001pipes]. Once
+status is a centrality score, one can ask what moves it. @li2026erraticism answer with
+a variable that a snapshot of the network cannot show: the *order* in which a firm has
+moved across market categories.
+
+Their construct, *category erraticism*, is the average socio-cognitive distance between
+consecutive categories on a VC's investment path over the past five years. Distance is
+built from the market itself. The similarity of category $I$ to category $J$ is the
+share of VCs active in $I$ that are also active in $J$, so similarity is asymmetric and
+categories that the same investors span are close. When a VC enters several
+categories on one day, consecutive steps are category sets, and the authors use the
+modified Hausdorff distance between sets. Because the measure is defined on adjacent
+moves, two VCs with identical portfolios can differ in erraticism. The chunk below
+shows this with a toy market of three categories. Both paths visit the same
+categories, so their path-independent pairwise distance is identical, but the path
+that jumps through the distant category scores higher.
+
+```{r graph-erraticism, message=FALSE, warning=FALSE}
+set.seed(20261110)
+n_vc  <- 60
+style <- rbinom(n_vc, 1, 0.5)   # 1 = life-science/energy investor, 0 = software/finance
+inc <- cbind(                   # VC x category activity (1 = invested there)
+  biotech   = rbinom(n_vc, 1, ifelse(style == 1, 0.80, 0.15)),
+  cleantech = rbinom(n_vc, 1, ifelse(style == 1, 0.70, 0.15)),
+  fintech   = rbinom(n_vc, 1, ifelse(style == 1, 0.10, 0.80))
+)
+co   <- crossprod(inc)      # diagonal: |I|; off-diagonal: |I and J|
+sim  <- co / diag(co)       # row I: share of I's investors also active in J
+dist <- 1 - sim             # asymmetric socio-cognitive distance
+round(dist, 2)
+
+# Erraticism: mean distance between CONSECUTIVE categories (order matters).
+erraticism <- function(path, D) mean(D[cbind(head(path, -1), path[-1])])
+# Path-independent distance: mean over all category pairs (order ignored).
+path_indep <- function(path, D) {
+  p <- combn(unique(path), 2)
+  mean((D[t(p)] + D[t(p[2:1, ])]) / 2)
+}
+paths <- list(
+  coherent = c("fintech", "biotech", "cleantech"),
+  erratic  = c("biotech", "fintech", "cleantech")
+)
+data.frame(
+  path                = sapply(paths, paste, collapse = " -> "),
+  erraticism          = round(sapply(paths, erraticism, D = dist), 3),
+  path_indep_distance = round(sapply(paths, path_indep, D = dist), 3),
+  row.names = NULL
+)
+```
+
+The empirical test uses VentureXpert data on 1,413 U.S. VCs (14,430 firm-years,
+1980–2012) across 567 industry categories. Status is min-max-scaled eigenvector
+centrality on five-year rolling syndication networks, and mobility is the change from
+$t$ to $t+5$. The design point is that the two windows share no ties, so the
+erraticism measured on ties up to $t$ cannot mechanically produce the change. With VC
+fixed effects, erraticism lowers status mobility ($\beta = -0.022$, $p = .006$). In the
+same model, category spanning *raises* mobility and path-independent category distance
+is not significant. Breadth is not penalized; incoherent traversal is. The penalty
+works through the eigenvector logic. Erraticism does not reduce the number of future
+syndication partners ($p = .550$) but does reduce the number of top-decile-status
+partners ($p = .011$), which are the ties that carry weight in
+@eq-graph-eigenvector. The coefficient also grows slightly (from $-0.020$ to $-0.023$)
+as the centrality measure puts more weight on partners' centrality. The penalty is
+larger for high-status and experienced VCs (interactions $p = .007$ and $p < .001$). It
+reverses for low-status VCs. One standard deviation of erraticism moves status by about
+$+0.006$ at low status and by $-0.026$ at high status. The authors read this as weaker
+expectations of consistency for firms with little standing to protect, for whom a
+distant move can work as repositioning.
+
+Two parts of the design deserve a reader's skepticism:
+
+- The mediators are measured over $t+1$ to $t+5$, the same window as the outcome.
+  "Commitment" is the share of past dollars in categories the VC keeps investing in,
+  and "capability" is the share of past portfolio companies that later win an IPO,
+  an acquisition, or follow-on funding from a new VC. Follow-on rounds with new VCs
+  are themselves syndication events, so this mediator partly draws on the same tie
+  formation that defines the outcome. The bootstrapped shares of the total effect
+  (21% through commitment, 12% through capability) are best read as decomposition,
+  not as established mechanism.
+- The 2SLS instrument, the cognitive novelty of the ventures a VC backs (from topic
+  models of business descriptions), is strong for the main effect (first-stage
+  $F = 23.5$) but weak in the full interaction model ($F = 5.8$). The authors
+  themselves call the experience interaction tentative.
+
+The broader lesson for marketing network research is that a centrality score
+summarizes where a node sits, while the node's history of moves can carry independent
+information about where it is going. The same logic applies to a brand's sequence of
+extensions or a creator's sequence of content niches.
+
 ## Brokerage and Structural Holes {#sec-graph-brokerage}
 
 Betweenness (@eq-graph-betweenness) finds brokers by counting shortest paths across the
