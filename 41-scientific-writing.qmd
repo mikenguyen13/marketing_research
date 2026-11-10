@@ -2548,170 +2548,6 @@ weigh three further things.
     headline table, not only the training loop.
 :::
 
-## The Interpretable Machine-Learning Paper: A Competitive-Intelligence Specimen {#sec-sw-interpretable-ml}
-
-A second route from machine learning to a top-journal paper is quieter than the
-design-science route. The paper builds no new architecture. It takes a well-understood
-probabilistic model, extends it so that it can absorb data the original model never
-saw, and arranges every estimated parameter so that it answers a question a manager
-already asks. @qian2026competitive, published in *Production and Operations Management*,
-is a clean specimen. They extend latent Dirichlet allocation to combine three traces
-that users leave on a Chinese car platform (the cars they favorite, the cars whose
-forums they comment in, and what they write there) and return a competitive map of
-2,330 car models. @sec-tad-hlda covers the model and reimplements its core on simulated
-data. This section reads the paper for its construction. (The full open-access article
-was read; its online appendices were not.)
-
-### The title states the managerial object first
-
-The title follows a formula worth copying: *Deriving [a managerial object] from [a
-data source]: an interpretable machine learning framework*. Competitive intelligence
-is the object, user behavior data is the input, and the method comes last. An
-operations or marketing editor sees a question their readers ask before they see an
-algorithm. Compare a title that leads with the model's name. That title tells the
-editor what was built but not why anyone should read it.
-
-### Quantify the gap with a number anyone can check
-
-Most methods papers assert that prior data are sparse. This one counts. Earlier
-market-structure work inferred competition from products mentioned together in reviews
-[@netzer2012]. The authors collected reviews from edmunds.com and autohome.com and found
-that only 1.1% and 0.13% of them, respectively, mention more than one car. One sentence
-turns a methodological complaint into a fact a referee can verify, and it motivates
-the paper's whole design. If co-mentions are that rare, the information has to come
-from somewhere else, and favorites and comment histories are where it is.
-
-### The spine is a data-source table
-
-In @sec-sw-design-science the spine runs from challenges to components. Here it runs
-from data sources to roles (the paper's Table 1).
-
-| Data source | What it reveals | Where it enters the model |
-|---|---|---|
-| Favorites lists | Serious consideration, close to purchase | Product embeddings learned from favorites, held fixed |
-| Commented products | Broader attention, early in search | Topic-model documents; one mixture component draws on the embeddings |
-| Comment text | Why products are compared | Word topics tied one-to-one to submarkets |
-
-: The data-source spine of @qian2026competitive, after their Table 1. {#tbl-sw-hlda-spine}
-
-Each row is justified by consumer behavior, not by the method. Favorites and comments
-are said to capture different stages of the decision process, and the text explains
-the comparison. The ablation study then removes rows from this table, one source at a
-time. A reader who sees the table knows what the evaluation will test before reaching
-it.
-
-### Bound the novelty by naming the building blocks
-
-The method section credits its parts. The base models are LDA [@blei2002lda] and
-Correspondence LDA [@blei2003annotated], the two-component mixture comes from
-@nguyen2015latentfeature, and the softmax over embeddings follows @dieng2020etm. The new
-part is the composition: a mixture that lets favorites inform submarkets, a link that
-makes the text conditional on them, and a joint sampler for both. That claim is
-smaller than "a new model", and it is one a referee cannot take apart by finding the
-pieces elsewhere.
-
-### "Interpretable" means every estimand has a managerial name
-
-The word *interpretable* in the title is a commitment. It does not mean that a black
-box gets a post hoc explanation. The paper's section on competitive intelligence
-(their §3.5) lists four quantities, each a posterior summary of a model parameter and
-each named for a decision:
-
-1. *Competitive strength* of a product in a submarket: the probability the submarket
-   generates it, mixing comment co-occurrence and the favorites embedding.
-2. *User perceptions* of a submarket: the word distribution of its linked topic, scored
-   for sentiment.
-3. *User preference* over submarkets: each user's mixture weights.
-4. *Submarket popularity*: those weights averaged over users.
-
-This mapping is the reason the paper can take an unsupervised model to an operations
-journal. The reader never has to be told what a topic "means"; the model was built so
-that each topic is a submarket and each topic weight is a share of attention.
-
-### One focal firm carries the results
-
-All the managerial results are told through one company, Tesla. The empirical section
-finds Tesla's premium EV submarket and its neighbors, ranks the rivals in each, reads
-the perception topics for each, and predicts where two new entrants will land (an NIO
-sedan ranks seventh in Tesla's submarket, a BMW only seventeenth). A
-single running case makes 60 submarkets readable and gives the managerial-implications
-section something concrete to stand on.
-
-### A validation stack, not a fit statistic
-
-The paper presents four layers of evidence. Only the first is in the main text.
-
-1. *Ablation by data source*: five variants, ten runs each, paired *t*-tests against
-   the full model on topic coherence and perplexity.
-2. *Parameter recovery*: simulate from the model with known parameters and check that
-   the sampler recovers them.
-3. *Benchmarks* against other topic and embedding models.
-4. *External validation* against consumer reports, sales data, and human ratings of
-   the submarkets.
-
-The fourth layer is what turns a better-fitting model into a claim about markets.
-Coherence and perplexity are both computed from the model's own outputs. A student
-copying the template should treat external validation as required, not optional.
-
-### Where the specimen is thin
-
-A referee from a marketing journal would press on four points.
-
-- **The gains are measured in fit, and they are small.** Against single-source
-  variants, the full model improves coherence by about 5% and perplexity by about 4%.
-  The variants that pair favorites with comments come within 3% on coherence. One
-  ordering in the ablation also goes the other way. Adding text to comments without
-  favorites makes both metrics *worse* than comments alone, so text helps only when
-  the favorites embedding anchors the submarkets. The paper reads the ablation as
-  showing that favorites are the most valuable source. It does not discuss why adding
-  text alone lowers fit.
-- **Strength is attention, not substitution.** A product's competitive strength is
-  the share of a submarket's comment and favorites activity it attracts. The demand
-  definition of a market is about who substitutes for whom
-  [@desarbo2006competes; @ringel2016asymmetric]. Agreement with sales patterns, in an
-  appendix, is consistent with substitution but does not establish it.
-- **The number of submarkets was chosen by perplexity**, which tends to keep improving
-  as topics are added, and the 60 submarkets are then read by hand.
-- **The new-entrant forecast relies on vector arithmetic chosen by the analyst.** It
-  approximates the Mercedes EQC as Audi e-tron − Audi Q7 + Mercedes GLC. The
-  analogy is checked visually for one car. It is not tested on a set of launches
-  whose later positions are known.
-
-None of these is fatal. Each is a place where a revision would ask for one more table.
-No code or data were released, which leaves the gains impossible to check from
-outside.
-
-### Carrying the template into a marketing journal
-
-The acknowledgments show that the paper was handled in *POM* by marketing scholars, so
-the genre already sits on the marketing–operations border. A version aimed at a
-marketing journal would keep the spine and the named estimands and add three things.
-It would validate submarkets against substitution measured from choice or
-consideration data. It would add a held-out prediction test, for example the
-following year's cross-shopping or the positions of cars launched after the training
-window. And it would make one managerial decision visibly depend on the map.
-
-::: {.callout-tip}
-## A checklist for the interpretable machine-learning paper
-
-1. Put the managerial object first in the title and the method last.
-2. Quantify the data gap that motivates the method with a count a referee can
-   reproduce.
-3. Build the data-source table before drafting: each source gets a behavioral
-   rationale and a place in the model.
-4. Extend a model readers already trust, and name every borrowed building block.
-5. Map every estimated parameter to a quantity with a managerial name, and define the
-   mapping by equation.
-6. Tell the results through one focal firm.
-7. Ablate by data source with repeated runs and paired tests, and explain any ordering
-   that contradicts the story.
-8. Add parameter recovery on simulated data and external validation against outcomes
-   the model never saw.
-9. Include a prediction the incumbent methods cannot make, and test it on held-out
-   cases rather than one illustration.
-10. Release code and, where licensing allows, the processed data.
-:::
-
 ## The Structural-Model Paper: A Consumer-Search Specimen {#sec-sw-structural}
 
 A third paper from the same September 2026 issue of *Information Systems Research*
@@ -3345,6 +3181,42 @@ come apart. Three adjustments help a marketing version get through review.
   a material misrepresentation. A paper that tells readers which side of it a claim falls
   on is useful to managers and regulators alike.
 
+### A second specimen: a construct that sits between two literatures
+
+@giuliani2026doublefailure build the same kind of paper from a different kind of hidden
+data. Their question is why workers stay at a plant they know is harming them and their
+families. The site is the ILVA steel plant in Taranto, Italy, which by 2013 employed
+about 12,000 workers, relied on 8,000 contractors, and produced about a quarter of
+Italy's steel. Each relevant literature covers half of the case (checklist item 3
+below). Organizational research treats employees as *insiders* who rationalize or go
+along with wrongdoing. Research on victims and environmental justice treats communities
+as *victims* seeking redress from institutions. These workers are both.
+
+The data design deals with the main threat to an interview study of a past scandal,
+which is that people reinterpret it in hindsight. The authors fixed two critical
+incidents. The first was the 2008 dioxin crisis, which ended with about 1,200
+contaminated sheep slaughtered. The second was a 2012 court order seizing the plant's
+hot furnaces. They then built a database of workers' quotations recorded at the time:
+over 3,000 pages of newspapers and books and about 17 hours of television, with each
+quotation coded to its incident. Only after that did they add 56 interviews conducted
+between 2020 and 2025 (about 63 hours). The 232 coded quotations show how workers'
+framing changed between the two incidents, not just how they remember it.
+
+The construct is defined by what it is not, and that is the move to copy.
+*Organizational resignation* means staying while condemning the firm, as a way to
+survive. The authors separate it in turn from loyalty, which defends the firm; from
+complicity and rationalization, which excuse the wrongdoing; from apathy, which drops
+the grievance; and from the victimhood of residents, who do not work there.
+*Institutional abandonment* is the belief that no outside authority will protect the
+workers. It builds up through repeated encounters with courts, regulators, and
+politicians that deny or delay recognition. The *double-failure trap* is the two beliefs
+reinforcing each other. The authors draw its boundary by comparison with single-failure
+cases, in which one arena, such as a court or a firm committed to repair, still offers a
+way out. A marketing version of the question is easy to state, although the paper does
+not pose it: a customer, supplier, or employee who keeps dealing with a brand they
+condemn is resigned, not loyal, and a satisfaction survey that reads continued business
+as approval will classify them wrongly.
+
 ::: {.callout-tip}
 ## A checklist for the theory-building paper
 
@@ -3513,42 +3385,6 @@ scaling <- data.frame(
   slope_per_sd      = c(slope(y ~ z(log_count)), slope(y ~ z(share)),
                         slope(y ~ z(resid_ct) + len), slope(y ~ z(theta) + len))
 )
-### A second specimen: a construct that sits between two literatures
-
-@giuliani2026doublefailure build the same kind of paper from a different kind of hidden
-data. Their question is why workers stay at a plant they know is harming them and their
-families. The site is the ILVA steel plant in Taranto, Italy, which by 2013 employed
-about 12,000 workers, relied on 8,000 contractors, and produced about a quarter of
-Italy's steel. Each relevant literature covers half of the case (checklist item 3
-below). Organizational research treats employees as *insiders* who rationalize or go
-along with wrongdoing. Research on victims and environmental justice treats communities
-as *victims* seeking redress from institutions. These workers are both.
-
-The data design deals with the main threat to an interview study of a past scandal,
-which is that people reinterpret it in hindsight. The authors fixed two critical
-incidents. The first was the 2008 dioxin crisis, which ended with about 1,200
-contaminated sheep slaughtered. The second was a 2012 court order seizing the plant's
-hot furnaces. They then built a database of workers' quotations recorded at the time:
-over 3,000 pages of newspapers and books and about 17 hours of television, with each
-quotation coded to its incident. Only after that did they add 56 interviews conducted
-between 2020 and 2025 (about 63 hours). The 232 coded quotations show how workers'
-framing changed between the two incidents, not just how they remember it.
-
-The construct is defined by what it is not, and that is the move to copy.
-*Organizational resignation* means staying while condemning the firm, as a way to
-survive. The authors separate it in turn from loyalty, which defends the firm; from
-complicity and rationalization, which excuse the wrongdoing; from apathy, which drops
-the grievance; and from the victimhood of residents, who do not work there.
-*Institutional abandonment* is the belief that no outside authority will protect the
-workers. It builds up through repeated encounters with courts, regulators, and
-politicians that deny or delay recognition. The *double-failure trap* is the two beliefs
-reinforcing each other. The authors draw its boundary by comparison with single-failure
-cases, in which one arena, such as a court or a firm committed to repair, still offers a
-way out. A marketing version of the question is easy to state, although the paper does
-not pose it: a customer, supplier, or employee who keeps dealing with a brand they
-condemn is resigned, not loyal, and a satisfaction survey that reads continued business
-as approval will classify them wrongly.
-
 scaling[-1] <- round(scaling[-1], 2)
 print(scaling, row.names = FALSE)
 ```
