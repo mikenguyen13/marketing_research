@@ -188,6 +188,12 @@ sample-ratio mismatch. Lab: the A/B-power simulation in
 - Imbens, G. W. & Rubin, D. B. (2015). *Causal Inference...*, Part II. Cambridge
   University Press *(book)* — **[F]** classical randomized experiments; Fisher and
   Neyman inference.
+- Huch, E., Nail, S. A., Melconian, T., Vongsathorn, X. & Feinberg, F. (2026).
+  "Overall Evaluation Criteria for A/B Tests: A Meta-Analytic Approach."
+  *Marketing Science*, published online ahead of print.
+  [doi:10.1287/mksc.2025.0164](https://doi.org/10.1287/mksc.2025.0164) —
+  **[R]** pools an archive of experiments to estimate each test's long-run
+  effect from short-run metrics; method and replication in @sec-causal-oec.
 
 **Debate.** Fisher versus Neyman inference; fixed-horizon versus
 sequential/always-valid testing; how much can web A/B testing actually learn given
@@ -1135,6 +1141,665 @@ platform's decision turns on. The outcomes are chosen the same way. Refund payou
 processing costs, later purchasing, and strategic claiming each enter the platform's
 payoff, and the paper reports all of them rather than a single headline metric
 (@sec-sw-decomposition).
+
+## Overall Evaluation Criteria: Learning Across A/B Tests {#sec-causal-oec}
+
+A single A/B test answers a narrow question well: did this variant move this
+metric over these two weeks? The decision the firm faces is wider. It wants to know
+whether the variant raises long-run value, and the metrics that measure long-run
+value (six-month revenue, retention, closed transactions) are slow and noisy, while
+the metrics that are fast and precise (clicks, form fills, sessions) are only
+proxies. Practitioners resolve the tension with an **overall evaluation criterion**
+(OEC): one number, built from short-run metrics, that is supposed to track long-run
+value [@kohavi2020trustworthy]. In most firms the OEC is a weighted sum whose weights
+were negotiated in a meeting.
+
+@huch2026oec replace the meeting with a model. Their observation is that a firm that
+has run hundreds of experiments already owns the data needed to learn how short-run
+effects map to long-run effects: every past test whose long-run outcome has matured
+is one observation on that mapping. The method is a multivariate random-effects
+meta-analysis, the tool biostatisticians built to validate surrogate endpoints in
+clinical trials [@dersimonian1986meta; @buyse2000surrogate], applied to an archive of
+A/B tests. It needs only two summaries per test, a vector of effect estimates and
+its covariance matrix, and it returns for every test, finished or still running, a
+posterior distribution for the long-run effect. This section sets out the full
+method, reports what the authors find in 190 tests at Zillow, and replicates the
+estimators in R.
+
+### Setup: what the archive must contain {#sec-causal-oec-setup}
+
+Index past experiments by $t = 1, \dots, T$. Each test reports a vector of estimated
+treatment effects on $p$ metrics, $\mathbf z_t \in \mathbb R^p$, together with an
+estimate of its sampling covariance $\boldsymbol\Sigma_t$. With a difference in
+means, $\mathbf z_t = \bar{\mathbf m}_{t1} - \bar{\mathbf m}_{t0}$ and
+$\boldsymbol\Sigma_t = \mathbf S_{t1}/n_{t1} + \mathbf S_{t0}/n_{t0}$, where
+$\mathbf S_{ta}$ is the sample covariance matrix of the metrics in arm $a$. Any
+estimator will do, including a covariate-adjusted one such as CUPED
+[@deng2013cuped], as long as two conditions hold. The estimate must be
+approximately Gaussian around the true effect vector $\boldsymbol\mu_t$, and the
+covariance estimate must be consistent, so that it can be treated as known:
+
+$$
+\mathbf z_t \mid \boldsymbol\mu_t \;\sim\; \mathcal N\!\left(\boldsymbol\mu_t, \boldsymbol\Sigma_t\right).
+$$ {#eq-oec-likelihood}
+
+The only new bookkeeping relative to standard practice is the off-diagonal part of
+$\boldsymbol\Sigma_t$. A platform that analyzes one metric at a time already
+computes the diagonal; the method also needs the covariances between metrics, and
+it needs metric definitions and measurement windows that are the same across tests.
+In the Zillow application these summaries shrink the data from billions of
+customer-level rows to a few hundred.
+
+Split the metrics into two groups, $\mathbf z_t = (\mathbf y_t^\top, \mathbf
+x_t^\top)^\top$, with true effects $\boldsymbol\mu_t = (\boldsymbol\mu_{yt}^\top,
+\boldsymbol\mu_{xt}^\top)^\top$. The $r$ metrics in $\mathbf y_t$ are the key
+performance indicators the business cares about. The $q$ metrics in $\mathbf x_t$
+are proxies. Both are estimated effects on post-treatment outcomes; neither is a
+covariate. The analyst then defines the target as a function of the *true* KPI
+effects,
+
+$$
+\text{OEC}_t \;=\; f\!\left(\boldsymbol\mu_{yt}\right),
+$$ {#eq-oec-definition}
+
+and the three examples in the paper cover most uses. With one KPI, such as revenue
+per customer over six months, $f$ is the identity. With revenue split by line of
+business, $f(\boldsymbol\mu_{yt}) = \mathbf 1_r^\top \boldsymbol\mu_{yt}$ adds the
+lines up. With a conversion funnel whose stage-$j$ effect is a log ratio of
+conditional conversion rates, $f(\boldsymbol\mu_{yt}) = \exp(\mathbf 1_r^\top
+\boldsymbol\mu_{yt}) - 1$ is the lift at the bottom of the funnel. The funnel case
+shows that the proxies need not be measured earlier than the KPI. Bottom-of-funnel
+events are rare, so their effects are estimated imprecisely even when the window is
+the same, and the upper-funnel metrics lend them precision.
+
+Defining the OEC as a function of true effects is the step that separates this
+framework from an OEC by committee. The target is stated in business terms and never
+changes. What the model learns is how much each proxy says about it.
+
+### The benchmark: one test at a time {#sec-causal-oec-naive}
+
+The estimator every platform already computes is the plug-in
+
+$$
+\widehat{\text{OEC}}_t = f(\mathbf y_t),
+\qquad
+\frac{\widehat{\text{OEC}}_t - \text{OEC}_t}
+     {\sqrt{f'(\boldsymbol\mu_{yt})^\top \boldsymbol\Sigma_{yyt}\, f'(\boldsymbol\mu_{yt})}}
+\;\xrightarrow{d}\; \mathcal N(0, 1),
+$$ {#eq-oec-naive}
+
+with the standard error from the delta method. The authors call it the naive
+method. It ignores the proxies and it ignores every other test. It is unbiased for
+each test taken alone, and it has two defects that matter in practice. Its
+intervals are wide, because the KPIs are noisy. And it is biased *conditional on
+being selected*: a firm ships the variants whose estimates are large and positive,
+and the estimates that clear that bar are disproportionately the ones whose noise
+happened to be positive. The summed "impact" of a year of shipped winners is
+therefore overstated, by regression to the mean.
+
+### The meta-analytic model {#sec-causal-oec-model}
+
+The fix is one added assumption. The true effect vectors of the tests in the archive
+are independent draws from a common distribution,
+
+$$
+\boldsymbol\mu_t \;\overset{\text{iid}}{\sim}\; P_{\boldsymbol\theta},
+\qquad \boldsymbol\theta \sim p(\boldsymbol\theta \mid \boldsymbol\theta_0),
+$$ {#eq-oec-prior}
+
+with a hyperprior on the unknown $\boldsymbol\theta$. This is the standard
+exchangeability assumption of meta-analysis. Univariate versions were already in
+use for online experiments, for example to show that the distribution of true
+effects at Bing has fat tails [@azevedo2020fattails]. Because $\boldsymbol\mu_t$ is
+a vector, $P_{\boldsymbol\theta}$ carries more than a location and a spread: it
+carries the correlations between true effects on different metrics across
+experiments, and those correlations are what allow one metric to stand in for
+another. @fig-oec-model draws the model.
+
+```{mermaid}
+%%| label: fig-oec-model
+%%| fig-cap: "The meta-analytic OEC model. Each test contributes an effect estimate and its sampling covariance. True effects are draws from a shared distribution that is learned from the whole archive. The posterior for one test's long-run effect combines its own noisy KPI estimate, its precise proxy estimates, and the cross-test relationship between proxies and KPIs."
+flowchart LR
+  H["Hyperprior θ₀ (fixed)"] --> TH["Shared effect distribution P_θ: location, spread, cross-metric correlation"]
+  subgraph Archive["Archive of T tests"]
+    direction TB
+    MU["True effects μ_t = (μ_yt, μ_xt)"] --> Z["Estimates z_t = (y_t, x_t)"]
+    S["Sampling covariance Σ_t (treated as known)"] --> Z
+  end
+  TH --> MU
+  Z --> POST["Posterior for μ_yt given all tests"]
+  TH --> POST
+  POST --> OEC["OEC_t = f(μ_yt): point estimate, interval, ship / no-ship"]
+```
+
+Why is the posterior the right estimator? Take squared-error loss and average it
+over both the sampling noise and the draw of $\boldsymbol\mu_t$ from
+$P_{\boldsymbol\theta}$. The estimator that minimizes this Bayes risk is the
+posterior mean of $f(\boldsymbol\mu_{yt})$ given $\mathbf z_t$. With
+$\boldsymbol\theta$ unknown, the fully Bayesian version integrates over its
+posterior, and in practice that is done by applying $f$ to Markov chain Monte Carlo
+draws of $\boldsymbol\mu_{yt}$.
+
+It helps to be exact about what has been assumed and what has not. Surrogate-index
+methods [@athey2026surrogateindex; @yang2024longterm] work with individual-level
+data and assume that the long-run outcome is independent of treatment given the
+surrogates, so that the surrogates capture every channel through which treatment
+acts. The meta-analytic model makes no such claim about mechanisms. It replaces the
+causal surrogacy assumption with a statistical one about the *population of
+experiments*, and it measures the strength of surrogacy empirically, as a
+cross-experiment correlation, instead of assuming it. The cost is that
+@eq-oec-prior must be credible. It is most credible for many closely related tests
+on one platform and one customer population. It fails when tests interfere with
+each other, when the archive mixes domains, or when something observable about a
+test predicts its effect. The authors' remedy for the last case is metaregression:
+let the effect distribution depend on test-level covariates $\mathbf w_t$ (platform,
+intervention type, duration, or summaries of $\boldsymbol\Sigma_t$ if strong tests
+are stopped early) and require exchangeability only conditional on them. The
+assumption has observable consequences, so it can be checked with posterior
+predictive tests of dependence between $\boldsymbol\mu_t$ and test metadata.
+
+### Three priors for the distribution of effects {#sec-causal-oec-priors}
+
+**Gaussian.** With $\boldsymbol\mu_t \sim \mathcal N(\boldsymbol\eta,
+\boldsymbol\Omega)$, the posterior of a test's true effects given
+$\boldsymbol\theta = (\boldsymbol\eta, \boldsymbol\Omega)$ is available in closed
+form:
+
+$$
+\boldsymbol\mu_t \mid \mathbf z_t, \boldsymbol\theta \sim \mathcal N(\boldsymbol\eta_t, \boldsymbol\Omega_t),
+\qquad
+\boldsymbol\Omega_t = \left(\boldsymbol\Omega^{-1} + \boldsymbol\Sigma_t^{-1}\right)^{-1},
+\qquad
+\boldsymbol\eta_t = \boldsymbol\Omega_t\left(\boldsymbol\Omega^{-1}\boldsymbol\eta + \boldsymbol\Sigma_t^{-1}\mathbf z_t\right).
+$$ {#eq-oec-blup}
+
+The posterior mean is a precision-weighted average of the archive's mean effect and
+the test's own estimate. It is the best linear unbiased predictor (BLUP) of
+$\boldsymbol\mu_t$, which makes it the benchmark for any OEC that is linear in the
+metrics, including a committee's weighted sum. Two properties follow from
+@eq-oec-blup. As a test grows, $\boldsymbol\Sigma_t \to \mathbf 0$ and the BLUP
+converges to the naive estimate, so a large test is left alone. And because
+$\boldsymbol\Omega$ has off-diagonal terms, a precise proxy estimate moves the
+posterior for a noisy KPI.
+
+The second property gives the method its most practical use. Suppose only some
+metrics have been observed, $\mathbf A \mathbf z_t$ for a selection matrix $\mathbf
+A$, because the long-run window has not closed. The posterior becomes
+
+$$
+\boldsymbol\Omega_t = \left[\boldsymbol\Omega^{-1} + \mathbf A^\top\!\left(\mathbf A \boldsymbol\Sigma_t \mathbf A^\top\right)^{-1}\!\mathbf A\right]^{-1},
+\qquad
+\boldsymbol\eta_t = \boldsymbol\Omega_t\left[\boldsymbol\Omega^{-1}\boldsymbol\eta + \mathbf A^\top\!\left(\mathbf A \boldsymbol\Sigma_t \mathbf A^\top\right)^{-1}\!\mathbf A \mathbf z_t\right],
+$$ {#eq-oec-missing}
+
+which is a posterior for the long-run effect of a test whose long-run outcome does
+not exist yet. The same expression handles a metric that a given test could not
+track. The requirement is that the missingness is unrelated to the effects.
+
+**Student-t.** True effects in online experiments have more large outliers than a
+Gaussian allows. Replacing the prior with a multivariate Student-t,
+$\boldsymbol\mu_t \sim \mathcal T(\boldsymbol\eta, \boldsymbol\Omega, \gamma)$,
+shrinks a surprising estimate less. The posterior mean is no longer linear in
+$\mathbf z_t$.
+
+**Dirichlet process mixture (DPM).** The most flexible option drops the parametric
+family. Tests belong to latent clusters, each with its own Gaussian, and the number
+of clusters is inferred:
+
+$$
+\boldsymbol\mu_t \mid c_t \sim \mathcal N\!\left(\boldsymbol\eta_{c_t}, \boldsymbol\Omega_{c_t}\right),
+\qquad
+c_t \mid \boldsymbol\pi \sim \text{Categorical}(\boldsymbol\pi),
+\qquad
+\boldsymbol\pi \sim \text{GEM}(\alpha_0),
+\qquad
+(\boldsymbol\eta_k, \boldsymbol\Omega_k) \sim G_0 ,
+$$ {#eq-oec-dpm}
+
+with a Gaussian-inverse-Wishart base measure $G_0$ and a concentration parameter
+$\alpha_0$ that governs how readily new clusters form. A test is now shrunk toward
+the center of the cluster it most plausibly belongs to, not toward the grand mean.
+The clusters are also a finding in their own right, because the model sees only
+$(\mathbf z_t, \boldsymbol\Sigma_t)$ and still groups tests by the profile of their
+effects.
+
+### Measuring surrogacy {#sec-causal-oec-surrogacy}
+
+The fitted $\boldsymbol\Omega$ answers a question that OEC committees argue about:
+how good are the proxies? Following @buyse2000surrogate, the strength of the
+proxies for the summed OEC is the share of cross-test variance in the OEC that the
+proxy effects explain,
+
+$$
+R^2 \;=\; \frac{\mathbf 1_r^\top \boldsymbol\Omega_{yx}\boldsymbol\Omega_{xx}^{-1}\boldsymbol\Omega_{xy}\mathbf 1_r}
+               {\mathbf 1_r^\top \boldsymbol\Omega_{yy}\mathbf 1_r}.
+$$ {#eq-oec-r2}
+
+A second set of diagnostics says where the precision comes from. Let $v_{0t} =
+\mathbf u^\top \boldsymbol\Sigma_t \mathbf u$ be the naive variance of the OEC,
+with $\mathbf u = (\mathbf 1_r^\top, \mathbf 0_q^\top)^\top$; let $v_{zt} = \mathbf
+u^\top \boldsymbol\Omega_t \mathbf u$ be the posterior variance from
+@eq-oec-blup; and let $v_{yt} = \mathbf 1_r^\top(\boldsymbol\Omega_{yy}^{-1} +
+\boldsymbol\Sigma_{yyt}^{-1})^{-1}\mathbf 1_r$ be the posterior variance from a
+meta-analysis that throws the proxies away. Then
+
+$$
+\underbrace{\frac{v_{zt}}{v_{0t}}}_{\text{TVR}_t}
+\;=\;
+\underbrace{\frac{v_{yt}}{v_{0t}}}_{\text{PVR}_t}
+\times
+\underbrace{\frac{v_{zt}}{v_{yt}}}_{\text{SVR}_t}.
+$$ {#eq-oec-tvr}
+
+The total variance ratio has a direct cost interpretation: to match the posterior
+variance with the naive method, the test would need $1/\text{TVR}_t$ times as many
+customers. The prior variance ratio is the part due to shrinking the KPIs toward
+what the archive says is plausible. The surrogacy variance ratio is the further
+gain from the proxies. Computing the three for each candidate proxy is a principled
+way to decide which metrics belong in $\mathbf x_t$. Under the DPM the same
+quantities are computed with each test's cluster covariance and averaged.
+
+### Estimation {#sec-causal-oec-estimation}
+
+All three models are fitted by collapsed Gibbs sampling. The Gaussian sampler
+cycles through three blocks, with priors $\boldsymbol\eta \sim \mathcal
+N(\boldsymbol\eta_0, \boldsymbol\Phi)$ and $\boldsymbol\Omega \sim \mathcal
+W^{-1}(\boldsymbol\Psi, \nu)$:
+
+1. Draw $\boldsymbol\Omega$ from $\mathcal W^{-1}\big(\boldsymbol\Psi + \sum_t
+   (\boldsymbol\mu_t - \boldsymbol\eta)(\boldsymbol\mu_t - \boldsymbol\eta)^\top,\;
+   \nu + T\big)$.
+2. Draw $\boldsymbol\eta$ with the $\boldsymbol\mu_t$ integrated out, from
+   $\mathcal N(\boldsymbol\eta_T, \boldsymbol\Phi_T)$ with $\boldsymbol\Phi_T =
+   \big[\boldsymbol\Phi^{-1} + \sum_t (\boldsymbol\Omega +
+   \boldsymbol\Sigma_t)^{-1}\big]^{-1}$ and $\boldsymbol\eta_T =
+   \boldsymbol\Phi_T\big[\boldsymbol\Phi^{-1}\boldsymbol\eta_0 + \sum_t
+   (\boldsymbol\Omega + \boldsymbol\Sigma_t)^{-1}\mathbf z_t\big]$.
+3. Draw each $\boldsymbol\mu_t$ from @eq-oec-blup.
+
+The Student-t sampler adds a latent scale per test, $d_t \sim \chi^2(\gamma)$ with
+$\boldsymbol\mu_t \mid d_t \sim \mathcal N(\boldsymbol\eta, (\gamma/d_t)\,
+\boldsymbol\Omega)$, which restores conjugacy; every $\boldsymbol\Omega$ above is
+rescaled by $\gamma/d_t$, the scales are drawn from a gamma distribution, and
+$\gamma$ gets a Metropolis step. The DPM sampler reassigns each test to a cluster
+with probability proportional to the cluster's size times the posterior predictive
+density of $\boldsymbol\mu_t$ under that cluster (a multivariate Student-t), or to
+a new cluster with probability proportional to $\alpha_0$ times the prior
+predictive density [@neal2000dpm, algorithm 3], and then runs the Gaussian blocks
+within each cluster. The concentration parameter is updated by the
+data-augmentation step of @escobar1995density.
+
+The authors recommend weakly informative hyperpriors: $\boldsymbol\eta_0 = \mathbf
+0$ (the average change does nothing), a diffuse $\boldsymbol\Phi$, a small $\nu$,
+a prior on $\gamma$ that covers roughly 5 to 10 degrees of freedom, and $\alpha_0$
+between 0.5 and 2. Cost scales linearly in the number of tests for the Gaussian and
+Student-t models, as $T \log T$ for the DPM, and as $p^3$ in the number of metrics,
+so the practical range is around ten metrics or fewer. On 190 tests with five
+metrics and 30,000 draws, the authors report 1.35 minutes for the Gaussian model
+with $\boldsymbol\eta$ fixed at zero, 2.45 for the Gaussian, 4.73 for the
+Student-t, and 142.53 for the DPM. Tests with several treatment arms are handled by
+stacking the arms' effect vectors and using their joint covariance.
+
+### What the paper finds {#sec-causal-oec-findings}
+
+**Simulation.** The authors fit the DPM to the Zillow archive, draw 100 synthetic
+archives from its posterior predictive distribution (transformed so that nothing
+confidential survives), and run six methods on each: the naive estimator (N), a
+Gaussian model with the prior mean fixed at zero (G-0), the Gaussian (G), the
+Student-t (T), the DPM, and a metaregression (MR) in which each test's cluster is
+known, as it would be if tests were tagged by type. @tbl-oec-paper-sim reproduces
+their headline table.
+
+| Metric | N | G-0 | G | T | DPM | MR |
+|:--|--:|--:|--:|--:|--:|--:|
+| Correct decision rate | 0.81 | 0.84 | 0.87 | 0.87 | 0.91 | 0.93 |
+| Regret | 0.05 | 0.03 | 0.02 | 0.02 | 0.01 | 0.01 |
+| Overestimation among shipped variants | 0.48 | 0.01 | 0.01 | 0.02 | −0.01 | −0.01 |
+| Mean absolute error | 1.01 | 0.16 | 0.15 | 0.15 | 0.11 | 0.09 |
+| Average 95% interval length | 4.95 | 0.98 | 0.94 | 0.98 | 0.56 | 0.49 |
+| 95% interval coverage | 0.95 | 0.97 | 0.97 | 0.98 | 0.97 | 0.97 |
+
+: Simulation results reported by @huch2026oec (their Table 1), averaged over 100 synthetic archives. A variant is "shipped" when its estimated OEC is positive; regret is the OEC lost relative to the better arm. {#tbl-oec-paper-sim}
+
+Three patterns are visible. Every meta-analytic method beats the naive one on every
+criterion, and the largest single step is from N to G-0: most of the gain comes
+from having a prior at all. The naive method overstates the value of what it ships
+by 0.48, about half its own mean absolute error, while the meta-analytic methods
+are within 0.02 of zero. And the intervals from the meta-analytic methods are less
+than a fifth as long yet cover slightly *more* than 95%, the mild overcoverage
+being the price of hyperpriors that were deliberately not tuned to the truth. The
+DPM and MR cut wrong decisions by more than half relative to the naive method (from
+19% to 9% and 7%).
+
+**The Zillow archive.** The application uses 190 tests run during part of 2022 to
+2024: email campaigns, site design changes, new features, personalization models.
+The KPIs are the rescaled dollar impact per customer on two undisclosed lines of
+business, the OEC is their sum, and three undisclosed short-term metrics serve as
+proxies. Ground truth is unavailable, so the authors split each test's customers in
+half, fit every method on one half, and score its predictions against the naive
+estimate from the other half, which is noisy but unbiased under minimal
+assumptions.
+
+On that test the meta-analytic methods predict the held-out estimate better than
+the naive method in 69% to 73% of tests. The DPM's log absolute error is lower by
+0.29, about 25% less absolute error; the Student-t is close behind at 0.27, and the
+two Gaussian models are at 0.21 to 0.22. All five methods have prediction-interval
+coverage between 0.94 and 0.96, and the DPM's median interval is about a quarter
+shorter than the naive one (1.55 against 2.06). These gains are smaller than in the
+simulation because the yardstick is itself a noisy half-sample estimate. The
+sharpest diagnostic is the rank correlation between a method's prediction and its
+own prediction error. For the naive method it is −0.59: the bigger the claimed
+win, the bigger the subsequent disappointment. For the DPM it is −0.14. A second
+set of hyperpriors that changes almost every setting leaves the ordering of the
+methods intact.
+
+Fitted to the full data, the DPM gives the surrogacy measures in
+@tbl-oec-paper-surrogacy.
+
+| Measure | KPI 1 | KPI 2 | OEC (sum) |
+|:--|:--|:--|:--|
+| $R^2$ | 0.52 (0.18–0.90) | 0.78 (0.42–0.98) | 0.46 (0.13–0.81) |
+| TVR | 0.16 (0.08–0.24) | 0.10 (0.04–0.19) | 0.15 (0.08–0.24) |
+| PVR | 0.18 (0.10–0.27) | 0.13 (0.06–0.22) | 0.17 (0.10–0.26) |
+| SVR | 0.91 (0.82–0.97) | 0.88 (0.79–0.95) | 0.93 (0.84–0.97) |
+
+: Aggregate surrogacy measures for the Zillow archive reported by @huch2026oec (their Table 5): posterior means with 95% credible intervals, averaged over 190 tests. {#tbl-oec-paper-surrogacy}
+
+The table deserves a careful reading, because it qualifies the paper's own framing.
+A TVR of 0.15 means the posterior standard deviation of the OEC is about 60% smaller
+than the naive standard error, the equivalent of a test six to ten times larger.
+But the decomposition shows that almost all of that comes from the PVR: shrinking
+the noisy KPI estimates toward the archive's distribution does the work, and the
+proxies add a further 7% to 12% reduction in variance on top. The proxies are
+moderately strong surrogates ($R^2$ around 0.5) and still contribute little, since
+the prior has already removed most of the noise they could have removed. In this
+archive the method earns its keep as a shrinkage estimator first and as a
+surrogate model second. Where the proxies become indispensable is the early
+readout of @eq-oec-missing, when the KPI has not been observed at all.
+
+The DPM finds a posterior mean of 7.2 clusters (95% interval 4 to 12), and the
+clusters are interpretable after the fact: one is dominated by tests of rental
+search, another contains only mobile tests. The authors suggest using such
+clusters to discover the metadata a metaregression should condition on. Posterior
+predictive checks for dependence between the effects and their sampling variances
+give a smallest p-value of 0.05 across ten comparisons, little evidence against
+exchangeability.
+
+### Replication {#sec-causal-oec-replication}
+
+The Zillow data are confidential, and the authors' replication package (synthetic
+archives and Python code) sits behind a registration form on the INFORMS site, so
+it was not used here. What follows is an independent implementation in R, written
+from the paper's Section 4 and Appendix B, in `replication/oec-meta/` of the book's
+repository. It reproduces the estimators and the design of the simulation study,
+not the paper's numbers, because the data-generating process is ours.
+
+The Gaussian model is short enough to run inline. The chunk below simulates an
+archive of 190 tests with one noisy KPI and two precise proxies, learns
+$(\boldsymbol\eta, \boldsymbol\Omega)$ by the EM algorithm (an empirical-Bayes
+shortcut that plugs in point estimates where the paper integrates over a
+posterior), and compares three estimates of each test's long-run effect: the naive
+one, the BLUP of @eq-oec-blup, and the early readout of @eq-oec-missing that never
+sees the KPI.
+
+```{r causal-oec-demo}
+#| echo: true
+#| message: false
+#| warning: false
+#| label: fig-oec-shrinkage
+#| fig-cap: "Shrinkage in a simulated archive of 190 A/B tests. Each point is one test. The naive estimate (left) scatters widely around the true long-run effect, and its largest values are mostly noise. The meta-analytic posterior mean (right) pulls each estimate toward what the archive and the test's own proxy metrics say is plausible. The dashed line marks a perfect estimate."
+#| fig-width: 9
+#| fig-height: 4.2
+set.seed(47)
+
+# --- An archive of 190 past A/B tests ----------------------------------------
+# Three metrics per test: y = effect on six-month revenue per customer (the KPI),
+# x1 = effect on click-through, x2 = effect on form-fill rate (the proxies).
+n_tests <- 190; p <- 3
+eta   <- c(0.05, 0.10, 0.08)                        # average true effect
+sd_mu <- c(0.30, 0.40, 0.35)
+R_mu  <- matrix(c(1, .7, .6,  .7, 1, .5,  .6, .5, 1), p, p)
+Omega <- diag(sd_mu) %*% R_mu %*% diag(sd_mu)       # cross-test covariance of true effects
+mu    <- sweep(matrix(rnorm(n_tests * p), n_tests) %*% chol(Omega), 2, eta, "+")
+
+# Sampling noise: the KPI is rare and slow, so it is far noisier than the proxies.
+size  <- rlnorm(n_tests, 0, 0.6)                    # tests differ in sample size
+C_err <- matrix(c(1, .3, .3,  .3, 1, .2,  .3, .2, 1), p, p)
+Sigma <- lapply(size, function(h) { s <- c(0.50, 0.12, 0.15) / sqrt(h)
+                                    diag(s) %*% C_err %*% diag(s) })
+z <- t(sapply(seq_len(n_tests), function(t)
+  mu[t, ] + drop(rnorm(p) %*% chol(Sigma[[t]]))))
+
+# --- The BLUP: combine the prior N(eta, Omega) with z_t ~ N(mu_t, Sigma_t) -----
+# `seen` marks the metrics already observed for this test.
+blup <- function(z_t, S_t, eta, Omega, seen = rep(TRUE, length(z_t))) {
+  prec <- matrix(0, length(z_t), length(z_t))
+  prec[seen, seen] <- solve(S_t[seen, seen])
+  V <- solve(solve(Omega) + prec)
+  list(mean = drop(V %*% (solve(Omega, eta) + prec %*% replace(z_t, !seen, 0))),
+       cov = V)
+}
+
+# --- Learn (eta, Omega) from the archive by EM (empirical Bayes) --------------
+eta_hat <- colMeans(z); Omega_hat <- cov(z)
+for (iter in 1:500) {
+  post <- lapply(seq_len(n_tests), function(t)
+    blup(z[t, ], Sigma[[t]], eta_hat, Omega_hat))
+  m <- t(sapply(post, `[[`, "mean"))
+  eta_hat <- colMeans(m)
+  Omega_hat <- Reduce(`+`, lapply(seq_len(n_tests), function(t)
+    post[[t]]$cov + tcrossprod(m[t, ] - eta_hat))) / n_tests
+}
+
+# --- Three estimates of each test's OEC (the true KPI effect) ------------------
+full  <- lapply(seq_len(n_tests), function(t)
+  blup(z[t, ], Sigma[[t]], eta_hat, Omega_hat))
+early <- lapply(seq_len(n_tests), function(t)
+  blup(z[t, ], Sigma[[t]], eta_hat, Omega_hat, seen = c(FALSE, TRUE, TRUE)))
+est <- data.frame(
+  naive = z[, 1], se_naive = sqrt(sapply(Sigma, `[`, 1, 1)),
+  meta  = sapply(full,  function(b) b$mean[1]),
+  se_meta  = sqrt(sapply(full,  function(b) b$cov[1, 1])),
+  early = sapply(early, function(b) b$mean[1]),
+  se_early = sqrt(sapply(early, function(b) b$cov[1, 1])))
+truth <- mu[, 1]
+
+score <- function(e, se) {
+  ship <- e > 0
+  c("Correct decision rate"             = mean(ship == (truth > 0)),
+    "Overestimation, shipped variants"  = mean((e - truth)[ship]),
+    "Mean absolute error"               = mean(abs(e - truth)),
+    "Mean 95% interval length"          = mean(2 * 1.96 * se),
+    "95% interval coverage"             = mean(abs(e - truth) <= 1.96 * se))
+}
+oec_demo <- cbind("Naive (KPI only)"              = score(est$naive, est$se_naive),
+                  "Meta-analytic (KPI + proxies)" = score(est$meta,  est$se_meta),
+                  "Early readout (proxies only)"  = score(est$early, est$se_early))
+
+# --- Surrogacy diagnostics at the median-sized test ----------------------------
+S_med <- Sigma[[which.min(abs(size - median(size)))]]
+v0 <- S_med[1, 1]
+vz <- blup(z[1, ], S_med, eta_hat, Omega_hat)$cov[1, 1]
+vy <- 1 / (1 / Omega_hat[1, 1] + 1 / v0)
+oec_diag <- c(R2  = drop(Omega_hat[1, 2:3] %*%
+                           solve(Omega_hat[2:3, 2:3], Omega_hat[2:3, 1])) / Omega_hat[1, 1],
+              TVR = vz / v0, PVR = vy / v0, SVR = vz / vy)
+
+op <- par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.2, 1))
+lim <- range(est$naive)
+plot(truth, est$naive, pch = 16, cex = .6, col = "grey55", ylim = lim,
+     xlab = "True effect on the KPI", ylab = "Estimate",
+     main = "Naive: one test at a time")
+abline(0, 1, lty = 2)
+plot(truth, est$meta, pch = 16, cex = .6, col = "steelblue4", ylim = lim,
+     xlab = "True effect on the KPI", ylab = "Estimate",
+     main = "Meta-analytic posterior mean")
+abline(0, 1, lty = 2)
+par(op)
+```
+
+```{r causal-oec-demo-table}
+#| echo: false
+#| label: tbl-oec-demo
+#| tbl-cap: "Three estimators of the long-run effect in the simulated archive of @fig-oec-shrinkage. The early readout uses only the two proxy estimates of each test."
+knitr::kable(oec_demo, digits = 2, align = "rrr")
+```
+
+@tbl-oec-demo has the paper's qualitative results in miniature. The naive estimator
+overstates the value of the variants it ships by
+`r sprintf("%.2f", oec_demo[2, 1])`, against a mean absolute error of
+`r sprintf("%.2f", oec_demo[3, 1])`; the meta-analytic estimator's overstatement is
+`r sprintf("%.2f", oec_demo[2, 2])` and its error is roughly a third as large, with
+intervals half as long. The early readout is the striking column. It never sees the
+KPI, and it is about as accurate as the estimator that does, because in this
+archive a KPI estimate with a standard error near 0.5 adds little to two precise
+proxies and a prior. The diagnostics say the same thing in the paper's vocabulary.
+At the median-sized test the estimated $R^2$ of the proxies is
+`r sprintf("%.2f", oec_diag["R2"])` (the true value in the simulation is 0.57, and
+the gap is a reminder that $\boldsymbol\Omega$ is itself estimated from noisy
+tests), the total variance ratio is `r sprintf("%.2f", oec_diag["TVR"])`, and it
+factors into a prior variance ratio of `r sprintf("%.2f", oec_diag["PVR"])` and a
+surrogacy variance ratio of `r sprintf("%.2f", oec_diag["SVR"])`. The plug-in
+intervals ignore the uncertainty in $(\hat{\boldsymbol\eta},
+\hat{\boldsymbol\Omega})$, which is one reason to prefer the fully Bayesian version
+when the archive is small.
+
+The fully Bayesian samplers are in `oec_samplers.R`: `gibbs_re()` fits the Gaussian,
+Gaussian-0, and Student-t models, `gibbs_dpm()` fits the DPM and (given known
+labels) the metaregression variant, and both accept a mask of unobserved metrics.
+
+```{r causal-oec-samplers, eval=FALSE}
+#| file: replication/oec-meta/oec_samplers.R
+```
+
+To test them the way the paper tests its own, `oec_simulate.R` draws archives of
+190 tests with two KPIs and three proxies from a six-cluster mixture: half the
+tests are minor tweaks with true effects near zero, and the rest fall into
+clusters that move one line of business, the other, both, or do harm. The sampling
+noise of the KPIs is four to five times that of the proxies, and test precision
+varies on a heavy-tailed log-normal scale. The six methods and six metrics are the
+paper's. The scale of the exercise is not: 48 archives and 2,000 draws per fit
+(500 discarded), against the paper's 100 archives and 30,000 draws.
+
+```{r causal-oec-sim-table}
+#| echo: false
+#| label: tbl-oec-sim
+#| tbl-cap: "Our simulation: six estimators of the OEC on 48 synthetic archives of 190 tests (standard errors across archives in parentheses). The design follows Section 5 of @huch2026oec; the data-generating process is ours, so levels are not comparable with @tbl-oec-paper-sim, only the ordering of methods."
+sim <- read.csv("replication/oec-meta/oec_simulation_summary.csv")
+lab <- c(correct = "Correct decision rate", regret = "Regret",
+         overest = "Overestimation among shipped variants",
+         mae = "Mean absolute error", ci_len = "Average 95% interval length",
+         coverage = "95% interval coverage",
+         win_vs_naive = "Win rate against naive",
+         mleq_vs_naive = "Mean log error quotient against naive")
+meth <- c("N", "G-0", "G", "T", "DPM", "MR")
+cell <- function(m, k) {
+  r <- sim[sim$method == m & sim$metric == k, ]
+  if (m == "N" && grepl("naive", k)) return("")
+  sprintf("%.2f (%.3f)", r$mean, r$se)
+}
+out <- sapply(meth, function(m) sapply(names(lab), function(k) cell(m, k)))
+rownames(out) <- lab
+knitr::kable(out, align = "rrrrrr")
+```
+
+The ordering in @tbl-oec-sim is the paper's. The naive method makes the right call
+in 72% of tests and overstates what it ships by 0.39. The three single-distribution
+models are indistinguishable from one another, raise the correct-decision rate to
+76%, cut the mean absolute error by about 60%, halve the interval length, and all
+but remove the overstatement. The DPM takes a second step of similar practical
+size: 81% correct decisions, error down by a further 30%, intervals 40% shorter
+again, overstatement of 0.01, and coverage at the nominal 95% where the
+single-distribution models overcover. On the log scale the DPM's typical error is
+$e^{-0.95} \approx 0.39$ of the naive error, against $e^{-0.57} \approx 0.57$ for
+the Gaussian.
+
+Two of our results differ from the paper's, and both are informative. Telling the
+model each test's true cluster (MR) buys almost nothing beyond the DPM here,
+whereas in the paper it adds two points of decision accuracy; our clusters are well
+separated in the precise proxies, so the DPM recovers what matters about them
+without being told. And the DPM beats the naive estimate in slightly *fewer* tests
+(76%) than the Gaussian does (79%) while being far more accurate on average. The
+paper's Zillow results show the same reversal (69% for the DPM, 73% for the
+Gaussian). A mixture prior occasionally assigns a test to the wrong cluster and
+shrinks it toward the wrong center, so it loses a few more head-to-head
+comparisons and wins the others by a wider margin. A win rate rewards being
+slightly better often, and decisions about money depend on the size of the errors,
+so the mean absolute error and the log error quotient are the better guides.
+
+`oec_full_data.R` treats one synthetic archive the way the paper treats the real
+one.
+
+```{r causal-oec-readout-table}
+#| echo: false
+#| label: tbl-oec-readout
+#| tbl-cap: "Early readout on one synthetic archive. The KPI estimates of the 30 most recent tests are withheld and the DPM predicts their OEC from the three proxy estimates alone, using the relationship learned from the other 160 tests."
+ro <- read.csv("replication/oec-meta/oec_early_readout.csv", check.names = FALSE)
+names(ro) <- c("Analysis of the 30 most recent tests", "Mean absolute error",
+               "Mean 95% interval length", "95% interval coverage",
+               "Correct decision rate")
+knitr::kable(ro, digits = 2, align = "lrrrr")
+```
+
+@tbl-oec-readout is the use case of @eq-oec-missing. For 30 tests whose KPIs are
+hidden, the DPM's proxy-only prediction has a mean absolute error of 0.15, less
+than half the 0.35 of the naive estimate that *does* see the KPIs, and intervals
+about half as long. Its intervals cover all 30 true values, so they are
+conservative here. Once the KPIs arrive the error falls further, to 0.09, and the
+correct-decision rate rises from 73% to 83%: the early readout is good enough to
+rank tests and to size effects, and the mature KPI is still worth waiting for when
+the sign is in doubt. On the same archive the DPM's surrogacy measures for the OEC
+are $R^2 = 0.70$ (95% interval 0.54 to 0.83), TVR $= 0.27$ (0.20 to 0.35), PVR
+$= 0.43$ (0.37 to 0.50), and SVR $= 0.62$ (0.50 to 0.76). Our synthetic proxies are
+stronger surrogates than Zillow's, so more of the variance reduction comes from
+them than in @tbl-oec-paper-surrogacy. The sampler also recovers the latent
+structure imperfectly, as it should with noisy data: the posterior mean number of
+clusters is 9.4 (95% interval 5 to 15) against a true 6, and the posterior
+probability that two tests share a cluster averages 0.73 for pairs that truly do
+and 0.17 for pairs that do not.
+
+### Using the method {#sec-causal-oec-practice}
+
+For a team that wants to adopt this, the paper implies a sequence.
+
+1. Build the archive. Store $(\mathbf z_t, \boldsymbol\Sigma_t)$ for every
+   test, with the full covariance matrix, fixed metric definitions, and fixed
+   measurement windows. Exclude tests that fail quality checks such as
+   sample-ratio mismatch.
+2. Define the OEC in business terms. Choose the KPIs and the function $f$ so
+   that the target is long-run value, and resist redefining it when a proxy is
+   convenient. The proxies enter through the model, not through the definition.
+3. Start with the Gaussian model. It runs in minutes, its posterior mean is a
+   linear rule that can be explained to a product manager, and in both the paper's
+   results and ours it captures most of the gain over the naive method.
+4. **Check exchangeability.** Test for dependence between estimated effects and
+   test metadata, including sampling variances. If the DPM finds clusters that line
+   up with something observable, condition on it.
+5. **Read the diagnostics before trusting the proxies.** A low $R^2$ or an SVR near
+   one says the proxies add little once the KPI is observed, and that early
+   readouts will be weak.
+6. **Refit on a schedule and validate.** Refit as tests mature, score early
+   readouts against mature estimates, and track the rank correlation between
+   predictions and errors as a running check on regression to the mean.
+
+Three limits should be kept in view. The framework estimates the long-run effect
+of the treatment as it was run, a short exposure whose consequences are followed
+for months; the effect of leaving a feature on permanently is a different
+estimand and needs a forecasting model. Exchangeability is an assumption about
+the firm's process for generating ideas, and it can break when that process
+changes, for instance when a team shifts from incremental tweaks to redesigns.
+And the posterior for any one test depends on every other test in the archive, so
+an archive curated toward successes will produce a prior that is too optimistic.
+
+The method belongs to a family that this book meets in two other places. Predicted
+incrementality by experimentation (@sec-adv-pie) also treats a library of
+experiments as training data, but it predicts the effect of campaigns that had no
+control group at all, from features of the treated group, with a supervised
+learner and no measurement model. Matrix completion across overlapping experiments
+(@sec-adv-overlap) recovers outcomes for treatment combinations that were never
+run. The meta-analytic OEC is the member of the family built for the most common
+situation in a product organization: the test was run, the short-run metrics are
+in, and the decision cannot wait for the metric that matters.
 
 ## Difference-in-Differences {#sec-causal-did}
 
