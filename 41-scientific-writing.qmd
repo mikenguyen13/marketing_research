@@ -3405,6 +3405,60 @@ Four features of the ladder are worth copying beyond the list itself.
    different outcome, crash risk. It then tests the rival story, mispricing, on
    earnings announcements, and concedes that the two cannot be fully separated.
 
+### Opening the authors' data: what the term counts show {#sec-sw-measurement-package}
+
+The paper's replication package, available from the journal's supplemental-material
+page, includes the count of every dictionary term in every filing, together with the
+Stata logs behind each table. The return, accounting, and reputation data are licensed
+and not included, so the regressions cannot be rerun from the package alone. Two checks
+are still possible. The first is against the logs. They reproduce the means and standard deviations in the manuscript's descriptive
+table, and the twelve portfolio alphas to within 0.03 percentage points, so the estimates quoted in this section match the authors' final
+runs. The second is on the measure itself. The script
+`replication/intangible-liabilities/il_measure_checks.R` in this book's repository
+computes the statistics below from the term counts, over all 232,874 filings from
+32,604 filers with fiscal years 1996 to 2020. That is the full set of filings scored,
+about twice the 112,457 firm-years that survive the match to stock and accounting data,
+so the figures describe the measure before any sample selection. They are our
+calculations and appear nowhere in the paper.
+
+| Question | Result in the term counts |
+|---|---|
+| How fast does the count grow with filing length? | Elasticity of 1.16, and 1.11 with year and two-digit industry effects. Length alone explains 66% of the variance of the log count |
+| How much is industry? | Two-digit industry effects alone explain 12%, close to the paper's 13% |
+| How concentrated is the count? | Ten terms supply 43% of all hits: *claims*, *legal*, *court*, *settlement*, *litigation*, *contingent*, *judgment*, *claim*, *penalties*, *damages*. Fourteen terms supply half, and 51 of the 569 supply 80% |
+| Does the measure depend on those ten? | Net of length and year, the measure without the top ten terms correlates 0.94 with the full measure |
+| How much comes from marketing-origin terms? | *False advertising*, *deceptive*, *product liability*, *recall*, *warranty*, *counterfeit*, *unfair competition*, and *misrepresentation* supply 1.4% of hits. An index built from them alone correlates 0.28 with the full measure |
+| Is it a firm trait or a yearly signal? | Net of length, year, and industry, 63% of the variance is between firms. Net of length and year, the year-to-year correlation within a firm is 0.86 |
+
+: Properties of the intangible-liabilities count, computed from the filing-level term counts in the authors' replication package. {#tbl-sw-measurement-package}
+
+Three lessons follow, and each one is a check any dictionary paper can run on itself.
+
+*A dictionary of 569 terms is, in use, a dictionary of about 50.* Zipf's law guarantees
+that a few frequent terms dominate any count. The ten that dominate here are the most
+generic words on the list, and *legal* appears in nearly every filing. The measure survives
+their removal almost unchanged, which is reassuring, and it is the kind of evidence a
+reader wants in the paper: a table of the top terms with their share of hits, and the
+measure recomputed without them.
+
+*A sub-construct can be nearly invisible inside the total.* The marketing-made
+obligations are in the dictionary, but they carry 1.4% of the count and move largely
+independently of it. A researcher who wants product-harm or false-advertising exposure
+should build that index separately and validate it separately. The full measure is
+mostly a litigation-and-contingency measure.
+
+*Check the named cases under both scalings.* The paper contrasts IBM, with very low
+intangible liabilities, and HP, with very high ones. In the fiscal-2020 counts HP has
+767 hits in a filing of about 52,800 words and IBM has 77 in a filing of about 10,300
+words. On the raw log count IBM sits at the 15th percentile of that year's filings and
+HP at the 96th. Net of length, year, and industry, IBM rises to the 79th percentile and
+HP stays at the 95th. IBM's 10-K is short, which is what one would see if much of its
+annual report were incorporated by reference in exhibits that the text processing
+drops, though the package cannot confirm the reason. The other named cases hold either
+way: 3M, PG&E, and Corteva are above the 90th percentile on both versions, and Boston
+Beer is below the 15th on both. An illustrative contrast should be chosen after
+checking that it does not depend on the scaling.
+
 ### Where the specimen is thin
 
 A template is more useful with its weak points marked, and several of them are places
@@ -3412,9 +3466,9 @@ where a marketing referee would press harder than a finance referee did.
 
 - *No human has checked the measure against text.* There is no hand-coded sample of
   filings, no precision for individual terms, and no test of whether a high score means
-  much liability or much boilerplate. The published list keeps generic words (*legal*,
-  *court*, *claim*, *attorney*, *legislation*, *contingent*) that appear in filings
-  with nothing at stake. The validation is entirely by association with outcomes. A
+  much liability or much boilerplate. The generic words that dominate the count
+  (@tbl-sw-measurement-package) appear in filings with nothing at stake. The validation
+  is entirely by association with outcomes. A
   marketing journal would normally ask for agreement with human judgment as well
   (@sec-classification-validity).
 - *The simplest rival is beaten off the page.* A footnote reports that the parent
@@ -3431,7 +3485,8 @@ where a marketing referee would press harder than a finance referee did.
   the explained variance of IL from 0.51 to 0.75. In the return regressions, length
   carries a coefficient of $-0.17$ beside IL's $+0.16$. The finding is therefore about
   liability language relative to the length of the filing, and long filings alone
-  predict lower returns. The simulation above shows why this must be stated plainly.
+  predict lower returns. The simulation above shows why this must be stated plainly,
+  and the IBM case shows it in the data.
 - *The headline number is one of several.* The abstract's 3% matches the
   industry-adjusted figures (a 3.02% return spread and a 2.99% six-factor alpha). The
   same table gives 2.11%, significant only at the 10%
@@ -3444,9 +3499,10 @@ where a marketing referee would press harder than a finance referee did.
   sample but reports no out-of-sample fit. The authors do warn that a zero coefficient
   does not make a word uninformative.
 - *Some counts do not reconcile in the manuscript.* The text gives 112,716 firm-years
-  and the descriptive table 112,457. The reputation sample is 11,329 in the text and
-  11,256 or 12,598 in the regressions. The final typeset version may resolve these.
-  The lesson from @sec-sw-theory-building applies here too: every sample size in the
+  and the descriptive table 112,457. The package's construction log settles it in favor
+  of the table: 114,276 filings match the stock and accounting data, and 1,819 without
+  a count are dropped. The reputation sample is 11,329 in the text and 11,256 or 12,598
+  in the regressions. The final typeset version may resolve these. The lesson from @sec-sw-theory-building applies here too: every sample size in the
   prose should be recomputable from a table.
 
 None of this undoes the contribution. It marks what a successor paper can add, and the
@@ -3506,6 +3562,7 @@ Four adjustments help a marketing version.
    unit.
 8. Tie the measure to a price or a decision.
 9. Put the nearest existing measures, and the parent instrument, in the same table.
+   Report the top terms' share of the count and the measure recomputed without them.
 10. Validate against human coding as well as against outcomes.
 11. Show where in the source the signal sits and which terms carry it, with
     out-of-sample fit.
