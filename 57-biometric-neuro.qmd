@@ -1071,6 +1071,129 @@ of subjects. These methods are powerful and genuinely advancing, and they are al
 easiest place in the entire toolkit to fool oneself, which is the cue to turn to
 validity and ethics.
 
+### Does the Scanner Earn Its Keep? Neuroforecasting in a Grocery Chain {#sec-bio-fmri-retail}
+
+Validity and cost are easiest to weigh on a concrete case, and @albuquerque2026fmri supply
+one that asks the question a manager would ask. Working with one of Germany's largest
+grocery chains, they test whether fMRI data improve predictions of two outcomes for newly
+launched consumer packaged goods: how widely the product is taken up across the chain's
+6,934 stores, whose managers choose what to stock from a central assortment, and how many
+units it sells per store that stocks it. The numbers below come from the November 2025
+working paper [@albuquerque2025fmriwp], which we read in full; the published article is
+paywalled, and its figures may differ.
+
+The obvious objection is practical: few stores have an MRI machine. But the design never
+puts a scanner in a store, and seeing why is the key to what neuroforecasting means. Forty-four
+lab participants (23 women, mean age 27.2) performed the shopping task of @knutson2007neuralpurchases on the 56 study
+products, each shown at three prices (168 trials). For each product, the authors averaged
+the brain response across participants in four valuation regions: ventral striatum and
+anterior insula while the product was on screen, and anterior insula and ventromedial
+prefrontal cortex once the price appeared. Those four product-level numbers then enter a
+model of chain-wide outcomes. The scanner sits in a university lab, and the forecast covers
+the entire chain. That is the move the literature above made with songs, trailers, and loan
+requests: a small sample's average response stands in for a shared valuation process that
+aggregates to the market.
+
+The comparison measures are what make the study informative. The same 56 products were
+rated by a representative online panel of 1,451 people (293 to 331 ratings per product) on
+expected success, desirability, purchase intention, and innovativeness, and the lab
+participants also made an incentivized purchase decision, with one trial paid out of a
+€50 budget. Every model also contains market controls (log price, promotion share, category
+and quarter fixed effects). The products span soft drinks, alcohol, packaged food, and
+prepared meals, each tracked for its first eight quarters on sale between 2014 and 2019 (for
+the 14 products already on shelves in 2014, the earliest available quarters), which leaves
+411 product-quarters after exclusions. Adoption is thin, a mean of 16.9% of stores and a median
+of 6.13%, and because sales per store exist only where the product is stocked, the sales
+model includes the residual from the adoption regression as a control function. That is
+Heckman-style selection logic applied to a forecasting problem: the stores you observe
+selling a product are not a random draw of the stores that could have.
+
+The authors report two kinds of validation, and the gap between them is a lesson in
+itself. The "explanation" split assigns product-quarters to training and test sets at
+random (80/20), so the same product sits on both sides and its quarters leak into each
+other; the authors treat it as an upper bound. The "prediction" split trains on each
+product's first year and tests on the second, the question a retailer actually faces. Both
+are repeated 1,000 times with decision trees and LASSO variable selection, and
+@tbl-bio-fmri-retail-rmse shows how much each predictor set cuts error relative to the
+market-controls baseline.
+
+| Predictor set | Adoption: explain | Adoption: Year-2 predict | Sales per store: explain | Sales per store: Year-2 predict |
+|---|---:|---:|---:|---:|
+| fMRI (4 regions) | 10.6 | 2.0 | 32.5 | 18.0 |
+| Representative survey | 20.7 | 11.3 | 27.2 | 7.6 |
+| Incentivized purchase | 3.6 | -0.2 | 17.5 | 3.3 |
+| Survey + fMRI | 21.9 | 8.4 | 33.9 | 19.4 |
+| All | 21.7 | 8.0 | 34.8 | 18.7 |
+
+: Percentage reduction in RMSE relative to a market-controls baseline, averaged over 1,000 splits (Tables 2 and 3 of the November 2025 working paper). "Explain" is a random 80/20 split of product-quarters; "Year-2 predict" trains on each product's first year and tests on its second. {#tbl-bio-fmri-retail-rmse}
+
+The pattern divides the labor cleanly. Whether store managers adopt a product is predicted
+best by asking consumers: the survey cuts Year-2 adoption error by 11.3%, fMRI by 2.0%, and
+in LASSO selection the expected-success and purchase-intention ratings are kept in every
+iteration. How much an adopted product sells per store is where the brain data matter: fMRI
+cuts Year-2 error by 18.0% against the survey's 7.6% (RMSE 0.45 at baseline, 0.37 with fMRI,
+0.42 with the survey), the fMRI model's BIC is about 57 points lower, and all four regions
+are selected in 85% to 100% of iterations. Two further results make the sales finding more
+credible. Arbitrary brain regions unrelated to valuation do not help, which is the placebo a
+reverse-inference skeptic would demand. And the advantage is concentrated: modeling absolute
+errors against rated innovativeness (1 to 7, mean 4.38), fMRI beats the survey on sales only
+above about 4.7 (a Johnson–Neyman cutoff), which covers the 18 most innovative products. One
+reading consistent with the neuroforecasting argument is that people can report what they
+think of familiar products but are poor introspectors about genuinely new ones, while the
+valuation signal is still there to be measured.
+
+So the practical questions are cost, how representative 44 lab participants are, and what
+fMRI adds over cheaper data, rather than where to put a magnet. The working paper answers all
+three with an ROI calculation (@tbl-bio-fmri-retail-roi). It converts forecast error into
+inventory holding costs for a 50-product launch set over one year (cost of goods 75% of
+revenue, holding cost 20% a year, forecast errors persisting two months) and sets the savings
+beside vendor quotes.
+
+| Predictor set | Yearly savings: sales-per-store forecast only | Yearly savings: sales × adoption forecast | Vendor quotes |
+|---|---:|---:|---|
+| fMRI alone | €18,518 | €56,171 | €29k–€35k |
+| Representative survey alone | €8,042 | €213,005 | €10k–€22k |
+| Representative survey + fMRI | €19,956 | €224,610 | €39k–€57k |
+| Lab survey (same 44 people) + fMRI | €20,157 | €221,194 | €29k–€35k |
+| Survey + incentivized purchase + fMRI | €20,157 | €240,800 | €39k–€57k |
+
+: Yearly inventory-cost reduction for a 50-product launch set, from Table 5 of the November 2025 working paper; vendor quotes are the paper's (three survey quotes of €10k, €12k, and €22k; two fMRI quotes of €29k and €35k). The lab survey adds no vendor cost because it is collected in the fMRI session. {#tbl-bio-fmri-retail-roi}
+
+Read the table the way a buyer would. Once adoption is in the forecast, the representative
+survey alone saves about €213,000 a year for a quote of €10,000 to €22,000. Adding fMRI on
+top raises the savings from €213,005 to €224,610, about €11,600, which is less than either
+fMRI quote. A survey of the same 44 lab participants tracked the 1,451-person panel closely
+(product-level correlations of .71, .81, and .83, with no significant difference in
+prediction), so the representativeness worry turns out to bite less for asking people than
+one might fear. The cheap, large win is the survey. fMRI pays its way as a pre-launch
+screen for the most novel items, where it beats the survey on per-store sales, or across a
+larger product set or a longer horizon than one year and 50 products; it is not a
+replacement for routine forecasting.
+
+A careful reader should also ask a few questions the working paper leaves open.
+
+- How far do 56 products go? Every fMRI and survey predictor is a constant for each
+  product, so the effective sample for those coefficients is 56, and the innovativeness
+  result rests on 18 of them.
+- Could product-level predictors act as product fingerprints? In the Year-2 split the
+  test products' first-year data are in the training set, and the trees are grown to the
+  software defaults (a minimum leaf size of one). A vector of numbers that is constant
+  within a product can then identify that product and let the tree recall its first-year
+  level. The placebo regions partly answer this, since they are just as product-constant and
+  do not help. A stronger benchmark would put each test product's own Year-1 sales into the
+  baseline and ask whether fMRI still adds.
+- Which version are the numbers from? The working paper describes "retailer adoption"
+  where the published abstract says store manager adoption, and the published figures may
+  have moved. The published data statement lists aggregate data and scripts on OSF
+  (view-only); raw store sales are not public.
+
+The design generalizes beyond neuroscience. Whenever a proposal says an expensive measure
+"predicts" an outcome, the questions are the ones this paper asks of itself: incremental
+over what cheaper measure, validated on what split, for which segment of products, and is the
+gain in money larger than the price of the measure. Asked that way, fMRI earns a narrow,
+defensible role in forecasting. It does not earn a general one.
+
+
 ## Validity, Cost, and Ethics {#sec-bio-validity-ethics}
 
 No part of marketing measurement is more prone to over-claiming than this one, and the

@@ -1125,8 +1125,13 @@ Table&nbsp;49.1: Three families of marketing image features, the construct each 
 <span class="header-section-number">49.4.2</span> Aesthetic Features</h3>
 <p>Aesthetic features score an image on beauty, professionalism, or arousal potential. Two routes exist. The <strong>hand-engineered</strong> route assembles the color and complexity statistics of the previous section into an interpretable index grounded in the <span class="citation" data-cites="Berlyne_1960">Berlyne (<a href="#ref-Berlyne_1960" role="doc-biblioref">1960</a>)</span> inverted-U. The <strong>learned</strong> route trains a CNN to regress human aesthetic ratings onto images, yielding a single continuous “aesthetic score” per image. Each route has its place: learned scores predict human judgment far better but are opaque and may encode spurious correlates of the training raters’ tastes; hand-engineered indices are weaker predictors but transparent and manipulable, which matters when the goal is <em>advice</em> (“raise saturation”) rather than mere ranking.</p>
 <p>Aesthetics is not decoration. In advertising, the visual <em>pleasure</em> of an ad is a proximate driver of attention and attitude, mediated by the complexity mechanism of <span class="citation" data-cites="pieters2010">Pieters, Wedel, and Batra (<a href="#ref-pieters2010" role="doc-biblioref">2010</a>)</span> and by the gaze patterns of <span class="citation" data-cites="pieters2007">Pieters, Wedel, and Zhang (<a href="#ref-pieters2007" role="doc-biblioref">2007</a>)</span>, and the rhetorical <em>figuration</em> of an image—visual metaphor, pun, and other tropes—shapes persuasion in ways parallel to verbal rhetoric <span class="citation" data-cites="mcquarrie1999visualrhetoric">(<a href="#ref-mcquarrie1999visualrhetoric" role="doc-biblioref">McQuarrie and Mick 1999</a>)</span>. Specific perceptual choices carry meaning: color hue and saturation move brand personality and downstream response <span class="citation" data-cites="labrecque2012red labrecque2013palette">(<a href="#ref-labrecque2012red" role="doc-biblioref">Labrecque and Milne 2012</a>; <a href="#ref-labrecque2013palette" role="doc-biblioref">Labrecque, Patrick, and Milne 2013</a>)</span>, and aesthetic styling trades off against perceived functionality rather than improving evaluation monotonically <span class="citation" data-cites="hagtvedt2014overstyling">(<a href="#ref-hagtvedt2014overstyling" role="doc-biblioref">Hagtvedt and Patrick 2014</a>)</span>. In social commerce, image quality is a documented driver of demand: professionally composed product and listing photos lift engagement and conversion, and <span class="citation" data-cites="zhang2022goodimage">Zhang et al. (<a href="#ref-zhang2022goodimage" role="doc-biblioref">2022</a>)</span> show, using interpretable deep-learning image features on Airbnb listings, <em>which</em> properties of a photo (composition, brightness, depth) actually raise demand. The aesthetic score is therefore a feature with a theory behind it, not a black box to be regressed on outcomes for its own sake.</p>
-<section id="sec-image-glossiness" class="level4" data-number="49.4.2.1"><h4 data-number="49.4.2.1" class="anchored" data-anchor-id="sec-image-glossiness">
-<span class="header-section-number">49.4.2.1</span> Surface Finish: One Cue, Two Meanings</h4>
+<section id="sec-image-aesthetic-triangulation" class="level4" data-number="49.4.2.1"><h4 data-number="49.4.2.1" class="anchored" data-anchor-id="sec-image-aesthetic-triangulation">
+<span class="header-section-number">49.4.2.1</span> Triangulating Aesthetic Quality: Judges, a Quality Model, and an LLM</h4>
+<p>Scoring aesthetic quality at scale forces a choice of instrument, and <span class="citation" data-cites="xue2026picture">Xue and Melumad (<a href="#ref-xue2026picture" role="doc-biblioref">2026</a>)</span> (<span class="quarto-unresolved-ref">?sec-online-review-photos</span>) declined to make it. To test whether photos attached to positive reviews are better than those attached to negative ones, they scored every photo three ways: with human judges (in their Study 1, 1,401 judges gave 14,010 ratings); with MUSIQ <span class="citation" data-cites="ke2021musiq">(<a href="#ref-ke2021musiq" role="doc-biblioref">Ke et al. 2021</a>)</span>, a transformer trained to predict human ratings of image quality that reads an image at several scales and at its native aspect ratio instead of a fixed-size crop; and with GPT-4o given a rating prompt. In Study 1 all three instruments ranked photos of liked products above photos of disliked ones (humans 3.56 vs.&nbsp;3.29, GPT-4o 3.97 vs.&nbsp;3.82, MUSIQ 44.76 vs.&nbsp;43.88). Rather than pick the best instrument, the authors treated the three scores as reflective indicators of one latent quality in a structural equation model. What three instruments with different error sources share is more credible than any one of them, and disagreements among them are visible instead of hidden.</p>
+<p>They do disagree, in magnitude. In the field data, the correlation between a review’s star rating and its photo’s MUSIQ score is .10 on Amazon and .06 on Yelp; with the GPT-4o score it is .34 and .21. Both instruments find the same direction, but GPT-4o finds a relation three to four times as strong. The paper’s numbers do not settle why, but the two instruments measure different slices of “quality.” MUSIQ was trained on human ratings of image quality and responds to properties of the pixels, such as sharpness, noise, and exposure. It should be less sensitive to staging (props, arrangement, framing choices), which is where Study 2’s hidden cameras found part of the extra effort. A general-purpose language model asked to rate a photo can respond to composition and staging, but it can also respond to what is in the frame: an appealing product, a well-plated dish, cues of the photographer’s enthusiasm. To the extent it does, part of its stronger correlation with the star rating is content rather than photographic quality. That is a validity concern, not a precision one, and it is the error-correlated-with-outcome case of <a href="#sec-image-econometrics" class="quarto-xref"><span>Section 49.5</span></a>: if the instrument reads valence-related content from the photo, its error is correlated with the very variable the analyst is relating it to.</p>
+<p>Three habits follow for any study that scores images with a learned model or an LLM. Report each instrument separately as well as the combined latent, and check whether the conclusion survives the most conservative one. Anchor the automated scores to human judgments on a subsample, as the authors did. And test discriminant validity directly: does the score move with content the construct excludes? <span class="citation" data-cites="xue2026picture">Xue and Melumad (<a href="#ref-xue2026picture" role="doc-biblioref">2026</a>)</span> supply the experimental version of that test in Study 3b, which crossed the attractiveness of the depicted shoe with deliberate degradation of the photo. Helpfulness moved with degradation and not with attractiveness, separating how a photo looks from what it shows, the distinction drawn under social-media images below.</p>
+</section><section id="sec-image-glossiness" class="level4" data-number="49.4.2.2"><h4 data-number="49.4.2.2" class="anchored" data-anchor-id="sec-image-glossiness">
+<span class="header-section-number">49.4.2.2</span> Surface Finish: One Cue, Two Meanings</h4>
 <p>Surface finish is a visual property that the aesthetics literature long left implicit, and <span class="citation" data-cites="song2026glossy">Song, Fan, and Jiang (<a href="#ref-song2026glossy" role="doc-biblioref">2026</a>)</span> show that its meaning depends on the market a product is sold in. Across six studies, consumers preferred products with a glossy rather than a matte surface in both the firsthand (new) and the secondhand market, but they read the same cue differently in each. In the firsthand market gloss heightens perceived <em>recency</em>, the sense that the item was made only a short time ago. In the secondhand market, where chronological newness is no longer on offer, gloss heightens perceived <em>pristineness</em>, the sense that the item is clean and little used (<a href="#fig-image-glossiness" class="quarto-xref">Figure&nbsp;<span>49.2</span></a>). Each mechanism has its own boundary condition. For time-enhanced products, whose quality and value improve with age, the firsthand preference reverses because a recency signal contradicts the value proposition. The AMA research summary of the article reports a Cabernet Sauvignon rated more favorably in a matte than a glossy bottle. In the secondhand market the glossy advantage diminishes when diagnostic information about prior use is available, such as a condition description of wear and scratches, because consumers then rely on that information rather than on the surface.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
@@ -1221,6 +1226,8 @@ y_i = \alpha + \beta\, f_i^{\ast} + \mathbf{w}_i^{\top}\boldsymbol{\gamma}
 <p>The naive slope is pulled toward zero by exactly the reliability ratio; dividing by <span class="math inline">\(\rho\)</span>—which a validation set identifies—restores the truth. The correction works <em>only</em> under classical error; when the detector’s mistakes correlate with the outcome, no such fix exists and design-based identification is the only honest route.</p>
 <p><strong>Controllable generation: assigning a feature instead of measuring it.</strong> The strongest form of that design-based route does not measure the feature at all; it <em>builds</em> stimuli that differ in one feature and nothing else. Randomizing which of several real images a viewer sees severs the tie between an image and the campaign that bought it, but it does not isolate an attribute, because photographs bundle them: a more feminine headshot also tends to differ in hairstyle, expression, clothing, and lighting, so what is assigned is a package and what is estimated is the package’s effect. <span class="citation" data-cites="luo2026femininity">Luo and Toubia (<a href="#ref-luo2026femininity" role="doc-biblioref">2026</a>)</span> close that gap with a generative adversarial network that renders realistic headshots in which femininity varies while pose, facial expression, hairstyle, clothing, and background are held fixed. In a field experiment inside the live advertising environment of an education company, prospective customers discriminated against femininity at several stages of the purchase funnel, and did so to a largely similar extent whether the depicted person was a man, a woman, or non-binary—which separates a taste defined over a <em>visual attribute</em> from one defined over gender identity. The template generalizes well past faces: name the hypothesis-relevant feature in natural language, locate it in a generative model’s latent space, and emit stimuli that vary controllably along that feature. An attribute that observational data can only estimate, with every hazard catalogued above, becomes one an experiment can assign. The cost is that one validity question is traded for another—whether a synthetic face means to a viewer what a photograph would (<a href="30-measurement-scales.html" class="quarto-xref"><span>Chapter 39</span></a>)—and that is the question any controllable-stimulus design has to answer.</p>
 <p><strong>When the image is the subject’s own face.</strong> Controllable generation edits the stimulus that a <em>viewer</em> sees. Consumer-side AI editing raises a second question: what happens to the person who presents an edited image of themselves. Beauty filters and virtual makeup are image transformations that billions of profile photos now pass through, and their effect need not run through the audience at all. <span class="citation" data-cites="ma2026facade">Ma et al. (<a href="#ref-ma2026facade" role="doc-biblioref">2026</a>)</span> randomize whether participants in an online trust game play under an AI-enhanced version of their own headshot or under the original, and they find that the enhancement changes the participant’s <em>own</em> economic behavior. Enhanced senders entrust less, and the authors trace this to higher perceived risk, while enhanced receivers return more (<a href="03a-relational-constructs.html#sec-rel-trust-game" class="quarto-xref"><span>Section 5.2.2</span></a>). The design point generalizes. An image feature can act on the poster as well as on the viewer, so an observational regression of outcomes on “photo attractiveness” mixes how others respond to the photo with how the photo changed the poster’s behavior. Only a design that randomizes the image can tell these channels apart.</p>
+<p><strong>When the target is a perception, rater bias is part of the measure.</strong> In everything above, a mistake by the classifier is error to be minimized. Some constructs reverse that. <span class="citation" data-cites="yang2026lookingpart">Yang et al. (<a href="#ref-yang2026lookingpart" role="doc-biblioref">2026</a>)</span> need <em>perceived professionalism</em> for 109,624 profile photos on a low-wage gig-staffing platform. They have MTurk raters score 1,000 photos on motivation, reliability, laziness, carelessness, and disobedience, check that these ratings predict hiring on the platform, and then train a computer-vision model to reproduce the ratings for every photo. The study argues that perceptions of professionalism are racially biased. A model trained on human perceptions learns that bias, and here learning it is the goal, because the construct <em>is</em> the biased perception. Removing it would remove the effect under study. The same logic makes the measure unsuitable for a different question. Once the model is fit, its “professionalism” score cannot serve as an unbiased measure of how professional anyone actually is.</p>
+<p>The paper keeps two measurement layers separate, and that separation is good practice. A discrete, auditable feature, <em>professional attire</em> (collar, tie, or suit), is coded by five Prolific raters per photo, using the modal answer, on a 39,032-photo subsample. The holistic perception is then the generated mediator. Because these are different objects, the analysis can ask whether the same coded attire produces different perceived professionalism by race, which it does. The paper also coded skin tone, hairstyle, expression, accessories, and attractiveness to test whether the perception score is driven by attire or by other features that correlate with race. Two cautions from this section still apply. The generated mediator’s <span class="math inline">\(M \to Y\)</span> coefficient is attenuated by <a href="#eq-34-attenuation" class="quarto-xref">Equation&nbsp;<span>49.5</span></a> to the extent that the vision model does not reproduce the raters. And if the model reproduces the raters better for one group than for the other, the error is non-classical and differs by group, which affects exactly the race contrast the paper is testing. The paper’s preregistered photo experiment holds each candidate fixed and changes only the shirt. Its mediator comes from human raters, not a model, and this is what keeps the measurement chain from carrying the whole argument (<a href="47-causal-inference.html#sec-causal-mediation-attire" class="quarto-xref"><span>Section 44.9.7</span></a>).</p>
 </section><section id="applications-in-advertising-and-social-media" class="level2" data-number="49.6"><h2 data-number="49.6" class="anchored" data-anchor-id="applications-in-advertising-and-social-media">
 <span class="header-section-number">49.6</span> Applications in Advertising and Social Media</h2>
 <section id="advertising-creative" class="level3" data-number="49.6.1"><h3 data-number="49.6.1" class="anchored" data-anchor-id="advertising-creative">
@@ -1317,6 +1324,9 @@ Hartmann, Jochen, Mark Heitmann, Christian Siebert, and Christina Schamp. 2023. 
 <div id="ref-he2016resnet" class="csl-entry" role="listitem">
 He, Kaiming, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016. <span>“Deep Residual Learning for Image Recognition.”</span> In <em>2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)</em>, 770–78. <a href="https://doi.org/10.1109/cvpr.2016.90">https://doi.org/10.1109/cvpr.2016.90</a>.
 </div>
+<div id="ref-ke2021musiq" class="csl-entry" role="listitem">
+Ke, Junjie, Qifei Wang, Yilin Wang, Peyman Milanfar, and Feng Yang. 2021. <span>“<span>MUSIQ</span>: Multi-Scale Image Quality Transformer.”</span> In <em>2021 IEEE/CVF International Conference on Computer Vision (ICCV)</em>, 5128–37. <a href="https://doi.org/10.1109/ICCV48922.2021.00510">https://doi.org/10.1109/ICCV48922.2021.00510</a>.
+</div>
 <div id="ref-krizhevsky2017imagenet" class="csl-entry" role="listitem">
 Krizhevsky, Alex, Ilya Sutskever, and Geoffrey E. Hinton. 2017. <span>“ImageNet Classification with Deep Convolutional Neural Networks.”</span> <em>Communications of the ACM</em> 60 (6): 84–90. <a href="https://doi.org/10.1145/3065386">https://doi.org/10.1145/3065386</a>.
 </div>
@@ -1385,6 +1395,12 @@ Witte, Maximilian, Mark Heitmann, Jochen Hartmann, and Keno Tetzlaff. 2026. <spa
 </div>
 <div id="ref-wu2026familiarface" class="csl-entry" role="listitem">
 Wu, Jane. 2026. <span>“A Familiar Face: Measuring Visual Similarity in Venture Capital.”</span> <em>Strategy Science</em>. <a href="https://doi.org/10.1287/stsc.2025.0490">https://doi.org/10.1287/stsc.2025.0490</a>.
+</div>
+<div id="ref-xue2026picture" class="csl-entry" role="listitem">
+Xue, Jiani, and Shiri Melumad. 2026. <span>“Picture This: <span>How</span> Review Valence Shapes the Quality and Helpfulness of User-Generated Photos.”</span> <em>Journal of Marketing Research</em> 63 (6): 1000–1019. <a href="https://doi.org/10.1177/00222437261450925">https://doi.org/10.1177/00222437261450925</a>.
+</div>
+<div id="ref-yang2026lookingpart" class="csl-entry" role="listitem">
+Yang, Tiantian, Jiayi Bao, Tianna Barnes, and Ming D. Leung. 2026. <span>“Looking the Part? <span>How</span> Candidates’ Race and Attire Shape Employers’ Hiring Decisions in a Low-Wage Labor Market.”</span> <em>Administrative Science Quarterly</em>. <a href="https://doi.org/10.1177/00018392261493033">https://doi.org/10.1177/00018392261493033</a>.
 </div>
 <div id="ref-zeiler2014visualizing" class="csl-entry" role="listitem">
 Zeiler, Matthew D., and Rob Fergus. 2014. <span>“Visualizing and Understanding Convolutional Networks.”</span> In <em>Computer Vision – ECCV 2014</em>, 818–33. Lecture Notes in Computer Science. <a href="https://doi.org/10.1007/978-3-319-10590-1_53">https://doi.org/10.1007/978-3-319-10590-1_53</a>.
@@ -2270,393 +2286,468 @@ Zhang, Shunyuan, Dokyun Lee, Param Vir Singh, and Kannan Srinivasan. 2022. <span
 <span id="cb4-419"><a href="#cb4-419" aria-hidden="true" tabindex="-1"></a>aesthetic score is therefore a feature with a theory behind it, not a black box to</span>
 <span id="cb4-420"><a href="#cb4-420" aria-hidden="true" tabindex="-1"></a>be regressed on outcomes for its own sake.</span>
 <span id="cb4-421"><a href="#cb4-421" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-422"><a href="#cb4-422" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Surface Finish: One Cue, Two Meanings {#sec-image-glossiness}</span></span>
+<span id="cb4-422"><a href="#cb4-422" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Triangulating Aesthetic Quality: Judges, a Quality Model, and an LLM {#sec-image-aesthetic-triangulation}</span></span>
 <span id="cb4-423"><a href="#cb4-423" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-424"><a href="#cb4-424" aria-hidden="true" tabindex="-1"></a>Surface finish is a visual property that the aesthetics literature long left implicit,</span>
-<span id="cb4-425"><a href="#cb4-425" aria-hidden="true" tabindex="-1"></a>and @song2026glossy show that its meaning depends on the market a product is sold in.</span>
-<span id="cb4-426"><a href="#cb4-426" aria-hidden="true" tabindex="-1"></a>Across six studies, consumers preferred products with a glossy rather than a matte</span>
-<span id="cb4-427"><a href="#cb4-427" aria-hidden="true" tabindex="-1"></a>surface in both the firsthand (new) and the secondhand market, but they read the same</span>
-<span id="cb4-428"><a href="#cb4-428" aria-hidden="true" tabindex="-1"></a>cue differently in each. In the firsthand market gloss heightens perceived *recency*, the</span>
-<span id="cb4-429"><a href="#cb4-429" aria-hidden="true" tabindex="-1"></a>sense that the item was made only a short time ago. In the secondhand market, where</span>
-<span id="cb4-430"><a href="#cb4-430" aria-hidden="true" tabindex="-1"></a>chronological newness is no longer on offer, gloss heightens perceived *pristineness*,</span>
-<span id="cb4-431"><a href="#cb4-431" aria-hidden="true" tabindex="-1"></a>the sense that the item is clean and little used (@fig-image-glossiness). Each</span>
-<span id="cb4-432"><a href="#cb4-432" aria-hidden="true" tabindex="-1"></a>mechanism has its own boundary condition. For time-enhanced products, whose quality</span>
-<span id="cb4-433"><a href="#cb4-433" aria-hidden="true" tabindex="-1"></a>and value improve with age, the firsthand preference reverses because a recency signal</span>
-<span id="cb4-434"><a href="#cb4-434" aria-hidden="true" tabindex="-1"></a>contradicts the value proposition. The AMA research summary of the article reports a</span>
-<span id="cb4-435"><a href="#cb4-435" aria-hidden="true" tabindex="-1"></a>Cabernet Sauvignon rated more favorably in a matte than a glossy bottle. In the</span>
-<span id="cb4-436"><a href="#cb4-436" aria-hidden="true" tabindex="-1"></a>secondhand market the glossy advantage diminishes when diagnostic information about</span>
-<span id="cb4-437"><a href="#cb4-437" aria-hidden="true" tabindex="-1"></a>prior use is available, such as a condition description of wear and scratches, because</span>
-<span id="cb4-438"><a href="#cb4-438" aria-hidden="true" tabindex="-1"></a>consumers then rely on that information rather than on the surface.</span>
-<span id="cb4-439"><a href="#cb4-439" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-442"><a href="#cb4-442" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb4-443"><a href="#cb4-443" aria-hidden="true" tabindex="-1"></a>%%| label: fig-image-glossiness</span>
-<span id="cb4-444"><a href="#cb4-444" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Product glossiness raises preference through market-specific inferences of newness: recency in the firsthand market and pristineness in the secondhand market. Dashed links mark the boundary conditions in </span><span class="dt">@song2026glossy</span><span class="st">.</span><span class="ot">"</span></span>
-<span id="cb4-445"><a href="#cb4-445" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb4-446"><a href="#cb4-446" aria-hidden="true" tabindex="-1"></a>  G[<span class="ot">"</span><span class="st">Glossy (vs. matte)&lt;br/&gt;surface</span><span class="ot">"</span>] --&gt; F[<span class="ot">"</span><span class="st">Firsthand market</span><span class="ot">"</span>]</span>
-<span id="cb4-447"><a href="#cb4-447" aria-hidden="true" tabindex="-1"></a>  G --&gt; S[<span class="ot">"</span><span class="st">Secondhand market</span><span class="ot">"</span>]</span>
-<span id="cb4-448"><a href="#cb4-448" aria-hidden="true" tabindex="-1"></a>  F --&gt; R[<span class="ot">"</span><span class="st">Perceived recency&lt;br/&gt;(recently made)</span><span class="ot">"</span>]</span>
-<span id="cb4-449"><a href="#cb4-449" aria-hidden="true" tabindex="-1"></a>  S --&gt; P[<span class="ot">"</span><span class="st">Perceived pristineness&lt;br/&gt;(clean, little used)</span><span class="ot">"</span>]</span>
-<span id="cb4-450"><a href="#cb4-450" aria-hidden="true" tabindex="-1"></a>  R --&gt; Y[<span class="ot">"</span><span class="st">Product preference</span><span class="ot">"</span>]</span>
-<span id="cb4-451"><a href="#cb4-451" aria-hidden="true" tabindex="-1"></a>  P --&gt; Y</span>
-<span id="cb4-452"><a href="#cb4-452" aria-hidden="true" tabindex="-1"></a>  T[<span class="ot">"</span><span class="st">Time-enhanced product&lt;br/&gt;(improves with age)</span><span class="ot">"</span>] -.-&gt;|<span class="ot">"</span><span class="st">reverses</span><span class="ot">"</span>| R</span>
-<span id="cb4-453"><a href="#cb4-453" aria-hidden="true" tabindex="-1"></a>  D[<span class="ot">"</span><span class="st">Diagnostic prior-usage&lt;br/&gt;information</span><span class="ot">"</span>] -.-&gt;|<span class="ot">"</span><span class="st">diminishes</span><span class="ot">"</span>| P</span>
-<span id="cb4-454"><a href="#cb4-454" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-455"><a href="#cb4-455" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-456"><a href="#cb4-456" aria-hidden="true" tabindex="-1"></a>The evidence combines incentive-compatible and field designs. According to the</span>
-<span id="cb4-457"><a href="#cb4-457" aria-hidden="true" tabindex="-1"></a>university press release, laboratory participants stated their maximum willingness to</span>
-<span id="cb4-458"><a href="#cb4-458" aria-hidden="true" tabindex="-1"></a>pay for display trays they could actually buy, and online field experiments on a large</span>
-<span id="cb4-459"><a href="#cb4-459" aria-hidden="true" tabindex="-1"></a>Chinese secondhand marketplace compared clicks on glossy and matte listings of an</span>
-<span id="cb4-460"><a href="#cb4-460" aria-hidden="true" tabindex="-1"></a>otherwise identical tote bag. The release puts the differences at 72% higher bids and</span>
-<span id="cb4-461"><a href="#cb4-461" aria-hidden="true" tabindex="-1"></a>63% more clicks for the glossy versions. (Only the</span>
-<span id="cb4-462"><a href="#cb4-462" aria-hidden="true" tabindex="-1"></a>published abstract and these public summaries were accessible when this section was</span>
-<span id="cb4-463"><a href="#cb4-463" aria-hidden="true" tabindex="-1"></a>written. The study-level sample sizes, the recency and pristineness measures, and the</span>
-<span id="cb4-464"><a href="#cb4-464" aria-hidden="true" tabindex="-1"></a>mediation and interaction estimates should be checked against the article before they</span>
-<span id="cb4-465"><a href="#cb4-465" aria-hidden="true" tabindex="-1"></a>are quoted.)</span>
-<span id="cb4-466"><a href="#cb4-466" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-467"><a href="#cb4-467" aria-hidden="true" tabindex="-1"></a>For image analytics the lesson concerns specification as much as measurement. A</span>
-<span id="cb4-468"><a href="#cb4-468" aria-hidden="true" tabindex="-1"></a>finish feature extracted from product photos, whether a hand-engineered</span>
-<span id="cb4-469"><a href="#cb4-469" aria-hidden="true" tabindex="-1"></a>specular-highlight share or a learned glossy/matte classifier, should not be expected</span>
-<span id="cb4-470"><a href="#cb4-470" aria-hidden="true" tabindex="-1"></a>to carry one coefficient. On this evidence its effect is positive for ordinary new and</span>
-<span id="cb4-471"><a href="#cb4-471" aria-hidden="true" tabindex="-1"></a>used goods but runs through different inferences. It turns negative for time-enhanced</span>
-<span id="cb4-472"><a href="#cb4-472" aria-hidden="true" tabindex="-1"></a>goods sold new, and it shrinks when the listing text already describes the item's</span>
-<span id="cb4-473"><a href="#cb4-473" aria-hidden="true" tabindex="-1"></a>condition. A model that pools a new-goods retailer with a resale platform, or that</span>
-<span id="cb4-474"><a href="#cb4-474" aria-hidden="true" tabindex="-1"></a>drops the listing text sitting next to the photo, averages over mechanisms that run in</span>
-<span id="cb4-475"><a href="#cb4-475" aria-hidden="true" tabindex="-1"></a>different directions. That argues for interacting visual features with market context</span>
-<span id="cb4-476"><a href="#cb4-476" aria-hidden="true" tabindex="-1"></a>and product category, and for combining image and text features in one model</span>
-<span id="cb4-477"><a href="#cb4-477" aria-hidden="true" tabindex="-1"></a>(@sec-multimodal-fusion), rather than reading a single "gloss premium" off pooled</span>
-<span id="cb4-478"><a href="#cb4-478" aria-hidden="true" tabindex="-1"></a>data.</span>
-<span id="cb4-479"><a href="#cb4-479" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-480"><a href="#cb4-480" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-481"><a href="#cb4-481" aria-hidden="true" tabindex="-1"></a><span class="fu">### Content Features</span></span>
-<span id="cb4-482"><a href="#cb4-482" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-483"><a href="#cb4-483" aria-hidden="true" tabindex="-1"></a>Content features identify *what is depicted*. **Object detection** returns the</span>
-<span id="cb4-484"><a href="#cb4-484" aria-hidden="true" tabindex="-1"></a>set, count, and location of recognizable objects (a person, a beverage, a beach);</span>
-<span id="cb4-485"><a href="#cb4-485" aria-hidden="true" tabindex="-1"></a>**scene recognition** classifies the overall setting (kitchen, gym, nightclub);</span>
-<span id="cb4-486"><a href="#cb4-486" aria-hidden="true" tabindex="-1"></a>**face analysis** locates faces and, more controversially, infers attributes such</span>
-<span id="cb4-487"><a href="#cb4-487" aria-hidden="true" tabindex="-1"></a>as apparent emotion, age, or gaze direction. Content features connect images to</span>
-<span id="cb4-488"><a href="#cb4-488" aria-hidden="true" tabindex="-1"></a>substantive marketing theory: the presence of *people* versus *products* in a post,</span>
-<span id="cb4-489"><a href="#cb4-489" aria-hidden="true" tabindex="-1"></a>the warmth of depicted facial expressions, and the activities shown all map onto</span>
-<span id="cb4-490"><a href="#cb4-490" aria-hidden="true" tabindex="-1"></a>constructs—self-presentation, social proof, lifestyle congruence—that the</span>
-<span id="cb4-491"><a href="#cb4-491" aria-hidden="true" tabindex="-1"></a>social-media and influencer literatures (@sec-influencer-marketing) treat as</span>
-<span id="cb4-492"><a href="#cb4-492" aria-hidden="true" tabindex="-1"></a>drivers of engagement.</span>
-<span id="cb4-493"><a href="#cb4-493" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-494"><a href="#cb4-494" aria-hidden="true" tabindex="-1"></a>Face features need not be attribute inferences at all. @wu2026familiarface uses a</span>
-<span id="cb4-495"><a href="#cb4-495" aria-hidden="true" tabindex="-1"></a>facial-recognition embedding to measure the *distance* between two faces, an</span>
-<span id="cb4-496"><a href="#cb4-496" aria-hidden="true" tabindex="-1"></a>investor's and a founder's, and shows that visually similar pairs are more likely to</span>
-<span id="cb4-497"><a href="#cb4-497" aria-hidden="true" tabindex="-1"></a>close an early-stage venture deal and less likely to reach a successful exit</span>
-<span id="cb4-498"><a href="#cb4-498" aria-hidden="true" tabindex="-1"></a>(@sec-ent-resources). The embedding compares two people with each other and never</span>
-<span id="cb4-499"><a href="#cb4-499" aria-hidden="true" tabindex="-1"></a>labels either one, which is the form of face analysis least exposed to the concerns</span>
-<span id="cb4-500"><a href="#cb4-500" aria-hidden="true" tabindex="-1"></a>in the callout below.</span>
-<span id="cb4-501"><a href="#cb4-501" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-502"><a href="#cb4-502" aria-hidden="true" tabindex="-1"></a>A content feature can also be a single, theory-motivated object class counted across</span>
-<span id="cb4-503"><a href="#cb4-503" aria-hidden="true" tabindex="-1"></a>a whole corpus. @chang2026plantimagery code 569,773 listing photos of 40,294 sold</span>
-<span id="cb4-504"><a href="#cb4-504" aria-hidden="true" tabindex="-1"></a>homes on a major U.S. real-estate platform for the presence of plants, using a</span>
-<span id="cb4-505"><a href="#cb4-505" aria-hidden="true" tabindex="-1"></a>multimodal language model (GPT-5-mini) as the classifier, and find that home</span>
-<span id="cb4-506"><a href="#cb4-506" aria-hidden="true" tabindex="-1"></a>profiles with more plant imagery are associated with higher transaction prices,</span>
-<span id="cb4-507"><a href="#cb4-507" aria-hidden="true" tabindex="-1"></a>faster sales, and more online engagement, after accounting for property,</span>
-<span id="cb4-508"><a href="#cb4-508" aria-hidden="true" tabindex="-1"></a>neighborhood, listing, and market factors. Two features of the design generalize.</span>
-<span id="cb4-509"><a href="#cb4-509" aria-hidden="true" tabindex="-1"></a>The construct is narrow enough that a general-purpose vision-language model can</span>
-<span id="cb4-510"><a href="#cb4-510" aria-hidden="true" tabindex="-1"></a>label it without task-specific training, which is what makes half a million images</span>
-<span id="cb4-511"><a href="#cb4-511" aria-hidden="true" tabindex="-1"></a>affordable to code. And because the label is generated, the cautions of</span>
-<span id="cb4-512"><a href="#cb4-512" aria-hidden="true" tabindex="-1"></a>@sec-image-econometrics apply: a classifier whose errors correlate with photo</span>
-<span id="cb4-513"><a href="#cb4-513" aria-hidden="true" tabindex="-1"></a>quality or home type would contaminate the very association being described, so</span>
-<span id="cb4-514"><a href="#cb4-514" aria-hidden="true" tabindex="-1"></a>agreement with human annotation, and with alternative vision models, is the</span>
-<span id="cb4-515"><a href="#cb4-515" aria-hidden="true" tabindex="-1"></a>evidence a reader should look for before trusting the count. The paper is also a</span>
-<span id="cb4-516"><a href="#cb4-516" aria-hidden="true" tabindex="-1"></a>useful example of a descriptive design written for a top marketing journal, which</span>
-<span id="cb4-517"><a href="#cb4-517" aria-hidden="true" tabindex="-1"></a>@sec-sw-descriptive takes up.</span>
-<span id="cb4-518"><a href="#cb4-518" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-519"><a href="#cb4-519" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
-<span id="cb4-520"><a href="#cb4-520" aria-hidden="true" tabindex="-1"></a>Face- and demographic-inference features are the most fraught in this chapter.</span>
-<span id="cb4-521"><a href="#cb4-521" aria-hidden="true" tabindex="-1"></a>Apparent-emotion and inferred-demographic classifiers are trained on labeled data</span>
-<span id="cb4-522"><a href="#cb4-522" aria-hidden="true" tabindex="-1"></a>that encode the annotators' cultural assumptions; their errors are systematically</span>
-<span id="cb4-523"><a href="#cb4-523" aria-hidden="true" tabindex="-1"></a>correlated with skin tone, age, and gender, raising both validity and fairness</span>
-<span id="cb4-524"><a href="#cb4-524" aria-hidden="true" tabindex="-1"></a>concerns. The privacy implications of inferring protected attributes from images</span>
-<span id="cb4-525"><a href="#cb4-525" aria-hidden="true" tabindex="-1"></a>are governed by the regimes in @sec-privacy. Researchers should treat such</span>
-<span id="cb4-526"><a href="#cb4-526" aria-hidden="true" tabindex="-1"></a>features as low-confidence proxies, audit error rates by subgroup, and prefer</span>
-<span id="cb4-527"><a href="#cb4-527" aria-hidden="true" tabindex="-1"></a>coarse, well-validated labels (face present / absent) over fine-grained inferences</span>
-<span id="cb4-528"><a href="#cb4-528" aria-hidden="true" tabindex="-1"></a>(specific emotion, exact age) wherever the theory permits.</span>
-<span id="cb4-529"><a href="#cb4-529" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb4-530"><a href="#cb4-530" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-531"><a href="#cb4-531" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Econometrics of Generated Image Features {#sec-image-econometrics}</span></span>
-<span id="cb4-532"><a href="#cb4-532" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-533"><a href="#cb4-533" aria-hidden="true" tabindex="-1"></a>The defining methodological problem of images-as-data is that the features are</span>
-<span id="cb4-534"><a href="#cb4-534" aria-hidden="true" tabindex="-1"></a>**generated regressors**: they are not observed but *predicted* by a first-stage</span>
-<span id="cb4-535"><a href="#cb4-535" aria-hidden="true" tabindex="-1"></a>model (the CNN), and that prediction carries error. Suppose the structural object</span>
-<span id="cb4-536"><a href="#cb4-536" aria-hidden="true" tabindex="-1"></a>of interest is</span>
+<span id="cb4-424"><a href="#cb4-424" aria-hidden="true" tabindex="-1"></a>Scoring aesthetic quality at scale forces a choice of instrument, and @xue2026picture</span>
+<span id="cb4-425"><a href="#cb4-425" aria-hidden="true" tabindex="-1"></a>(@sec-online-review-photos) declined to make it. To test whether photos attached to</span>
+<span id="cb4-426"><a href="#cb4-426" aria-hidden="true" tabindex="-1"></a>positive reviews are better than those attached to negative ones, they scored every</span>
+<span id="cb4-427"><a href="#cb4-427" aria-hidden="true" tabindex="-1"></a>photo three ways: with human judges (in their Study 1, 1,401 judges gave 14,010</span>
+<span id="cb4-428"><a href="#cb4-428" aria-hidden="true" tabindex="-1"></a>ratings); with MUSIQ <span class="co">[</span><span class="ot">@ke2021musiq</span><span class="co">]</span>, a transformer trained to predict human ratings of</span>
+<span id="cb4-429"><a href="#cb4-429" aria-hidden="true" tabindex="-1"></a>image quality that reads an image at several scales and at its native aspect ratio</span>
+<span id="cb4-430"><a href="#cb4-430" aria-hidden="true" tabindex="-1"></a>instead of a fixed-size crop; and with GPT-4o given a rating prompt. In Study 1 all</span>
+<span id="cb4-431"><a href="#cb4-431" aria-hidden="true" tabindex="-1"></a>three instruments ranked photos of liked products above photos of disliked ones</span>
+<span id="cb4-432"><a href="#cb4-432" aria-hidden="true" tabindex="-1"></a>(humans 3.56 vs. 3.29, GPT-4o 3.97 vs. 3.82, MUSIQ 44.76 vs. 43.88). Rather than pick</span>
+<span id="cb4-433"><a href="#cb4-433" aria-hidden="true" tabindex="-1"></a>the best instrument, the authors treated the three scores as reflective indicators of</span>
+<span id="cb4-434"><a href="#cb4-434" aria-hidden="true" tabindex="-1"></a>one latent quality in a structural equation model. What three instruments with</span>
+<span id="cb4-435"><a href="#cb4-435" aria-hidden="true" tabindex="-1"></a>different error sources share is more credible than any one of them, and</span>
+<span id="cb4-436"><a href="#cb4-436" aria-hidden="true" tabindex="-1"></a>disagreements among them are visible instead of hidden.</span>
+<span id="cb4-437"><a href="#cb4-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-438"><a href="#cb4-438" aria-hidden="true" tabindex="-1"></a>They do disagree, in magnitude. In the field data, the correlation between a review's</span>
+<span id="cb4-439"><a href="#cb4-439" aria-hidden="true" tabindex="-1"></a>star rating and its photo's MUSIQ score is .10 on Amazon and .06 on Yelp; with the</span>
+<span id="cb4-440"><a href="#cb4-440" aria-hidden="true" tabindex="-1"></a>GPT-4o score it is .34 and .21. Both instruments find the same direction, but GPT-4o</span>
+<span id="cb4-441"><a href="#cb4-441" aria-hidden="true" tabindex="-1"></a>finds a relation three to four times as strong. The paper's numbers do not settle why,</span>
+<span id="cb4-442"><a href="#cb4-442" aria-hidden="true" tabindex="-1"></a>but the two instruments measure different slices of "quality." MUSIQ was trained on</span>
+<span id="cb4-443"><a href="#cb4-443" aria-hidden="true" tabindex="-1"></a>human ratings of image quality and responds to properties of the pixels, such as</span>
+<span id="cb4-444"><a href="#cb4-444" aria-hidden="true" tabindex="-1"></a>sharpness, noise, and exposure. It should be less sensitive to staging (props,</span>
+<span id="cb4-445"><a href="#cb4-445" aria-hidden="true" tabindex="-1"></a>arrangement, framing choices), which is where Study 2's hidden cameras found part of</span>
+<span id="cb4-446"><a href="#cb4-446" aria-hidden="true" tabindex="-1"></a>the extra effort. A general-purpose language model asked to rate a photo can respond to</span>
+<span id="cb4-447"><a href="#cb4-447" aria-hidden="true" tabindex="-1"></a>composition and staging, but it can also respond to what is in the frame: an</span>
+<span id="cb4-448"><a href="#cb4-448" aria-hidden="true" tabindex="-1"></a>appealing product, a well-plated dish, cues of the photographer's enthusiasm. To the</span>
+<span id="cb4-449"><a href="#cb4-449" aria-hidden="true" tabindex="-1"></a>extent it does, part of its stronger correlation with the star rating is content</span>
+<span id="cb4-450"><a href="#cb4-450" aria-hidden="true" tabindex="-1"></a>rather than photographic quality. That is a validity concern, not a precision one, and</span>
+<span id="cb4-451"><a href="#cb4-451" aria-hidden="true" tabindex="-1"></a>it is the error-correlated-with-outcome case of @sec-image-econometrics: if the</span>
+<span id="cb4-452"><a href="#cb4-452" aria-hidden="true" tabindex="-1"></a>instrument reads valence-related content from the photo, its error is correlated with</span>
+<span id="cb4-453"><a href="#cb4-453" aria-hidden="true" tabindex="-1"></a>the very variable the analyst is relating it to.</span>
+<span id="cb4-454"><a href="#cb4-454" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-455"><a href="#cb4-455" aria-hidden="true" tabindex="-1"></a>Three habits follow for any study that scores images with a learned model or an LLM.</span>
+<span id="cb4-456"><a href="#cb4-456" aria-hidden="true" tabindex="-1"></a>Report each instrument separately as well as the combined latent, and check whether the</span>
+<span id="cb4-457"><a href="#cb4-457" aria-hidden="true" tabindex="-1"></a>conclusion survives the most conservative one. Anchor the automated scores to human</span>
+<span id="cb4-458"><a href="#cb4-458" aria-hidden="true" tabindex="-1"></a>judgments on a subsample, as the authors did. And test discriminant validity directly:</span>
+<span id="cb4-459"><a href="#cb4-459" aria-hidden="true" tabindex="-1"></a>does the score move with content the construct excludes? @xue2026picture supply the</span>
+<span id="cb4-460"><a href="#cb4-460" aria-hidden="true" tabindex="-1"></a>experimental version of that test in Study 3b, which crossed the attractiveness of the</span>
+<span id="cb4-461"><a href="#cb4-461" aria-hidden="true" tabindex="-1"></a>depicted shoe with deliberate degradation of the photo. Helpfulness moved with</span>
+<span id="cb4-462"><a href="#cb4-462" aria-hidden="true" tabindex="-1"></a>degradation and not with attractiveness, separating how a photo looks from what it</span>
+<span id="cb4-463"><a href="#cb4-463" aria-hidden="true" tabindex="-1"></a>shows, the distinction drawn under social-media images below.</span>
+<span id="cb4-464"><a href="#cb4-464" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-465"><a href="#cb4-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-466"><a href="#cb4-466" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Surface Finish: One Cue, Two Meanings {#sec-image-glossiness}</span></span>
+<span id="cb4-467"><a href="#cb4-467" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-468"><a href="#cb4-468" aria-hidden="true" tabindex="-1"></a>Surface finish is a visual property that the aesthetics literature long left implicit,</span>
+<span id="cb4-469"><a href="#cb4-469" aria-hidden="true" tabindex="-1"></a>and @song2026glossy show that its meaning depends on the market a product is sold in.</span>
+<span id="cb4-470"><a href="#cb4-470" aria-hidden="true" tabindex="-1"></a>Across six studies, consumers preferred products with a glossy rather than a matte</span>
+<span id="cb4-471"><a href="#cb4-471" aria-hidden="true" tabindex="-1"></a>surface in both the firsthand (new) and the secondhand market, but they read the same</span>
+<span id="cb4-472"><a href="#cb4-472" aria-hidden="true" tabindex="-1"></a>cue differently in each. In the firsthand market gloss heightens perceived *recency*, the</span>
+<span id="cb4-473"><a href="#cb4-473" aria-hidden="true" tabindex="-1"></a>sense that the item was made only a short time ago. In the secondhand market, where</span>
+<span id="cb4-474"><a href="#cb4-474" aria-hidden="true" tabindex="-1"></a>chronological newness is no longer on offer, gloss heightens perceived *pristineness*,</span>
+<span id="cb4-475"><a href="#cb4-475" aria-hidden="true" tabindex="-1"></a>the sense that the item is clean and little used (@fig-image-glossiness). Each</span>
+<span id="cb4-476"><a href="#cb4-476" aria-hidden="true" tabindex="-1"></a>mechanism has its own boundary condition. For time-enhanced products, whose quality</span>
+<span id="cb4-477"><a href="#cb4-477" aria-hidden="true" tabindex="-1"></a>and value improve with age, the firsthand preference reverses because a recency signal</span>
+<span id="cb4-478"><a href="#cb4-478" aria-hidden="true" tabindex="-1"></a>contradicts the value proposition. The AMA research summary of the article reports a</span>
+<span id="cb4-479"><a href="#cb4-479" aria-hidden="true" tabindex="-1"></a>Cabernet Sauvignon rated more favorably in a matte than a glossy bottle. In the</span>
+<span id="cb4-480"><a href="#cb4-480" aria-hidden="true" tabindex="-1"></a>secondhand market the glossy advantage diminishes when diagnostic information about</span>
+<span id="cb4-481"><a href="#cb4-481" aria-hidden="true" tabindex="-1"></a>prior use is available, such as a condition description of wear and scratches, because</span>
+<span id="cb4-482"><a href="#cb4-482" aria-hidden="true" tabindex="-1"></a>consumers then rely on that information rather than on the surface.</span>
+<span id="cb4-483"><a href="#cb4-483" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-486"><a href="#cb4-486" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb4-487"><a href="#cb4-487" aria-hidden="true" tabindex="-1"></a>%%| label: fig-image-glossiness</span>
+<span id="cb4-488"><a href="#cb4-488" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">Product glossiness raises preference through market-specific inferences of newness: recency in the firsthand market and pristineness in the secondhand market. Dashed links mark the boundary conditions in </span><span class="dt">@song2026glossy</span><span class="st">.</span><span class="ot">"</span></span>
+<span id="cb4-489"><a href="#cb4-489" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb4-490"><a href="#cb4-490" aria-hidden="true" tabindex="-1"></a>  G[<span class="ot">"</span><span class="st">Glossy (vs. matte)&lt;br/&gt;surface</span><span class="ot">"</span>] --&gt; F[<span class="ot">"</span><span class="st">Firsthand market</span><span class="ot">"</span>]</span>
+<span id="cb4-491"><a href="#cb4-491" aria-hidden="true" tabindex="-1"></a>  G --&gt; S[<span class="ot">"</span><span class="st">Secondhand market</span><span class="ot">"</span>]</span>
+<span id="cb4-492"><a href="#cb4-492" aria-hidden="true" tabindex="-1"></a>  F --&gt; R[<span class="ot">"</span><span class="st">Perceived recency&lt;br/&gt;(recently made)</span><span class="ot">"</span>]</span>
+<span id="cb4-493"><a href="#cb4-493" aria-hidden="true" tabindex="-1"></a>  S --&gt; P[<span class="ot">"</span><span class="st">Perceived pristineness&lt;br/&gt;(clean, little used)</span><span class="ot">"</span>]</span>
+<span id="cb4-494"><a href="#cb4-494" aria-hidden="true" tabindex="-1"></a>  R --&gt; Y[<span class="ot">"</span><span class="st">Product preference</span><span class="ot">"</span>]</span>
+<span id="cb4-495"><a href="#cb4-495" aria-hidden="true" tabindex="-1"></a>  P --&gt; Y</span>
+<span id="cb4-496"><a href="#cb4-496" aria-hidden="true" tabindex="-1"></a>  T[<span class="ot">"</span><span class="st">Time-enhanced product&lt;br/&gt;(improves with age)</span><span class="ot">"</span>] -.-&gt;|<span class="ot">"</span><span class="st">reverses</span><span class="ot">"</span>| R</span>
+<span id="cb4-497"><a href="#cb4-497" aria-hidden="true" tabindex="-1"></a>  D[<span class="ot">"</span><span class="st">Diagnostic prior-usage&lt;br/&gt;information</span><span class="ot">"</span>] -.-&gt;|<span class="ot">"</span><span class="st">diminishes</span><span class="ot">"</span>| P</span>
+<span id="cb4-498"><a href="#cb4-498" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-499"><a href="#cb4-499" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-500"><a href="#cb4-500" aria-hidden="true" tabindex="-1"></a>The evidence combines incentive-compatible and field designs. According to the</span>
+<span id="cb4-501"><a href="#cb4-501" aria-hidden="true" tabindex="-1"></a>university press release, laboratory participants stated their maximum willingness to</span>
+<span id="cb4-502"><a href="#cb4-502" aria-hidden="true" tabindex="-1"></a>pay for display trays they could actually buy, and online field experiments on a large</span>
+<span id="cb4-503"><a href="#cb4-503" aria-hidden="true" tabindex="-1"></a>Chinese secondhand marketplace compared clicks on glossy and matte listings of an</span>
+<span id="cb4-504"><a href="#cb4-504" aria-hidden="true" tabindex="-1"></a>otherwise identical tote bag. The release puts the differences at 72% higher bids and</span>
+<span id="cb4-505"><a href="#cb4-505" aria-hidden="true" tabindex="-1"></a>63% more clicks for the glossy versions. (Only the</span>
+<span id="cb4-506"><a href="#cb4-506" aria-hidden="true" tabindex="-1"></a>published abstract and these public summaries were accessible when this section was</span>
+<span id="cb4-507"><a href="#cb4-507" aria-hidden="true" tabindex="-1"></a>written. The study-level sample sizes, the recency and pristineness measures, and the</span>
+<span id="cb4-508"><a href="#cb4-508" aria-hidden="true" tabindex="-1"></a>mediation and interaction estimates should be checked against the article before they</span>
+<span id="cb4-509"><a href="#cb4-509" aria-hidden="true" tabindex="-1"></a>are quoted.)</span>
+<span id="cb4-510"><a href="#cb4-510" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-511"><a href="#cb4-511" aria-hidden="true" tabindex="-1"></a>For image analytics the lesson concerns specification as much as measurement. A</span>
+<span id="cb4-512"><a href="#cb4-512" aria-hidden="true" tabindex="-1"></a>finish feature extracted from product photos, whether a hand-engineered</span>
+<span id="cb4-513"><a href="#cb4-513" aria-hidden="true" tabindex="-1"></a>specular-highlight share or a learned glossy/matte classifier, should not be expected</span>
+<span id="cb4-514"><a href="#cb4-514" aria-hidden="true" tabindex="-1"></a>to carry one coefficient. On this evidence its effect is positive for ordinary new and</span>
+<span id="cb4-515"><a href="#cb4-515" aria-hidden="true" tabindex="-1"></a>used goods but runs through different inferences. It turns negative for time-enhanced</span>
+<span id="cb4-516"><a href="#cb4-516" aria-hidden="true" tabindex="-1"></a>goods sold new, and it shrinks when the listing text already describes the item's</span>
+<span id="cb4-517"><a href="#cb4-517" aria-hidden="true" tabindex="-1"></a>condition. A model that pools a new-goods retailer with a resale platform, or that</span>
+<span id="cb4-518"><a href="#cb4-518" aria-hidden="true" tabindex="-1"></a>drops the listing text sitting next to the photo, averages over mechanisms that run in</span>
+<span id="cb4-519"><a href="#cb4-519" aria-hidden="true" tabindex="-1"></a>different directions. That argues for interacting visual features with market context</span>
+<span id="cb4-520"><a href="#cb4-520" aria-hidden="true" tabindex="-1"></a>and product category, and for combining image and text features in one model</span>
+<span id="cb4-521"><a href="#cb4-521" aria-hidden="true" tabindex="-1"></a>(@sec-multimodal-fusion), rather than reading a single "gloss premium" off pooled</span>
+<span id="cb4-522"><a href="#cb4-522" aria-hidden="true" tabindex="-1"></a>data.</span>
+<span id="cb4-523"><a href="#cb4-523" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-524"><a href="#cb4-524" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-525"><a href="#cb4-525" aria-hidden="true" tabindex="-1"></a><span class="fu">### Content Features</span></span>
+<span id="cb4-526"><a href="#cb4-526" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-527"><a href="#cb4-527" aria-hidden="true" tabindex="-1"></a>Content features identify *what is depicted*. **Object detection** returns the</span>
+<span id="cb4-528"><a href="#cb4-528" aria-hidden="true" tabindex="-1"></a>set, count, and location of recognizable objects (a person, a beverage, a beach);</span>
+<span id="cb4-529"><a href="#cb4-529" aria-hidden="true" tabindex="-1"></a>**scene recognition** classifies the overall setting (kitchen, gym, nightclub);</span>
+<span id="cb4-530"><a href="#cb4-530" aria-hidden="true" tabindex="-1"></a>**face analysis** locates faces and, more controversially, infers attributes such</span>
+<span id="cb4-531"><a href="#cb4-531" aria-hidden="true" tabindex="-1"></a>as apparent emotion, age, or gaze direction. Content features connect images to</span>
+<span id="cb4-532"><a href="#cb4-532" aria-hidden="true" tabindex="-1"></a>substantive marketing theory: the presence of *people* versus *products* in a post,</span>
+<span id="cb4-533"><a href="#cb4-533" aria-hidden="true" tabindex="-1"></a>the warmth of depicted facial expressions, and the activities shown all map onto</span>
+<span id="cb4-534"><a href="#cb4-534" aria-hidden="true" tabindex="-1"></a>constructs—self-presentation, social proof, lifestyle congruence—that the</span>
+<span id="cb4-535"><a href="#cb4-535" aria-hidden="true" tabindex="-1"></a>social-media and influencer literatures (@sec-influencer-marketing) treat as</span>
+<span id="cb4-536"><a href="#cb4-536" aria-hidden="true" tabindex="-1"></a>drivers of engagement.</span>
 <span id="cb4-537"><a href="#cb4-537" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-538"><a href="#cb4-538" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-539"><a href="#cb4-539" aria-hidden="true" tabindex="-1"></a>y_i = \alpha + \beta\, f_i^{\ast} + \mathbf{w}_i^{\top}\boldsymbol{\gamma}</span>
-<span id="cb4-540"><a href="#cb4-540" aria-hidden="true" tabindex="-1"></a><span class="ss">+ </span>\varepsilon_i,</span>
-<span id="cb4-541"><a href="#cb4-541" aria-hidden="true" tabindex="-1"></a>$$ {#eq-structural-image}</span>
-<span id="cb4-542"><a href="#cb4-542" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-543"><a href="#cb4-543" aria-hidden="true" tabindex="-1"></a>where $y_i$ is an outcome (clicks, likes, sales), $f_i^{\ast}$ is the *true* image</span>
-<span id="cb4-544"><a href="#cb4-544" aria-hidden="true" tabindex="-1"></a>feature (true aesthetic appeal, true logo prominence), and $\mathbf{w}_i$ are</span>
-<span id="cb4-545"><a href="#cb4-545" aria-hidden="true" tabindex="-1"></a>controls. The analyst does not observe $f_i^{\ast}$; the CNN supplies an estimate</span>
-<span id="cb4-546"><a href="#cb4-546" aria-hidden="true" tabindex="-1"></a>$\hat f_i = f_i^{\ast} + u_i$. Regressing $y_i$ on $\hat f_i$ instead of</span>
-<span id="cb4-547"><a href="#cb4-547" aria-hidden="true" tabindex="-1"></a>$f_i^{\ast}$ raises three distinct hazards.</span>
-<span id="cb4-548"><a href="#cb4-548" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-549"><a href="#cb4-549" aria-hidden="true" tabindex="-1"></a>**Attenuation from classical measurement error.** If $u_i$ is mean-zero noise</span>
-<span id="cb4-550"><a href="#cb4-550" aria-hidden="true" tabindex="-1"></a>independent of $f_i^{\ast}$ and $\varepsilon_i$, the ordinary-least-squares</span>
-<span id="cb4-551"><a href="#cb4-551" aria-hidden="true" tabindex="-1"></a>estimand is biased toward zero by the reliability ratio,</span>
-<span id="cb4-552"><a href="#cb4-552" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-553"><a href="#cb4-553" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb4-554"><a href="#cb4-554" aria-hidden="true" tabindex="-1"></a>\operatorname{plim}\hat\beta_{\text{OLS}}</span>
-<span id="cb4-555"><a href="#cb4-555" aria-hidden="true" tabindex="-1"></a>= \beta \cdot \frac{\operatorname{Var}(f^{\ast})}</span>
-<span id="cb4-556"><a href="#cb4-556" aria-hidden="true" tabindex="-1"></a>{\operatorname{Var}(f^{\ast}) + \operatorname{Var}(u)} \;&lt;\; \beta .</span>
-<span id="cb4-557"><a href="#cb4-557" aria-hidden="true" tabindex="-1"></a>$$ {#eq-34-attenuation}</span>
-<span id="cb4-558"><a href="#cb4-558" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-559"><a href="#cb4-559" aria-hidden="true" tabindex="-1"></a>The noisier the classifier (the smaller its reliability), the more the true effect</span>
-<span id="cb4-560"><a href="#cb4-560" aria-hidden="true" tabindex="-1"></a>is understated. A nonsignificant coefficient on an image feature can therefore mean</span>
-<span id="cb4-561"><a href="#cb4-561" aria-hidden="true" tabindex="-1"></a>"no effect" *or* "a noisy detector," and the two are not distinguishable without an</span>
-<span id="cb4-562"><a href="#cb4-562" aria-hidden="true" tabindex="-1"></a>estimate of $\operatorname{Var}(u)$.</span>
-<span id="cb4-563"><a href="#cb4-563" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-564"><a href="#cb4-564" aria-hidden="true" tabindex="-1"></a>**Non-classical, correlated error.** Worse, CNN error is rarely classical. A logo</span>
-<span id="cb4-565"><a href="#cb4-565" aria-hidden="true" tabindex="-1"></a>detector may systematically miss small or occluded logos; an aesthetic regressor</span>
-<span id="cb4-566"><a href="#cb4-566" aria-hidden="true" tabindex="-1"></a>may rate professionally lit photos higher *and* such photos may be posted by</span>
-<span id="cb4-567"><a href="#cb4-567" aria-hidden="true" tabindex="-1"></a>firms that also buy promotion. When $\operatorname{Cov}(u_i, \varepsilon_i) \neq</span>
-<span id="cb4-568"><a href="#cb4-568" aria-hidden="true" tabindex="-1"></a>0$—because the same unobserved factor (a firm's production budget) drives both the</span>
-<span id="cb4-569"><a href="#cb4-569" aria-hidden="true" tabindex="-1"></a>classifier's error and the outcome—$\hat\beta$ is biased in an *unknown* direction</span>
-<span id="cb4-570"><a href="#cb4-570" aria-hidden="true" tabindex="-1"></a>and no reliability correction recovers $\beta$. This is the image analogue of the</span>
-<span id="cb4-571"><a href="#cb4-571" aria-hidden="true" tabindex="-1"></a>endogeneity problems treated throughout @sec-causal-inference, and it is the</span>
-<span id="cb4-572"><a href="#cb4-572" aria-hidden="true" tabindex="-1"></a>reason image features must be validated against, and where possible instrumented or</span>
-<span id="cb4-573"><a href="#cb4-573" aria-hidden="true" tabindex="-1"></a>held fixed within an experiment.</span>
+<span id="cb4-538"><a href="#cb4-538" aria-hidden="true" tabindex="-1"></a>Face features need not be attribute inferences at all. @wu2026familiarface uses a</span>
+<span id="cb4-539"><a href="#cb4-539" aria-hidden="true" tabindex="-1"></a>facial-recognition embedding to measure the *distance* between two faces, an</span>
+<span id="cb4-540"><a href="#cb4-540" aria-hidden="true" tabindex="-1"></a>investor's and a founder's, and shows that visually similar pairs are more likely to</span>
+<span id="cb4-541"><a href="#cb4-541" aria-hidden="true" tabindex="-1"></a>close an early-stage venture deal and less likely to reach a successful exit</span>
+<span id="cb4-542"><a href="#cb4-542" aria-hidden="true" tabindex="-1"></a>(@sec-ent-resources). The embedding compares two people with each other and never</span>
+<span id="cb4-543"><a href="#cb4-543" aria-hidden="true" tabindex="-1"></a>labels either one, which is the form of face analysis least exposed to the concerns</span>
+<span id="cb4-544"><a href="#cb4-544" aria-hidden="true" tabindex="-1"></a>in the callout below.</span>
+<span id="cb4-545"><a href="#cb4-545" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-546"><a href="#cb4-546" aria-hidden="true" tabindex="-1"></a>A content feature can also be a single, theory-motivated object class counted across</span>
+<span id="cb4-547"><a href="#cb4-547" aria-hidden="true" tabindex="-1"></a>a whole corpus. @chang2026plantimagery code 569,773 listing photos of 40,294 sold</span>
+<span id="cb4-548"><a href="#cb4-548" aria-hidden="true" tabindex="-1"></a>homes on a major U.S. real-estate platform for the presence of plants, using a</span>
+<span id="cb4-549"><a href="#cb4-549" aria-hidden="true" tabindex="-1"></a>multimodal language model (GPT-5-mini) as the classifier, and find that home</span>
+<span id="cb4-550"><a href="#cb4-550" aria-hidden="true" tabindex="-1"></a>profiles with more plant imagery are associated with higher transaction prices,</span>
+<span id="cb4-551"><a href="#cb4-551" aria-hidden="true" tabindex="-1"></a>faster sales, and more online engagement, after accounting for property,</span>
+<span id="cb4-552"><a href="#cb4-552" aria-hidden="true" tabindex="-1"></a>neighborhood, listing, and market factors. Two features of the design generalize.</span>
+<span id="cb4-553"><a href="#cb4-553" aria-hidden="true" tabindex="-1"></a>The construct is narrow enough that a general-purpose vision-language model can</span>
+<span id="cb4-554"><a href="#cb4-554" aria-hidden="true" tabindex="-1"></a>label it without task-specific training, which is what makes half a million images</span>
+<span id="cb4-555"><a href="#cb4-555" aria-hidden="true" tabindex="-1"></a>affordable to code. And because the label is generated, the cautions of</span>
+<span id="cb4-556"><a href="#cb4-556" aria-hidden="true" tabindex="-1"></a>@sec-image-econometrics apply: a classifier whose errors correlate with photo</span>
+<span id="cb4-557"><a href="#cb4-557" aria-hidden="true" tabindex="-1"></a>quality or home type would contaminate the very association being described, so</span>
+<span id="cb4-558"><a href="#cb4-558" aria-hidden="true" tabindex="-1"></a>agreement with human annotation, and with alternative vision models, is the</span>
+<span id="cb4-559"><a href="#cb4-559" aria-hidden="true" tabindex="-1"></a>evidence a reader should look for before trusting the count. The paper is also a</span>
+<span id="cb4-560"><a href="#cb4-560" aria-hidden="true" tabindex="-1"></a>useful example of a descriptive design written for a top marketing journal, which</span>
+<span id="cb4-561"><a href="#cb4-561" aria-hidden="true" tabindex="-1"></a>@sec-sw-descriptive takes up.</span>
+<span id="cb4-562"><a href="#cb4-562" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-563"><a href="#cb4-563" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb4-564"><a href="#cb4-564" aria-hidden="true" tabindex="-1"></a>Face- and demographic-inference features are the most fraught in this chapter.</span>
+<span id="cb4-565"><a href="#cb4-565" aria-hidden="true" tabindex="-1"></a>Apparent-emotion and inferred-demographic classifiers are trained on labeled data</span>
+<span id="cb4-566"><a href="#cb4-566" aria-hidden="true" tabindex="-1"></a>that encode the annotators' cultural assumptions; their errors are systematically</span>
+<span id="cb4-567"><a href="#cb4-567" aria-hidden="true" tabindex="-1"></a>correlated with skin tone, age, and gender, raising both validity and fairness</span>
+<span id="cb4-568"><a href="#cb4-568" aria-hidden="true" tabindex="-1"></a>concerns. The privacy implications of inferring protected attributes from images</span>
+<span id="cb4-569"><a href="#cb4-569" aria-hidden="true" tabindex="-1"></a>are governed by the regimes in @sec-privacy. Researchers should treat such</span>
+<span id="cb4-570"><a href="#cb4-570" aria-hidden="true" tabindex="-1"></a>features as low-confidence proxies, audit error rates by subgroup, and prefer</span>
+<span id="cb4-571"><a href="#cb4-571" aria-hidden="true" tabindex="-1"></a>coarse, well-validated labels (face present / absent) over fine-grained inferences</span>
+<span id="cb4-572"><a href="#cb4-572" aria-hidden="true" tabindex="-1"></a>(specific emotion, exact age) wherever the theory permits.</span>
+<span id="cb4-573"><a href="#cb4-573" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb4-574"><a href="#cb4-574" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-575"><a href="#cb4-575" aria-hidden="true" tabindex="-1"></a>**Forbidden-regression and look-elsewhere risks.** Because embeddings are</span>
-<span id="cb4-576"><a href="#cb4-576" aria-hidden="true" tabindex="-1"></a>high-dimensional, an analyst can search across hundreds of learned dimensions for</span>
-<span id="cb4-577"><a href="#cb4-577" aria-hidden="true" tabindex="-1"></a>one that correlates with the outcome and report it as a "discovered visual driver."</span>
-<span id="cb4-578"><a href="#cb4-578" aria-hidden="true" tabindex="-1"></a>Without pre-registration or a held-out test, this is overfitting dressed as</span>
-<span id="cb4-579"><a href="#cb4-579" aria-hidden="true" tabindex="-1"></a>inference. The discipline that text-as-data imposes—split the sample, fix the</span>
-<span id="cb4-580"><a href="#cb4-580" aria-hidden="true" tabindex="-1"></a>representation before looking at outcomes, report out-of-sample fit—applies with</span>
-<span id="cb4-581"><a href="#cb4-581" aria-hidden="true" tabindex="-1"></a>full force here.</span>
-<span id="cb4-582"><a href="#cb4-582" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-583"><a href="#cb4-583" aria-hidden="true" tabindex="-1"></a>Three remedies recur. First, **validate the feature** against human labels on a</span>
-<span id="cb4-584"><a href="#cb4-584" aria-hidden="true" tabindex="-1"></a>held-out subsample and report the classifier's accuracy or correlation with</span>
-<span id="cb4-585"><a href="#cb4-585" aria-hidden="true" tabindex="-1"></a>ground truth, so the reader can gauge $\operatorname{Var}(u)$. Second,</span>
-<span id="cb4-586"><a href="#cb4-586" aria-hidden="true" tabindex="-1"></a>**experimentally manipulate** the feature rather than only observe it: the cleanest</span>
-<span id="cb4-587"><a href="#cb4-587" aria-hidden="true" tabindex="-1"></a>images-as-data designs randomize which image a user sees (an A/B test on ad</span>
-<span id="cb4-588"><a href="#cb4-588" aria-hidden="true" tabindex="-1"></a>creative) so that $f_i$ is assigned, not estimated from confounded content, which</span>
-<span id="cb4-589"><a href="#cb4-589" aria-hidden="true" tabindex="-1"></a>severs $\operatorname{Cov}(u_i, \varepsilon_i)$ by design. Third, **correct or</span>
-<span id="cb4-590"><a href="#cb4-590" aria-hidden="true" tabindex="-1"></a>bound** the bias—correcting attenuation with an estimated reliability ratio when</span>
-<span id="cb4-591"><a href="#cb4-591" aria-hidden="true" tabindex="-1"></a>error is plausibly classical, and otherwise reporting the OLS estimate as a</span>
-<span id="cb4-592"><a href="#cb4-592" aria-hidden="true" tabindex="-1"></a>conservative (attenuated) bound on a positive effect. The simulation below makes</span>
-<span id="cb4-593"><a href="#cb4-593" aria-hidden="true" tabindex="-1"></a>the attenuation in @eq-34-attenuation concrete and shows that a reliability</span>
-<span id="cb4-594"><a href="#cb4-594" aria-hidden="true" tabindex="-1"></a>correction recovers the true slope when error is classical.</span>
-<span id="cb4-595"><a href="#cb4-595" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-596"><a href="#cb4-596" aria-hidden="true" tabindex="-1"></a><span class="in">```{r generated-regressor-attenuation, message=FALSE, warning=FALSE}</span></span>
-<span id="cb4-597"><a href="#cb4-597" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">34</span>)</span>
-<span id="cb4-598"><a href="#cb4-598" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">4000</span></span>
-<span id="cb4-599"><a href="#cb4-599" aria-hidden="true" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fl">1.5</span></span>
-<span id="cb4-600"><a href="#cb4-600" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-601"><a href="#cb4-601" aria-hidden="true" tabindex="-1"></a><span class="co"># True (latent) image feature f* and outcome y generated from it.</span></span>
-<span id="cb4-602"><a href="#cb4-602" aria-hidden="true" tabindex="-1"></a>f_star <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">1</span>)</span>
-<span id="cb4-603"><a href="#cb4-603" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">+</span> beta_true <span class="sc">*</span> f_star <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">1</span>)</span>
-<span id="cb4-604"><a href="#cb4-604" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-605"><a href="#cb4-605" aria-hidden="true" tabindex="-1"></a><span class="co"># A noisy CNN measures f* with classical error: reliability rho = Var(f*)/Var(fhat).</span></span>
-<span id="cb4-606"><a href="#cb4-606" aria-hidden="true" tabindex="-1"></a>sigma_u <span class="ot">&lt;-</span> <span class="fl">0.9</span></span>
-<span id="cb4-607"><a href="#cb4-607" aria-hidden="true" tabindex="-1"></a>f_hat <span class="ot">&lt;-</span> f_star <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, sigma_u)</span>
-<span id="cb4-608"><a href="#cb4-608" aria-hidden="true" tabindex="-1"></a>rho   <span class="ot">&lt;-</span> <span class="fu">var</span>(f_star) <span class="sc">/</span> <span class="fu">var</span>(f_hat)                <span class="co"># estimable from a validation set</span></span>
-<span id="cb4-609"><a href="#cb4-609" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-610"><a href="#cb4-610" aria-hidden="true" tabindex="-1"></a>naive  <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(y <span class="sc">~</span> f_hat))[<span class="st">"f_hat"</span>]           <span class="co"># attenuated OLS</span></span>
-<span id="cb4-611"><a href="#cb4-611" aria-hidden="true" tabindex="-1"></a>corrected <span class="ot">&lt;-</span> naive <span class="sc">/</span> rho                         <span class="co"># reliability-ratio correction</span></span>
-<span id="cb4-612"><a href="#cb4-612" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-613"><a href="#cb4-613" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"True slope beta          :"</span>, beta_true, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb4-614"><a href="#cb4-614" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Reliability ratio (rho)  :"</span>, <span class="fu">round</span>(rho, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb4-615"><a href="#cb4-615" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Naive OLS on f_hat       :"</span>, <span class="fu">round</span>(naive, <span class="dv">3</span>),</span>
-<span id="cb4-616"><a href="#cb4-616" aria-hidden="true" tabindex="-1"></a>    <span class="st">" (attenuated toward 0)</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb4-617"><a href="#cb4-617" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Reliability-corrected    :"</span>, <span class="fu">round</span>(corrected, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb4-618"><a href="#cb4-618" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-619"><a href="#cb4-619" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-620"><a href="#cb4-620" aria-hidden="true" tabindex="-1"></a>The naive slope is pulled toward zero by exactly the reliability ratio; dividing by</span>
-<span id="cb4-621"><a href="#cb4-621" aria-hidden="true" tabindex="-1"></a>$\rho$—which a validation set identifies—restores the truth. The correction works</span>
-<span id="cb4-622"><a href="#cb4-622" aria-hidden="true" tabindex="-1"></a>*only* under classical error; when the detector's mistakes correlate with the</span>
-<span id="cb4-623"><a href="#cb4-623" aria-hidden="true" tabindex="-1"></a>outcome, no such fix exists and design-based identification is the only honest</span>
-<span id="cb4-624"><a href="#cb4-624" aria-hidden="true" tabindex="-1"></a>route.</span>
-<span id="cb4-625"><a href="#cb4-625" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-626"><a href="#cb4-626" aria-hidden="true" tabindex="-1"></a>**Controllable generation: assigning a feature instead of measuring it.** The strongest</span>
-<span id="cb4-627"><a href="#cb4-627" aria-hidden="true" tabindex="-1"></a>form of that design-based route does not measure the feature at all; it *builds* stimuli</span>
-<span id="cb4-628"><a href="#cb4-628" aria-hidden="true" tabindex="-1"></a>that differ in one feature and nothing else. Randomizing which of several real images a</span>
-<span id="cb4-629"><a href="#cb4-629" aria-hidden="true" tabindex="-1"></a>viewer sees severs the tie between an image and the campaign that bought it, but it does</span>
-<span id="cb4-630"><a href="#cb4-630" aria-hidden="true" tabindex="-1"></a>not isolate an attribute, because photographs bundle them: a more feminine headshot also</span>
-<span id="cb4-631"><a href="#cb4-631" aria-hidden="true" tabindex="-1"></a>tends to differ in hairstyle, expression, clothing, and lighting, so what is assigned is</span>
-<span id="cb4-632"><a href="#cb4-632" aria-hidden="true" tabindex="-1"></a>a package and what is estimated is the package's effect. @luo2026femininity close that</span>
-<span id="cb4-633"><a href="#cb4-633" aria-hidden="true" tabindex="-1"></a>gap with a generative adversarial network that renders realistic headshots in which</span>
-<span id="cb4-634"><a href="#cb4-634" aria-hidden="true" tabindex="-1"></a>femininity varies while pose, facial expression, hairstyle, clothing, and background are</span>
-<span id="cb4-635"><a href="#cb4-635" aria-hidden="true" tabindex="-1"></a>held fixed. In a field experiment inside the live advertising environment of an education</span>
-<span id="cb4-636"><a href="#cb4-636" aria-hidden="true" tabindex="-1"></a>company, prospective customers discriminated against femininity at several stages of the</span>
-<span id="cb4-637"><a href="#cb4-637" aria-hidden="true" tabindex="-1"></a>purchase funnel, and did so to a largely similar extent whether the depicted person was a</span>
-<span id="cb4-638"><a href="#cb4-638" aria-hidden="true" tabindex="-1"></a>man, a woman, or non-binary—which separates a taste defined over a *visual attribute*</span>
-<span id="cb4-639"><a href="#cb4-639" aria-hidden="true" tabindex="-1"></a>from one defined over gender identity. The template generalizes well past faces: name the</span>
-<span id="cb4-640"><a href="#cb4-640" aria-hidden="true" tabindex="-1"></a>hypothesis-relevant feature in natural language, locate it in a generative model's latent</span>
-<span id="cb4-641"><a href="#cb4-641" aria-hidden="true" tabindex="-1"></a>space, and emit stimuli that vary controllably along that feature. An attribute that</span>
-<span id="cb4-642"><a href="#cb4-642" aria-hidden="true" tabindex="-1"></a>observational data can only estimate, with every hazard catalogued above, becomes one an</span>
-<span id="cb4-643"><a href="#cb4-643" aria-hidden="true" tabindex="-1"></a>experiment can assign. The cost is that one validity question is traded for</span>
-<span id="cb4-644"><a href="#cb4-644" aria-hidden="true" tabindex="-1"></a>another—whether a synthetic face means to a viewer what a photograph would</span>
-<span id="cb4-645"><a href="#cb4-645" aria-hidden="true" tabindex="-1"></a>(@sec-measurement-scales)—and that is the question any controllable-stimulus design</span>
-<span id="cb4-646"><a href="#cb4-646" aria-hidden="true" tabindex="-1"></a>has to answer.</span>
-<span id="cb4-647"><a href="#cb4-647" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-648"><a href="#cb4-648" aria-hidden="true" tabindex="-1"></a>**When the image is the subject's own face.** Controllable generation edits the stimulus</span>
-<span id="cb4-649"><a href="#cb4-649" aria-hidden="true" tabindex="-1"></a>that a *viewer* sees. Consumer-side AI editing raises a second question: what happens to</span>
-<span id="cb4-650"><a href="#cb4-650" aria-hidden="true" tabindex="-1"></a>the person who presents an edited image of themselves. Beauty filters and virtual makeup</span>
-<span id="cb4-651"><a href="#cb4-651" aria-hidden="true" tabindex="-1"></a>are image transformations that billions of profile photos now pass through, and their</span>
-<span id="cb4-652"><a href="#cb4-652" aria-hidden="true" tabindex="-1"></a>effect need not run through the audience at all. @ma2026facade randomize whether</span>
-<span id="cb4-653"><a href="#cb4-653" aria-hidden="true" tabindex="-1"></a>participants in an online trust game play under an AI-enhanced version of their own</span>
-<span id="cb4-654"><a href="#cb4-654" aria-hidden="true" tabindex="-1"></a>headshot or under the original, and they find that the enhancement changes the</span>
-<span id="cb4-655"><a href="#cb4-655" aria-hidden="true" tabindex="-1"></a>participant's *own* economic behavior. Enhanced senders entrust less, and the authors</span>
-<span id="cb4-656"><a href="#cb4-656" aria-hidden="true" tabindex="-1"></a>trace this to higher perceived risk, while enhanced receivers return more</span>
-<span id="cb4-657"><a href="#cb4-657" aria-hidden="true" tabindex="-1"></a>(@sec-rel-trust-game). The design point generalizes. An image feature can act on the</span>
-<span id="cb4-658"><a href="#cb4-658" aria-hidden="true" tabindex="-1"></a>poster as well as on the viewer, so an observational regression of outcomes on</span>
-<span id="cb4-659"><a href="#cb4-659" aria-hidden="true" tabindex="-1"></a>"photo attractiveness" mixes how others respond to the photo with how the photo changed</span>
-<span id="cb4-660"><a href="#cb4-660" aria-hidden="true" tabindex="-1"></a>the poster's behavior. Only a design that randomizes the image can tell these channels</span>
-<span id="cb4-661"><a href="#cb4-661" aria-hidden="true" tabindex="-1"></a>apart.</span>
-<span id="cb4-662"><a href="#cb4-662" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-575"><a href="#cb4-575" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Econometrics of Generated Image Features {#sec-image-econometrics}</span></span>
+<span id="cb4-576"><a href="#cb4-576" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-577"><a href="#cb4-577" aria-hidden="true" tabindex="-1"></a>The defining methodological problem of images-as-data is that the features are</span>
+<span id="cb4-578"><a href="#cb4-578" aria-hidden="true" tabindex="-1"></a>**generated regressors**: they are not observed but *predicted* by a first-stage</span>
+<span id="cb4-579"><a href="#cb4-579" aria-hidden="true" tabindex="-1"></a>model (the CNN), and that prediction carries error. Suppose the structural object</span>
+<span id="cb4-580"><a href="#cb4-580" aria-hidden="true" tabindex="-1"></a>of interest is</span>
+<span id="cb4-581"><a href="#cb4-581" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-582"><a href="#cb4-582" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-583"><a href="#cb4-583" aria-hidden="true" tabindex="-1"></a>y_i = \alpha + \beta\, f_i^{\ast} + \mathbf{w}_i^{\top}\boldsymbol{\gamma}</span>
+<span id="cb4-584"><a href="#cb4-584" aria-hidden="true" tabindex="-1"></a><span class="ss">+ </span>\varepsilon_i,</span>
+<span id="cb4-585"><a href="#cb4-585" aria-hidden="true" tabindex="-1"></a>$$ {#eq-structural-image}</span>
+<span id="cb4-586"><a href="#cb4-586" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-587"><a href="#cb4-587" aria-hidden="true" tabindex="-1"></a>where $y_i$ is an outcome (clicks, likes, sales), $f_i^{\ast}$ is the *true* image</span>
+<span id="cb4-588"><a href="#cb4-588" aria-hidden="true" tabindex="-1"></a>feature (true aesthetic appeal, true logo prominence), and $\mathbf{w}_i$ are</span>
+<span id="cb4-589"><a href="#cb4-589" aria-hidden="true" tabindex="-1"></a>controls. The analyst does not observe $f_i^{\ast}$; the CNN supplies an estimate</span>
+<span id="cb4-590"><a href="#cb4-590" aria-hidden="true" tabindex="-1"></a>$\hat f_i = f_i^{\ast} + u_i$. Regressing $y_i$ on $\hat f_i$ instead of</span>
+<span id="cb4-591"><a href="#cb4-591" aria-hidden="true" tabindex="-1"></a>$f_i^{\ast}$ raises three distinct hazards.</span>
+<span id="cb4-592"><a href="#cb4-592" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-593"><a href="#cb4-593" aria-hidden="true" tabindex="-1"></a>**Attenuation from classical measurement error.** If $u_i$ is mean-zero noise</span>
+<span id="cb4-594"><a href="#cb4-594" aria-hidden="true" tabindex="-1"></a>independent of $f_i^{\ast}$ and $\varepsilon_i$, the ordinary-least-squares</span>
+<span id="cb4-595"><a href="#cb4-595" aria-hidden="true" tabindex="-1"></a>estimand is biased toward zero by the reliability ratio,</span>
+<span id="cb4-596"><a href="#cb4-596" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-597"><a href="#cb4-597" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb4-598"><a href="#cb4-598" aria-hidden="true" tabindex="-1"></a>\operatorname{plim}\hat\beta_{\text{OLS}}</span>
+<span id="cb4-599"><a href="#cb4-599" aria-hidden="true" tabindex="-1"></a>= \beta \cdot \frac{\operatorname{Var}(f^{\ast})}</span>
+<span id="cb4-600"><a href="#cb4-600" aria-hidden="true" tabindex="-1"></a>{\operatorname{Var}(f^{\ast}) + \operatorname{Var}(u)} \;&lt;\; \beta .</span>
+<span id="cb4-601"><a href="#cb4-601" aria-hidden="true" tabindex="-1"></a>$$ {#eq-34-attenuation}</span>
+<span id="cb4-602"><a href="#cb4-602" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-603"><a href="#cb4-603" aria-hidden="true" tabindex="-1"></a>The noisier the classifier (the smaller its reliability), the more the true effect</span>
+<span id="cb4-604"><a href="#cb4-604" aria-hidden="true" tabindex="-1"></a>is understated. A nonsignificant coefficient on an image feature can therefore mean</span>
+<span id="cb4-605"><a href="#cb4-605" aria-hidden="true" tabindex="-1"></a>"no effect" *or* "a noisy detector," and the two are not distinguishable without an</span>
+<span id="cb4-606"><a href="#cb4-606" aria-hidden="true" tabindex="-1"></a>estimate of $\operatorname{Var}(u)$.</span>
+<span id="cb4-607"><a href="#cb4-607" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-608"><a href="#cb4-608" aria-hidden="true" tabindex="-1"></a>**Non-classical, correlated error.** Worse, CNN error is rarely classical. A logo</span>
+<span id="cb4-609"><a href="#cb4-609" aria-hidden="true" tabindex="-1"></a>detector may systematically miss small or occluded logos; an aesthetic regressor</span>
+<span id="cb4-610"><a href="#cb4-610" aria-hidden="true" tabindex="-1"></a>may rate professionally lit photos higher *and* such photos may be posted by</span>
+<span id="cb4-611"><a href="#cb4-611" aria-hidden="true" tabindex="-1"></a>firms that also buy promotion. When $\operatorname{Cov}(u_i, \varepsilon_i) \neq</span>
+<span id="cb4-612"><a href="#cb4-612" aria-hidden="true" tabindex="-1"></a>0$—because the same unobserved factor (a firm's production budget) drives both the</span>
+<span id="cb4-613"><a href="#cb4-613" aria-hidden="true" tabindex="-1"></a>classifier's error and the outcome—$\hat\beta$ is biased in an *unknown* direction</span>
+<span id="cb4-614"><a href="#cb4-614" aria-hidden="true" tabindex="-1"></a>and no reliability correction recovers $\beta$. This is the image analogue of the</span>
+<span id="cb4-615"><a href="#cb4-615" aria-hidden="true" tabindex="-1"></a>endogeneity problems treated throughout @sec-causal-inference, and it is the</span>
+<span id="cb4-616"><a href="#cb4-616" aria-hidden="true" tabindex="-1"></a>reason image features must be validated against, and where possible instrumented or</span>
+<span id="cb4-617"><a href="#cb4-617" aria-hidden="true" tabindex="-1"></a>held fixed within an experiment.</span>
+<span id="cb4-618"><a href="#cb4-618" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-619"><a href="#cb4-619" aria-hidden="true" tabindex="-1"></a>**Forbidden-regression and look-elsewhere risks.** Because embeddings are</span>
+<span id="cb4-620"><a href="#cb4-620" aria-hidden="true" tabindex="-1"></a>high-dimensional, an analyst can search across hundreds of learned dimensions for</span>
+<span id="cb4-621"><a href="#cb4-621" aria-hidden="true" tabindex="-1"></a>one that correlates with the outcome and report it as a "discovered visual driver."</span>
+<span id="cb4-622"><a href="#cb4-622" aria-hidden="true" tabindex="-1"></a>Without pre-registration or a held-out test, this is overfitting dressed as</span>
+<span id="cb4-623"><a href="#cb4-623" aria-hidden="true" tabindex="-1"></a>inference. The discipline that text-as-data imposes—split the sample, fix the</span>
+<span id="cb4-624"><a href="#cb4-624" aria-hidden="true" tabindex="-1"></a>representation before looking at outcomes, report out-of-sample fit—applies with</span>
+<span id="cb4-625"><a href="#cb4-625" aria-hidden="true" tabindex="-1"></a>full force here.</span>
+<span id="cb4-626"><a href="#cb4-626" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-627"><a href="#cb4-627" aria-hidden="true" tabindex="-1"></a>Three remedies recur. First, **validate the feature** against human labels on a</span>
+<span id="cb4-628"><a href="#cb4-628" aria-hidden="true" tabindex="-1"></a>held-out subsample and report the classifier's accuracy or correlation with</span>
+<span id="cb4-629"><a href="#cb4-629" aria-hidden="true" tabindex="-1"></a>ground truth, so the reader can gauge $\operatorname{Var}(u)$. Second,</span>
+<span id="cb4-630"><a href="#cb4-630" aria-hidden="true" tabindex="-1"></a>**experimentally manipulate** the feature rather than only observe it: the cleanest</span>
+<span id="cb4-631"><a href="#cb4-631" aria-hidden="true" tabindex="-1"></a>images-as-data designs randomize which image a user sees (an A/B test on ad</span>
+<span id="cb4-632"><a href="#cb4-632" aria-hidden="true" tabindex="-1"></a>creative) so that $f_i$ is assigned, not estimated from confounded content, which</span>
+<span id="cb4-633"><a href="#cb4-633" aria-hidden="true" tabindex="-1"></a>severs $\operatorname{Cov}(u_i, \varepsilon_i)$ by design. Third, **correct or</span>
+<span id="cb4-634"><a href="#cb4-634" aria-hidden="true" tabindex="-1"></a>bound** the bias—correcting attenuation with an estimated reliability ratio when</span>
+<span id="cb4-635"><a href="#cb4-635" aria-hidden="true" tabindex="-1"></a>error is plausibly classical, and otherwise reporting the OLS estimate as a</span>
+<span id="cb4-636"><a href="#cb4-636" aria-hidden="true" tabindex="-1"></a>conservative (attenuated) bound on a positive effect. The simulation below makes</span>
+<span id="cb4-637"><a href="#cb4-637" aria-hidden="true" tabindex="-1"></a>the attenuation in @eq-34-attenuation concrete and shows that a reliability</span>
+<span id="cb4-638"><a href="#cb4-638" aria-hidden="true" tabindex="-1"></a>correction recovers the true slope when error is classical.</span>
+<span id="cb4-639"><a href="#cb4-639" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-640"><a href="#cb4-640" aria-hidden="true" tabindex="-1"></a><span class="in">```{r generated-regressor-attenuation, message=FALSE, warning=FALSE}</span></span>
+<span id="cb4-641"><a href="#cb4-641" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">34</span>)</span>
+<span id="cb4-642"><a href="#cb4-642" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">4000</span></span>
+<span id="cb4-643"><a href="#cb4-643" aria-hidden="true" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fl">1.5</span></span>
+<span id="cb4-644"><a href="#cb4-644" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-645"><a href="#cb4-645" aria-hidden="true" tabindex="-1"></a><span class="co"># True (latent) image feature f* and outcome y generated from it.</span></span>
+<span id="cb4-646"><a href="#cb4-646" aria-hidden="true" tabindex="-1"></a>f_star <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb4-647"><a href="#cb4-647" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">+</span> beta_true <span class="sc">*</span> f_star <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb4-648"><a href="#cb4-648" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-649"><a href="#cb4-649" aria-hidden="true" tabindex="-1"></a><span class="co"># A noisy CNN measures f* with classical error: reliability rho = Var(f*)/Var(fhat).</span></span>
+<span id="cb4-650"><a href="#cb4-650" aria-hidden="true" tabindex="-1"></a>sigma_u <span class="ot">&lt;-</span> <span class="fl">0.9</span></span>
+<span id="cb4-651"><a href="#cb4-651" aria-hidden="true" tabindex="-1"></a>f_hat <span class="ot">&lt;-</span> f_star <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, sigma_u)</span>
+<span id="cb4-652"><a href="#cb4-652" aria-hidden="true" tabindex="-1"></a>rho   <span class="ot">&lt;-</span> <span class="fu">var</span>(f_star) <span class="sc">/</span> <span class="fu">var</span>(f_hat)                <span class="co"># estimable from a validation set</span></span>
+<span id="cb4-653"><a href="#cb4-653" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-654"><a href="#cb4-654" aria-hidden="true" tabindex="-1"></a>naive  <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">lm</span>(y <span class="sc">~</span> f_hat))[<span class="st">"f_hat"</span>]           <span class="co"># attenuated OLS</span></span>
+<span id="cb4-655"><a href="#cb4-655" aria-hidden="true" tabindex="-1"></a>corrected <span class="ot">&lt;-</span> naive <span class="sc">/</span> rho                         <span class="co"># reliability-ratio correction</span></span>
+<span id="cb4-656"><a href="#cb4-656" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-657"><a href="#cb4-657" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"True slope beta          :"</span>, beta_true, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-658"><a href="#cb4-658" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Reliability ratio (rho)  :"</span>, <span class="fu">round</span>(rho, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-659"><a href="#cb4-659" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Naive OLS on f_hat       :"</span>, <span class="fu">round</span>(naive, <span class="dv">3</span>),</span>
+<span id="cb4-660"><a href="#cb4-660" aria-hidden="true" tabindex="-1"></a>    <span class="st">" (attenuated toward 0)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-661"><a href="#cb4-661" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Reliability-corrected    :"</span>, <span class="fu">round</span>(corrected, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb4-662"><a href="#cb4-662" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb4-663"><a href="#cb4-663" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-664"><a href="#cb4-664" aria-hidden="true" tabindex="-1"></a><span class="fu">## Applications in Advertising and Social Media</span></span>
-<span id="cb4-665"><a href="#cb4-665" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-666"><a href="#cb4-666" aria-hidden="true" tabindex="-1"></a><span class="fu">### Advertising Creative</span></span>
-<span id="cb4-667"><a href="#cb4-667" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-668"><a href="#cb4-668" aria-hidden="true" tabindex="-1"></a>The richest application is the measurement and optimization of advertising</span>
-<span id="cb4-669"><a href="#cb4-669" aria-hidden="true" tabindex="-1"></a>**creative**. The visual content of an ad—its complexity, color, brand prominence,</span>
-<span id="cb4-670"><a href="#cb4-670" aria-hidden="true" tabindex="-1"></a>and pacing—drives whether viewers attend, remember, and respond, and image (and</span>
-<span id="cb4-671"><a href="#cb4-671" aria-hidden="true" tabindex="-1"></a>video-frame) features make these properties measurable at the scale of entire ad</span>
-<span id="cb4-672"><a href="#cb4-672" aria-hidden="true" tabindex="-1"></a>libraries. The construct lineage is clear: visual complexity and gaze</span>
-<span id="cb4-673"><a href="#cb4-673" aria-hidden="true" tabindex="-1"></a>(@pieters2007; @pieters2010), the arousal-potential account of aesthetic</span>
-<span id="cb4-674"><a href="#cb4-674" aria-hidden="true" tabindex="-1"></a>preference (@Berlyne_1960), and the visual sources of brand meaning (@batra2019)</span>
-<span id="cb4-675"><a href="#cb4-675" aria-hidden="true" tabindex="-1"></a>all become *features* once a CNN is in the loop. Video advertising extends this</span>
-<span id="cb4-676"><a href="#cb4-676" aria-hidden="true" tabindex="-1"></a>from stills to sequences. The dynamics of attention within a video ad—when a brand</span>
-<span id="cb4-677"><a href="#cb4-677" aria-hidden="true" tabindex="-1"></a>appears, how scenes are cut, what holds the viewer—predict skipping and recall;</span>
-<span id="cb4-678"><a href="#cb4-678" aria-hidden="true" tabindex="-1"></a>@teixeira2010 show that inducing *joy* and *surprise* sustains attention to</span>
-<span id="cb4-679"><a href="#cb4-679" aria-hidden="true" tabindex="-1"></a>online video ads, and @teixeira2014 that emotional and attentional dynamics jointly</span>
-<span id="cb4-680"><a href="#cb4-680" aria-hidden="true" tabindex="-1"></a>govern whether viewers watch through or zap. Per-frame image features are precisely</span>
-<span id="cb4-681"><a href="#cb4-681" aria-hidden="true" tabindex="-1"></a>how those dynamics are operationalized at scale, a theme picked up in the</span>
-<span id="cb4-682"><a href="#cb4-682" aria-hidden="true" tabindex="-1"></a>video-marketing literature (@rajaram2020video; @leyva2021video) and developed</span>
-<span id="cb4-683"><a href="#cb4-683" aria-hidden="true" tabindex="-1"></a>further in @sec-advertising. The methodological caveat from @sec-image-econometrics</span>
-<span id="cb4-684"><a href="#cb4-684" aria-hidden="true" tabindex="-1"></a>binds hardest here: observational creative comparisons confound the image with the</span>
-<span id="cb4-685"><a href="#cb4-685" aria-hidden="true" tabindex="-1"></a>campaign that bought it, so the credible designs hold the audience fixed and</span>
-<span id="cb4-686"><a href="#cb4-686" aria-hidden="true" tabindex="-1"></a>randomize the creative—or, stronger still, generate the creative so that it varies</span>
-<span id="cb4-687"><a href="#cb4-687" aria-hidden="true" tabindex="-1"></a>in the single attribute under test <span class="co">[</span><span class="ot">@luo2026femininity</span><span class="co">]</span>.</span>
-<span id="cb4-688"><a href="#cb4-688" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-689"><a href="#cb4-689" aria-hidden="true" tabindex="-1"></a><span class="fu">### Social Media and User-Generated Images</span></span>
-<span id="cb4-690"><a href="#cb4-690" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-691"><a href="#cb4-691" aria-hidden="true" tabindex="-1"></a>On social platforms, the image *is* the post. Engagement, reach, and</span>
-<span id="cb4-692"><a href="#cb4-692" aria-hidden="true" tabindex="-1"></a>brand-relevant outcomes depend on visual content the firm often does not produce,</span>
-<span id="cb4-693"><a href="#cb4-693" aria-hidden="true" tabindex="-1"></a>which makes image features the only way to measure exposure and appeal across</span>
-<span id="cb4-694"><a href="#cb4-694" aria-hidden="true" tabindex="-1"></a>user-generated corpora. Three measurement problems recur. **Incidental brand</span>
-<span id="cb4-695"><a href="#cb4-695" aria-hidden="true" tabindex="-1"></a>exposure** is captured by logo detection and the share-of-visual-voice it yields,</span>
-<span id="cb4-696"><a href="#cb4-696" aria-hidden="true" tabindex="-1"></a>revealing brand presence that text-only listening (@sec-online-environments)</span>
-<span id="cb4-697"><a href="#cb4-697" aria-hidden="true" tabindex="-1"></a>misses entirely. **Image-driven engagement** is studied by relating content and</span>
-<span id="cb4-698"><a href="#cb4-698" aria-hidden="true" tabindex="-1"></a>aesthetic features—people versus products, warmth, professionalism, complexity—to</span>
-<span id="cb4-699"><a href="#cb4-699" aria-hidden="true" tabindex="-1"></a>likes, shares, and comments; @Li_2019 show empirically which image-content features</span>
-<span id="cb4-700"><a href="#cb4-700" aria-hidden="true" tabindex="-1"></a>raise social-media engagement, and @hartmann2021power and @hartmann2023more</span>
-<span id="cb4-701"><a href="#cb4-701" aria-hidden="true" tabindex="-1"></a>develop image-mining pipelines for brand-relevant social-media content</span>
-<span id="cb4-702"><a href="#cb4-702" aria-hidden="true" tabindex="-1"></a>and relate visual elements to engagement. @majumdar2026image push this strand from</span>
-<span id="cb4-703"><a href="#cb4-703" aria-hidden="true" tabindex="-1"></a>description to *prescription*: using deep learning to separate a post's **primary**</span>
-<span id="cb4-704"><a href="#cb4-704" aria-hidden="true" tabindex="-1"></a>features (its subject) from the **secondary** ones a designer can add at an extraction</span>
-<span id="cb4-705"><a href="#cb4-705" aria-hidden="true" tabindex="-1"></a>cost (background detail, visual complexity), they estimate a nonlinear, platform-specific</span>
-<span id="cb4-706"><a href="#cb4-706" aria-hidden="true" tabindex="-1"></a>map from features to engagement and embed it in an optimization framework that</span>
-<span id="cb4-707"><a href="#cb4-707" aria-hidden="true" tabindex="-1"></a>allocates design effort across features and platforms—beating rules of thumb that</span>
-<span id="cb4-708"><a href="#cb4-708" aria-hidden="true" tabindex="-1"></a>budget by a platform's audience size alone or ignore the controllable secondary</span>
-<span id="cb4-709"><a href="#cb4-709" aria-hidden="true" tabindex="-1"></a>features entirely. **Influencer aesthetics** connect a</span>
-<span id="cb4-710"><a href="#cb4-710" aria-hidden="true" tabindex="-1"></a>creator's visual style to follower growth and sponsorship value</span>
-<span id="cb4-711"><a href="#cb4-711" aria-hidden="true" tabindex="-1"></a>(@sec-influencer-marketing), with content features quantifying the self-presentation</span>
-<span id="cb4-712"><a href="#cb4-712" aria-hidden="true" tabindex="-1"></a>strategies that drive parasocial response. A recurring, sobering finding across</span>
-<span id="cb4-713"><a href="#cb4-713" aria-hidden="true" tabindex="-1"></a>this work is that *what is depicted* (content) and *how it looks* (aesthetics) carry</span>
-<span id="cb4-714"><a href="#cb4-714" aria-hidden="true" tabindex="-1"></a>largely separable effects, so a study that conflates them—loading both onto a single</span>
-<span id="cb4-715"><a href="#cb4-715" aria-hidden="true" tabindex="-1"></a>"image quality" score—misattributes one to the other.</span>
-<span id="cb4-716"><a href="#cb4-716" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-717"><a href="#cb4-717" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
-<span id="cb4-718"><a href="#cb4-718" aria-hidden="true" tabindex="-1"></a>The text-and-image fusion frontier. Marketing stimuli are rarely image-only: an</span>
-<span id="cb4-719"><a href="#cb4-719" aria-hidden="true" tabindex="-1"></a>ad, a post, or a listing pairs a picture with words. **Multimodal** models learn a</span>
-<span id="cb4-720"><a href="#cb4-720" aria-hidden="true" tabindex="-1"></a>joint embedding in which images and the text that co-occurs with them are mapped to</span>
-<span id="cb4-721"><a href="#cb4-721" aria-hidden="true" tabindex="-1"></a>the same space, so a post can be represented by a single vector capturing both. This</span>
-<span id="cb4-722"><a href="#cb4-722" aria-hidden="true" tabindex="-1"></a>lets the analyst ask whether the image and caption are *congruent*—and incongruence</span>
-<span id="cb4-723"><a href="#cb4-723" aria-hidden="true" tabindex="-1"></a>is itself a measurable, theory-relevant feature—and connects images-as-data to the</span>
-<span id="cb4-724"><a href="#cb4-724" aria-hidden="true" tabindex="-1"></a>text methods of @sec-text-as-data and the broader machine-learning toolkit of</span>
-<span id="cb4-725"><a href="#cb4-725" aria-hidden="true" tabindex="-1"></a>@sec-ai-ml. @witte2026language show that transformer-based vision-language models can</span>
-<span id="cb4-726"><a href="#cb4-726" aria-hidden="true" tabindex="-1"></a>classify marketing images directly from natural-language prompts, often without</span>
-<span id="cb4-727"><a href="#cb4-727" aria-hidden="true" tabindex="-1"></a>task-specific training, and the same model class can now *generate* marketing visuals,</span>
-<span id="cb4-728"><a href="#cb4-728" aria-hidden="true" tabindex="-1"></a>raising the question of whether it reaches human-level creative quality</span>
-<span id="cb4-729"><a href="#cb4-729" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@hartmann2025generative</span><span class="co">]</span>. The commercial stakes are clearest where the listing *is*</span>
-<span id="cb4-730"><a href="#cb4-730" aria-hidden="true" tabindex="-1"></a>the market: @sikdar2026artwork show that for novice artwork on Etsy, the photographs</span>
-<span id="cb4-731"><a href="#cb4-731" aria-hidden="true" tabindex="-1"></a>and the written description carry price-relevant signal beyond the structured</span>
-<span id="cb4-732"><a href="#cb4-732" aria-hidden="true" tabindex="-1"></a>attributes a seller fills into a form, which is what makes fusion worth the trouble</span>
-<span id="cb4-733"><a href="#cb4-733" aria-hidden="true" tabindex="-1"></a>rather than merely fashionable (@sec-mmf-artpricing). The fusion of image with text and</span>
-<span id="cb4-734"><a href="#cb4-734" aria-hidden="true" tabindex="-1"></a>other modalities is the subject of @sec-multimodal-fusion.</span>
-<span id="cb4-735"><a href="#cb4-735" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb4-736"><a href="#cb4-736" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-737"><a href="#cb4-737" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification</span></span>
+<span id="cb4-664"><a href="#cb4-664" aria-hidden="true" tabindex="-1"></a>The naive slope is pulled toward zero by exactly the reliability ratio; dividing by</span>
+<span id="cb4-665"><a href="#cb4-665" aria-hidden="true" tabindex="-1"></a>$\rho$—which a validation set identifies—restores the truth. The correction works</span>
+<span id="cb4-666"><a href="#cb4-666" aria-hidden="true" tabindex="-1"></a>*only* under classical error; when the detector's mistakes correlate with the</span>
+<span id="cb4-667"><a href="#cb4-667" aria-hidden="true" tabindex="-1"></a>outcome, no such fix exists and design-based identification is the only honest</span>
+<span id="cb4-668"><a href="#cb4-668" aria-hidden="true" tabindex="-1"></a>route.</span>
+<span id="cb4-669"><a href="#cb4-669" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-670"><a href="#cb4-670" aria-hidden="true" tabindex="-1"></a>**Controllable generation: assigning a feature instead of measuring it.** The strongest</span>
+<span id="cb4-671"><a href="#cb4-671" aria-hidden="true" tabindex="-1"></a>form of that design-based route does not measure the feature at all; it *builds* stimuli</span>
+<span id="cb4-672"><a href="#cb4-672" aria-hidden="true" tabindex="-1"></a>that differ in one feature and nothing else. Randomizing which of several real images a</span>
+<span id="cb4-673"><a href="#cb4-673" aria-hidden="true" tabindex="-1"></a>viewer sees severs the tie between an image and the campaign that bought it, but it does</span>
+<span id="cb4-674"><a href="#cb4-674" aria-hidden="true" tabindex="-1"></a>not isolate an attribute, because photographs bundle them: a more feminine headshot also</span>
+<span id="cb4-675"><a href="#cb4-675" aria-hidden="true" tabindex="-1"></a>tends to differ in hairstyle, expression, clothing, and lighting, so what is assigned is</span>
+<span id="cb4-676"><a href="#cb4-676" aria-hidden="true" tabindex="-1"></a>a package and what is estimated is the package's effect. @luo2026femininity close that</span>
+<span id="cb4-677"><a href="#cb4-677" aria-hidden="true" tabindex="-1"></a>gap with a generative adversarial network that renders realistic headshots in which</span>
+<span id="cb4-678"><a href="#cb4-678" aria-hidden="true" tabindex="-1"></a>femininity varies while pose, facial expression, hairstyle, clothing, and background are</span>
+<span id="cb4-679"><a href="#cb4-679" aria-hidden="true" tabindex="-1"></a>held fixed. In a field experiment inside the live advertising environment of an education</span>
+<span id="cb4-680"><a href="#cb4-680" aria-hidden="true" tabindex="-1"></a>company, prospective customers discriminated against femininity at several stages of the</span>
+<span id="cb4-681"><a href="#cb4-681" aria-hidden="true" tabindex="-1"></a>purchase funnel, and did so to a largely similar extent whether the depicted person was a</span>
+<span id="cb4-682"><a href="#cb4-682" aria-hidden="true" tabindex="-1"></a>man, a woman, or non-binary—which separates a taste defined over a *visual attribute*</span>
+<span id="cb4-683"><a href="#cb4-683" aria-hidden="true" tabindex="-1"></a>from one defined over gender identity. The template generalizes well past faces: name the</span>
+<span id="cb4-684"><a href="#cb4-684" aria-hidden="true" tabindex="-1"></a>hypothesis-relevant feature in natural language, locate it in a generative model's latent</span>
+<span id="cb4-685"><a href="#cb4-685" aria-hidden="true" tabindex="-1"></a>space, and emit stimuli that vary controllably along that feature. An attribute that</span>
+<span id="cb4-686"><a href="#cb4-686" aria-hidden="true" tabindex="-1"></a>observational data can only estimate, with every hazard catalogued above, becomes one an</span>
+<span id="cb4-687"><a href="#cb4-687" aria-hidden="true" tabindex="-1"></a>experiment can assign. The cost is that one validity question is traded for</span>
+<span id="cb4-688"><a href="#cb4-688" aria-hidden="true" tabindex="-1"></a>another—whether a synthetic face means to a viewer what a photograph would</span>
+<span id="cb4-689"><a href="#cb4-689" aria-hidden="true" tabindex="-1"></a>(@sec-measurement-scales)—and that is the question any controllable-stimulus design</span>
+<span id="cb4-690"><a href="#cb4-690" aria-hidden="true" tabindex="-1"></a>has to answer.</span>
+<span id="cb4-691"><a href="#cb4-691" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-692"><a href="#cb4-692" aria-hidden="true" tabindex="-1"></a>**When the image is the subject's own face.** Controllable generation edits the stimulus</span>
+<span id="cb4-693"><a href="#cb4-693" aria-hidden="true" tabindex="-1"></a>that a *viewer* sees. Consumer-side AI editing raises a second question: what happens to</span>
+<span id="cb4-694"><a href="#cb4-694" aria-hidden="true" tabindex="-1"></a>the person who presents an edited image of themselves. Beauty filters and virtual makeup</span>
+<span id="cb4-695"><a href="#cb4-695" aria-hidden="true" tabindex="-1"></a>are image transformations that billions of profile photos now pass through, and their</span>
+<span id="cb4-696"><a href="#cb4-696" aria-hidden="true" tabindex="-1"></a>effect need not run through the audience at all. @ma2026facade randomize whether</span>
+<span id="cb4-697"><a href="#cb4-697" aria-hidden="true" tabindex="-1"></a>participants in an online trust game play under an AI-enhanced version of their own</span>
+<span id="cb4-698"><a href="#cb4-698" aria-hidden="true" tabindex="-1"></a>headshot or under the original, and they find that the enhancement changes the</span>
+<span id="cb4-699"><a href="#cb4-699" aria-hidden="true" tabindex="-1"></a>participant's *own* economic behavior. Enhanced senders entrust less, and the authors</span>
+<span id="cb4-700"><a href="#cb4-700" aria-hidden="true" tabindex="-1"></a>trace this to higher perceived risk, while enhanced receivers return more</span>
+<span id="cb4-701"><a href="#cb4-701" aria-hidden="true" tabindex="-1"></a>(@sec-rel-trust-game). The design point generalizes. An image feature can act on the</span>
+<span id="cb4-702"><a href="#cb4-702" aria-hidden="true" tabindex="-1"></a>poster as well as on the viewer, so an observational regression of outcomes on</span>
+<span id="cb4-703"><a href="#cb4-703" aria-hidden="true" tabindex="-1"></a>"photo attractiveness" mixes how others respond to the photo with how the photo changed</span>
+<span id="cb4-704"><a href="#cb4-704" aria-hidden="true" tabindex="-1"></a>the poster's behavior. Only a design that randomizes the image can tell these channels</span>
+<span id="cb4-705"><a href="#cb4-705" aria-hidden="true" tabindex="-1"></a>apart.</span>
+<span id="cb4-706"><a href="#cb4-706" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-707"><a href="#cb4-707" aria-hidden="true" tabindex="-1"></a>**When the target is a perception, rater bias is part of the measure.** In everything</span>
+<span id="cb4-708"><a href="#cb4-708" aria-hidden="true" tabindex="-1"></a>above, a mistake by the classifier is error to be minimized. Some constructs reverse</span>
+<span id="cb4-709"><a href="#cb4-709" aria-hidden="true" tabindex="-1"></a>that. @yang2026lookingpart need *perceived professionalism* for 109,624 profile photos</span>
+<span id="cb4-710"><a href="#cb4-710" aria-hidden="true" tabindex="-1"></a>on a low-wage gig-staffing platform. They have MTurk raters score 1,000 photos on</span>
+<span id="cb4-711"><a href="#cb4-711" aria-hidden="true" tabindex="-1"></a>motivation, reliability, laziness, carelessness, and disobedience, check that these</span>
+<span id="cb4-712"><a href="#cb4-712" aria-hidden="true" tabindex="-1"></a>ratings predict hiring on the platform, and then train a computer-vision model to</span>
+<span id="cb4-713"><a href="#cb4-713" aria-hidden="true" tabindex="-1"></a>reproduce the ratings for every photo. The study argues that perceptions of</span>
+<span id="cb4-714"><a href="#cb4-714" aria-hidden="true" tabindex="-1"></a>professionalism are racially biased. A model trained on human perceptions learns that</span>
+<span id="cb4-715"><a href="#cb4-715" aria-hidden="true" tabindex="-1"></a>bias, and here learning it is the goal, because the construct *is* the biased</span>
+<span id="cb4-716"><a href="#cb4-716" aria-hidden="true" tabindex="-1"></a>perception. Removing it would remove the effect under study. The same logic makes</span>
+<span id="cb4-717"><a href="#cb4-717" aria-hidden="true" tabindex="-1"></a>the measure unsuitable for a different question. Once the model is fit, its</span>
+<span id="cb4-718"><a href="#cb4-718" aria-hidden="true" tabindex="-1"></a>"professionalism" score cannot serve as an unbiased measure of how professional</span>
+<span id="cb4-719"><a href="#cb4-719" aria-hidden="true" tabindex="-1"></a>anyone actually is.</span>
+<span id="cb4-720"><a href="#cb4-720" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-721"><a href="#cb4-721" aria-hidden="true" tabindex="-1"></a>The paper keeps two measurement layers separate, and that separation is good practice.</span>
+<span id="cb4-722"><a href="#cb4-722" aria-hidden="true" tabindex="-1"></a>A discrete, auditable feature, *professional attire* (collar, tie, or suit), is coded</span>
+<span id="cb4-723"><a href="#cb4-723" aria-hidden="true" tabindex="-1"></a>by five Prolific raters per photo, using the modal answer, on a 39,032-photo</span>
+<span id="cb4-724"><a href="#cb4-724" aria-hidden="true" tabindex="-1"></a>subsample. The holistic perception is then the generated mediator. Because these are</span>
+<span id="cb4-725"><a href="#cb4-725" aria-hidden="true" tabindex="-1"></a>different objects, the analysis can ask whether the same coded attire produces</span>
+<span id="cb4-726"><a href="#cb4-726" aria-hidden="true" tabindex="-1"></a>different perceived professionalism by race, which it does. The paper also coded skin</span>
+<span id="cb4-727"><a href="#cb4-727" aria-hidden="true" tabindex="-1"></a>tone, hairstyle, expression, accessories, and attractiveness to test whether the</span>
+<span id="cb4-728"><a href="#cb4-728" aria-hidden="true" tabindex="-1"></a>perception score is driven by attire or by other features that correlate with race.</span>
+<span id="cb4-729"><a href="#cb4-729" aria-hidden="true" tabindex="-1"></a>Two cautions from this section still apply. The generated mediator's $M \to Y$</span>
+<span id="cb4-730"><a href="#cb4-730" aria-hidden="true" tabindex="-1"></a>coefficient is attenuated by @eq-34-attenuation to the extent that the vision model</span>
+<span id="cb4-731"><a href="#cb4-731" aria-hidden="true" tabindex="-1"></a>does not reproduce the raters. And if the model reproduces the raters better for one</span>
+<span id="cb4-732"><a href="#cb4-732" aria-hidden="true" tabindex="-1"></a>group than for the other, the error is non-classical and differs by group, which</span>
+<span id="cb4-733"><a href="#cb4-733" aria-hidden="true" tabindex="-1"></a>affects exactly the race contrast the paper is testing. The paper's preregistered</span>
+<span id="cb4-734"><a href="#cb4-734" aria-hidden="true" tabindex="-1"></a>photo experiment holds each candidate fixed and changes only the shirt. Its mediator</span>
+<span id="cb4-735"><a href="#cb4-735" aria-hidden="true" tabindex="-1"></a>comes from human raters, not a model, and this is what keeps the</span>
+<span id="cb4-736"><a href="#cb4-736" aria-hidden="true" tabindex="-1"></a>measurement chain from carrying the whole argument (@sec-causal-mediation-attire).</span>
+<span id="cb4-737"><a href="#cb4-737" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-738"><a href="#cb4-738" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-739"><a href="#cb4-739" aria-hidden="true" tabindex="-1"></a>Five recurring failures separate credible image-as-data work from decorative work.</span>
+<span id="cb4-739"><a href="#cb4-739" aria-hidden="true" tabindex="-1"></a><span class="fu">## Applications in Advertising and Social Media</span></span>
 <span id="cb4-740"><a href="#cb4-740" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-741"><a href="#cb4-741" aria-hidden="true" tabindex="-1"></a>The first is **treating predictions as measurements**, ignoring the generated-</span>
-<span id="cb4-742"><a href="#cb4-742" aria-hidden="true" tabindex="-1"></a>regressor problem of @sec-image-econometrics. Always report classifier validation</span>
-<span id="cb4-743"><a href="#cb4-743" aria-hidden="true" tabindex="-1"></a>and, where error may be non-classical, prefer experimental assignment of the image.</span>
-<span id="cb4-744"><a href="#cb4-744" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-745"><a href="#cb4-745" aria-hidden="true" tabindex="-1"></a>The second is **dataset shift**. A backbone pre-trained on ImageNet encodes the</span>
-<span id="cb4-746"><a href="#cb4-746" aria-hidden="true" tabindex="-1"></a>visual statistics of web photos circa its training era; applied to a domain it never</span>
-<span id="cb4-747"><a href="#cb4-747" aria-hidden="true" tabindex="-1"></a>saw—X-ray packaging, niche product categories, a new platform's aesthetic—its</span>
-<span id="cb4-748"><a href="#cb4-748" aria-hidden="true" tabindex="-1"></a>features may be uninformative or biased. Validate on in-domain data, and fine-tune</span>
-<span id="cb4-749"><a href="#cb4-749" aria-hidden="true" tabindex="-1"></a>when the target distribution diverges.</span>
-<span id="cb4-750"><a href="#cb4-750" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-751"><a href="#cb4-751" aria-hidden="true" tabindex="-1"></a>The third is **spurious cues and shortcut learning**. CNNs latch onto whatever</span>
-<span id="cb4-752"><a href="#cb4-752" aria-hidden="true" tabindex="-1"></a>predicts the label in training, including artifacts—a watermark, a background, a</span>
-<span id="cb4-753"><a href="#cb4-753" aria-hidden="true" tabindex="-1"></a>camera type—that correlate with the outcome by accident. A classifier that appears</span>
-<span id="cb4-754"><a href="#cb4-754" aria-hidden="true" tabindex="-1"></a>to "detect luxury" may have learned to detect studio lighting. Probe what the model</span>
-<span id="cb4-755"><a href="#cb4-755" aria-hidden="true" tabindex="-1"></a>actually responds to before interpreting a feature substantively.</span>
-<span id="cb4-756"><a href="#cb4-756" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-757"><a href="#cb4-757" aria-hidden="true" tabindex="-1"></a>The fourth is **conflating content and aesthetics**, collapsing *what is shown* and</span>
-<span id="cb4-758"><a href="#cb4-758" aria-hidden="true" tabindex="-1"></a>*how it looks* into one score when the social-media evidence says their effects are</span>
-<span id="cb4-759"><a href="#cb4-759" aria-hidden="true" tabindex="-1"></a>separable. Keep the two families of features distinct and let the data assign their</span>
-<span id="cb4-760"><a href="#cb4-760" aria-hidden="true" tabindex="-1"></a>effects.</span>
-<span id="cb4-761"><a href="#cb4-761" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-762"><a href="#cb4-762" aria-hidden="true" tabindex="-1"></a>The fifth is **ethics and privacy**, especially for facial and demographic</span>
-<span id="cb4-763"><a href="#cb4-763" aria-hidden="true" tabindex="-1"></a>inference. Subgroup-correlated error and the inference of protected attributes raise</span>
-<span id="cb4-764"><a href="#cb4-764" aria-hidden="true" tabindex="-1"></a>fairness and legal exposure (@sec-privacy); coarse, validated labels are preferable</span>
-<span id="cb4-765"><a href="#cb4-765" aria-hidden="true" tabindex="-1"></a>to fine-grained inferences, and audits by subgroup are not optional.</span>
-<span id="cb4-766"><a href="#cb4-766" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-767"><a href="#cb4-767" aria-hidden="true" tabindex="-1"></a>Underlying all five is a single discipline borrowed from the rest of this book:</span>
-<span id="cb4-768"><a href="#cb4-768" aria-hidden="true" tabindex="-1"></a>fix the representation before looking at outcomes, validate the features against</span>
-<span id="cb4-769"><a href="#cb4-769" aria-hidden="true" tabindex="-1"></a>ground truth, prefer designs that randomize the image over those that merely</span>
-<span id="cb4-770"><a href="#cb4-770" aria-hidden="true" tabindex="-1"></a>observe it, and report the bias that remains. An image feature is a *measurement*,</span>
-<span id="cb4-771"><a href="#cb4-771" aria-hidden="true" tabindex="-1"></a>and like every measurement in @sec-measurement-scales it must be shown to be</span>
-<span id="cb4-772"><a href="#cb4-772" aria-hidden="true" tabindex="-1"></a>reliable and valid before its coefficient can be believed. Images are one branch of</span>
-<span id="cb4-773"><a href="#cb4-773" aria-hidden="true" tabindex="-1"></a>the broader unstructured-data program <span class="co">[</span><span class="ot">@balducci2018unstructured</span><span class="co">]</span>; for a survey</span>
-<span id="cb4-774"><a href="#cb4-774" aria-hidden="true" tabindex="-1"></a>focused on the visual channel and its methods, see @dzyabura2021imageanalytics.</span>
-<span id="cb4-775"><a href="#cb4-775" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-776"><a href="#cb4-776" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb4-777"><a href="#cb4-777" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: image analytics</span></span>
-<span id="cb4-778"><a href="#cb4-778" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-779"><a href="#cb4-779" aria-hidden="true" tabindex="-1"></a>The hand-engineered color/complexity features and the frozen-embedding transfer-learning</span>
-<span id="cb4-780"><a href="#cb4-780" aria-hidden="true" tabindex="-1"></a>demonstration in this chapter run on open R/Python tooling (<span class="in">`magick`</span>/<span class="in">`imager`</span> in R; Pillow,</span>
-<span id="cb4-781"><a href="#cb4-781" aria-hidden="true" tabindex="-1"></a>OpenCV, and pretrained <span class="in">`torchvision`</span>/<span class="in">`timm`</span> backbones in Python). The canonical backbones</span>
-<span id="cb4-782"><a href="#cb4-782" aria-hidden="true" tabindex="-1"></a>ship reference implementations—ResNet at <span class="in">`github.com/KaimingHe/deep-residual-networks`</span></span>
-<span id="cb4-783"><a href="#cb4-783" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@he2016resnet</span><span class="co">]</span>; ImageNet-pretrained AlexNet/Inception weights [@krizhevsky2017imagenet;</span>
-<span id="cb4-784"><a href="#cb4-784" aria-hidden="true" tabindex="-1"></a>@szegedy2015googlenet] are bundled in every deep-learning framework—and SIFT</span>
-<span id="cb4-785"><a href="#cb4-785" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@lowe2004sift</span><span class="co">]</span> is in OpenCV. The empirical marketing studies cited here</span>
-<span id="cb4-786"><a href="#cb4-786" aria-hidden="true" tabindex="-1"></a>(e.g., @liu2020, @hartmann2021brandselfies, @zhang2022goodimage) generally rely on</span>
-<span id="cb4-787"><a href="#cb4-787" aria-hidden="true" tabindex="-1"></a>proprietary image corpora; confirm any code/data release on the article page rather than</span>
-<span id="cb4-788"><a href="#cb4-788" aria-hidden="true" tabindex="-1"></a>assuming one.</span>
-<span id="cb4-789"><a href="#cb4-789" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb4-790"><a href="#cb4-790" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-791"><a href="#cb4-791" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
-<span id="cb4-792"><a href="#cb4-792" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-793"><a href="#cb4-793" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>An image is a high-dimensional tensor (@eq-image-tensor); useful image analysis</span>
-<span id="cb4-794"><a href="#cb4-794" aria-hidden="true" tabindex="-1"></a>  replaces raw pixels with **learned or hand-engineered features** whose dimensions</span>
-<span id="cb4-795"><a href="#cb4-795" aria-hidden="true" tabindex="-1"></a>  a marketing theory can interpret.</span>
-<span id="cb4-796"><a href="#cb4-796" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The **convolutional network** (@eq-convolution) builds locality and translation</span>
-<span id="cb4-797"><a href="#cb4-797" aria-hidden="true" tabindex="-1"></a>  structure in by construction; in marketing it is almost always used via</span>
-<span id="cb4-798"><a href="#cb4-798" aria-hidden="true" tabindex="-1"></a>  **transfer learning**, with a frozen pre-trained backbone supplying an embedding</span>
-<span id="cb4-799"><a href="#cb4-799" aria-hidden="true" tabindex="-1"></a>  to a small downstream model.</span>
-<span id="cb4-800"><a href="#cb4-800" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Marketing image features divide into **brand** (logo and perceptual identity, as</span>
-<span id="cb4-801"><a href="#cb4-801" aria-hidden="true" tabindex="-1"></a>  in @liu2020), **aesthetic** (beauty and arousal potential, grounded in</span>
-<span id="cb4-802"><a href="#cb4-802" aria-hidden="true" tabindex="-1"></a>  @Berlyne_1960), and **content** (objects, scenes, faces) families.</span>
-<span id="cb4-803"><a href="#cb4-803" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Image features are **generated regressors**: classical error attenuates effects</span>
-<span id="cb4-804"><a href="#cb4-804" aria-hidden="true" tabindex="-1"></a>  by the reliability ratio (@eq-34-attenuation), and non-classical, outcome-correlated</span>
-<span id="cb4-805"><a href="#cb4-805" aria-hidden="true" tabindex="-1"></a>  error biases them unpredictably. Validate, and prefer designs that randomize the</span>
-<span id="cb4-806"><a href="#cb4-806" aria-hidden="true" tabindex="-1"></a>  image—or, strongest of all, **generate** stimuli that vary in one attribute alone</span>
-<span id="cb4-807"><a href="#cb4-807" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@luo2026femininity</span><span class="co">]</span>.</span>
-<span id="cb4-808"><a href="#cb4-808" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The strongest applications—advertising creative and social-media engagement—pair</span>
-<span id="cb4-809"><a href="#cb4-809" aria-hidden="true" tabindex="-1"></a>  image features with **experimental assignment** of the visual stimulus, severing</span>
-<span id="cb4-810"><a href="#cb4-810" aria-hidden="true" tabindex="-1"></a>  the confound between what an image looks like and the campaign that produced it.</span>
+<span id="cb4-741"><a href="#cb4-741" aria-hidden="true" tabindex="-1"></a><span class="fu">### Advertising Creative</span></span>
+<span id="cb4-742"><a href="#cb4-742" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-743"><a href="#cb4-743" aria-hidden="true" tabindex="-1"></a>The richest application is the measurement and optimization of advertising</span>
+<span id="cb4-744"><a href="#cb4-744" aria-hidden="true" tabindex="-1"></a>**creative**. The visual content of an ad—its complexity, color, brand prominence,</span>
+<span id="cb4-745"><a href="#cb4-745" aria-hidden="true" tabindex="-1"></a>and pacing—drives whether viewers attend, remember, and respond, and image (and</span>
+<span id="cb4-746"><a href="#cb4-746" aria-hidden="true" tabindex="-1"></a>video-frame) features make these properties measurable at the scale of entire ad</span>
+<span id="cb4-747"><a href="#cb4-747" aria-hidden="true" tabindex="-1"></a>libraries. The construct lineage is clear: visual complexity and gaze</span>
+<span id="cb4-748"><a href="#cb4-748" aria-hidden="true" tabindex="-1"></a>(@pieters2007; @pieters2010), the arousal-potential account of aesthetic</span>
+<span id="cb4-749"><a href="#cb4-749" aria-hidden="true" tabindex="-1"></a>preference (@Berlyne_1960), and the visual sources of brand meaning (@batra2019)</span>
+<span id="cb4-750"><a href="#cb4-750" aria-hidden="true" tabindex="-1"></a>all become *features* once a CNN is in the loop. Video advertising extends this</span>
+<span id="cb4-751"><a href="#cb4-751" aria-hidden="true" tabindex="-1"></a>from stills to sequences. The dynamics of attention within a video ad—when a brand</span>
+<span id="cb4-752"><a href="#cb4-752" aria-hidden="true" tabindex="-1"></a>appears, how scenes are cut, what holds the viewer—predict skipping and recall;</span>
+<span id="cb4-753"><a href="#cb4-753" aria-hidden="true" tabindex="-1"></a>@teixeira2010 show that inducing *joy* and *surprise* sustains attention to</span>
+<span id="cb4-754"><a href="#cb4-754" aria-hidden="true" tabindex="-1"></a>online video ads, and @teixeira2014 that emotional and attentional dynamics jointly</span>
+<span id="cb4-755"><a href="#cb4-755" aria-hidden="true" tabindex="-1"></a>govern whether viewers watch through or zap. Per-frame image features are precisely</span>
+<span id="cb4-756"><a href="#cb4-756" aria-hidden="true" tabindex="-1"></a>how those dynamics are operationalized at scale, a theme picked up in the</span>
+<span id="cb4-757"><a href="#cb4-757" aria-hidden="true" tabindex="-1"></a>video-marketing literature (@rajaram2020video; @leyva2021video) and developed</span>
+<span id="cb4-758"><a href="#cb4-758" aria-hidden="true" tabindex="-1"></a>further in @sec-advertising. The methodological caveat from @sec-image-econometrics</span>
+<span id="cb4-759"><a href="#cb4-759" aria-hidden="true" tabindex="-1"></a>binds hardest here: observational creative comparisons confound the image with the</span>
+<span id="cb4-760"><a href="#cb4-760" aria-hidden="true" tabindex="-1"></a>campaign that bought it, so the credible designs hold the audience fixed and</span>
+<span id="cb4-761"><a href="#cb4-761" aria-hidden="true" tabindex="-1"></a>randomize the creative—or, stronger still, generate the creative so that it varies</span>
+<span id="cb4-762"><a href="#cb4-762" aria-hidden="true" tabindex="-1"></a>in the single attribute under test <span class="co">[</span><span class="ot">@luo2026femininity</span><span class="co">]</span>.</span>
+<span id="cb4-763"><a href="#cb4-763" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-764"><a href="#cb4-764" aria-hidden="true" tabindex="-1"></a><span class="fu">### Social Media and User-Generated Images</span></span>
+<span id="cb4-765"><a href="#cb4-765" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-766"><a href="#cb4-766" aria-hidden="true" tabindex="-1"></a>On social platforms, the image *is* the post. Engagement, reach, and</span>
+<span id="cb4-767"><a href="#cb4-767" aria-hidden="true" tabindex="-1"></a>brand-relevant outcomes depend on visual content the firm often does not produce,</span>
+<span id="cb4-768"><a href="#cb4-768" aria-hidden="true" tabindex="-1"></a>which makes image features the only way to measure exposure and appeal across</span>
+<span id="cb4-769"><a href="#cb4-769" aria-hidden="true" tabindex="-1"></a>user-generated corpora. Three measurement problems recur. **Incidental brand</span>
+<span id="cb4-770"><a href="#cb4-770" aria-hidden="true" tabindex="-1"></a>exposure** is captured by logo detection and the share-of-visual-voice it yields,</span>
+<span id="cb4-771"><a href="#cb4-771" aria-hidden="true" tabindex="-1"></a>revealing brand presence that text-only listening (@sec-online-environments)</span>
+<span id="cb4-772"><a href="#cb4-772" aria-hidden="true" tabindex="-1"></a>misses entirely. **Image-driven engagement** is studied by relating content and</span>
+<span id="cb4-773"><a href="#cb4-773" aria-hidden="true" tabindex="-1"></a>aesthetic features—people versus products, warmth, professionalism, complexity—to</span>
+<span id="cb4-774"><a href="#cb4-774" aria-hidden="true" tabindex="-1"></a>likes, shares, and comments; @Li_2019 show empirically which image-content features</span>
+<span id="cb4-775"><a href="#cb4-775" aria-hidden="true" tabindex="-1"></a>raise social-media engagement, and @hartmann2021power and @hartmann2023more</span>
+<span id="cb4-776"><a href="#cb4-776" aria-hidden="true" tabindex="-1"></a>develop image-mining pipelines for brand-relevant social-media content</span>
+<span id="cb4-777"><a href="#cb4-777" aria-hidden="true" tabindex="-1"></a>and relate visual elements to engagement. @majumdar2026image push this strand from</span>
+<span id="cb4-778"><a href="#cb4-778" aria-hidden="true" tabindex="-1"></a>description to *prescription*: using deep learning to separate a post's **primary**</span>
+<span id="cb4-779"><a href="#cb4-779" aria-hidden="true" tabindex="-1"></a>features (its subject) from the **secondary** ones a designer can add at an extraction</span>
+<span id="cb4-780"><a href="#cb4-780" aria-hidden="true" tabindex="-1"></a>cost (background detail, visual complexity), they estimate a nonlinear, platform-specific</span>
+<span id="cb4-781"><a href="#cb4-781" aria-hidden="true" tabindex="-1"></a>map from features to engagement and embed it in an optimization framework that</span>
+<span id="cb4-782"><a href="#cb4-782" aria-hidden="true" tabindex="-1"></a>allocates design effort across features and platforms—beating rules of thumb that</span>
+<span id="cb4-783"><a href="#cb4-783" aria-hidden="true" tabindex="-1"></a>budget by a platform's audience size alone or ignore the controllable secondary</span>
+<span id="cb4-784"><a href="#cb4-784" aria-hidden="true" tabindex="-1"></a>features entirely. **Influencer aesthetics** connect a</span>
+<span id="cb4-785"><a href="#cb4-785" aria-hidden="true" tabindex="-1"></a>creator's visual style to follower growth and sponsorship value</span>
+<span id="cb4-786"><a href="#cb4-786" aria-hidden="true" tabindex="-1"></a>(@sec-influencer-marketing), with content features quantifying the self-presentation</span>
+<span id="cb4-787"><a href="#cb4-787" aria-hidden="true" tabindex="-1"></a>strategies that drive parasocial response. A recurring, sobering finding across</span>
+<span id="cb4-788"><a href="#cb4-788" aria-hidden="true" tabindex="-1"></a>this work is that *what is depicted* (content) and *how it looks* (aesthetics) carry</span>
+<span id="cb4-789"><a href="#cb4-789" aria-hidden="true" tabindex="-1"></a>largely separable effects, so a study that conflates them—loading both onto a single</span>
+<span id="cb4-790"><a href="#cb4-790" aria-hidden="true" tabindex="-1"></a>"image quality" score—misattributes one to the other.</span>
+<span id="cb4-791"><a href="#cb4-791" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-792"><a href="#cb4-792" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb4-793"><a href="#cb4-793" aria-hidden="true" tabindex="-1"></a>The text-and-image fusion frontier. Marketing stimuli are rarely image-only: an</span>
+<span id="cb4-794"><a href="#cb4-794" aria-hidden="true" tabindex="-1"></a>ad, a post, or a listing pairs a picture with words. **Multimodal** models learn a</span>
+<span id="cb4-795"><a href="#cb4-795" aria-hidden="true" tabindex="-1"></a>joint embedding in which images and the text that co-occurs with them are mapped to</span>
+<span id="cb4-796"><a href="#cb4-796" aria-hidden="true" tabindex="-1"></a>the same space, so a post can be represented by a single vector capturing both. This</span>
+<span id="cb4-797"><a href="#cb4-797" aria-hidden="true" tabindex="-1"></a>lets the analyst ask whether the image and caption are *congruent*—and incongruence</span>
+<span id="cb4-798"><a href="#cb4-798" aria-hidden="true" tabindex="-1"></a>is itself a measurable, theory-relevant feature—and connects images-as-data to the</span>
+<span id="cb4-799"><a href="#cb4-799" aria-hidden="true" tabindex="-1"></a>text methods of @sec-text-as-data and the broader machine-learning toolkit of</span>
+<span id="cb4-800"><a href="#cb4-800" aria-hidden="true" tabindex="-1"></a>@sec-ai-ml. @witte2026language show that transformer-based vision-language models can</span>
+<span id="cb4-801"><a href="#cb4-801" aria-hidden="true" tabindex="-1"></a>classify marketing images directly from natural-language prompts, often without</span>
+<span id="cb4-802"><a href="#cb4-802" aria-hidden="true" tabindex="-1"></a>task-specific training, and the same model class can now *generate* marketing visuals,</span>
+<span id="cb4-803"><a href="#cb4-803" aria-hidden="true" tabindex="-1"></a>raising the question of whether it reaches human-level creative quality</span>
+<span id="cb4-804"><a href="#cb4-804" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@hartmann2025generative</span><span class="co">]</span>. The commercial stakes are clearest where the listing *is*</span>
+<span id="cb4-805"><a href="#cb4-805" aria-hidden="true" tabindex="-1"></a>the market: @sikdar2026artwork show that for novice artwork on Etsy, the photographs</span>
+<span id="cb4-806"><a href="#cb4-806" aria-hidden="true" tabindex="-1"></a>and the written description carry price-relevant signal beyond the structured</span>
+<span id="cb4-807"><a href="#cb4-807" aria-hidden="true" tabindex="-1"></a>attributes a seller fills into a form, which is what makes fusion worth the trouble</span>
+<span id="cb4-808"><a href="#cb4-808" aria-hidden="true" tabindex="-1"></a>rather than merely fashionable (@sec-mmf-artpricing). The fusion of image with text and</span>
+<span id="cb4-809"><a href="#cb4-809" aria-hidden="true" tabindex="-1"></a>other modalities is the subject of @sec-multimodal-fusion.</span>
+<span id="cb4-810"><a href="#cb4-810" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-811"><a href="#cb4-811" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-812"><a href="#cb4-812" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pitfalls and Identification</span></span>
+<span id="cb4-813"><a href="#cb4-813" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-814"><a href="#cb4-814" aria-hidden="true" tabindex="-1"></a>Five recurring failures separate credible image-as-data work from decorative work.</span>
+<span id="cb4-815"><a href="#cb4-815" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-816"><a href="#cb4-816" aria-hidden="true" tabindex="-1"></a>The first is **treating predictions as measurements**, ignoring the generated-</span>
+<span id="cb4-817"><a href="#cb4-817" aria-hidden="true" tabindex="-1"></a>regressor problem of @sec-image-econometrics. Always report classifier validation</span>
+<span id="cb4-818"><a href="#cb4-818" aria-hidden="true" tabindex="-1"></a>and, where error may be non-classical, prefer experimental assignment of the image.</span>
+<span id="cb4-819"><a href="#cb4-819" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-820"><a href="#cb4-820" aria-hidden="true" tabindex="-1"></a>The second is **dataset shift**. A backbone pre-trained on ImageNet encodes the</span>
+<span id="cb4-821"><a href="#cb4-821" aria-hidden="true" tabindex="-1"></a>visual statistics of web photos circa its training era; applied to a domain it never</span>
+<span id="cb4-822"><a href="#cb4-822" aria-hidden="true" tabindex="-1"></a>saw—X-ray packaging, niche product categories, a new platform's aesthetic—its</span>
+<span id="cb4-823"><a href="#cb4-823" aria-hidden="true" tabindex="-1"></a>features may be uninformative or biased. Validate on in-domain data, and fine-tune</span>
+<span id="cb4-824"><a href="#cb4-824" aria-hidden="true" tabindex="-1"></a>when the target distribution diverges.</span>
+<span id="cb4-825"><a href="#cb4-825" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-826"><a href="#cb4-826" aria-hidden="true" tabindex="-1"></a>The third is **spurious cues and shortcut learning**. CNNs latch onto whatever</span>
+<span id="cb4-827"><a href="#cb4-827" aria-hidden="true" tabindex="-1"></a>predicts the label in training, including artifacts—a watermark, a background, a</span>
+<span id="cb4-828"><a href="#cb4-828" aria-hidden="true" tabindex="-1"></a>camera type—that correlate with the outcome by accident. A classifier that appears</span>
+<span id="cb4-829"><a href="#cb4-829" aria-hidden="true" tabindex="-1"></a>to "detect luxury" may have learned to detect studio lighting. Probe what the model</span>
+<span id="cb4-830"><a href="#cb4-830" aria-hidden="true" tabindex="-1"></a>actually responds to before interpreting a feature substantively.</span>
+<span id="cb4-831"><a href="#cb4-831" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-832"><a href="#cb4-832" aria-hidden="true" tabindex="-1"></a>The fourth is **conflating content and aesthetics**, collapsing *what is shown* and</span>
+<span id="cb4-833"><a href="#cb4-833" aria-hidden="true" tabindex="-1"></a>*how it looks* into one score when the social-media evidence says their effects are</span>
+<span id="cb4-834"><a href="#cb4-834" aria-hidden="true" tabindex="-1"></a>separable. Keep the two families of features distinct and let the data assign their</span>
+<span id="cb4-835"><a href="#cb4-835" aria-hidden="true" tabindex="-1"></a>effects.</span>
+<span id="cb4-836"><a href="#cb4-836" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-837"><a href="#cb4-837" aria-hidden="true" tabindex="-1"></a>The fifth is **ethics and privacy**, especially for facial and demographic</span>
+<span id="cb4-838"><a href="#cb4-838" aria-hidden="true" tabindex="-1"></a>inference. Subgroup-correlated error and the inference of protected attributes raise</span>
+<span id="cb4-839"><a href="#cb4-839" aria-hidden="true" tabindex="-1"></a>fairness and legal exposure (@sec-privacy); coarse, validated labels are preferable</span>
+<span id="cb4-840"><a href="#cb4-840" aria-hidden="true" tabindex="-1"></a>to fine-grained inferences, and audits by subgroup are not optional.</span>
+<span id="cb4-841"><a href="#cb4-841" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-842"><a href="#cb4-842" aria-hidden="true" tabindex="-1"></a>Underlying all five is a single discipline borrowed from the rest of this book:</span>
+<span id="cb4-843"><a href="#cb4-843" aria-hidden="true" tabindex="-1"></a>fix the representation before looking at outcomes, validate the features against</span>
+<span id="cb4-844"><a href="#cb4-844" aria-hidden="true" tabindex="-1"></a>ground truth, prefer designs that randomize the image over those that merely</span>
+<span id="cb4-845"><a href="#cb4-845" aria-hidden="true" tabindex="-1"></a>observe it, and report the bias that remains. An image feature is a *measurement*,</span>
+<span id="cb4-846"><a href="#cb4-846" aria-hidden="true" tabindex="-1"></a>and like every measurement in @sec-measurement-scales it must be shown to be</span>
+<span id="cb4-847"><a href="#cb4-847" aria-hidden="true" tabindex="-1"></a>reliable and valid before its coefficient can be believed. Images are one branch of</span>
+<span id="cb4-848"><a href="#cb4-848" aria-hidden="true" tabindex="-1"></a>the broader unstructured-data program <span class="co">[</span><span class="ot">@balducci2018unstructured</span><span class="co">]</span>; for a survey</span>
+<span id="cb4-849"><a href="#cb4-849" aria-hidden="true" tabindex="-1"></a>focused on the visual channel and its methods, see @dzyabura2021imageanalytics.</span>
+<span id="cb4-850"><a href="#cb4-850" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-851"><a href="#cb4-851" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb4-852"><a href="#cb4-852" aria-hidden="true" tabindex="-1"></a><span class="fu">## Replication resources: image analytics</span></span>
+<span id="cb4-853"><a href="#cb4-853" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-854"><a href="#cb4-854" aria-hidden="true" tabindex="-1"></a>The hand-engineered color/complexity features and the frozen-embedding transfer-learning</span>
+<span id="cb4-855"><a href="#cb4-855" aria-hidden="true" tabindex="-1"></a>demonstration in this chapter run on open R/Python tooling (<span class="in">`magick`</span>/<span class="in">`imager`</span> in R; Pillow,</span>
+<span id="cb4-856"><a href="#cb4-856" aria-hidden="true" tabindex="-1"></a>OpenCV, and pretrained <span class="in">`torchvision`</span>/<span class="in">`timm`</span> backbones in Python). The canonical backbones</span>
+<span id="cb4-857"><a href="#cb4-857" aria-hidden="true" tabindex="-1"></a>ship reference implementations—ResNet at <span class="in">`github.com/KaimingHe/deep-residual-networks`</span></span>
+<span id="cb4-858"><a href="#cb4-858" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@he2016resnet</span><span class="co">]</span>; ImageNet-pretrained AlexNet/Inception weights [@krizhevsky2017imagenet;</span>
+<span id="cb4-859"><a href="#cb4-859" aria-hidden="true" tabindex="-1"></a>@szegedy2015googlenet] are bundled in every deep-learning framework—and SIFT</span>
+<span id="cb4-860"><a href="#cb4-860" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@lowe2004sift</span><span class="co">]</span> is in OpenCV. The empirical marketing studies cited here</span>
+<span id="cb4-861"><a href="#cb4-861" aria-hidden="true" tabindex="-1"></a>(e.g., @liu2020, @hartmann2021brandselfies, @zhang2022goodimage) generally rely on</span>
+<span id="cb4-862"><a href="#cb4-862" aria-hidden="true" tabindex="-1"></a>proprietary image corpora; confirm any code/data release on the article page rather than</span>
+<span id="cb4-863"><a href="#cb4-863" aria-hidden="true" tabindex="-1"></a>assuming one.</span>
+<span id="cb4-864"><a href="#cb4-864" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-865"><a href="#cb4-865" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-866"><a href="#cb4-866" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Takeaways</span></span>
+<span id="cb4-867"><a href="#cb4-867" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-868"><a href="#cb4-868" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>An image is a high-dimensional tensor (@eq-image-tensor); useful image analysis</span>
+<span id="cb4-869"><a href="#cb4-869" aria-hidden="true" tabindex="-1"></a>  replaces raw pixels with **learned or hand-engineered features** whose dimensions</span>
+<span id="cb4-870"><a href="#cb4-870" aria-hidden="true" tabindex="-1"></a>  a marketing theory can interpret.</span>
+<span id="cb4-871"><a href="#cb4-871" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The **convolutional network** (@eq-convolution) builds locality and translation</span>
+<span id="cb4-872"><a href="#cb4-872" aria-hidden="true" tabindex="-1"></a>  structure in by construction; in marketing it is almost always used via</span>
+<span id="cb4-873"><a href="#cb4-873" aria-hidden="true" tabindex="-1"></a>  **transfer learning**, with a frozen pre-trained backbone supplying an embedding</span>
+<span id="cb4-874"><a href="#cb4-874" aria-hidden="true" tabindex="-1"></a>  to a small downstream model.</span>
+<span id="cb4-875"><a href="#cb4-875" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Marketing image features divide into **brand** (logo and perceptual identity, as</span>
+<span id="cb4-876"><a href="#cb4-876" aria-hidden="true" tabindex="-1"></a>  in @liu2020), **aesthetic** (beauty and arousal potential, grounded in</span>
+<span id="cb4-877"><a href="#cb4-877" aria-hidden="true" tabindex="-1"></a>  @Berlyne_1960), and **content** (objects, scenes, faces) families.</span>
+<span id="cb4-878"><a href="#cb4-878" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Image features are **generated regressors**: classical error attenuates effects</span>
+<span id="cb4-879"><a href="#cb4-879" aria-hidden="true" tabindex="-1"></a>  by the reliability ratio (@eq-34-attenuation), and non-classical, outcome-correlated</span>
+<span id="cb4-880"><a href="#cb4-880" aria-hidden="true" tabindex="-1"></a>  error biases them unpredictably. Validate, and prefer designs that randomize the</span>
+<span id="cb4-881"><a href="#cb4-881" aria-hidden="true" tabindex="-1"></a>  image—or, strongest of all, **generate** stimuli that vary in one attribute alone</span>
+<span id="cb4-882"><a href="#cb4-882" aria-hidden="true" tabindex="-1"></a>  <span class="co">[</span><span class="ot">@luo2026femininity</span><span class="co">]</span>.</span>
+<span id="cb4-883"><a href="#cb4-883" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The strongest applications—advertising creative and social-media engagement—pair</span>
+<span id="cb4-884"><a href="#cb4-884" aria-hidden="true" tabindex="-1"></a>  image features with **experimental assignment** of the visual stimulus, severing</span>
+<span id="cb4-885"><a href="#cb4-885" aria-hidden="true" tabindex="-1"></a>  the confound between what an image looks like and the campaign that produced it.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

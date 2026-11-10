@@ -677,6 +677,288 @@ correlates [@chang2019automated]. The methodological point connects privacy rese
 to the broader text-analytics toolkit and makes the regulatory-compliance literature
 tractable beyond hand-coded samples.
 
+## Where to Put Differential Privacy in a Targeting Workflow {#sec-privacy-dp-targeting}
+
+The regulatory evidence above treats privacy as a property of data collection: what a
+firm may gather, and with whose consent. Targeting adds a risk that survives lawful
+collection. When a firm mails a coupon, a retention offer, or a catalog to a customer
+because a model scored them as responsive, the decision is itself information. A
+customer who receives a mailing of baby products learns, and so does anyone who sees
+the mailing, what the model inferred. @ponte2026dptargeting call this *targeting
+privacy risk*. It grows as European law tightens around sensitive traits: the Digital Services Act
+restricts targeting on sensitive attributes even with consent, and rulings of the Court
+of Justice of the European Union in 2022 and 2023 extend "sensitive" to data that reveal
+such traits indirectly. A targeting score can be exactly such a proxy.
+
+Differential privacy gives the risk a quantitative form [@dwork2014algorithmic]. A
+randomized procedure is $\varepsilon$-differentially private if changing any one
+customer's data changes the probability of any output by at most a factor of
+$e^{\varepsilon}$. A small $\varepsilon$ is strong protection, because no single
+record moves the output much; $\varepsilon = 0$ means the output does not depend on the
+data at all. Two properties make the definition usable in a marketing pipeline. Under
+*post-processing*, anything computed from a differentially private output, without
+going back to the raw data, keeps the same guarantee. Under *composition*, several
+private analyses of the same customers spend privacy additively: the total
+$\varepsilon$ is at most the sum of the parts (Theorem 3.14 in
+@dwork2014algorithmic).
+
+### Three Places to Add the Noise
+
+The paper's question is not whether to protect a targeting system but where. A
+targeting workflow built on conditional average treatment effects (CATEs) has three
+areas where noise can enter, and each has a natural strategy
+(@tbl-privacy-dp-areas).
+
+| Workflow area | What is protected | Strategy | How it works |
+|---|---|---|---|
+| Input data | Customer covariates | Noise on inputs [@huang2023dptargeting] | Perturb the covariates and estimate CATEs from the protected data |
+| Model training | The fitted CATE model | DP-CATE | Fit CATEs with the R-loss [@nie2021quasi] in a neural network; train only the final CATE step with DP-SGD [@abadi2016deep] |
+| Model predictions | The targeting decision | DP-policy | Apply randomized response [@warner1965randomized] to each target or do-not-target decision |
+
+: Three places to implement differential privacy in a CATE-based targeting workflow, following @ponte2026dptargeting. {#tbl-privacy-dp-areas}
+
+DP-CATE shows post-processing doing real work. The R-learner first estimates two
+nuisance functions, the expected outcome given covariates and the propensity score,
+and then fits the CATE by regressing outcome residuals on treatment residuals
+[@nie2021quasi]. Differentially private stochastic gradient descent (DP-SGD) clips
+each customer's gradient, at a bound of 4 in the paper, and adds Gaussian noise scaled
+to that bound [@abadi2016deep]. Where an earlier proposal adds noise at every stage of
+CATE estimation, the authors add it only when training the final CATE network and let
+post-processing carry the guarantee downstream: the targeting scores, the policy built
+from them, and any reuse of the scores in later campaigns are covered at no extra
+privacy cost. A reader adapting the design should check how the nuisance fits, which
+are functions of every customer's data, enter the per-customer gradients of that final
+step, because that is where the accounting of what is protected has to be done.
+
+DP-policy is the simplest of the three. For each customer, keep the non-private
+decision with probability $e^{\varepsilon}/(1+e^{\varepsilon})$ and flip it with
+probability $1/(1+e^{\varepsilon})$. The ratio of the two is exactly $e^{\varepsilon}$,
+which is the definition of $\varepsilon$-differential privacy for a single binary
+output. This is the randomized response device that survey researchers use for
+sensitive questions: a respondent can answer truthfully because any single answer
+might be the coin's [@warner1965randomized]. The flip probability is each customer's
+plausible deniability. It is about 49% at $\varepsilon = 0.05$, 38% at 0.5, 27% at 1,
+5% at 3, and 1% at 5.
+
+### What the Field Experiment Shows
+
+The authors compare the three strategies in a field experiment at a European retailer
+that mailed physical discount coupons. The models were trained on a randomized
+experiment with 356,686 customers (95% treated, 5% control), 15 covariates, and a
+five-week outcome window, and the resulting policies were evaluated on 391,289
+different customers, 747,975 in all. Each strategy was run 100 times. Profit follows @hitsch2024heterogeneous:
+
+$$
+\mathbb{E}[\Pi] = \sum_{i} \Big( m\,\mathbb{E}[Y_i(0) \mid X_i] + d(X_i)\big(m\,\tau(X_i) - c\big) \Big),
+$$ {#eq-privacy-dp-profit}
+
+where $d(X_i) \in \{0, 1\}$ is the targeting decision, $\tau(X_i)$ the CATE, $m$ the
+margin, and $c$ the contact cost. With $m = 1$ and $c = 0$, as in the paper, a
+policy's value beyond the baseline is the sum of the CATEs of the customers it
+targets.
+
+Averaged over the privacy levels studied, the out-of-sample profit uplift over random
+targeting was €123,786 without privacy protection. Noise on the inputs kept €11,301
+of it, DP-CATE €12,571 (11% more than input noise), and DP-policy €57,361, about 4.5 times DP-CATE
+and 46% of the unprotected uplift. Protecting the decision, the step furthest from
+the raw data, cost the least. DP-CATE also attenuated the estimated heterogeneity and
+biased the average treatment effect downward, the signature of regularization: noisy
+gradients pull the network toward a flat CATE surface, and a flat surface ranks
+customers no better than chance.
+
+The paper flags two limits on reading these numbers. The first has a consequence that
+is our reading rather than the paper's. The field data contain no true CATEs, so the evaluation uses the
+non-private model's estimates in their place. DP-policy starts from that model's own
+decisions and flips some of them, whereas DP-CATE re-estimates the ranking, so a
+benchmark built from the non-private model sits closer, by construction, to the
+strategy that keeps its decisions. Second, $\varepsilon$ is not comparable across the
+three areas, because each protects a different object: a covariate vector, a fitted
+model, a decision. Equal $\varepsilon$ is equal formal protection of different things,
+and the field comparison prices three different promises rather than one promise
+three ways.
+
+### Protecting the Decision: A Closed Form
+
+DP-policy is simple enough to solve, which makes its trade-off transparent. Suppose a
+firm can contact a share $\phi$ of $N$ customers, targets the $\phi N$ with the
+largest CATEs, and CATEs are exponential with rate $\lambda$ (mean $1/\lambda$). By
+memorylessness, the CATEs above the cutoff $-\ln\phi/\lambda$ average
+$(1 - \ln\phi)/\lambda$, so the top $\phi$ hold a CATE mass of
+$N\phi(1-\ln\phi)/\lambda$ and everyone else holds $N(1 - \phi + \phi\ln\phi)/\lambda$.
+Randomized response keeps each top customer with probability
+$p_\varepsilon = e^{\varepsilon}/(1+e^{\varepsilon})$ and adds each other customer with
+probability $1 - p_\varepsilon$, so
+
+$$
+\mathbb{E}[\Pi_\varepsilon] = p_\varepsilon \, \frac{N\phi(1-\ln\phi)}{\lambda}
+  + (1-p_\varepsilon)\,\frac{N(1-\phi+\phi\ln\phi)}{\lambda}.
+$$ {#eq-privacy-dp-policy}
+
+@eq-privacy-dp-policy ignores the budget. Randomized response flags
+$N_1 = N[\phi p_\varepsilon + (1-\phi)(1-p_\varepsilon)]$ customers in expectation,
+which exceeds $\phi N$ whenever $\phi < 0.5$, and the paper corrects for this: it scales
+profit by $\phi N / N_1$ when $\phi \le 0.5$ and adds random draws when $\phi > 0.5$. We
+implement the correction as contacting a random $\phi N$ of the flagged customers when
+too many are flagged, and topping up with randomly chosen unflagged customers, each
+carrying the average CATE of the unflagged pool, when too few are. Corrected profit
+then runs from random targeting, $N\phi/\lambda$, at $\varepsilon = 0$ to the
+non-private $N\phi(1-\ln\phi)/\lambda$ as $\varepsilon$ grows.
+
+The budget is where the asymmetry lives. Randomized response treats every customer
+alike, but the two pools are not alike in size. At $\varepsilon = 1$ and $\phi = 0.01$,
+about 27% of all customers are flagged, and fewer than 3% of them belong to the true
+top 1%; at $\phi = 0.1$, about 23% of the flagged customers are true targets. A narrow
+campaign therefore pays far more for the same $\varepsilon$ than a broad one.
+
+The code below implements the corrected formula, checks it against a simulation that
+draws exponential CATEs, applies randomized response to the top-$\phi$ policy, and
+enforces the budget customer by customer, and then computes the *privacy elasticity of
+targeting profit*, $\partial \ln \mathbb{E}[\Pi_\varepsilon] / \partial \ln \varepsilon$.
+
+```{r}
+#| label: dp-policy-closed-form
+# Expected profit of a top-phi targeting policy protected by randomized response
+# (DP-policy) when CATEs are Exponential(lambda), with margin m = 1 and cost c = 0.
+# Profits are in units of N / lambda, so lambda drops out of every ratio below.
+dp_flip <- function(eps) 1 / (1 + exp(eps))      # probability a decision flips
+
+dp_profit <- function(eps, phi) {
+  p   <- 1 - dp_flip(eps)                        # decision kept
+  top <- phi * (1 - log(phi))                    # CATE mass in the top phi
+  bot <- 1 - phi + phi * log(phi)                # CATE mass in the rest
+  raw <- p * top + (1 - p) * bot                 # before the budget correction
+  n1  <- phi * p + (1 - phi) * (1 - p)           # expected share targeted
+  if (phi <= 0.5) {
+    raw * phi / n1                               # too many targeted: drop at random
+  } else {
+    left <- (1 - p) * top + p * bot              # CATE mass among the untargeted
+    raw + (phi - n1) * left / (1 - n1)           # too few: add random customers
+  }
+}
+
+# Monte Carlo check: draw CATEs, protect the top-phi decisions by randomized
+# response, enforce the budget of N * phi contacts, and sum the CATEs contacted.
+set.seed(2026)
+eps_grid <- c(0.05, 0.5, 1, 3, 5)
+check <- expand.grid(eps = eps_grid, phi = c(0.01, 0.1, 0.3, 0.7))
+N <- 5000; R <- 120
+sim <- matrix(0, nrow(check), R)
+for (r in 1:R) {
+  tau <- sort(rexp(N), decreasing = TRUE)        # customers ranked by CATE
+  u   <- runif(N)                                # one coin per customer
+  for (j in seq_len(nrow(check))) {
+    K <- round(N * check$phi[j])
+    d <- xor(seq_len(N) <= K, u < dp_flip(check$eps[j]))  # randomized response
+    s <- which(d)
+    if (length(s) > K) s <- s[sample.int(length(s), K)]
+    if (length(s) < K) {
+      o <- which(!d)
+      s <- c(s, o[sample.int(length(o), K - length(s))])
+    }
+    sim[j, r] <- sum(tau[s]) / N
+  }
+}
+check$gap <- rowMeans(sim) / mapply(dp_profit, check$eps, check$phi) - 1
+print(round(100 * tapply(abs(check$gap), check$phi, max), 1))  # max % gap by phi
+
+# Privacy elasticity of targeting profit, d ln Profit / d ln eps
+dp_elasticity <- function(eps, phi, f = dp_profit, h = 1e-5)
+  (log(f(eps * exp(h), phi)) - log(f(eps * exp(-h), phi))) / (2 * h)
+dp_net <- function(eps, phi) dp_profit(eps, phi) - phi   # profit above random
+cat(sprintf("Elasticity at eps = 1, phi = 0.10: %.2f (profit net of random: %.2f)\n",
+            dp_elasticity(1, 0.10), dp_elasticity(1, 0.10, f = dp_net)))
+for (phi in c(0.10, 0.01)) {
+  pk <- optimize(dp_elasticity, c(0.5, 8), phi = phi, maximum = TRUE)$maximum
+  cat(sprintf("phi = %.2f: elasticity peaks at eps = %.2f (flip probability %.1f%%)\n",
+              phi, pk, 100 * dp_flip(pk)))
+}
+```
+
+The formula and the simulation agree to within 2.6% in every cell, and to within 1.2%
+once $\phi \ge 0.1$; the largest gaps are at $\phi = 0.01$, where each draw contacts
+only 50 customers. The elasticity at $\varepsilon = 1$ and $\phi = 0.1$ is 0.34: a 1%
+loosening of $\varepsilon$ raises expected targeting profit by about 0.34%. That is the
+value the paper reports, and the reproduction pins down which profit it refers to:
+total profit, including what random targeting would earn. Measured on profit above
+random targeting, the same elasticity is 1.35. Without the budget correction the
+elasticity even turns negative, because the customers outside the top 10% hold more
+CATE mass in total than those inside it, so un-flagging them lowers the uncorrected
+sum faster than keeping true targets raises it.
+
+The paper also reports two tipping points: $\varepsilon = 2.43$ for $\phi = 0.1$ (a flip
+probability of 8.1%) and $\varepsilon = 4.28$ for $\phi = 0.01$ (1.4%). In the closed
+form, both coincide with the $\varepsilon$ at which the elasticity peaks, 2.44 and 4.28;
+the small gap at $\phi = 0.1$ is consistent with rounding or a grid search. Below the
+peak, each proportional loosening of privacy buys a rising proportional gain in profit;
+above it, the returns to giving up privacy diminish. @tbl-dp-policy-profit translates
+the same formula into the share of the non-private uplift that DP-policy keeps.
+
+```{r}
+#| label: tbl-dp-policy-profit
+#| tbl-cap: "Share of the non-private profit uplift (profit above random targeting) that DP-policy keeps in the closed-form model with exponential CATEs and the budget correction, by privacy level and the share of customers targeted. The flip probability is 1/(1 + exp(epsilon))."
+share <- function(eps, phi)                      # share of the non-private uplift
+  (dp_profit(eps, phi) - phi) / (phi * (1 - log(phi)) - phi)
+knitr::kable(data.frame(
+  epsilon = eps_grid,
+  `Flip probability` = sprintf("%.1f%%", 100 * dp_flip(eps_grid)),
+  `phi = 0.01` = sprintf("%.0f%%", 100 * share(eps_grid, 0.01)),
+  `phi = 0.10` = sprintf("%.0f%%", 100 * share(eps_grid, 0.10)),
+  `phi = 0.30` = sprintf("%.0f%%", 100 * share(eps_grid, 0.30)),
+  check.names = FALSE), align = "rrrrr")
+```
+
+At $\varepsilon = 1$, a campaign that contacts 30% of customers keeps 34% of its uplift,
+one that contacts 10% keeps 15%, and one that contacts 1% keeps 2%. At $\varepsilon = 3$
+the three keep 85%, 66%, and 16%. The table is a stylized model, not a forecast of the
+field results, which depend on the true distribution of CATEs and on the campaign's
+budget. What it teaches is the shape: protection at the decision stage is cheap for
+broad campaigns and expensive for narrow ones.
+
+### When Each Strategy Wins
+
+The field ranking is not universal. In simulations with the data-generating process of
+@nie2021quasi (10,000 customers, 10 covariates), DP-CATE beats DP-policy for
+$\varepsilon$ below 5. At strict privacy ($\varepsilon = 0.05$), DP-CATE's profit rises
+with the number of customers and falls with the number of covariates, with
+confounding, and with complex or heavy-tailed CATE distributions, while DP-policy's
+profit barely moves with any of them. In a data-generating process built to mimic the
+field data, DP-CATE is no better than random at 10,000 customers, improves at 100,000,
+and beats DP-policy at one million customers, and then only for $0.05 \le \varepsilon
+\le 1$. The authors attribute this to what @ponte2024waldo call the "Where's Waldo"
+effect. The intuition is that in a larger crowd each record moves a model less, so
+the noise needed to hide any one customer costs less accuracy.
+
+That scale dependence is the paper's policy point. Protecting inputs or training
+favors large firms, whose profit under privacy grows with their customer base, which
+cuts against the intent of rules such as the Digital Services Act. DP-policy costs every
+firm the same percentage of profit whatever its size and needs nothing more than a
+random number per decision. The authors recommend $\varepsilon$ between 0.5 and 4.28,
+and note that a firm can offset a stricter $\varepsilon$ by targeting more customers,
+which is cheap when a contact is a catalog (around €2 in their example) and expensive
+when it is a retention offer (around €15).
+
+Two further points matter for anyone designing such a system. Composition cuts both
+ways: a DP-CATE score trained once can be reused across campaigns at no extra privacy
+cost, whereas decisions re-randomized for each campaign spend $\varepsilon$ every time:
+twelve monthly campaigns at $\varepsilon = 1$ spend up to 12 in total, and an observer
+who sees all twelve can average away much of the flipping. And
+$\varepsilon$ can be read as continuous consent. Binary consent of the kind
+@johnson2020 study treats a customer as either fully in or fully out; $\varepsilon$
+offers a dial, with $\varepsilon = 0$ meaning targeting that uses none of the
+customer's data.
+
+For a PhD reader, the design lesson is to treat privacy as a location in a pipeline
+rather than a setting on a dataset. The DP-CATE strategy is a privacy-protected uplift
+model: the CATE is the uplift that retention and targeting decisions require
+[@ascarza2018futility; @lemmens2020managing] (see @sec-clv-causal), and
+@eq-privacy-dp-profit is the profit function used to evaluate uplift policies
+[@hitsch2024heterogeneous]. Where the noise enters decides who bears its cost, how it
+scales with firm size, and how it accumulates across campaigns, and a closed form for
+the simplest strategy turns those trade-offs into numbers a manager can set a budget
+against. The same logic of protecting what is released, rather than everything that
+is collected, underlies the location-data defenses in @sec-geo-privacy.
+
+
 ## The Right to Be Forgotten Inside a Trained Model {#sec-privacy-revocation-audit}
 
 GDPR's right to erasure lets a consumer ask a firm to delete their personal data, and
@@ -1151,6 +1433,11 @@ norms rather than to minimize disclosure or maximize collection.
   models trained with and without that user flags unforgotten users with an AUROC of
   0.92 in the authors' demo, which this chapter reproduces exactly, and a pooled-variance
   version stays near 0.88 with only four reference models [@zhu2026forget].
+- **Where privacy noise enters a targeting workflow is a design choice with profit
+  stakes.** In a field test with 747,975 customers, randomized response on the
+  targeting decision kept about 4.5 times the profit uplift of noise in CATE training.
+  It costs firms of every size the same share of profit and has a closed-form price of
+  privacy (@sec-privacy-dp-targeting; @ponte2026dptargeting).
 - Treat **privacy as strategy**: authentic, aligned, long-horizon, control-granting
   practices build the trust that flattens the privacy-cost gradient and insure against
   breach damage [@martin2017data; @casadesus2015competing].

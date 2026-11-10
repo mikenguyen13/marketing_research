@@ -1426,6 +1426,199 @@ encode—two subject lines with identical embeddings but different offer terms a
 interchangeable treatments. @sec-tad-pitfalls develops the general version of this
 warning; @sec-ai-ml places the framework in the wider generative-AI stack.
 
+### Text as Treatment Without an Experiment: Does Puffery Sell? {#sec-tad-puffery}
+
+The causal-prediction framework above assumes the firm can eventually run an
+experiment. Much marketing text cannot be randomized: a researcher who wants to know
+whether vague praise in a product description moves demand has only the descriptions
+that sellers chose to write. @thomas2026puffery takes on that problem for *puffery*,
+the legal term for exaggerated, unverifiable praise ("luxurious", "cozy",
+"beautiful"). U.S. advertising law tolerates puffery on the premise that consumers
+discount it, so it cannot mislead. The paper's own review of the literature finds 13
+lab studies of puffery since 1977 and none that observes field purchases. The data are
+monthly InsideAirbnb scrapes from 2015 to 2019 in 27 cities: 219,335 distinct property
+descriptions, with nightly calendars that show when each future night was booked. The
+paper is worth studying for its design as much as for its answer, because nearly
+every step is a reusable move for anyone who treats observational text as a treatment.
+
+**Operationalizing a legal construct with an LLM.** Puffery is defined by courts, not
+by linguists: a claim is puffery when it is too general or subjective to be proven
+true or false. The paper turns that legal test into a measurement instrument in two
+steps. First, an LLM (ChatGPT-4o) decomposes each description into its individual
+claims. Second, it rates each claim on the likelihood, from 0 to 1, that a court would
+consider it puffery. The ratings are not used as a continuous score. Their histogram is
+multimodal, and the modes define the categories: *objective* claims rated 0,
+*weakly subjective* claims rated about 0.1 to 0.3 ("near downtown", "ocean view"), and
+*puffery* rated about 0.7 to 0.9. Letting the data's own gaps set the cutoffs, rather
+than choosing cutoffs that maximize a booking effect, keeps the outcome out of the
+measurement. The same logic explains the choice of a pre-existing model.
+@egami2022causal show that when a text measure is discovered on the same data used to
+estimate its effect, the discovery step overfits and the resulting inference is
+invalid; their remedy is a train/test split. A model that was fixed before it saw these
+listings or their bookings meets the same requirement without spending half the
+sample. The paper also counts features that need no model: exclamation points, words
+in all caps, emojis, and stop words. The stop words matter most for identification,
+as shown below.
+
+The validation follows the discipline of @sec-classification-validity, adapted to a
+construct with no human-labeled corpus of Airbnb text behind it. The LLM's ratings are
+checked against claims from legal cases, where courts have already ruled. The main
+estimate is re-run under alternative cutoffs, under a continuous subjectivity score,
+and under a transparent bag-of-words measure built from the subjectivity lexicon of
+@wilson2005contextual (@sec-lexicon). Agreement across instruments whose errors come
+from different places is the argument that the category measures puffery and not an
+artifact of one prompt.
+
+**The design.** Identification comes from within-listing change. The sample is
+restricted to description edits that left the photos unchanged: 118,646 changes on
+97,185 properties, each new description in place for at least 20 days (90 days in a
+robustness check). Edits that mention events such as Christmas, or the word
+"renovated", are dropped because they signal a change in the product rather than in
+how it is described. The outcome is not monthly bookings but a booking hazard,
+estimated as a linear probability model:
+
+$$
+y_{idk} = h_{ipk} + g(X_{idk}) + \theta_\tau + \beta' w_{it} + \varepsilon_{idk},
+$$ {#eq-tad-puffery-hazard}
+
+where $y_{idk}$ indicates that night $d$ of property $i$ is booked during 30-day lead
+period $k$ (six periods cover the 180 days before the stay), $w_{it}$ counts each claim
+type in the description shown at scrape date $t$, and $h_{ipk}$ are fixed effects for
+each combination of property, photo set, and lead period (633,920 of them). The hazard framing is what
+makes the design work. A single description is shown to shoppers for many different
+future nights at once, and from the point of view of any one stay date, whether the
+new description arrived early or late in its booking window is close to arbitrary.
+Each description change is therefore evaluated against many stay dates, which is far
+more informative than relating a change to aggregate monthly bookings, the outcome
+used by earlier Airbnb demand work such as @zhang2022goodimage. The regression has
+167,637,110 night-by-period observations, with standard errors clustered on the
+219,335 descriptions.
+
+Everything else on the page that a host might change at the same time enters through
+$g(X_{idk})$: 466 low-dimensional variables, a 384-dimensional text embedding (e5-small)
+of the rest of the listing page (@sec-embeddings), the number of competitors within
+half a mile, and a local price index fit with LightGBM. Because $g$ is high-dimensional,
+it is estimated by cross-fitting in the style of double machine learning
+[@chernozhukov2018doubledebiased]: predictions for each observation come from a model
+fit on other folds, and the adjustment is estimated once and then reused across every
+specification, which keeps a regression of this size tractable. A fully nonparametric
+LightGBM version of $g$ serves as a robustness check.
+
+**The update reward.** The single most instructive result is a confound that no amount
+of text control could have caught. In the month of any page update, including new
+photos, a new host blurb, or a changed amenity list, the booking hazard jumps. The
+likely cause is the platform's ranking algorithm rewarding fresh listings (blocked
+calendar dates may also play a part). Since every description change is also a page
+update, a within-listing comparison credits that bump to whatever words the host
+happened to write. The fix is $\theta_\tau$, fixed effects for months relative to the
+latest update of any kind, and @tbl-tad-puffery-controls shows what it does. The stop
+words are the giveaway. They carry no meaning a shopper could respond to, yet before
+$\theta_\tau$ is added they appear to raise bookings. Once it is added they fall to
+zero, as a placebo should, and the puffery and objective-claim estimates drop by
+roughly half or more.
+
+| Feature (one extra) | (1) Property FE | (4) + $g(X)$ | (6) + months-since-update FE |
+|:--------------------|----------------:|-------------:|-----------------------------:|
+| Puffery claim | 1.88 | 1.28 | 0.65 (0.18) |
+| Weakly subjective claim | 2.18 | 1.78 | 1.00 (0.16) |
+| Objective claim | 1.87 | 1.42 | 0.52 (0.14) |
+| Stop word (placebo) | 0.89 | 0.47 | 0.13 (0.23) |
+| Exclamation point | 1.32 | 1.14 | 1.02 (0.41) |
+
+: Booked days per year from one additional feature in the description, as controls are added (Table 7 of @thomas2026puffery, columns 1, 4, and 6; standard errors in parentheses for the preferred column 6). The stop-word placebo is the diagnostic: it shrinks toward zero only once the update reward is absorbed. {#tbl-tad-puffery-controls}
+
+The mechanism is easy to reproduce. In the simulation below, hosts who rewrite a
+description tend to add claims and words, and the platform rewards any update for a
+couple of months. Puffery has a true effect of 0.30 and stop words have none.
+
+```{r tad-puffery-update-reward}
+set.seed(2026)
+n <- 4000; n_mon <- 36                       # listings x months
+# --- Page updates: ~10% of listing-months; 60% of updates rewrite the text ------
+U  <- matrix(runif(n * n_mon) < 0.10, n, n_mon); U[, 1] <- FALSE
+Rw <- U & matrix(runif(n * n_mon) < 0.60, n, n_mon)
+# Hosts who rewrite tend to ADD claims and words (net drift is positive)
+dp <- Rw * matrix(sample(c(-1, 0, 1, 2), n * n_mon, TRUE), n, n_mon)
+ds <- Rw * matrix(sample(-2:4,          n * n_mon, TRUE), n, n_mon)
+puff <- rpois(n, 3)  + t(apply(dp, 1, cumsum))
+stopw <- rpois(n, 20) + t(apply(ds, 1, cumsum))
+# Months since the last update of ANY kind (photos too), capped at 6; 99 = none yet
+since <- matrix(99L, n, n_mon); last <- rep(NA_integer_, n)
+for (m in 1:n_mon) {
+  last[U[, m]] <- m
+  since[, m] <- ifelse(is.na(last), 99L, pmin(m - last, 6L))
+}
+# --- Bookings: puffery truly worth 0.30, stop words worth 0, and every update ---
+#     earns a transient "update reward" from the platform's ranking
+reward <- ifelse(since == 0, 4, ifelse(since == 1, 2, ifelse(since == 2, 1, 0)))
+y <- rnorm(n, 0, 2) + 0.30 * puff + 0 * stopw + reward +
+  matrix(rnorm(n * n_mon, 0, 1.5), n, n_mon)
+# --- Within-listing estimates by demeaning (Frisch-Waugh-Lovell) ----------------
+dm <- function(M) as.vector(M - rowMeans(M))           # listing x month matrix
+S  <- sapply(0:6, function(k) dm((since == k) * 1))    # 99 (no update yet) = base
+est <- function(fit) {                                 # naive (unclustered) SEs
+  co <- summary(fit)$coefficients[1:2, 1:2]
+  sprintf("%.3f (%.3f)", co[, 1], co[, 2])
+}
+out <- rbind(est(lm(dm(y) ~ dm(puff) + dm(stopw) - 1)),
+             est(lm(dm(y) ~ dm(puff) + dm(stopw) + S - 1)),
+             c("0.300", "0.000"))
+dimnames(out) <- list(c("Listing FE only", "+ months-since-update FE", "Truth"),
+                      c("Puffery claim", "Stop word (placebo)"))
+noquote(out)
+```
+
+With listing fixed effects alone, puffery is overstated by about 28% and the
+stop words show a precisely estimated "effect" that cannot be real. Adding fixed
+effects for months since the last update recovers both truths. The general lesson is
+that on a platform, the act of editing is itself a treatment. Any study that relates
+seller-written content to demand through within-listing changes needs a placebo
+feature that should do nothing, and a control for the editing event itself.
+
+**What survives.** In the preferred specification, one more puffery claim adds 0.65
+booked days per year (95% CI 0.29 to 1.00), about 0.22% over a baseline booking rate
+of 80%. That is statistically indistinguishable from an objective claim (0.52;
+$p = .57$ for the difference). Consumers do not discount puffery to zero, which is the
+premise of the law, but they do not reward it more than plain facts either. The
+best-performing category is the weakly subjective claim (1.00, CI 0.68 to 1.32), which
+beats objective claims ($p = .019$) and, less firmly, puffery ($p = .100$). Its point
+estimate is about 55% larger than puffery's, with a wide interval (−7.9% to 228%). An
+exclamation point adds 1.02 days (CI 0.22 to 1.83), while all caps and emojis are not
+significant. Moving from a description at the 25th percentile to one at the 75th adds
+about 1.35 booked days and \$143 in revenue per year. The puffery estimate holds at a
+cutoff of 0.3 (0.65) and 0.8 (0.55), under the continuous subjectivity score (0.66), and
+in weaker form under the bag-of-words lexicon (0.40, $p = .083$). At the strictest
+cutoff of 0.9, it vanishes (0.05, SE 0.33), so the most extreme superlatives may do
+nothing at all. Controlling for sentiment (with the `sentimentr` lexicon) changes
+little. Because several claim types change at once, the two-way fixed-effects
+estimates may be contaminated by heterogeneous effects across treatments
+(@sec-causal-week06). The multi-treatment check of @dechaisemartin2023several was run,
+but it is too imprecise to be conclusive either way.
+
+The paper then asks whether puffery leaves guests feeling misled, which is the harm
+the law's premise assumes away. It does not appear to. Measured in thousandths of a
+standard deviation, the effect of a puffery claim on the month-to-month change in a
+listing's running average rating is −1.07 (SE 13.11), which rules out effects outside
+roughly −0.027 to 0.025 SD. Its effect on review sentiment is 7.92 (SE 6.34), with an
+interval of about −0.005 to 0.020 SD. The all-caps effect is the exception. It lowers
+ratings (−77.10, SE 34.18, $p = .024$) and is associated with lower trust, while
+objective claims carry a small positive coefficient on ratings (26.32, $p = .011$). The paper is
+explicit about what this cannot show. A booking effect could come from persuasion,
+where the words change a given shopper's choice, or from selection, where the words
+attract shoppers already inclined to like the place. Observational booking data
+cannot separate the two. A null average effect on satisfaction can also hide
+offsetting effects across guests.
+
+Three moves transfer directly. A construct defined by an outside authority, such as a
+court, a regulator, or a professional code, can be measured by asking an LLM to apply
+that authority's test claim by claim, provided the cutoffs come from the rating
+distribution and the model was not tuned on the outcome data. A placebo text feature,
+like stop words here, is a cheap and sharp falsification test for any within-unit
+text design. And on a platform, the timing of edits needs its own fixed effects,
+because the algorithm may be reacting to the edit rather than to what it says.
+@sec-adv-puffery takes up what the finding means for advertising regulation.
+
+
 ## Marketing Applications {#sec-tad-applications}
 
 The methods above are general; their value is in what they let a marketer measure.

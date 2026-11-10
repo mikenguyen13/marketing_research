@@ -2050,6 +2050,260 @@ performance, because that would require a second source of exogenous variation f
 bank choice. Stopping at the estimand the design can support is a choice a reader
 should credit.
 
+### Two Treated Groups, Two Channels: Platform Sanction or Consumer Boycott? {#sec-causal-did-two-channels}
+
+Some shocks reach an outcome through two parties at once. When an artist is accused
+of serious misconduct, listeners may stop listening on purpose, and the streaming
+platform may stop promoting the artist. Both happen in the same weeks, both lower
+streams, and a difference-in-differences on the artist's streams estimates their sum.
+The sum is rarely the quantity anyone needs. A label deciding whether to drop the
+artist, a platform defending its content policy, and a regulator weighing
+deplatforming rules all need to know which party moved the market.
+@winkler2026artist separate the two channels in the case of R. Kelly and the \#MuteRKelly
+campaign, and the design is worth learning in detail. They combine
+11,501,284 tweets (January 2017 to October 2022), weekly U.S. song-level streams from
+Luminate pooled across Spotify, Apple Music and Amazon at the level of the designated
+market area (DMA), German streaming data from GfK split into ad-supported and premium
+listening, and the 896,749 largest public Spotify playlists, of which 54,498 are
+curated by Spotify. The data are not public (the authors gave disguised data to the
+editors), so what follows is a reading of the published design rather than a
+replication.
+
+*Why the naive comparison misleads.* R. Kelly's streams grew about 2% a year while
+the streaming market grew 17%, and the web appendix puts his streams at least 35%
+below those of comparable artists. It is tempting to read that gap as a boycott. It
+is not evidence of one. The gap combines whatever the platform did, whatever
+listeners did, the ordinary aging of a back catalog, and anything else that
+separates this artist from the market, and it gives no hint of the shares.
+
+*Two events that move different sides of the market.* On May 10, 2018, Spotify
+announced a Hate Content policy and removed R. Kelly from its curated playlists and
+its recommendations. The policy was later reversed, but the songs were never put
+back on the playlists (they were still absent in 2025). This event changed supply,
+meaning what the platform showed listeners, and may also have changed demand. On
+January 3, 2019, the documentary *Surviving R. Kelly* aired. Nothing changed on the
+platform, while #MuteRKelly tweets rose more than 200-fold. The second event moves
+demand-side salience with supply held fixed, which is what makes it useful later.
+
+*Two treated groups with different treatment intensity.* The sanction did not hit
+every song equally. Ten songs had been on Spotify-curated playlists and lost that
+placement (the delisted songs). Another 349 had never been on a curated playlist,
+so they lost only indirect algorithmic exposure (the nondelisted songs). A listener
+who boycotts the artist boycotts both kinds of song. Write $\beta$ for the boycott
+effect, $\alpha$ for the loss of algorithmic recommendations, and $\nu$ for the loss
+of playlist visibility. The two difference-in-differences estimands are then
+
+$$
+\tau_{\text{del}} = \beta + \alpha + \nu, \qquad
+\tau_{\text{nd}} = \beta + \alpha .
+$$ {#eq-47-two-channels}
+
+Two conclusions follow, each with its own assumption. First, because $\alpha$ can
+only lower streams, $|\tau_{\text{nd}}|$ is an upper bound on the size of the
+boycott effect; the nondelisted estimate may itself be partly algorithmic. Second,
+$\tau_{\text{del}} - \tau_{\text{nd}}$ recovers the visibility effect $\nu$ only if
+the boycott and algorithmic effects are about the same for both groups. That second
+assumption deserves suspicion, because the delisted songs are the hits, and a
+boycott could fall harder or more lightly on hits than on deep cuts. The mechanism
+tests below are what make it credible.
+
+*Controls, weights, and inference.* Each treated song gets its own matched control
+set. The donor pool comes from artists whom Last.fm users listen to alongside
+R. Kelly, and controls are matched on pretreatment streams, genre and release
+period. There are 320 control songs for the delisted group, 698 for the nondelisted
+group and 924 in the pooled sample. Co-listening is a better basis for a donor pool
+than a genre label, because control songs then face the same listeners' tastes and
+the same seasonal swings. The specification is a two-way fixed-effects regression,
+
+$$
+\ln(\text{Streams}_{st}) = \tau\,(\text{Post}_t \times \text{Treat}_s) + \mu_s + \lambda_t + \varepsilon_{st},
+$$
+
+with song and week fixed effects over seven weeks before and seven weeks after the
+event. Two choices matter. Observations are weighted by each treated song's
+pretreatment share of the artist's streams, so $\hat\tau$ is an artist-level effect
+in which a hit counts for more than a deep cut, rather than an average over songs.
+Standard errors are clustered at the matched set, because songs matched to the same
+treated song are not independent draws [@abadie2022postmatching]. One risk comes with
+a co-listening donor pool. Co-listened artists are substitutes, so streams that leave
+R. Kelly may flow to the controls. That violates SUTVA (@sec-causal-week14) and would
+make the estimated decline too large. The authors test for this spillover.
+
+| Sample | Treated songs | Observations | Coefficient (SE) | Implied change |
+|:--|--:|--:|:--|--:|
+| All songs | 359 | 17,962 | −0.1616 (0.0459) | −14.9% |
+| Delisted | 10 | 4,620 | −0.2862 (0.0657) | −24.9% |
+| Delisted, with dose term: Post × Treat | 10 | as above | −0.1374 | −12.8% |
+| Delisted, with dose term: × ln(curated followers), centered | 10 | as above | −0.1328 (0.0430) | −12.4% per log point |
+| Nondelisted | 349 | 14,658 | −0.0450 (0.0098) | −4.4% |
+
+: Difference-in-differences estimates of Spotify's May 2018 playlist removal on log weekly U.S. streams of R. Kelly songs, from Table 2 of @winkler2026artist. Implied changes are $e^{\hat\tau} - 1$; the dose-model rows are our conversions, and we omit the standard error of that model's main effect. Control songs can serve more than one group, which is why the group observation counts sum to more than the pooled count. {#tbl-causal-boycott}
+
+*Reading the estimates.* Across all songs, streams fell about 15% relative to matched
+controls (@tbl-causal-boycott). Delisted songs fell about 25%, and nondelisted songs
+fell about 4%. On the logic of @eq-47-two-channels, 4.4% is the most that intentional
+boycotting could have cost, and the gap between the groups (about 0.24 log points,
+our arithmetic) is the visibility effect of losing curated placement. One more
+correction matters for interpretation. The outcome pools three services, and Spotify
+is about 40% of U.S. streaming, so the authors note that Spotify-specific effects are
+roughly 2.5 times larger. Whenever a treatment hits one platform and the outcome is
+measured across several, the estimate is diluted by the treated platform's share.
+
+*Dose-response.* If lost visibility drives the decline, songs that lost more curated
+reach should lose more streams. The interaction with centered log curated-playlist
+followers is −0.1328 (SE 0.0430). "Ignition (Remix)", with more than 5 million curated
+followers, fell by about 37%, while "I Believe I Can Fly", with about 250,930, showed
+no significant change. The caveat is that curated reach and popularity are highly
+correlated (0.781), so on its own the dose test cannot tell visibility apart from a
+boycott that hits popular songs harder. That is the job of the next two tests.
+
+*Heterogeneity that points in opposite directions.* Each channel predicts a different
+pattern of who leaves. A loss of visibility should mostly affect lean-back listeners
+who take what the service plays. In Germany, the decline was concentrated among
+ad-supported users. Across U.S. DMAs, proportional declines were larger where
+R. Kelly was less popular, that is, among incidental rather than committed listeners.
+The documentary shows the reverse gradient. Streams rose more where he was more
+popular (by DMA market share and by the share of Black residents), and more for his
+less popular songs, while songs featured in the documentary rose less. That is the
+signature of existing fans going back to the catalog, not of curious newcomers. One
+channel would have to produce both gradients; two channels produce them naturally.
+
+*A second event with no supply change.* The documentary is the demand-side probe. It
+is the moment of maximum boycott salience, with no change on the platform, so if
+intentional boycotting were a strong channel it should show up here. Streams instead
+rose 105% in the week after the broadcast relative to the prior four-week average,
+and a difference-in-differences version gives +90%. Negative publicity can raise
+sales through awareness [@berger2010negative], and fans can condemn the person while
+still consuming the work [@bhattacharjee2013moral]. The authors read this through Hirschman.s distinction
+between voice and exit: plenty of voice, little exit. The authors also note that if salience spikes like
+this one occurred during the sanction window as well, the supply estimate is, if
+anything, understated. Platform-curated visibility, not listener choice, carried
+most of the decline.
+
+*Robustness and the descriptive extensions.* The main estimates survive Poisson
+models, unweighted OLS, synthetic difference-in-differences [@arkhangelsky2021sdid],
+alternative clustering and the bootstrap, a SUTVA-spillover check, and a pretreatment
+placebo. The authors then apply SDID to three other cases and are explicit that these
+are descriptive. For Morgan Wallen after a racial slur (February 2021; 52 country-artist
+donors), the coefficient is 0.814 ($p = 0.081$). For Rammstein in Germany in 2023 (57
+donors), it is 0.034 ($p = 0.827$). For Diddy after his arrest (September 2024),
+streams peaked about 50% above his own baseline and 60.8% above the synthetic
+control. None of these cases has a second treated group, so they show how streams
+moved but not which side of the market moved them. A rough calculation for R. Kelly
+puts the forgone streams at 900 million to 1.2 billion over 241 weeks, or
+\$3.2 million to \$4.2 million in U.S. revenue at \$0.0035 a stream.
+
+*What the design cannot do.* It is one artist, one platform sanction and one
+documentary. Without listener-level data, the mechanism evidence comes from aggregate
+heterogeneity, and the authors call it suggestive. The documentary estimate combines
+media exposure with whatever boycott it prompted, so it bounds the boycott in that
+event rather than isolating it. It is also an effect on the audience that remained
+after the 2018 sanction, a local effect for that population rather than for everyone
+who listened in 2017. The visibility contrast rests on ten delisted songs, which is
+few clusters for inference and is why the dose-response and heterogeneity results
+carry so much of the argument.
+
+The simulation below sets up the structure of @eq-47-two-channels with known
+effects. There are 10 delisted songs with 32 matched controls each, 349 nondelisted
+songs with 2 controls each, and 14 weeks, with each matched set sharing its own
+trend. The delisted songs differ in how much curated reach they lose.
+
+```{r did-two-channels}
+#| echo: true
+set.seed(2018)
+
+# Effects on log weekly streams. Magnitudes are illustrative, not the paper's.
+b_boycott <- -0.03   # listeners who choose to stop: every song by the artist
+a_algo    <- -0.02   # lost algorithmic recommendations: every song
+g_dose    <- -0.06   # lost playlist visibility per unit of curated reach
+
+# One treated group: n_treat songs, each with n_ctrl matched controls that share
+# its trend (the reason to match on co-listening). Panel is song x week.
+sim_group <- function(n_treat, n_ctrl, dose, weeks = 14, post_from = 8) {
+  k     <- 1 + n_ctrl
+  set   <- rep(seq_len(n_treat), each = k)
+  treat <- rep(c(1, rep(0, n_ctrl)), n_treat)
+  dose  <- rep(dose, each = k) * treat
+  post  <- matrix(seq_len(weeks) >= post_from, length(set), weeks, byrow = TRUE)
+  trend <- outer(rnorm(n_treat, 0, 0.02)[set], seq_len(weeks))
+  D     <- treat * post
+  Y     <- rnorm(length(set), 8, 1) + trend +
+           D * (b_boycott + a_algo + g_dose * dose) +
+           matrix(rnorm(length(D), 0, 0.05), nrow(D))
+  list(Y = Y, D = D, Dz = D * (dose - mean(dose[treat == 1])), set = set, k = k)
+}
+
+# Song effects and set-by-week effects swept out: each treated song is compared
+# only with its own matched controls, week by week.
+sweep_fe <- function(M, g) {
+  setweek <- rowsum(M, g$set) / g$k
+  M - rowMeans(M) - setweek[g$set, ] + rowMeans(setweek)[g$set]
+}
+twfe <- function(g, dose_term = FALSE) {
+  X <- cbind(D = c(sweep_fe(g$D, g)))
+  if (dose_term) X <- cbind(X, Dz = c(sweep_fe(g$Dz, g)))
+  coef(lm.fit(X, c(sweep_fe(g$Y, g))))
+}
+
+one_draw <- function() {
+  del <- sim_group(10,  32, runif(10, 0.5, 4))  # on curated playlists
+  nd  <- sim_group(349,  2, rep(0, 349))        # never on them
+  c(nondelisted = twfe(nd)[["D"]], delisted = twfe(del)[["D"]],
+    dose_slope = twfe(del, TRUE)[["Dz"]])
+}
+
+est <- t(replicate(200, one_draw()))
+est <- cbind(est, difference = est[, "delisted"] - est[, "nondelisted"])
+truth <- c(b_boycott + a_algo, b_boycott + a_algo + g_dose * 2.25, g_dose,
+           g_dose * 2.25)
+round(rbind(truth = truth, mean_estimate = colMeans(est),
+            sd_across_draws = apply(est, 2, sd)), 3)
+cat("Share of draws in which the nondelisted estimate lies below the true",
+    "boycott effect:", mean(est[, "nondelisted"] <= b_boycott), "\n")
+```
+
+Across 200 simulated datasets, the nondelisted estimate is centered on
+$\beta + \alpha = -0.05$, not on the boycott effect of −0.03, and it lies below −0.03
+in every draw. That is the upper bound at work: it holds because $\alpha \le 0$, and it
+is loose by exactly $|\alpha|$. The delisted-minus-nondelisted difference recovers the
+average visibility loss (−0.135), and the dose slope recovers the per-unit effect
+(−0.06). The difference is far noisier than the nondelisted estimate, because ten
+delisted songs carry it. Two edits break the design in instructive ways. Give the
+delisted songs a larger boycott effect than the others and the difference overstates
+visibility by that gap. Let control streams rise when treated streams fall (a SUTVA
+spillover) and every estimate grows in size.
+
+*A recipe for other settings.* The same structure appears whenever a platform and its
+users react to one shock. (1) Name both channels and write each estimand as a sum, as
+in @eq-47-two-channels. (2) Find units that share the demand-side exposure (the same
+artist, brand or creator) but differ in how much the platform's action touched them,
+and estimate each group separately. (3) Build a matched control set for each treated
+unit from a behavioral donor pool (co-listening, co-purchase, co-viewing), weight by
+pretreatment share if the estimand is at the brand or artist level, and cluster at
+the matched set. (4) State the sign assumption behind the bound, and the
+equal-boycott assumption behind the difference. (5) Test dose-response in the supply
+intensity. (6) Look for heterogeneity that the two channels predict in opposite
+directions. (7) Find a second event that moves demand without moving supply. (8) Treat
+single-unit synthetic-control or SDID extensions to other cases as description.
+@tbl-causal-two-channel-recipe maps the recipe onto settings where it should travel.
+
+| Setting | Supply-side action | High-intensity units | Low-intensity units | Demand-only probe |
+|:--|:--|:--|:--|:--|
+| Creator deplatforming or demonetization | Platform stops recommending or monetizing a creator | Videos removed from recommendations | Videos reachable only by search or subscription | A news story about the creator with no policy change |
+| Marketplace product recall | Marketplace delists or buries recalled items | Recalled SKUs of the brand | The brand's non-recalled SKUs, still listed | Later media coverage of the recall |
+| Advertiser boycott of a publisher | Advertisers withdraw spend, so promotion budgets shrink | Sections or shows that lost their sponsors | Sections that kept them | A controversy about the publisher that triggers no advertiser exits |
+| Retailer drops a brand after a scandal | Shelf or search placement removed at one retailer | Stores or channels that dropped it | Channels that kept it | A scandal flare-up with no distribution change |
+
+: Where the two-group design should travel. In each row, low-intensity units bound the demand-side effect from above, and the high-minus-low contrast estimates the supply-side effect if the demand reaction is similar across the two groups. {#tbl-causal-two-channel-recipe}
+
+The gap between online voice and purchase behavior is not specific to music. After
+Goya's CEO praised President Trump in 2020, boycott posts and coverage outweighed
+calls to buy in support, yet Goya's sales rose 22% for a short time before fading
+within three weeks, with little sign of boycotting among its core customers
+(figures from the working-paper abstract of [@liaukonyte2023frontiers]). Together with the case above, it is a reminder that the
+volume of a campaign is a poor guide to which side of the market actually moved.
+
+
 ## Instrumental Variables {#sec-causal-iv}
 
 Sometimes treatment is endogenous and no untreated group plausibly satisfies

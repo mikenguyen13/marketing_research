@@ -542,6 +542,110 @@ remedy is the one used throughout this part: validate the generated feature agai
 human judgment on a held-out sample from the target domain before trusting it in a
 downstream model.
 
+### Sounding Like the Listener: Vocal Similarity {#sec-audio-vocal-similarity}
+
+The prosody results treat a voice as persuasive or not in itself. @hyun2026vocal ask a
+relational question instead: does a spokesperson persuade more when their voice sounds like
+the listener's? The construct is vocal similarity in timbre, and the measurement is
+objective. Each voice is represented by its MFCC timbre profile, the same per-utterance
+vector the demonstration above built, and similarity is closeness between two such
+representations, estimated with a machine-learning model. We could not access the full
+text, so this account rests on the published abstract and the university's news release
+[@hyun2026vocalrelease]; design details beyond those sources are not described here.
+
+The paper tests the idea with two field designs that define "the listener" differently.
+
+- **Dyadic.** On *Shark Tank*, entrepreneurs pitch to a panel of investors, which yields
+  7,002 entrepreneur–investor combinations across 14 seasons (the season count is from the
+  release). Similarity is computed for each pair, and the abstract reports that it raises persuasion in
+  these investment pitches.
+- **Audience average.** A Kickstarter campaign video speaks to a large, anonymous audience,
+  so there is no single listener to match. For 2,091 campaigns, the comparison is between the
+  spokesperson's voice and the audience's average voice, and campaigns whose spokesperson
+  sounds closer to that average raise more money and succeed more often.
+
+The two designs are worth more together than either alone. Closeness to an average voice is
+also a measure of how typical a voice is, and averaging voices makes them sound more
+attractive [@bruckert2010vocal], so the Kickstarter result on its own could be a
+"typical voices are pleasant" effect rather than a similarity effect. The dyadic design is
+the one that can separate the two, because the same presentation, with the same words, product,
+and entrepreneur, meets several investors whose voices differ. Comparing investors within
+a pitch holds the entrepreneur's general vocal appeal fixed. Whether the paper's models
+exploit that within-pitch variation is not something we can confirm from the abstract, and
+it is the first thing to check in the full text.
+
+Two further results tie the effect to a mechanism. It weakens when external credibility
+signals are available, which is what one would expect if similarity is a cue people fall
+back on when other evidence about the speaker is scarce. And in four lab studies,
+similarity raises trust in the speaker's competence, which carries the effect on
+persuasion. The lab studies also validate the measure: objective (acoustic) and subjective
+(rated) similarity behave alike, and the objective measure maps onto the subjective one, the
+convergent-validity check @sec-construct-vs-variable asks of any generated variable. The
+broader similarity literature suggests a boundary condition to look for. In a meta-analysis
+of 313 studies, actual similarity predicted attraction in no-interaction and short-interaction
+settings but not in existing relationships, where perceived similarity carried the effect
+[@montoya2008similarity]. A pitch and a campaign video are exactly the short-exposure
+settings where actual similarity matters, so whether vocal similarity still persuades a
+listener after repeated contact is an open question.
+
+The managerial and ethical edge is sharp. According to the release, under ten seconds of
+audio are enough to characterize a voice, and voice cloning makes it cheap to synthesize a
+spokesperson, or an AI salesperson, tuned to sound like each customer, a capability that
+scammers can use as easily as brands. Because the mechanism runs through trust in
+competence, a matched voice manufactures a competence cue that nothing about the seller has
+earned. A voice is also biometric data, so tuning a synthetic voice to a customer's own
+voice brings in the consent and retention questions of @sec-privacy.
+
+Before borrowing the measure, notice how many choices hide inside "distance between MFCC
+representations." The sketch below scores four simulated speakers, plus one of them
+re-recorded with a louder microphone, against a simulated audience and a single listener.
+
+```{r audio-vocal-similarity}
+# Vocal similarity from mean-MFCC vectors: simulated voices, base R only.
+set.seed(2026)
+k   <- 13                                    # c0 (log-energy) + c1..c12 (timbre)
+mu  <- c(60, seq(8, -3, length.out = 12))    # spectral tilt shared by all voices
+sdv <- c(8, seq(4, 1, length.out = 12))      # low-order coefficients vary more
+draw <- function(n) matrix(rnorm(n * k, rep(mu, each = n), rep(sdv, each = n)), n, k)
+
+audience <- draw(400)                        # one mean-MFCC vector per listener
+speakers <- draw(4)
+rownames(speakers) <- c("A", "B", "C", "D")
+# Speaker A re-recorded with the microphone gain turned up: only c0 moves.
+speakers <- rbind(speakers, "A, louder mic" = speakers["A", ] + c(12, rep(0, 12)))
+investor <- draw(1)[1, ]                     # a single listener (dyadic design)
+
+# Measurement choices: drop c0, standardize each coefficient by the audience SD.
+timbre <- 2:k
+z <- function(x) sweep(sweep(x[, timbre, drop = FALSE], 2, colMeans(audience[, timbre])),
+                       2, apply(audience[, timbre], 2, sd), "/")
+avg_voice <- colMeans(audience)              # the "average voice"
+euc    <- function(a, b) sqrt(sum((a - b)^2))
+cosine <- function(a, b) sum(a * b) / sqrt(sum(a^2) * sum(b^2))
+
+zs <- z(speakers); zi <- z(rbind(investor))[1, ]
+round(data.frame(
+  raw_dist_avg    = apply(speakers, 1, euc, b = avg_voice),         # all 13, unscaled
+  timbre_dist_avg = apply(zs, 1, function(s) euc(s, rep(0, length(timbre)))),
+  raw_cosine_avg  = apply(speakers[, timbre], 1, cosine, b = avg_voice[timbre]),
+  dyadic_cosine   = apply(zs, 1, cosine, b = zi)
+), 3)
+```
+
+Three lessons come out of the table. First, the energy coefficient c0 records loudness and
+microphone gain, not timbre: re-recording speaker A louder moves the raw distance to the
+average voice from about 13.0 to 8.9 and makes A look like a different speaker, while the
+timbre distance (c0 dropped, coefficients standardized) does not change. Second, defensible
+measures disagree. The raw distance ranks C closest to the average voice, the standardized
+timbre distance ranks D, and the raw cosine ranks A, so the ranking a study reports depends
+on choices that belong in its methods section. Third, the standardized distances all sit
+near $\sqrt{12} \approx 3.5$, because in twelve dimensions most voices are about equally far
+from the mean, so similarity to an average voice varies within a narrow band and small
+measurement artifacts can move a speaker's rank. The dyadic column, in contrast, uses cosine
+on centered vectors, which asks whether two voices deviate from the average in the same
+direction, a different notion of "sounding alike" than closeness to the mean.
+
+
 ## Music and Sonic Branding {#sec-audio-music}
 
 Music is the oldest and most developed thread in audio-as-marketing, and the
