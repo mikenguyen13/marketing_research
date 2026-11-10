@@ -2723,6 +2723,131 @@ rose because the product was liberalized. The sample keeps 483 of 792 listed
 electronics firms, those with at least some patenting or mainland exporting, so it
 describes the larger multinational firms and not the sector as a whole.
 
+### Exposure to a Talent Supply: University Hiring Networks as an Instrument {#sec-causal-iv-talent-network}
+
+@babina2024ai want the effect of a firm's AI investment, measured as the change in
+its share of AI-skilled workers from 2010 to 2018, on its growth
+(@sec-aiml-ai-firm-growth). OLS is suspect for two reasons. Firms that expect growth
+may hire AI workers in anticipation, and an unobserved demand shock may raise both AI
+hiring and sales. The instrument uses a supply constraint. AI talent was scarce in the
+2010s, and the universities that were already strong in AI research turned out more
+AI-trained graduates once commercial interest arrived around 2012. A firm that
+habitually hired from those universities could recruit AI workers more easily.
+
+The instrument has the exposure form familiar from shift-share designs:
+
+$$
+IV_i = \sum_u s^{2010}_{iu}\, AIstrong_u,
+$$ {#eq-causal-iv-talent}
+
+where $s^{2010}_{iu}$ is the share of firm $i$'s 2010 STEM workers who graduated from
+university $u$ (over the firm's 50 largest source universities) and $AIstrong_u$ marks
+universities that, in some year from 2005 to 2009, were in the top 5% by count of AI
+researchers in the Open Academic Graph, or in the top 10% by count and top 5% by AI
+share of researchers. The shares come from resumes; the shock comes from publication
+records that predate the commercial boom.
+
+The general theory of these instruments says identification can come from the shares
+or from the shocks [@goldsmithpinkham2020bartik; @borusyak2022shiftshare]. Here the
+shock is a fixed university attribute, so it does not vary over time, and the argument
+rests on the shares: conditional on controls, firms whose hiring networks ran through
+AI-strong universities must not have been on different growth paths for other reasons.
+The obvious threat is that AI-strong universities are also strong at everything else,
+so exposure to them proxies for hiring from elite or technical schools. The authors
+build two parallel exposures with the same 2010 shares, one to universities strong in
+non-AI computer science and one to the U.S. News top 10, and control for both in every
+specification. The design then compares firms with the same exposure to computer
+science and to prestige but different exposure to AI research specifically.
+
+| Check | Result | Table |
+|---|---|---|
+| Hiring networks persist | Pre-2010 share of fresh graduates from a university predicts the post-2010 share at 0.465; for AI-skilled post-2010 hires, 0.550 | A.1 |
+| No anticipation | Instrument does not predict a 2005–2010 shift toward hiring from AI-strong universities (−0.005 to 0.060, all insignificant) | A.2 |
+| No pre-period growth | Instrument does not predict 2000–2008 growth in sales (−0.027, −0.032), employment (−0.005, 0.006), or market value (−0.041, −0.037) | A.4 |
+| No reverse flow | Firms' later AI hiring does not predict 2005–2010 growth in their connected universities' AI research (0.000 to 0.012, insignificant) | A.5 |
+| First stage | 0.609 (F = 12.7) with university controls only; 0.464 (F = 18.7) with baseline controls, pre-2010 growth, and state fixed effects | A.3 |
+| 2SLS, full controls | Sales 0.317, employment 0.330, market value 0.360, versus OLS 0.195, 0.181, 0.223 | 5 |
+
+: Design checks for the university-network instrument in @babina2024ai. All variables are standardized; sample of about 1,000 non-tech public firms. {#tbl-iv-talent-network}
+
+The 2SLS estimates exceed OLS by about half, but the two are not statistically
+different. The authors offer two reasons OLS could be biased down: measurement error in
+the AI share, and selection into AI by firms with weaker growth prospects and a lower
+opportunity cost of innovating. Controlling for 2010 sales raises the IV coefficient,
+and the sales control itself enters negatively, which fits the second reason.
+
+The public replication kit [@babina2024aidata] lets the university side of the
+instrument be checked even though the firm-level regressions cannot be rerun. The
+Open Academic Graph panel of AI, computer-science, and other researchers by university
+and year is posted, along with the derived university file that carries the
+AI-strong flag. The script `replication/babina-ai-growth/replicate.R` rebuilds the
+classification from the rule as stated and checks it against the flag.
+
+```{r}
+#| label: causal-iv-talent-replication
+#| eval: false
+# Core of replication/babina-ai-growth/replicate.R. Data: Mendeley
+# doi:10.17632/s26kxvspn7.3 (CC BY 4.0), files iv/ai_cs_uni_panel.csv and
+# iv/Reseracher_IV_uni_level.dta (the kit's spelling).
+library(haven)
+u <- read.csv("kit/ai_cs_uni_panel.csv")            # 676 universities, 1999-2012
+r <- as.data.frame(read_dta("kit/Reseracher_IV_uni_level.dta"))
+
+pre  <- subset(u, year >= 2005 & year <= 2009)
+flag <- do.call(rbind, lapply(split(pre, pre$year), function(d) {
+  q <- function(x, p) quantile(x, p)
+  data.frame(uni_name = d$uni_name,
+             hub = d$num_ai > q(d$num_ai, .95) |
+                   (d$num_ai > q(d$num_ai, .90) & d$prop_ai > q(d$prop_ai, .95)))
+}))
+mine <- aggregate(hub ~ uni_name, flag, any)
+cmp  <- merge(mine, r, by.x = "uni_name", by.y = "inst_name_long")
+table(rule = cmp$hub, kit = cmp$aihub_uni)          # 44 of 44 recovered, 4 extra
+mean(r$aihub_uni[r$top20 == 1])                     # 11 of 22 = 0.50 (paper: 50%)
+mean(r$aihub_uni[r$top50 == 1])                     # 25 of 64 = 0.39 (paper: 39%)
+mean(r$top50[r$aihub_uni == 1])                     # 25 of 44 = 0.568 (paper: 56%)
+# Figure A.1: log researchers vs log HERDS R&D, 2010 -> 0.832 (paper: 0.83)
+```
+
+The rule recovers all 44 AI-strong universities in the kit's flag, led by Carnegie
+Mellon, UCLA, Stanford, Illinois, NYU, and Maryland, the six the paper names. It also
+flags four more: Drexel, UC Riverside, Central Florida, and Wisconsin–Madison. Each
+clears the top-5% count cutoff in a single year by a few researchers. The paper says
+it assigns researchers to their institution in years when they did not publish, and
+the posted panel may not include that adjustment. The paper's statements about overlap
+with rankings reproduce exactly: half of the U.S. News top 20 and 39% of the top 50
+are AI-strong, and a quarter of the AI-strong universities are in the top 20. The
+validation that OAG researcher counts track university R&D spending also reproduces
+(correlation 0.83).
+
+The kit's firm-level regression file is a different matter. Compustat is replaced by
+pseudo data. Running the published Table 3 specification on it gives −0.03 for sales
+and −0.17 for employment, against the published 0.202 and 0.239, on 995 rather than
+1,052 firms. The code runs, but the coefficients have nothing to do with the paper's.
+This is common in finance replication kits, and a reader who reruns one should check
+which inputs were replaced before calling the result a replication.
+
+Three lessons carry over to exposure instruments in marketing, where similar
+designs measure exposure to a media market, a supplier, or a platform's rollout.
+
+First, an exposure instrument is only as good as the shares. A cross-sectional shock
+contributes no time variation, so the case rests on why firms ended up with the shares
+they had. Here the argument is historical: networks formed before 2010 for reasons
+unrelated to AI, which the anticipation and pre-growth tests support.
+
+Second, build exposure to the correlated attributes with the same shares. Most
+plausible violations of the exclusion restriction involve the shock being correlated
+with another attribute of the same units, here computer science strength and prestige.
+Computing exposure to those attributes from the same shares and controlling for it
+removes the most likely alternative explanation.
+
+Third, a binary shock built from percentile cutoffs is fragile at the margin.
+Four of 48 universities change status under a reasonable reconstruction of the rule.
+The authors' robustness tables use a continuous research-strength measure from
+csrankings.org, an earlier 2000–2004 window, and drop Stanford, CMU, and Illinois one
+at a time. That is the right response: show that the estimate does not depend on which
+side of the cutoff the marginal units fall.
+
 ## Regression Discontinuity {#sec-causal-rd}
 
 A **regression discontinuity** design exploits rules that assign treatment based on
@@ -3787,136 +3912,6 @@ mediation analysis in firm panels, and the reason the chapter insists that
 randomizing $D$ does not identify a mechanism. A paper in this shape should say
 plainly that its identification strength declines from stage to stage rather than
 presenting all three stages in one confident register.
-
-### A Third Reading: One Moderator on Both Paths, Field Plus Experiment {#sec-causal-mediation-attire}
-
-The oximetry study put an attribute, race, in the treatment slot and had to concede
-that its first arrow is a disparity rather than a causal effect. @yang2026lookingpart
-study a racial disparity too, but they arrange the same variables differently, and
-the arrangement is the lesson. The treatment is something a person can change: wearing
-professional attire (a collared shirt, tie, or suit) in a job-application photo. The
-mediator is *perceived professionalism*, meaning the evaluator's inference about
-motivation and reliability. Race is the moderator. The theory, from status
-characteristics theory, is that race discounts the signal at both steps: a
-professionally dressed Black candidate is read as less professional than an
-identically dressed White one, and equal perceived professionalism converts into
-hiring less readily for the Black candidate. That puts the same $W$ on the $D \to M$
-path and the $M \to Y$ path, which is first- and second-stage moderated mediation
-(Model 58 in the numbering of @hayes2017). As the firm-panel reading stressed, the
-choice of model is itself the hypothesis. Here the theory needed both stages, so it
-licensed the larger model.
-
-The evidence comes in two parts that cover each other's weaknesses.
-
-The field data come from a mobile gig-staffing platform for low-wage temporary work:
-1,032,496 applications from 60,636 Black and White job seekers to 317,031 jobs posted
-by 3,866 employers between 2013 and 2019. On this platform the profile photo is the
-only visual information an employer sees before hiring. With job fixed effects, so
-that candidates are compared within the same posting, professional attire raises a
-White applicant's hiring probability by 2.3 points (SE 0.7) on a base of 64.4%. The
-$\text{Black} \times \text{attire}$ interaction is $-0.021$ (SE 0.008), which
-removes nearly all of that return. A descriptive fact undercuts the supply-side story
-employers tell in interview studies: Black applicants were *more* likely than White
-applicants to wear professional attire (7.8% versus 5.6%), yet they scored lower on
-the perceived-professionalism measure (0.42 versus 0.49). Two features of this field
-design match devices from @sec-causal-mediation-craft. First, the authors argue the
-direction of the bias. Applicants who dressed professionally had slightly *worse*
-past-performance records, so if attire were standing in for unobserved quality, the
-selection would push against the estimate. Second, they bring in an independent
-source of information to see whether the gap moves. Employers whose average rating of
-the Black workers they had already hired was above 4.5 show a smaller racial gap in
-returns to attire, which is the dose-response pattern that employer learning
-predicts.
-
-The second part is a preregistered experiment that varies attire *within the same
-person*. Each candidate supplied two headshots against a plain background, one in a
-button-up shirt and one in a T-shirt. Prolific participants then chose whom to hire for a warehouse-restocking job. The participants were
-screened for hiring experience. Each participant saw
-candidates of only one race and never saw both photos of the same candidate. With
-candidate and respondent fixed effects, attire is randomized within person, so the
-total-effect link is clean in a way the field data cannot match. Here the experiment
-did more than confirm the field result. When participants saw only the photo,
-professional attire *hurt* Black candidates: the White return was 0.155 and the
-interaction was $-0.311$, for a net effect of $-0.156$. A second experiment attached
-a platform-style profile (completed jobs, rating, tenure) to each photo, and the Black
-net return moved to roughly zero ($0.130 - 0.131$), close to the field estimate.
-Varying how much information evaluators have is therefore a second moderator, and it
-explains why the experiment and the field data disagree in magnitude. That makes it
-more useful than a robustness check. A footnote in the field data points the same
-way: attire matters more for applicants who have not yet completed any jobs.
-
-The mediation results meet the standard set in the firm-panel reading. The paper
-reports conditional indirect effects for each group *and* a test of their difference.
-In the field data the indirect effect is 0.0014 for Black and 0.0022 for White
-applicants, a difference of $-0.0008$ ($p = 0.040$, 500 bootstrap draws). In the
-experiment it is 0.116 versus 0.362, a difference of $-0.246$ ($p = 0.064$). The
-paper counts both as support for its hypothesis. A careful reader would rest that
-hypothesis mainly on the field estimate and treat the experimental difference as
-pointing the same way but imprecise.
-
-Four points are worth carrying away, and each applies well beyond hiring.
-
-**The mediator was measured by someone other than the decision-maker.** In both data
-sets, perceived professionalism is not the hiring evaluator's own judgment. In the
-experiment it is the mean rating from a separate panel of raters, about 40 per photo.
-In the field data it is a computer-vision model trained on MTurk ratings of 1,000
-platform photos (@sec-image-econometrics discusses what that does to the measurement).
-This design avoids common-method bias and demand effects, because no participant
-both rates professionalism and makes the hiring choice. The cost is that $M$ becomes
-a property of the *photo*, a consensus perception, and not the state of mind of the
-evaluator whose decision is $Y$. The indirect effect is causal only if evaluators
-share that consensus, and that is an additional assumption on top of
-@eq-seq-ign-2.
-
-**When the indirect and total effects have opposite signs, something is missing
-from the model.** In the photo-only experiment, the indirect path through
-professionalism is *positive* for Black candidates (0.116), but the total return to
-attire is *negative*. The leftover direct path must therefore be negative and large,
-and no mediator in the model explains it. The authors tested the obvious rival,
-perceived authenticity. Its indirect effect is 0.067 ($p = 0.016$) for White
-candidates and $-0.009$ ($p = 0.761$) for Black candidates, so it does not close the
-gap. They report the reversal as unexplained and suggest role-incongruity concerns
-(fit, overqualification, motive) as the next candidate. That is the honest version of
-the third claim in @sec-causal-mediation-craft. The residual path is a finding, and
-the paper treats it as one.
-
-**The mechanism-off condition is a different job, and testing it requires a direct
-contrast.** The theory says the discount comes from treating attire as an ambiguous
-proxy, so it should shrink where appearance is part of the job itself. In a sales-job
-condition the interaction is $-0.081$ (SE 0.050) in the photo-only experiment and
-$-0.001$ in the profile experiment, compared with $-0.311$ and $-0.131$ for the
-warehouse job. That is the predicted attenuation. Read strictly, however, a
-non-significant interaction in one condition beside a significant one in another is
-the same "difference in significance" inference the firm-panel reading warned
-against. The estimate that tests the boundary claim is the three-way contrast
-$(\text{Black} \times \text{attire})_{\text{sales}} -
-(\text{Black} \times \text{attire})_{\text{warehouse}}$, reported with its own
-standard error. A reader reproducing the design should estimate that contrast
-directly.
-
-**In the experiment, the race contrast rests on 20 people.** The experiment has 2,590
-and 11,900 evaluation rows, but only 20 candidates: the ten Black and ten White men,
-out of 121 who supplied usable photo pairs, whose two photos differed most in rated
-professionalism in a pretest. Candidate fixed effects absorb each man's baseline
-hireability. They do not absorb differences between men in how much attire helps, and
-those differences are exactly what the race interaction compares. Standard errors
-clustered by respondent treat the 20 men as fixed, so strictly the inference covers
-these men. Generalizing to Black and White candidates as populations requires
-treating the stimuli as a random factor [@judd2012stimuli]. The field data, with tens
-of thousands of job seekers, do not have this problem, and it is the main reason the
-two-part design is stronger than either part alone. Selecting candidates for the
-largest within-person contrast also strengthens the manipulation by design. That
-choice is sensible for a test, but the first-path magnitudes then describe the most
-attire-sensitive photos, not a typical change of clothes.
-
-For marketing researchers the general template is this. When the variable you care
-about is an attribute such as race, gender, or origin, do not use it as the
-treatment. Find a lever the attribute is supposed to *change the meaning of*, randomize
-that lever within unit, and place the attribute on the paths the theory names. The
-estimand is then a causal effect that varies across groups, which is a stronger claim
-than a disparity decomposition. The same structure fits a seller's photo on a
-marketplace listing, an accent in a sales call, or a brand cue on a minority-owned
-business.
 
 ### Sensitivity and the Mechanism-Off Contrast in Practice {#sec-causal-mediation-sim}
 

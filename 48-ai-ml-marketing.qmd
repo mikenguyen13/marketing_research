@@ -2020,6 +2020,161 @@ paper finds stable, allocation and conflict resolution, which are judgment tasks
 about *what should be done* rather than execution tasks about *doing it*. (The
 published article is paywalled; this account rests on its abstract.)
 
+### Before Generative AI: AI Hiring, Firm Growth, and Product Innovation {#sec-aiml-ai-firm-growth}
+
+Both studies above date adoption from the generative-AI era. @babina2024ai cover the
+decade before it, 2010 to 2018, when commercial AI meant prediction: machine learning,
+natural language processing, and computer vision. That earlier wave matters for two
+reasons. It is long enough to observe what adopting firms became, not only whom they
+hired next. And it gives a baseline against which to read claims that generative AI is
+different.
+
+The measurement problem is the same one @kharazian2026ai faced: no administrative source
+records which firms invest in AI. The authors measure it through the people. AI-skilled
+labor is a necessary input, and data and compute are complements to it, so the share of
+a firm's workforce in AI roles tracks the intensity of its AI investment. Two datasets
+carry the measure. Cognism resumes give the stock of AI workers: about 535 million
+profiles, of which 120 million person-firm-years from 2007 to 2018 match U.S. public
+firms. Burning Glass postings give the demand for AI workers: about 180 million
+postings, of which 42 million match Compustat firms.
+
+The step worth copying is how an AI job is identified. A fixed keyword list misses new
+skills and catches tangential ones. Instead, the authors let the postings decide which
+skills belong to AI. For each of about 15,000 skills $s$ they compute
+
+$$
+w^{AI}_s = \frac{\#\{\text{postings requiring } s \text{ that also require ML, NLP, CV, or AI, or name AI in the title}\}}{\#\{\text{postings requiring } s\}}.
+$$ {#eq-aiml-ai-relatedness}
+
+"TensorFlow" scores 0.9 and "Microsoft Office" 0.003. A posting's score is the mean
+$w^{AI}_s$ over its required skills, and a posting is AI-related above 0.1. The
+highest-scoring skills, curated to drop generic programming and statistics, become 67
+search terms for the resumes. A worker holds an AI job in a year if the role
+description uses one of them, or if the worker files a patent or publishes with one
+within the following one to two years. The firm-level measure is the share of U.S.
+employees in AI jobs. The chunk below runs the posting step on a toy sample.
+
+```{r}
+#| label: aiml-skill-cooccurrence
+# Toy version of the skill-level AI-relatedness score (Babina et al. 2024, eq. above).
+postings <- list(
+  c("machine learning", "python", "tensorflow"),
+  c("tensorflow", "computer vision", "c++"),
+  c("python", "sql", "tableau"),
+  c("sql", "excel", "microsoft office"),
+  c("natural language processing", "python", "tensorflow"),
+  c("excel", "microsoft office", "budgeting"),
+  c("python", "statistics", "sql"),
+  c("tensorflow", "python", "docker")
+)
+core <- c("machine learning", "natural language processing",
+          "computer vision", "artificial intelligence")
+has_core <- sapply(postings, function(p) any(p %in% core))
+
+skills <- setdiff(unique(unlist(postings)), core)
+w <- sapply(skills, function(s) {
+  req <- sapply(postings, function(p) s %in% p)
+  mean(has_core[req])                         # share of s-postings with a core skill
+})
+round(sort(w, decreasing = TRUE), 2)
+
+# Posting-level score: mean w over required skills (core skills count as 1).
+score <- sapply(postings, function(p) mean(ifelse(p %in% core, 1, w[p])))
+data.frame(posting = seq_along(postings), score = round(score, 2),
+           ai_job = score > 0.1)
+```
+
+In the toy data "tensorflow" scores 0.75 without being on the core list, which is how
+the method finds AI skills nobody listed in advance. The toy data also show two
+weaknesses. "c++" scores 1.00 because it appears in a single posting that happens to
+require computer vision. Postings 3 and 7, an analyst job and a statistics job, clear
+the 0.1 threshold only because "python" (0.40) is common in AI postings. The authors
+address both. They score only skills that appear in at least 50 postings, have AI
+practitioners screen the 700 skills above 0.05 to remove general programming and
+statistics tools, and show that the results hold at cutoffs of 0.05 and 0.15 and with
+the continuous score.
+
+The measure behaves as an investment series should. The resume-based AI share of
+public-firm employment rises from 0.04% in 2007 to 0.29% in 2018, and the AI share of
+postings from 0.1% in 2010 to 0.8% in 2018. Information has the highest level, but
+almost every sector grows. The resume and posting measures correlate across firms at
+0.27 to 0.48 (fractions, raw) and 0.47 to 0.65 conditional on controls. Changes in the
+AI share correlate 0.27 with changes in log R&D. Of the ex-ante characteristics, only
+size and cash holdings robustly predict who invests. One standard deviation of 2010 log
+sales predicts a 0.23 standard deviation larger rise in the AI share.
+
+The main specification is a long difference across 2010 to 2018 among 1,052 non-tech
+public firms (NAICS 51 and 54 are excluded), with 2-digit industry fixed effects and
+2010 firm, industry, and commuting-zone controls. The regressor is standardized, so each
+coefficient is the change in the outcome for a one-standard-deviation larger rise in the
+AI share.
+
+| Outcome, 2010–2018 | OLS, no controls | OLS, controls | 2SLS, full controls |
+|---|---|---|---|
+| $\Delta$ log sales | 0.202 (0.069) | 0.195 (0.069) | 0.317 (0.152) |
+| $\Delta$ log employment | 0.239 (0.097) | 0.181 (0.086) | 0.330 (0.163) |
+| $\Delta$ log market value | 0.240 (0.093) | 0.223 (0.086) | 0.360 (0.184) |
+| $\Delta$ log(1+trademarks) | 0.144 (0.065) | 0.134 (0.078) | 0.648 (0.278) |
+| $\Delta$ log(1+product patents) | 0.221 (0.035) | 0.239 (0.031) | 0.430 (0.238) |
+| $\Delta$ log(1+process patents) | −0.010 (0.039) | 0.014 (0.054) | not significant |
+| $\Delta$ log sales per worker | −0.036 (0.028) | 0.013 (0.022) | not significant |
+| $\Delta$ revenue TFP | −0.049 (0.046) | −0.003 (0.037) | not significant |
+
+: Long-difference estimates for a one-standard-deviation rise in the resume-based AI share, from Tables 3, 5, 6, 7, and 8 of @babina2024ai. Standard errors clustered by 5-digit NAICS in parentheses. The 2SLS column adds pre-2010 firm growth and state fixed effects; its instrument is described in @sec-causal-iv-talent-network. {#tbl-aiml-ai-firm-growth}
+
+Firms that hired more AI workers grew about 20% more in sales over eight years, or
+roughly 2% a year. Employment grew by a similar amount, so sales per worker did not
+change. The authors decline to read the coefficient as a return on AI hiring. AI
+workers come with other investments, and the coefficient is a reduced-form association
+between the AI share and growth.
+
+Three checks address reverse causality and omitted trends. A distributed lead-lag model
+on the annual panel shows no pre-trend, and sales start to rise two to three years
+after an increase in AI share. The cumulative effect is 1.5% to 2% of sales for a
+one-standard-deviation annual increase. The coefficient is stable when the authors
+control for contemporaneous investment in non-AI IT, robotics, non-AI data skills, and
+non-AI analytics. They also instrument the AI share with exposure to AI-trained
+graduates (@sec-causal-iv-talent-network). The 2SLS estimates are about half again as
+large as OLS, but not statistically different from them.
+
+The mechanism is product innovation, not lower costs. Trademarks and product patents
+rise with AI hiring. Process patents, sales per worker, and revenue TFP do not move.
+Cost of goods sold and operating expenses rise in proportion to sales. The
+product-portfolio change measured from 10-K text [@hoberg2014threats] rises without
+controls (0.149) but loses significance with them (0.059). The product-versus-process
+patent split is the one discussed in @sec-innovation-offshoring.
+
+The gains are concentrated among large firms. Within industry, the bottom employment
+tercile shows no relationship once controls are added (−0.001 for sales), while the
+middle and top terciles show 0.183 and 0.204. At the industry level, a one-standard-
+deviation rise in the industry AI share goes with 17% more industry sales, 20% more
+employment, a 0.012 to 0.018 rise in the Herfindahl index, and a 1.4 to 2.2
+percentage-point gain in the largest firm's market share. AI-related growth therefore
+does not appear to be mostly business stolen from rivals inside the same industry, and
+it adds to the concentration associated with intangible-intensive superstar firms.
+
+Read with the two studies above, the evidence lines up on employment and diverges on
+coverage. Here, as for the high-intensity adopters in @kharazian2026ai, AI-investing
+firms add workers instead of shedding them. Babina et al. cover large public firms outside tech over eight years.
+Kharazian et al. observe younger firms on one payment platform over two years. Neither
+measures which tasks moved, which is the question @devigili2026skill ask.
+
+For marketing, the product channel is the relevant one. In this sample, prediction
+technology raised revenue mainly by helping firms launch, extend, and tailor products,
+which is product-line and customer-insight work. Because firm size conditions the
+effect, the results also bear on whether small brands can catch up by adopting the same
+tools. The authors note that the advantage plausibly rests on proprietary data, which
+small firms lack.
+
+Four cautions apply. The sample is non-tech public firms observed in both 2010 and 2018.
+Resume data over-represent skilled workers (coverage is about 64% of U.S. employment).
+The AI share measures an input, not use, so a firm that hired AI staff who produced
+nothing counts the same as one whose models run the business. And the period ends
+before generative AI, whose tasks and cost structure are different. The published
+article is open access under CC BY. The Mendeley kit [@babina2024aidata] posts code and
+the university and Census inputs, but Compustat and CRSP are replaced by pseudo data, so
+the firm-level tables cannot be reproduced from it.
+
 ## Key Takeaways
 
 - The **prediction–inference distinction** (@eq-aiml-dgp) is the organizing idea:
