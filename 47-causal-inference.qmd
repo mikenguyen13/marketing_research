@@ -487,6 +487,13 @@ Lab: the single-market SCM simulation in @sec-causal-scm below (@fig-scm).
   Annals of Applied Statistics* 9(1), 247–274.
   [doi:10.1214/14-aoas788](https://doi.org/10.1214/14-aoas788) — **[R]** the
   "CausalImpact" approach used widely for ad/geo impact at platforms.
+- Li, S., Bassamboo, A. & Lariviere, M. A. (2026). "Proximity Matters: The Impact of
+  Urgent Care Centers on Emergency Department Arrivals." *Production and Operations
+  Management* 35(12), 4203–4222.
+  [doi:10.1177/10591478261468124](https://doi.org/10.1177/10591478261468124) —
+  **[F]** generalized synthetic control alongside difference-in-differences, with
+  identification from operating-hour policies that switch the treatment on and off
+  within the day; worked through at @sec-health-ucc.
 
 **Debate.** Is placebo inference valid with few units? Convex-weight restriction
 versus regression-based panel methods; overfitting pre-treatment fit.
@@ -2050,6 +2057,120 @@ performance, because that would require a second source of exogenous variation f
 bank choice. Stopping at the estimand the design can support is a choice a reader
 should credit.
 
+### From Store Effects to Category Mechanisms: Linking a Survey to a DiD {#sec-causal-did-survey-moderators}
+
+In a sixth pattern the firm chooses where and when to treat, and the question is not
+only how large the effect is but why it differs across products. @cetinel2026experience
+estimate what opening experience-centric and convenience-centric stores did to an
+online-first electronics retailer's revenue (@sec-online-experience-stores). The design
+details and numbers here come from the April 2026 working-paper version
+[@cetinel2025experiencewp]. Three choices at the store level are worth copying. (1)
+*Define exposure the way the decision maker does.* A zipcode is treated if it lies
+within a 20-minute travel time of a new store, the retailer's own planning radius. That
+gives 192 exposed zipcodes, of which nearest-neighbour propensity-score matching with a
+0.1 caliper matches 191, and the results hold under coarsened exact matching
+[@iacus2012cem]. (2) *Use the radius as a dose check.* At 25 minutes the two large
+stores' short-term revenue uplifts fall from 21.7% and 23.2% to 14.5% and 16.4%. That
+is the dilution expected when less-exposed zipcodes join the treated group, and it is
+hard to produce with a spurious effect. (3) *Bin event time to match the question.* The
+estimator is the interaction-weighted event study of @sun2021eventstudies on log
+outcomes with zipcode and month fixed effects and standard errors clustered by zipcode.
+Relative time is grouped into three-month bins: the quarter before opening, a
+short-term bin covering the opening month and the three months after it, and a
+long-term bin for later months. Binning trades resolution for precision on monthly
+zipcode data, and the bins name the two horizons the manager asked about.
+
+The category-level model is where the paper is most reusable. A separate coefficient
+for each store × category × time bin would use dozens of parameters, each estimated
+from one category's noisy sales. The authors instead decompose the effect as
+$\gamma_{sck} = \alpha_{sk} + \beta_{ck}$, with $\sum_c \beta_{ck} = 0$, where
+$\alpha_{sk}$ is store $s$'s average effect in bin $k$ and $\beta_{ck}$ is category
+$c$'s deviation from it, shared across stores. The sum-to-zero constraint does the
+identifying work. Without it, any constant could be added to every $\beta_{ck}$ and
+subtracted from $\alpha_{sk}$ with no change in fit. It is the same normalization as
+effects coding in an analysis of variance, and it makes each $\beta_{ck}$ read as
+"how much better than this store's average category." The decomposition then shows that
+the store-level average hides a wide spread, from desktops at about 160% to more than
+40% of categories with no significant uplift.
+
+The second stage explains that spread with data the sales records cannot provide. In a
+preregistered survey (AsPredicted #99412), 450 Prolific respondents from the focal
+country rated, for each category, how important each of four benefits was and how much
+better a store delivers it than the website. Following the Theory of Reasoned Action,
+utility is importance × relative store attractiveness. Sensory experience and product
+expertise are averaged into an information-search utility, instant gratification
+becomes a fulfilment utility, and return efficiency a returns utility. Categories with
+40 or fewer responses are dropped, leaving 22 (16 destination categories and 6
+accessories). The authors link the survey to the DiD in two ways. The model-free link
+correlates each category's estimated uplift with its utility: $r = .419$ ($p = .052$)
+for information search and $r = .504$ ($p = .017$) for total utility, rising to $r =
+.575$ ($p = .020$) among destination categories. The integrated link replaces
+$\beta_{ck}$ in the short-term bin with $\sum_d \beta_d \, \text{UTILITY}_{cd}$, so that
+the utilities enter the DiD itself. A one-standard-deviation increase in
+information-search utility multiplies revenue by a factor of 1.085 [1.012, 1.158], and
+the same increase in fulfilment utility by 1.090 [1.030, 1.150]. Returns utility does
+nothing measurable (1.012). Splitting the categories shows that the effect sits in
+destination categories (information search 16.2%, fulfilment 10.1%) and that none of
+the accessory coefficients is significant. Accessories still gained from the stores,
+which the authors attribute to cross-buying, such as earbuds bought with a phone, and to
+use-case displays such as a home-office setup.
+
+A multiplication factor from a log-outcome model is easy to misread. Applied to the
+information-search row, where the predicted uplift at mean utility is 54.4%, the factor
+multiplies $1 + \text{uplift}$, not the uplift itself.
+
+```{r}
+#| label: causal-did-multiplication-factor
+#| code-fold: true
+# Our toy illustration, not the authors' code: three ways to read a
+# "multiplication factor" from a log-outcome DiD. Inputs are the published
+# info-search row (working-paper version): predicted short-term uplift of
+# 54.4% at mean utility, and a factor of 8.5% per +1 SD of utility.
+base   <- 0.544                 # uplift at mean utility: revenue x 1.544
+factor <- 0.085                 # +1 SD utility: revenue x 1.085 on top
+b_log  <- log(1 + factor)       # the coefficient in log points
+
+readings <- data.frame(
+  Reading = c("Correct: multiply (1 + uplift) by the factor",
+              "Wrong: scale the uplift itself by the factor",
+              "Wrong: add the factor as percentage points"),
+  `Uplift at +1 SD (%)` = 100 * c((1 + base) * (1 + factor) - 1,
+                                  base * (1 + factor),
+                                  base + factor),
+  check.names = FALSE
+)
+readings$`Gain over 54.4% (pp)` <- readings$`Uplift at +1 SD (%)` - 100 * base
+knitr::kable(readings, digits = 1)
+cat(sprintf("Coefficient in log points: %.3f\n", b_log))
+cat(sprintf("Same factor on a 0%% baseline: +%.1f pp; on a 100%% baseline: +%.1f pp\n",
+            100 * factor * 1, 100 * factor * 2))
+```
+
+The correct reading reproduces the paper's 67.5%, a gain of 13.1 percentage points.
+Scaling the uplift gives 59.0%, and adding the factor gives 62.9%. The underlying
+coefficient is 0.082 log points. Because the factor applies to the level of revenue,
+the same 8.5% is worth 8.5 points to a category with no baseline uplift and 17.0 points
+to one whose revenue has already doubled. A percentage-point gain should therefore always
+be reported together with the baseline it was computed from.
+
+The limits of the second stage deserve as much attention as its result. (1) *The sample
+is 22 categories.* However many zipcode-months sit behind the first stage, the
+explanation rests on 22 points, which is why a correlation of .42 lands at $p = .052$,
+and information-search and returns utilities are themselves correlated ($r = .57$), so
+separating them leans on a handful of categories. (2) *The link is ecological.* The
+utilities are category averages from a general-population panel, not from the
+retailer's customers. They show that categories where shoppers value in-store
+information gained more, not that the customers who value information are the ones the
+store brought in. (3) *Unmeasured supply-side moderators.* Televisions and desktops
+beat their predicted uplift, and the retailer's store team explained why: it had
+targeted those categories to take share from competitors and staffed them with its
+best television salespeople. Store effort varies by category and is invisible to a
+consumer survey, so it sits in the residual. The design is still a good template for
+"multi-method" work on heterogeneous treatment effects. Estimate the effects with a
+structured decomposition, measure the proposed mechanism independently and under
+preregistration, report the model-free correlation next to the integrated model, and
+use conversations with managers to explain the outliers.
+
 ### Two Treated Groups, Two Channels: Platform Sanction or Consumer Boycott? {#sec-causal-did-two-channels}
 
 Some shocks reach an outcome through two parties at once. When an artist is accused
@@ -3008,6 +3129,257 @@ The estimate is a local average effect for firm-cluster pairs whose mainland exp
 rose because the product was liberalized. The sample keeps 483 of 792 listed
 electronics firms, those with at least some patenting or mainland exporting, so it
 describes the larger multinational firms and not the sector as a whole.
+
+### Infrastructure Rollout as a Source of Variation: The Broadband Literature {#sec-causal-iv-broadband}
+
+Few treatments have been used as often as the arrival of broadband. The outcomes
+differ from paper to paper (shopping trips, retailer exit, music piracy, voter
+turnout, wages, hate crime, body weight, test scores), but the identification problem
+is always the same. Providers and regulators decide where and when the network is
+built, and they build first where they expect subscribers. A regression of an outcome
+on local broadband therefore compares places that differ in income, density,
+education and demand for the very things the outcome measures. Each paper has to find
+some part of the variation in broadband that is not a response to local demand.
+@tbl-causal-broadband-lit lists a set of published studies, with the source of
+variation and the design given only as far as each paper's abstract states them.
+
+| Study | Outcome | Broadband measure or source of variation | Design, as the abstract states it |
+|---|---|---|---|
+| @tran2026broadband (JM) | Nine household and retailer outcomes in consumer packaged goods: brands bought, trips, retailers visited, offline and online spending, prices, price dispersion, elasticities | Geographic variation in broadband growth, 2004–2019, tracked with Census and FCC data | — |
+| @chen2021internet (JMR) | Academic performance and disciplinary records of more than 9,000 Texas public schools | School district internet access spending, 1,243 districts, 2000–2014 | Longitudinal data; effects reported as associations |
+| @wlomert2019music (IJRM) | Recorded-music revenue (36 countries, 22 years) and piracy (47 countries) | National broadband penetration and new business models | Bayesian multilevel model of between-country heterogeneity in associations |
+| @raj2026broadband (Strategy Science) | Exit of brick-and-mortar retailers, 1999–2008 | Broadband availability linked to local slope terrain | Instrumental variables |
+| @belo2014broadband (Mgmt Sci) | Grades on ninth-grade national exams, all Portuguese middle schools | Broadband use in schools, 2005–2009 | First differences, with the quality of broadband instrumented |
+| @dandrea2024highspeed (Mgmt Sci) | Bank credit supply and interbank-market technology adoption in Africa | Staggered arrival of fiber-optic submarine cables | Variation within country and across multicountry bank networks |
+| @chan2016hate (MISQ) | Racial hate crimes in the United States, 2001–2008 | Broadband availability | — |
+| @falck2014elections (AER) | Voter turnout and party vote shares | Regional and technological peculiarities of the preexisting voice-telephony network that hindered rollout | Placebo estimates from the pre-Internet period |
+| @czernich2011broadband (EJ) | Per-capita GDP growth, OECD countries, 1996–2007 | Preexisting voice-telephony and cable-TV networks, which predict maximum broadband penetration | Instrumental variables with a nonlinear first stage from a logistic diffusion model; country and year fixed effects |
+| @akerman2015skill (QJE) | Productivity and wages of skilled and unskilled workers in Norwegian firms | A public program with limited funding that rolled out broadband access points | Program rollout as plausibly exogenous variation in availability and adoption |
+| @hjort2019fast (AER) | Employment, firm entry, productivity and exporting in 12 African countries | Gradual arrival of submarine cables, with maps of the terrestrial network | Difference-in-differences |
+| @gavazza2019internet (REStud) | Local election turnout; local government spending and taxes (U.K.) | Broadband diffusion | — |
+| @vigdor2014scaling (Econ Inquiry) | Math and reading test scores, North Carolina | Across-ZIP-code timing of high-speed Internet introduction; within-student changes in home computer access | — |
+| @dettling2018every (REStat) | SAT scores and college applications | Diffusion of residential broadband across postal codes | — |
+| @dinardi2019body (J Pop Econ) | Body weight | Rollout of broadband providers (from the title; no abstract was available here) | — |
+| @niewoehner2026broadband (POMS) | Share of students proficient in math, U.S. school districts | Household broadband subscription and maximum advertised speed | Dynamic panel model |
+
+: Studies that use variation in broadband availability, adoption or speed. The design column repeats only what each published abstract says; a dash means the abstract does not state it. {#tbl-causal-broadband-lit}
+
+Read by its third column, the table sorts into five sources of variation. The first
+is the topology of the network that was there before broadband: digital subscriber
+lines ran over telephone wire, so the layout of the old telephone and cable networks
+shaped where fast service could be offered [@falck2014elections; @czernich2011broadband].
+The second is the cost of building, which depends on terrain and distance: slope
+[@raj2026broadband] and, in the worked example below, district land area. The third is
+rationing, where a public program or subsidy auction decides who is served first
+[@akerman2015skill]. The fourth is the arrival of backbone capacity, such as a
+submarine cable landing on a coast, whose timing is set far from the places studied
+[@hjort2019fast; @dandrea2024highspeed]. The fifth is the timing of diffusion itself,
+with fixed effects absorbing level differences between places
+[@tran2026broadband; @vigdor2014scaling]. Each source needs its own exclusion
+argument. Telephone topology must affect turnout only through the Internet; slope must
+affect retailer survival only through broadband, and not through the transport costs
+and population density that also follow terrain.
+
+For marketing, the outcomes are as instructive as the designs. @tran2026broadband
+finds modest average effects of broadband on consumer packaged goods shopping, with
+sharp declines in brick-and-mortar shopping among younger consumers and stability in
+the larger older cohorts. @raj2026broadband finds that broadband lowered the
+probability that a physical retailer exited, in a period before e-commerce was a
+serious competitor, and attributes the effect to lower consumer search costs.
+@falck2014elections and @gavazza2019internet both report that broadband displaced
+other media (television in Germany, radio and newspapers in the U.K.) and lowered
+turnout. These are channel-substitution and media-substitution results of the kind
+marketing studies directly.
+
+Education is where the literature disagrees most. @belo2014broadband find that heavy
+broadband use in Portuguese schools lowered exam grades, and that students did
+relatively better in schools that blocked sites such as YouTube. @vigdor2014scaling
+find modest negative effects of home computer technology on math and reading scores.
+@dettling2018every find that residential broadband raised SAT performance and college
+applications, mainly among high-SES students. @chen2021internet find that district
+internet spending is associated with better academic indicators and also with a 5%
+rise in one class of disciplinary problems. These studies do not estimate the same
+treatment. Classroom use intensity, a home computer, broadband available in a postal
+code and district spending are four different interventions, and the signs need not
+agree. A paper entering this literature adds most when it says precisely which
+treatment it is estimating.
+
+#### A worked example: access and speed in U.S. school districts
+
+@niewoehner2026broadband separate two treatments that earlier work had combined:
+whether households have broadband (access) and how fast the available connection is
+(speed). The outcome, the share of students in grades 3–8 scoring proficient or above
+on state math assessments, is one that marketing and operations papers on broadband had
+not studied. The figures below come from the working-paper version
+[@niewoehner2025broadbandwp]; its main estimates match the published abstract.
+
+The panel covers more than 6,800 school districts in 33 states from 2017 to 2022, with
+no tests in 2019–20. Each district follows the cohort that was in third grade in 2017.
+Access is the share of households subscribing to broadband in the American Community
+Survey, and the paper also uses the range of that share across Census tracts within a
+district as a measure of the district's internal digital divide. Speed is the maximum
+advertised download speed in FCC Form 477 filings at the Census-block level,
+winsorized and logged. The model is a value-added specification,
+
+$$
+Y_{it} = \phi_1 Y_{i,t-1} + \phi_2 Y_{i,t-2} + \beta D_{it}
+       + \mathbf{x}_{it}^{\top}\boldsymbol{\gamma} + \eta_i + \delta_t + \varepsilon_{it},
+$$ {#eq-broadband-va}
+
+where $Y_{it}$ is proficiency in district $i$ and year $t$, $D_{it}$ is the broadband
+measure, $\mathbf{x}_{it}$ holds controls for population density, enrollment, adult
+education and unemployment, within-state income quartile and local school revenue,
+$\eta_i$ is a district effect and $\delta_t$ a year effect.
+
+A lagged outcome and a district effect cannot both be handled by the within
+estimator, because demeaning makes the lag correlated with the error. The authors use
+one-step System GMM [@blundell1998]. It stacks two sets of equations: first
+differences, which remove $\eta_i$ and use lagged levels as instruments, and levels,
+which keep $\eta_i$ and use lagged differences as instruments. Lagged proficiency is
+treated as endogenous and broadband as predetermined, and the instrument matrix is
+collapsed to 31 instruments to limit instrument proliferation. Two excluded
+instruments are added: the log of the district's land area, a proxy for the cost of
+deployment, and the share of district area covered by broadband.
+
+Land area enters only the level equation, and the reason is the most reusable point
+in the paper. A variable that never changes over time is zero after first
+differencing, so it cannot instrument anything in the differenced equation. In the
+level equation the error contains $\eta_i$, so the instrument must be uncorrelated
+with the district's persistent level of proficiency, given the controls. That is a
+strong requirement. Large districts are rural, and rurality affects school finance,
+transport and teacher labor markets as well as the cost of laying fiber. The
+argument therefore rests on the density, income and revenue controls. The
+Difference-in-Hansen tests for the land-area and coverage instruments ($p > 0.23$ and
+$p > 0.24$) check these moments only on the assumption that the remaining ones are
+valid, and Hansen tests lose power as instruments multiply. The paper also reports
+Kleibergen–Paap and Anderson–Rubin statistics for instrument strength in its appendix,
+which is good practice when the weak-instrument problem of @staiger1997instrumenvariables
+is in play.
+
+For all students, the access coefficient is 0.545 (s.e. 0.145): a one-point increase
+in the share of households with broadband goes with a 0.545-point increase in the
+share proficient, 1.22% of the 44.7% baseline. The working paper's abstract and
+introduction describe this as more than a one-point (1.22 percentage-point) gain; the
+published abstract has it right. Keep
+percentage points and percent apart in your own abstracts. The lag coefficients are
+0.515 and 0.295, AR(2) has $p = 0.176$ and the Hansen test $p = 0.161$, on 27,428
+observations from 6,832 districts with standard errors clustered by state. The
+within-district range has a negative coefficient ($-0.0644$), so the internal digital
+divide matters as well as the average. Speed enters as a quadratic in log speed with
+coefficients 0.0591 and $-0.00432$, an inverted U.
+
+```{r}
+#| label: causal-broadband-turning-point
+#| code-fold: true
+# Our toy arithmetic on the published Table 1 coefficients (all students), not the
+# authors' code: outcome = ... + b1 * log(speed) + b2 * log(speed)^2, speed in Mbps.
+b1 <- 0.0591
+b2 <- -0.00432
+phi <- c(0.515, 0.295)          # lag-1 and lag-2 proficiency coefficients
+
+turn_log  <- -b1 / (2 * b2)
+turn_mbps <- exp(turn_log)
+
+mbps  <- c(10, 25, 100, 250, round(turn_mbps), 1000, 2000)
+slope <- b1 + 2 * b2 * log(mbps)          # d outcome / d log(speed)
+level <- b1 * log(mbps) + b2 * log(mbps)^2
+tab <- data.frame(
+  speed_mbps        = mbps,
+  log_speed         = round(log(mbps), 2),
+  slope_per_log_pt  = round(slope, 4),
+  effect_of_doubling = round(b1 * log(2) + b2 * ((log(2 * mbps))^2 - log(mbps)^2), 4),
+  level_vs_turning  = round(level - (b1 * turn_log + b2 * turn_log^2), 4)
+)
+cat(sprintf("Turning point: %.2f log Mbps = %.0f Mbps\n", turn_log, turn_mbps))
+cat(sprintf("Slope at 25 Mbps relative to slope at 100 Mbps: %.2f\n", slope[2] / slope[3]))
+cat(sprintf("Long-run multiplier 1/(1 - phi1 - phi2): %.2f\n", 1 / (1 - sum(phi))))
+cat(sprintf("Implied long-run access effect: %.2f (per unit of the access coefficient's scale)\n",
+            0.545 / (1 - sum(phi))))
+knitr::kable(tab, col.names = c("Max. advertised speed (Mbps)", "log speed",
+  "Marginal effect of log speed", "Effect of doubling speed", "Level relative to the peak"))
+```
+
+The chunk is our own arithmetic on the reported coefficients. The turning point is
+$-0.0591 / (2 \times -0.00432) = 6.84$ in log Mbps, about 935 Mbps, just below a
+gigabit. The paper places it at the 16th percentile of the speed distribution, so most
+districts lie on the declining side. The table reports effects in the units of the
+outcome as the paper scales it. The slope at 25 Mbps is 1.62 times the slope at 100
+Mbps, and moving from the peak to 2,000 Mbps lowers the predicted outcome by only
+0.0025 in those units in a single period. A quadratic fitted where 84% of the data
+lie past the peak gets most of its curvature from the declining side and imposes
+symmetry on the rising side. The authors' spline check (knots at the 15th and 75th
+percentiles) is the right complement: it finds a positive slope at low speeds and
+negative slopes in the middle and upper ranges. One caution in that table is that the
+spline model for disadvantaged students fails the AR(2) test ($p = 0.025$).
+
+Two more pieces of arithmetic are worth doing on any value-added model. The
+coefficient $\beta$ is the effect in one period with last period's proficiency held
+fixed. If the effect persisted, the lag polynomial implies a long-run multiplier of
+$1/(1 - 0.515 - 0.295) = 5.26$, so 0.545 would cumulate to 2.87. A cohort observed
+from third to eighth grade never reaches that steady state, so 2.87 is an upper bound
+from the arithmetic, not an estimate.
+
+The paper's second design is closer to an experiment. In the 2018 Connect America Fund
+Phase II reverse auction, the FCC subsidized deployment in eligible areas. Among
+eligible areas with a winning bid, some schools received service in 2018–19 and others
+later, with timing driven by the provider's engineering lead times, capacity and local
+frictions. Comparing early with later deployment in a matched difference-in-differences
+across 24 states, the authors find that deployment above the baseline standard,
+including gigabit service, lowered math proficiency by about 4 percentage points,
+while deployment at the baseline standard (at least 25/3 Mbps) produced modest gains,
+significant in one sample. Conditioning on having won a bid removes the question of
+who gets subsidized; what remains is the claim that, among winners, the timing of
+construction is unrelated to trends in proficiency. That is the not-yet-treated logic
+of staggered designs (@sec-causal-week06), with later-served schools as controls
+[@callaway2021did].
+
+The two designs differ in size as well as method. The quadratic implies that going
+from the peak to 2,000 Mbps changes the outcome by $-0.0025$ per period in its own
+units, which is considerably smaller than four percentage points under either reading
+of the scale, even after the long-run multiplier. The two estimates answer different
+questions. One is the effect of a marginal change in the fastest speed advertised
+somewhere in a district; the other is the effect of a discrete gigabit build reaching
+a school. A reader should not use one to validate the magnitude of the other.
+
+The paper adds several checks. A state-by-state jackknife leaves the access estimate
+stable; dropping Massachusetts raises it by about 11%. In Minnesota, the only state
+with historical school attendance zones, a school-level version gives an access
+coefficient of 0.307 ($p < 0.01$) and no clear inverted U, because most blocks there
+already have gigabit service. For reading (ELA) there is no consistent overall
+effect, though English learners show an inverted U with a turning point near 2 Gbps.
+The access effect is largest in the early grades and declines through middle school.
+
+Three threats are common to the whole genre, and this paper illustrates each of them.
+
+First, rollout follows demand. Any variation left after controls reflects where
+providers expected subscribers. Topology, terrain, rationing and backbone timing are
+attempts to find variation that providers did not choose, and the CAF II comparison
+is an attempt to compare places all of which were selected.
+
+Second, adoption is not availability. The ACS subscription share is a demand
+measure: households subscribe because of income, education, children's needs and
+taste, all of which predict test scores. With an availability-based instrument the
+estimate is a local effect for households whose subscription responds to supply, in
+the sense of @sec-causal-iv. A regression of the outcome on availability alone would
+be an intention-to-treat estimate, and the two should not be confused.
+
+Third, advertised speed is not delivered speed. Form 477 records the fastest tier a
+provider says it could offer in a block, and a block counts as served if one location
+in it can be. Students experience delivered throughput, shared among siblings and
+devices. Measurement error in a variable that also enters squared does not simply
+attenuate, so the location of the turning point carries this error as well as
+sampling error. A turning point should be reported with a confidence interval
+(delta method or Fieller), not only as a number.
+
+A smaller point is inference. With 33 states, state-clustered standard errors are
+near the range where cluster-robust inference becomes unreliable, and the jackknife by
+state is a useful addition for that reason.
+
+The general lesson for a marketing paper that uses broadband, or any other
+infrastructure, as a source of variation: name the treatment (availability, adoption,
+use or speed), name where its variation comes from and why that source is unrelated
+to local demand, and check whether the outcome you study could also be moved by the
+same source through another channel.
 
 ### Exposure to a Talent Supply: University Hiring Networks as an Instrument {#sec-causal-iv-talent-network}
 
@@ -4705,6 +5077,12 @@ foundational/frontier marking as the load-bearing pedagogical device.
   terms in the interaction model as conditional effects at moderator zero; and treat
   any crossover threshold as an estimate with sampling error rather than a managerial
   cutoff (@sec-causal-mediation-firm-panel).
+- Infrastructure rollout follows demand. Broadband studies find usable variation in
+  legacy network topology, terrain and land-area costs, rationed programs and subsidy
+  auctions, and the timing of backbone arrival, and each source needs its own exclusion
+  argument. Say whether the treatment is availability, adoption or speed, and note that
+  a time-invariant instrument in System GMM can enter only the level equation, where it
+  must be uncorrelated with the unit effect (@sec-causal-iv-broadband).
 
 ## Further Reading
 

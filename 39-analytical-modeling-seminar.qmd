@@ -378,6 +378,7 @@ writing a referee report; constructing an original modeling proposal.
 - Misra, K., Schwartz, E. M., and Abernethy, J. (2019), "Dynamic Online Pricing with Incomplete Information Using Multiarmed Bandit Experiments," *Marketing Science* 38(2), pp. 226–252, [doi:10.1287/mksc.2018.1129](https://doi.org/10.1287/mksc.2018.1129) — learning-and-earning pricing where the firm, not just the consumer, is the learner. [R]
 - Dubé, J.-P. and Misra, S. (2023), "Personalized Pricing and Consumer Welfare," *Journal of Political Economy* 131(1), pp. 131–189, [doi:10.1086/720793](https://doi.org/10.1086/720793) — a capstone tying theory, ML, and welfare. [R]
 - DellaVigna, S. (2009), "Psychology and Economics: Evidence from the Field," *Journal of Economic Literature* 47(2), pp. 315–372. *(DOI to verify)* — the survey that frames behavioral primitives for equilibrium modeling. [F]
+- Bhaskaran, S., Erat, S., and Mukherjee, R. (2026), "Pay More, Use More: Consumer Bias and Demand Management for Digital Services," *Production and Operations Management* 35(12), pp. 4385–4406, [doi:10.1177/10591478261454768](https://doi.org/10.1177/10591478261454768) — a mental-accounting primitive micro-founds usage and reverses the optimal price response to service cost; worked as a modeling template in @sec-ams-pay-more-use-more. [R]
 
 **Debate.** Do behavioral models *predict* better or merely *rationalize*? How
 should analytical and empirical marketing inform each other?
@@ -852,6 +853,172 @@ mitigate price competition by committing each firm to withhold supply, which is
 profitable when demand becomes more inelastic over time. The model rationalizes a
 pervasive empirical regularity—price rigidity under demand variation—as an
 equilibrium outcome rather than a friction.
+
+### Micro-founding Usage from a Behavioral Primitive: Pay More, Use More {#sec-ams-pay-more-use-more}
+
+The behavioral industrial organization week (@sec-analytical-week14) asks how a
+non-standard consumer changes an equilibrium prediction. @bhaskaran2026paymore is a
+compact specimen of how to build such a model, and its construction is worth
+copying as a template. It proceeds in four steps: a standard stochastic process for
+individual behavior; a behavioral primitive from consumer research that enters that
+process through one parameter; aggregation over heterogeneous consumers into
+closed-form demand and usage; and a firm problem whose comparative statics the
+primitive reverses. Extensions are then added one assumption at a time. The
+pricing-chapter treatment in @sec-price-pay-more-use-more covers the managerial
+content; here the focus is the machinery.
+
+*Step 1: a baseline usage process.* Each period a subscriber is in one of three
+states: consumed last period ($C$), idle ($I$), or exited ($E$, absorbing). A
+consumer of type $v$ who buys a service of quality $q$ gets per-use utility $vq$
+against an outside option worth $\theta$, and consumes in a period with probability
+$\rho = vq/(\theta + vq)$, a choice probability whose odds $\rho/(1-\rho) = vq/\theta$
+are the ratio of inside to outside value. From either live state the next period is
+$C$ with probability $\rho$; a consumer who does not consume exits with probability
+$\phi$, so $C$ and $I$ both move to $E$ with probability $(1-\rho)\phi$ and to $I$
+with probability $(1-\rho)(1-\phi)$. Because the transition probabilities do not
+depend on the current live state, the number of periods before exit is geometric
+with mean $1/[(1-\rho)\phi]$, and expected lifetime usage is
+
+$$
+K = \frac{\rho}{(1-\rho)\phi} = \frac{vq}{\theta\phi}.
+$$ {#eq-ams-pmu-baseline}
+
+*Step 2: the behavioral primitive.* Paying the access fee $p$ opens a mental account
+with deficit $L = p$, and an outstanding deficit causes disutility $(\gamma/2)L^2$,
+a quadratic form for the pain of an unrecovered payment in the spirit of
+@thaler1985 and @prelec1998red. A use that delivers value $vq$ shrinks the deficit
+by $vq$; at the margin that relieves $\gamma p \cdot vq$ of mental-accounting pain
+(the derivative of $(\gamma/2)L^2$ at $L = p$, times $vq$). Holding this relief
+constant across episodes, the effective per-use utility becomes
+$\hat V = vq + \gamma p\, vq = vq(1 + \gamma p)$. The primitive enters the Markov
+chain only through the per-use utility, so the whole of Step 1 carries over with
+$vq$ replaced by $\hat V$:
+
+$$
+\hat K = \frac{vq}{\theta\phi}\,(1 + \gamma p),
+$$ {#eq-ams-pmu-usage}
+
+increasing in both the fee and the bias. Routing the primitive through a single
+parameter of an otherwise standard process is what keeps the model solvable.
+
+*Step 3: naivety and aggregation.* Consumers are naive: they decide whether to buy
+using the unbiased forecast $K$, not $\hat K$, the naivety assumption of the
+present-bias literature [@odonoghue1999doing; @dellavigna2009psychology]. A type-$v$
+consumer expects $K$ uses worth $vq$ each and buys if and only if
+$p \le v^2 q^2/(\theta\phi)$. With $v \sim U[v_L, v_H]$, the marginal buyer is
+$v^* = \sqrt{p\theta\phi}/q$, and integrating over buyers gives demand and total
+usage (their Proposition 1):
+
+$$
+D = \frac{q v_H - \sqrt{p\theta\phi}}{q(v_H - v_L)}, \qquad
+M = \frac{(1+\gamma p)\,(q^2 v_H^2 - p\theta\phi)}{2q\theta\phi\,(v_H - v_L)}.
+$$ {#eq-ams-pmu-demand}
+
+Naivety does real work here: $\gamma$ is absent from $D$ and present in $M$, so the
+bias acts on the cost side of the firm's problem without touching willingness to pay.
+Differentiating $M$ shows the two forces of a price increase directly:
+$\partial M/\partial p$ has the sign of $\gamma(q^2 v_H^2 - 2p\theta\phi) - \theta\phi$,
+negative for small $\gamma$ (screening out buyers dominates) and positive once
+$\gamma > \theta\phi/(q^2 v_H^2 - 2p\theta\phi)$ (heavier use per buyer dominates).
+These closed forms hold while the marginal buyer is interior, $v_L \le v^* \le v_H$;
+below $p = q^2 v_L^2/(\theta\phi)$ everyone buys.
+
+*Step 4: the firm problem.* Serving one use costs $\eta q$, so profit is
+$\pi = pD - \eta q M$. Their Proposition 2 is the payoff: there is a cost threshold
+$\eta'$ above which the firm does not offer the service, decreasing in $\gamma$; below
+it, the optimal fee $p^*$ rises with $\eta$ only when $\gamma$ is below a threshold
+$\gamma'$ (admission control), and falls with $\eta$ when the bias is stronger
+(consumption control). The threshold $\gamma'$ rises with the outside option
+$\theta$, so better alternatives widen the region in which rationing access is the
+right response. The code below is our toy re-implementation of the closed forms with
+the paper's illustrative parameters ($q = 1$, $v_H = 5$, $v_L = 1$, $\theta = 2$,
+$\phi = 0.5$), truncating the marginal buyer to the support.
+
+```{r}
+#| label: ams-paymore-toy
+#| code-fold: true
+# Our toy re-implementation of the closed forms in Proposition 1 and the firm
+# problem of Bhaskaran, Erat & Mukherjee (2026); not the authors' code.
+vH <- 5; vL <- 1; theta <- 2; phi <- 0.5; q <- 1
+
+# A naive consumer of type v expects K = v q / (theta phi) uses worth v q each,
+# so buys iff p <= v^2 q^2 / (theta phi): the marginal buyer is v* below.
+# Truncate v* to the support [vL, vH]: for p < vL^2 q^2 / (theta phi) = 1
+# everyone buys (D = 1); at p = vH^2 q^2 / (theta phi) = 25 nobody does.
+cutoff <- function(p) pmin(pmax(sqrt(p * theta * phi) / q, vL), vH)
+D <- function(p) (vH - cutoff(p)) / (vH - vL)
+# Realized usage of buyer v is K-hat = v q (1 + gamma p) / (theta phi);
+# integrate over buyers v in [v*, vH] with uniform density 1 / (vH - vL).
+M <- function(p, gamma)
+  (1 + gamma * p) * q * (vH^2 - cutoff(p)^2) / (2 * theta * phi * (vH - vL))
+profit <- function(p, gamma, eta) p * D(p) - eta * q * M(p, gamma)
+
+# (a) Usage as the access fee rises: low (0.01) vs high (0.2) bias.
+#     The service cost eta does not enter M at all.
+p_grid <- c(2, 4, 6, 8)
+knitr::kable(data.frame(price = p_grid, demand_D = round(D(p_grid), 3),
+                        usage_M_gamma_0.01 = round(M(p_grid, 0.01), 3),
+                        usage_M_gamma_0.2  = round(M(p_grid, 0.20), 3)))
+
+# (b) Optimal access fee p*(eta) for low (0.1) vs high (0.5) bias
+p_star <- function(gamma, eta) {
+  o <- optimize(profit, c(0, vH^2 * q^2 / (theta * phi)),
+                gamma = gamma, eta = eta, maximum = TRUE)
+  c(p = o$maximum, pi = o$objective)
+}
+etas <- c(0, 0.1, 0.2, 0.3, 0.4)
+res <- t(sapply(etas, function(e) c(e, p_star(0.1, e), p_star(0.5, e))))
+colnames(res) <- c("eta", "p_star_gamma_0.1", "profit_gamma_0.1",
+                   "p_star_gamma_0.5", "profit_gamma_0.5")
+knitr::kable(round(res, 3))
+
+# Exit threshold eta': the service cost at which the best profit reaches zero
+eta_exit <- function(gamma)
+  uniroot(function(e) p_star(gamma, e)["pi"], c(0, 5))$root
+round(c(gamma_0.1 = eta_exit(0.1), gamma_0.5 = eta_exit(0.5)), 3)
+```
+
+The first table reproduces the sign switch. Demand is identical under both biases,
+falling from 0.896 at a fee of 2 to 0.543 at a fee of 8, yet total usage moves in
+opposite directions: from 2.933 to 2.295 when $\gamma = 0.01$, and from 4.025 up to
+5.525 when $\gamma = 0.2$. The second table reproduces the reversal in Proposition 2.
+With costless service both firms charge 11.111, the fee that maximizes $pD$
+($p = (2 q v_H/3)^2/(\theta\phi) = 100/9$). As the service cost $\eta$ climbs from 0.1
+to 0.4, the low-bias firm ($\gamma = 0.1$) raises its fee from 11.280 to 11.909,
+while the high-bias firm ($\gamma = 0.5$) cuts it from 11.000 to 9.000, and its
+profit collapses much faster (0.100 against 3.178 at $\eta = 0.4$). The exit
+thresholds, 1.429 for $\gamma = 0.1$ and 0.409 for $\gamma = 0.5$, show $\eta'$
+falling in the bias. All optimal fees lie inside the interior region $[1, 25]$, so
+the truncation of the marginal buyer never binds at an optimum.
+
+*Step 5: generalize one assumption at a time.* The paper then relaxes the base model
+one assumption at a time, as the model-building craft in @sec-analytical-models
+recommends, so that each extension isolates one new force. A two-part tariff with per-use fee $w$ keeps
+the same structure, with usage $((vq - w)/(\theta\phi))(1 + \gamma p)$; a pure access
+fee is optimal at $\gamma = 0$, and a positive $w$ becomes optimal above a bias
+threshold (their Proposition 3). A finite two-period subscription with a discounted
+deficit replaces $\gamma$ by $\gamma(1+\psi^2)/2$, which shows the result is not an
+artifact of the infinite horizon. With a soft capacity constraint that charges a
+premium $\delta$ on usage above capacity, the fee rises with $\delta$ under weak bias
+and falls with it under strong bias (Proposition 4); near a binding hard capacity
+constraint, a strong enough bias makes the fee rise with capacity (Proposition 5). Endogenous quality produces a
+three-regime result (Proposition 6): with weak bias, full quality and a fee rising in
+cost; with intermediate bias, full quality and a fee falling in cost; with strong
+bias, quality throttled below the frontier and both quality and fee falling in cost.
+The synthesis is a two-dimensional map, strength of consumer bias against cost of
+serving demand, that tells a manager which control to use.
+
+Three features make the template reusable. The primitive has deep experimental and
+field support [@arkes1985sunk; @gourville1998payment], so the referee's "is this
+behavior real?" objection is answered before the model starts. The primitive enters
+through one parameter of a process with closed-form expectations, so the aggregate
+demand and usage functions stay closed-form. And an assumption about what consumers
+foresee (naivety) places the primitive on one margin (usage) and not another
+(purchase), which is what produces a sign reversal rather than a level shift. The
+model also hands an empirical researcher a testable prediction and a parameter to
+estimate: $\gamma$ is identified by how usage per subscriber responds to the fee,
+the kind of behavioral parameter that structural behavioral economics sets out to
+recover [@dellavigna2018structural].
 
 ## Worked Frontier: Algorithmic Fairness as an Economic Constraint {#sec-ams-fairness}
 

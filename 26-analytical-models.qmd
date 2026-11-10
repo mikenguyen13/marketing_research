@@ -825,6 +825,182 @@ schedule can align an independent retailer's incentives with the manufacturer's.
 device, while @geylani2007 and @jerath2010 extend the channel framework to the
 strategic interaction between powerful retailers and manufacturers.
 
+### Multi-Tier Supply Chains: Where Disruption Risk Sits {#sec-channels-tier-risk}
+
+The channel models above have two layers, a manufacturer and a retailer. Real supply
+networks have tiers—an original equipment manufacturer (OEM) buys from tier-1
+suppliers, which buy from tier-2 suppliers—and the economically interesting question is
+how a shock *upstream* travels down to the firm that sells to consumers. The empirical
+motivation is the 2011 Great East Japan Earthquake: @carvalho2021supply trace how the
+disaster propagated through Japanese production networks, and, as Zhu, Chen and Zhou
+summarize that evidence, firms whose direct suppliers were hit lost about 3.8% in sales
+growth while firms hit only through their suppliers' suppliers lost about 2.8%. Damage
+falls with network distance, but it does not vanish.
+
+@zhu2026tiers (working paper: @zhu2023tierswp) ask the design question that this
+evidence raises: holding the size of the risk fixed, is it worse for the network when the
+unreliable supplier sits at tier 1 or at tier 2? Their model has an OEM (tier 0), two
+potential tier-1 suppliers, and two potential tier-2 suppliers. Exactly one supplier, in
+tier $k \in \{1, 2\}$, is unreliable: of the $x$ units it produces it delivers $xZ$, with
+$Z \sim \text{Bernoulli}(\rho)$, so $\rho$ is reliability and $1-\rho$ the disruption
+probability, and production cost is incurred even when the supplier is disrupted. The
+unreliable supplier is the cheap one ($c_u < c_r$), the other tier is reliable at unit cost
+$c$, the OEM's own cost is normalized to zero, and the OEM sells $x_0$ units at the linear
+inverse-demand price $(\alpha - \beta x_0)^+$. A fixed cost $f$ per qualified supplier link
+makes the network itself a choice. Timing does the work: quantities at the disrupted tier
+and every tier above it are committed before $Z$ is realized, and tiers below it react
+afterwards. The authors solve two versions—a *centralized* chain in which one owner
+maximizes total profit, and a *decentralized* chain in which firms within a tier compete
+in quantities (@sec-cournot) and market-clearing prices link the tiers, so that margins
+stack exactly as in the double-marginalization logic above.
+
+In the centralized chain with $f = 0$ the answer is unambiguous (Theorem 1 of the
+working paper): total profit and output are at least as high when the risk sits at tier 2
+as when it sits at tier 1. The intuition is about wasted upstream cost. A tier-1 unit that
+fails destroys the tier-2 input embodied in it, whereas a failed tier-2 unit is lost
+before any tier-1 processing has been spent on it. In our toy version of the model this
+shows up as the effective cost of one *delivered* unit from the unreliable supplier,
+$$
+\underbrace{c + \frac{c_u}{\rho}}_{\text{risk at tier 2}}
+\quad\text{versus}\quad
+\underbrace{\frac{c + c_u}{\rho}}_{\text{risk at tier 1}},
+\qquad \text{a gap of } \frac{c\,(1-\rho)}{\rho} \ge 0,
+$$ {#eq-tier-delivered-cost}
+so moving the same disruption one tier closer to the OEM is equivalent to taxing the cheap
+supplier's delivered output. The working paper's corollaries follow from the same
+wedge: under tier-1 risk the unreliable firm produces less and the reliable one more, and
+improving reliability pays off most at tier 2 when reliability is low and at tier 1 when it
+is high.
+
+The chunk below is our toy re-implementation of the centralized, $f = 0$ comparison, not
+the authors' code. It uses the parameter values of the working paper's Figure 4
+($\alpha = 8$, $\beta = 2$, $c_r = 2$, $c_u = 1$, $c = 1/2$; the authors use them for the
+$f > 0$ sourcing analysis). For each $\rho$ the planner chooses the reliable and unreliable
+quantities $(x_r, x_u)$ before $Z$; afterwards it sells the smaller of the units that
+arrived and the unconstrained optimal quantity. Because $Z$ has two states the expectation is computed
+exactly, and the two first-stage quantities are optimized with `optim` (L-BFGS-B, lower
+bound zero) and checked against a fine grid.
+
+```{r}
+#| label: tiers-toy-centralized
+#| code-fold: true
+# Our toy re-implementation (not the authors' code): centralized chain, f = 0,
+# Bernoulli all-or-nothing disruption of one cheap supplier, Fig-4 parameters.
+alpha <- 8; beta <- 2; c_r <- 2; c_u <- 1; c_rel <- 1/2
+
+# Second stage: sell y <= available units; mc = marginal cost still to be paid
+# per unit sold (the reliable tier-1 cost when it is decided after Z, else 0).
+stage2 <- function(avail, mc) {
+  y <- pmin(avail, (alpha - mc) / (2 * beta))
+  list(profit = (alpha - mc - beta * y) * y, y = y)
+}
+# k = 2: tier-2 quantities (xr, xu) committed before Z; tier 1 processes after Z.
+# k = 1: tier-1 quantities and the tier-2 inputs they embody committed before Z.
+value <- function(xr, xu, rho, k) {
+  mc   <- if (k == 2) c_rel else 0
+  sunk <- if (k == 2) c_r * xr + c_u * xu else (c_rel + c_r) * xr + (c_rel + c_u) * xu
+  good <- stage2(xr + xu, mc); bad <- stage2(xr, mc)       # Z = 1 and Z = 0, exactly
+  list(V   = rho * good$profit + (1 - rho) * bad$profit - sunk,
+       out = rho * good$y + (1 - rho) * bad$y)
+}
+solve_k <- function(rho, k) {
+  starts <- list(c(0.5, 0.5), c(1.5, 0.1), c(0.1, 1.5))
+  fits <- lapply(starts, function(s)
+    optim(s, function(x) -value(x[1], x[2], rho, k)$V, method = "L-BFGS-B", lower = c(0, 0)))
+  x <- fits[[which.min(sapply(fits, `[[`, "value"))]]$par
+  v <- value(x[1], x[2], rho, k)
+  c(xr = x[1], xu = x[2], V = v$V, out = v$out)
+}
+grid_V <- function(rho, k, step = 0.005) {      # coarse-grid sanity check
+  g <- expand.grid(xr = seq(0, 2.5, step), xu = seq(0, 2.5, step))
+  max(value(g$xr, g$xu, rho, k)$V)
+}
+
+rhos <- c(0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95)
+res <- as.data.frame(t(sapply(rhos, function(r) {
+  s2 <- solve_k(r, 2); s1 <- solve_k(r, 1)
+  c(rho = r, xr_t2 = s2[["xr"]], xu_t2 = s2[["xu"]], V_t2 = s2[["V"]], out_t2 = s2[["out"]],
+    xr_t1 = s1[["xr"]], xu_t1 = s1[["xu"]], V_t1 = s1[["V"]], out_t1 = s1[["out"]])
+})))
+gap <- max(sapply(rhos, function(r)
+  c(grid_V(r, 2) - solve_k(r, 2)[["V"]], grid_V(r, 1) - solve_k(r, 1)[["V"]])))
+knitr::kable(res, digits = 3,
+  col.names = c("rho", "x_r (tier-2 risk)", "x_u (tier-2 risk)", "V (tier-2 risk)", "E[output] (tier-2 risk)",
+                "x_r (tier-1 risk)", "x_u (tier-1 risk)", "V (tier-1 risk)", "E[output] (tier-1 risk)"))
+cat("\nLargest grid improvement over optim (should be ~0 or negative):", signif(gap, 2), "\n")
+cat("V(tier-2 risk) >= V(tier-1 risk) at every rho:", all(res$V_t2 >= res$V_t1 - 1e-8), "\n")
+cat("E[output] under tier-2 risk >= under tier-1 risk at every rho:", all(res$out_t2 >= res$out_t1 - 1e-8), "\n")
+```
+
+Three features of the output are worth reading slowly. First, the profit ordering of
+Theorem 1 holds at every reliability level, but the gap is hump-shaped: at $\rho \le 0.5$
+the cheap supplier is not used at all and the location of the risk is irrelevant (both
+values are 3.781); the gap widens to 4.062 versus 3.977 at $\rho = 0.8$; and it narrows
+again to 4.936 versus 4.896 at $\rho = 0.95$ as disruption becomes rare. Second, the
+cheap supplier enters the network earlier when its risk sits at tier 2. The first-order
+conditions put the entry thresholds at $\rho > c_u / c_r = 0.5$ under tier-2 risk and at
+$\rho > (c + c_u)/(c + c_r) = 0.6$ under tier-1 risk, which is why at $\rho = 0.6$ the
+planner already buys 0.208 units from the unreliable tier-2 supplier but none from the
+unreliable tier-1 supplier. In the dual-sourcing range the reliable supplier also carries
+more of the load under tier-1 risk (1.167 versus 1.042 units at $\rho = 0.7$), the pattern
+of the working paper's Corollary 1. Third, the output half of Theorem 1 is a weak
+inequality, and in this toy it binds: whenever the reliable supplier is used, expected
+output is $(\alpha - c - c_r)/(2\beta) = 1.375$ under either risk location, and output
+differs only once the planner single-sources from the cheap supplier (1.438 versus 1.425
+at $\rho = 0.9$). The grid search never improves on `optim` (largest improvement
+$-4.4 \times 10^{-16}$).
+
+With positive sourcing costs the same wedge shapes the network. Centralized sourcing moves
+monotonically from dual to single sourcing as $f$ rises, and the working paper shows that
+the planner is less willing to qualify an unreliable node at tier 1 than at tier 2, both
+because tier-1 risk is costlier and because adding a tier-1 node costs $2f$: the new
+supplier needs its own tier-2 source. If a firm is going to add one cheap but unreliable
+supplier, the centralized logic says to add it at tier 2.
+
+The chapter-level lesson comes from decentralization. Once the tiers are independent
+firms, double marginalization makes the unreliable supplier less competitive at tier 1,
+while at tier 2 it overproduces when risk is high, which makes the OEM's supply more
+volatile. The OEM's own profit and output are still lower under tier-1 risk, but total
+supply-chain profit reverses when disruption risk is high: below a reliability threshold
+the decentralized chain is better off with the risk at tier 1 (Theorem 3 of the working
+paper). The reversal disappears when the two firms in the disrupted tier are made
+homogeneous, so it is the interaction of stacked margins with within-tier asymmetry,
+not decentralization alone, that flips the sign. The practical corollary is a reshoring
+priority that depends on governance: an integrated chain should replace its unreliable
+tier-1 supplier first, whereas a decentralized chain facing high risk may prefer to
+replace the tier-2 one. Positive sourcing costs can flip even the OEM's own ranking: in
+a working-paper example ($\alpha = 15$, $\beta = 1$, $c_{2,r} = 3$, $c_{2,u} = 2$,
+$c = 1$, $f = 2$, $\rho = 0.95$) the OEM single-sources in both cases and earns 1.70
+under tier-1 risk but 1.56 under tier-2 risk, because the two identical tier-2 suppliers
+it faces under tier-1 risk compete harder and lower its input price. In the authors' decentralized numerical example
+($\alpha = 20$, $\beta = 1$, all costs 5), supply-chain profit is not even monotone in
+reliability—flat while the unreliable firm stays out, falling at intermediate $\rho$ as
+output becomes more volatile, rising again at high $\rho$—which is why an OEM may want to
+subsidize resilience upstream when risk is high and downstream when it is low.
+
+Sourcing itself becomes non-monotone in the decentralized chain. Under tier-2 risk, when
+the unreliable tier-2 supplier has a strong cost advantage and is reliable enough, the
+OEM's network moves from dual to single sourcing, back to dual, and then to single again
+as $f$ rises (Theorem 5), because the OEM is reacting to its tier-1 suppliers' own
+sourcing changes rather than to $f$ directly. An OEM that cannot see who its suppliers buy
+from cannot anticipate those reversals. The authors use this to argue for supply-chain
+visibility into sub-tier risk profiles, noting that Toyota lacked tier-2 risk profiles
+before the 2011 earthquake and citing a 2021 McKinsey survey in which only 21% of senior
+supply-chain executives reported visibility into their tier-2 supply base. The results
+extend to several firms per tier—where the centralized chain gains from pooling across
+more unreliable nodes—and to $n$ tiers, where a disruption closer to the OEM remains the
+more damaging one for the centralized chain.
+
+For a student building analytical models, the reusable design is a three-step audit.
+Start from a centralized benchmark in which the comparative static has a clean economic
+reason (here, wasted upstream cost). Decentralize and ask which comparative statics survive
+double marginalization and within-tier competition; the ones that flip are usually the
+paper. Then remove one asymmetry at a time (here, make the disrupted tier's firms identical)
+to locate exactly which primitive drives the reversal. The all-or-nothing Bernoulli yield is
+what keeps the exercise tractable: with two states, every expectation is a two-term sum,
+as in the chunk above. (Theorem numbers and numerical examples above are from the October
+2024 working-paper version of the article.)
+
 ## Advertising Models {#sec-26-advertising}
 
 Advertising enters consumer utility through three distinct mechanisms, and the choice
@@ -1666,6 +1842,66 @@ moral-hazard problem—the firm cannot observe the salesperson's true effort—i
 @gerstner1987 and @joseph1998 extend the compensation literature, and @simester2010 highlights a further tension between
 motivating managerial effort and eliciting truthful information-sharing, a trade-off that complicates the design of
 incentives when agents control information as well as effort.
+
+### Audits and the Threat of Lost Business {#sec-agency-audit}
+
+The models above hide the agent's action. Many outsourced relationships also hide the
+agent's cost. An agency bills hours, a contractor bills materials, a consultant bills a
+project, and the principal pays on the agent's report. Overbilling is a well-known
+problem in healthcare, IT, legal services, and engineering. The classical remedy is to
+verify the report at a cost and punish a false one. Costly state verification
+[@townsend1979costly] and auditing in regulation [@baron1984auditing] both work this
+way. The remedy needs two things that outsourcing often lacks: an audit signal precise
+enough to justify a monetary penalty, and a contract that can impose one.
+
+@bu2026overbilling start from the case where audits are expensive, slow, and noisy.
+Their model is a repeated principal–agent game. In each period the principal decides
+whether to give the task to the agent or to an outside option, and, if the agent
+executes it, whether to audit the agent's privately known cost. The principal
+minimizes total cost, which is the payments to agents plus the cost of auditing. The
+authors propose a class of Dynamic Auditing mechanisms under which truthful cost
+reporting is near-optimal for the agent and the principal's cost is near-optimal, for
+sufficiently large discount factors. Auditing is worth using when the unit cost of an
+audit is small enough, or when the principal does not know the agent's cost
+distribution. The results hold when several agents compete for the work and when an
+agent inflates cost by doing redundant work rather than by misreporting.
+
+The reusable idea is that the penalty becomes future business. A stylized version,
+which is our illustration and not the authors' mechanism, shows why. Suppose a
+retained agent earns a rent $R$ per period, an inflated bill gains $g$ once, the
+principal audits with probability $q$, an audit flags inflation with probability $\pi$,
+and a flagged agent loses the work to the outside option. With discount factor
+$\delta$, truthful reporting is optimal when
+
+$$
+g \;\le\; q\,\pi\,\frac{\delta R}{1-\delta}
+\quad\Longleftrightarrow\quad
+q \;\ge\; q^{\ast} = \frac{g\,(1-\delta)}{\pi\,\delta\,R}.
+$$ {#eq-audit-ic}
+
+Three readings follow. As $\delta$ approaches one, the required audit rate $q^{\ast}$
+goes to zero, which is why such mechanisms need patient agents. A noisy audit (low
+$\pi$) raises $q^{\ast}$ in proportion, but it does not break the mechanism, because
+withdrawing future business needs no proof that would satisfy a court. And the rent
+$R$ is a cost to the principal, so the principal trades audit frequency against the
+rent it leaves on the table. This is the relational-contract logic of
+@levin2003relational, in which a self-enforcing agreement requires that the future
+surplus at stake exceed the gain from deviating today. Cheap audits let the principal
+raise $q$ and cut $R$, which matches the first condition under which the authors find
+auditing effective.
+
+For marketing, the structure fits any relationship in which a partner bills on
+information it alone holds: an advertiser paying a media agency's reported costs, a
+manufacturer reimbursing a retailer's trade-promotion claims, a firm paying an
+outsourced sales partner's expenses. It also pairs with @sec-sales-ownership-monitoring,
+where monitoring substitutes for incentive pay. Here auditing together with the
+allocation decision substitutes for monetary penalties. One empirical prediction is
+our extrapolation, not a result of the paper. Where audits are noisy, enforcement
+should show up as reallocation of work, not as clawbacks, so a study that counts only
+contractual penalties would understate how much policing goes on. (Only the published
+abstract was accessible when this subsection was written; the model and conditions
+above are as the abstract states them, and the inequality is a textbook illustration
+rather than the paper's mechanism.)
 
 ## Branding, Bundling, and Mixed Strategies {#sec-branding-bundling}
 

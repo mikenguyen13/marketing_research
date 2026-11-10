@@ -469,6 +469,214 @@ between a toy instance and a real one is exactly what @akchen2026logit close—t
 provably hard design problem into one a solver can certify—and it is the reason the
 humble logit of @eq-sm-logit reaches past demand estimation into optimal product design.
 
+### Behavior in One Primitive: Assortment Optimization Under Choice Overload {#sec-sm-poc}
+
+The logit of @eq-sm-logit, used prescriptively in @sec-sm-socpd, carries a behavioral
+commitment that is easy to miss. With an outside option of fixed utility, the
+no-purchase probability $P_0(S) = 1/\big(1+\sum_{j\in S} e^{u_j}\big)$ falls every time a
+product is added to the offer set $S$, so a larger assortment always converts more
+shoppers. Every random-utility model whose outside option does not depend on $S$ shares
+this property, which is why none of them can produce choice overload: the inverted-U
+relation between assortment size and purchase that @iyengar2000demotivating made
+famous, and that the meta-analyses of @scheibehenne2010toomany and
+@bockenholt2014choiceoverload find to be real only under identifiable conditions (see
+the controversy callout in @sec-online-environments). @mirzaee2026paradox show how to
+put the effect into the model without giving up the logit's optimization machinery;
+the numbers below come from the working-paper version [@mirzaee2025paradoxwp].
+
+Their model changes a single primitive. Product $i$ keeps its logit attraction
+$a_i = e^{u_i}$, but the utility of not buying becomes a function of how many products
+are shown and of a *golden number* $B$:
+$$
+P_i(S) = \frac{e^{u_i}}{e^{u_0(|S|,B)} + \sum_{j\in S} e^{u_j}},
+\qquad
+u_0(|S|,B) = \zeta\,(B-|S|)^2 .
+$$ {#eq-sm-poc}
+The general assumption is only that $u_0$ is weakly decreasing in $|S|$ below $B$
+(choice *underload*: too few options push shoppers to walk away), weakly increasing
+above it (choice *overload*), zero at $|S| = B$ and positive elsewhere; the quadratic in
+@eq-sm-poc with $\zeta > 0$ is the authors' parametric workhorse, and a piecewise-linear
+$\zeta\,|B-|S||$ is their alternative. A U-shaped no-purchase utility produces a
+U-shaped no-purchase probability and hence an inverted-U in purchase. Within any given
+offer set, choice is still multinomial logit, IIA among the offered products included;
+only the comparison with not buying moves as the set grows or shrinks. That restraint is
+the reusable design lesson: **isolate the behavioral effect in one primitive**, keep
+everything else classical, and the classical results can be recovered by conditioning on
+the variable the primitive depends on.
+
+The conditioning is needed because the effect breaks the best-known result in
+assortment optimization. Under the plain logit the revenue-maximizing assortment is
+*revenue-ordered*—the $k$ highest-margin products for some $k$—so only $n$ candidate sets
+need checking [@talluri2004revenue]. Under choice overload this fails, as the first
+example below shows. What survives is a decomposition: fix $|S| = k$, and $u_0(k,B)$ is a
+constant, so each subproblem is an MNL assortment problem with an exact cardinality
+constraint. The authors adapt the geometric algorithm that @rusmevichientong2010dynamic
+developed for the capacitated logit—lines $h_i(\lambda) = a_i(r_i-\lambda)$ in the
+margins $r_i$, whose $O(n^2)$ intersection points split the real line into intervals
+within which the top-$k$ lines do not change—with one twist: because the cardinality is
+imposed rather than bounded, the subproblem must take exactly the top $k$ lines even when
+some are negative. That gives $O(n^2)$ candidate sets per $k$ and a polynomial algorithm
+overall. The structural results anchor the new optimum on the familiar one. Profit under
+choice overload never exceeds logit profit, with equality only when the optimal size,
+the golden number, and the size of the logit optimum $S_{\text{MNL}}$ coincide. If
+$|S_{\text{MNL}}| = B$, the logit optimum is also the overload optimum; if
+$|S_{\text{MNL}}| < B$, the overload optimum contains $S_{\text{MNL}}$ and adds at most
+$B - |S_{\text{MNL}}|$ products; if $|S_{\text{MNL}}| > B$, the overload optimum still
+has at least $B$ products. When the objective is conversion rather than revenue (equal
+margins), the optimum is the $k$ most attractive products for some $k \ge B$.
+
+The same fix-the-size trick carries the rest of the classical toolkit across. With
+prices chosen jointly, each fixed-$k$ subproblem becomes a capacity-constrained joint
+assortment-and-pricing problem whose solution uses the full capacity, and the optimum is
+the fixed point of a decreasing function. Under a nested logit with a golden number for
+each nest, the problem becomes a linear program of the @gallego2014constrained type with
+$m+1$ variables and $O(mn^3)$ constraints for $m$ nests; under a mixture of logits with
+segment-specific golden numbers, a fully polynomial-time approximation scheme exists when
+the number of segments is fixed.
+
+Estimation follows the same logic. With transactions $t$, offer sets $S^t$, and choices
+$c_t$ (where $u_{c_t} = u_0(|S^t|,B)$ if nothing is bought), the log-likelihood is
+$$
+\ell(\mathbf{u},\zeta; B) = \sum_t \Big[\,u_{c_t} - \log\Big(e^{u_0(|S^t|,B)} +
+\sum_{i\in S^t} e^{u_i}\Big)\Big].
+$$ {#eq-sm-poc-ll}
+Because $u_0$ in @eq-sm-poc is linear in $\zeta$ once $B$ is fixed, @eq-sm-poc-ll is the
+logit's familiar log-sum-exp of linear indices and is concave in $(\mathbf{u},\zeta)$,
+so estimation is a concave program nested inside a one-dimensional search over the
+integer golden number. A nonparametric version that frees $u_0(k,B)$ for every observed
+size, subject to the monotonicity in the assumption, is likewise convex for fixed $B$,
+and an estimated $\zeta \le 0$ signals that the U-shape is the wrong functional form for
+the data. Since $u_0$ depends on the data only through $|S|$, $B$ and $\zeta$ are
+identified only if transactions occur at several distinct set sizes; with a single size,
+$u_0$ is a constant indistinguishable from a common shift in the $u_i$. In the working
+paper's numerical study (synthetic transactions from a four-segment mixture of logits
+with 10 or 20 products and two to four distinct offer-set sizes), the overload model
+improves the average absolute log-likelihood over plain MNL in every scenario, with gains
+that rise with the strength of the overload effect and shrink as the number
+of distinct offer sets and of products grows.
+
+The chunk below is our toy re-implementation, not the authors' code. Part (a)
+enumerates every subset in the paper's two small examples; part (b) simulates choices
+from @eq-sm-poc and fits plain MNL and the overload model by maximum likelihood, profiling
+over $B$.
+
+```{r}
+#| label: sm-poc-assortment
+#| code-fold: true
+# Our toy re-implementation of Mirzaee, Fata & Li's examples and estimator (not the authors' code).
+# ---- (a) Exact enumeration: MNL vs. paradox-of-choice (PoC) optimal assortments ----
+# Expected revenue of offer set S: a_i = exp(u_i) are attractions, r_i margins, and
+# a0 the no-purchase attraction -- fixed at 1 under MNL, a function of |S| under PoC.
+rev_S <- function(S, a, r, a0) sum(a[S] * r[S]) / (a0 + sum(a[S]))
+enumerate <- function(a, r, a0_poc) {
+  sets <- unlist(lapply(seq_along(a), function(k) combn(length(a), k, simplify = FALSE)),
+                 recursive = FALSE)
+  data.frame(set = vapply(sets, function(S) paste0("{", paste(S, collapse = ","), "}"), ""),
+             MNL = vapply(sets, function(S) rev_S(S, a, r, 1), 0),
+             PoC = vapply(sets, function(S) rev_S(S, a, r, a0_poc(length(S))), 0))
+}
+# Example 2: a = (1,2,4), r = (9,8,7), golden number B = 1, a0 = exp(0.3 (B - |S|)^2)
+ex2 <- enumerate(c(1, 2, 4), c(9, 8, 7), function(k) exp(0.3 * (1 - k)^2))
+# Example 4: a = (1, 1.01, 5), r = (1.001, 0.99, 0.6), B = 1, a0(|S|) = (1, 2.5, 2.9);
+# the last column re-runs it with a0(3) = 2.99 to show how knife-edge the example is
+ex4 <- enumerate(c(1, 1.01, 5), c(1.001, 0.99, 0.6), function(k) c(1, 2.5, 2.9)[k])
+ex4$PoC_299 <- enumerate(c(1, 1.01, 5), c(1.001, 0.99, 0.6),
+                         function(k) c(1, 2.5, 2.99)[k])$PoC
+knitr::kable(cbind(ex2, ex4[, -1]), digits = 4,
+             col.names = c("Set", "Ex. 2 MNL", "Ex. 2 PoC", "Ex. 4 MNL",
+                           "Ex. 4 PoC", "Ex. 4 PoC, a0(3) = 2.99"))
+best <- function(d, col) d$set[which.max(d[[col]])]
+cat(sprintf("Ex. 2 optimum: MNL %s, PoC %s; PoC optimum earns %+.1f%% over the MNL optimum under PoC demand\n",
+            best(ex2, "MNL"), best(ex2, "PoC"),
+            100 * (max(ex2$PoC) / ex2$PoC[ex2$set == best(ex2, "MNL")] - 1)))
+cat(sprintf("Ex. 4 optimum: MNL %s, PoC %s (with a0(3) = 2.99: %s)\n",
+            best(ex4, "MNL"), best(ex4, "PoC"), best(ex4, "PoC_299")))
+
+# ---- (b) Estimation: plain MNL vs. MNL with quadratic PoC outside option ----------
+set.seed(4345)
+n <- 10; B_true <- 5; zeta_true <- 0.1
+u_true <- runif(n)                                  # product utilities ~ U(0,1)
+sizes  <- rep(c(3, 5, 7, 10), each = 1000)          # four offer-set sizes, 4,000 choices
+Tn     <- length(sizes)
+avail  <- t(vapply(sizes, function(k) { z <- numeric(n); z[sample.int(n, k)] <- 1; z },
+                   numeric(n)))                     # random offer set of each size
+num    <- avail * matrix(exp(u_true), Tn, n, byrow = TRUE)
+u0_t   <- zeta_true * (B_true - sizes)^2            # u0(|S|, B) = zeta (B - |S|)^2
+prob   <- cbind(exp(u0_t), num) / (exp(u0_t) + rowSums(num))
+choice <- apply(prob, 1, function(p) sample.int(n + 1, 1, prob = p)) - 1  # 0 = no purchase
+Y      <- outer(choice, seq_len(n), "==") * 1
+
+# Log-likelihood in theta = (u_1..u_n, zeta) for a given B, through q = (B - |S|)^2.
+# u0 is linear in zeta, so for fixed B the log-likelihood is concave; plain MNL is zeta = 0.
+negll <- function(theta, q) {
+  u <- theta[1:n]; z <- if (length(theta) > n) theta[n + 1] else 0
+  D <- exp(z * q) + drop(avail %*% exp(u))
+  -(sum(Y %*% u) + sum((choice == 0) * z * q) - sum(log(D)))
+}
+neggr <- function(theta, q) {
+  u <- theta[1:n]; z <- if (length(theta) > n) theta[n + 1] else 0
+  D <- exp(z * q) + drop(avail %*% exp(u))
+  g <- colSums(Y) - exp(u) * colSums(avail / D)
+  if (length(theta) > n) g <- c(g, sum((choice == 0) * q) - sum(q * exp(z * q) / D))
+  -g
+}
+fit_mnl <- optim(rep(0, n), negll, neggr, q = 0, method = "BFGS")
+fits <- lapply(1:n, function(B)                     # profile the likelihood over integer B
+  optim(c(rep(0, n), 0), negll, neggr, q = (B - sizes)^2, method = "BFGS",
+        control = list(maxit = 500)))
+ll_B  <- -vapply(fits, `[[`, 0, "value")
+B_hat <- which.max(ll_B); zeta_hat <- fits[[B_hat]]$par[n + 1]
+cat(sprintf("LL plain MNL %.1f | LL PoC-MNL %.1f at B_hat = %d, zeta_hat = %.3f (truth: B = %d, zeta = %.2f)\n",
+            -fit_mnl$value, ll_B[B_hat], B_hat, zeta_hat, B_true, zeta_true))
+cat("Profile log-likelihood over B = 1..10:", sprintf("%.1f", ll_B), "\n")
+
+# Purchase probability by offer-set size: data vs. the two fitted models
+pr_fit <- function(u, z, q) { s <- drop(avail %*% exp(u)); tapply(s / (exp(z * q) + s), sizes, mean) }
+knitr::kable(data.frame(size = c(3, 5, 7, 10),
+                        observed = as.vector(tapply(choice > 0, sizes, mean)),
+                        mnl = as.vector(pr_fit(fit_mnl$par, 0, 0)),
+                        poc = as.vector(pr_fit(fits[[B_hat]]$par[1:n], zeta_hat,
+                                               (B_hat - sizes)^2))),
+             digits = 3, col.names = c("Offer-set size", "Observed purchase rate",
+                                       "Plain MNL fit", "PoC-MNL fit"))
+```
+
+The first example has three products with attractions $(1, 2, 4)$, margins $(9, 8, 7)$,
+$B = 1$, and $e^{u_0} = \exp\{0.3(B-|S|)^2\}$. The logit offers everything (revenue
+6.625), but under choice overload the optimum is $\{2,3\}$, which drops the
+highest-margin product and so is not revenue-ordered. Under overload demand $\{2,3\}$
+earns 5.9865 against 5.1356 for the logit's choice, a 16.6% gain, which reproduces the
+16% gap the working paper reports. (The paper's Table 1 prints 5.135 and 5.980 for these
+two cells; the first is truncation, the second appears to be a small typo that does not
+touch the conclusion.) The second example runs the other way. With attractions
+$(1, 1.01, 5)$, margins $(1.001, 0.99, 0.6)$, $B = 1$, and no-purchase attractions 1,
+2.5, and 2.9 for sets of one, two, and three products, the logit picks $\{1,2\}$
+(0.6648) while the overload optimum is the full set $\{1,2,3\}$ (0.5046): the very
+attractive low-margin product 3 wins back enough shoppers from the outside option to
+outweigh the overload it adds. Choice overload can make the optimal assortment *larger*,
+and here the overload optimum contains the logit optimum. The enumeration matches every
+entry of the paper's Table 2 up to truncation in the fourth decimal. One caution: the
+working paper's text gives the three-product no-purchase attraction as 2.99, not 2.9, and
+that value does not reproduce its own table. At 2.99 the full set earns 0.5001 and the
+singleton $\{1\}$ (0.5005) becomes optimal, as the last column shows. Every Table 2 entry
+reproduces with 2.9, so 2.99 appears to be a typo, and the example is knife-edge either
+way: recomputing a paper's worked examples is a cheap check worth making a habit.
+
+In the estimation exercise, 4,000 choices are drawn from ten products with utilities
+from $U(0,1)$, offered in random sets of 3, 5, 7, and 10 products (the set sizes
+$\lceil n/4\rceil$, $\lceil n/2\rceil$, $\lceil n/1.5\rceil$, and $n$ of the paper's
+design), with $B = 5$ and $\zeta = 0.1$. The profile likelihood peaks at $\hat B = 5$
+with $\hat\zeta = 0.100$, and the overload model's log-likelihood ($-7255.4$) beats plain
+MNL's ($-7573.8$) by 318.4 points, about 4.2% of its absolute value. The table shows
+where the logit fails: it can only let purchase rise with set size (0.706, 0.802, 0.850,
+0.890), while the data rise and then fall (0.795, 0.922, 0.901, 0.630), which the
+overload fit tracks closely (0.803, 0.911, 0.906, 0.628). The profile over $B$ is also
+not unimodal—$B = 6$ fits worse ($-7315.8$) than $B = 1$ ($-7296.2$)—which is why the
+golden number is searched over a grid: concavity holds for each given $B$, not jointly.
+The broader lesson for structural work is that a behavioral regularity tied to a variable
+the firm controls need not force a new demand system; placed in one primitive and
+conditioned on, it lets decades of tractability results carry over.
+
 ### Permutation Invariance and Deep Demand Estimation {#sec-sm-perminv}
 
 Every model so far has bought tractability with a functional-form commitment, and the
@@ -1122,3 +1330,7 @@ unchanged into the last.
 - Every counterfactual inherits the assumptions that identified its parameters; the
   credible structural paper reports which conclusions survive weakening which
   assumption (@sec-sm-identification).
+- A behavioral effect can enter a structural model through one primitive: making the
+  outside option's utility depend on assortment size reproduces choice overload while
+  keeping the logit, and fixing the set size recovers the classical assortment
+  algorithms and a concave likelihood (@sec-sm-poc).
