@@ -2424,6 +2424,70 @@ within three weeks, with little sign of boycotting among its core customers
 (figures from the working-paper abstract of [@liaukonyte2023frontiers]). Together with the case above, it is a reminder that the
 volume of a campaign is a poor guide to which side of the market actually moved.
 
+### When the Pre-Trend Is the Finding: Acquisition Waves {#sec-causal-did-pretrend-selection}
+
+The usual reading of an event study treats a significant pre-trend as a failed
+design. @ederer2026digital show a case where the pre-trend is the result. They study
+startup acquisitions by eight large technology firms (substantive findings in
+@sec-ms-corpdev-killer). The treated unit is a technology area, a CPC main group,
+and the event is the first acquisition of a startup that patented in that area. In a
+two-way fixed-effects event study against the never-acquired groups, patenting
+rises steadily for years before the first deal. The authors do not trim the window
+or switch estimators to remove this trend. They make a theoretical claim about it:
+in their model, beliefs about a technology's viability drive both startup entry and
+acquisitions, so acquired areas are the ones that were already rising. The pre-trend
+measures selection, and the analysis is built around that reading.
+
+Several design moves are worth copying.
+
+*Hybrid comparison, checked against robust estimators.* Event timing varies across
+groups, so the authors run the estimators of @callaway2021did and
+@sun2021eventstudies alongside the plain TWFE event study. The thousands of
+never-acquired groups anchor the counterfactual path, and the TWFE estimates come
+out nearly identical. With a large never-treated pool this check is cheap, and
+reporting it ends the discussion.
+
+*Match on the pre-period, then test only the part the match did not target.* Each of
+310 event groups is paired with the never-acquired group closest in the level and
+growth of patenting in the year before the event, both standardized. Balance on
+the matched variables is close (9.14% against 8.82% growth). The authors then point
+out that the coefficients at $s=-1$ and $s=-2$ are *pinned by construction*: one is
+the normalization and the other restates the matched growth rate. Only the leads at
+$s \le -3$ are an independent check, and they are jointly insignificant
+($F = 0.95$, $p = 0.47$). Many matched event studies present flat leads as
+validation without saying which of them the matching forced to be flat.
+
+*Re-center on a different event to locate the timing.* Patenting keeps rising after
+a first acquisition only where more acquisitions follow. To ask whether that growth
+precedes or follows the later deals, the authors re-center event time on each
+group's *last* acquisition and find no post-event rise. A sequence specification
+then gives the increments directly: +0.32 after a first deal that is followed by
+others, +0.17 more after the second, and −0.36 after a second deal that turns out to
+be the last. Growth comes before the wave ends, as the selection account predicts.
+
+*Use a measurement choice as a timing diagnostic.* At the patent level, citations
+can be dated to the citing patent's application year (the convention) or its grant
+year. Citations added during examination, possibly prompted by the acquisition
+itself, appear before the event under application-year dating and after it under
+grant-year dating. The pre-trend in acquired patents' citations mostly disappears
+under grant-year dating. That is evidence about *when* the extra citations arrive,
+and it costs one extra column.
+
+*Pick the count model for the estimand.* Citation counts are zero in most
+patent-years and highly skewed. The NBER version estimates Poisson pseudo-maximum
+likelihood with patent and CPC-by-year fixed effects, so the post-acquisition
+coefficient is a semi-elasticity ($e^{0.245}-1 \approx 28\%$). The earlier draft
+[@ederer2025digitaldraft] used OLS in levels. The headline survives the switch, but a
+retention interaction reported in the draft does not, although the draft also
+measured retention differently. Parallel trends and effect heterogeneity are
+scale-dependent: an interaction that holds in levels need not hold in proportions.
+Check a heterogeneity result under the other scale before anyone builds on it.
+
+The broader point is about how to claim. Selection into treatment that follows a
+theory can itself be the contribution, provided the design separates the parts the
+matching fixes from the parts it leaves free, and the paper states plainly which
+estimates are description.
+
 
 ## Instrumental Variables {#sec-causal-iv}
 
