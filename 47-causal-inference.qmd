@@ -409,6 +409,13 @@ is introduced in the DiD discussion at @sec-causal-did.
   the bulk-import sample. @sec-data-txmb re-runs the design on the public data with
   planted listing dates, to show which threats the estimator handles and which it
   cannot.
+- Seo, E. & Dinkel, C. P. (2026). "Knowledge Protection and Modularity of Innovation
+  Activities in Firms: Evidence from US Trade Secrecy Law." *Strategic Management
+  Journal* 47(12), 3227–3252.
+  [doi:10.1002/smj.70125](https://doi.org/10.1002/smj.70125) — **[F]** a continuous
+  state policy index and a binary enactment dummy run side by side, with TWFE, stacked,
+  and Callaway–Sant'Anna estimates and a network-level outcome; worked through at
+  @sec-causal-did-policy-index.
 
 **Debate.** Which robust estimator, when? Is the efficient imputation estimator's
 stronger modeling worth it? How much published DiD work is invalidated? When a
@@ -494,6 +501,12 @@ Lab: the single-market SCM simulation in @sec-causal-scm below (@fig-scm).
   **[F]** generalized synthetic control alongside difference-in-differences, with
   identification from operating-hour policies that switch the treatment on and off
   within the day; worked through at @sec-health-ucc.
+- Hou, Y. (2026). "Accommodation in the Vertical Supply Chain: Implications of
+  Manufacturer Dual Tracking." *Strategic Management Journal* 47(13), 3382–3408.
+  [doi:10.1002/smj.70123](https://doi.org/10.1002/smj.70123) — **[F]** synthetic
+  difference-in-differences reported beside a DiD whose event studies show pre-trends;
+  the two estimators differ by up to a factor of four on the same outcome; worked through
+  at @sec-causal-scm-sdid.
 
 **Debate.** Is placebo inference valid with few units? Convex-weight restriction
 versus regression-based panel methods; overfitting pre-treatment fit.
@@ -2488,6 +2501,74 @@ theory can itself be the contribution, provided the design separates the parts t
 matching fixes from the parts it leaves free, and the paper states plainly which
 estimates are description.
 
+### A Continuous Policy Index and a Network Outcome: Trade-Secret Law {#sec-causal-did-policy-index}
+
+Most staggered designs in this chapter switch a binary treatment on. @seo2026tradesecret
+show what changes when the policy is a continuous index and the outcome is a property of
+a whole network. The question is whether firms compartmentalize their inventors less when
+state law protects trade secrets better (substance in
+@sec-innovation-trade-secret-modularity). The outcome is the modularity $Q$ of each firm's
+annual co-inventor network (construction and its mechanical floor in
+@sec-graph-communities), for 9,165 firm-years from 783 high-tech firms between 1976 and
+2017. The treatment is a state *Trade Secrecy Index*, an average of six legal provisions
+scaled from 0 to 1 that extends @png2017secrecy, assigned through each firm's historical
+headquarters state. The specification is
+$$
+\text{Modularity}_{it} = \alpha + \beta\,\text{Index}_{s(i)t} + \gamma' \mathbf{x}_{it}
+  + \mu_i + \tau_{j(i)t} + \varepsilon_{it},
+$$
+with firm effects $\mu_i$, industry-by-year effects $\tau_{jt}$ for two-digit NAICS, and
+standard errors clustered by state. Five features are worth copying.
+
+*Run the index and the dummy side by side.* Most of the index's movement comes from
+states enacting the Uniform Trade Secrets Act, but not all of it. States wrote different
+provisions into their statutes, and protection also changed through case law in the two
+states that never enacted the Act, Massachusetts and New York. The index keeps that
+variation; a 0/1 enactment dummy discards it but plugs straight into the staggered-DiD
+toolkit. The paper reports both, and they agree.
+
+*Let the fixed effects decide what is being compared.* Without firm fixed effects the
+index coefficient is 0.006 and insignificant. With them it is −0.055 ($p = .007$).
+Modularity differs across firms for many reasons unrelated to law, and only the
+within-firm change carries the hypothesis. The industry-by-year effects then restrict the
+comparison to firms in the same industry and year whose home states did and did not
+change their law. The estimate is also stable when the index is assigned through
+assignee or inventor locations instead of headquarters, which addresses the worry that
+headquarters state is the wrong legal exposure.
+
+*Translate the coefficient with the right yardstick.* The average enactment raised the
+index by 0.386, so the implied effect is $-0.055 \times 0.386 \approx -0.021$. Against the
+sample mean of 0.757 that is 2.8%, which sounds small. Against the within-firm standard
+deviation of 0.085, which is the variation the firm fixed effects leave, it is a quarter.
+With unit fixed effects in the model, the within-unit spread is usually the more honest
+denominator, and the paper reports both.
+
+*Put the robust estimators next to TWFE and say how far they move.* The enactment dummy
+gives −0.032 under two-way fixed effects (the 4.2% in the press release
+[@seo2026tradesecretrelease]), −0.030 under stacked DiD [@cengiz2019minimum], and −0.017
+to −0.024 under @callaway2021did, with never- and not-yet-treated states as controls. The
+robust estimates are smaller by up to about half but stay significant. The
+Callaway–Sant'Anna sample is also much smaller (273 firms, 4,159 firm-years), because
+only cohorts with clean comparisons enter, so part of the gap may reflect which firms the
+estimator can use rather than bias in TWFE alone. The event study is flat before
+enactment and turns significant from the second year after. A sensitivity analysis in
+the spirit of @rambachan2023credible keeps the post-period estimates significant unless
+post-treatment violations of parallel trends exceed 70% of the largest pre-treatment
+deviation. A permutation test (1,000 random reassignments of treatment, in which fewer
+than three draws produce a coefficient as negative) and a fractional logit for the
+bounded outcome round out the checks.
+
+*Rule out the mechanical channels of a network outcome.* $Q$ responds to network size,
+density, and team composition whether or not anyone reorganized anything (the simulated
+co-patenting networks in @sec-graph-communities score 0.12 to 0.55 with no structure at
+all). The authors control for the numbers of patents and inventors, and they show that the
+index is unrelated to inventor-team size, technological breadth, patenting volume, the
+concentration of business segments, overhead efficiency, and capital spending. The
+mechanism test is itself a contrast: the index raises the betweenness centrality of
+newly hired inventors (0.207 for experienced hires, 0.147 for junior ones) but not of
+incumbents (0.045, insignificant), which is the pattern the trust argument predicts and
+a general reorganization would not.
+
 
 ## Instrumental Variables {#sec-causal-iv}
 
@@ -4281,6 +4362,52 @@ legend("topleft", bty = "n", lwd = 2, lty = c(1, 2),
        col = c("black", "firebrick"),
        legend = c("treated market", "synthetic control"))
 ```
+
+### Synthetic DiD Beside an Event Study That Fails: Dual Tracking in Cereal {#sec-causal-scm-sdid}
+
+Synthetic control was built for one treated unit. Synthetic difference-in-differences
+[@arkhangelsky2021sdid] carries its weighting logic to designs with many treated units.
+It chooses *unit weights* so that the weighted controls track the treated units'
+average pre-period path, chooses *time weights* so that the weighted pre-periods
+resemble the post-periods, and then runs a weighted two-way fixed-effects regression.
+Unit and time fixed effects remain, so level differences are absorbed as in DiD, and the
+weights do the work that the parallel-trends assumption does in DiD. The estimator is
+consistent if either the weights or the fixed-effects model is right. Covariates enter
+by residualizing the outcome on them first.
+
+@hou2026dualtracking show why an applied paper reaches for it (substance in
+@sec-io-nn-simulation). When Post merged with Ralston, the dominant maker of private-label
+cereal, in 2007–2008, the treated units are private-label products in a store that
+imitate a Post brand, and the controls are private labels that imitate Kellogg's,
+General Mills, or PepsiCo brands, in IRI store data for 2004–2011. The DiD has product
+and year fixed effects, with store effects added in a second column. Its event studies
+do not pass. For private-label
+introductions the 2007 interaction is +0.039 and highly significant, because the control
+group's introduction rate dipped sharply that year. For in-store advertising the 2005
+and 2006 interactions are +0.57 and +0.91, both highly significant. The author reports
+SDID as a complementary estimate and does not claim it rescues parallel trends.
+
+| Outcome | DiD (with store FE) | Synthetic DiD (95% interval) |
+|:--|:--|:--|
+| Private-label introduction (probability) | −0.022 (−0.022) | −0.062 (−0.097, −0.027) |
+| In-store ads per product-year | −0.607 (−0.715) | −0.525 (−0.982, −0.068) |
+| Private-label sales (log units) | −0.512 (−0.306) | −0.121 (−0.206, −0.036) |
+
+: Two estimators for the same event in @hou2026dualtracking. DiD entries are the pooled post-merger interactions from the paper's Tables 3–5 with product and year fixed effects, and in parentheses with store fixed effects added; synthetic DiD estimates and intervals are from its Figure 3. {#tbl-causal-sdid-hou}
+
+The table (@tbl-causal-sdid-hou) is the lesson. The two estimators agree on direction
+for every outcome and disagree on size by a factor of up to four. The introduction effect
+nearly triples under SDID, consistent with the DiD being pulled toward zero by the
+control group's 2007 dip. The sales effect shrinks from 51 log points to about 12%,
+consistent with the DiD absorbing a pre-existing divergence between the two groups.
+Neither number is "the" effect. The disagreement measures how much the answer depends on
+the counterfactual, and an honest summary reports the range and says which estimator
+the reader should trust for which outcome. Two further points generalize. First, the
+year of the event matters for the event-study reading: the merger was announced in
+November 2007 and closed in August 2008, so a 2007 coefficient can reflect anticipation
+as easily as a broken comparison. Second, read figure captions against the text. The
+paper's synthetic-DiD caption prints the introduction estimate as −0.62, while the text
+and the confidence interval imply −0.062.
 
 ## Mechanism: Causal Mediation and Moderated Mediation {#sec-causal-mediation}
 

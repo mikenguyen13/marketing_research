@@ -986,6 +986,86 @@ it can segment a campaign, define a competitive set, or, as the next section war
 serve as a (dangerous) proxy for the shared environment that confounds influence
 estimation.
 
+Modularity is also used as an outcome in its own right, one number per network rather
+than a step toward a partition. @seo2026tradesecret compute it for each firm and year on
+an unweighted graph whose nodes are the firm's inventors and whose edges join co-inventors
+on a patent, keep firm-years with at least 10 inventors and 10 patents, partition each
+graph with the Clauset–Newman–Moore greedy algorithm (`cluster_fast_greedy` in `igraph`),
+and take the $Q$ of the best partition as the firm's modularity. They then relate it to
+state trade-secret law (@sec-innovation-trade-secret-modularity): firms that can lean on
+the law organize their inventors in less compartmentalized networks. Used that way, $Q$
+inherits choices that the clustering literature treats as tuning. Fast-greedy, Louvain,
+and Leiden can return different partitions of the same graph, a resolution parameter
+changes how coarse the communities are, and an analyst must decide over what window ties
+accumulate (one year in their main specification, three years as a robustness check) and
+whether repeat collaborations are weighted (they are not). The more basic issue is the
+null. Maximized $Q$ is far from
+zero even in graphs that have no community structure at all, and how far depends on size
+and density.
+
+```{r graph-modularity-null, message=FALSE, warning=FALSE}
+#| label: tbl-graph-modularity-null
+#| tbl-cap: "Louvain modularity of purely random (Erdős–Rényi) graphs, which contain no planted communities. Each cell averages 50 draws; isolated nodes are dropped before clustering. Rows are network size; columns are mean degree."
+set.seed(2026)
+null_q <- expand.grid(n = c(20, 60, 200), mean_degree = c(2, 4, 8))
+null_q$Q <- mapply(function(n, k) {
+  mean(replicate(50, {
+    g <- sample_gnp(n, p = k / (n - 1))
+    g <- induced_subgraph(g, which(degree(g) > 0))
+    modularity(cluster_louvain(g))
+  }))
+}, null_q$n, null_q$mean_degree)
+null_wide <- reshape(transform(null_q, Q = round(Q, 3)),
+                     idvar = "n", timevar = "mean_degree", direction = "wide")
+names(null_wide) <- c("Nodes", "Mean degree 2", "Mean degree 4", "Mean degree 8")
+knitr::kable(null_wide, row.names = FALSE)
+```
+
+A sparse random network of 200 nodes scores around 0.73, above the 0.3 to 0.7 range that
+the previous paragraph read as clear structure. A 60-node network with mean degree 4
+scores 0.43, squarely inside it. A dense network of 20 nodes scores around 0.16. In a firm-level panel, a sparse inventor network and a large one will look modular
+whether or not anyone compartmentalized anything.
+
+Co-invention networks add a second mechanical source, because every patent drops a fully
+connected clique of its inventors into the graph. The next table builds firms with no
+organizational structure at all, in which each patent draws a team of two to five
+inventors uniformly at random from the firm's pool, and scores them exactly as
+@seo2026tradesecret do.
+
+```{r graph-modularity-copatent, message=FALSE, warning=FALSE}
+#| label: tbl-graph-modularity-copatent
+#| tbl-cap: "Fast-greedy modularity of simulated co-patenting networks with no organizational structure: each patent's team of 2 to 5 inventors is drawn at random from the firm's pool, and edges join co-inventors (unweighted). Each cell averages 30 simulated firm-years; inventors without a co-inventor are dropped. Rows are the size of the inventor pool; columns are patents per inventor."
+set.seed(2026)
+copatent_q <- function(n_inv, n_pat, max_team = 5) {
+  edges <- do.call(rbind, lapply(seq_len(n_pat), function(p) {
+    team <- sample(n_inv, sample(2:max_team, 1))
+    t(combn(team, 2))
+  }))
+  g <- simplify(graph_from_edgelist(edges, directed = FALSE))
+  g <- induced_subgraph(g, which(degree(g) > 0))
+  modularity(cluster_fast_greedy(g))
+}
+cop <- expand.grid(inventors = c(30, 100, 300), per_inventor = c(0.5, 1, 2))
+cop$Q <- mapply(function(n, r) mean(replicate(30, copatent_q(n, round(n * r)))),
+                cop$inventors, cop$per_inventor)
+cop_wide <- reshape(transform(cop, Q = round(Q, 3)),
+                    idvar = "inventors", timevar = "per_inventor", direction = "wide")
+names(cop_wide) <- c("Inventors", "0.5 patents each", "1 patent each", "2 patents each")
+knitr::kable(cop_wide, row.names = FALSE)
+```
+
+Random team assignment alone yields $Q$ between about 0.12 and 0.55, higher for larger
+pools and fewer patents per inventor. The paper's sample mean of 0.757 sits well above
+these benchmarks, so real firms are more compartmentalized than random teaming would
+make them, but a large part of the raw level is mechanical. For a within-firm design the
+level matters less than its changes, and two defenses follow. Control for the number of
+inventors and patents, which @seo2026tradesecret do, or compare each firm's $Q$ with the
+$Q$ of randomized versions of its own network. And check that the treatment did not move
+the size, density, or team composition of the network in its own right, because a law
+that changed hiring or patenting could change $Q$ through these mechanical channels
+alone. The authors report that the trade-secrecy index is unrelated to inventor-team size
+and to patenting volume, which addresses the first two of those channels directly.
+
 ## Contagion, Homophily, and the Identification Challenge {#sec-graph-identification}
 
 The most consequential marketing question one can ask of a network is causal: does a

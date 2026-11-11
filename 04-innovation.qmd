@@ -1107,19 +1107,67 @@ not sold for. Across 1,925 IKEA product hacks, the two kinds of discovery respon
 attributes (@fig-innovation-exaptation). Modularity raises the likelihood that a hack
 yields a new function, and the effect is stronger when the product's components are
 compatible across product lines and weaker when the product comes in several esthetic
-variants. Visual simplicity instead raises the likelihood of a new functionality. An
-exploratory analysis of archival data and interviews illustrates how IKEA responds to these
-discoveries, and the authors identify two ways a firm can capture them: by showcasing
-promising community-discovered functions on its official channels, or by incorporating them
-as complements to existing product lines. They also caution that functional modifications
-can raise safety concerns and may require additional development. (Only the published
-abstract was accessible when this section was written, so the measures of modularity and
-visual simplicity, the identification strategy, and the effect sizes are not reported
-here.)
+variants. Visual simplicity instead raises the likelihood of a new functionality.
+
+The measures are worth studying because each turns a design concept into something
+observable at scale. The hacks are posts on IKEAHackers.net from June 2006 to June 2019.
+Modularity is the number of flat packs a product ships in (mean 2.68), on the argument that
+IKEA, which packs to minimize shipping and inventory cost, boxes parts separately only when
+they form physically separable and functionally distinct groups. Component compatibility
+adapts a patent measure of knowledge reuse to physical parts: for every numbered part in a
+product's assembly manual, count the distinct product-function categories in which the same
+part number appears, then average across the product's parts. Visual simplicity is computed
+from a standardized 200 × 200-pixel product photograph as the negative of a single factor,
+accounting for about 86% of the shared variance, behind pixel standard deviation, image
+entropy, and edge density. The outcome is coded by text embeddings rather than by the
+authors' judgment. Two sets of MTurk workers wrote up to three action labels and up to three
+function labels for the original product and for the hacked one, and Word Mover's Distance
+over FastText embeddings flags a change whenever some label on one side has no semantic
+match on the other. By this coding, 56% of hacks are adaptations with no new use, 15% yield a
+new function only, and 29% a new functionality, most of which (87%) also bring a new
+function.
+
+The estimates come from a multinomial logit with adaptation as the base outcome,
+standardized regressors, product-category fixed effects, and standard errors clustered by
+category. A one-standard-deviation increase in modularity raises the log-odds of a new
+function by 0.32 and has no significant effect on new functionality. Visual simplicity does
+the reverse: 0.13 for a new functionality, and no significant effect on a new function. The
+interactions are large relative to the main effect. Modularity × compatibility is 0.39 and
+modularity × esthetic variants is −0.30, both p < .001, and in probability terms modularity
+does little for products whose parts fit nothing else, or once esthetic variants are on
+offer. Two further results fit the same account. Products whose line already covers many
+functions through official complements yield fewer new functions (−0.23), as though the
+firm had already done the users' search for them. And the 116 hacks whose write-ups describe
+a surprise or an impasse are more likely to produce a new functionality (0.60) but not a new
+function. The design is observational, and the authors say so. A product fixed effect would
+absorb the cross-product variation the hypotheses need, so they fit product random effects
+and, separately, fixed effects for coarsened groups of observationally similar products
+(terciles of price, popularity, and size). The interactions survive both. The main
+modularity effect weakens to p = .28 under the coarsened groups, which is why the authors
+stress that modularity's effect on new functions depends on compatibility and variants. The
+conclusions also hold for the 975 hacks posted from 2013 onward, when hacking went
+mainstream and self-selection into posting was weaker, and when outcomes are recoded with
+Sentence-BERT embeddings. One reading caution: in the published Table 3 the rows for the
+number of pictures and hacker experience repeat the price and popularity rows digit for
+digit, which looks like a typesetting slip. The key coefficients are unaffected, and Table 4
+reports distinct estimates for those controls.
+
+The firm side is exploratory, drawn from ten years of IKEA catalogs and annual reports, six
+years of launch records, and interviews with hackers and former employees. Three responses
+recur. Some uses are never endorsed, however popular: the BEKVÄM step stool has been hacked
+hundreds of times into side tables, plant stands, and children's furniture, and IKEA
+commercialized none of them, a caution the authors connect to dresser tip-over recalls and
+the liability that federal legislation on the issue increased. Some are endorsed through
+marketing without any change to the product: when users turned the BEKVÄM spice rack into a
+toddler's bookshelf and the rack sold out, IKEA began photographing it in children's rooms
+and bathrooms. Some return as complements on the existing architecture: users cut openings
+in KALLAX fabric inserts to make cat caves from 2016, and in 2024 IKEA launched a fabric pet
+house designed for KALLAX. The authors are careful that these cases do not show the hacks
+caused the launches.
 
 ```{mermaid}
 %%| label: fig-innovation-exaptation
-%%| fig-cap: "Community-led exaptation in 1,925 IKEA product hacks, as reported in the published abstract. Modularity raises the likelihood that users discover a new function (a new application), more so when components are compatible across product lines and less so when esthetic variants exist; visual simplicity raises the likelihood of a new functionality (a new capability). Labeled dashed arrows are moderators of the modularity effect. Functional modifications can raise safety concerns and require further development."
+%%| fig-cap: "Community-led exaptation in 1,925 IKEA product hacks. Modularity raises the likelihood that users discover a new function (a new application), more so when components are compatible across product lines and less so when esthetic variants exist; visual simplicity raises the likelihood of a new functionality (a new capability). A product line already full of official complements lowers the likelihood of new functions, and a serendipitous encounter during the hack raises the likelihood of a new functionality. Labeled dashed arrows are moderators of the modularity effect. Functional modifications can raise safety concerns and require further development."
 flowchart LR
   subgraph DES["Product design choices"]
     direction TB
@@ -1127,7 +1175,9 @@ flowchart LR
     CMP["Components compatible<br/>across product lines"]
     VAR["Esthetic variants<br/>of the product"]
     SIM["Visual simplicity"]
+    PFS["Official complements<br/>already in the line"]
   end
+  SER["Serendipitous encounter<br/>while hacking"]
   subgraph DIS["What users discover"]
     direction TB
     FUN["New function<br/>(new application)"]
@@ -1143,6 +1193,8 @@ flowchart LR
   CMP -.->|"strengthens"| FUN
   VAR -.->|"weakens"| FUN
   SIM -->|"raises"| FTY
+  PFS -->|"lowers"| FUN
+  SER -->|"raises"| FTY
   FUN --> SHW
   FUN --> CPL
   FUN -.-> SAF
@@ -1163,8 +1215,12 @@ above (@sec-innovation-serendipity), the study is its mirror image: there, a fir
 accidents are often worth most to other firms; here, accidents made by customers can be
 worth something to the firm that made the product, provided it has designed for them and
 has a channel, such as official showcases or a line of complements, through which to bring
-them back in. The authors' design rule is to design for intended use and also for the kinds
-of new uses the firm is willing to seed and commercialize.
+them back in. Capture has a cost of its own, though: every complement the firm adds fills
+in part of the function space that users would otherwise search, which is what the negative
+effect of an already-full product line suggests. The authors put the choice as deciding
+which product lines to complete and which to leave incomplete. Their design rule is to
+design for intended use and also for the kinds of new uses the firm is willing to seed and
+commercialize.
 
 
 ### Generative AI in the Front End: Effort Saved Is Not Creativity Gained {#sec-innovation-genai-ideation}
@@ -1668,6 +1724,69 @@ the same shock. (Only the published abstract and the university's press release
 were accessible when this section was written. Neither reports the AI model used,
 the agreement statistics against human coders, or the box-office specification,
 so no estimates from the paper are quoted here.)
+
+
+### Trade-Secret Law and the Shape of the Inventor Network {#sec-innovation-trade-secret-modularity}
+
+The wrongful-discharge evidence above treats a state employment law as a shock to what
+inventors choose to work on. @seo2026tradesecret use the same kind of variation,
+state-level changes in trade-secrecy law, to ask how a firm arranges its inventors in the
+first place. The idea they test is familiar in strategy theory but had not been checked
+against data. A firm that worries departing employees will carry its know-how to rivals
+can compartmentalize: it splits inventors into groups that rarely collaborate, so that no
+one person sees enough of the whole to take it with them. The price is integration,
+because knowledge held in separate groups is hard to combine. If the law protects secrets
+better, the firm should need the compartments less.
+
+The sample links PatentsView inventors to Compustat firms in high-tech industries through
+the Global Corporate Patent Dataset. The authors keep firm-years with at least 10 unique
+inventors and 10 patents, which leaves 9,165 firm-years from 783 firms between 1976 and
+2017. The outcome is built in three steps. For each firm and year, inventors are nodes,
+and an unweighted, undirected edge joins two inventors who appear together on a patent.
+Communities are found with the Clauset–Newman–Moore greedy algorithm, as implemented in
+`igraph`'s `cluster_fast_greedy`: every inventor starts alone, the pair of communities
+whose merger most raises modularity is merged at each step, and the partition with the
+highest modularity is kept. The firm's *Modularity* is the $Q$ of that partition
+(@sec-graph-communities defines the score and shows how far it can be from zero by
+chance). The sample mean is 0.757 with a standard deviation of 0.180, but only 0.085
+within firms. Figure 1 of the paper makes the contrast concrete with two semiconductor
+firms in 1998–2000: Altera, in California, scores 0.584, and Analog Devices, in
+Massachusetts, where trade-secret protection was weaker, scores 0.867.
+
+The treatment is a state *Trade Secrecy Index* that extends @png2017secrecy to 2017. It
+averages six legal provisions, each scaled from 0 to 1, and is assigned through the
+firm's historical headquarters state, because courts usually apply the law of that state.
+With firm and industry-year fixed effects and errors clustered by state, a one-unit
+increase in the index lowers modularity by 0.055 (p = .007). The average enactment of the
+Uniform Trade Secrets Act raised the index by 0.386, so the implied effect is about 0.021,
+2.8% of the mean but a quarter of the within-firm standard deviation. A dummy for
+enactment gives −0.032 under two-way fixed effects, the 4.2% headline in the Strategic
+Management Society's release [@seo2026tradesecretrelease]. Stacked difference-in-differences
+gives −0.030, and the Callaway–Sant'Anna estimator gives −0.017 to −0.024, smaller but
+still significant. The event study is flat before enactment and turns significant from
+the second year after. A one-unit increase in the index also raises the technological
+impact of the firm's patents (coefficient 0.175), with no effect on novelty or
+originality. The effect is larger for firms with superior technologies and for firms
+located near competitors, where appropriability concerns should be sharpest, and smaller
+in industries where other appropriability mechanisms already work well. That pattern of
+moderators is what supports reading the result as knowledge protection rather than some
+other consequence of the law. The mechanism runs through new hires. A one-unit increase
+in the index raises the betweenness centrality of skilled hires by 0.207 and of junior
+hires by 0.147, while incumbent inventors, who already sit in central positions, do not
+move (0.045, not significant). The authors' reading is that new hires are less trusted
+because they are less socialized into the firm, and legal protection stands in for the
+missing trust.
+
+Two features make the study a useful template. The dependent variable is a property of a
+whole network rather than of any one inventor, which is the step from describing a graph
+to using it as a firm-level outcome. And the treatment data are public: the first author
+posts the updated state trade-secrecy index, extended to 1970–2018, on his website. One
+interpretive caution: the paper describes $Q$ as the probability that two randomly chosen
+inventors belong to the same community, and translates a one-standard-deviation change
+into 18 percentage points of that probability. $Q$ is not that probability. It is the
+share of edges that fall inside communities minus the share expected under random wiring
+with the same degrees, so it is better read as excess within-community tie density. The
+regression results do not depend on the label, but the probability translation does.
 
 
 ### Where Inventors Live: Residential Proximity Inside the Firm {#sec-innovation-proximity}
