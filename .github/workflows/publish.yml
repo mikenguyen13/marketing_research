@@ -72,3 +72,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run build.yml --ref ${{ github.ref_name }}
+
+  # GitHub Pages copy (https://mikenguyen13.github.io/marketing_research/).
+  # Google indexes almost nothing on share.connect.posit.cloud (Search Console,
+  # Nov 2026: 0 of 225 pages indexed), so the committed _book/ -- byte for byte
+  # what Posit serves -- is also published here. site-url + canonical-url in
+  # _quarto.yml make every page name this copy as canonical; Posit readers are
+  # not redirected. Publishes the committed _book (no render), so both hosts
+  # always carry the same files.
+  github-pages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload committed _book
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _book
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

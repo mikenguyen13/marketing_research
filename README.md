@@ -11,7 +11,7 @@
 
 A technical and academic treatment of marketing research: constructs, substantive domains, and the methods that connect them, with reproducible R code throughout.
 
-**Read the book:** https://mike-marketing-research.share.connect.posit.cloud
+**Read the book:** https://mikenguyen13.github.io/marketing_research
 
 ## What's in the book
 
